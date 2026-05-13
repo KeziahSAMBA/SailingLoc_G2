@@ -1,6 +1,6 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import DashboardOwnerPage from "../pages/DashboardOwnerPage.jsx";
-import { useAuth } from "../hooks/useAuth.jsx";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import DashboardOwnerPage from '../pages/DashboardOwnerPage.jsx';
+import { useAuth } from '../hooks/useAuth.jsx';
 
 function AppRouter() {
   const { user } = useAuth();

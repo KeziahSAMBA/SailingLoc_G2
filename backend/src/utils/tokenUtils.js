@@ -1,9 +1,9 @@
-import jwt from "jsonwebtoken";
-import { initConfig } from "../config/appConfig.js";
+import jwt from 'jsonwebtoken';
+import { initConfig } from '../config/appConfig.js';
 
 const { JWT_SECRET } = initConfig();
 
-export function createToken(payload, expiresIn = "24h") {
+export function createToken(payload, expiresIn = '24h') {
   return jwt.sign(payload, JWT_SECRET, { expiresIn });
 }
 

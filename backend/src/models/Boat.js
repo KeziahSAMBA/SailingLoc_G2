@@ -1,13 +1,5 @@
 export class Boat {
-  constructor({
-    id,
-    title,
-    description,
-    price,
-    location,
-    ownerId,
-    images = [],
-  }) {
+  constructor({ id, title, description, price, location, ownerId, images = [] }) {
     this.id = id;
     this.title = title;
     this.description = description;

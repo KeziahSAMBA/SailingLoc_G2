@@ -10,13 +10,13 @@ services:
       POSTGRES_USER: sailingloc_user
       POSTGRES_PASSWORD: sailingloc_password
     ports:
-      - "5434:5432"
+      - '5434:5432'
     volumes:
       - postgres_staging_data:/var/lib/postgresql/data
     networks:
       - sailingloc_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sailingloc_user -d sailingloc_staging"]
+      test: ['CMD-SHELL', 'pg_isready -U sailingloc_user -d sailingloc_staging']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,7 +38,7 @@ services:
       EMAIL_USER: youruser@example.com
       EMAIL_PASS: yourpassword
     ports:
-      - "4100:4000"
+      - '4100:4000'
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,10 +51,9 @@ services:
       dockerfile: Dockerfile
     container_name: sailingloc_frontend_staging
     restart: unless-stopped
-    environment:
-      VITE_API_BASE_URL=http://localhost:4100/api
+    environment: VITE_API_BASE_URL=http://localhost:4100/api
     ports:
-      - "5174:80"
+      - '5174:80'
     depends_on:
       - backend
     networks:

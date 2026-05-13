@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 services:
   # PostgreSQL Database
@@ -11,13 +11,13 @@ services:
       POSTGRES_USER: sailingloc_user
       POSTGRES_PASSWORD: sailingloc_password
     ports:
-      - "5433:5432" # Different port to avoid conflicts with local PostgreSQL
+      - '5433:5432' # Different port to avoid conflicts with local PostgreSQL
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - sailingloc_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sailingloc_user -d sailingloc_dev"]
+      test: ['CMD-SHELL', 'pg_isready -U sailingloc_user -d sailingloc_dev']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,7 +40,7 @@ services:
       EMAIL_USER: your_email@gmail.com
       EMAIL_PASS: your_app_password
     ports:
-      - "4000:4000"
+      - '4000:4000'
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -60,7 +60,7 @@ services:
     container_name: sailingloc_frontend_dev
     restart: unless-stopped
     ports:
-      - "5173:5173"
+      - '5173:5173'
     environment:
       VITE_API_BASE_URL: http://localhost:4000/api
     volumes:

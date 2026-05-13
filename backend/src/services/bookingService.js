@@ -1,4 +1,4 @@
-import prisma from "../config/db.js";
+import prisma from '../config/db.js';
 
 export async function createBooking({ userId, boatId, startDate, endDate }) {
   return prisma.booking.create({

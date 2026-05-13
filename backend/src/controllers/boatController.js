@@ -1,5 +1,5 @@
-import prisma from "../config/db.js";
-import { createBooking } from "../services/bookingService.js";
+import prisma from '../config/db.js';
+import { createBooking } from '../services/bookingService.js';
 
 export async function getBoats(req, res) {
   const boats = await prisma.boat.findMany({ include: { owner: true } });
@@ -11,7 +11,7 @@ export async function uploadBoat(req, res) {
   const ownerId = req.user?.id;
 
   if (!ownerId) {
-    return res.status(401).json({ message: "Owner required" });
+    return res.status(401).json({ message: 'Owner required' });
   }
 
   const images = req.files ? req.files.map((file) => file.filename) : [];

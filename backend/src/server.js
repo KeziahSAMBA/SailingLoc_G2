@@ -8,10 +8,10 @@ const { PORT } = initConfig();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
-app.use("/api/boats", boatRoutes);
+app.use('/uploads', express.static('uploads'));
+app.use('/api/boats', boatRoutes);
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);

@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 services:
   # PostgreSQL Database
@@ -11,14 +11,14 @@ services:
       POSTGRES_USER: sailingloc_user
       POSTGRES_PASSWORD: sailingloc_password
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - sailingloc_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sailingloc_user -d sailingloc"]
+      test: ['CMD-SHELL', 'pg_isready -U sailingloc_user -d sailingloc']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -41,7 +41,7 @@ services:
       EMAIL_USER: your_email@gmail.com
       EMAIL_PASS: your_app_password
     ports:
-      - "4000:4000"
+      - '4000:4000'
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:
@@ -50,7 +50,7 @@ services:
     networks:
       - sailingloc_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:4000/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -63,7 +63,7 @@ services:
     container_name: sailingloc_frontend
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - '3000:80'
     environment:
       VITE_API_BASE_URL: http://localhost:4000/api
     depends_on:
@@ -77,14 +77,14 @@ services:
     container_name: sailingloc_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     networks:
       - sailingloc_network
     command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 30s
       timeout: 10s
       retries: 3
