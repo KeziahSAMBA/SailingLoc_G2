@@ -1,7 +1,7 @@
+import { jest, describe, it, expect } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 
-// Mock Prisma before importing routes
 const mockFindMany = jest.fn().mockResolvedValue([]);
 jest.unstable_mockModule('../src/config/db.js', () => ({
   default: { boat: { findMany: mockFindMany } },
