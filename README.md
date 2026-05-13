@@ -1,6 +1,22 @@
-# SailingLoc
+<!-- markdownlint-disable MD024 MD025 MD060 -->
+
+# SailingLoc — Guide développeur
 
 Plateforme de location de bateaux — projet fullstack avec un backend Node.js/Express et un frontend React/Vite.
+
+---
+
+## Sommaire
+
+- [Technologies](#technologies)
+- [Prérequis](#prérequis)
+- [Installation](#installation)
+- [Scripts disponibles](#scripts-disponibles)
+- [Structure du projet](#structure-du-projet)
+- [API — Endpoints principaux](#api--endpoints-principaux)
+- [Choses à savoir](#choses-à-savoir)
+- [Extension TODO Tree](#extension-todo-tree)
+- [Workflow Git](#workflow-git)
 
 ---
 
@@ -37,16 +53,18 @@ Plateforme de location de bateaux — projet fullstack avec un backend Node.js/E
 
 - **Docker** v24+ et **Docker Compose** v2+ (méthode recommandée)
 - **ou** Node.js v20+ et PostgreSQL v16+ (méthode locale)
+- **Git** configuré avec vos identifiants
+- **VS Code** avec l'extension **Todo Tree** (voir [section dédiée](#extension-todo-tree))
 
 ---
 
-## Installation et lancement
+## Installation
 
 ### Méthode recommandée : Docker
 
-Tout se lance en une seule commande depuis la racine du projet :
-
 ```bash
+git clone <url-du-repo>
+cd SailingLoc_G2
 docker-compose -f docker-compose.dev.yml up --build
 ```
 
@@ -66,7 +84,14 @@ docker-compose -f docker-compose.dev.yml down
 
 ### Méthode locale (sans Docker)
 
-#### 1. Installer les dépendances
+#### 1. Cloner le dépôt
+
+```bash
+git clone <url-du-repo>
+cd SailingLoc_G2
+```
+
+#### 2. Installer les dépendances
 
 ```bash
 # À la racine
@@ -79,7 +104,7 @@ cd backend && npm install
 cd ../frontend && npm install
 ```
 
-#### 2. Configurer les variables d'environnement
+#### 3. Configurer les variables d'environnement
 
 ```bash
 # Backend
@@ -110,7 +135,7 @@ Variable frontend à renseigner dans `frontend/.env` :
 VITE_API_BASE_URL=http://localhost:4000/api
 ```
 
-#### 3. Initialiser la base de données
+#### 4. Initialiser la base de données
 
 ```bash
 cd backend
@@ -120,7 +145,7 @@ npx prisma migrate dev --name init
 npx prisma db seed
 ```
 
-#### 4. Lancer les serveurs
+#### 5. Lancer les serveurs
 
 Dans deux terminaux séparés :
 
@@ -163,42 +188,6 @@ cd frontend && npm run dev
 | `npm run preview` | Prévisualisation du build     |
 | `npm run lint`    | ESLint                        |
 | `npm run format`  | Prettier                      |
-
----
-
-## Choses à savoir
-
-### Fichiers ignorés par Git (`.gitignore`)
-
-| Fichier / Dossier             | Raison                                                 |
-| ----------------------------- | ------------------------------------------------------ |
-| `node_modules/`               | Dépendances npm — à réinstaller avec `npm install`     |
-| `.env` et `.env.*`            | Variables d'environnement sensibles — ne jamais commit |
-| `frontend/dist/`              | Build Vite généré — non versionné                      |
-| `backend/uploads/`            | Fichiers uploadés par les utilisateurs                 |
-| `docker-compose.override.yml` | Surcharges Docker locales                              |
-| `.vscode/`                    | Configuration éditeur personnelle                      |
-
-> Les fichiers `.env.*.example` sont versionnés et servent de modèles. Copier le bon exemple selon l'environnement (`development`, `staging`, `production`).
-
-### Branches
-
-| Branche   | Usage                                    |
-| --------- | ---------------------------------------- |
-| `master`  | Code stable — ne pas pousser directement |
-| `develop` | Branche de développement principale      |
-| `staging` | Validation pré-production                |
-
-Toujours travailler sur `develop` (ou une branche feature), puis merger vers `master` une fois validé.
-
-### CI/CD (GitHub Actions)
-
-Le pipeline `.github/workflows/ci.yml` s'exécute automatiquement sur `master`, `develop` et `staging` à chaque push ou pull request. Il vérifie :
-
-1. Lint (backend + frontend)
-2. Tests Jest (backend)
-3. Build Vite (frontend)
-4. Formatage Prettier
 
 ---
 
@@ -254,6 +243,273 @@ SailingLoc_G2/
 | `POST`  | `/api/auth/login`    | Connexion                      |
 | `GET`   | `/api/bookings`      | Réservations de l'utilisateur  |
 | `POST`  | `/api/bookings`      | Créer une réservation          |
+
+---
+
+## Choses à savoir
+
+### Fichiers ignorés par Git (`.gitignore`)
+
+| Fichier / Dossier             | Raison                                                 |
+| ----------------------------- | ------------------------------------------------------ |
+| `node_modules/`               | Dépendances npm — à réinstaller avec `npm install`     |
+| `.env` et `.env.*`            | Variables d'environnement sensibles — ne jamais commit |
+| `frontend/dist/`              | Build Vite généré — non versionné                      |
+| `backend/uploads/`            | Fichiers uploadés par les utilisateurs                 |
+| `docker-compose.override.yml` | Surcharges Docker locales                              |
+| `.vscode/`                    | Configuration éditeur personnelle                      |
+
+> Les fichiers `.env.*.example` sont versionnés et servent de modèles. Copier le bon exemple selon l'environnement (`development`, `staging`, `production`).
+
+### CI/CD (GitHub Actions)
+
+Le pipeline `.github/workflows/ci.yml` s'exécute automatiquement sur `master`, `develop` et `staging` à chaque push ou pull request. Il vérifie :
+
+1. Lint (backend + frontend)
+2. Tests Jest (backend)
+3. Build Vite (frontend)
+4. Formatage Prettier
+
+---
+
+## Extension TODO Tree
+
+### Installation
+
+1. Ouvrir VS Code
+2. Aller dans l'onglet **Extensions** (`Ctrl+Shift+X`)
+3. Rechercher **Todo Tree**
+4. Installer l'extension publiée par **Gruntfuggly**
+
+### Utilisation
+
+Todo Tree détecte automatiquement les commentaires spéciaux dans le code et les regroupe dans un panneau dédié (icône arbre dans la barre latérale gauche).
+
+Les mots-clés utilisés dans le projet :
+
+| Mot-clé | Usage                                               |
+| ------- | --------------------------------------------------- |
+| `TODO`  | Tâche à faire, fonctionnalité à implémenter         |
+| `FIXME` | Bug connu à corriger                                |
+| `HACK`  | Contournement temporaire à refactoriser plus tard   |
+| `NOTE`  | Information importante pour les autres développeurs |
+
+**Exemple dans le code :**
+
+```js
+// TODO: ajouter la validation du formulaire de réservation
+// FIXME: le calcul du prix ne prend pas en compte les week-ends
+// HACK: workaround en attendant la correction de l'API Stripe
+// NOTE: cette route nécessite le rôle admin
+```
+
+Le panneau Todo Tree permet de naviguer directement vers chaque occurrence en un clic, ce qui facilite le suivi des tâches en cours dans l'ensemble du projet.
+
+---
+
+## Workflow Git
+
+### 🏗️ Structure des branches
+
+#### Branches principales
+
+| Branche   | Rôle                         |
+| --------- | ---------------------------- |
+| `master`  | Production                   |
+| `develop` | Intégration et développement |
+
+#### Branches de fonctionnalités (parents)
+
+Format : `feature/nom-de-la-fonctionnalite`
+
+Exemples :
+
+```
+feature/authentification-utilisateur
+feature/dashboard-admin
+feature/paiement-stripe
+```
+
+#### Branches de tâches (enfants)
+
+Format : `feature/nom-fonctionnalite/nom-tache`
+
+Exemples :
+
+```
+feature/authentification-utilisateur/login-form
+feature/authentification-utilisateur/validation-token
+feature/dashboard-admin/stats-graph
+```
+
+#### Branches de correction
+
+```
+fix/description-du-bug
+hotfix/critical-issue    # Pour un correctif urgent en production
+release/v1.2.0           # Pour une release
+```
+
+---
+
+### 📝 Nomenclature des commits
+
+Format [Conventional Commits](https://www.conventionalcommits.org/) :
+
+```
+<type>(<scope>): <description>
+
+[corps optionnel]
+
+[footer optionnel]
+```
+
+#### Types de commits
+
+| Type       | Usage                                              |
+| ---------- | -------------------------------------------------- |
+| `feat`     | Nouvelle fonctionnalité                            |
+| `fix`      | Correction de bug                                  |
+| `docs`     | Documentation                                      |
+| `style`    | Formatage, point-virgules manquants, etc.          |
+| `refactor` | Refactorisation du code                            |
+| `test`     | Ajout ou modification de tests                     |
+| `chore`    | Tâches de maintenance (MAJ dépendances, config...) |
+| `perf`     | Amélioration des performances                      |
+
+#### Exemples de commits
+
+```bash
+feat(auth): add login form component
+fix(dashboard): correct data rendering issue
+docs(readme): update installation instructions
+refactor(api): simplify error handling logic
+test(auth): add unit tests for token validation
+```
+
+---
+
+### 🔄 Workflow détaillé
+
+#### 1. Création de la branche de fonctionnalité (parent)
+
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/nom-fonctionnalite
+```
+
+#### 2. Création d'une branche de tâche (enfant)
+
+```bash
+git checkout -b feature/nom-fonctionnalite/tache-1
+# Travail sur la tâche...
+git add .
+git commit -m "feat(module): description de la tâche"
+```
+
+#### 3. Merge de la tâche dans la branche parent
+
+```bash
+git checkout feature/nom-fonctionnalite
+git pull origin feature/nom-fonctionnalite  # Au cas où
+git merge feature/nom-fonctionnalite/tache-1
+git push origin feature/nom-fonctionnalite
+```
+
+#### 4. Création de la tâche suivante
+
+```bash
+git checkout -b feature/nom-fonctionnalite/tache-2
+# Continuer le cycle...
+```
+
+#### 5. Finalisation : merge dans develop
+
+```bash
+# Une fois toutes les tâches terminées
+git checkout develop
+git pull origin develop
+git merge feature/nom-fonctionnalite
+git push origin develop
+```
+
+---
+
+### 🎯 Best practices — Pull Requests
+
+#### Titres de PR
+
+```
+[Feature] Nom de la fonctionnalité
+[Fix] Description du bug corrigé
+[Refactor] Description de la refactorisation
+```
+
+#### Template de description
+
+```markdown
+## Description
+
+Brève description de la fonctionnalité/correction
+
+## Type de changement
+
+- [ ] Nouvelle fonctionnalité
+- [ ] Correction de bug
+- [ ] Refactorisation
+- [ ] Documentation
+
+## Checklist
+
+- [ ] Code testé localement
+- [ ] Tests unitaires ajoutés/mis à jour
+- [ ] Documentation mise à jour
+- [ ] Pas de conflits avec develop
+```
+
+#### Message de merge
+
+```bash
+git merge --no-ff feature/nom-fonctionnalite -m "Merge feature: description"
+```
+
+---
+
+### 📊 Exemple de workflow complet
+
+```bash
+# Démarrage
+git checkout develop
+git pull origin develop
+git checkout -b feature/payment-system
+
+# Tâche 1
+git checkout -b feature/payment-system/stripe-integration
+# ... travail ...
+git commit -m "feat(payment): integrate Stripe SDK"
+git checkout feature/payment-system
+git merge feature/payment-system/stripe-integration
+
+# Tâche 2
+git checkout -b feature/payment-system/payment-form
+# ... travail ...
+git commit -m "feat(payment): create payment form component"
+git checkout feature/payment-system
+git merge feature/payment-system/payment-form
+
+# Tâche 3
+git checkout -b feature/payment-system/error-handling
+# ... travail ...
+git commit -m "feat(payment): add error handling and user feedback"
+git checkout feature/payment-system
+git merge feature/payment-system/error-handling
+
+# Finalisation
+git checkout develop
+git merge feature/payment-system
+git push origin develop
+```
 
 ---
 
