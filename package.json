@@ -1,0 +1,36 @@
+{
+  "name": "sailingloc",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "lint": "npm run lint --workspace backend && npm run lint --workspace frontend",
+    "format": "npm run format --workspace backend && npm run format --workspace frontend",
+    "test": "npm run test --workspace backend",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react": "^7.34.0",
+    "husky": "^8.0.4",
+    "lint-staged": "^14.0.0",
+    "prettier": "^3.0.0"
+  },
+  "lint-staged": {
+    "backend/**/*.{js,mjs}": [
+      "npm run lint --workspace backend -- --fix",
+      "prettier --write"
+    ],
+    "frontend/**/*.{js,jsx}": [
+      "npm run lint --workspace frontend -- --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss,html}": [
+      "prettier --write"
+    ]
+  }
+}

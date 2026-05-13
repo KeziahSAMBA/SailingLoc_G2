@@ -8,7 +8,9 @@
     "start": "node src/server.js",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:generate": "prisma generate",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint 'src/**/*.{js,mjs}'",
+    "format": "prettier --write 'src/**/*.{js,mjs,json,md}'"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",

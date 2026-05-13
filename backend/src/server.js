@@ -1,10 +1,8 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import boatRoutes from "./routes/boatRoutes.js";
-import { initConfig } from "./config/appConfig.js";
+import express from 'express';
+import cors from 'cors';
+import boatRoutes from './routes/boatRoutes.js';
+import { initConfig } from './config/appConfig.js';
 
-dotenv.config();
 const { PORT } = initConfig();
 
 const app = express();

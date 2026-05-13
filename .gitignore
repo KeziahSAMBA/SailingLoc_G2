@@ -2,6 +2,7 @@ node_modules
 .DS_Store
 dist
 .env
+.env.*
 .env.local
 .env.docker
 frontend/node_modules

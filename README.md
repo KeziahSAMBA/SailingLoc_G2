@@ -124,6 +124,41 @@ npx prisma migrate dev --name init
 npx prisma db seed
 ```
 
+## Environnements
+
+Ce projet supporte trois environnements :
+
+- **local** : développement en local avec `docker-compose.dev.yml` ou `npm run dev`
+- **staging** : validation pré-production avec `docker-compose.staging.yml`
+- **production** : déploiement stable avec `docker-compose.yml`
+
+Chaque service utilise un fichier `.env` spécifique en fonction de `NODE_ENV`.
+
+### Fichiers d'exemple
+
+#### Backend
+- `backend/.env.development.example`
+- `backend/.env.staging.example`
+- `backend/.env.production.example`
+
+#### Frontend
+- `frontend/.env.development.example`
+- `frontend/.env.staging.example`
+- `frontend/.env.production.example`
+
+## CI/CD
+
+Le pipeline GitHub Actions est configuré dans `.github/workflows/ci.yml`.
+Il exécute automatiquement :
+
+- installation des dépendances
+- lint frontend/backend
+- tests backend
+- build frontend
+- vérification du formatage
+
+Le pipeline s'exécute sur les branches `main`, `develop` et `staging`.
+
 ## Démarrage du projet
 
 ### 🚀 Méthode recommandée : Docker (Environnement isolé)
