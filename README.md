@@ -129,10 +129,12 @@ npx prisma db seed
 ### 🚀 Méthode recommandée : Docker (Environnement isolé)
 
 #### Prérequis Docker
+
 - **Docker** v24+ et **Docker Compose** v2+
 - Téléchargeable sur [docker.com](https://www.docker.com/)
 
 #### Démarrage en mode développement (avec hot reload)
+
 ```bash
 # Démarrer tous les services
 make dev
@@ -142,6 +144,7 @@ docker-compose -f docker-compose.dev.yml up --build
 ```
 
 #### Démarrage en mode production
+
 ```bash
 # Démarrer tous les services
 make prod
@@ -151,11 +154,13 @@ docker-compose up --build
 ```
 
 #### URLs d'accès avec Docker
+
 - **Frontend** : `http://localhost:5173` (développement) ou `http://localhost:3000` (production)
 - **Backend API** : `http://localhost:4000`
 - **Base de données** : `localhost:5433` (développement) ou `localhost:5432` (production)
 
 #### Commandes Docker utiles
+
 ```bash
 # Voir les logs
 make logs
@@ -177,6 +182,7 @@ make shell-db       # base de données
 ```
 
 #### Vérifier l'état des services Docker
+
 ```bash
 # Script de vérification (Linux/Mac)
 ./check-docker.sh
@@ -188,12 +194,14 @@ docker-compose -f docker-compose.dev.yml ps
 ### 🖥️ Méthode alternative : Démarrage local (sans Docker)
 
 #### Prérequis locaux
+
 - **Node.js** v20.x
 - **PostgreSQL** v16.x (base de données locale)
 
 #### Démarrage en mode développement local
 
 ##### Terminal 1 : Backend
+
 ```bash
 cd backend
 npm install
@@ -201,14 +209,17 @@ npx prisma generate
 npx prisma migrate dev --name init
 npm run dev
 ```
+
 Le serveur backend sera accessible sur `http://localhost:4000`
 
 ##### Terminal 2 : Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+
 L'application frontend sera accessible sur `http://localhost:5173`
 
 ### Scripts disponibles
@@ -322,16 +333,19 @@ SailingLoc_G2/
 ## Avantages de Docker
 
 ### ✅ Isolation complète
+
 - Environnement de développement identique en local et en production
 - Pas de conflits avec les installations locales (Node.js, PostgreSQL)
 - Gestion simplifiée des dépendances
 
 ### ✅ Reproductibilité
+
 - Configuration partagée entre tous les développeurs
 - Démarrage rapide pour les nouveaux arrivants
 - Tests d'intégration facilités
 
 ### ✅ Performance
+
 - Images optimisées pour la production
 - Cache intelligent des couches Docker
 - Scaling horizontal possible
@@ -346,6 +360,7 @@ SailingLoc_G2/
 ### 🔄 Migration depuis l'environnement local
 
 Si vous aviez une base de données locale :
+
 1. Exportez vos données : `pg_dump sailingloc > backup.sql`
 2. Démarrez Docker : `make dev`
 3. Importez dans le container : `docker-compose exec postgres psql -U sailingloc_user -d sailingloc < backup.sql`

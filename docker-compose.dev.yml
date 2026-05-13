@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # PostgreSQL Database
@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: sailingloc_user
       POSTGRES_PASSWORD: sailingloc_password
     ports:
-      - "5433:5432"  # Different port to avoid conflicts with local PostgreSQL
+      - "5433:5432" # Different port to avoid conflicts with local PostgreSQL
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
