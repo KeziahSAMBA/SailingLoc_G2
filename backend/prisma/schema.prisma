@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  name      String?
+  role      Role      @default(USER)
+  boats             Boat[]    @relation("OwnerBoats")
+  bookings          Booking[] @relation("GuestBookings")
+  messages          Message[] @relation("SenderMessages")
+  receivedMessages  Message[] @relation("RecipientMessages")
+  createdAt         DateTime  @default(now())
+}
+
+model Boat {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  price       Float
+  location    String
+  owner       User      @relation(fields: [ownerId], references: [id], name: "OwnerBoats")
+  ownerId     String
+  images      String[]  @default([])
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  startDate  DateTime
+  endDate    DateTime
+  totalPrice Float
+  user       User     @relation(fields: [userId], references: [id], name: "GuestBookings")
+  userId     String
+  boat       Boat     @relation(fields: [boatId], references: [id])
+  boatId     String
+  status     BookingStatus @default(PENDING)
+  createdAt  DateTime @default(now())
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  sender     User     @relation(fields: [senderId], references: [id], name: "SenderMessages")
+  senderId   String
+  recipient  User     @relation(fields: [recipientId], references: [id], name: "RecipientMessages")
+  recipientId String
+  createdAt  DateTime @default(now())
+}
+
+enum Role {
+  USER
+  OWNER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}

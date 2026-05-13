@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+dist
+.env
+.env.local
+frontend/node_modules
+backend/node_modules
+frontend/dist
+backend/uploads
+
+# VS Code
+.vscode
