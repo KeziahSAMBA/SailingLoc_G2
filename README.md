@@ -137,11 +137,13 @@ Chaque service utilise un fichier `.env` spécifique en fonction de `NODE_ENV`.
 ### Fichiers d'exemple
 
 #### Backend
+
 - `backend/.env.development.example`
 - `backend/.env.staging.example`
 - `backend/.env.production.example`
 
 #### Frontend
+
 - `frontend/.env.development.example`
 - `frontend/.env.staging.example`
 - `frontend/.env.production.example`

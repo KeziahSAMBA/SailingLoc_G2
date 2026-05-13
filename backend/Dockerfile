@@ -1,6 +1,9 @@
 # Use Node.js 20 Alpine for smaller image size
 FROM node:20-alpine
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 # Set working directory
 WORKDIR /app
 
@@ -12,6 +15,9 @@ RUN npm ci --only=production
 
 # Copy source code
 COPY . .
+
+# Generate Prisma Client for Linux
+RUN npx prisma generate
 
 # Create uploads directory
 RUN mkdir -p uploads
