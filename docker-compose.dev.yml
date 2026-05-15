@@ -72,8 +72,30 @@ services:
       - sailingloc_network
     command: npm run dev -- --host 0.0.0.0
 
+  # pgAdmin - PostgreSQL Web Interface
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: sailingloc_pgadmin_dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@sailingloc.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_PROXY_X_FOR_COUNT: 1
+      PGADMIN_CONFIG_PROXY_X_PROTO_COUNT: 1
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    ports:
+      - '5050:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin_servers.json:/pgadmin4/servers.json
+    depends_on:
+      - postgres
+    networks:
+      - sailingloc_network
+
 volumes:
   postgres_data:
+  pgadmin_data:
 
 networks:
   sailingloc_network:
