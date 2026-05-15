@@ -36,4 +36,3 @@ export async function createBookingController(req, res) {
   const booking = await createBooking({ userId, boatId, startDate, endDate });
   res.status(201).json(booking);
 }
-
