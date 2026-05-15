@@ -12,6 +12,9 @@
     "lint": "eslint src/**/*.{js,mjs}",
     "format": "prettier --write src/**/*.{js,mjs,json,md}"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@prisma/client": "^5.0.0",
     "bcrypt": "^5.1.0",

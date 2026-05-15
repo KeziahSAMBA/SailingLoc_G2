@@ -14,6 +14,7 @@ services:
       - '5433:5432' # Different port to avoid conflicts with local PostgreSQL
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - sailingloc_network
     healthcheck:
@@ -50,7 +51,7 @@ services:
         condition: service_healthy
     networks:
       - sailingloc_network
-    command: npm run dev
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run dev"
 
   # Frontend React App (Development mode with hot reload)
   frontend:
