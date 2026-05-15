@@ -165,20 +165,20 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 ### Compte Administrateur
 
-| Email | Mot de passe |
-| --- | --- |
+| Email                 | Mot de passe   |
+| --------------------- | -------------- |
 | `admin@sailingloc.fr` | `Admin@123456` |
 
 ### Compte Locataire
 
-| Email | Mot de passe |
-| --- | --- |
+| Email                     | Mot de passe           |
+| ------------------------- | ---------------------- |
 | `thomas.bernard@email.fr` | `Locataire@2025Secure` |
 
 ### Compte Propriétaire
 
-| Email | Mot de passe |
-| --- | --- |
+| Email                 | Mot de passe              |
+| --------------------- | ------------------------- |
 | `luc.martin@email.fr` | `Proprietaire@2025Secure` |
 
 > **Note :** Tous les mots de passe sont hachés avec bcrypt. Les données de test incluent 13 utilisateurs, 8 bateaux, 8 ports et 14 réservations pour un environnement de développement complet.
