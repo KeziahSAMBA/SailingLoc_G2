@@ -2,18 +2,29 @@ import { useState, useEffect, useRef } from 'react';
 import logo from '../../../assets/image/SL_logo/logo SL.webp';
 import logoLong from '../../../assets/image/SL_logo/logo SL long.webp';
 
-const BURGER_ITEMS = [
-  'Chercher une location',
-  'Tutoriel',
-  'Nos suggestions',
-  'Avis & commentaires',
+const NAV_ITEMS = ['Chercher une location', 'Tutoriel', 'Nos suggestions', 'Avis & commentaires'];
+
+const USER_MENU_ITEMS = [
+  { label: 'Mon dashboard', href: '#' },
+  { label: 'Compte', href: '#' },
+  { label: 'Mes documents', href: '#' },
+  { label: 'Mes réservations', href: '#' },
+  { label: 'Favoris', href: '#' },
+  { label: 'Déconnexion', href: '#', danger: true },
 ];
 
+// Mock — remplacer par la vraie donnée utilisateur quand la BDD sera prête
+const mockUser = {
+  name: 'Jean Dupont',
+  avatar: null, // URL de la photo de profil, ex: '/uploads/avatar.jpg'
+};
+
 function Header() {
-  const [lang, setLang] = useState('FR');
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const [navOpen, setNavOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const navRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -23,8 +34,9 @@ function Header() {
 
   useEffect(() => {
     const onClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
+      if (navRef.current && !navRef.current.contains(e.target)) setNavOpen(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', onClickOutside);
@@ -42,30 +54,28 @@ function Header() {
         transition: 'height 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease',
       }}
     >
-      {/* Gauche — Burger + Logo (33%) */}
+      {/* Gauche — Burger nav + Logo (33%) */}
       <div className="w-1/3 flex items-center gap-4 pl-4">
-        {/* Burger */}
-        <div className="relative" ref={menuRef}>
+        <div className="relative" ref={navRef}>
           <button
-            onClick={() => setMenuOpen((o) => !o)}
+            onClick={() => setNavOpen((o) => !o)}
             className="flex flex-col justify-center gap-[5px] p-1"
-            aria-label="Menu"
+            aria-label="Menu navigation"
           >
             <span
               className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
+              style={{ transform: navOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
             />
             <span
               className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ opacity: menuOpen ? 0 : 1 }}
+              style={{ opacity: navOpen ? 0 : 1 }}
             />
             <span
               className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }}
+              style={{ transform: navOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }}
             />
           </button>
 
-          {/* Dropdown — panneau latéral gauche */}
           <div
             className="fixed left-0 overflow-hidden"
             style={{
@@ -77,13 +87,13 @@ function Header() {
               WebkitBackdropFilter: 'blur(14px)',
               borderRight: '1px solid rgba(255, 255, 255, 0.15)',
               boxShadow: '4px 0 24px rgba(0,0,0,0.2)',
-              transform: menuOpen ? 'translateX(0)' : 'translateX(-100%)',
-              pointerEvents: menuOpen ? 'auto' : 'none',
-              transition: `top 0.3s ease, height 0.3s ease, transform 0.3s ease`,
+              transform: navOpen ? 'translateX(0)' : 'translateX(-100%)',
+              pointerEvents: navOpen ? 'auto' : 'none',
+              transition: 'top 0.3s ease, height 0.3s ease, transform 0.3s ease',
             }}
           >
             <div className="flex flex-col" style={{ height: '55%' }}>
-              {BURGER_ITEMS.map((item) => (
+              {NAV_ITEMS.map((item) => (
                 <a
                   key={item}
                   href="#"
@@ -103,7 +113,6 @@ function Header() {
           </div>
         </div>
 
-        {/* Logo décalé légèrement à droite */}
         <a href="/" className="flex items-center">
           <img
             src={scrolled ? logoLong : logo}
@@ -156,81 +165,129 @@ function Header() {
         </ul>
       </nav>
 
-      {/* Droite — Langue + Connexion (33%) */}
-      <div className="w-1/3 flex items-center justify-end gap-4 pr-4">
-        <div className="flex items-center gap-1">
-          {['FR', 'EN'].map((l, i) => (
-            <span key={l} className="flex items-center gap-1">
-              {i === 1 && (
-                <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.6rem' }}>/</span>
-              )}
-              <button
-                onClick={() => setLang(l)}
-                className="px-1 font-medium"
-                style={{
-                  color: '#fff',
-                  opacity: lang === l ? 1 : 0.45,
-                  fontWeight: lang === l ? 700 : 500,
-                  fontSize: scrolled ? '0.6rem' : '0.65rem',
-                  backgroundImage: 'linear-gradient(#fff, #fff)',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '0% 1px',
-                  backgroundPosition: '0 100%',
-                  paddingBottom: '2px',
-                  transition: 'font-size 0.3s ease, background-size 0.35s ease',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundSize = '100% 1px')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundSize = '0% 1px')}
-              >
-                {l}
-              </button>
-            </span>
-          ))}
-        </div>
-
-        <button
-          className="flex items-center gap-2 rounded-full transition-all whitespace-nowrap"
-          style={{
-            color: '#fff',
-            border: '1px solid rgba(255, 255, 255, 0.5)',
-            backgroundColor: 'transparent',
-            fontSize: scrolled ? '0.65rem' : '0.7rem',
-            padding: scrolled ? '4px 10px' : '6px 12px',
-            transition:
-              'font-size 0.3s ease, padding 0.3s ease, background-color 0.2s, border-color 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-            e.currentTarget.style.borderColor = '#fff';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
-          }}
-        >
+      {/* Droite — Icône utilisateur + Burger menu utilisateur (33%) */}
+      <div className="w-1/3 flex items-center justify-end gap-3 pr-4">
+        {/* Nom + Icône utilisateur — lien vers le profil */}
+        <a href="#" className="flex items-center gap-3 group" style={{ textDecoration: 'none' }}>
           <span
-            className="rounded-full flex items-center justify-center flex-shrink-0"
             style={{
-              width: scrolled ? '14px' : '16px',
-              height: scrolled ? '14px' : '16px',
-              border: '1px solid rgba(255, 255, 255, 0.6)',
-              transition: 'width 0.3s ease, height 0.3s ease',
+              color: '#fff',
+              fontSize: scrolled ? '0.75rem' : '0.85rem',
+              opacity: 0.9,
+              fontWeight: 500,
+              transition: 'font-size 0.3s ease, background-size 0.35s ease',
+              backgroundImage: 'linear-gradient(#fff, #fff)',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '0% 1px',
+              backgroundPosition: '0 100%',
+              paddingBottom: '3px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundSize = '100% 1px';
+              e.currentTarget.style.opacity = '0.75';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundSize = '0% 1px';
+              e.currentTarget.style.opacity = '0.9';
             }}
           >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#fff"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-            </svg>
+            {mockUser.name}
           </span>
-          Se connecter / S&apos;inscrire
-        </button>
+          <div
+            className="rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+            style={{
+              width: scrolled ? '32px' : '40px',
+              height: scrolled ? '32px' : '40px',
+              border: '1.5px solid rgba(255, 255, 255, 0.7)',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              transition: 'width 0.3s ease, height 0.3s ease, background-color 0.2s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
+          >
+            {mockUser.avatar ? (
+              <img
+                src={mockUser.avatar}
+                alt={mockUser.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <svg
+                width={scrolled ? '18' : '22'}
+                height={scrolled ? '18' : '22'}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#fff"
+                strokeWidth="1.8"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+              </svg>
+            )}
+          </div>
+        </a>
+
+        {/* Burger menu utilisateur */}
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setUserMenuOpen((o) => !o)}
+            className="flex flex-col justify-center gap-[5px] p-1 ml-1"
+            aria-label="Menu utilisateur"
+          >
+            <span
+              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
+              style={{ transform: userMenuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
+            />
+            <span
+              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
+              style={{ opacity: userMenuOpen ? 0 : 1 }}
+            />
+            <span
+              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
+              style={{ transform: userMenuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }}
+            />
+          </button>
+
+          {/* Dropdown panel côté droit */}
+          <div
+            className="fixed right-0 overflow-hidden"
+            style={{
+              top: scrolled ? '60px' : '80px',
+              width: '260px',
+              height: `calc(100vh - ${scrolled ? '60px' : '80px'})`,
+              backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.25)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              borderLeft: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '-4px 0 24px rgba(0,0,0,0.2)',
+              transform: userMenuOpen ? 'translateX(0)' : 'translateX(100%)',
+              pointerEvents: userMenuOpen ? 'auto' : 'none',
+              transition: 'top 0.3s ease, height 0.3s ease, transform 0.3s ease',
+            }}
+          >
+            {/* Items du menu */}
+            <div className="flex flex-col" style={{ height: '65%' }}>
+              {USER_MENU_ITEMS.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className="flex items-center flex-1 px-5 text-base font-medium transition-colors"
+                  style={{ color: item.danger ? '#e05252' : scrolled ? '#0A3172' : '#fff' }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = item.danger
+                      ? 'rgba(224, 82, 82, 0.08)'
+                      : scrolled
+                        ? 'rgba(10, 49, 114, 0.06)'
+                        : 'rgba(255, 255, 255, 0.1)')
+                  }
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </header>
   );
