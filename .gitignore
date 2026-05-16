@@ -16,3 +16,7 @@ docker volumes (handled by docker-compose)
 
 # VS Code
 .vscode
+
+# JetBrains IDE
+.idea/
+

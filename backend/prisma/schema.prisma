@@ -9,62 +9,257 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  name      String?
-  role      Role      @default(USER)
-  boats             Boat[]    @relation("OwnerBoats")
-  bookings          Booking[] @relation("GuestBookings")
-  messages          Message[] @relation("SenderMessages")
-  receivedMessages  Message[] @relation("RecipientMessages")
-  createdAt         DateTime  @default(now())
+  id_user             Int        @id @default(autoincrement())
+  last_name           String     @db.VarChar(100)
+  first_name          String     @db.VarChar(100)
+  email               String     @unique @db.VarChar(255)
+  password            String     @db.VarChar(255)
+  role                UserRole   @default(locataire)
+  phone               String?    @db.VarChar(20)
+  is_active           Boolean    @default(true)
+  reset_token         String?    @db.VarChar(255)
+  created_at          DateTime   @default(now())
+  updated_at          DateTime?
+  deleted_at          DateTime?
+
+  boats               Boat[]     @relation("OwnerBoats")
+  bookings            Booking[]  @relation("GuestBookings")
+  sentMessages        Message[]  @relation("SenderMessages")
+  receivedMessages    Message[]  @relation("ReceiverMessages")
+  documents           Document[]
+  reviews             Review[]
+  favoriteBoats       UserBoatFavorite[]
+  images              Image[]
+
+  @@map("user")
+}
+
+model Port {
+  id_port     Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(150)
+  city        String   @db.VarChar(100)
+  country     String   @db.VarChar(100)
+  latitude    Decimal?
+  longitude   Decimal?
+  created_at  DateTime @default(now())
+  updated_at  DateTime?
+  deleted_at  DateTime?
+
+  boats       Boat[]
+
+  @@map("port")
 }
 
 model Boat {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  price       Float
-  location    String
-  owner       User      @relation(fields: [ownerId], references: [id], name: "OwnerBoats")
-  ownerId     String
-  images      String[]  @default([])
-  bookings    Booking[]
-  createdAt   DateTime  @default(now())
+  id_boat         Int      @id @default(autoincrement())
+  id_user         Int
+  id_port         Int
+  name            String   @db.VarChar(150)
+  type            String   @db.VarChar(50)
+  size            Decimal
+  engine          String?  @db.VarChar(100)
+  with_skipper    Boolean  @default(false)
+  daily_price     Decimal
+  capacity        Int
+  build_year      Int?
+  registration    String   @unique @db.VarChar(50)
+  description     String?
+  is_published    Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime?
+  deleted_at      DateTime?
+
+  owner           User     @relation("OwnerBoats", fields: [id_user], references: [id_user])
+  port            Port     @relation(fields: [id_port], references: [id_port])
+  bookings        Booking[]
+  images          Image[]
+  favoriteUsers   UserBoatFavorite[]
+
+  @@index([id_user])
+  @@index([id_port])
+  @@map("boat")
 }
 
 model Booking {
-  id         String   @id @default(cuid())
-  startDate  DateTime
-  endDate    DateTime
-  totalPrice Float
-  user       User     @relation(fields: [userId], references: [id], name: "GuestBookings")
-  userId     String
-  boat       Boat     @relation(fields: [boatId], references: [id])
-  boatId     String
-  status     BookingStatus @default(PENDING)
-  createdAt  DateTime @default(now())
+  id_booking          Int             @id @default(autoincrement())
+  id_user             Int
+  id_boat             Int
+  start_date          DateTime        @db.Date
+  end_date            DateTime        @db.Date
+  status              BookingStatus   @default(pending)
+  total_amount        Decimal
+  booking_date        DateTime
+  cancellation_reason String?
+  cancellation_date   DateTime?
+  created_at          DateTime        @default(now())
+  updated_at          DateTime?
+  deleted_at          DateTime?
+
+  user                User            @relation("GuestBookings", fields: [id_user], references: [id_user])
+  boat                Boat            @relation(fields: [id_boat], references: [id_boat])
+  payments            Payment[]
+  reviews             Review[]
+  documents           BookingDocument[]
+
+  @@index([id_user])
+  @@index([id_boat])
+  @@index([status])
+  @@map("booking")
+}
+
+model Payment {
+  id_payment      Int           @id @default(autoincrement())
+  id_booking      Int
+  amount          Decimal
+  commission      Decimal
+  payment_date    DateTime
+  payment_method  String        @db.VarChar(50)
+  status          PaymentStatus @default(pending)
+  transaction_ref String?       @unique @db.VarChar(255)
+  created_at      DateTime      @default(now())
+
+  booking         Booking       @relation(fields: [id_booking], references: [id_booking])
+
+  @@index([id_booking])
+  @@map("payment")
+}
+
+model Document {
+  id_document   Int            @id @default(autoincrement())
+  id_user       Int
+  type          String         @db.VarChar(50)
+  file_name     String         @db.VarChar(255)
+  file_url      String         @db.VarChar(500)
+  upload_date   DateTime
+  status        DocumentStatus @default(pending)
+  created_at    DateTime       @default(now())
+  updated_at    DateTime?
+
+  user          User           @relation(fields: [id_user], references: [id_user])
+  bookings      BookingDocument[]
+
+  @@map("document")
 }
 
 model Message {
-  id         String   @id @default(cuid())
-  content    String
-  sender     User     @relation(fields: [senderId], references: [id], name: "SenderMessages")
-  senderId   String
-  recipient  User     @relation(fields: [recipientId], references: [id], name: "RecipientMessages")
-  recipientId String
-  createdAt  DateTime @default(now())
+  id_message    Int      @id @default(autoincrement())
+  id_sender     Int
+  id_receiver   Int
+  content       String
+  sent_at       DateTime
+  is_read       Boolean  @default(false)
+  read_at       DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+
+  sender        User     @relation("SenderMessages", fields: [id_sender], references: [id_user])
+  receiver      User     @relation("ReceiverMessages", fields: [id_receiver], references: [id_user])
+
+  @@index([id_sender])
+  @@index([id_receiver])
+  @@map("message")
 }
 
-enum Role {
-  USER
-  OWNER
-  ADMIN
+model Review {
+  id_review   Int          @id @default(autoincrement())
+  id_user     Int
+  id_booking  Int
+  rating      Int
+  comment     String?
+  status      ReviewStatus @default(pending)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime?
+  deleted_at  DateTime?
+
+  user        User         @relation(fields: [id_user], references: [id_user])
+  booking     Booking      @relation(fields: [id_booking], references: [id_booking])
+
+  @@index([id_booking])
+  @@map("review")
+}
+
+model Image {
+  id_image    Int      @id @default(autoincrement())
+  id_boat     Int?
+  id_user     Int?
+  url         String   @db.VarChar(500)
+  type        String   @db.VarChar(50)
+  order       Int      @default(0) @map("order")
+  created_at  DateTime @default(now())
+  updated_at  DateTime?
+  deleted_at  DateTime?
+
+  boat        Boat?    @relation(fields: [id_boat], references: [id_boat])
+  user        User?    @relation(fields: [id_user], references: [id_user])
+
+  @@map("image")
+}
+
+model UserBoatFavorite {
+  id_favorite Int      @id @default(autoincrement())
+  id_user     Int
+  id_boat     Int
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [id_user], references: [id_user])
+  boat        Boat     @relation(fields: [id_boat], references: [id_boat])
+
+  @@unique([id_user, id_boat])
+  @@map("user_boat_favorite")
+}
+
+model BookingDocument {
+  id_booking_doc Int      @id @default(autoincrement())
+  id_booking     Int
+  id_document    Int
+  created_at     DateTime @default(now())
+
+  booking        Booking  @relation(fields: [id_booking], references: [id_booking])
+  document       Document @relation(fields: [id_document], references: [id_document])
+
+  @@unique([id_booking, id_document])
+  @@map("booking_document")
+}
+
+enum UserRole {
+  admin
+  proprietaire
+  locataire
+
+  @@map("user_role")
 }
 
 enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
+  pending
+  confirmed
+  refused
+  cancelled
+
+  @@map("booking_status")
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+  refunded
+
+  @@map("payment_status")
+}
+
+enum DocumentStatus {
+  pending
+  validated
+  refused
+
+  @@map("document_status")
+}
+
+enum ReviewStatus {
+  pending
+  validated
+  refused
+
+  @@map("review_status")
 }

@@ -29,5 +29,5 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:4000/health || exit 1
 
-# Start the application
-CMD ["npm", "start"]
+# Run migrations, seed data (idempotent), then start the app
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm start"]
