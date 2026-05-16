@@ -7,9 +7,9 @@ services:
     container_name: sailingloc_postgres_dev
     restart: unless-stopped
     environment:
-      POSTGRES_DB: sailingloc_dev
-      POSTGRES_USER: sailingloc_user
-      POSTGRES_PASSWORD: sailingloc_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - '5433:5432' # Different port to avoid conflicts with local PostgreSQL
     volumes:
@@ -18,7 +18,7 @@ services:
     networks:
       - sailingloc_network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U sailingloc_user -d sailingloc_dev']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -33,13 +33,13 @@ services:
     environment:
       NODE_ENV: development
       PORT: 4000
-      DATABASE_URL: postgresql://sailingloc_user:sailingloc_password@postgres:5432/sailingloc_dev
-      JWT_SECRET: dev_jwt_secret_change_this
-      STRIPE_SECRET_KEY: sk_test_your_stripe_secret_key
-      EMAIL_HOST: smtp.gmail.com
-      EMAIL_PORT: 587
-      EMAIL_USER: your_email@gmail.com
-      EMAIL_PASS: your_app_password
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
     ports:
       - '4000:4000'
     volumes:
@@ -79,8 +79,8 @@ services:
     container_name: sailingloc_pgadmin_dev
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@sailingloc.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_CONFIG_PROXY_X_FOR_COUNT: 1
       PGADMIN_CONFIG_PROXY_X_PROTO_COUNT: 1
       PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json

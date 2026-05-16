@@ -6,9 +6,9 @@ services:
     container_name: sailingloc_postgres_staging
     restart: unless-stopped
     environment:
-      POSTGRES_DB: sailingloc_staging
-      POSTGRES_USER: sailingloc_user
-      POSTGRES_PASSWORD: sailingloc_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - '5434:5432'
     volumes:
@@ -16,7 +16,7 @@ services:
     networks:
       - sailingloc_network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U sailingloc_user -d sailingloc_staging']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -30,13 +30,13 @@ services:
     environment:
       NODE_ENV: staging
       PORT: 4000
-      DATABASE_URL: postgresql://sailingloc_user:sailingloc_password@postgres:5432/sailingloc_staging
-      JWT_SECRET: staging_jwt_secret
-      STRIPE_SECRET_KEY: sk_test_yourkey_staging
-      EMAIL_HOST: smtp.example.com
-      EMAIL_PORT: 587
-      EMAIL_USER: youruser@example.com
-      EMAIL_PASS: yourpassword
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
     ports:
       - '4100:4000'
     depends_on:
@@ -51,7 +51,8 @@ services:
       dockerfile: Dockerfile
     container_name: sailingloc_frontend_staging
     restart: unless-stopped
-    environment: VITE_API_BASE_URL=http://localhost:4100/api
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     ports:
       - '5174:80'
     depends_on:
