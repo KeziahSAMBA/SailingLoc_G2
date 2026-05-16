@@ -38,7 +38,6 @@ function DashboardOwnerPage() {
           )}
         </section>
       </div>
-      <div className="w-full bg-slate-50" style={{ height: '200vh' }} />
     </main>
   );
 }
