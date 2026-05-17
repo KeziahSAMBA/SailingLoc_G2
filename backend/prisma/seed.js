@@ -7,19 +7,19 @@ async function main() {
   // email_verified = TRUE for accounts listed in README (ready to login without verification step)
   await prisma.$executeRawUnsafe(`
     INSERT INTO "user" (last_name, first_name, email, password, role, phone, is_active, email_verified) VALUES
-    ('Admin',     'Super',    'admin@sailingloc.fr',       '$2b$10$KITQQw5GQghHW/xvJkF/Tu3nWQdD1w6PzwxYL0BbMOeEr7TqppHHi', 'admin',        '0600000001', TRUE, TRUE),
-    ('Martin',    'Luc',      'luc.martin@email.fr',       '$2b$10$MwfejQtxp6pMVQldLJLKtu398Blu09bqGQ2RDyYp2GNUj7cJTKKyG', 'proprietaire', '0600000002', TRUE, TRUE),
-    ('Dupont',    'Claire',   'claire.dupont@email.fr',    '$2b$10$MwfejQtxp6pMVQldLJLKtu398Blu09bqGQ2RDyYp2GNUj7cJTKKyG', 'proprietaire', '0600000003', TRUE, TRUE),
-    ('Renaud',    'Pierre',   'pierre.renaud@email.fr',    '$2b$10$MwfejQtxp6pMVQldLJLKtu398Blu09bqGQ2RDyYp2GNUj7cJTKKyG', 'proprietaire', '0611000004', TRUE, TRUE),
-    ('Faure',     'Isabelle', 'isabelle.faure@email.fr',   '$2b$10$MwfejQtxp6pMVQldLJLKtu398Blu09bqGQ2RDyYp2GNUj7cJTKKyG', 'proprietaire', '0622000005', TRUE, TRUE),
-    ('Bernard',   'Thomas',   'thomas.bernard@email.fr',   '$2b$10$8CeLhh4Z8ste.LNTnpYsyOq36JiRRoRU8fpTOGwPAsnfyQYsAtZAi', 'locataire',    '0633000006', TRUE, TRUE),
-    ('Lefevre',   'Sophie',   'sophie.lefevre@email.fr',   '$2b$10$8CeLhh4Z8ste.LNTnpYsyOq36JiRRoRU8fpTOGwPAsnfyQYsAtZAi', 'locataire',    '0644000007', TRUE, TRUE),
-    ('Moreau',    'Jules',    'jules.moreau@email.fr',     '$2b$10$8CeLhh4Z8ste.LNTnpYsyOq36JiRRoRU8fpTOGwPAsnfyQYsAtZAi', 'locataire',    '0655000008', TRUE, TRUE),
-    ('Girard',    'Camille',  'camille.girard@email.fr',   '$2b$10$8CeLhh4Z8ste.LNTnpYsyOq36JiRRoRU8fpTOGwPAsnfyQYsAtZAi', 'locataire',    '0666000009', TRUE, TRUE),
-    ('Rousseau',  'Antoine',  'antoine.rousseau@email.fr', '$2b$10$8CeLhh4Z8ste.LNTnpYsyOq36JiRRoRU8fpTOGwPAsnfyQYsAtZAi', 'locataire',    '0677000010', TRUE, TRUE),
-    ('Lambert',   'Marie',    'marie.lambert@email.fr',    '$2b$10$8CeLhh4Z8ste.LNTnpYsyOq36JiRRoRU8fpTOGwPAsnfyQYsAtZAi', 'locataire',    '0688000011', TRUE, TRUE),
-    ('Blanc',     'Kevin',    'kevin.blanc@email.fr',      '$2b$10$8CeLhh4Z8ste.LNTnpYsyOq36JiRRoRU8fpTOGwPAsnfyQYsAtZAi', 'locataire',    '0699000012', TRUE, TRUE),
-    ('Chevalier', 'Lucie',    'lucie.chevalier@email.fr',  '$2b$10$8CeLhh4Z8ste.LNTnpYsyOq36JiRRoRU8fpTOGwPAsnfyQYsAtZAi', 'locataire',    NULL,         TRUE, TRUE)
+    ('Admin',     'Super',    'admin@sailingloc.fr',       '$2a$12$tsDdeCb5vK.n7/Z7cW7wq.G0HU/2eBbkHtW/XqGnRFBdszjhVT5Ay', 'admin',        '0600000001', TRUE, TRUE),
+    ('Martin',    'Luc',      'luc.martin@email.fr',       '$2a$12$pti1fNZ6NupK64x/XV0FvOOJpov6K/1DPBBja9Tx0Cp0vCyHg4BTu', 'proprietaire', '0600000002', TRUE, TRUE),
+    ('Dupont',    'Claire',   'claire.dupont@email.fr',    '$2a$12$pti1fNZ6NupK64x/XV0FvOOJpov6K/1DPBBja9Tx0Cp0vCyHg4BTu', 'proprietaire', '0600000003', TRUE, TRUE),
+    ('Renaud',    'Pierre',   'pierre.renaud@email.fr',    '$2a$12$pti1fNZ6NupK64x/XV0FvOOJpov6K/1DPBBja9Tx0Cp0vCyHg4BTu', 'proprietaire', '0611000004', TRUE, TRUE),
+    ('Faure',     'Isabelle', 'isabelle.faure@email.fr',   '$2a$12$pti1fNZ6NupK64x/XV0FvOOJpov6K/1DPBBja9Tx0Cp0vCyHg4BTu', 'proprietaire', '0622000005', TRUE, TRUE),
+    ('Bernard',   'Thomas',   'thomas.bernard@email.fr',   '$2a$12$86/bkBw/rXcj4UkvnZY3nuS.oB7ZDPKwrxHRuXfrKpbjCxcAqt.Ze', 'locataire',    '0633000006', TRUE, TRUE),
+    ('Lefevre',   'Sophie',   'sophie.lefevre@email.fr',   '$2a$12$86/bkBw/rXcj4UkvnZY3nuS.oB7ZDPKwrxHRuXfrKpbjCxcAqt.Ze', 'locataire',    '0644000007', TRUE, TRUE),
+    ('Moreau',    'Jules',    'jules.moreau@email.fr',     '$2a$12$86/bkBw/rXcj4UkvnZY3nuS.oB7ZDPKwrxHRuXfrKpbjCxcAqt.Ze', 'locataire',    '0655000008', TRUE, TRUE),
+    ('Girard',    'Camille',  'camille.girard@email.fr',   '$2a$12$86/bkBw/rXcj4UkvnZY3nuS.oB7ZDPKwrxHRuXfrKpbjCxcAqt.Ze', 'locataire',    '0666000009', TRUE, TRUE),
+    ('Rousseau',  'Antoine',  'antoine.rousseau@email.fr', '$2a$12$86/bkBw/rXcj4UkvnZY3nuS.oB7ZDPKwrxHRuXfrKpbjCxcAqt.Ze', 'locataire',    '0677000010', TRUE, TRUE),
+    ('Lambert',   'Marie',    'marie.lambert@email.fr',    '$2a$12$86/bkBw/rXcj4UkvnZY3nuS.oB7ZDPKwrxHRuXfrKpbjCxcAqt.Ze', 'locataire',    '0688000011', TRUE, TRUE),
+    ('Blanc',     'Kevin',    'kevin.blanc@email.fr',      '$2a$12$86/bkBw/rXcj4UkvnZY3nuS.oB7ZDPKwrxHRuXfrKpbjCxcAqt.Ze', 'locataire',    '0699000012', TRUE, TRUE),
+    ('Chevalier', 'Lucie',    'lucie.chevalier@email.fr',  '$2a$12$86/bkBw/rXcj4UkvnZY3nuS.oB7ZDPKwrxHRuXfrKpbjCxcAqt.Ze', 'locataire',    NULL,         TRUE, TRUE)
     ON CONFLICT (email, role) DO NOTHING
   `);
 

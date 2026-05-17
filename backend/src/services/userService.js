@@ -1,12 +1,64 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import {
   findUserByEmailAndRole,
   findUserByVerificationToken,
+  findUserById,
   createUser,
   updateUser,
+  createRefreshToken,
+  findRefreshTokenByHash,
+  revokeRefreshToken,
+  revokeAllUserRefreshTokens,
 } from '../repositories/userRepository.js';
 import { sendVerificationEmail } from './emailService.js';
+import { initConfig } from '../config/appConfig.js';
+
+const { JWT_SECRET } = initConfig();
+const ACCESS_TOKEN_TTL = '15m';
+export const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const DUMMY_HASH = '$2a$12$CwTycUXWue0Thq9StjUM0uJ8eVCD7vYz3uTtbpcLzqAOJBT5VnYf6';
+
+function publicUser(user) {
+  return {
+    id_user: user.id_user,
+    email: user.email,
+    role: user.role,
+    first_name: user.first_name,
+    last_name: user.last_name,
+  };
+}
+
+function signAccessToken(user) {
+  return jwt.sign(
+    {
+      id_user: user.id_user,
+      email: user.email,
+      role: user.role,
+      first_name: user.first_name,
+    },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL }
+  );
+}
+
+function hashToken(rawToken) {
+  return crypto.createHash('sha256').update(rawToken).digest('hex');
+}
+
+async function issueRefreshToken(id_user, userAgent) {
+  const rawToken = crypto.randomBytes(64).toString('hex');
+  const token_hash = hashToken(rawToken);
+  const expires_at = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+  await createRefreshToken({
+    id_user,
+    token_hash,
+    expires_at,
+    user_agent: userAgent ? userAgent.slice(0, 255) : null,
+  });
+  return rawToken;
+}
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
@@ -120,6 +172,85 @@ export async function resendVerification({ email, role }) {
   } catch (emailErr) {
     console.error('[email] Échec renvoi email de confirmation :', emailErr.message);
   }
+}
+
+export async function login({ email, password, role }, { userAgent } = {}) {
+  const genericInvalid = Object.assign(new Error('Identifiants invalides.'), { status: 401 });
+
+  if (!email || !password || !role) throw genericInvalid;
+  if (!['proprietaire', 'locataire', 'admin'].includes(role)) throw genericInvalid;
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const user = await findUserByEmailAndRole(normalizedEmail, role);
+
+  const hashToCompare = user ? user.password : DUMMY_HASH;
+  const passwordOk = await bcrypt.compare(password, hashToCompare);
+
+  if (!user || !passwordOk) throw genericInvalid;
+
+  if (!user.is_active) {
+    throw Object.assign(new Error('Compte désactivé. Contactez le support.'), { status: 403 });
+  }
+
+  if (!user.email_verified) {
+    throw Object.assign(
+      new Error('Email non confirmé. Vérifiez votre boîte mail pour activer votre compte.'),
+      { status: 403 }
+    );
+  }
+
+  const accessToken = signAccessToken(user);
+  const refreshToken = await issueRefreshToken(user.id_user, userAgent);
+
+  return { accessToken, refreshToken, user: publicUser(user) };
+}
+
+export async function refreshSession(rawRefreshToken, { userAgent } = {}) {
+  const invalid = Object.assign(new Error('Session expirée. Reconnectez-vous.'), { status: 401 });
+  if (!rawRefreshToken) throw invalid;
+
+  const token_hash = hashToken(rawRefreshToken);
+  const stored = await findRefreshTokenByHash(token_hash);
+
+  if (!stored) throw invalid;
+
+  // Détection de réutilisation : token déjà révoqué = compromission potentielle.
+  if (stored.revoked_at) {
+    await revokeAllUserRefreshTokens(stored.id_user);
+    throw Object.assign(
+      new Error('Session compromise détectée. Reconnectez-vous.'),
+      { status: 401 }
+    );
+  }
+
+  if (stored.expires_at < new Date()) throw invalid;
+
+  const user = await findUserById(stored.id_user);
+  if (!user || !user.is_active) throw invalid;
+
+  // Rotation : on révoque l'ancien et on émet un nouveau couple.
+  await revokeRefreshToken(stored.id_refresh);
+  const accessToken = signAccessToken(user);
+  const newRefreshToken = await issueRefreshToken(user.id_user, userAgent);
+
+  return { accessToken, refreshToken: newRefreshToken, user: publicUser(user) };
+}
+
+export async function logoutSession(rawRefreshToken) {
+  if (!rawRefreshToken) return;
+  const token_hash = hashToken(rawRefreshToken);
+  const stored = await findRefreshTokenByHash(token_hash);
+  if (stored && !stored.revoked_at) {
+    await revokeRefreshToken(stored.id_refresh);
+  }
+}
+
+export async function getCurrentUser(id_user) {
+  const user = await findUserById(id_user);
+  if (!user || !user.is_active) {
+    throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
+  }
+  return publicUser(user);
 }
 
 export async function verifyEmail(token) {

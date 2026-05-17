@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import boatRoutes from './routes/boatRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -12,11 +13,13 @@ const app = express();
 app.use(
   cors({
     origin: APP_URL,
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     exposedHeaders: ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
   })
 );
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
 const registerLimiter = rateLimit({
@@ -36,6 +39,24 @@ const resendLimiter = rateLimit({
   message: { message: 'Trop de renvois. Réessayez dans quelques minutes.' },
 });
 app.use('/api/users/resend-verification', resendLimiter);
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de tentatives de connexion. Réessayez dans quelques minutes.' },
+});
+app.use('/api/users/login', loginLimiter);
+
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+});
+app.use('/api/users/admin/login', adminLoginLimiter);
 
 app.use('/api/boats', boatRoutes);
 app.use('/api/users', userRoutes);

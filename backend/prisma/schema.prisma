@@ -32,9 +32,26 @@ model User {
   reviews             Review[]
   favoriteBoats       UserBoatFavorite[]
   images              Image[]
+  refreshTokens       RefreshToken[]
 
   @@unique([email, role])
   @@map("user")
+}
+
+model RefreshToken {
+  id_refresh   Int       @id @default(autoincrement())
+  id_user      Int
+  token_hash   String    @unique @db.VarChar(255)
+  expires_at   DateTime
+  revoked_at   DateTime?
+  user_agent   String?   @db.VarChar(255)
+  created_at   DateTime  @default(now())
+
+  user         User      @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+
+  @@index([id_user])
+  @@index([expires_at])
+  @@map("refresh_token")
 }
 
 model Port {

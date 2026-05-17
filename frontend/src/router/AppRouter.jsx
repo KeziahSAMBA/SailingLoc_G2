@@ -1,11 +1,12 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import DashboardOwnerPage from '../pages/DashboardOwnerPage.jsx';
+import DashboardPage from '../pages/DashboardPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
-import { useAuth } from '../hooks/useAuth.jsx';
+import AdminLoginPage from '../pages/AdminLoginPage.jsx';
+import AdminDashboardPage from '../pages/AdminDashboardPage.jsx';
+import RequireRole from '../components/common/RequireRole.jsx';
 
 function AppRouter({ location }) {
-  const { user } = useAuth();
-
   return (
     <Routes location={location}>
       <Route path="/" element={<DashboardOwnerPage />} />
@@ -14,7 +15,20 @@ function AppRouter({ location }) {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route
         path="/dashboard"
-        element={user ? <DashboardOwnerPage /> : <Navigate to="/" replace />}
+        element={
+          <RequireRole>
+            <DashboardPage />
+          </RequireRole>
+        }
+      />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route
+        path="/admin"
+        element={
+          <RequireRole role="admin" redirectTo="/admin/login">
+            <AdminDashboardPage />
+          </RequireRole>
+        }
       />
     </Routes>
   );
