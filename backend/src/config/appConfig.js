@@ -16,5 +16,6 @@ export function initConfig() {
     EMAIL_PORT: Number(process.env.EMAIL_PORT) || 587,
     EMAIL_USER: process.env.EMAIL_USER || '',
     EMAIL_PASS: process.env.EMAIL_PASS || '',
+    APP_URL: process.env.APP_URL || 'http://localhost:5173',
   };
 }

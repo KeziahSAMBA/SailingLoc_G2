@@ -73,6 +73,9 @@ Cela démarre automatiquement :
 - le frontend sur [http://localhost:5173](http://localhost:5173)
 - le backend sur [http://localhost:4000](http://localhost:4000)
 - PostgreSQL sur le port `5433`
+- **MailDev** (interface web emails) sur [http://localhost:1080](http://localhost:1080)
+
+> Les emails d'inscription/vérification sont interceptés par MailDev — aucun vrai email n'est envoyé. Ouvrez [http://localhost:1080](http://localhost:1080) pour les consulter.
 
 Pour arrêter :
 
@@ -122,10 +125,10 @@ Variables backend à renseigner dans `backend/.env` :
 DATABASE_URL=postgresql://user:password@localhost:5432/sailingloc
 JWT_SECRET=votre_secret_jwt
 STRIPE_SECRET_KEY=sk_test_...
-EMAIL_HOST=smtp.example.com
-EMAIL_PORT=587
-EMAIL_USER=votre@email.com
-EMAIL_PASS=votre_mot_de_passe
+EMAIL_HOST=localhost
+EMAIL_PORT=1025
+EMAIL_USER=
+EMAIL_PASS=
 PORT=4000
 ```
 
@@ -135,7 +138,20 @@ Variable frontend à renseigner dans `frontend/.env` :
 VITE_API_BASE_URL=http://localhost:4000/api
 ```
 
-#### 4. Initialiser la base de données
+#### 4. Lancer MailDev (intercepteur d'emails local)
+
+Dans un terminal dédié :
+
+```bash
+npx maildev
+```
+
+MailDev démarre un serveur SMTP sur le port `1025` et une interface web sur [http://localhost:1080](http://localhost:1080).
+Tous les emails envoyés par l'application y sont interceptés — aucun vrai email n'est expédié.
+
+> **Alternative** : installation globale avec `npm install -g maildev` puis `maildev`.
+
+#### 5. Initialiser la base de données
 
 ```bash
 cd backend
@@ -145,7 +161,7 @@ npx prisma migrate dev --name init
 npx prisma db seed
 ```
 
-#### 5. Lancer les serveurs
+#### 6. Lancer les serveurs
 
 Dans deux terminaux séparés :
 

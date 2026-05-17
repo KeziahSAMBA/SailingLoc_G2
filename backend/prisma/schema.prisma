@@ -9,18 +9,20 @@ datasource db {
 }
 
 model User {
-  id_user             Int        @id @default(autoincrement())
-  last_name           String     @db.VarChar(100)
-  first_name          String     @db.VarChar(100)
-  email               String     @unique @db.VarChar(255)
-  password            String     @db.VarChar(255)
-  role                UserRole   @default(locataire)
-  phone               String?    @db.VarChar(20)
-  is_active           Boolean    @default(true)
-  reset_token         String?    @db.VarChar(255)
-  created_at          DateTime   @default(now())
-  updated_at          DateTime?
-  deleted_at          DateTime?
+  id_user                    Int        @id @default(autoincrement())
+  last_name                  String     @db.VarChar(100)
+  first_name                 String     @db.VarChar(100)
+  email                      String     @db.VarChar(255)
+  password                   String     @db.VarChar(255)
+  role                       UserRole   @default(locataire)
+  phone                      String?    @db.VarChar(20)
+  is_active                  Boolean    @default(true)
+  email_verified             Boolean    @default(false)
+  email_verification_token   String?    @db.VarChar(255)
+  reset_token                String?    @db.VarChar(255)
+  created_at                 DateTime   @default(now())
+  updated_at                 DateTime?
+  deleted_at                 DateTime?
 
   boats               Boat[]     @relation("OwnerBoats")
   bookings            Booking[]  @relation("GuestBookings")
@@ -31,6 +33,7 @@ model User {
   favoriteBoats       UserBoatFavorite[]
   images              Image[]
 
+  @@unique([email, role])
   @@map("user")
 }
 

@@ -24,6 +24,8 @@ CREATE TABLE "user" (
     "phone" VARCHAR(20),
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "reset_token" VARCHAR(255),
+    "email_verified" BOOLEAN NOT NULL DEFAULT false,
+    "email_verification_token" VARCHAR(255),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3),
     "deleted_at" TIMESTAMP(3),
@@ -185,7 +187,7 @@ CREATE TABLE "booking_document" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
+CREATE UNIQUE INDEX "user_email_role_key" ON "user"("email", "role");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "port_name_key" ON "port"("name");
