@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { register } from '../services/authService.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+
+function formatCountdown(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
@@ -25,6 +31,17 @@ function RegisterPage() {
   const [success, setSuccess] = useState(false);
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [retryAfter, setRetryAfter] = useState(0);
+
+  useEffect(() => {
+    if (retryAfter <= 0) return undefined;
+    const id = setInterval(() => {
+      setRetryAfter((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [retryAfter]);
+
+  const isBlocked = retryAfter > 0;
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -52,6 +69,7 @@ function RegisterPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (isBlocked) return;
     setServerError('');
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -72,7 +90,17 @@ function RegisterPage() {
       });
       setSuccess(true);
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Une erreur est survenue.');
+      if (err.response?.status === 429) {
+        const headerValue =
+          err.response.headers?.['retry-after'] ?? err.response.headers?.['ratelimit-reset'];
+        const seconds = Number.parseInt(headerValue, 10);
+        setRetryAfter(Number.isFinite(seconds) && seconds > 0 ? seconds : 60);
+        setServerError(
+          err.response.data?.message || 'Trop de tentatives. Réessayez dans quelques minutes.'
+        );
+      } else {
+        setServerError(err.response?.data?.message || 'Une erreur est survenue.');
+      }
     } finally {
       setLoading(false);
     }
@@ -133,6 +161,12 @@ function RegisterPage() {
                   className="mb-4 rounded-lg border border-red-400/40 bg-red-500/20 px-4 py-2 text-sm text-red-100"
                 >
                   {serverError}
+                  {isBlocked && (
+                    <span className="mt-1 block font-mono text-xs text-red-200">
+                      Nouvelle tentative possible dans{' '}
+                      <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -319,10 +353,14 @@ function RegisterPage() {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || isBlocked}
                   className="mt-2 w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {loading ? 'Inscription en cours...' : "S'inscrire"}
+                  {isBlocked
+                    ? `Réessayez dans ${formatCountdown(retryAfter)}`
+                    : loading
+                      ? 'Inscription en cours...'
+                      : "S'inscrire"}
                 </button>
               </form>
 

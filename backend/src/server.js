@@ -13,13 +13,14 @@ app.use(
   cors({
     origin: APP_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    exposedHeaders: ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
   })
 );
 app.use(express.json({ limit: '10kb' }));
 app.use('/uploads', express.static('uploads'));
 
 const registerLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 5 * 60 * 1000,
   limit: 5,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
