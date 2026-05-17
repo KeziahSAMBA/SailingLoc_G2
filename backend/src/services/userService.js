@@ -9,10 +9,21 @@ import {
 import { sendVerificationEmail } from './emailService.js';
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
+const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 
-export async function create({ first_name, last_name, email, password, confirmPassword, role }) {
+export async function create({
+  first_name,
+  last_name,
+  email,
+  password,
+  confirmPassword,
+  role,
+  phone,
+}) {
   if (!first_name || !last_name || !email || !password || !confirmPassword || !role) {
-    throw Object.assign(new Error('Tous les champs sont obligatoires.'), { status: 400 });
+    throw Object.assign(new Error('Tous les champs obligatoires doivent être renseignés.'), {
+      status: 400,
+    });
   }
 
   if (!['proprietaire', 'locataire'].includes(role)) {
@@ -32,6 +43,11 @@ export async function create({ first_name, last_name, email, password, confirmPa
     throw Object.assign(new Error('Les mots de passe ne correspondent pas.'), { status: 400 });
   }
 
+  const normalizedPhone = typeof phone === 'string' ? phone.trim() : '';
+  if (normalizedPhone && !PHONE_REGEX.test(normalizedPhone)) {
+    throw Object.assign(new Error('Le numéro de téléphone est invalide.'), { status: 400 });
+  }
+
   const existing = await findUserByEmailAndRole(email, role);
   if (existing) {
     throw Object.assign(
@@ -49,6 +65,7 @@ export async function create({ first_name, last_name, email, password, confirmPa
     email,
     password: hashed,
     role,
+    phone: normalizedPhone || null,
     email_verified: false,
     email_verification_token: token,
   });
