@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../../assets/image/SL_logo/logo SL.webp';
 import logoLong from '../../../assets/image/SL_logo/logo SL long.webp';
 
@@ -14,6 +15,8 @@ function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -189,6 +192,7 @@ function Header() {
         </div>
 
         <button
+          onClick={() => navigate('/login', { state: { backgroundLocation: location } })}
           className="flex items-center gap-2 rounded-full transition-all whitespace-nowrap"
           style={{
             color: '#fff',
