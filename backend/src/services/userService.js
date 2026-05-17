@@ -10,6 +10,9 @@ import { sendVerificationEmail } from './emailService.js';
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const NAME_MAX_LENGTH = 100;
+const EMAIL_MAX_LENGTH = 255;
 
 export async function create({
   first_name,
@@ -24,6 +27,24 @@ export async function create({
     throw Object.assign(new Error('Tous les champs obligatoires doivent être renseignés.'), {
       status: 400,
     });
+  }
+
+  const trimmedFirstName = String(first_name).trim();
+  const trimmedLastName = String(last_name).trim();
+  const normalizedEmail = String(email).trim().toLowerCase();
+
+  if (trimmedFirstName.length === 0 || trimmedFirstName.length > NAME_MAX_LENGTH) {
+    throw Object.assign(new Error(`Le prénom doit contenir 1 à ${NAME_MAX_LENGTH} caractères.`), {
+      status: 400,
+    });
+  }
+  if (trimmedLastName.length === 0 || trimmedLastName.length > NAME_MAX_LENGTH) {
+    throw Object.assign(new Error(`Le nom doit contenir 1 à ${NAME_MAX_LENGTH} caractères.`), {
+      status: 400,
+    });
+  }
+  if (normalizedEmail.length > EMAIL_MAX_LENGTH || !EMAIL_REGEX.test(normalizedEmail)) {
+    throw Object.assign(new Error("Le format de l'email est invalide."), { status: 400 });
   }
 
   if (!['proprietaire', 'locataire'].includes(role)) {
@@ -48,21 +69,19 @@ export async function create({
     throw Object.assign(new Error('Le numéro de téléphone est invalide.'), { status: 400 });
   }
 
-  const existing = await findUserByEmailAndRole(email, role);
+  const existing = await findUserByEmailAndRole(normalizedEmail, role);
   if (existing) {
-    throw Object.assign(
-      new Error(`Un compte ${role} existe déjà avec cet email.`),
-      { status: 409 }
-    );
+    // Réponse générique pour empêcher l'énumération d'emails inscrits.
+    return { id_user: null, email: normalizedEmail, role };
   }
 
   const hashed = await bcrypt.hash(password, 12);
   const token = crypto.randomBytes(32).toString('hex');
 
   const user = await createUser({
-    first_name,
-    last_name,
-    email,
+    first_name: trimmedFirstName,
+    last_name: trimmedLastName,
+    email: normalizedEmail,
     password: hashed,
     role,
     phone: normalizedPhone || null,
@@ -71,7 +90,7 @@ export async function create({
   });
 
   try {
-    await sendVerificationEmail(email, token);
+    await sendVerificationEmail(normalizedEmail, token);
   } catch (emailErr) {
     console.error('[email] Échec envoi email de confirmation :', emailErr.message);
   }
