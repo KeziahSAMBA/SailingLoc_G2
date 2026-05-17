@@ -28,6 +28,15 @@ const registerLimiter = rateLimit({
 });
 app.use('/api/users/register', registerLimiter);
 
+const resendLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 3,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de renvois. Réessayez dans quelques minutes.' },
+});
+app.use('/api/users/resend-verification', resendLimiter);
+
 app.use('/api/boats', boatRoutes);
 app.use('/api/users', userRoutes);
 

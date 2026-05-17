@@ -90,12 +90,36 @@ export async function create({
   });
 
   try {
-    await sendVerificationEmail(normalizedEmail, token);
+    await sendVerificationEmail(normalizedEmail, token, trimmedFirstName);
   } catch (emailErr) {
     console.error('[email] Échec envoi email de confirmation :', emailErr.message);
   }
 
   return { id_user: user.id_user, email: user.email, role: user.role };
+}
+
+export async function resendVerification({ email, role }) {
+  if (!email || !role) {
+    throw Object.assign(new Error('Email et rôle requis.'), { status: 400 });
+  }
+  if (!['proprietaire', 'locataire'].includes(role)) {
+    throw Object.assign(new Error('Rôle invalide.'), { status: 400 });
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const user = await findUserByEmailAndRole(normalizedEmail, role);
+
+  // Réponse identique dans tous les cas pour bloquer l'énumération.
+  if (!user || user.email_verified) return;
+
+  const token = crypto.randomBytes(32).toString('hex');
+  await updateUser(user.id_user, { email_verification_token: token });
+
+  try {
+    await sendVerificationEmail(normalizedEmail, token, user.first_name);
+  } catch (emailErr) {
+    console.error('[email] Échec renvoi email de confirmation :', emailErr.message);
+  }
 }
 
 export async function verifyEmail(token) {

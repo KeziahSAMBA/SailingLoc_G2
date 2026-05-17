@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { register } from '../services/authService.js';
+import { register, resendVerification } from '../services/authService.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+
+const INITIAL_RESEND_COOLDOWN = 30;
+const POST_CLICK_COOLDOWN = 60;
 
 function formatCountdown(seconds) {
   const m = Math.floor(seconds / 60);
@@ -32,6 +35,9 @@ function RegisterPage() {
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendNotice, setResendNotice] = useState('');
 
   useEffect(() => {
     if (retryAfter <= 0) return undefined;
@@ -41,7 +47,48 @@ function RegisterPage() {
     return () => clearInterval(id);
   }, [retryAfter]);
 
+  useEffect(() => {
+    if (resendCountdown <= 0) return undefined;
+    const id = setInterval(() => {
+      setResendCountdown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [resendCountdown]);
+
+  useEffect(() => {
+    if (success) {
+      setResendCountdown(INITIAL_RESEND_COOLDOWN);
+      setResendNotice('');
+    }
+  }, [success]);
+
   const isBlocked = retryAfter > 0;
+  const canResend = resendCountdown <= 0 && !resendLoading;
+
+  async function handleResend() {
+    if (!canResend) return;
+    setResendNotice('');
+    setResendLoading(true);
+    try {
+      await resendVerification({ email: form.email, role: form.role });
+      setResendCountdown(POST_CLICK_COOLDOWN);
+      setResendNotice('Un nouveau lien vient d’être envoyé. Vérifiez votre boîte mail.');
+    } catch (err) {
+      if (err.response?.status === 429) {
+        const headerValue =
+          err.response.headers?.['retry-after'] ?? err.response.headers?.['ratelimit-reset'];
+        const seconds = Number.parseInt(headerValue, 10);
+        setResendCountdown(Number.isFinite(seconds) && seconds > 0 ? seconds : POST_CLICK_COOLDOWN);
+        setResendNotice(
+          err.response.data?.message || 'Trop de renvois. Réessayez dans quelques minutes.'
+        );
+      } else {
+        setResendNotice(err.response?.data?.message || 'Échec du renvoi. Réessayez plus tard.');
+      }
+    } finally {
+      setResendLoading(false);
+    }
+  }
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -133,6 +180,30 @@ function RegisterPage() {
                 <span className="font-semibold text-[#5AB4EC]">{form.email}</span>. Vérifiez votre
                 boîte mail pour activer votre compte.
               </p>
+
+              <div className="mt-6 rounded-lg border border-white/20 bg-white/5 p-4 text-sm">
+                <p className="text-white/80">
+                  Vous n&apos;avez pas reçu l&apos;email ?
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={!canResend}
+                  className="mt-3 w-full rounded-full border border-[#5AB4EC] bg-transparent px-5 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/15 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {resendLoading
+                    ? 'Envoi en cours…'
+                    : resendCountdown > 0
+                      ? `Renvoyer dans ${formatCountdown(resendCountdown)}`
+                      : "Renvoyer l'email"}
+                </button>
+                {resendNotice && (
+                  <p className="mt-3 text-xs text-white/85" role="status">
+                    {resendNotice}
+                  </p>
+                )}
+              </div>
+
               <p className="mt-6 text-sm text-white/80">
                 Déjà confirmé ?{' '}
                 <a href="/login" className="font-semibold text-[#5AB4EC] hover:underline">
