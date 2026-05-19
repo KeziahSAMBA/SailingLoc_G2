@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import {
   findUserByEmailAndRole,
   findUserByVerificationToken,
+  findUserByResetToken,
   findUserById,
   createUser,
   updateUser,
@@ -12,12 +13,12 @@ import {
   revokeRefreshToken,
   revokeAllUserRefreshTokens,
 } from '../repositories/userRepository.js';
-import { sendVerificationEmail } from './emailService.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from './emailService.js';
 import { initConfig } from '../config/appConfig.js';
 
 const { JWT_SECRET } = initConfig();
 const ACCESS_TOKEN_TTL = '15m';
-export const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const DUMMY_HASH = '$2a$12$CwTycUXWue0Thq9StjUM0uJ8eVCD7vYz3uTtbpcLzqAOJBT5VnYf6';
 
 function publicUser(user) {
@@ -251,6 +252,75 @@ export async function getCurrentUser(id_user) {
     throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
   }
   return publicUser(user);
+}
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1h
+
+export async function requestPasswordReset({ email, role }) {
+  // Toujours retourner sans erreur pour empêcher l'énumération.
+  if (!email || !role) return;
+  if (!['proprietaire', 'locataire'].includes(role)) return;
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const user = await findUserByEmailAndRole(normalizedEmail, role);
+  if (!user || !user.is_active) return;
+
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+
+  await updateUser(user.id_user, {
+    reset_token: tokenHash,
+    reset_token_expires_at: expiresAt,
+  });
+
+  try {
+    await sendPasswordResetEmail(normalizedEmail, rawToken, user.first_name);
+  } catch (emailErr) {
+    console.error('[email] Échec envoi reset password :', emailErr.message);
+  }
+}
+
+export async function checkResetToken(token) {
+  if (!token) return false;
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const user = await findUserByResetToken(tokenHash);
+  if (!user || !user.reset_token_expires_at) return false;
+  return user.reset_token_expires_at > new Date();
+}
+
+export async function resetPassword({ token, password, confirmPassword }) {
+  if (!token || !password || !confirmPassword) {
+    throw Object.assign(new Error('Lien invalide ou expiré.'), { status: 400 });
+  }
+  if (!PASSWORD_REGEX.test(password)) {
+    throw Object.assign(
+      new Error(
+        'Le mot de passe doit contenir au moins 12 caractères, une majuscule et un caractère spécial.'
+      ),
+      { status: 400 }
+    );
+  }
+  if (password !== confirmPassword) {
+    throw Object.assign(new Error('Les mots de passe ne correspondent pas.'), { status: 400 });
+  }
+
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const user = await findUserByResetToken(tokenHash);
+
+  if (!user || !user.reset_token_expires_at || user.reset_token_expires_at < new Date()) {
+    throw Object.assign(new Error('Lien invalide ou expiré.'), { status: 400 });
+  }
+
+  const hashed = await bcrypt.hash(password, 12);
+  await updateUser(user.id_user, {
+    password: hashed,
+    reset_token: null,
+    reset_token_expires_at: null,
+  });
+
+  // Force la déconnexion de toutes les sessions actives sur ce compte.
+  await revokeAllUserRefreshTokens(user.id_user);
 }
 
 export async function verifyEmail(token) {

@@ -58,6 +58,24 @@ const adminLoginLimiter = rateLimit({
 });
 app.use('/api/users/admin/login', adminLoginLimiter);
 
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 3,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de demandes. Réessayez dans quelques minutes.' },
+});
+app.use('/api/users/forgot-password', forgotPasswordLimiter);
+
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+});
+app.use('/api/users/reset-password', resetPasswordLimiter);
+
 app.use('/api/boats', boatRoutes);
 app.use('/api/users', userRoutes);
 

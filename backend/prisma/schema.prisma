@@ -20,6 +20,7 @@ model User {
   email_verified             Boolean    @default(false)
   email_verification_token   String?    @db.VarChar(255)
   reset_token                String?    @db.VarChar(255)
+  reset_token_expires_at     DateTime?
   created_at                 DateTime   @default(now())
   updated_at                 DateTime?
   deleted_at                 DateTime?

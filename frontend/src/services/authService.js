@@ -38,3 +38,18 @@ export async function resendVerification(data) {
   const response = await api.post('/users/resend-verification', data);
   return response.data;
 }
+
+export async function requestPasswordReset(data) {
+  const response = await api.post('/users/forgot-password', data);
+  return response.data;
+}
+
+export async function resetPassword(data) {
+  const response = await api.post('/users/reset-password', data);
+  return response.data;
+}
+
+export async function verifyResetToken(token) {
+  const response = await api.get(`/users/reset-password/${token}`);
+  return response.data;
+}

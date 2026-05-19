@@ -8,6 +8,9 @@ import {
   me,
   confirmEmail,
   resend,
+  forgotPassword,
+  resetPassword,
+  verifyResetToken,
 } from '../controllers/userController.js';
 import { protect } from '../middlewares/authMiddleware.js';
 
@@ -19,6 +22,9 @@ router.post('/admin/login', adminLogin);
 router.post('/refresh', refresh);
 router.post('/logout', logout);
 router.post('/resend-verification', resend);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+router.get('/reset-password/:token', verifyResetToken);
 router.get('/verify-email/:token', confirmEmail);
 router.get('/me', protect, me);
 

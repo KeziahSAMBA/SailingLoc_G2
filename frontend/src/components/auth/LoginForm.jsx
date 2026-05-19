@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import PasswordField from './PasswordField.jsx';
 
@@ -117,9 +117,9 @@ function LoginForm({ onSwitchToRegister }) {
             <label htmlFor="login-password" className={labelClass}>
               Mot de passe
             </label>
-            <a href="#" className="text-xs text-[#0A3172] hover:underline">
+            <Link to="/forgot-password" className="text-xs text-[#0A3172] hover:underline">
               Mot de passe oublié&nbsp;?
-            </a>
+            </Link>
           </div>
           <PasswordField
             id="login-password"

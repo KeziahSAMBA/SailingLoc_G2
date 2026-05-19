@@ -4,7 +4,10 @@ import DashboardPage from '../pages/DashboardPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminDashboardPage from '../pages/AdminDashboardPage.jsx';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import RequireRole from '../components/common/RequireRole.jsx';
+import RequireGuest from '../components/common/RequireGuest.jsx';
 
 function AppRouter({ location }) {
   return (
@@ -13,6 +16,22 @@ function AppRouter({ location }) {
       <Route path="/login" element={<DashboardOwnerPage />} />
       <Route path="/register" element={<DashboardOwnerPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route
+        path="/forgot-password"
+        element={
+          <RequireGuest>
+            <ForgotPasswordPage />
+          </RequireGuest>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <RequireGuest>
+            <ResetPasswordPage />
+          </RequireGuest>
+        }
+      />
       <Route
         path="/dashboard"
         element={

@@ -12,6 +12,10 @@ export async function findUserById(id_user) {
   return prisma.user.findUnique({ where: { id_user } });
 }
 
+export async function findUserByResetToken(reset_token) {
+  return prisma.user.findFirst({ where: { reset_token } });
+}
+
 export async function createRefreshToken(data) {
   return prisma.refreshToken.create({ data });
 }

@@ -6,6 +6,9 @@ import {
   refreshSession,
   logoutSession,
   getCurrentUser,
+  requestPasswordReset,
+  resetPassword as resetPasswordService,
+  checkResetToken,
   REFRESH_TOKEN_TTL_MS,
 } from '../services/userService.js';
 
@@ -112,6 +115,41 @@ export async function resend(req, res) {
     res.status(200).json({
       message: 'Si un compte non confirmé existe pour cet email, un nouveau lien a été envoyé.',
     });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function forgotPassword(req, res) {
+  try {
+    await requestPasswordReset(req.body || {});
+    // Réponse identique pour bloquer l'énumération.
+    res.status(200).json({
+      message: "Si un compte correspond à ces informations, un lien de réinitialisation a été envoyé.",
+    });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function resetPassword(req, res) {
+  try {
+    await resetPasswordService(req.body || {});
+    res.status(200).json({
+      message: 'Mot de passe mis à jour. Vous pouvez maintenant vous connecter.',
+    });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function verifyResetToken(req, res) {
+  try {
+    const valid = await checkResetToken(req.params.token);
+    if (!valid) {
+      return res.status(400).json({ valid: false, message: 'Lien invalide ou expiré.' });
+    }
+    res.status(200).json({ valid: true });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
