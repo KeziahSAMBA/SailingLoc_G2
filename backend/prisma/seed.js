@@ -3,6 +3,17 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Idempotence : on repart d'une base propre, IDs réinitialisés à 1.
+  // Indispensable car les clés étrangères ci-dessous sont codées en dur
+  // (id_boat, id_booking, id_document…) et supposent une numérotation déterministe.
+  // CASCADE purge aussi les tables dépendantes (refresh_token, etc.).
+  await prisma.$executeRawUnsafe(`
+    TRUNCATE TABLE
+      booking_document, payment, review, image, user_boat_favorite,
+      message, document, booking, boat, port, "user"
+    RESTART IDENTITY CASCADE
+  `);
+
   // Passwords: Admin@123456 | Proprietaire@2025Secure | Locataire@2025Secure (bcryptjs)
   // email_verified = TRUE for accounts listed in README (ready to login without verification step)
   await prisma.$executeRawUnsafe(`
