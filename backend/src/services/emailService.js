@@ -8,12 +8,16 @@ const LOGO_PATH = path.resolve(__dirname, '../assets/email/logo.webp');
 const LOGO_CID = 'sailingloc-logo';
 
 function createTransporter() {
-  const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS } = initConfig();
+  const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, EMAIL_SECURE, EMAIL_IGNORE_TLS } =
+    initConfig();
+  const port = Number(EMAIL_PORT);
   return nodemailer.createTransport({
     host: EMAIL_HOST,
-    port: Number(EMAIL_PORT),
-    secure: false,
-    ignoreTLS: true,
+    port,
+    // TLS implicite sur le port 465, ou si EMAIL_SECURE=true.
+    secure: EMAIL_SECURE || port === 465,
+    // TLS conservé par défaut (STARTTLS sur 587) ; désactivé seulement pour MailDev.
+    ignoreTLS: EMAIL_IGNORE_TLS,
     ...(EMAIL_USER && EMAIL_PASS ? { auth: { user: EMAIL_USER, pass: EMAIL_PASS } } : {}),
   });
 }

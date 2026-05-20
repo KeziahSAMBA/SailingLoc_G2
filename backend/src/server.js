@@ -12,6 +12,12 @@ const { PORT, APP_URL } = initConfig();
 
 const app = express();
 
+// Derrière un proxy en production (Railway, etc.) : permet à Express de reconnaître
+// HTTPS (X-Forwarded-Proto) et la vraie IP cliente (cookies Secure, rate-limit).
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 app.use(
   cors({
     origin: APP_URL,

@@ -26,9 +26,20 @@ export function useIdleLogout({ enabled, timeoutMs, onIdle, checkIntervalMs = 60
     ACTIVITY_EVENTS.forEach((evt) => window.addEventListener(evt, markActive, { passive: true }));
 
     const intervalId = setInterval(() => {
-      const stored = Number(window.localStorage.getItem(STORAGE_KEY)) || Date.now();
+      let stored;
+      try {
+        stored = Number(window.localStorage.getItem(STORAGE_KEY)) || lastWrite || Date.now();
+      } catch {
+        // localStorage illisible (mode privé strict, etc.) : fallback sur l'activité
+        // gardée en mémoire (mono-onglet) pour ne pas casser le timer.
+        stored = lastWrite || Date.now();
+      }
       if (Date.now() - stored >= timeoutMs) {
-        window.localStorage.removeItem(STORAGE_KEY);
+        try {
+          window.localStorage.removeItem(STORAGE_KEY);
+        } catch {
+          // Suppression impossible — sans incidence, on déconnecte quand même.
+        }
         onIdle();
       }
     }, checkIntervalMs);

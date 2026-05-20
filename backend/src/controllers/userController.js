@@ -21,8 +21,10 @@ const isProduction = process.env.NODE_ENV === 'production';
 function refreshCookieOptions() {
   return {
     httpOnly: true,
-    secure: true,
-    sameSite: isProduction ? 'strict' : 'none',
+    // En dev (http://localhost), un cookie Secure est rejeté par le navigateur.
+    // On n'active Secure/SameSite=strict qu'en production (HTTPS).
+    secure: isProduction,
+    sameSite: isProduction ? 'strict' : 'lax',
     path: '/api/users',
     maxAge: REFRESH_TOKEN_TTL_MS,
   };

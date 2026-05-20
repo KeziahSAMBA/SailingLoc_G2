@@ -8,8 +8,10 @@ export function uploadDocument(type, file) {
   const form = new FormData();
   form.append('type', type);
   form.append('file', file);
+  // On laisse axios/le navigateur poser le Content-Type (avec le boundary multipart).
+  // `undefined` écrase le défaut 'application/json' de l'instance api.
   return api.post('/documents', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: { 'Content-Type': undefined },
   });
 }
 

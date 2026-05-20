@@ -25,15 +25,18 @@ function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
   const [tokenStatus, setTokenStatus] = useState('checking'); // 'checking' | 'valid' | 'invalid'
-  const checked = useRef(false);
+  // Verrou basé sur la valeur du token : évite la double vérification en StrictMode
+  // tout en re-vérifiant si le token change (sans démontage du composant).
+  const lastToken = useRef(null);
 
   useEffect(() => {
-    if (checked.current) return;
-    checked.current = true;
+    if (lastToken.current === token) return;
+    lastToken.current = token;
     if (!token) {
       setTokenStatus('invalid');
       return;
     }
+    setTokenStatus('checking');
     verifyResetToken(token)
       .then(() => setTokenStatus('valid'))
       .catch(() => setTokenStatus('invalid'));
