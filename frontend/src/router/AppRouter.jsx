@@ -1,9 +1,11 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import DashboardOwnerPage from '../pages/DashboardOwnerPage.jsx';
 import DashboardPage from '../pages/DashboardPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
-import AdminDashboardPage from '../pages/AdminDashboardPage.jsx';
+import AdminLayout from '../components/admin/AdminLayout.jsx';
+import AdminDashboard from '../components/admin/AdminDashboard.jsx';
+import AdminPlaceholder from '../components/admin/AdminPlaceholder.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
@@ -61,14 +63,6 @@ function AppRouter({ location }) {
       />
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route
-        path="/admin"
-        element={
-          <RequireRole role="admin" redirectTo="/admin/login">
-            <AdminDashboardPage />
-          </RequireRole>
-        }
-      />
-      <Route
         path="/admin/users/new"
         element={
           <RequireRole role="admin" redirectTo="/admin/login">
@@ -76,6 +70,39 @@ function AppRouter({ location }) {
           </RequireRole>
         }
       />
+      <Route
+        path="/admin"
+        element={
+          <RequireRole role="admin" redirectTo="/admin/login">
+            <AdminLayout />
+          </RequireRole>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="spectateur" element={<AdminPlaceholder title="Vue spectateur" />} />
+        <Route
+          path="users"
+          element={
+            <AdminPlaceholder
+              title="Utilisateurs"
+              action={
+                <Link
+                  to="/admin/users/new"
+                  className="rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0A3172]/90"
+                >
+                  Ajouter un compte
+                </Link>
+              }
+            />
+          }
+        />
+        <Route path="comments" element={<AdminPlaceholder title="Commentaires" />} />
+        <Route path="publications" element={<AdminPlaceholder title="Publication" />} />
+        <Route path="documents" element={<AdminPlaceholder title="Documents" />} />
+        <Route path="bookings" element={<AdminPlaceholder title="Réservations" />} />
+        <Route path="ports" element={<AdminPlaceholder title="Ports" />} />
+        <Route path="transactions" element={<AdminPlaceholder title="Transaction" />} />
+      </Route>
     </Routes>
   );
 }
