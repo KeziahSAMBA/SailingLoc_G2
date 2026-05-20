@@ -11,12 +11,12 @@ export async function login(data) {
 }
 
 export async function adminLogin(data) {
-  const response = await api.post('/users/admin/login', data);
+  const response = await api.post('/admin/login', data);
   return response.data;
 }
 
 export async function adminCreateUser(data) {
-  const response = await api.post('/users/admin/users', data);
+  const response = await api.post('/admin/users', data);
   return response.data;
 }
 

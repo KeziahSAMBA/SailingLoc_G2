@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import boatRoutes from './routes/boatRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { initConfig } from './config/appConfig.js';
 
 const { PORT, APP_URL } = initConfig();
@@ -56,7 +57,7 @@ const adminLoginLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
 });
-app.use('/api/users/admin/login', adminLoginLimiter);
+app.use('/api/admin/login', adminLoginLimiter);
 
 const forgotPasswordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -78,6 +79,7 @@ app.use('/api/users/reset-password', resetPasswordLimiter);
 
 app.use('/api/boats', boatRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
