@@ -5,7 +5,7 @@ import { useToast } from '../hooks/useToast.jsx';
 import PasswordField from '../components/auth/PasswordField.jsx';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
 
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
 
 function formatCountdown(seconds) {
@@ -59,7 +59,7 @@ function ResetPasswordPage() {
     const next = {};
     if (!PASSWORD_REGEX.test(form.password)) {
       next.password =
-        'Le mot de passe doit contenir au moins 12 caractères, une majuscule et un caractère spécial.';
+        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule et un caractère spécial.';
     }
     if (form.password !== form.confirmPassword) {
       next.confirmPassword = 'Les mots de passe ne correspondent pas.';
@@ -179,7 +179,7 @@ function ResetPasswordPage() {
                       ariaDescribedBy="reset-hint reset-error"
                     />
                     <small id="reset-hint" className="mt-1 block text-xs text-slate-500">
-                      12 caractères minimum, 1 majuscule, 1 caractère spécial.
+                      12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
                     </small>
                     {errors.password && (
                       <span id="reset-error" className="mt-1 block text-xs text-red-600">

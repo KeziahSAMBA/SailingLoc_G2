@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
 import PasswordField from '../components/auth/PasswordField.jsx';
 
@@ -79,16 +79,22 @@ function AdminLoginPage() {
 
   return (
     <main className="min-h-screen w-full bg-slate-950 px-4 pt-[120px] pb-12">
-      <section
-        aria-labelledby="admin-login-title"
-        className="mx-auto w-full max-w-md"
-      >
+      <section aria-labelledby="admin-login-title" className="mx-auto w-full max-w-md">
         <div className="mb-6 text-center">
           <div
             aria-hidden="true"
             className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#0A3172] text-white shadow-lg"
           >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
@@ -146,6 +152,14 @@ function AdminLoginPage() {
                 autoComplete="current-password"
                 required
               />
+              <div className="mt-1.5 text-right">
+                <Link
+                  to="/forgot-password?role=admin"
+                  className="text-xs text-[#0A3172] hover:underline"
+                >
+                  Mot de passe oublié&nbsp;?
+                </Link>
+              </div>
             </div>
 
             <button

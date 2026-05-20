@@ -15,6 +15,11 @@ export async function adminLogin(data) {
   return response.data;
 }
 
+export async function adminCreateUser(data) {
+  const response = await api.post('/users/admin/users', data);
+  return response.data;
+}
+
 export async function refreshToken() {
   const response = await api.post('/users/refresh');
   return response.data;

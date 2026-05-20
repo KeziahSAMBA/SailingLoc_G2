@@ -32,7 +32,9 @@ api.interceptors.request.use((config) => {
 });
 
 const REFRESH_URL = '/users/refresh';
-const LOGIN_URL = '/users/login';
+// Endpoints d'authentification : un 401 y est une réponse métier légitime
+// (mauvais identifiants), pas une session expirée → on ne tente pas de refresh.
+const AUTH_URLS = ['/users/login', '/users/admin/login'];
 
 api.interceptors.response.use(
   (response) => response,
@@ -45,7 +47,7 @@ api.interceptors.response.use(
       !original ||
       original._retry ||
       original.url?.endsWith(REFRESH_URL) ||
-      original.url?.endsWith(LOGIN_URL)
+      AUTH_URLS.some((url) => original.url?.endsWith(url))
     ) {
       return Promise.reject(error);
     }

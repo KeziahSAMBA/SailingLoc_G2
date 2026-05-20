@@ -4,6 +4,7 @@ import DashboardPage from '../pages/DashboardPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminDashboardPage from '../pages/AdminDashboardPage.jsx';
+import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import RequireRole from '../components/common/RequireRole.jsx';
@@ -46,6 +47,14 @@ function AppRouter({ location }) {
         element={
           <RequireRole role="admin" redirectTo="/admin/login">
             <AdminDashboardPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/admin/users/new"
+        element={
+          <RequireRole role="admin" redirectTo="/admin/login">
+            <AdminCreateUserPage />
           </RequireRole>
         }
       />

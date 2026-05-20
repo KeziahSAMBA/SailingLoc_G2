@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { requestPasswordReset } from '../services/authService.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
 
@@ -14,7 +14,9 @@ function formatCountdown(seconds) {
 }
 
 function ForgotPasswordPage() {
-  const [form, setForm] = useState({ email: '', role: 'locataire' });
+  const [searchParams] = useSearchParams();
+  const isAdmin = searchParams.get('role') === 'admin';
+  const [form, setForm] = useState({ email: '', role: isAdmin ? 'admin' : 'locataire' });
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -85,7 +87,16 @@ function ForgotPasswordPage() {
                   aria-hidden="true"
                   className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#0A3172]/10 ring-2 ring-[#0A3172]"
                 >
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A3172" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="26"
+                    height="26"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#0A3172"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                     <polyline points="22,6 12,13 2,6" />
                   </svg>
@@ -146,37 +157,39 @@ function ForgotPasswordPage() {
                     />
                   </div>
 
-                  <fieldset>
-                    <legend className={labelClass}>Type de compte</legend>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        ['locataire', 'Locataire'],
-                        ['proprietaire', 'Propriétaire'],
-                      ].map(([value, label]) => {
-                        const checked = form.role === value;
-                        return (
-                          <label
-                            key={value}
-                            className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
-                              checked
-                                ? 'border-[#0A3172] bg-[#0A3172]/10 text-[#0A3172]'
-                                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="role"
-                              value={value}
-                              checked={checked}
-                              onChange={handleChange}
-                              className="sr-only"
-                            />
-                            {label}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
+                  {!isAdmin && (
+                    <fieldset>
+                      <legend className={labelClass}>Type de compte</legend>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          ['locataire', 'Locataire'],
+                          ['proprietaire', 'Propriétaire'],
+                        ].map(([value, label]) => {
+                          const checked = form.role === value;
+                          return (
+                            <label
+                              key={value}
+                              className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+                                checked
+                                  ? 'border-[#0A3172] bg-[#0A3172]/10 text-[#0A3172]'
+                                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="role"
+                                value={value}
+                                checked={checked}
+                                onChange={handleChange}
+                                className="sr-only"
+                              />
+                              {label}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
+                  )}
 
                   <button
                     type="submit"
@@ -192,7 +205,10 @@ function ForgotPasswordPage() {
                 </form>
 
                 <footer className="mt-6 text-center text-sm text-slate-600">
-                  <Link to="/login" className="font-semibold text-[#0A3172] hover:underline">
+                  <Link
+                    to={isAdmin ? '/admin/login' : '/login'}
+                    className="font-semibold text-[#0A3172] hover:underline"
+                  >
                     Retour à la connexion
                   </Link>
                 </footer>

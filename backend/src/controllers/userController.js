@@ -1,5 +1,6 @@
 import {
   create,
+  adminCreate,
   verifyEmail,
   resendVerification,
   login as loginService,
@@ -39,6 +40,15 @@ export async function register(req, res) {
     res.status(201).json({
       message: 'Inscription réussie. Vérifiez votre email pour confirmer votre compte.',
     });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function adminCreateUser(req, res) {
+  try {
+    const user = await adminCreate(req.body || {});
+    res.status(201).json({ user });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
@@ -125,7 +135,8 @@ export async function forgotPassword(req, res) {
     await requestPasswordReset(req.body || {});
     // Réponse identique pour bloquer l'énumération.
     res.status(200).json({
-      message: "Si un compte correspond à ces informations, un lien de réinitialisation a été envoyé.",
+      message:
+        'Si un compte correspond à ces informations, un lien de réinitialisation a été envoyé.',
     });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

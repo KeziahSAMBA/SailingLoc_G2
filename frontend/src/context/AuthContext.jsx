@@ -57,34 +57,43 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = useCallback(async (credentials) => {
-    const data = await apiLogin(credentials);
-    setAccessToken(data.accessToken);
-    setUser(data.user);
-    showToast('Vous êtes connecté.', 'success');
-    return data.user;
-  }, [showToast]);
+  const login = useCallback(
+    async (credentials) => {
+      const data = await apiLogin(credentials);
+      setAccessToken(data.accessToken);
+      setUser(data.user);
+      showToast('Vous êtes connecté.', 'success');
+      return data.user;
+    },
+    [showToast]
+  );
 
-  const adminLogin = useCallback(async (credentials) => {
-    const data = await apiAdminLogin(credentials);
-    setAccessToken(data.accessToken);
-    setUser(data.user);
-    showToast('Vous êtes connecté.', 'success');
-    return data.user;
-  }, [showToast]);
+  const adminLogin = useCallback(
+    async (credentials) => {
+      const data = await apiAdminLogin(credentials);
+      setAccessToken(data.accessToken);
+      setUser(data.user);
+      showToast('Vous êtes connecté.', 'success');
+      return data.user;
+    },
+    [showToast]
+  );
 
-  const logout = useCallback(async ({ silent = false, reason } = {}) => {
-    try {
-      await apiLogout();
-    } catch (err) {
-      console.warn('[logout]', err.message);
-    }
-    setAccessToken(null);
-    setUser(null);
-    if (!silent) {
-      showToast('Vous êtes déconnecté.', 'warning');
-    }
-  }, [showToast]);
+  const logout = useCallback(
+    async ({ silent = false } = {}) => {
+      try {
+        await apiLogout();
+      } catch (err) {
+        console.warn('[logout]', err.message);
+      }
+      setAccessToken(null);
+      setUser(null);
+      if (!silent) {
+        showToast('Vous êtes déconnecté.', 'warning');
+      }
+    },
+    [showToast]
+  );
 
   const handleIdleLogout = useCallback(() => {
     logout({ reason: 'idle' });

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { register, resendVerification } from '../../services/authService.js';
 import PasswordField from './PasswordField.jsx';
 
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const INITIAL_RESEND_COOLDOWN = 30;
 const POST_CLICK_COOLDOWN = 60;
@@ -11,7 +11,11 @@ const inputClass =
   'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
 const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
 const errorClass = 'mt-1 block text-xs text-red-600';
-const requiredMark = <span aria-hidden="true" className="ml-0.5 text-[#0A3172]">*</span>;
+const requiredMark = (
+  <span aria-hidden="true" className="ml-0.5 text-[#0A3172]">
+    *
+  </span>
+);
 
 function formatCountdown(seconds) {
   const m = Math.floor(seconds / 60);
@@ -80,7 +84,7 @@ function RegisterForm({ onSwitchToLogin }) {
     }
     if (!PASSWORD_REGEX.test(form.password)) {
       newErrors.password =
-        'Le mot de passe doit contenir au moins 12 caractères, une majuscule et un caractère spécial.';
+        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule et un caractère spécial.';
     }
     if (form.password !== form.confirmPassword) {
       newErrors.confirmPassword = 'Les mots de passe ne correspondent pas.';
@@ -157,8 +161,8 @@ function RegisterForm({ onSwitchToLogin }) {
         <h2 className="text-2xl font-bold text-[#0A3172]">Inscription réussie !</h2>
         <p className="mt-3 text-slate-700">
           Un email de confirmation a été envoyé à{' '}
-          <span className="font-semibold text-[#0A3172]">{form.email}</span>. Vérifiez votre
-          boîte mail pour activer votre compte.
+          <span className="font-semibold text-[#0A3172]">{form.email}</span>. Vérifiez votre boîte
+          mail pour activer votre compte.
         </p>
 
         <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
@@ -368,7 +372,7 @@ function RegisterForm({ onSwitchToLogin }) {
             ariaDescribedBy="password-hint password-error"
           />
           <small id="password-hint" className="mt-1 block text-xs text-slate-500">
-            12 caractères minimum, 1 majuscule, 1 caractère spécial.
+            12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
           </small>
           {errors.password && (
             <span id="password-error" className={errorClass}>

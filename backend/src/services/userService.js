@@ -13,12 +13,17 @@ import {
   revokeRefreshToken,
   revokeAllUserRefreshTokens,
 } from '../repositories/userRepository.js';
-import { sendVerificationEmail, sendPasswordResetEmail } from './emailService.js';
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendAccountCreatedEmail,
+} from './emailService.js';
 import { initConfig } from '../config/appConfig.js';
 
 const { JWT_SECRET } = initConfig();
 const ACCESS_TOKEN_TTL = '15m';
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const SET_PASSWORD_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24h pour définir son mdp après création
 const DUMMY_HASH = '$2a$12$CwTycUXWue0Thq9StjUM0uJ8eVCD7vYz3uTtbpcLzqAOJBT5VnYf6';
 
 function publicUser(user) {
@@ -61,7 +66,7 @@ async function issueRefreshToken(id_user, userAgent) {
   return rawToken;
 }
 
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const NAME_MAX_LENGTH = 100;
@@ -107,7 +112,7 @@ export async function create({
   if (!PASSWORD_REGEX.test(password)) {
     throw Object.assign(
       new Error(
-        'Le mot de passe doit contenir au moins 12 caractères, une majuscule et un caractère spécial.'
+        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule et un caractère spécial.'
       ),
       { status: 400 }
     );
@@ -149,6 +154,79 @@ export async function create({
   }
 
   return { id_user: user.id_user, email: user.email, role: user.role };
+}
+
+export async function adminCreate({ first_name, last_name, email, role, phone }) {
+  if (!first_name || !last_name || !email || !role) {
+    throw Object.assign(new Error('Tous les champs obligatoires doivent être renseignés.'), {
+      status: 400,
+    });
+  }
+
+  const trimmedFirstName = String(first_name).trim();
+  const trimmedLastName = String(last_name).trim();
+  const normalizedEmail = String(email).trim().toLowerCase();
+
+  if (trimmedFirstName.length === 0 || trimmedFirstName.length > NAME_MAX_LENGTH) {
+    throw Object.assign(new Error(`Le prénom doit contenir 1 à ${NAME_MAX_LENGTH} caractères.`), {
+      status: 400,
+    });
+  }
+  if (trimmedLastName.length === 0 || trimmedLastName.length > NAME_MAX_LENGTH) {
+    throw Object.assign(new Error(`Le nom doit contenir 1 à ${NAME_MAX_LENGTH} caractères.`), {
+      status: 400,
+    });
+  }
+  if (normalizedEmail.length > EMAIL_MAX_LENGTH || !EMAIL_REGEX.test(normalizedEmail)) {
+    throw Object.assign(new Error("Le format de l'email est invalide."), { status: 400 });
+  }
+
+  if (!['admin', 'proprietaire', 'locataire'].includes(role)) {
+    throw Object.assign(new Error('Rôle invalide.'), { status: 400 });
+  }
+
+  const normalizedPhone = typeof phone === 'string' ? phone.trim() : '';
+  if (normalizedPhone && !PHONE_REGEX.test(normalizedPhone)) {
+    throw Object.assign(new Error('Le numéro de téléphone est invalide.'), { status: 400 });
+  }
+
+  // Côté admin, on remonte le vrai conflit : pas de risque d'énumération depuis une session admin.
+  const existing = await findUserByEmailAndRole(normalizedEmail, role);
+  if (existing) {
+    throw Object.assign(new Error('Un utilisateur avec cet email et ce rôle existe déjà.'), {
+      status: 409,
+    });
+  }
+
+  // L'admin ne saisit aucun mot de passe : on pose un hash aléatoire inutilisable.
+  // L'utilisateur définit le sien via un lien sécurisé (jeton à usage unique, 24h).
+  const placeholderPassword = crypto.randomBytes(32).toString('hex');
+  const hashed = await bcrypt.hash(placeholderPassword, 12);
+
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + SET_PASSWORD_TOKEN_TTL_MS);
+
+  const user = await createUser({
+    first_name: trimmedFirstName,
+    last_name: trimmedLastName,
+    email: normalizedEmail,
+    password: hashed,
+    role,
+    phone: normalizedPhone || null,
+    email_verified: true,
+    email_verification_token: null,
+    reset_token: tokenHash,
+    reset_token_expires_at: expiresAt,
+  });
+
+  try {
+    await sendAccountCreatedEmail(normalizedEmail, rawToken, trimmedFirstName);
+  } catch (emailErr) {
+    console.error('[email] Échec envoi email création de compte :', emailErr.message);
+  }
+
+  return publicUser(user);
 }
 
 export async function resendVerification({ email, role }) {
@@ -218,10 +296,9 @@ export async function refreshSession(rawRefreshToken, { userAgent } = {}) {
   // Détection de réutilisation : token déjà révoqué = compromission potentielle.
   if (stored.revoked_at) {
     await revokeAllUserRefreshTokens(stored.id_user);
-    throw Object.assign(
-      new Error('Session compromise détectée. Reconnectez-vous.'),
-      { status: 401 }
-    );
+    throw Object.assign(new Error('Session compromise détectée. Reconnectez-vous.'), {
+      status: 401,
+    });
   }
 
   if (stored.expires_at < new Date()) throw invalid;
@@ -259,7 +336,7 @@ const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1h
 export async function requestPasswordReset({ email, role }) {
   // Toujours retourner sans erreur pour empêcher l'énumération.
   if (!email || !role) return;
-  if (!['proprietaire', 'locataire'].includes(role)) return;
+  if (!['proprietaire', 'locataire', 'admin'].includes(role)) return;
 
   const normalizedEmail = String(email).trim().toLowerCase();
   const user = await findUserByEmailAndRole(normalizedEmail, role);
@@ -296,7 +373,7 @@ export async function resetPassword({ token, password, confirmPassword }) {
   if (!PASSWORD_REGEX.test(password)) {
     throw Object.assign(
       new Error(
-        'Le mot de passe doit contenir au moins 12 caractères, une majuscule et un caractère spécial.'
+        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule et un caractère spécial.'
       ),
       { status: 400 }
     );
