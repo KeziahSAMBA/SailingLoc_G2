@@ -8,7 +8,7 @@ export async function getBoats(req, res) {
 
 export async function uploadBoat(req, res) {
   const { title, description, price, location } = req.body;
-  const ownerId = req.user?.id;
+  const ownerId = req.user?.id_user;
 
   if (!ownerId) {
     return res.status(401).json({ message: 'Owner required' });
@@ -32,7 +32,7 @@ export async function uploadBoat(req, res) {
 
 export async function createBookingController(req, res) {
   const { boatId, startDate, endDate } = req.body;
-  const userId = req.user?.id;
+  const userId = req.user?.id_user;
   const booking = await createBooking({ userId, boatId, startDate, endDate });
   res.status(201).json(booking);
 }
