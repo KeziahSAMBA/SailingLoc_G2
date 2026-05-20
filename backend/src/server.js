@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import boatRoutes from './routes/boatRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
 import { initConfig } from './config/appConfig.js';
 
 const { PORT, APP_URL } = initConfig();
@@ -80,6 +81,7 @@ app.use('/api/users/reset-password', resetPasswordLimiter);
 app.use('/api/boats', boatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/documents', documentRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 

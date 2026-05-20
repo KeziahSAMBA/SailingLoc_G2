@@ -6,6 +6,7 @@ import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminDashboardPage from '../pages/AdminDashboardPage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
+import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import RequireRole from '../components/common/RequireRole.jsx';
@@ -47,6 +48,14 @@ function AppRouter({ location }) {
         element={
           <RequireRole>
             <AccountPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/documents"
+        element={
+          <RequireRole role="locataire">
+            <MyDocumentsPage />
           </RequireRole>
         }
       />
