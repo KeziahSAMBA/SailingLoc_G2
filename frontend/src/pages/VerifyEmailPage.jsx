@@ -42,11 +42,7 @@ function VerifyEmailPage() {
       }}
     >
       <div className="w-full min-h-screen bg-black/40 px-4 pt-[120px] pb-10 flex justify-center">
-        <section
-          aria-labelledby="verify-title"
-          aria-live="polite"
-          className="w-full max-w-md"
-        >
+        <section aria-labelledby="verify-title" aria-live="polite" className="w-full max-w-md">
           <article className="rounded-2xl bg-white p-8 text-center shadow-2xl ring-1 ring-slate-200">
             {status === 'loading' && (
               <>

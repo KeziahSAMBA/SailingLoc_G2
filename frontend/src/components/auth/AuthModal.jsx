@@ -21,7 +21,9 @@ function AuthModal({ activeTab, onClose }) {
     };
   }, [onClose]);
 
-  const navState = backgroundLocation ? { state: { backgroundLocation }, replace: true } : { replace: true };
+  const navState = backgroundLocation
+    ? { state: { backgroundLocation }, replace: true }
+    : { replace: true };
   const goToLogin = () => navigate('/login', navState);
   const goToRegister = () => navigate('/register', navState);
 

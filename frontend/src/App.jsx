@@ -48,9 +48,7 @@ function AppContent() {
       <div className="min-h-screen bg-slate-50 text-slate-900">
         <AppRouter location={routesLocation} />
       </div>
-      {showAuthModal && (
-        <AuthModal activeTab={activeAuthTab} onClose={closeAuthModal} />
-      )}
+      {showAuthModal && <AuthModal activeTab={activeAuthTab} onClose={closeAuthModal} />}
     </>
   );
 }

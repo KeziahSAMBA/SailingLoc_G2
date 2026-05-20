@@ -23,9 +23,7 @@ export function useIdleLogout({ enabled, timeoutMs, onIdle, checkIntervalMs = 60
     // Initialise pour ne pas se déconnecter immédiatement si l'entrée est vide.
     markActive();
 
-    ACTIVITY_EVENTS.forEach((evt) =>
-      window.addEventListener(evt, markActive, { passive: true })
-    );
+    ACTIVITY_EVENTS.forEach((evt) => window.addEventListener(evt, markActive, { passive: true }));
 
     const intervalId = setInterval(() => {
       const stored = Number(window.localStorage.getItem(STORAGE_KEY)) || Date.now();

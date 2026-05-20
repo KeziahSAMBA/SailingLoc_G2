@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-   // Passwords: Admin@123456 | Proprietaire@2025Secure | Locataire@2025Secure (bcryptjs)
+  // Passwords: Admin@123456 | Proprietaire@2025Secure | Locataire@2025Secure (bcryptjs)
   // email_verified = TRUE for accounts listed in README (ready to login without verification step)
   await prisma.$executeRawUnsafe(`
     INSERT INTO "user" (last_name, first_name, email, password, role, phone, is_active, email_verified) VALUES
