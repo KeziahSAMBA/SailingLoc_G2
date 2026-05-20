@@ -1,0 +1,235 @@
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { resetPassword, verifyResetToken } from '../services/authService.js';
+import { useToast } from '../hooks/useToast.jsx';
+import PasswordField from '../components/auth/PasswordField.jsx';
+import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
+const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
+
+function formatCountdown(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function ResetPasswordPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const token = searchParams.get('token') || '';
+  const [form, setForm] = useState({ password: '', confirmPassword: '' });
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [retryAfter, setRetryAfter] = useState(0);
+  const [tokenStatus, setTokenStatus] = useState('checking'); // 'checking' | 'valid' | 'invalid'
+  // Verrou basé sur la valeur du token : évite la double vérification en StrictMode
+  // tout en re-vérifiant si le token change (sans démontage du composant).
+  const lastToken = useRef(null);
+
+  useEffect(() => {
+    if (lastToken.current === token) return;
+    lastToken.current = token;
+    if (!token) {
+      setTokenStatus('invalid');
+      return;
+    }
+    setTokenStatus('checking');
+    verifyResetToken(token)
+      .then(() => setTokenStatus('valid'))
+      .catch(() => setTokenStatus('invalid'));
+  }, [token]);
+
+  useEffect(() => {
+    if (retryAfter <= 0) return undefined;
+    const id = setInterval(() => {
+      setRetryAfter((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [retryAfter]);
+
+  const isBlocked = retryAfter > 0;
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
+  }
+
+  function validate() {
+    const next = {};
+    if (!PASSWORD_REGEX.test(form.password)) {
+      next.password =
+        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule et un caractère spécial.';
+    }
+    if (form.password !== form.confirmPassword) {
+      next.confirmPassword = 'Les mots de passe ne correspondent pas.';
+    }
+    return next;
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (isBlocked || loading || tokenStatus !== 'valid') return;
+    setServerError('');
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await resetPassword({
+        token,
+        password: form.password,
+        confirmPassword: form.confirmPassword,
+      });
+      showToast('Mot de passe mis à jour. Connectez-vous.', 'success');
+      navigate('/login', { replace: true });
+    } catch (err) {
+      if (err.response?.status === 429) {
+        const headerValue =
+          err.response.headers?.['retry-after'] ?? err.response.headers?.['ratelimit-reset'];
+        const seconds = Number.parseInt(headerValue, 10);
+        setRetryAfter(Number.isFinite(seconds) && seconds > 0 ? seconds : 60);
+        setServerError(
+          err.response.data?.message || 'Trop de tentatives. Réessayez dans quelques minutes.'
+        );
+      } else {
+        setServerError(err.response?.data?.message || 'Lien invalide ou expiré.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main
+      className="min-h-screen w-full"
+      style={{
+        backgroundImage: `url(${bateauBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      <div className="min-h-screen w-full bg-black/40 px-4 pt-[120px] pb-12 flex justify-center">
+        <section aria-labelledby="reset-title" className="w-full max-w-md">
+          <article className="rounded-2xl bg-white p-8 shadow-2xl ring-1 ring-slate-200">
+            <header className="mb-6 text-center">
+              <h1 id="reset-title" className="text-2xl font-bold text-[#0A3172]">
+                Nouveau mot de passe
+              </h1>
+              <p className="mt-2 text-sm text-slate-600">
+                Choisissez un mot de passe sécurisé pour votre compte.
+              </p>
+            </header>
+
+            {tokenStatus === 'checking' ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex flex-col items-center gap-3 py-4 text-sm text-slate-500"
+              >
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#0A3172]" />
+                Vérification du lien…
+              </div>
+            ) : tokenStatus === 'invalid' ? (
+              <div
+                role="alert"
+                className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
+                Ce lien de réinitialisation est invalide, expiré ou déjà utilisé. Demandez un
+                nouveau lien depuis la page{' '}
+                <Link to="/forgot-password" className="font-semibold underline">
+                  mot de passe oublié
+                </Link>
+                .
+              </div>
+            ) : (
+              <>
+                {serverError && (
+                  <div
+                    role="alert"
+                    className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+                  >
+                    {serverError}
+                    {isBlocked && (
+                      <span className="mt-1 block font-mono text-xs text-red-600">
+                        Nouvelle tentative possible dans{' '}
+                        <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} noValidate className="space-y-4">
+                  <div>
+                    <label htmlFor="reset-password" className={labelClass}>
+                      Nouveau mot de passe
+                    </label>
+                    <PasswordField
+                      id="reset-password"
+                      name="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      autoComplete="new-password"
+                      required
+                      ariaInvalid={Boolean(errors.password)}
+                      ariaDescribedBy="reset-hint reset-error"
+                    />
+                    <small id="reset-hint" className="mt-1 block text-xs text-slate-500">
+                      12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
+                    </small>
+                    {errors.password && (
+                      <span id="reset-error" className="mt-1 block text-xs text-red-600">
+                        {errors.password}
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="reset-confirm" className={labelClass}>
+                      Confirmer le mot de passe
+                    </label>
+                    <PasswordField
+                      id="reset-confirm"
+                      name="confirmPassword"
+                      value={form.confirmPassword}
+                      onChange={handleChange}
+                      autoComplete="new-password"
+                      required
+                      ariaInvalid={Boolean(errors.confirmPassword)}
+                    />
+                    {errors.confirmPassword && (
+                      <span className="mt-1 block text-xs text-red-600">
+                        {errors.confirmPassword}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading || isBlocked}
+                    className="mt-2 w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isBlocked
+                      ? `Réessayez dans ${formatCountdown(retryAfter)}`
+                      : loading
+                        ? 'Mise à jour…'
+                        : 'Mettre à jour'}
+                  </button>
+                </form>
+              </>
+            )}
+          </article>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+export default ResetPasswordPage;

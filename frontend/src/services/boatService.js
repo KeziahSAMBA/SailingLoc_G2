@@ -5,7 +5,9 @@ export function fetchBoats() {
 }
 
 export function createBoat(formData) {
+  // On laisse axios/le navigateur poser le Content-Type (avec le boundary multipart).
+  // `undefined` écrase le défaut 'application/json' de l'instance api.
   return api.post('/boats', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: { 'Content-Type': undefined },
   });
 }

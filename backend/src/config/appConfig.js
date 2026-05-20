@@ -16,5 +16,10 @@ export function initConfig() {
     EMAIL_PORT: Number(process.env.EMAIL_PORT) || 587,
     EMAIL_USER: process.env.EMAIL_USER || '',
     EMAIL_PASS: process.env.EMAIL_PASS || '',
+    // TLS implicite (port 465). Laisser vide en dev/587 (STARTTLS automatique).
+    EMAIL_SECURE: process.env.EMAIL_SECURE === 'true',
+    // Désactive TLS — à réserver à MailDev en local (EMAIL_IGNORE_TLS=true).
+    EMAIL_IGNORE_TLS: process.env.EMAIL_IGNORE_TLS === 'true',
+    APP_URL: process.env.APP_URL || 'http://localhost:5173',
   };
 }

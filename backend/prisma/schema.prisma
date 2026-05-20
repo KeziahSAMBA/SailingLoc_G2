@@ -9,18 +9,21 @@ datasource db {
 }
 
 model User {
-  id_user             Int        @id @default(autoincrement())
-  last_name           String     @db.VarChar(100)
-  first_name          String     @db.VarChar(100)
-  email               String     @unique @db.VarChar(255)
-  password            String     @db.VarChar(255)
-  role                UserRole   @default(locataire)
-  phone               String?    @db.VarChar(20)
-  is_active           Boolean    @default(true)
-  reset_token         String?    @db.VarChar(255)
-  created_at          DateTime   @default(now())
-  updated_at          DateTime?
-  deleted_at          DateTime?
+  id_user                    Int        @id @default(autoincrement())
+  last_name                  String     @db.VarChar(100)
+  first_name                 String     @db.VarChar(100)
+  email                      String     @db.VarChar(255)
+  password                   String     @db.VarChar(255)
+  role                       UserRole   @default(locataire)
+  phone                      String?    @db.VarChar(20)
+  is_active                  Boolean    @default(true)
+  email_verified             Boolean    @default(false)
+  email_verification_token   String?    @db.VarChar(255)
+  reset_token                String?    @db.VarChar(255)
+  reset_token_expires_at     DateTime?
+  created_at                 DateTime   @default(now())
+  updated_at                 DateTime?
+  deleted_at                 DateTime?
 
   boats               Boat[]     @relation("OwnerBoats")
   bookings            Booking[]  @relation("GuestBookings")
@@ -30,8 +33,26 @@ model User {
   reviews             Review[]
   favoriteBoats       UserBoatFavorite[]
   images              Image[]
+  refreshTokens       RefreshToken[]
 
+  @@unique([email, role])
   @@map("user")
+}
+
+model RefreshToken {
+  id_refresh   Int       @id @default(autoincrement())
+  id_user      Int
+  token_hash   String    @unique @db.VarChar(255)
+  expires_at   DateTime
+  revoked_at   DateTime?
+  user_agent   String?   @db.VarChar(255)
+  created_at   DateTime  @default(now())
+
+  user         User      @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+
+  @@index([id_user])
+  @@index([expires_at])
+  @@map("refresh_token")
 }
 
 model Port {

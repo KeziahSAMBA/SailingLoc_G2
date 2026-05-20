@@ -23,6 +23,17 @@ services:
       timeout: 10s
       retries: 3
 
+  # MailDev — SMTP local + interface web (dev only)
+  maildev:
+    image: maildev/maildev:latest
+    container_name: sailingloc_maildev
+    restart: unless-stopped
+    ports:
+      - '1080:1080' # Interface web : http://localhost:1080
+      - '1025:1025' # SMTP
+    networks:
+      - sailingloc_network
+
   # Backend API (Development mode with hot reload)
   backend:
     build:
@@ -36,10 +47,10 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-      EMAIL_HOST: ${EMAIL_HOST}
-      EMAIL_PORT: ${EMAIL_PORT}
-      EMAIL_USER: ${EMAIL_USER}
-      EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_HOST: maildev
+      EMAIL_PORT: 1025
+      EMAIL_USER: ''
+      EMAIL_PASS: ''
     ports:
       - '4000:4000'
     volumes:
@@ -49,9 +60,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      maildev:
+        condition: service_started
     networks:
       - sailingloc_network
-    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run dev"
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && npx prisma db seed && node --watch src/server.js"
 
   # Frontend React App (Development mode with hot reload)
   frontend:
