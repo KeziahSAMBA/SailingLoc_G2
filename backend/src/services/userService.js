@@ -33,6 +33,7 @@ function publicUser(user) {
     role: user.role,
     first_name: user.first_name,
     last_name: user.last_name,
+    phone: user.phone,
   };
 }
 
@@ -329,6 +330,89 @@ export async function getCurrentUser(id_user) {
     throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
   }
   return publicUser(user);
+}
+
+// Mise à jour des informations personnelles de l'utilisateur connecté.
+// Email et rôle ne sont volontairement pas modifiables ici (re-vérification / unicité).
+export async function updateProfile(id_user, { first_name, last_name, phone }) {
+  const data = {};
+
+  if (first_name !== undefined) {
+    const trimmed = String(first_name).trim();
+    if (trimmed.length === 0 || trimmed.length > NAME_MAX_LENGTH) {
+      throw Object.assign(new Error(`Le prénom doit contenir 1 à ${NAME_MAX_LENGTH} caractères.`), {
+        status: 400,
+      });
+    }
+    data.first_name = trimmed;
+  }
+
+  if (last_name !== undefined) {
+    const trimmed = String(last_name).trim();
+    if (trimmed.length === 0 || trimmed.length > NAME_MAX_LENGTH) {
+      throw Object.assign(new Error(`Le nom doit contenir 1 à ${NAME_MAX_LENGTH} caractères.`), {
+        status: 400,
+      });
+    }
+    data.last_name = trimmed;
+  }
+
+  if (phone !== undefined) {
+    const trimmed = typeof phone === 'string' ? phone.trim() : '';
+    if (trimmed && !PHONE_REGEX.test(trimmed)) {
+      throw Object.assign(new Error('Le numéro de téléphone est invalide.'), { status: 400 });
+    }
+    data.phone = trimmed || null;
+  }
+
+  if (Object.keys(data).length === 0) {
+    throw Object.assign(new Error('Aucune donnée à mettre à jour.'), { status: 400 });
+  }
+
+  data.updated_at = new Date();
+  const user = await updateUser(id_user, data);
+  return publicUser(user);
+}
+
+// Changement de mot de passe par l'utilisateur connecté : exige le mot de passe actuel.
+export async function changePassword(id_user, { currentPassword, newPassword, confirmPassword }) {
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    throw Object.assign(new Error('Tous les champs sont requis.'), { status: 400 });
+  }
+
+  const user = await findUserById(id_user);
+  if (!user || !user.is_active) {
+    throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
+  }
+
+  const currentOk = await bcrypt.compare(currentPassword, user.password);
+  if (!currentOk) {
+    throw Object.assign(new Error('Mot de passe actuel incorrect.'), { status: 400 });
+  }
+
+  if (!PASSWORD_REGEX.test(newPassword)) {
+    throw Object.assign(
+      new Error(
+        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule et un caractère spécial.'
+      ),
+      { status: 400 }
+    );
+  }
+  if (newPassword !== confirmPassword) {
+    throw Object.assign(new Error('Les mots de passe ne correspondent pas.'), { status: 400 });
+  }
+  if (currentPassword === newPassword) {
+    throw Object.assign(new Error("Le nouveau mot de passe doit être différent de l'ancien."), {
+      status: 400,
+    });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 12);
+  await updateUser(id_user, { password: hashed, updated_at: new Date() });
+
+  // Sécurité : invalide TOUTES les sessions actives (tous les appareils, y compris
+  // celui-ci). L'utilisateur devra se reconnecter avec son nouveau mot de passe.
+  await revokeAllUserRefreshTokens(id_user);
 }
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1h

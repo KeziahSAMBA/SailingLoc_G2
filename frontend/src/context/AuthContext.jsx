@@ -95,6 +95,11 @@ export function AuthProvider({ children }) {
     [showToast]
   );
 
+  // Met à jour le user en contexte après une édition de profil (fusion partielle).
+  const updateUser = useCallback((next) => {
+    setUser((prev) => ({ ...prev, ...next }));
+  }, []);
+
   const handleIdleLogout = useCallback(() => {
     logout({ reason: 'idle' });
   }, [logout]);
@@ -115,7 +120,7 @@ export function AuthProvider({ children }) {
   });
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, adminLogin, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, adminLogin, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

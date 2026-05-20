@@ -34,6 +34,16 @@ export async function getMe() {
   return response.data;
 }
 
+export async function updateMe(data) {
+  const response = await api.patch('/users/me', data);
+  return response.data;
+}
+
+export async function changePassword(data) {
+  const response = await api.patch('/users/me/password', data);
+  return response.data;
+}
+
 export async function verifyEmail(token) {
   const response = await api.get(`/users/verify-email/${token}`);
   return response.data;

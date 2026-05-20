@@ -5,6 +5,7 @@ import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminDashboardPage from '../pages/AdminDashboardPage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
+import AccountPage from '../pages/AccountPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import RequireRole from '../components/common/RequireRole.jsx';
@@ -38,6 +39,14 @@ function AppRouter({ location }) {
         element={
           <RequireRole>
             <DashboardPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/account"
+        element={
+          <RequireRole>
+            <AccountPage />
           </RequireRole>
         }
       />

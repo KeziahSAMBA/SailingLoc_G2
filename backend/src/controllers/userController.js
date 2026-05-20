@@ -7,6 +7,8 @@ import {
   refreshSession,
   logoutSession,
   getCurrentUser,
+  updateProfile,
+  changePassword,
   requestPasswordReset,
   resetPassword as resetPasswordService,
   checkResetToken,
@@ -114,6 +116,26 @@ export async function me(req, res) {
   try {
     const user = await getCurrentUser(req.user.id_user);
     res.json({ user });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function updateMe(req, res) {
+  try {
+    const user = await updateProfile(req.user.id_user, req.body || {});
+    res.json({ user });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function changeMyPassword(req, res) {
+  try {
+    await changePassword(req.user.id_user, req.body || {});
+    // Toutes les sessions sont révoquées : on efface aussi le cookie courant.
+    clearRefreshCookie(res);
+    res.json({ message: 'Mot de passe mis à jour. Veuillez vous reconnecter.' });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
