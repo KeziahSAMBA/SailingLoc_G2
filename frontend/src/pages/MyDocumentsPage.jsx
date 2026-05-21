@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '../hooks/useAuth.jsx';
 import { useToast } from '../hooks/useToast.jsx';
 import {
   getMyDocuments,
@@ -8,23 +9,35 @@ import {
 } from '../services/documentService.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
 
-const DOC_TYPES = [
-  {
-    key: 'permis_conduire',
-    label: 'Permis bateau',
-    desc: 'Permis bateau côtier ou fluvial.',
-  },
-  {
-    key: 'piece_identite',
-    label: "Pièce d'identité",
-    desc: "Carte nationale d'identité ou passeport en cours de validité.",
-  },
-  {
-    key: 'cv_nautique',
-    label: 'CV nautique',
-    desc: 'Document décrivant votre expérience de navigation.',
-  },
-];
+// Documents obligatoires selon le rôle (doit correspondre au backend).
+const DOC_TYPES_BY_ROLE = {
+  locataire: [
+    { key: 'permis_conduire', label: 'Permis bateau', desc: 'Permis bateau côtier ou fluvial.' },
+    {
+      key: 'piece_identite',
+      label: "Pièce d'identité",
+      desc: "Carte nationale d'identité ou passeport en cours de validité.",
+    },
+    {
+      key: 'cv_nautique',
+      label: 'CV nautique',
+      desc: 'Document décrivant votre expérience de navigation.',
+    },
+  ],
+  proprietaire: [
+    { key: 'permis', label: 'Permis', desc: 'Permis bateau ou de conduire.' },
+    { key: 'assurance', label: 'Assurance', desc: 'Attestation d’assurance du bateau.' },
+    { key: 'cv_marin', label: 'CV marin', desc: 'Document décrivant votre expérience maritime.' },
+    {
+      key: 'acte_francisation',
+      label: 'Acte de francisation',
+      desc: 'Vous pouvez en déposer plusieurs (un par bateau).',
+      multiple: true,
+    },
+  ],
+};
+
+const ROLE_LABEL = { locataire: 'Locataire', proprietaire: 'Propriétaire' };
 
 const STATUS = {
   pending: { label: 'En attente de validation', cls: 'bg-amber-100 text-amber-800' },
@@ -32,7 +45,7 @@ const STATUS = {
   refused: { label: 'Refusé', cls: 'bg-red-100 text-red-700' },
 };
 
-function DocumentRow({ config, doc, onChanged }) {
+function DocumentRow({ config, docs, onChanged }) {
   const { showToast } = useToast();
   const [file, setFile] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -59,7 +72,7 @@ function DocumentRow({ config, doc, onChanged }) {
     }
   }
 
-  async function handleView() {
+  async function handleView(doc) {
     setError('');
     try {
       const res = await fetchDocumentFile(doc.id_document);
@@ -71,7 +84,7 @@ function DocumentRow({ config, doc, onChanged }) {
     }
   }
 
-  async function handleDelete() {
+  async function handleDelete(doc) {
     setBusy(true);
     setError('');
     try {
@@ -85,7 +98,14 @@ function DocumentRow({ config, doc, onChanged }) {
     }
   }
 
-  const status = doc ? STATUS[doc.status] : null;
+  const hasDocs = docs.length > 0;
+  const headerBadge = config.multiple
+    ? hasDocs
+      ? { label: `${docs.length} fichier(s)`, cls: 'bg-slate-100 text-slate-600' }
+      : null
+    : hasDocs
+      ? STATUS[docs[0].status]
+      : null;
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
@@ -96,33 +116,44 @@ function DocumentRow({ config, doc, onChanged }) {
         </div>
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-            status ? status.cls : 'bg-slate-100 text-slate-500'
+            headerBadge ? headerBadge.cls : 'bg-slate-100 text-slate-500'
           }`}
         >
-          {status ? status.label : 'Non fourni'}
+          {headerBadge ? headerBadge.label : 'Non fourni'}
         </span>
       </div>
 
-      {doc && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 px-4 py-3">
-          <span className="truncate text-sm font-medium text-slate-700">{doc.file_name}</span>
-          <button
-            type="button"
-            onClick={handleView}
-            className="text-xs font-semibold text-[#0A3172] hover:underline"
+      {docs.map((doc) => {
+        const st = STATUS[doc.status];
+        return (
+          <div
+            key={doc.id_document}
+            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 px-4 py-3"
           >
-            Voir
-          </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={busy}
-            className="ml-auto text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
-          >
-            Supprimer
-          </button>
-        </div>
-      )}
+            <span className="truncate text-sm font-medium text-slate-700">{doc.file_name}</span>
+            {st && (
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>
+                {st.label}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => handleView(doc)}
+              className="text-xs font-semibold text-[#0A3172] hover:underline"
+            >
+              Voir
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDelete(doc)}
+              disabled={busy}
+              className="ml-auto text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+            >
+              Supprimer
+            </button>
+          </div>
+        );
+      })}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <input
@@ -141,7 +172,7 @@ function DocumentRow({ config, doc, onChanged }) {
           disabled={busy || !file}
           className="rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {busy ? 'Envoi…' : doc ? 'Remplacer' : 'Envoyer'}
+          {busy ? 'Envoi…' : config.multiple ? 'Ajouter' : hasDocs ? 'Remplacer' : 'Envoyer'}
         </button>
       </div>
 
@@ -155,6 +186,8 @@ function DocumentRow({ config, doc, onChanged }) {
 }
 
 function MyDocumentsPage() {
+  const { user } = useAuth();
+  const docTypes = DOC_TYPES_BY_ROLE[user?.role] || [];
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -170,8 +203,11 @@ function MyDocumentsPage() {
     load();
   }, [load]);
 
-  const byType = Object.fromEntries(documents.map((d) => [d.type, d]));
-  const providedCount = DOC_TYPES.filter((t) => byType[t.key]).length;
+  const docsByType = documents.reduce((acc, d) => {
+    (acc[d.type] = acc[d.type] || []).push(d);
+    return acc;
+  }, {});
+  const providedCount = docTypes.filter((t) => (docsByType[t.key] || []).length > 0).length;
 
   return (
     <main
@@ -187,7 +223,7 @@ function MyDocumentsPage() {
         <section className="mx-auto w-full max-w-2xl">
           <header className="mb-8">
             <p className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-              Locataire
+              {ROLE_LABEL[user?.role] || 'Compte'}
             </p>
             <h1 className="mt-3 text-3xl font-bold text-white">Mes documents</h1>
             <p className="mt-2 text-slate-200">
@@ -195,7 +231,7 @@ function MyDocumentsPage() {
               par notre équipe.
             </p>
             <p className="mt-2 text-sm font-semibold text-white">
-              {providedCount} / {DOC_TYPES.length} documents fournis
+              {providedCount} / {docTypes.length} types fournis
             </p>
           </header>
 
@@ -203,11 +239,11 @@ function MyDocumentsPage() {
             <p className="text-slate-200">Chargement…</p>
           ) : (
             <div className="space-y-5">
-              {DOC_TYPES.map((config) => (
+              {docTypes.map((config) => (
                 <DocumentRow
                   key={config.key}
                   config={config}
-                  doc={byType[config.key] || null}
+                  docs={docsByType[config.key] || []}
                   onChanged={load}
                 />
               ))}
