@@ -6,6 +6,7 @@ import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminLayout from '../components/admin/AdminLayout.jsx';
 import AdminDashboard from '../components/admin/AdminDashboard.jsx';
 import AdminUsersPage from '../components/admin/AdminUsersPage.jsx';
+import AdminDocumentsPage from '../components/admin/AdminDocumentsPage.jsx';
 import AdminPlaceholder from '../components/admin/AdminPlaceholder.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
@@ -57,7 +58,7 @@ function AppRouter({ location }) {
       <Route
         path="/documents"
         element={
-          <RequireRole role="locataire">
+          <RequireRole role={['locataire', 'proprietaire']}>
             <MyDocumentsPage />
           </RequireRole>
         }
@@ -77,7 +78,7 @@ function AppRouter({ location }) {
         <Route path="users/new" element={<AdminCreateUserPage />} />
         <Route path="comments" element={<AdminPlaceholder title="Commentaires" />} />
         <Route path="publications" element={<AdminPlaceholder title="Publication" />} />
-        <Route path="documents" element={<AdminPlaceholder title="Documents" />} />
+        <Route path="documents" element={<AdminDocumentsPage />} />
         <Route path="bookings" element={<AdminPlaceholder title="Réservations" />} />
         <Route path="ports" element={<AdminPlaceholder title="Ports" />} />
         <Route path="transactions" element={<AdminPlaceholder title="Transaction" />} />
