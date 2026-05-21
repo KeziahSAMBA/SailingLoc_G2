@@ -11,11 +11,11 @@ const ROLES = [
 ];
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
-const errorClass = 'mt-1 block text-xs text-red-600';
+  'w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-slate-300';
+const errorClass = 'mt-1 block text-xs text-red-400';
 const requiredMark = (
-  <span aria-hidden="true" className="ml-0.5 text-[#0A3172]">
+  <span aria-hidden="true" className="ml-0.5 text-[#5AB4EC]">
     *
   </span>
 );
@@ -80,26 +80,23 @@ function AdminCreateUserPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 pt-[120px] pb-16">
+    <section className="mx-auto w-full max-w-2xl">
       <header className="mb-8">
-        <p className="inline-block rounded-full bg-[#0A3172]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#0A3172]">
-          Administration
-        </p>
-        <h1 className="mt-3 text-3xl font-bold text-[#0A3172]">Ajouter un compte</h1>
-        <p className="mt-2 text-slate-600">
+        <h1 className="text-3xl font-bold text-white">Ajouter un compte</h1>
+        <p className="mt-2 text-slate-300">
           Créez un compte utilisateur. L'utilisateur recevra un email pour définir lui-même son mot
           de passe.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Les champs marqués d&apos;un <span className="text-[#0A3172]">*</span> sont obligatoires.
+          Les champs marqués d&apos;un <span className="text-[#5AB4EC]">*</span> sont obligatoires.
         </p>
       </header>
 
-      <article className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 shadow-xl">
         {success && (
           <div
             role="status"
-            className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+            className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
           >
             Compte créé pour <span className="font-semibold">{success.email}</span> ({success.role}
             ). Un email vient de lui être envoyé pour définir son mot de passe.
@@ -109,7 +106,7 @@ function AdminCreateUserPage() {
         {serverError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
           >
             {serverError}
           </div>
@@ -236,8 +233,8 @@ function AdminCreateUserPage() {
           <div className="flex gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navigate('/admin')}
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              onClick={() => navigate('/admin/users')}
+              className="rounded-full border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
             >
               Retour
             </button>
@@ -251,7 +248,7 @@ function AdminCreateUserPage() {
           </div>
         </form>
       </article>
-    </main>
+    </section>
   );
 }
 
