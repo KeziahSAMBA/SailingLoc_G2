@@ -3,6 +3,18 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Le seed tourne à chaque démarrage du conteneur : on NE réinitialise PAS si des
+  // données existent déjà, sinon on effacerait les comptes créés en cours de route.
+  // Pour forcer un reset complet : SEED_FORCE=true.
+  const force = process.env.SEED_FORCE === 'true';
+  const existingUsers = await prisma.user.count();
+  if (existingUsers > 0 && !force) {
+    console.log(
+      `Seed ignoré : ${existingUsers} utilisateur(s) déjà présents (SEED_FORCE=true pour réinitialiser).`
+    );
+    return;
+  }
+
   // Idempotence : on repart d'une base propre, IDs réinitialisés à 1.
   // Indispensable car les clés étrangères ci-dessous sont codées en dur
   // (id_boat, id_booking, id_document…) et supposent une numérotation déterministe.
