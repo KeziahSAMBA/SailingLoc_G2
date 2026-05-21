@@ -15,3 +15,11 @@ export function updateUser(id, data) {
 export function deleteUser(id) {
   return api.delete(`/admin/users/${id}`);
 }
+
+export function listDocuments(params) {
+  return api.get('/admin/documents', { params });
+}
+
+export function setDocumentStatus(id, status) {
+  return api.patch(`/admin/documents/${id}`, { status });
+}

@@ -6,6 +6,7 @@ import {
   adminUpdateUser,
   adminDeleteUser,
 } from '../controllers/adminUserController.js';
+import { adminListDocuments, adminSetDocumentStatus } from '../controllers/documentController.js';
 import { protect, requireAdmin } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -18,5 +19,8 @@ router.get('/users', protect, requireAdmin, adminListUsers);
 router.post('/users', protect, requireAdmin, adminCreateUser);
 router.patch('/users/:id', protect, requireAdmin, adminUpdateUser);
 router.delete('/users/:id', protect, requireAdmin, adminDeleteUser);
+
+router.get('/documents', protect, requireAdmin, adminListDocuments);
+router.patch('/documents/:id', protect, requireAdmin, adminSetDocumentStatus);
 
 export default router;

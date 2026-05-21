@@ -317,7 +317,7 @@ function Header() {
                   </svg>
                   Mon compte
                 </button>
-                {user.role === 'locataire' && (
+                {(user.role === 'locataire' || user.role === 'proprietaire') && (
                   <button
                     type="button"
                     onClick={() => {

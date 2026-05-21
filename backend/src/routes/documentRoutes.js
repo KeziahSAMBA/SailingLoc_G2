@@ -52,9 +52,14 @@ function uploadSingle(req, res, next) {
 
 const router = Router();
 
-router.get('/', protect, requireRole('locataire'), listMyDocuments);
-router.post('/', protect, requireRole('locataire'), uploadSingle, uploadMyDocument);
-router.delete('/:id', protect, requireRole('locataire'), deleteMyDocumentController);
+router.get('/', protect, requireRole('locataire', 'proprietaire'), listMyDocuments);
+router.post('/', protect, requireRole('locataire', 'proprietaire'), uploadSingle, uploadMyDocument);
+router.delete(
+  '/:id',
+  protect,
+  requireRole('locataire', 'proprietaire'),
+  deleteMyDocumentController
+);
 // Téléchargement protégé : autorisé au propriétaire du document ou à un admin
 // (le contrôle d'accès est fait dans le service).
 router.get('/:id/file', protect, downloadDocument);

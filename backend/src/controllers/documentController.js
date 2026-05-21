@@ -3,6 +3,8 @@ import {
   uploadDocument,
   deleteMyDocument,
   getDocumentFile,
+  listAllDocuments,
+  setDocumentStatus,
 } from '../services/documentService.js';
 
 export async function listMyDocuments(req, res) {
@@ -16,7 +18,7 @@ export async function listMyDocuments(req, res) {
 
 export async function uploadMyDocument(req, res) {
   try {
-    const document = await uploadDocument(req.user.id_user, req.body?.type, req.file);
+    const document = await uploadDocument(req.user, req.body?.type, req.file);
     res.status(201).json({ document });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
@@ -37,6 +39,26 @@ export async function downloadDocument(req, res) {
     const { absPath, file_name } = await getDocumentFile(req.user, req.params.id);
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(file_name)}"`);
     res.sendFile(absPath);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+// --- Administration ---
+
+export async function adminListDocuments(req, res) {
+  try {
+    const documents = await listAllDocuments(req.query);
+    res.json({ documents });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function adminSetDocumentStatus(req, res) {
+  try {
+    const document = await setDocumentStatus(req.params.id, req.body?.status);
+    res.json({ document });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

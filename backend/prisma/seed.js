@@ -118,23 +118,34 @@ async function main() {
   // Documents
   await prisma.$executeRawUnsafe(`
     INSERT INTO document (id_user, type, file_name, file_url, upload_date, status) VALUES
-    (2,  'permis',    'permis_luc_martin.pdf',        'https://storage.sailingloc.fr/docs/permis_luc_martin.pdf',        '2024-01-15 10:00:00', 'validated'),
-    (2,  'assurance', 'assurance_luc_martin.pdf',     'https://storage.sailingloc.fr/docs/assurance_luc_martin.pdf',     '2024-01-15 10:05:00', 'validated'),
-    (2,  'identité',  'cni_luc_martin.pdf',           'https://storage.sailingloc.fr/docs/cni_luc_martin.pdf',           '2024-01-15 10:10:00', 'validated'),
-    (3,  'permis',    'permis_claire_dupont.pdf',     'https://storage.sailingloc.fr/docs/permis_claire_dupont.pdf',     '2024-02-20 09:00:00', 'validated'),
-    (3,  'assurance', 'assurance_claire_dupont.pdf',  'https://storage.sailingloc.fr/docs/assurance_claire_dupont.pdf',  '2024-02-20 09:05:00', 'validated'),
-    (4,  'permis',    'permis_pierre_renaud.pdf',     'https://storage.sailingloc.fr/docs/permis_pierre_renaud.pdf',     '2024-03-10 08:00:00', 'validated'),
-    (4,  'assurance', 'assurance_pierre_renaud.pdf',  'https://storage.sailingloc.fr/docs/assurance_pierre_renaud.pdf',  '2024-03-10 08:10:00', 'validated'),
-    (5,  'permis',    'permis_isabelle_faure.pdf',    'https://storage.sailingloc.fr/docs/permis_isabelle_faure.pdf',    '2024-04-05 11:00:00', 'validated'),
-    (5,  'assurance', 'assurance_isabelle_faure.pdf', 'https://storage.sailingloc.fr/docs/assurance_isabelle_faure.pdf', '2024-04-05 11:10:00', 'pending'),
-    (6,  'identité',  'cni_thomas_bernard.pdf',       'https://storage.sailingloc.fr/docs/cni_thomas_bernard.pdf',       '2025-04-01 08:00:00', 'validated'),
-    (7,  'identité',  'cni_sophie_lefevre.pdf',       'https://storage.sailingloc.fr/docs/cni_sophie_lefevre.pdf',       '2025-04-10 11:00:00', 'validated'),
-    (8,  'permis',    'permis_jules_moreau.pdf',      'https://storage.sailingloc.fr/docs/permis_jules_moreau.pdf',      '2025-05-01 14:00:00', 'validated'),
-    (9,  'identité',  'cni_camille_girard.pdf',       'https://storage.sailingloc.fr/docs/cni_camille_girard.pdf',       '2025-05-15 09:00:00', 'pending'),
-    (10, 'identité',  'cni_antoine_rousseau.pdf',     'https://storage.sailingloc.fr/docs/cni_antoine_rousseau.pdf',     '2025-05-20 10:00:00', 'validated'),
-    (11, 'identité',  'cni_marie_lambert.pdf',        'https://storage.sailingloc.fr/docs/cni_marie_lambert.pdf',        '2025-06-01 08:30:00', 'validated'),
-    (12, 'identité',  'cni_kevin_blanc.pdf',          'https://storage.sailingloc.fr/docs/cni_kevin_blanc.pdf',          '2025-06-05 09:00:00', 'refused'),
-    (13, 'identité',  'cni_lucie_chevalier.pdf',      'https://storage.sailingloc.fr/docs/cni_lucie_chevalier.pdf',      '2025-07-01 15:00:00', 'pending')
+    -- Propriétaires : permis, assurance, cv_marin, acte_francisation (plusieurs possibles)
+    (2,  'permis',            'permis_luc_martin.pdf',           'https://storage.sailingloc.fr/docs/permis_luc_martin.pdf',           '2025-01-15 10:00:00', 'validated'),
+    (2,  'assurance',         'assurance_le_mistral.pdf',        'https://storage.sailingloc.fr/docs/assurance_le_mistral.pdf',        '2025-01-15 10:05:00', 'validated'),
+    (2,  'cv_marin',          'cv_marin_luc_martin.pdf',         'https://storage.sailingloc.fr/docs/cv_marin_luc_martin.pdf',         '2025-01-15 10:10:00', 'validated'),
+    (2,  'acte_francisation', 'francisation_le_mistral.pdf',     'https://storage.sailingloc.fr/docs/francisation_le_mistral.pdf',     '2025-01-15 10:15:00', 'validated'),
+    (2,  'acte_francisation', 'francisation_soleil_levant.pdf',  'https://storage.sailingloc.fr/docs/francisation_soleil_levant.pdf',  '2025-01-16 09:00:00', 'pending'),
+    (3,  'permis',            'permis_claire_dupont.pdf',        'https://storage.sailingloc.fr/docs/permis_claire_dupont.pdf',        '2025-02-20 09:00:00', 'validated'),
+    (3,  'assurance',         'assurance_atlantique.pdf',        'https://storage.sailingloc.fr/docs/assurance_atlantique.pdf',        '2025-02-20 09:05:00', 'pending'),
+    (3,  'cv_marin',          'cv_marin_claire_dupont.pdf',      'https://storage.sailingloc.fr/docs/cv_marin_claire_dupont.pdf',      '2025-02-20 09:10:00', 'validated'),
+    (3,  'acte_francisation', 'francisation_atlantique.pdf',     'https://storage.sailingloc.fr/docs/francisation_atlantique.pdf',     '2025-02-20 09:15:00', 'validated'),
+    (4,  'permis',            'permis_pierre_renaud.pdf',        'https://storage.sailingloc.fr/docs/permis_pierre_renaud.pdf',        '2025-03-10 08:00:00', 'validated'),
+    (4,  'assurance',         'assurance_belle_de_cannes.pdf',   'https://storage.sailingloc.fr/docs/assurance_belle_de_cannes.pdf',   '2025-03-10 08:10:00', 'validated'),
+    (4,  'acte_francisation', 'francisation_belle_de_cannes.pdf','https://storage.sailingloc.fr/docs/francisation_belle_de_cannes.pdf','2025-03-10 08:15:00', 'validated'),
+    (5,  'permis',            'permis_isabelle_faure.pdf',       'https://storage.sailingloc.fr/docs/permis_isabelle_faure.pdf',       '2025-04-05 11:00:00', 'pending'),
+    (5,  'assurance',         'assurance_finistere.pdf',         'https://storage.sailingloc.fr/docs/assurance_finistere.pdf',         '2025-04-05 11:10:00', 'refused'),
+    -- Locataires : permis_conduire, piece_identite, cv_nautique
+    (6,  'permis_conduire',   'permis_thomas_bernard.pdf',       'https://storage.sailingloc.fr/docs/permis_thomas_bernard.pdf',       '2025-04-01 08:00:00', 'validated'),
+    (6,  'piece_identite',    'cni_thomas_bernard.pdf',          'https://storage.sailingloc.fr/docs/cni_thomas_bernard.pdf',          '2025-04-01 08:05:00', 'validated'),
+    (6,  'cv_nautique',       'cv_nautique_thomas_bernard.pdf',  'https://storage.sailingloc.fr/docs/cv_nautique_thomas_bernard.pdf',  '2025-04-01 08:10:00', 'pending'),
+    (7,  'piece_identite',    'cni_sophie_lefevre.pdf',          'https://storage.sailingloc.fr/docs/cni_sophie_lefevre.pdf',          '2025-04-10 11:00:00', 'validated'),
+    (7,  'permis_conduire',   'permis_sophie_lefevre.pdf',       'https://storage.sailingloc.fr/docs/permis_sophie_lefevre.pdf',       '2025-04-10 11:05:00', 'validated'),
+    (8,  'permis_conduire',   'permis_jules_moreau.pdf',         'https://storage.sailingloc.fr/docs/permis_jules_moreau.pdf',         '2025-05-01 14:00:00', 'validated'),
+    (9,  'piece_identite',    'cni_camille_girard.pdf',          'https://storage.sailingloc.fr/docs/cni_camille_girard.pdf',          '2025-05-15 09:00:00', 'pending'),
+    (10, 'piece_identite',    'cni_antoine_rousseau.pdf',        'https://storage.sailingloc.fr/docs/cni_antoine_rousseau.pdf',        '2025-05-20 10:00:00', 'validated'),
+    (10, 'permis_conduire',   'permis_antoine_rousseau.pdf',     'https://storage.sailingloc.fr/docs/permis_antoine_rousseau.pdf',     '2025-05-20 10:05:00', 'validated'),
+    (11, 'piece_identite',    'cni_marie_lambert.pdf',           'https://storage.sailingloc.fr/docs/cni_marie_lambert.pdf',           '2025-06-01 08:30:00', 'validated'),
+    (12, 'piece_identite',    'cni_kevin_blanc.pdf',             'https://storage.sailingloc.fr/docs/cni_kevin_blanc.pdf',             '2025-06-05 09:00:00', 'refused'),
+    (13, 'piece_identite',    'cni_lucie_chevalier.pdf',         'https://storage.sailingloc.fr/docs/cni_lucie_chevalier.pdf',         '2025-07-01 15:00:00', 'pending')
     ON CONFLICT DO NOTHING
   `);
 
@@ -218,8 +229,9 @@ async function main() {
 
   // Booking documents
   await prisma.$executeRawUnsafe(`
+    -- Lie chaque réservation à la pièce d'identité du locataire concerné.
     INSERT INTO booking_document (id_booking, id_document) VALUES
-    ( 1, 10), ( 2, 11), ( 5, 11), ( 7, 14), ( 8, 15), ( 9, 16), (11, 12), (12, 13)
+    (1, 16), (2, 18), (5, 18), (6, 21), (7, 22), (8, 24), (9, 25), (12, 21)
     ON CONFLICT (id_booking, id_document) DO NOTHING
   `);
 
