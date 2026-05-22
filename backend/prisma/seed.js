@@ -22,7 +22,7 @@ async function main() {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE
       booking_document, payment, review, image, user_boat_favorite,
-      message, document, booking, boat, port, "user"
+      boat_report, message, document, booking, boat, port, "user"
     RESTART IDENTITY CASCADE
   `);
 
@@ -233,6 +233,22 @@ async function main() {
     INSERT INTO booking_document (id_booking, id_document) VALUES
     (1, 16), (2, 18), (5, 18), (6, 21), (7, 22), (8, 24), (9, 25), (12, 21)
     ON CONFLICT (id_booking, id_document) DO NOTHING
+  `);
+
+  // Signalements de bateaux
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO boat_report (id_boat, id_user, reason, status) VALUES
+    (1, 7,  'Équipements de sécurité signalés manquants lors de la visite.', 'resolved'),
+    (2, 6,  'Les photos ne correspondent pas au bateau réel.',               'pending'),
+    (2, 9,  'Bateau indisponible à la date pourtant affichée libre.',        'pending'),
+    (3, 9,  'Prix trompeur : des frais non annoncés ont été demandés.',      'pending'),
+    (3, 11, 'Description mensongère sur la capacité du bateau.',             'dismissed'),
+    (4, 10, 'Annonce en double avec une autre déjà en ligne.',              'dismissed'),
+    (5, 12, 'Le propriétaire demande à payer hors plateforme.',             'pending'),
+    (6, 11, 'Annonce suspecte, le propriétaire reste injoignable.',          'pending'),
+    (7, 13, 'Comportement déplacé du propriétaire lors de l''échange.',     'resolved'),
+    (8, 8,  'Bateau non conforme aux caractéristiques annoncées.',           'pending')
+    ON CONFLICT DO NOTHING
   `);
 
   console.log('Seed completed.');

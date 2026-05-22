@@ -34,6 +34,7 @@ model User {
   favoriteBoats       UserBoatFavorite[]
   images              Image[]
   refreshTokens       RefreshToken[]
+  reports             BoatReport[]   @relation("UserReports")
 
   @@unique([email, role])
   @@map("user")
@@ -95,10 +96,27 @@ model Boat {
   bookings        Booking[]
   images          Image[]
   favoriteUsers   UserBoatFavorite[]
+  reports         BoatReport[]
 
   @@index([id_user])
   @@index([id_port])
   @@map("boat")
+}
+
+model BoatReport {
+  id_report   Int          @id @default(autoincrement())
+  id_boat     Int
+  id_user     Int?
+  reason      String       @db.VarChar(500)
+  status      ReportStatus @default(pending)
+  created_at  DateTime     @default(now())
+  resolved_at DateTime?
+
+  boat        Boat         @relation(fields: [id_boat], references: [id_boat])
+  reporter    User?        @relation("UserReports", fields: [id_user], references: [id_user])
+
+  @@index([id_boat])
+  @@map("boat_report")
 }
 
 model Booking {
@@ -267,6 +285,14 @@ enum PaymentStatus {
   refunded
 
   @@map("payment_status")
+}
+
+enum ReportStatus {
+  pending
+  resolved
+  dismissed
+
+  @@map("report_status")
 }
 
 enum DocumentStatus {
