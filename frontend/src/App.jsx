@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { useAuth } from './hooks/useAuth.jsx';
 import Header from './components/common/Header/Header.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
+import Footer from './components/common/Footer.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -45,10 +46,11 @@ function AppContent() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="bg-slate-50 text-slate-900">
         <AppRouter location={routesLocation} />
       </div>
       {showAuthModal && <AuthModal activeTab={activeAuthTab} onClose={closeAuthModal} />}
+      <Footer />
     </>
   );
 }
