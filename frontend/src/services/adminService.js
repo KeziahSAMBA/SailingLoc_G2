@@ -55,3 +55,15 @@ export function listDisputes(status) {
 export function setDisputeStatus(id, status, resolution) {
   return api.patch(`/admin/disputes/${id}`, { status, resolution });
 }
+
+export function listReviews(params) {
+  return api.get('/admin/reviews', { params });
+}
+
+export function updateReview(id, data) {
+  return api.patch(`/admin/reviews/${id}`, data);
+}
+
+export function deleteReview(id) {
+  return api.delete(`/admin/reviews/${id}`);
+}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../hooks/useToast.jsx';
 import { listDocuments, setDocumentStatus } from '../../services/adminService.js';
 import { fetchDocumentFile } from '../../services/documentService.js';
+import { IconBtn, EyeIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 
 const TYPE_LABEL = {
   permis_conduire: 'Permis bateau',
@@ -202,13 +203,9 @@ function AdminDocumentsPage() {
                   </td>
                   <td className="px-4 py-3">{TYPE_LABEL[d.type] || d.type}</td>
                   <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => view(d)}
-                      className="text-xs font-semibold text-[#5AB4EC] hover:underline"
-                    >
-                      Voir
-                    </button>
+                    <IconBtn title="Voir le document" variant="info" onClick={() => view(d)}>
+                      <EyeIcon />
+                    </IconBtn>
                   </td>
                   <td className="px-4 py-3 text-slate-400">{fmtDate(d.upload_date)}</td>
                   <td className="px-4 py-3">
@@ -222,22 +219,22 @@ function AdminDocumentsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
+                      <IconBtn
+                        title="Valider"
+                        variant="success"
                         disabled={busyId === d.id_document || d.status === 'validated'}
                         onClick={() => decide(d, 'validated')}
-                        className="rounded-lg border border-emerald-500/40 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10 disabled:opacity-40"
                       >
-                        Valider
-                      </button>
-                      <button
-                        type="button"
+                        <CheckIcon />
+                      </IconBtn>
+                      <IconBtn
+                        title="Refuser"
+                        variant="danger"
                         disabled={busyId === d.id_document || d.status === 'refused'}
                         onClick={() => decide(d, 'refused')}
-                        className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-40"
                       >
-                        Refuser
-                      </button>
+                        <XIcon />
+                      </IconBtn>
                     </div>
                   </td>
                 </tr>

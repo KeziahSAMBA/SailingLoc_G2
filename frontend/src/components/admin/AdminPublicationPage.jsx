@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
+import { IconBtn, EyeIcon, EyeOffIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 import {
   listBoats,
   setBoatPublished,
@@ -241,19 +242,17 @@ function AdminPublicationPage() {
                           <span className="text-xs text-slate-500">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          disabled={busyId === `b${b.id_boat}`}
-                          onClick={() => togglePublish(b)}
-                          className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50 ${
-                            b.is_published
-                              ? 'border-slate-600 text-slate-200 hover:bg-slate-800'
-                              : 'border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10'
-                          }`}
-                        >
-                          {b.is_published ? 'Dépublier' : 'Publier'}
-                        </button>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end">
+                          <IconBtn
+                            title={b.is_published ? 'Dépublier' : 'Publier'}
+                            variant={b.is_published ? 'default' : 'success'}
+                            disabled={busyId === `b${b.id_boat}`}
+                            onClick={() => togglePublish(b)}
+                          >
+                            {b.is_published ? <EyeOffIcon /> : <EyeIcon />}
+                          </IconBtn>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -339,31 +338,30 @@ function AdminPublicationPage() {
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap justify-end gap-2">
                           {r.boat?.is_published && (
-                            <button
-                              type="button"
+                            <IconBtn
+                              title="Dépublier le bateau"
                               disabled={busyId === `r${r.id_report}`}
                               onClick={() => unpublishFromReport(r)}
-                              className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-slate-800 disabled:opacity-50"
                             >
-                              Dépublier
-                            </button>
+                              <EyeOffIcon />
+                            </IconBtn>
                           )}
-                          <button
-                            type="button"
+                          <IconBtn
+                            title="Traiter"
+                            variant="success"
                             disabled={busyId === `r${r.id_report}` || r.status === 'resolved'}
                             onClick={() => decideReport(r, 'resolved')}
-                            className="rounded-lg border border-emerald-500/40 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10 disabled:opacity-40"
                           >
-                            Traiter
-                          </button>
-                          <button
-                            type="button"
+                            <CheckIcon />
+                          </IconBtn>
+                          <IconBtn
+                            title="Rejeter"
+                            variant="danger"
                             disabled={busyId === `r${r.id_report}` || r.status === 'dismissed'}
                             onClick={() => decideReport(r, 'dismissed')}
-                            className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-40"
                           >
-                            Rejeter
-                          </button>
+                            <XIcon />
+                          </IconBtn>
                         </div>
                       </td>
                     </tr>

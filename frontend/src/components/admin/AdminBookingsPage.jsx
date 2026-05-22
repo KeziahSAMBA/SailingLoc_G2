@@ -6,6 +6,7 @@ import {
   listDisputes,
   setDisputeStatus,
 } from '../../services/adminService.js';
+import { IconBtn, BanIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -249,18 +250,20 @@ function AdminBookingsPage() {
                           <span className="text-xs text-slate-500">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3">
                         {b.status === 'pending' || b.status === 'confirmed' ? (
-                          <button
-                            type="button"
-                            disabled={busyId === `b${b.id_booking}`}
-                            onClick={() => cancel(b)}
-                            className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-40"
-                          >
-                            Annuler
-                          </button>
+                          <div className="flex justify-end">
+                            <IconBtn
+                              title="Annuler la réservation"
+                              variant="danger"
+                              disabled={busyId === `b${b.id_booking}`}
+                              onClick={() => cancel(b)}
+                            >
+                              <BanIcon />
+                            </IconBtn>
+                          </div>
                         ) : (
-                          <span className="text-xs text-slate-500">—</span>
+                          <span className="block text-right text-xs text-slate-500">—</span>
                         )}
                       </td>
                     </tr>
@@ -336,22 +339,22 @@ function AdminBookingsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
+                          <IconBtn
+                            title="Résoudre"
+                            variant="success"
                             disabled={d.status === 'resolved'}
                             onClick={() => openDecision(d, 'resolved')}
-                            className="rounded-lg border border-emerald-500/40 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10 disabled:opacity-40"
                           >
-                            Résoudre
-                          </button>
-                          <button
-                            type="button"
+                            <CheckIcon />
+                          </IconBtn>
+                          <IconBtn
+                            title="Rejeter"
+                            variant="danger"
                             disabled={d.status === 'rejected'}
                             onClick={() => openDecision(d, 'rejected')}
-                            className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-40"
                           >
-                            Rejeter
-                          </button>
+                            <XIcon />
+                          </IconBtn>
                         </div>
                       </td>
                     </tr>
