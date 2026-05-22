@@ -23,3 +23,19 @@ export function listDocuments(params) {
 export function setDocumentStatus(id, status) {
   return api.patch(`/admin/documents/${id}`, { status });
 }
+
+export function listBoats(params) {
+  return api.get('/admin/boats', { params });
+}
+
+export function setBoatPublished(id, is_published) {
+  return api.patch(`/admin/boats/${id}`, { is_published });
+}
+
+export function listReports(status) {
+  return api.get('/admin/reports', { params: status ? { status } : {} });
+}
+
+export function setReportStatus(id, status) {
+  return api.patch(`/admin/reports/${id}`, { status });
+}
