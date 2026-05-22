@@ -13,6 +13,12 @@ import {
   adminListReports,
   adminSetReportStatus,
 } from '../controllers/boatAdminController.js';
+import {
+  adminListBookings,
+  adminCancelBooking,
+  adminListDisputes,
+  adminSetDisputeStatus,
+} from '../controllers/bookingAdminController.js';
 import { protect, requireAdmin } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -33,5 +39,10 @@ router.get('/boats', protect, requireAdmin, adminListBoats);
 router.patch('/boats/:id', protect, requireAdmin, adminSetBoatPublished);
 router.get('/reports', protect, requireAdmin, adminListReports);
 router.patch('/reports/:id', protect, requireAdmin, adminSetReportStatus);
+
+router.get('/bookings', protect, requireAdmin, adminListBookings);
+router.patch('/bookings/:id/cancel', protect, requireAdmin, adminCancelBooking);
+router.get('/disputes', protect, requireAdmin, adminListDisputes);
+router.patch('/disputes/:id', protect, requireAdmin, adminSetDisputeStatus);
 
 export default router;

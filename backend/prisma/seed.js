@@ -22,7 +22,7 @@ async function main() {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE
       booking_document, payment, review, image, user_boat_favorite,
-      boat_report, message, document, booking, boat, port, "user"
+      dispute, boat_report, message, document, booking, boat, port, "user"
     RESTART IDENTITY CASCADE
   `);
 
@@ -248,6 +248,17 @@ async function main() {
     (6, 11, 'Annonce suspecte, le propriétaire reste injoignable.',          'pending'),
     (7, 13, 'Comportement déplacé du propriétaire lors de l''échange.',     'resolved'),
     (8, 8,  'Bateau non conforme aux caractéristiques annoncées.',           'pending')
+    ON CONFLICT DO NOTHING
+  `);
+
+  // Litiges sur réservations
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO dispute (id_booking, id_user, reason, status, resolution) VALUES
+    (1,  6,  'Le bateau présentait des dommages non signalés à la remise des clés.', 'open',     NULL),
+    (2,  7,  'Prestation skipper absente alors qu''elle était incluse, remboursement partiel demandé.', 'open', NULL),
+    (7,  10, 'Caution non restituée par le propriétaire après la location.',         'open',     NULL),
+    (8,  11, 'Annulation tardive du propriétaire, frais de transport engagés.',      'resolved', 'Remboursement intégral effectué par la plateforme.'),
+    (12, 9,  'Désaccord sur l''état de propreté du bateau à la livraison.',          'rejected', 'Photos fournies non probantes, litige écarté.')
     ON CONFLICT DO NOTHING
   `);
 

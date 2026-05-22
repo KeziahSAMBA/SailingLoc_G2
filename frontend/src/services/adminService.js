@@ -39,3 +39,19 @@ export function listReports(status) {
 export function setReportStatus(id, status) {
   return api.patch(`/admin/reports/${id}`, { status });
 }
+
+export function listBookings(params) {
+  return api.get('/admin/bookings', { params });
+}
+
+export function cancelBooking(id, reason) {
+  return api.patch(`/admin/bookings/${id}/cancel`, { reason });
+}
+
+export function listDisputes(status) {
+  return api.get('/admin/disputes', { params: status ? { status } : {} });
+}
+
+export function setDisputeStatus(id, status, resolution) {
+  return api.patch(`/admin/disputes/${id}`, { status, resolution });
+}

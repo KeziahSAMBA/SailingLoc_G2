@@ -35,6 +35,7 @@ model User {
   images              Image[]
   refreshTokens       RefreshToken[]
   reports             BoatReport[]   @relation("UserReports")
+  disputes            Dispute[]      @relation("UserDisputes")
 
   @@unique([email, role])
   @@map("user")
@@ -139,11 +140,29 @@ model Booking {
   payments            Payment[]
   reviews             Review[]
   documents           BookingDocument[]
+  disputes            Dispute[]
 
   @@index([id_user])
   @@index([id_boat])
   @@index([status])
   @@map("booking")
+}
+
+model Dispute {
+  id_dispute  Int           @id @default(autoincrement())
+  id_booking  Int
+  id_user     Int?
+  reason      String        @db.VarChar(1000)
+  status      DisputeStatus @default(open)
+  resolution  String?       @db.VarChar(1000)
+  created_at  DateTime      @default(now())
+  resolved_at DateTime?
+
+  booking     Booking       @relation(fields: [id_booking], references: [id_booking])
+  opener      User?         @relation("UserDisputes", fields: [id_user], references: [id_user])
+
+  @@index([id_booking])
+  @@map("dispute")
 }
 
 model Payment {
@@ -293,6 +312,14 @@ enum ReportStatus {
   dismissed
 
   @@map("report_status")
+}
+
+enum DisputeStatus {
+  open
+  resolved
+  rejected
+
+  @@map("dispute_status")
 }
 
 enum DocumentStatus {
