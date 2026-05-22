@@ -8,6 +8,7 @@ import AdminDashboard from '../components/admin/AdminDashboard.jsx';
 import AdminUsersPage from '../components/admin/AdminUsersPage.jsx';
 import AdminDocumentsPage from '../components/admin/AdminDocumentsPage.jsx';
 import AdminPublicationPage from '../components/admin/AdminPublicationPage.jsx';
+import AdminBookingsPage from '../components/admin/AdminBookingsPage.jsx';
 import AdminPlaceholder from '../components/admin/AdminPlaceholder.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
@@ -80,7 +81,7 @@ function AppRouter({ location }) {
         <Route path="comments" element={<AdminPlaceholder title="Commentaires" />} />
         <Route path="publications" element={<AdminPublicationPage />} />
         <Route path="documents" element={<AdminDocumentsPage />} />
-        <Route path="bookings" element={<AdminPlaceholder title="Réservations" />} />
+        <Route path="bookings" element={<AdminBookingsPage />} />
         <Route path="ports" element={<AdminPlaceholder title="Ports" />} />
         <Route path="transactions" element={<AdminPlaceholder title="Transaction" />} />
       </Route>
