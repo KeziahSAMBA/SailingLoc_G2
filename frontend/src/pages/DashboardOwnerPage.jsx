@@ -24,8 +24,10 @@ function DashboardOwnerPage() {
     >
       <div className="w-full min-h-screen bg-black/10 px-16 pt-[120px] pb-10">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Dashboard propriétaire</h1>
-          <p className="mt-2 text-gray-300">Gestion des annonces, réservations et paiements.</p>
+          <h1 className="text-3xl font-bold text-white">Prenez le large avec style</h1>
+          <p className="mt-2 text-gray-300">
+            Réservez le bateau de vos rêves auprès de propriétaires passionnés partout en France
+          </p>
         </header>
 
         <section className="grid gap-6 md:grid-cols-2">
