@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import DashboardOwnerPage from '../pages/DashboardOwnerPage.jsx';
+import HomePage from '../pages/HomePage.jsx';
 import DashboardPage from '../pages/DashboardPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
@@ -15,9 +15,9 @@ import RequireGuest from '../components/common/RequireGuest.jsx';
 function AppRouter({ location }) {
   return (
     <Routes location={location}>
-      <Route path="/" element={<DashboardOwnerPage />} />
-      <Route path="/login" element={<DashboardOwnerPage />} />
-      <Route path="/register" element={<DashboardOwnerPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<HomePage />} />
+      <Route path="/register" element={<HomePage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route
         path="/forgot-password"
