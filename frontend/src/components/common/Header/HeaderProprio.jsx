@@ -49,7 +49,7 @@ function Header() {
       className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
       style={{
         height: scrolled ? '60px' : '80px',
-        backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.01)',
+        backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
         borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
         boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
         transition: 'height 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease',
