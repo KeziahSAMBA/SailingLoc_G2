@@ -7,6 +7,8 @@ import { SiAppstore, SiGoogleplay } from 'react-icons/si';
 import logoLong from '../assets/image/SL_logo/logo SL long.webp';
 import { MdVerified, MdAnchor } from 'react-icons/md';
 import { FaShieldAlt, FaHandshake } from 'react-icons/fa';
+import CarrouselBoat from '../components/common/CarrouselBoat.jsx';
+import CarouselBoatTypes from '../components/common/CarouselBoatTypes.jsx';
 
 function HomePage() {
   const [boats, setBoats] = useState([]);
@@ -28,7 +30,8 @@ function HomePage() {
           className="absolute inset-0 w-full h-full object-cover"
           src={bateauVideo}
         />
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-b from-transparent to-[rgb(0,78,87)]" />
 
         {/* Titres + Search bar + CTA — centrés verticalement */}
         <div className="relative flex-1 flex flex-col items-center justify-center gap-14 text-center">
@@ -65,7 +68,13 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Section 2 — Proposition de valeur */}
+      {/* Section 2 — Carrousels bateaux & ports */}
+      <section className="relative w-full min-h-screen flex flex-col justify-center gap-10 px-16 py-10 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_50%,white_65%,white_100%)]">
+        <CarouselBoatTypes />
+        <CarrouselBoat />
+      </section>
+
+      {/* Section 3 — Proposition de valeur */}
       <section className="w-full min-h-screen bg-white flex flex-col items-center justify-center px-16 py-14 gap-0">
         {/* Bloc titre */}
         <div className="text-center mb-10">
@@ -119,16 +128,6 @@ function HomePage() {
         >
           En savoir plus
         </a>
-      </section>
-
-      {/* Section 3 */}
-      <section className="w-full min-h-screen flex items-center justify-center bg-teal-800 px-16">
-        <div className="text-center text-white">
-          <h2 className="text-4xl font-bold mb-4">Comment ça marche ?</h2>
-          <p className="text-teal-200 text-lg max-w-xl mx-auto">
-            Parcourez les annonces, contactez le propriétaire et prenez la mer en toute sérénité.
-          </p>
-        </div>
       </section>
 
       {/* Section 4 */}
