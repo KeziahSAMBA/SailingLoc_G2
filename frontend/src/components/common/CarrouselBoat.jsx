@@ -200,7 +200,7 @@ const PortCarousel = ({ slides, visibleCount, imageSize = 'normal' }) => {
 const CarrouselBoat = () => (
   <div className="relative w-full">
     <div className="flex items-baseline gap-3">
-      <h2 className="font-bold text-black" style={{ fontSize: '16px', lineHeight: '22px' }}>
+      <h2 className="font-semibold text-black" style={{ fontSize: '16px', lineHeight: '22px' }}>
         Choisissez votre port de départ
       </h2>
       <button
