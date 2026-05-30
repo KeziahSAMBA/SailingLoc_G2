@@ -136,7 +136,7 @@ const PortCarousel = ({ slides, visibleCount, imageSize = 'normal' }) => {
               style={{ width: `${slideWidthPct}%` }}
             >
               <div
-                className="relative rounded-xl overflow-hidden w-full"
+                className="relative rounded-xl overflow-hidden w-full border border-black/40"
                 style={{ aspectRatio: imageSize === 'small' ? '4 / 3' : '1 / 1' }}
               >
                 <img
@@ -166,14 +166,14 @@ const PortCarousel = ({ slides, visibleCount, imageSize = 'normal' }) => {
               </div>
               <span
                 className="mt-1 text-center text-black font-semibold"
-                style={{ fontSize: '11px', lineHeight: '16px' }}
+                style={{ fontSize: '12px', lineHeight: '16px' }}
               >
                 {slide.label}
               </span>
               {slide.description && (
                 <span
                   className="text-center text-gray-600"
-                  style={{ fontSize: '10px', lineHeight: '14px' }}
+                  style={{ fontSize: '11px', lineHeight: '14px' }}
                 >
                   {slide.description}
                 </span>
@@ -205,7 +205,7 @@ const CarrouselBoat = () => (
       </h2>
       <button
         className="flex items-center gap-1.5 text-gray-600 hover:text-black transition-colors ml-4"
-        style={{ fontSize: '11px' }}
+        style={{ fontSize: '14px' }}
       >
         Voir plus <FaArrowRight size={10} />
       </button>

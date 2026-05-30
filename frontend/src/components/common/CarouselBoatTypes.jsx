@@ -83,7 +83,7 @@ const BoatTypeCarousel = ({ slides, title }) => {
 
   return (
     <div
-      className="relative flex-1 rounded-xl overflow-hidden border border-white/30"
+      className="relative flex-1 rounded-xl overflow-hidden border border-black/40"
       style={{ height: 220 }}
     >
       <div
@@ -105,15 +105,15 @@ const BoatTypeCarousel = ({ slides, title }) => {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
             <div className="absolute top-3 left-3">
-              <div className="text-white font-semibold" style={{ fontSize: '12px' }}>
+              <div className="text-white font-semibold" style={{ fontSize: '14px' }}>
                 {title}
               </div>
             </div>
             <div className="absolute bottom-3 left-3 right-3">
-              <div className="text-white font-semibold" style={{ fontSize: '11px' }}>
+              <div className="text-white font-semibold" style={{ fontSize: '12px' }}>
                 {slide.label}
               </div>
-              <div className="text-white/80" style={{ fontSize: '10px', lineHeight: '14px' }}>
+              <div className="text-white/80" style={{ fontSize: '11px', lineHeight: '14px' }}>
                 {slide.description}
               </div>
             </div>
@@ -166,7 +166,7 @@ const CarouselBoatTypes = () => (
       </h2>
       <button
         className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors ml-4"
-        style={{ fontSize: '11px' }}
+        style={{ fontSize: '14px' }}
       >
         Voir plus d'annonces <FaArrowRight size={10} />
       </button>

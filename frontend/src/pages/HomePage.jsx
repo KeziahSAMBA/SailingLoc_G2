@@ -104,7 +104,7 @@ function HomePage() {
   }, []);
 
   return (
-    <main className="w-full">
+    <main className="w-full bg-[linear-gradient(to_bottom,transparent_20%,rgb(0,78,87)_20%,#EBF5FD_60%,white_100%)]">
       <style>{dotFlowCSS}</style>
 
       {/* Section 1 — Hero */}
@@ -120,9 +120,9 @@ function HomePage() {
         <div className="absolute inset-0 bg-black/50" />
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-b from-transparent to-[rgb(0,78,87)]" />
 
-        <div className="relative flex-1 flex flex-col items-center justify-center gap-14 text-center">
+        <div className="relative flex-1 flex flex-col items-center justify-center gap-20 text-center">
           <div>
-            <img src={logoLong} alt="SailingLoc" className="h-16 mx-auto mb-4" />
+            <img src={logoLong} alt="SailingLoc" className="h-16 mx-auto mb-2" />
             <p className="text-gray-300 text-base">
               Réservez le bateau de vos rêves auprès de propriétaires passionnés dans tous les ports
               de France
@@ -155,75 +155,77 @@ function HomePage() {
       </section>
 
       {/* Section 2 — Carrousels bateaux & ports */}
-      <section className="relative w-full min-h-screen flex flex-col justify-center gap-10 px-16 py-16 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_50%,white_65%,white_100%)]">
+      <section className="relative w-full min-h-screen flex flex-col justify-center gap-10 px-28 py-16 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_50%,white_65%,white_100%)]">
         <CarouselBoatTypes />
         <CarrouselBoat />
       </section>
 
       {/* Section 3 — Tuto */}
-      <section className="w-full bg-white flex flex-col items-center justify-center px-16 py-16 gap-0">
-        <div className="text-center mb-10">
-          <h2 className="text-md font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
-            Comment ça marche ?
-          </h2>
-          <h1 className="text-3xl md:text-4xl font-semi-bold text-gray-900">
-            Réserver un bateau n'a jamais été aussi simple
-          </h1>
-        </div>
+      <section className="w-full bg-white flex flex-col items-center justify-center px-28 py-16 gap-0">
+        <div className="w-full flex flex-col items-center rounded-2xl border border-black/15 shadow-[0_8px_48px_rgba(0,0,0,0.18)] px-16 py-12">
+          <div className="text-center mb-10">
+            <h2 className="text-md font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+              Comment ça marche ?
+            </h2>
+            <h1 className="text-3xl md:text-4xl font-semi-bold text-gray-900">
+              Réserver un bateau n'a jamais été aussi simple
+            </h1>
+          </div>
 
-        <div ref={stepsRef} className="flex items-start w-full mb-10">
-          {STEPS.map(({ num, icon, title, text }, i) => (
-            <>
-              <div key={num} className="flex flex-col items-center text-center flex-1 px-4">
-                <div
-                  className="w-14 h-14 rounded-full bg-white border border-sky-500 flex items-center justify-center text-sky-500 text-xl font-semibold mb-4"
-                  style={{ boxShadow: '0 2px 8px rgba(14,165,233,0.3)' }}
-                >
-                  {num}
+          <div ref={stepsRef} className="flex items-start w-full mb-10">
+            {STEPS.map(({ num, icon, title, text }, i) => (
+              <>
+                <div key={num} className="flex flex-col items-center text-center flex-1 px-4">
+                  <div
+                    className="w-14 h-14 rounded-full bg-white border border-sky-500 flex items-center justify-center text-sky-500 text-xl font-semibold mb-4"
+                    style={{ boxShadow: '0 2px 8px rgba(14,165,233,0.3)' }}
+                  >
+                    {num}
+                  </div>
+                  <h3
+                    className="font-semibold text-gray-900 flex items-center gap-1.5"
+                    style={{ letterSpacing: '-0.01em' }}
+                  >
+                    <span className="text-sky-500">{icon}</span>
+                    {title}
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed max-w-xs mt-2">{text}</p>
                 </div>
-                <h3
-                  className="font-semibold text-gray-900 flex items-center gap-1.5"
-                  style={{ letterSpacing: '-0.01em' }}
-                >
-                  <span className="text-sky-500">{icon}</span>
-                  {title}
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-xs mt-2">{text}</p>
-              </div>
 
-              {i < STEPS.length - 1 && <DataDots active={dotsActive} />}
-            </>
-          ))}
+                {i < STEPS.length - 1 && <DataDots active={dotsActive} />}
+              </>
+            ))}
+          </div>
+
+          <a
+            href="#"
+            className="flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap"
+            style={{
+              border: '1px solid rgba(14,165,233,0.95)',
+              boxShadow: '0 2px 8px rgba(10,49,114,0.3)',
+              backgroundColor: '#fff',
+              color: 'rgba(14,165,233,0.95)',
+              transition: 'background-color 0.2s, color 0.2s, box-shadow 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.95)';
+              e.currentTarget.style.color = '#fff';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#fff';
+              e.currentTarget.style.color = 'rgba(14,165,233,0.95)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(10,49,114,0.3)';
+            }}
+          >
+            <MdSearch className="text-base" />
+            Lancer ma recherche
+          </a>
         </div>
-
-        <a
-          href="#"
-          className="flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap"
-          style={{
-            border: '1px solid rgba(14,165,233,0.95)',
-            boxShadow: '0 2px 8px rgba(10,49,114,0.3)',
-            backgroundColor: '#fff',
-            color: 'rgba(14,165,233,0.95)',
-            transition: 'background-color 0.2s, color 0.2s, box-shadow 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.95)';
-            e.currentTarget.style.color = '#fff';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#fff';
-            e.currentTarget.style.color = 'rgba(14,165,233,0.95)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(10,49,114,0.3)';
-          }}
-        >
-          <MdSearch className="text-base" />
-          Lancer ma recherche
-        </a>
       </section>
 
       {/* Section 4 — Proposition de valeur */}
-      <section className="w-full bg-white flex flex-col items-center justify-center px-16 py-16 gap-0">
+      <section className="w-full bg-white flex flex-col items-center justify-center px-28 py-16 gap-0">
         <div className="text-center mb-10">
           <h2 className="text-md font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
             Pourquoi nous choisir ?
@@ -293,7 +295,7 @@ function HomePage() {
       </section>
 
       {/* Section 5 - Avis & Commentaires*/}
-      <section className="w-full min-h-screen bg-slate-800 px-16 py-16">
+      <section className="w-full min-h-screen bg-slate-800 px-28 py-16">
         <div className="text-center text-white mb-12">
           <h2 className="text-4xl font-bold mb-4">Prêt à larguer les amarres ?</h2>
           <p className="text-slate-300 text-lg max-w-xl mx-auto">
