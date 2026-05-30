@@ -105,7 +105,7 @@ const BoatTypeCarousel = ({ slides, title }) => {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
             <div className="absolute top-3 left-3">
-              <div className="text-white font-bold" style={{ fontSize: '12px' }}>
+              <div className="text-white font-semibold" style={{ fontSize: '12px' }}>
                 {title}
               </div>
             </div>
@@ -161,7 +161,7 @@ const BoatTypeCarousel = ({ slides, title }) => {
 const CarouselBoatTypes = () => (
   <div className="relative w-full">
     <div className="flex items-baseline gap-3 mb-3">
-      <h2 className="font-bold text-white" style={{ fontSize: '16px', lineHeight: '22px' }}>
+      <h2 className="font-semibold text-white" style={{ fontSize: '16px', lineHeight: '22px' }}>
         Annonces du moment
       </h2>
       <button
