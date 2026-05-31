@@ -1,23 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth.jsx';
 import logo from '../../../assets/image/SL_logo/logo SL.webp';
 import logoLong from '../../../assets/image/SL_logo/logo SL long.webp';
 
 const NAV_ITEMS = ['Chercher une location', 'Tutoriel', 'Nos suggestions', 'Avis & commentaires'];
 
 const USER_MENU_ITEMS = [
-  { label: 'Mon dashboard', href: '#' },
-  { label: 'Compte', href: '#' },
-  { label: 'Mes documents', href: '#' },
-  { label: 'Mes réservations', href: '#' },
-  { label: 'Favoris', href: '#' },
-  { label: 'Déconnexion', href: '#', danger: true },
+  { label: 'Mon dashboard', to: '/dashboard' },
+  { label: 'Compte', to: '/account' },
+  { label: 'Mes documents', to: '/documents' },
+  { label: 'Mes réservations', to: '/dashboard' },
+  { label: 'Favoris', to: '/dashboard' },
+  { label: 'Déconnexion', action: 'logout', danger: true },
 ];
-
-// Mock — remplacer par la vraie donnée utilisateur quand la BDD sera prête
-const mockUser = {
-  name: 'Jean Dupont',
-  avatar: null, // URL de la photo de profil, ex: '/uploads/avatar.jpg'
-};
 
 function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -25,6 +21,23 @@ function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navRef = useRef(null);
   const userMenuRef = useRef(null);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const displayName = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') : '';
+
+  function handleLogout() {
+    setUserMenuOpen(false);
+    logout();
+    navigate('/', { replace: true });
+  }
+
+  function handleMenuClick(e, item) {
+    e.preventDefault();
+    setUserMenuOpen(false);
+    if (item.action === 'logout') handleLogout();
+    else if (item.to) navigate(item.to);
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -168,7 +181,15 @@ function Header() {
       {/* Droite — Icône utilisateur + Burger menu utilisateur (33%) */}
       <div className="w-1/3 flex items-center justify-end gap-3 pr-4">
         {/* Nom + Icône utilisateur — lien vers le profil */}
-        <a href="#" className="flex items-center gap-3 group" style={{ textDecoration: 'none' }}>
+        <a
+          href="/account"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/account');
+          }}
+          className="flex items-center gap-3 group"
+          style={{ textDecoration: 'none' }}
+        >
           <span
             style={{
               color: '#fff',
@@ -191,7 +212,7 @@ function Header() {
               e.currentTarget.style.opacity = '0.9';
             }}
           >
-            {mockUser.name}
+            {displayName}
           </span>
           <div
             className="rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
@@ -205,10 +226,10 @@ function Header() {
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
           >
-            {mockUser.avatar ? (
+            {user?.avatar ? (
               <img
-                src={mockUser.avatar}
-                alt={mockUser.name}
+                src={user.avatar}
+                alt={displayName}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             ) : (
@@ -270,7 +291,8 @@ function Header() {
               {USER_MENU_ITEMS.map((item) => (
                 <a
                   key={item.label}
-                  href={item.href}
+                  href={item.to || '#'}
+                  onClick={(e) => handleMenuClick(e, item)}
                   className="flex items-center flex-1 px-5 text-base font-medium transition-colors"
                   style={{ color: item.danger ? '#e05252' : scrolled ? '#0A3172' : '#fff' }}
                   onMouseEnter={(e) =>

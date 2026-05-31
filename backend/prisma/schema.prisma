@@ -62,6 +62,8 @@ model Port {
   name        String   @unique @db.VarChar(150)
   city        String   @db.VarChar(100)
   country     String   @db.VarChar(100)
+  department  String?  @db.VarChar(3)
+  region      String?  @db.VarChar(100)
   latitude    Decimal?
   longitude   Decimal?
   created_at  DateTime @default(now())

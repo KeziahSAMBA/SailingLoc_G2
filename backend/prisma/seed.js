@@ -48,15 +48,15 @@ async function main() {
 
   // Ports
   await prisma.$executeRawUnsafe(`
-    INSERT INTO port (name, city, country, latitude, longitude) VALUES
-    ('Port Vieux',           'Antibes',           'France',  43.584100,  7.125300),
-    ('Port de la Joliette',  'Marseille',         'France',  43.351900,  5.355300),
-    ('Port des Minimes',     'La Rochelle',       'France',  46.146700, -1.174400),
-    ('Port de Socoa',        'Saint-Jean-de-Luz', 'France',  43.393900, -1.681600),
-    ('Port Camargue',        'Le Grau-du-Roi',    'France',  43.524500,  4.134200),
-    ('Port de Cannes',       'Cannes',            'France',  43.547700,  7.017700),
-    ('Port de Saint-Tropez', 'Saint-Tropez',      'France',  43.272800,  6.638100),
-    ('Port de Brest',        'Brest',             'France',  48.387200, -4.494900)
+    INSERT INTO port (name, city, country, department, region, latitude, longitude) VALUES
+    ('Port Vieux',           'Antibes',           'France', '06', 'Provence-Alpes-Côte d''Azur', 43.584100,  7.125300),
+    ('Port de la Joliette',  'Marseille',         'France', '13', 'Provence-Alpes-Côte d''Azur', 43.351900,  5.355300),
+    ('Port des Minimes',     'La Rochelle',       'France', '17', 'Nouvelle-Aquitaine',          46.146700, -1.174400),
+    ('Port de Socoa',        'Saint-Jean-de-Luz', 'France', '64', 'Nouvelle-Aquitaine',          43.393900, -1.681600),
+    ('Port Camargue',        'Le Grau-du-Roi',    'France', '30', 'Occitanie',                   43.524500,  4.134200),
+    ('Port de Cannes',       'Cannes',            'France', '06', 'Provence-Alpes-Côte d''Azur', 43.547700,  7.017700),
+    ('Port de Saint-Tropez', 'Saint-Tropez',      'France', '83', 'Provence-Alpes-Côte d''Azur', 43.272800,  6.638100),
+    ('Port de Brest',        'Brest',             'France', '29', 'Bretagne',                    48.387200, -4.494900)
     ON CONFLICT (name) DO NOTHING
   `);
 

@@ -67,3 +67,15 @@ export function updateReview(id, data) {
 export function deleteReview(id) {
   return api.delete(`/admin/reviews/${id}`);
 }
+
+export function listPorts(params) {
+  return api.get('/admin/ports', { params });
+}
+
+export function createPort(data) {
+  return api.post('/admin/ports', data);
+}
+
+export function deletePort(id) {
+  return api.delete(`/admin/ports/${id}`);
+}

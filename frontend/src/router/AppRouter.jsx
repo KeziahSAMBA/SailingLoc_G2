@@ -10,6 +10,7 @@ import AdminDocumentsPage from '../components/admin/AdminDocumentsPage.jsx';
 import AdminPublicationPage from '../components/admin/AdminPublicationPage.jsx';
 import AdminBookingsPage from '../components/admin/AdminBookingsPage.jsx';
 import AdminCommentsPage from '../components/admin/AdminCommentsPage.jsx';
+import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
 import AdminPlaceholder from '../components/admin/AdminPlaceholder.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
@@ -83,7 +84,7 @@ function AppRouter({ location }) {
         <Route path="publications" element={<AdminPublicationPage />} />
         <Route path="documents" element={<AdminDocumentsPage />} />
         <Route path="bookings" element={<AdminBookingsPage />} />
-        <Route path="ports" element={<AdminPlaceholder title="Ports" />} />
+        <Route path="ports" element={<AdminPortsPage />} />
         <Route path="transactions" element={<AdminPlaceholder title="Transaction" />} />
       </Route>
     </Routes>

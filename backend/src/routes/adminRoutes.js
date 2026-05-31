@@ -24,6 +24,11 @@ import {
   adminUpdateReview,
   adminDeleteReview,
 } from '../controllers/reviewAdminController.js';
+import {
+  adminListPorts,
+  adminCreatePort,
+  adminDeletePort,
+} from '../controllers/portAdminController.js';
 import { protect, requireAdmin } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -53,5 +58,9 @@ router.patch('/disputes/:id', protect, requireAdmin, adminSetDisputeStatus);
 router.get('/reviews', protect, requireAdmin, adminListReviews);
 router.patch('/reviews/:id', protect, requireAdmin, adminUpdateReview);
 router.delete('/reviews/:id', protect, requireAdmin, adminDeleteReview);
+
+router.get('/ports', protect, requireAdmin, adminListPorts);
+router.post('/ports', protect, requireAdmin, adminCreatePort);
+router.delete('/ports/:id', protect, requireAdmin, adminDeletePort);
 
 export default router;
