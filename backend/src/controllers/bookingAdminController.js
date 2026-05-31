@@ -34,7 +34,10 @@ export async function adminListDisputes(req, res) {
 
 export async function adminSetDisputeStatus(req, res) {
   try {
-    const dispute = await setDisputeStatus(req.params.id, req.body?.status, req.body?.resolution);
+    const dispute = await setDisputeStatus(req.params.id, req.body?.status, req.body?.resolution, {
+      refund_percent: req.body?.refund_percent,
+      refund_commission: req.body?.refund_commission,
+    });
     res.json({ dispute });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

@@ -66,6 +66,12 @@ function AdminBookingsPage() {
   const [resolution, setResolution] = useState('');
   const [deciding, setDeciding] = useState(false);
 
+  // État du remboursement (uniquement si décision = 'resolved').
+  // `pct` = '' désactive le remboursement ; sinon valeur 1-100.
+  const [refundEnabled, setRefundEnabled] = useState(false);
+  const [refundPct, setRefundPct] = useState(50);
+  const [refundCommission, setRefundCommission] = useState(false);
+
   const loadBookings = useCallback(async () => {
     setBookingsLoading(true);
     try {
@@ -122,14 +128,34 @@ function AdminBookingsPage() {
   function openDecision(dispute, status) {
     setDecision({ dispute, status });
     setResolution('');
+    setRefundEnabled(false);
+    setRefundPct(50);
+    setRefundCommission(false);
   }
 
   async function confirmDecision() {
     if (!decision) return;
     setDeciding(true);
     try {
-      await setDisputeStatus(decision.dispute.id_dispute, decision.status, resolution);
-      showToast(decision.status === 'resolved' ? 'Litige résolu.' : 'Litige rejeté.', 'success');
+      const refund =
+        decision.status === 'resolved' && refundEnabled
+          ? { percent: refundPct, commission: refundCommission }
+          : undefined;
+      const res = await setDisputeStatus(
+        decision.dispute.id_dispute,
+        decision.status,
+        resolution,
+        refund
+      );
+      const refunded = res.data?.dispute?.refund;
+      if (refunded) {
+        showToast(
+          `Litige résolu — ${EURO.format(refunded.refunded_amount)} remboursé(s).`,
+          'success'
+        );
+      } else {
+        showToast(decision.status === 'resolved' ? 'Litige résolu.' : 'Litige rejeté.', 'success');
+      }
       setDecision(null);
       await loadDisputes();
     } catch (err) {
@@ -401,6 +427,101 @@ function AdminBookingsPage() {
               placeholder="Détaillez la décision…"
               className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#5AB4EC]"
             />
+
+            {decision.status === 'resolved' &&
+              (() => {
+                const payment = decision.dispute.booking?.payment;
+                if (!payment || payment.status !== 'success') {
+                  return (
+                    <p className="mt-4 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
+                      Aucun paiement réussi rattaché à cette réservation : remboursement
+                      indisponible.
+                    </p>
+                  );
+                }
+                const base = refundCommission
+                  ? payment.amount + payment.commission
+                  : payment.amount;
+                const computed = Math.round(base * Number(refundPct || 0)) / 100;
+                return (
+                  <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/60 p-3">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-200">
+                      <input
+                        type="checkbox"
+                        checked={refundEnabled}
+                        onChange={(e) => setRefundEnabled(e.target.checked)}
+                        className="h-4 w-4 accent-emerald-500"
+                      />
+                      Rembourser le locataire
+                    </label>
+
+                    {refundEnabled && (
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <p className="mb-1 text-xs font-medium text-slate-400">
+                            Pourcentage à rembourser
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {[25, 50, 75, 100].map((p) => (
+                              <button
+                                key={p}
+                                type="button"
+                                onClick={() => setRefundPct(p)}
+                                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                                  Number(refundPct) === p
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'border border-slate-600 text-slate-300 hover:bg-slate-800'
+                                }`}
+                              >
+                                {p}%
+                              </button>
+                            ))}
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={refundPct}
+                                onChange={(e) => setRefundPct(e.target.value)}
+                                className="w-16 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 outline-none focus:border-[#5AB4EC]"
+                              />
+                              <span className="text-xs text-slate-400">%</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={refundCommission}
+                            onChange={(e) => setRefundCommission(e.target.checked)}
+                            className="h-3.5 w-3.5 accent-emerald-500"
+                          />
+                          Rembourser aussi la commission ({EURO.format(payment.commission)})
+                        </label>
+
+                        <div className="rounded-md bg-slate-950/60 px-3 py-2 text-xs">
+                          <div className="flex justify-between text-slate-400">
+                            <span>Montant payé</span>
+                            <span>{EURO.format(payment.amount)}</span>
+                          </div>
+                          <div className="flex justify-between text-slate-400">
+                            <span>Commission</span>
+                            <span>
+                              {refundCommission ? 'incluse' : 'conservée'} (
+                              {EURO.format(payment.commission)})
+                            </span>
+                          </div>
+                          <div className="mt-1 flex justify-between border-t border-slate-700 pt-1 font-semibold text-emerald-300">
+                            <span>Remboursement</span>
+                            <span>{EURO.format(computed)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
             <div className="mt-4 flex justify-end gap-3">
               <button

@@ -464,12 +464,50 @@ export async function sendBoatUnpublishedEmail(to, { firstName, boatName }) {
   });
 }
 
-function buildDisputeDecisionEmail({ firstName, audience, resolved, boatName, resolution }) {
+const EUR = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  maximumFractionDigits: 2,
+});
+
+function buildDisputeDecisionEmail({
+  firstName,
+  audience,
+  resolved,
+  boatName,
+  resolution,
+  refund,
+}) {
   const safeFirstName = escapeHtml(firstName);
   const safeBoat = escapeHtml(boatName || '');
   const safeResolution = escapeHtml(resolution || '');
   const verdict = resolved ? 'résolu' : 'rejeté';
   const accent = resolved ? '#10b981' : '#ef4444';
+
+  // Bloc remboursement : présent seulement si un montant a été remboursé.
+  // Phrase différente pour le locataire (qui reçoit) et le propriétaire (qui est informé).
+  let refundHtml = '';
+  let refundText = '';
+  if (refund && refund.amount > 0) {
+    const amountFmt = EUR.format(refund.amount);
+    const pct = Number(refund.percent);
+    const commissionNote = refund.includesCommission
+      ? ' (commission incluse)'
+      : ' (commission SailingLoc conservée)';
+    const refundIntro =
+      audience === 'proprietaire'
+        ? `Un remboursement de <strong style="color:#10b981;">${amountFmt}</strong> (soit <strong>${pct}%</strong> du montant payé${commissionNote}) a été accordé au locataire.`
+        : `Un remboursement de <strong style="color:#10b981;">${amountFmt}</strong> (soit <strong>${pct}%</strong> du montant payé${commissionNote}) sera crédité sur votre moyen de paiement initial sous quelques jours.`;
+    refundHtml = `
+            <div style="margin:20px 0 0; padding:16px 18px; background-color:#ecfdf5; border-left:4px solid #10b981; border-radius:8px;">
+              <p style="margin:0 0 6px; color:#065f46; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Remboursement</p>
+              <p style="margin:0; color:#064e3b; font-size:14px; line-height:1.6;">${refundIntro}</p>
+            </div>`;
+    refundText =
+      audience === 'proprietaire'
+        ? `\nRemboursement : ${amountFmt} (${pct}% du montant payé${commissionNote}) accordé au locataire.\n`
+        : `\nRemboursement : ${amountFmt} (${pct}% du montant payé${commissionNote}) sera crédité sur votre moyen de paiement initial sous quelques jours.\n`;
+  }
 
   // Message distinct selon le destinataire.
   const introHtml =
@@ -500,7 +538,7 @@ function buildDisputeDecisionEmail({ firstName, audience, resolved, boatName, re
                 ? `<p style="margin:0 0 8px; color:#64748b; font-size:13px;">Décision / motif :</p>
             <p style="margin:0; padding:14px 16px; background-color:#f1f5f9; border-radius:8px; color:#334155; font-size:14px; line-height:1.6;">${safeResolution}</p>`
                 : ''
-            }
+            }${refundHtml}
             <p style="margin:24px 0 0; color:#334155; font-size:14px; line-height:1.6;">
               Pour toute question, contactez notre support.
             </p>
@@ -519,7 +557,7 @@ function buildDisputeDecisionEmail({ firstName, audience, resolved, boatName, re
   const text = `Bonjour ${firstName},
 
 ${introText}
-${resolution ? `\nDécision / motif : ${resolution}\n` : ''}
+${resolution ? `\nDécision / motif : ${resolution}\n` : ''}${refundText}
 Pour toute question, contactez notre support.
 
 — L'équipe SailingLoc`;
@@ -529,7 +567,7 @@ Pour toute question, contactez notre support.
 
 export async function sendDisputeDecisionEmail(
   to,
-  { firstName, audience, resolved, boatName, resolution }
+  { firstName, audience, resolved, boatName, resolution, refund }
 ) {
   const { html, text } = buildDisputeDecisionEmail({
     firstName,
@@ -537,6 +575,7 @@ export async function sendDisputeDecisionEmail(
     resolved,
     boatName,
     resolution,
+    refund,
   });
   await createTransporter().sendMail({
     from: '"SailingLoc" <noreply@sailingloc.fr>',

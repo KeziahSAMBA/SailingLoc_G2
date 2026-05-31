@@ -52,8 +52,16 @@ export function listDisputes(status) {
   return api.get('/admin/disputes', { params: status ? { status } : {} });
 }
 
-export function setDisputeStatus(id, status, resolution) {
-  return api.patch(`/admin/disputes/${id}`, { status, resolution });
+export function setDisputeStatus(id, status, resolution, refund) {
+  // `refund` est optionnel : { percent: 25|50|75|100|number, commission: boolean }.
+  // Le backend ne déclenche un remboursement que si status === 'resolved'
+  // ET percent > 0. La commission est conservée par défaut (politique standard).
+  const payload = { status, resolution };
+  if (refund && Number(refund.percent) > 0) {
+    payload.refund_percent = Number(refund.percent);
+    payload.refund_commission = !!refund.commission;
+  }
+  return api.patch(`/admin/disputes/${id}`, payload);
 }
 
 export function listReviews(params) {
@@ -78,4 +86,12 @@ export function createPort(data) {
 
 export function deletePort(id) {
   return api.delete(`/admin/ports/${id}`);
+}
+
+export function listPayments(params) {
+  return api.get('/admin/payments', { params });
+}
+
+export function getPaymentStats() {
+  return api.get('/admin/payments/stats');
 }

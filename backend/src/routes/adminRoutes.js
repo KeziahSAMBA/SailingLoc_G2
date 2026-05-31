@@ -29,6 +29,7 @@ import {
   adminCreatePort,
   adminDeletePort,
 } from '../controllers/portAdminController.js';
+import { adminListPayments, adminPaymentStats } from '../controllers/paymentAdminController.js';
 import { protect, requireAdmin } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -62,5 +63,8 @@ router.delete('/reviews/:id', protect, requireAdmin, adminDeleteReview);
 router.get('/ports', protect, requireAdmin, adminListPorts);
 router.post('/ports', protect, requireAdmin, adminCreatePort);
 router.delete('/ports/:id', protect, requireAdmin, adminDeletePort);
+
+router.get('/payments', protect, requireAdmin, adminListPayments);
+router.get('/payments/stats', protect, requireAdmin, adminPaymentStats);
 
 export default router;

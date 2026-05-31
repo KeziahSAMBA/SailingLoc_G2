@@ -90,6 +90,18 @@ export async function listDisputes({ status } = {}) {
           end_date: true,
           status: true,
           boat: { select: { name: true } },
+          // Paiement le plus récent → utilisé en preview dans la modal de
+          // résolution pour calculer le montant remboursable.
+          payments: {
+            orderBy: { payment_date: 'desc' },
+            take: 1,
+            select: {
+              id_payment: true,
+              amount: true,
+              commission: true,
+              status: true,
+            },
+          },
         },
       },
       opener: { select: { id_user: true, first_name: true, last_name: true, email: true } },
@@ -111,6 +123,14 @@ export async function listDisputes({ status } = {}) {
           end_date: d.booking.end_date,
           status: d.booking.status,
           boat_name: d.booking.boat?.name || null,
+          payment: d.booking.payments?.[0]
+            ? {
+                id_payment: d.booking.payments[0].id_payment,
+                amount: Number(d.booking.payments[0].amount),
+                commission: Number(d.booking.payments[0].commission),
+                status: d.booking.payments[0].status,
+              }
+            : null,
         }
       : null,
     opener: d.opener
@@ -124,7 +144,12 @@ export async function listDisputes({ status } = {}) {
   }));
 }
 
-export async function setDisputeStatus(id_dispute, status, resolution) {
+export async function setDisputeStatus(
+  id_dispute,
+  status,
+  resolution,
+  { refund_percent, refund_commission } = {}
+) {
   if (!DISPUTE_STATUSES.includes(status)) {
     throw Object.assign(new Error('Statut invalide.'), { status: 400 });
   }
@@ -136,6 +161,8 @@ export async function setDisputeStatus(id_dispute, status, resolution) {
         include: {
           user: { select: { first_name: true, email: true } },
           boat: { select: { name: true, owner: { select: { first_name: true, email: true } } } },
+          // Paiements liés à la réservation, pour identifier celui à rembourser.
+          payments: { orderBy: { payment_date: 'desc' } },
         },
       },
     },
@@ -143,6 +170,17 @@ export async function setDisputeStatus(id_dispute, status, resolution) {
   if (!dispute) {
     throw Object.assign(new Error('Litige introuvable.'), { status: 404 });
   }
+
+  // Validation du pourcentage de remboursement (autorisé uniquement quand le
+  // litige est résolu en faveur du locataire).
+  const pct = Number(refund_percent);
+  const wantsRefund = status === 'resolved' && Number.isFinite(pct) && pct > 0;
+  if (wantsRefund && (pct < 1 || pct > 100)) {
+    throw Object.assign(new Error('Le pourcentage de remboursement doit être entre 1 et 100.'), {
+      status: 400,
+    });
+  }
+
   const updated = await prisma.dispute.update({
     where: { id_dispute: id },
     data: {
@@ -152,9 +190,44 @@ export async function setDisputeStatus(id_dispute, status, resolution) {
     },
   });
 
+  // Remboursement : on rembourse le paiement 'success' le plus récent rattaché
+  // à la réservation. Par défaut la commission est conservée par SailingLoc
+  // (politique standard) — sauf si l'admin coche « refund_commission ».
+  let refundedPayment = null;
+  if (wantsRefund) {
+    const target = (dispute.booking?.payments || []).find((p) => p.status === 'success');
+    if (target) {
+      const amount = Number(target.amount);
+      const commission = Number(target.commission);
+      const base = refund_commission ? amount + commission : amount;
+      const refundedAmount = Math.round(base * pct) / 100;
+      refundedPayment = await prisma.payment.update({
+        where: { id_payment: target.id_payment },
+        data: {
+          status: 'refunded',
+          refunded_amount: refundedAmount,
+          refunded_at: new Date(),
+          refund_reason:
+            (resolution && String(resolution).trim()) ||
+            `Remboursement à ${pct}% suite au litige #${id}`,
+          id_dispute: id,
+        },
+      });
+    }
+  }
+
   // Notification personnalisée au locataire ET au propriétaire quand une décision est rendue.
   if (status === 'resolved' || status === 'rejected') {
     const boatName = dispute.booking?.boat?.name;
+
+    // Détails du remboursement à inclure dans l'email (montant, %, commission).
+    const refundDetails = refundedPayment
+      ? {
+          amount: Number(refundedPayment.refunded_amount),
+          percent: pct,
+          includesCommission: !!refund_commission,
+        }
+      : null;
 
     // Deux emails distincts : un au locataire, un au propriétaire.
     const recipients = [];
@@ -173,6 +246,7 @@ export async function setDisputeStatus(id_dispute, status, resolution) {
           resolved: status === 'resolved',
           boatName,
           resolution: updated.resolution,
+          refund: refundDetails,
         });
       } catch (emailErr) {
         console.error('[email] décision litige :', emailErr.message);
@@ -185,5 +259,11 @@ export async function setDisputeStatus(id_dispute, status, resolution) {
     status: updated.status,
     resolution: updated.resolution,
     resolved_at: updated.resolved_at,
+    refund: refundedPayment
+      ? {
+          id_payment: refundedPayment.id_payment,
+          refunded_amount: Number(refundedPayment.refunded_amount),
+        }
+      : null,
   };
 }
