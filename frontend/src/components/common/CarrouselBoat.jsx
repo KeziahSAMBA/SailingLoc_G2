@@ -1,15 +1,15 @@
 import { useState, useCallback } from 'react';
-import portBrest from '../../assets/image/ports/Brest.jpg';
-import portLaRochelle from '../../assets/image/ports/La_Rochelle.jpg';
-import portBordeaux from '../../assets/image/ports/Bordeaux.jpg';
-import portNice from '../../assets/image/ports/Nice.jpg';
-import portMarseille from '../../assets/image/ports/Marseille.jpg';
-import portBarcelone from '../../assets/image/ports/Barcelone.jpg';
-import portValence from '../../assets/image/ports/Valence.jpg';
-import portGenes from '../../assets/image/ports/Gênes.jpg';
-import portNaples from '../../assets/image/ports/Naples.jpg';
-import portCroatie from '../../assets/image/ports/Croatie.jpg';
-import portAthenes from '../../assets/image/ports/Athènes.jpg';
+import portBrest from '../../assets/image/ports/Brest.webp';
+import portLaRochelle from '../../assets/image/ports/La_Rochelle.webp';
+import portBordeaux from '../../assets/image/ports/Bordeaux.webp';
+import portNice from '../../assets/image/ports/Nice.webp';
+import portMarseille from '../../assets/image/ports/Marseille.webp';
+import portBarcelone from '../../assets/image/ports/Barcelone.webp';
+import portValence from '../../assets/image/ports/Valence.webp';
+import portGenes from '../../assets/image/ports/Gênes.webp';
+import portNaples from '../../assets/image/ports/Naples.webp';
+import portCroatie from '../../assets/image/ports/Croatie.webp';
+import portAthenes from '../../assets/image/ports/Athènes.webp';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
 
 const portSlides = [

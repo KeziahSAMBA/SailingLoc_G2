@@ -11,6 +11,65 @@ const BURGER_ITEMS = [
   'Avis & commentaires',
 ];
 
+const NAV_LINKS = [
+  ['Découvrir', '/'],
+  ['Contact', '/contact'],
+  ['À propos', '/a-propos'],
+];
+
+const UserIcon = ({ size }) => (
+  <span
+    className="rounded-full flex items-center justify-center flex-shrink-0"
+    style={{
+      width: size,
+      height: size,
+      border: '1px solid rgba(255, 255, 255, 0.6)',
+      transition: 'width 0.3s ease, height 0.3s ease',
+    }}
+  >
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  </span>
+);
+
+const ChevronDown = ({ open }) => (
+  <svg
+    width="10"
+    height="10"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="#fff"
+    strokeWidth="2"
+    style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+function getAuthBtnStyle(scrolled) {
+  return {
+    color: '#fff',
+    border: '1px solid rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'transparent',
+    fontSize: scrolled ? '0.65rem' : '0.7rem',
+    padding: scrolled ? '4px 10px' : '6px 12px',
+    transition: 'font-size 0.3s ease, padding 0.3s ease, background-color 0.2s, border-color 0.2s',
+  };
+}
+
+const authBtnHover = {
+  onMouseEnter: (e) => {
+    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+    e.currentTarget.style.borderColor = '#fff';
+  },
+  onMouseLeave: (e) => {
+    e.currentTarget.style.backgroundColor = 'transparent';
+    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+  },
+};
+
 function Header() {
   const [lang, setLang] = useState('FR');
   const [scrolled, setScrolled] = useState(false);
@@ -30,12 +89,8 @@ function Header() {
 
   useEffect(() => {
     const onClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
     };
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
@@ -46,6 +101,8 @@ function Header() {
     logout();
     navigate('/', { replace: true });
   }
+
+  const iconSize = scrolled ? '14px' : '16px';
 
   return (
     <header
@@ -95,7 +152,7 @@ function Header() {
               boxShadow: '4px 0 24px rgba(0,0,0,0.2)',
               transform: menuOpen ? 'translateX(0)' : 'translateX(-100%)',
               pointerEvents: menuOpen ? 'auto' : 'none',
-              transition: `top 0.3s ease, height 0.3s ease, transform 0.3s ease`,
+              transition: 'top 0.3s ease, height 0.3s ease, transform 0.3s ease',
             }}
           >
             <div className="flex flex-col" style={{ height: '55%' }}>
@@ -119,7 +176,7 @@ function Header() {
           </div>
         </div>
 
-        {/* Logo décalé légèrement à droite */}
+        {/* Logo */}
         <a href="/" className="flex items-center">
           <img
             src={scrolled ? logoLong : logo}
@@ -137,11 +194,7 @@ function Header() {
       {/* Centre — Navigation (33%) */}
       <nav className="w-1/3 flex justify-center">
         <ul className="flex gap-10 list-none m-0 p-0">
-          {[
-            ['Découvrir', '/'],
-            ['Contact', '/contact'],
-            ['À propos', '/a-propos'],
-          ].map(([label, href]) => (
+          {NAV_LINKS.map(([label, href]) => (
             <li key={label}>
               <a
                 href={href}
@@ -211,60 +264,12 @@ function Header() {
             <button
               onClick={() => setUserMenuOpen((o) => !o)}
               className="flex items-center gap-2 rounded-full transition-all whitespace-nowrap"
-              style={{
-                color: '#fff',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-                backgroundColor: 'transparent',
-                fontSize: scrolled ? '0.65rem' : '0.7rem',
-                padding: scrolled ? '4px 10px' : '6px 12px',
-                transition:
-                  'font-size 0.3s ease, padding 0.3s ease, background-color 0.2s, border-color 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-                e.currentTarget.style.borderColor = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
-              }}
+              style={getAuthBtnStyle(scrolled)}
+              {...authBtnHover}
             >
-              <span
-                className="rounded-full flex items-center justify-center flex-shrink-0"
-                style={{
-                  width: scrolled ? '14px' : '16px',
-                  height: scrolled ? '14px' : '16px',
-                  border: '1px solid rgba(255, 255, 255, 0.6)',
-                  transition: 'width 0.3s ease, height 0.3s ease',
-                }}
-              >
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#fff"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                </svg>
-              </span>
+              <UserIcon size={iconSize} />
               {user.first_name}
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#fff"
-                strokeWidth="2"
-                style={{
-                  transform: userMenuOpen ? 'rotate(180deg)' : 'none',
-                  transition: 'transform 0.2s',
-                }}
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              <ChevronDown open={userMenuOpen} />
             </button>
 
             {userMenuOpen && (
@@ -372,45 +377,10 @@ function Header() {
           <button
             onClick={() => navigate('/login', { state: { backgroundLocation: location } })}
             className="flex items-center gap-2 rounded-full transition-all whitespace-nowrap"
-            style={{
-              color: '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.5)',
-              backgroundColor: 'transparent',
-              fontSize: scrolled ? '0.65rem' : '0.7rem',
-              padding: scrolled ? '4px 10px' : '6px 12px',
-              transition:
-                'font-size 0.3s ease, padding 0.3s ease, background-color 0.2s, border-color 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-              e.currentTarget.style.borderColor = '#fff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
-            }}
+            style={getAuthBtnStyle(scrolled)}
+            {...authBtnHover}
           >
-            <span
-              className="rounded-full flex items-center justify-center flex-shrink-0"
-              style={{
-                width: scrolled ? '14px' : '16px',
-                height: scrolled ? '14px' : '16px',
-                border: '1px solid rgba(255, 255, 255, 0.6)',
-                transition: 'width 0.3s ease, height 0.3s ease',
-              }}
-            >
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#fff"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-              </svg>
-            </span>
+            <UserIcon size={iconSize} />
             Se connecter / S&apos;inscrire
           </button>
         )}

@@ -1,14 +1,15 @@
-import { useState, useCallback } from 'react';
-import portBarcelone from '../../assets/image/ports/Barcelone.jpg';
-import portCroatie from '../../assets/image/ports/Croatie.jpg';
-import portAthenes from '../../assets/image/ports/Athènes.jpg';
-import portNaples from '../../assets/image/ports/Naples.jpg';
-import portGenes from '../../assets/image/ports/Gênes.jpg';
-import portValence from '../../assets/image/ports/Valence.jpg';
-import portBordeaux from '../../assets/image/ports/Bordeaux.jpg';
-import portNice from '../../assets/image/ports/Nice.jpg';
-import portBrest from '../../assets/image/ports/Brest.jpg';
-import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { motion, useMotionValue, useTransform } from 'motion/react';
+import portBarcelone from '../../assets/image/ports/Barcelone.webp';
+import portCroatie from '../../assets/image/ports/Croatie.webp';
+import portAthenes from '../../assets/image/ports/Athènes.webp';
+import portNaples from '../../assets/image/ports/Naples.webp';
+import portGenes from '../../assets/image/ports/Gênes.webp';
+import portValence from '../../assets/image/ports/Valence.webp';
+import portBordeaux from '../../assets/image/ports/Bordeaux.webp';
+import portNice from '../../assets/image/ports/Nice.webp';
+import portBrest from '../../assets/image/ports/Brest.webp';
+import { FaArrowRight } from 'react-icons/fa6';
 
 const voilierSlides = [
   {
@@ -73,90 +74,180 @@ const penicheSlides = [
   },
 ];
 
-const BoatTypeCarousel = ({ slides, title }) => {
-  const maxIndex = slides.length - 1;
-  const [index, setIndex] = useState(0);
-  const slideWidthPct = 100 / slides.length;
+const GAP = 16;
+const PADDING = 16;
+const SPRING = { type: 'spring', stiffness: 300, damping: 30 };
+const VELOCITY_THRESHOLD = 500;
 
-  const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
-  const next = useCallback(() => setIndex((i) => Math.min(maxIndex, i + 1)), [maxIndex]);
+function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
+  const range = [
+    -(index + 1) * trackItemOffset,
+    -index * trackItemOffset,
+    -(index - 1) * trackItemOffset,
+  ];
+  const rotateY = useTransform(x, range, [90, 0, -90], { clamp: false });
 
   return (
-    <div
-      className="relative flex-1 rounded-xl overflow-hidden border border-black/40"
-      style={{ height: 220 }}
+    <motion.div
+      className="relative shrink-0 rounded-xl overflow-hidden border border-black/40 cursor-grab active:cursor-grabbing"
+      style={{ width: itemWidth, height: 220, rotateY }}
     >
+      <img
+        src={slide.img}
+        alt={slide.label}
+        className="w-full h-full object-cover"
+        loading="lazy"
+        draggable={false}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
+      <div className="absolute top-3 left-3 text-white font-semibold" style={{ fontSize: '14px' }}>
+        {title}
+      </div>
+      <div className="absolute bottom-3 left-3 right-3">
+        <div className="text-white font-semibold" style={{ fontSize: '12px' }}>
+          {slide.label}
+        </div>
+        <div className="text-white/80" style={{ fontSize: '11px', lineHeight: '14px' }}>
+          {slide.description}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function BoatTypeCarousel({ slides, title }) {
+  const outerRef = useRef(null);
+  const [itemWidth, setItemWidth] = useState(0);
+  const trackItemOffset = itemWidth + GAP;
+
+  // Mesure synchrone à la première peinture
+  useLayoutEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    const measure = () => setItemWidth(el.clientWidth - PADDING * 2);
+    measure();
+    const ro = new window.ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const itemsForRender = useMemo(() => [slides[slides.length - 1], ...slides, slides[0]], [slides]);
+
+  const [position, setPosition] = useState(1);
+  const [isJumping, setIsJumping] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const x = useMotionValue(0);
+
+  // Synchronise x quand itemWidth est connu ou quand position change sans animation
+  useLayoutEffect(() => {
+    if (itemWidth === 0) return;
+    x.set(-position * trackItemOffset);
+  }, [itemWidth]); // uniquement au resize, pas au changement de position
+
+  // Autoplay
+  useEffect(() => {
+    if (isHovered || itemsForRender.length <= 1) return;
+    const timer = setInterval(() => {
+      setPosition((p) => Math.min(p + 1, itemsForRender.length - 1));
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [isHovered, itemsForRender.length]);
+
+  const transition = isJumping ? { duration: 0 } : SPRING;
+
+  const handleAnimationComplete = () => {
+    const lastClone = itemsForRender.length - 1;
+    if (position === lastClone) {
+      setIsJumping(true);
+      setPosition(1);
+      x.set(-1 * trackItemOffset);
+      window.requestAnimationFrame(() => {
+        setIsJumping(false);
+        setIsAnimating(false);
+      });
+    } else if (position === 0) {
+      setIsJumping(true);
+      setPosition(slides.length);
+      x.set(-slides.length * trackItemOffset);
+      window.requestAnimationFrame(() => {
+        setIsJumping(false);
+        setIsAnimating(false);
+      });
+    } else {
+      setIsAnimating(false);
+    }
+  };
+
+  const handleDragEnd = (_, info) => {
+    const { offset, velocity } = info;
+    const dir =
+      offset.x < 0 || velocity.x < -VELOCITY_THRESHOLD
+        ? 1
+        : offset.x > 0 || velocity.x > VELOCITY_THRESHOLD
+          ? -1
+          : 0;
+    if (dir !== 0) setPosition((p) => Math.max(0, Math.min(p + dir, itemsForRender.length - 1)));
+  };
+
+  const activeIndex = (position - 1 + slides.length) % slides.length;
+
+  return (
+    <div className="relative flex-1 flex flex-col items-center">
       <div
-        className="flex h-full"
-        style={{
-          width: `${slides.length * 100}%`,
-          transform: `translateX(${-index * slideWidthPct}%)`,
-          transition: 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-        }}
+        ref={outerRef}
+        className="relative overflow-hidden rounded-[24px] border border-[#222] p-4 flex justify-center"
+        style={{ width: '100%' }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        {slides.map((slide) => (
-          <div key={slide.id} className="relative h-full" style={{ width: `${slideWidthPct}%` }}>
-            <img
-              src={slide.img}
-              alt={slide.label}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              draggable={false}
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
-            <div className="absolute top-3 left-3">
-              <div className="text-white font-semibold" style={{ fontSize: '14px' }}>
-                {title}
-              </div>
-            </div>
-            <div className="absolute bottom-3 left-3 right-3">
-              <div className="text-white font-semibold" style={{ fontSize: '12px' }}>
-                {slide.label}
-              </div>
-              <div className="text-white/80" style={{ fontSize: '11px', lineHeight: '14px' }}>
-                {slide.description}
-              </div>
-            </div>
-          </div>
-        ))}
+        {itemWidth > 0 && (
+          <motion.div
+            className="flex"
+            drag={isAnimating ? false : 'x'}
+            style={{
+              width: itemWidth,
+              gap: `${GAP}px`,
+              perspective: 800,
+              perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
+              x,
+            }}
+            onDragEnd={handleDragEnd}
+            animate={{ x: -(position * trackItemOffset) }}
+            transition={transition}
+            onAnimationStart={() => setIsAnimating(true)}
+            onAnimationComplete={handleAnimationComplete}
+          >
+            {itemsForRender.map((slide, index) => (
+              <SlideItem
+                key={`${slide.id}-${index}`}
+                slide={slide}
+                index={index}
+                itemWidth={itemWidth}
+                trackItemOffset={trackItemOffset}
+                x={x}
+                title={title}
+              />
+            ))}
+          </motion.div>
+        )}
       </div>
 
-      {index > 0 && (
-        <button
-          onClick={prev}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white rounded-full p-1 shadow transition-colors"
-          aria-label="Précédent"
-        >
-          <FaChevronLeft size={12} className="text-gray-700" />
-        </button>
-      )}
-
-      {index < maxIndex && (
-        <button
-          onClick={next}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white rounded-full p-1 shadow transition-colors"
-          aria-label="Suivant"
-        >
-          <FaChevronRight size={12} className="text-gray-700" />
-        </button>
-      )}
-
-      <div className="absolute bottom-2 right-3 flex gap-1">
+      <div className="flex gap-2 mt-3">
         {slides.map((_, i) => (
-          <div
+          <motion.div
             key={i}
-            className="rounded-full transition-all duration-300"
-            style={{
-              width: index === i ? 14 : 6,
-              height: 6,
-              background: index === i ? 'white' : 'rgba(255,255,255,0.45)',
-            }}
+            className="h-2 w-2 rounded-full cursor-pointer"
+            style={{ background: activeIndex === i ? '#333' : 'rgba(51,51,51,0.4)' }}
+            animate={{ scale: activeIndex === i ? 1.2 : 1 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => setPosition(i + 1)}
           />
         ))}
       </div>
     </div>
   );
-};
+}
 
 const CarouselBoatTypes = () => (
   <div className="relative w-full">
@@ -180,3 +271,4 @@ const CarouselBoatTypes = () => (
 );
 
 export default CarouselBoatTypes;
+// TODO: Faire effet vitre sur les carrousels
