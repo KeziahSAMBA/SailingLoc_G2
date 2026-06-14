@@ -25,23 +25,23 @@ export async function getAdminStats() {
       _count: { _all: true },
     }),
     // Réservations par mois (sur la date de réservation).
-    prisma.$queryRawUnsafe(
-      `SELECT to_char(booking_date, 'YYYY-MM') AS month, COUNT(*)::int AS count
+    prisma.$queryRaw`
+      SELECT to_char(booking_date, 'YYYY-MM') AS month, COUNT(*)::int AS count
          FROM booking WHERE deleted_at IS NULL
-         GROUP BY 1 ORDER BY 1`
-    ),
+         GROUP BY 1 ORDER BY 1
+    `,
     // Revenus par mois (paiements aboutis).
-    prisma.$queryRawUnsafe(
-      `SELECT to_char(payment_date, 'YYYY-MM') AS month, SUM(amount)::float AS revenue
+    prisma.$queryRaw`
+      SELECT to_char(payment_date, 'YYYY-MM') AS month, SUM(amount)::float AS revenue
          FROM payment WHERE status = 'success'
-         GROUP BY 1 ORDER BY 1`
-    ),
+         GROUP BY 1 ORDER BY 1
+    `,
     // Commissions par mois (paiements aboutis).
-    prisma.$queryRawUnsafe(
-      `SELECT to_char(payment_date, 'YYYY-MM') AS month, SUM(commission)::float AS commission
+    prisma.$queryRaw`
+      SELECT to_char(payment_date, 'YYYY-MM') AS month, SUM(commission)::float AS commission
          FROM payment WHERE status = 'success'
-         GROUP BY 1 ORDER BY 1`
-    ),
+         GROUP BY 1 ORDER BY 1
+    `,
   ]);
 
   return {

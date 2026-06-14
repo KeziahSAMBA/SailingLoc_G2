@@ -10,6 +10,9 @@ const QUICK_LINKS = [
 function normalizePath(value) {
   const v = String(value || '').trim();
   if (!v) return '/';
+  // Refuse les URLs externes (protocol-relative ou avec schéma) pour empêcher
+  // de charger un site tiers dans l'iframe admin (phishing / contenu non maîtrisé).
+  if (v.startsWith('//') || /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(v)) return '/';
   return v.startsWith('/') ? v : `/${v}`;
 }
 
