@@ -12,7 +12,7 @@ import AdminBookingsPage from '../components/admin/AdminBookingsPage.jsx';
 import AdminCommentsPage from '../components/admin/AdminCommentsPage.jsx';
 import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
 import AdminTransactionsPage from '../components/admin/AdminTransactionsPage.jsx';
-import AdminPlaceholder from '../components/admin/AdminPlaceholder.jsx';
+import AdminSpectateurPage from '../components/admin/AdminSpectateurPage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
@@ -78,7 +78,7 @@ function AppRouter({ location }) {
         }
       >
         <Route index element={<AdminDashboard />} />
-        <Route path="spectateur" element={<AdminPlaceholder title="Vue spectateur" />} />
+        <Route path="spectateur" element={<AdminSpectateurPage />} />
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="users/new" element={<AdminCreateUserPage />} />
         <Route path="comments" element={<AdminCommentsPage />} />
