@@ -36,7 +36,7 @@ function FitBounds({ points }) {
       points.map((p) => [p.lat, p.lng]),
       { padding: [40, 40] }
     );
-  }, [points, map]);
+  }, [points.map((p) => `${p.lat},${p.lng}`).join('|'), map]);
   return null;
 }
 
