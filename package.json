@@ -7,6 +7,9 @@
     "frontend"
   ],
   "scripts": {
+    "dev": "docker compose -f docker-compose.dev.yml up",
+    "dev:build": "docker compose -f docker-compose.dev.yml up --build",
+    "dev:down": "docker compose -f docker-compose.dev.yml down",
     "lint": "npm run lint --workspace backend && npm run lint --workspace frontend",
     "format": "npm run format --workspace backend && npm run format --workspace frontend",
     "test": "npm run test --workspace backend",
@@ -32,5 +35,8 @@
     "*.{json,md,css,scss,html}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "motion": "^12.40.0"
   }
 }

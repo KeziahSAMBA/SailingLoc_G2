@@ -8,6 +8,7 @@ Plateforme de location de bateaux — projet fullstack avec un backend Node.js/E
 
 ## Sommaire
 
+- [Identité visuelle](#identité-visuelle)
 - [Technologies](#technologies)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
@@ -17,6 +18,47 @@ Plateforme de location de bateaux — projet fullstack avec un backend Node.js/E
 - [Choses à savoir](#choses-à-savoir)
 - [Extension TODO Tree](#extension-todo-tree)
 - [Workflow Git](#workflow-git)
+
+---
+
+## Identité visuelle
+
+### Police
+
+**Plus Jakarta Sans** — utilisée sur l'ensemble du projet (web et application mobile).
+
+---
+
+### Charte graphique
+
+#### Couleurs
+
+| Nom         | Hex       | Usage                          |
+| ----------- | --------- | ------------------------------ |
+| Blanc Nuage | `#EBF5FD` | Fonds clairs, surfaces, cartes |
+| Bleu Ciel   | `#5AB4EC` | Accents, icônes, CTA           |
+| Bleu Mer    | `#5AB4EC` | Couleur principale, CTA, liens |
+| Bleu Océan  | `#0A3172` | Titres, headers, textes forts  |
+
+#### Modes d'utilisation
+
+| Mode                  | Description                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| Mode sombre / Premium | Fond océan, textes et icônes en blanc nuage. Ambiance nocturne et haut de gamme.      |
+| Mode été / Outdoor    | Bleu ciel dominant, blanc en négatif. Communication légère, affiches, réseaux.        |
+| Mode clair / Digital  | Fond nuage, éléments en bleu mer et ciel. Idéal pour le web et l'application mobile.  |
+| Tricolore marine      | Les trois bleus ensemble pour les supports institutionnels, pitch decks et brochures. |
+
+---
+
+### Assets / Logos
+
+Les logos sont disponibles dans `frontend/src/assets/image/SL_logo/` :
+
+| Fichier    | Description                                       |
+| ---------- | ------------------------------------------------- |
+| Logo long  | Logo avec le nom complet **SailingLoc** en entier |
+| Logo court | Logo avec les initiales uniquement                |
 
 ---
 
