@@ -5,3 +5,8 @@ import api from './api.js';
 export function getDashboard() {
   return api.get('/users/me/dashboard');
 }
+
+// Liste complète des réservations du locataire connecté.
+export function getBookings() {
+  return api.get('/users/me/bookings');
+}

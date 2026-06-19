@@ -14,7 +14,7 @@ import {
   verifyResetToken,
 } from '../controllers/userController.js';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
-import { getDashboard } from '../controllers/locataireController.js';
+import { getDashboard, getMyBookings } from '../controllers/locataireController.js';
 
 const router = Router();
 
@@ -31,5 +31,6 @@ router.get('/me', protect, me);
 router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
 router.get('/me/dashboard', protect, requireRole('locataire'), getDashboard);
+router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
 
 export default router;

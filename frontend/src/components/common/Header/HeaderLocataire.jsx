@@ -182,10 +182,10 @@ function Header() {
       <div className="w-1/3 flex items-center justify-end gap-3 pr-4">
         {/* Nom + Icône utilisateur — lien vers le profil */}
         <a
-          href="/account"
+          href="/locataire/compte"
           onClick={(e) => {
             e.preventDefault();
-            navigate('/account');
+            navigate('/locataire/compte');
           }}
           className="flex items-center gap-3 group"
           style={{ textDecoration: 'none' }}

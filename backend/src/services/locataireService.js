@@ -139,3 +139,48 @@ export async function getDashboardStats(id_user) {
     })),
   };
 }
+
+// Liste complète des réservations du locataire (plus récentes d'abord).
+export async function listBookings(id_user) {
+  const bookings = await prisma.booking.findMany({
+    where: { id_user, deleted_at: null },
+    orderBy: { start_date: 'desc' },
+    select: {
+      id_booking: true,
+      start_date: true,
+      end_date: true,
+      status: true,
+      total_amount: true,
+      booking_date: true,
+      cancellation_reason: true,
+      cancellation_date: true,
+      boat: {
+        select: {
+          name: true,
+          type: true,
+          port: { select: { name: true, city: true } },
+          images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+        },
+      },
+      reviews: { where: { id_user }, select: { id_review: true } },
+    },
+  });
+
+  return bookings.map((b) => ({
+    id_booking: b.id_booking,
+    start_date: b.start_date,
+    end_date: b.end_date,
+    status: b.status,
+    total_amount: Number(b.total_amount),
+    booking_date: b.booking_date,
+    cancellation_reason: b.cancellation_reason,
+    cancellation_date: b.cancellation_date,
+    reviewed: b.reviews.length > 0,
+    boat: {
+      name: b.boat?.name,
+      type: b.boat?.type,
+      port: b.boat?.port,
+      image: b.boat?.images?.[0]?.url ?? null,
+    },
+  }));
+}
