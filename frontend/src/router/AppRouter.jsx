@@ -14,6 +14,8 @@ import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
 import AdminTransactionsPage from '../components/admin/AdminTransactionsPage.jsx';
 import AdminSpectateurPage from '../components/admin/AdminSpectateurPage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
+import LocataireLayout from '../components/locataire/LocataireLayout.jsx';
+import LocataireDashboard from '../components/locataire/LocataireDashboard.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
@@ -68,6 +70,18 @@ function AppRouter({ location }) {
           </RequireRole>
         }
       />
+      <Route
+        path="/locataire"
+        element={
+          <RequireRole role="locataire">
+            <LocataireLayout />
+          </RequireRole>
+        }
+      >
+        <Route index element={<LocataireDashboard />} />
+        {/* Les autres pages (Compte, Mes documents, Mes réservations, Mes favoris)
+            seront ajoutées ultérieurement. */}
+      </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route
         path="/admin"

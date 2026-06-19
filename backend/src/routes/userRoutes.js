@@ -13,7 +13,8 @@ import {
   resetPassword,
   verifyResetToken,
 } from '../controllers/userController.js';
-import { protect } from '../middlewares/authMiddleware.js';
+import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { getDashboard } from '../controllers/locataireController.js';
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.get('/verify-email/:token', confirmEmail);
 router.get('/me', protect, me);
 router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
+router.get('/me/dashboard', protect, requireRole('locataire'), getDashboard);
 
 export default router;
