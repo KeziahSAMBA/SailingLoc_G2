@@ -172,15 +172,15 @@ async function main() {
 
   // Reviews
   await prisma.$executeRawUnsafe(`
-    INSERT INTO review (id_user, id_booking, rating, comment, status) VALUES
-    ( 6,  1, 5, 'Superbe semaine à bord du Mistral, bateau en parfait état et propriétaire très accueillant !',     'validated'),
-    ( 7,  2, 4, 'Très beau catamaran, skipper professionnel et sympa. Un peu cher mais ça valait largement.',        'validated'),
-    ( 7,  5, 5, 'Deuxième location sur Le Mistral, toujours aussi parfait. Je recommande vivement !',                'validated'),
-    (10,  7, 4, 'Belle de Cannes est un voilier magnifique, très bien entretenu. Pierre est un super propriétaire.', 'validated'),
-    (11,  8, 5, 'Le Côte d''Azur est exceptionnel ! Skipper au top, luxe et confort au rendez-vous.',               'validated'),
-    (12,  9, 3, 'Finistère correct mais quelques petits équipements à revoir. Expérience globalement positive.',     'pending'),
-    ( 9, 12, 5, 'Superbe balade avec le Finistère, parfait pour la Bretagne. Je reviendrai !',                       'validated'),
-    ( 8, 11, 4, 'Belle de Cannes très agréable pour un week-end. Tout était propre et bien rangé.',                  'pending')
+    INSERT INTO review (id_user, id_booking, rating, comment, status, created_at) VALUES
+    ( 6,  1, 5, 'Superbe semaine à bord du Mistral, bateau en parfait état et propriétaire très accueillant !',     'validated', '2025-07-09 10:00:00'),
+    ( 7,  2, 4, 'Très beau catamaran, skipper professionnel et sympa. Un peu cher mais ça valait largement.',        'validated', '2025-07-23 14:00:00'),
+    ( 7,  5, 5, 'Deuxième location sur Le Mistral, toujours aussi parfait. Je recommande vivement !',                'validated', '2025-09-06 09:00:00'),
+    (10,  7, 4, 'Belle de Cannes est un voilier magnifique, très bien entretenu. Pierre est un super propriétaire.', 'validated', '2025-07-28 11:00:00'),
+    (11,  8, 5, 'Le Côte d''Azur est exceptionnel ! Skipper au top, luxe et confort au rendez-vous.',               'validated', '2025-08-13 17:00:00'),
+    (12,  9, 3, 'Finistère correct mais quelques petits équipements à revoir. Expérience globalement positive.',     'pending',   '2025-07-15 08:00:00'),
+    ( 9, 12, 5, 'Superbe balade avec le Finistère, parfait pour la Bretagne. Je reviendrai !',                       'validated', '2025-06-21 16:00:00'),
+    ( 8, 11, 4, 'Belle de Cannes très agréable pour un week-end. Tout était propre et bien rangé.',                  'pending',   '2025-11-04 10:00:00')
     ON CONFLICT DO NOTHING
   `);
 

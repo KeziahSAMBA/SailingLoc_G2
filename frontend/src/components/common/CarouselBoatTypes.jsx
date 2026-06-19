@@ -76,7 +76,7 @@ const penicheSlides = [
 
 const GAP = 16;
 const PADDING = 16;
-const SPRING = { type: 'spring', stiffness: 300, damping: 30 };
+const SPRING = { type: 'spring', stiffness: 40, damping: 20 };
 const VELOCITY_THRESHOLD = 500;
 
 function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
@@ -89,7 +89,7 @@ function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
 
   return (
     <motion.div
-      className="relative shrink-0 rounded-xl overflow-hidden border border-black/40 cursor-grab active:cursor-grabbing"
+      className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20 cursor-grab active:cursor-grabbing"
       style={{ width: itemWidth, height: 220, rotateY }}
     >
       <img
@@ -100,14 +100,14 @@ function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
         draggable={false}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
-      <div className="absolute top-3 left-3 text-white font-semibold" style={{ fontSize: '14px' }}>
+      <div className="absolute top-3 left-3 text-white font-semibold" style={{ fontSize: '15px' }}>
         {title}
       </div>
       <div className="absolute bottom-3 left-3 right-3">
-        <div className="text-white font-semibold" style={{ fontSize: '12px' }}>
+        <div className="text-white font-semibold" style={{ fontSize: '14px' }}>
           {slide.label}
         </div>
-        <div className="text-white/80" style={{ fontSize: '11px', lineHeight: '14px' }}>
+        <div className="text-white/80" style={{ fontSize: '13px', lineHeight: '16px' }}>
           {slide.description}
         </div>
       </div>
@@ -115,7 +115,14 @@ function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
   );
 }
 
-function BoatTypeCarousel({ slides, title }) {
+function BoatTypeCarousel({
+  slides,
+  title,
+  initialSlide = 1,
+  interval = 4000,
+  isHovered,
+  onHoverChange,
+}) {
   const outerRef = useRef(null);
   const [itemWidth, setItemWidth] = useState(0);
   const trackItemOffset = itemWidth + GAP;
@@ -133,26 +140,25 @@ function BoatTypeCarousel({ slides, title }) {
 
   const itemsForRender = useMemo(() => [slides[slides.length - 1], ...slides, slides[0]], [slides]);
 
-  const [position, setPosition] = useState(1);
+  const [position, setPosition] = useState(initialSlide);
   const [isJumping, setIsJumping] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const x = useMotionValue(0);
 
-  // Synchronise x quand itemWidth est connu ou quand position change sans animation
-  useLayoutEffect(() => {
-    if (itemWidth === 0) return;
-    x.set(-position * trackItemOffset);
-  }, [itemWidth]); // uniquement au resize, pas au changement de position
+  useEffect(() => {
+    const startingPosition = initialSlide;
+    setPosition(startingPosition);
+    x.set(-startingPosition * trackItemOffset);
+  }, [slides.length, trackItemOffset]);
 
   // Autoplay
   useEffect(() => {
     if (isHovered || itemsForRender.length <= 1) return;
     const timer = setInterval(() => {
       setPosition((p) => Math.min(p + 1, itemsForRender.length - 1));
-    }, 3000);
+    }, interval);
     return () => clearInterval(timer);
-  }, [isHovered, itemsForRender.length]);
+  }, [isHovered, itemsForRender.length, interval]);
 
   const transition = isJumping ? { duration: 0 } : SPRING;
 
@@ -196,15 +202,16 @@ function BoatTypeCarousel({ slides, title }) {
     <div className="relative flex-1 flex flex-col items-center">
       <div
         ref={outerRef}
-        className="relative overflow-hidden rounded-[24px] border border-[#222] p-4 flex justify-center"
-        style={{ width: '100%' }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className="relative overflow-hidden rounded-[12px] border border-white/15 p-4 flex justify-center bg-white/5"
+        style={{ width: '100%', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        onMouseEnter={() => onHoverChange(true)}
+        onMouseLeave={() => onHoverChange(false)}
       >
         {itemWidth > 0 && (
           <motion.div
             className="flex"
             drag={isAnimating ? false : 'x'}
+            dragConstraints={{}}
             style={{
               width: itemWidth,
               gap: `${GAP}px`,
@@ -249,26 +256,51 @@ function BoatTypeCarousel({ slides, title }) {
   );
 }
 
-const CarouselBoatTypes = () => (
-  <div className="relative w-full">
-    <div className="flex items-baseline gap-3 mb-3">
-      <h2 className="font-semibold text-white" style={{ fontSize: '16px', lineHeight: '22px' }}>
-        Annonces du moment
-      </h2>
-      <button
-        className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors ml-4"
-        style={{ fontSize: '14px' }}
-      >
-        Voir plus d'annonces <FaArrowRight size={10} />
-      </button>
+const CarouselBoatTypes = () => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div className="relative w-full">
+      <div className="flex items-baseline gap-3 mb-3">
+        <h2 className="font-semibold text-white" style={{ fontSize: '20px', lineHeight: '22px' }}>
+          Annonces du moment
+        </h2>
+        <button
+          className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors ml-4"
+          style={{ fontSize: '16px' }}
+        >
+          Voir plus d'annonces <FaArrowRight size={10} />
+        </button>
+      </div>
+      <div className="flex gap-4">
+        <BoatTypeCarousel
+          slides={voilierSlides}
+          title="Voilier"
+          initialSlide={1}
+          interval={4000}
+          isHovered={isHovered}
+          onHoverChange={setIsHovered}
+        />
+        <BoatTypeCarousel
+          slides={catamaranSlides}
+          title="Catamaran"
+          initialSlide={3}
+          interval={5000}
+          isHovered={isHovered}
+          onHoverChange={setIsHovered}
+        />
+        <BoatTypeCarousel
+          slides={penicheSlides}
+          title="Péniche"
+          initialSlide={2}
+          interval={4500}
+          isHovered={isHovered}
+          onHoverChange={setIsHovered}
+        />
+      </div>
     </div>
-    <div className="flex gap-4">
-      <BoatTypeCarousel slides={voilierSlides} title="Voilier" />
-      <BoatTypeCarousel slides={catamaranSlides} title="Catamaran" />
-      <BoatTypeCarousel slides={penicheSlides} title="Péniche" />
-    </div>
-  </div>
-);
+  );
+};
 
 export default CarouselBoatTypes;
 // TODO: Faire effet vitre sur les carrousels

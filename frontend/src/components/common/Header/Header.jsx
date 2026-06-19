@@ -5,15 +5,15 @@ import logo from '../../../assets/image/SL_logo/logo SL.webp';
 import logoLong from '../../../assets/image/SL_logo/logo SL long.webp';
 
 const BURGER_ITEMS = [
-  'Chercher une location',
-  'Tutoriel',
-  'Nos suggestions',
-  'Avis & commentaires',
+  { label: 'Chercher une location', anchor: 'hero' },
+  { label: 'Tutoriel', anchor: 'tutoriel' },
+  { label: 'Nos suggestions', anchor: 'suggestions' },
+  { label: 'Avis & commentaires', anchor: 'avis' },
 ];
 
 const NAV_LINKS = [
   ['Découvrir', '/'],
-  ['Contact', '/contact'],
+  ['Contact', '#contact'],
   ['À propos', '/a-propos'],
 ];
 
@@ -53,8 +53,8 @@ function getAuthBtnStyle(scrolled) {
     color: '#fff',
     border: '1px solid rgba(255, 255, 255, 0.5)',
     backgroundColor: 'transparent',
-    fontSize: scrolled ? '0.65rem' : '0.7rem',
-    padding: scrolled ? '4px 10px' : '6px 12px',
+    fontSize: scrolled ? '0.75rem' : '0.80rem',
+    padding: scrolled ? '5px 14px' : '7px 16px',
     transition: 'font-size 0.3s ease, padding 0.3s ease, background-color 0.2s, border-color 0.2s',
   };
 }
@@ -95,6 +95,20 @@ function Header() {
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
+
+  function scrollToAnchor(anchor) {
+    setMenuOpen(false);
+    const scroll = () => {
+      const el = document.getElementById(anchor);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+    if (location.pathname === '/') {
+      scroll();
+    } else {
+      navigate('/');
+      setTimeout(scroll, 300);
+    }
+  }
 
   function handleLogout() {
     setUserMenuOpen(false);
@@ -156,11 +170,11 @@ function Header() {
             }}
           >
             <div className="flex flex-col" style={{ height: '55%' }}>
-              {BURGER_ITEMS.map((item) => (
-                <a
-                  key={item}
-                  href="#"
-                  className="flex items-center flex-1 px-5 text-base font-medium transition-colors"
+              {BURGER_ITEMS.map(({ label, anchor }) => (
+                <button
+                  key={label}
+                  onClick={() => scrollToAnchor(anchor)}
+                  className="flex items-center flex-1 px-5 text-base font-medium transition-colors text-left"
                   style={{ color: scrolled ? '#0A3172' : '#fff' }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.backgroundColor = scrolled
@@ -169,15 +183,24 @@ function Header() {
                   }
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
-                  {item}
-                </a>
+                  {label}
+                </button>
               ))}
             </div>
           </div>
         </div>
 
         {/* Logo */}
-        <a href="/" className="flex items-center">
+        <button
+          onClick={() => {
+            if (location.pathname === '/') {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              navigate('/');
+            }
+          }}
+          className="flex items-center"
+        >
           <img
             src={scrolled ? logoLong : logo}
             alt="SailingLoc"
@@ -188,7 +211,7 @@ function Header() {
               objectFit: 'contain',
             }}
           />
-        </a>
+        </button>
       </div>
 
       {/* Centre — Navigation (33%) */}
@@ -198,10 +221,18 @@ function Header() {
             <li key={label}>
               <a
                 href={href}
+                onClick={
+                  href === '#contact'
+                    ? (e) => {
+                        e.preventDefault();
+                        scrollToAnchor('contact');
+                      }
+                    : undefined
+                }
                 className="font-medium"
                 style={{
                   color: '#fff',
-                  fontSize: scrolled ? '0.85rem' : '1.05rem',
+                  fontSize: scrolled ? '0.90rem' : '1.15rem',
                   backgroundImage: 'linear-gradient(#fff, #fff)',
                   backgroundRepeat: 'no-repeat',
                   backgroundSize: '0% 1px',
@@ -231,7 +262,7 @@ function Header() {
           {['FR', 'EN'].map((l, i) => (
             <span key={l} className="flex items-center gap-1">
               {i === 1 && (
-                <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.6rem' }}>/</span>
+                <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.9rem' }}>/</span>
               )}
               <button
                 onClick={() => setLang(l)}
@@ -240,7 +271,7 @@ function Header() {
                   color: '#fff',
                   opacity: lang === l ? 1 : 0.45,
                   fontWeight: lang === l ? 700 : 500,
-                  fontSize: scrolled ? '0.6rem' : '0.65rem',
+                  fontSize: scrolled ? '0.7rem' : '0.75rem',
                   backgroundImage: 'linear-gradient(#fff, #fff)',
                   backgroundRepeat: 'no-repeat',
                   backgroundSize: '0% 1px',
@@ -258,7 +289,7 @@ function Header() {
         </div>
 
         {authLoading ? (
-          <div style={{ height: scrolled ? '24px' : '28px', width: '120px' }} aria-hidden="true" />
+          <div style={{ height: scrolled ? '24px' : '2px', width: '120px' }} aria-hidden="true" />
         ) : user ? (
           <div className="relative" ref={userMenuRef}>
             <button

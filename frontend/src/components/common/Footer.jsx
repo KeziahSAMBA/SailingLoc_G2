@@ -67,6 +67,7 @@ const appBtnStyle = {
 const Footer = () => {
   return (
     <footer
+      id="contact"
       className="text-gray-300 px-16 flex flex-col justify-between"
       style={{
         backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${bgImage})`,

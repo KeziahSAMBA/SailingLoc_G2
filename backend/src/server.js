@@ -6,6 +6,7 @@ import boatRoutes from './routes/boatRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 import { initConfig } from './config/appConfig.js';
 
 const { PORT, APP_URL } = initConfig();
@@ -88,6 +89,7 @@ app.use('/api/boats', boatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 

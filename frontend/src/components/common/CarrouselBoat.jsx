@@ -136,7 +136,7 @@ const PortCarousel = ({ slides, visibleCount, imageSize = 'normal' }) => {
               style={{ width: `${slideWidthPct}%` }}
             >
               <div
-                className="relative rounded-xl overflow-hidden w-full border border-black/40"
+                className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
                 style={{ aspectRatio: imageSize === 'small' ? '4 / 3' : '1 / 1' }}
               >
                 <img
@@ -152,7 +152,7 @@ const PortCarousel = ({ slides, visibleCount, imageSize = 'normal' }) => {
                       <span
                         className="text-white font-semibold text-center px-2"
                         style={{
-                          fontSize: '10px',
+                          fontSize: '13px',
                           lineHeight: '14px',
                           letterSpacing: '0.05em',
                           textTransform: 'uppercase',
@@ -166,14 +166,14 @@ const PortCarousel = ({ slides, visibleCount, imageSize = 'normal' }) => {
               </div>
               <span
                 className="mt-1 text-center text-black font-semibold"
-                style={{ fontSize: '12px', lineHeight: '16px' }}
+                style={{ fontSize: '15px', lineHeight: '18px' }}
               >
                 {slide.label}
               </span>
               {slide.description && (
                 <span
                   className="text-center text-gray-600"
-                  style={{ fontSize: '11px', lineHeight: '14px' }}
+                  style={{ fontSize: '13px', lineHeight: '16px' }}
                 >
                   {slide.description}
                 </span>
@@ -200,12 +200,12 @@ const PortCarousel = ({ slides, visibleCount, imageSize = 'normal' }) => {
 const CarrouselBoat = () => (
   <div className="relative w-full">
     <div className="flex items-baseline gap-3">
-      <h2 className="font-semibold text-black" style={{ fontSize: '16px', lineHeight: '22px' }}>
+      <h2 className="font-semibold text-black" style={{ fontSize: '20px', lineHeight: '22px' }}>
         Choisissez votre port de départ
       </h2>
       <button
         className="flex items-center gap-1.5 text-gray-600 hover:text-black transition-colors ml-4"
-        style={{ fontSize: '14px' }}
+        style={{ fontSize: '16px' }}
       >
         Voir plus <FaArrowRight size={10} />
       </button>
