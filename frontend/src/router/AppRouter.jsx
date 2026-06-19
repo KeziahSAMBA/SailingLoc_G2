@@ -19,6 +19,7 @@ import LocataireDashboard from '../components/locataire/LocataireDashboard.jsx';
 import LocataireAccount from '../components/locataire/LocataireAccount.jsx';
 import LocataireDocuments from '../components/locataire/LocataireDocuments.jsx';
 import LocataireReservations from '../components/locataire/LocataireReservations.jsx';
+import LocataireFavorites from '../components/locataire/LocataireFavorites.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
@@ -85,7 +86,7 @@ function AppRouter({ location }) {
         <Route path="compte" element={<LocataireAccount />} />
         <Route path="documents" element={<LocataireDocuments />} />
         <Route path="reservations" element={<LocataireReservations />} />
-        {/* La page Mes favoris sera ajoutée ultérieurement. */}
+        <Route path="favoris" element={<LocataireFavorites />} />
       </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route

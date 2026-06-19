@@ -184,3 +184,43 @@ export async function listBookings(id_user) {
     },
   }));
 }
+
+// Liste des bateaux favoris du locataire (plus récents d'abord).
+export async function listFavorites(id_user) {
+  const favorites = await prisma.userBoatFavorite.findMany({
+    where: { id_user },
+    orderBy: { created_at: 'desc' },
+    select: {
+      id_favorite: true,
+      boat: {
+        select: {
+          id_boat: true,
+          name: true,
+          type: true,
+          daily_price: true,
+          capacity: true,
+          port: { select: { name: true, city: true } },
+          images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+        },
+      },
+    },
+  });
+
+  return favorites.map((f) => ({
+    id_favorite: f.id_favorite,
+    boat: {
+      id_boat: f.boat.id_boat,
+      name: f.boat.name,
+      type: f.boat.type,
+      daily_price: Number(f.boat.daily_price),
+      capacity: f.boat.capacity,
+      port: f.boat.port,
+      image: f.boat.images?.[0]?.url ?? null,
+    },
+  }));
+}
+
+// Retire un bateau des favoris du locataire (idempotent).
+export async function removeFavorite(id_user, id_boat) {
+  await prisma.userBoatFavorite.deleteMany({ where: { id_user, id_boat } });
+}

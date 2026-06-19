@@ -10,3 +10,13 @@ export function getDashboard() {
 export function getBookings() {
   return api.get('/users/me/bookings');
 }
+
+// Bateaux favoris du locataire connecté.
+export function getFavorites() {
+  return api.get('/users/me/favorites');
+}
+
+// Retire un bateau des favoris.
+export function removeFavorite(idBoat) {
+  return api.delete(`/users/me/favorites/${idBoat}`);
+}
