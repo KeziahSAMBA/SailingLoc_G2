@@ -16,6 +16,7 @@ import AdminSpectateurPage from '../components/admin/AdminSpectateurPage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
 import LocataireLayout from '../components/locataire/LocataireLayout.jsx';
 import LocataireDashboard from '../components/locataire/LocataireDashboard.jsx';
+import LocataireAccount from '../components/locataire/LocataireAccount.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
@@ -79,7 +80,8 @@ function AppRouter({ location }) {
         }
       >
         <Route index element={<LocataireDashboard />} />
-        {/* Les autres pages (Compte, Mes documents, Mes réservations, Mes favoris)
+        <Route path="compte" element={<LocataireAccount />} />
+        {/* Les autres pages (Mes documents, Mes réservations, Mes favoris)
             seront ajoutées ultérieurement. */}
       </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
