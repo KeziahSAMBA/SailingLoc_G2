@@ -326,6 +326,274 @@ export async function sendAccountCreatedEmail(to, token, firstName) {
   });
 }
 
+function buildBoatUnpublishedEmail({ firstName, boatName }) {
+  const safeFirstName = escapeHtml(firstName);
+  const safeBoat = escapeHtml(boatName);
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Annonce retirée</title></head>
+  <body style="margin:0; padding:0; background-color:#f4f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
+          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+            <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
+            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Modération des annonces</p>
+          </td></tr>
+          <tr><td style="padding:40px 36px 24px;">
+            <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">
+              Votre annonce <strong style="color:#0A3172;">${safeBoat}</strong> a été <strong>retirée</strong> de SailingLoc
+              par notre équipe de modération pour <strong>non-respect des règles</strong> de la plateforme.
+            </p>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">
+              L'annonce n'est plus visible par les locataires. Pour comprendre la raison ou contester cette décision,
+              répondez aux exigences de nos conditions d'utilisation puis contactez notre support afin de demander une nouvelle vérification.
+            </p>
+            <p style="margin:28px 0 0; padding:14px 16px; background-color:#fef3c7; border-left:3px solid #f59e0b; border-radius:6px; color:#78350f; font-size:13px; line-height:1.5;">
+              Toute récidive peut entraîner la suspension de votre compte propriétaire.
+            </p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
+            <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
+              © ${new Date().getFullYear()} SailingLoc — Tous droits réservés.<br />Cet email a été envoyé automatiquement.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = `Bonjour ${firstName},
+
+Votre annonce "${boatName}" a été retirée de SailingLoc par notre équipe de modération pour non-respect des règles de la plateforme.
+
+L'annonce n'est plus visible par les locataires. Pour comprendre la raison ou contester, contactez notre support.
+
+Toute récidive peut entraîner la suspension de votre compte propriétaire.
+
+— L'équipe SailingLoc`;
+
+  return { html, text };
+}
+
+function buildBoatRepublishedEmail({ firstName, boatName }) {
+  const safeFirstName = escapeHtml(firstName);
+  const safeBoat = escapeHtml(boatName);
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Annonce de nouveau en ligne</title></head>
+  <body style="margin:0; padding:0; background-color:#f4f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
+          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+            <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
+            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Votre annonce est en ligne</p>
+          </td></tr>
+          <tr><td style="padding:40px 36px 24px;">
+            <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">
+              Bonne nouvelle : votre annonce <strong style="color:#0A3172;">${safeBoat}</strong> est de nouveau
+              <strong>publiée et visible</strong> par les locataires sur SailingLoc.
+            </p>
+            <p style="margin:0; color:#334155; font-size:15px; line-height:1.6;">
+              Aucune action de votre part n'est nécessaire. Merci de votre confiance.
+            </p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
+            <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
+              © ${new Date().getFullYear()} SailingLoc — Tous droits réservés.<br />Cet email a été envoyé automatiquement.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = `Bonjour ${firstName},
+
+Bonne nouvelle : votre annonce "${boatName}" est de nouveau publiée et visible par les locataires sur SailingLoc.
+
+Aucune action de votre part n'est nécessaire.
+
+— L'équipe SailingLoc`;
+
+  return { html, text };
+}
+
+export async function sendBoatRepublishedEmail(to, { firstName, boatName }) {
+  const { html, text } = buildBoatRepublishedEmail({ firstName, boatName });
+  await createTransporter().sendMail({
+    from: '"SailingLoc" <noreply@sailingloc.fr>',
+    to,
+    subject: `Votre annonce "${boatName}" est de nouveau en ligne — SailingLoc`,
+    html,
+    text,
+    attachments: [
+      {
+        filename: 'sailingloc-logo.webp',
+        path: LOGO_PATH,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  });
+}
+
+export async function sendBoatUnpublishedEmail(to, { firstName, boatName }) {
+  const { html, text } = buildBoatUnpublishedEmail({ firstName, boatName });
+  await createTransporter().sendMail({
+    from: '"SailingLoc" <noreply@sailingloc.fr>',
+    to,
+    subject: `Votre annonce "${boatName}" a été retirée — SailingLoc`,
+    html,
+    text,
+    attachments: [
+      {
+        filename: 'sailingloc-logo.webp',
+        path: LOGO_PATH,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  });
+}
+
+const EUR = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  maximumFractionDigits: 2,
+});
+
+function buildDisputeDecisionEmail({
+  firstName,
+  audience,
+  resolved,
+  boatName,
+  resolution,
+  refund,
+}) {
+  const safeFirstName = escapeHtml(firstName);
+  const safeBoat = escapeHtml(boatName || '');
+  const safeResolution = escapeHtml(resolution || '');
+  const verdict = resolved ? 'résolu' : 'rejeté';
+  const accent = resolved ? '#10b981' : '#ef4444';
+
+  // Bloc remboursement : présent seulement si un montant a été remboursé.
+  // Phrase différente pour le locataire (qui reçoit) et le propriétaire (qui est informé).
+  let refundHtml = '';
+  let refundText = '';
+  if (refund && refund.amount > 0) {
+    const amountFmt = EUR.format(refund.amount);
+    const pct = Number(refund.percent);
+    const commissionNote = refund.includesCommission
+      ? ' (commission incluse)'
+      : ' (commission SailingLoc conservée)';
+    const refundIntro =
+      audience === 'proprietaire'
+        ? `Un remboursement de <strong style="color:#10b981;">${amountFmt}</strong> (soit <strong>${pct}%</strong> du montant payé${commissionNote}) a été accordé au locataire.`
+        : `Un remboursement de <strong style="color:#10b981;">${amountFmt}</strong> (soit <strong>${pct}%</strong> du montant payé${commissionNote}) sera crédité sur votre moyen de paiement initial sous quelques jours.`;
+    refundHtml = `
+            <div style="margin:20px 0 0; padding:16px 18px; background-color:#ecfdf5; border-left:4px solid #10b981; border-radius:8px;">
+              <p style="margin:0 0 6px; color:#065f46; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Remboursement</p>
+              <p style="margin:0; color:#064e3b; font-size:14px; line-height:1.6;">${refundIntro}</p>
+            </div>`;
+    refundText =
+      audience === 'proprietaire'
+        ? `\nRemboursement : ${amountFmt} (${pct}% du montant payé${commissionNote}) accordé au locataire.\n`
+        : `\nRemboursement : ${amountFmt} (${pct}% du montant payé${commissionNote}) sera crédité sur votre moyen de paiement initial sous quelques jours.\n`;
+  }
+
+  // Message distinct selon le destinataire.
+  const introHtml =
+    audience === 'proprietaire'
+      ? `Le litige concernant la réservation de votre bateau${safeBoat ? ` <strong style="color:#0A3172;">${safeBoat}</strong>` : ''} a été <strong style="color:${accent};">${verdict}</strong> par notre équipe.`
+      : `Le litige concernant votre réservation${safeBoat ? ` du bateau <strong style="color:#0A3172;">${safeBoat}</strong>` : ''} a été <strong style="color:${accent};">${verdict}</strong> par notre équipe.`;
+  const introText =
+    audience === 'proprietaire'
+      ? `Le litige concernant la réservation de votre bateau${boatName ? ` "${boatName}"` : ''} a été ${verdict} par notre équipe.`
+      : `Le litige concernant votre réservation${boatName ? ` du bateau "${boatName}"` : ''} a été ${verdict} par notre équipe.`;
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Litige traité</title></head>
+  <body style="margin:0; padding:0; background-color:#f4f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
+          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+            <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
+            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Gestion des litiges</p>
+          </td></tr>
+          <tr><td style="padding:40px 36px 24px;">
+            <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">${introHtml}</p>
+            ${
+              safeResolution
+                ? `<p style="margin:0 0 8px; color:#64748b; font-size:13px;">Décision / motif :</p>
+            <p style="margin:0; padding:14px 16px; background-color:#f1f5f9; border-radius:8px; color:#334155; font-size:14px; line-height:1.6;">${safeResolution}</p>`
+                : ''
+            }${refundHtml}
+            <p style="margin:24px 0 0; color:#334155; font-size:14px; line-height:1.6;">
+              Pour toute question, contactez notre support.
+            </p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
+            <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
+              © ${new Date().getFullYear()} SailingLoc — Tous droits réservés.<br />Cet email a été envoyé automatiquement.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = `Bonjour ${firstName},
+
+${introText}
+${resolution ? `\nDécision / motif : ${resolution}\n` : ''}${refundText}
+Pour toute question, contactez notre support.
+
+— L'équipe SailingLoc`;
+
+  return { html, text };
+}
+
+export async function sendDisputeDecisionEmail(
+  to,
+  { firstName, audience, resolved, boatName, resolution, refund }
+) {
+  const { html, text } = buildDisputeDecisionEmail({
+    firstName,
+    audience,
+    resolved,
+    boatName,
+    resolution,
+    refund,
+  });
+  await createTransporter().sendMail({
+    from: '"SailingLoc" <noreply@sailingloc.fr>',
+    to,
+    subject: `Votre litige a été ${resolved ? 'résolu' : 'rejeté'} — SailingLoc`,
+    html,
+    text,
+    attachments: [
+      {
+        filename: 'sailingloc-logo.webp',
+        path: LOGO_PATH,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  });
+}
+
 export async function sendPasswordResetEmail(to, token, firstName) {
   const { APP_URL } = initConfig();
   const link = `${APP_URL}/reset-password?token=${token}`;

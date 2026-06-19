@@ -13,7 +13,7 @@ Plateforme de location de bateaux — projet fullstack avec un backend Node.js/E
 - [Installation](#installation)
 - [Scripts disponibles](#scripts-disponibles)
 - [Structure du projet](#structure-du-projet)
-- [API — Endpoints principaux](#api--endpoints-principaux)
+- [API](#api)
 - [Choses à savoir](#choses-à-savoir)
 - [Extension TODO Tree](#extension-todo-tree)
 - [Workflow Git](#workflow-git)
@@ -185,6 +185,10 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 | --------------------- | -------------- |
 | `admin@sailingloc.fr` | `Admin@123456` |
 
+> **Connexion admin :** la page de login administrateur est séparée de celle des utilisateurs.
+> URL : [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
+> Une fois connecté, le dashboard est accessible sur [http://localhost:5173/admin](http://localhost:5173/admin).
+
 ### Compte Locataire
 
 | Email                     | Mot de passe           |
@@ -275,16 +279,9 @@ SailingLoc_G2/
 
 ---
 
-## API — Endpoints principaux
+## API
 
-| Méthode | Route                | Description                    |
-| ------- | -------------------- | ------------------------------ |
-| `GET`   | `/api/boats`         | Liste des bateaux              |
-| `POST`  | `/api/boats`         | Créer un bateau (auth requise) |
-| `POST`  | `/api/auth/register` | Inscription                    |
-| `POST`  | `/api/auth/login`    | Connexion                      |
-| `GET`   | `/api/bookings`      | Réservations de l'utilisateur  |
-| `POST`  | `/api/bookings`      | Créer une réservation          |
+Documentation complète (architecture, authentification, endpoints) : [`backend/README.md`](./backend/README.md)
 
 ---
 

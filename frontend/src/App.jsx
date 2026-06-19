@@ -4,6 +4,9 @@ import AppRouter from './router/AppRouter.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { useAuth } from './hooks/useAuth.jsx';
 import Header from './components/common/Header/Header.jsx';
+import HeaderAdmin from './components/common/Header/HeaderAdmin.jsx';
+import HeaderProprio from './components/common/Header/HeaderProprio.jsx';
+import HeaderLocataire from './components/common/Header/HeaderLocataire.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import Footer from './components/common/Footer.jsx';
 
@@ -43,9 +46,24 @@ function AppContent() {
 
   const showAuthModal = activeAuthTab && !user && !loading;
 
+  // Header dédié selon le rôle (les composants de common/Header). Invité ou pendant
+  // le chargement de la session : header public générique.
+  function renderHeader() {
+    switch (user?.role) {
+      case 'admin':
+        return <HeaderAdmin />;
+      case 'proprietaire':
+        return <HeaderProprio />;
+      case 'locataire':
+        return <HeaderLocataire />;
+      default:
+        return <Header />;
+    }
+  }
+
   return (
     <>
-      <Header />
+      {renderHeader()}
       <div className="bg-slate-50 text-slate-900">
         <AppRouter location={routesLocation} />
       </div>

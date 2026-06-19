@@ -34,6 +34,8 @@ model User {
   favoriteBoats       UserBoatFavorite[]
   images              Image[]
   refreshTokens       RefreshToken[]
+  reports             BoatReport[]   @relation("UserReports")
+  disputes            Dispute[]      @relation("UserDisputes")
 
   @@unique([email, role])
   @@map("user")
@@ -60,6 +62,8 @@ model Port {
   name        String   @unique @db.VarChar(150)
   city        String   @db.VarChar(100)
   country     String   @db.VarChar(100)
+  department  String?  @db.VarChar(3)
+  region      String?  @db.VarChar(100)
   latitude    Decimal?
   longitude   Decimal?
   created_at  DateTime @default(now())
@@ -95,10 +99,27 @@ model Boat {
   bookings        Booking[]
   images          Image[]
   favoriteUsers   UserBoatFavorite[]
+  reports         BoatReport[]
 
   @@index([id_user])
   @@index([id_port])
   @@map("boat")
+}
+
+model BoatReport {
+  id_report   Int          @id @default(autoincrement())
+  id_boat     Int
+  id_user     Int?
+  reason      String       @db.VarChar(500)
+  status      ReportStatus @default(pending)
+  created_at  DateTime     @default(now())
+  resolved_at DateTime?
+
+  boat        Boat         @relation(fields: [id_boat], references: [id_boat])
+  reporter    User?        @relation("UserReports", fields: [id_user], references: [id_user])
+
+  @@index([id_boat])
+  @@map("boat_report")
 }
 
 model Booking {
@@ -121,6 +142,7 @@ model Booking {
   payments            Payment[]
   reviews             Review[]
   documents           BookingDocument[]
+  disputes            Dispute[]
 
   @@index([id_user])
   @@index([id_boat])
@@ -128,20 +150,47 @@ model Booking {
   @@map("booking")
 }
 
-model Payment {
-  id_payment      Int           @id @default(autoincrement())
-  id_booking      Int
-  amount          Decimal
-  commission      Decimal
-  payment_date    DateTime
-  payment_method  String        @db.VarChar(50)
-  status          PaymentStatus @default(pending)
-  transaction_ref String?       @unique @db.VarChar(255)
-  created_at      DateTime      @default(now())
+model Dispute {
+  id_dispute  Int           @id @default(autoincrement())
+  id_booking  Int
+  id_user     Int?
+  reason      String        @db.VarChar(1000)
+  status      DisputeStatus @default(open)
+  resolution  String?       @db.VarChar(1000)
+  created_at  DateTime      @default(now())
+  resolved_at DateTime?
 
-  booking         Booking       @relation(fields: [id_booking], references: [id_booking])
+  booking     Booking       @relation(fields: [id_booking], references: [id_booking])
+  opener      User?         @relation("UserDisputes", fields: [id_user], references: [id_user])
+  payments    Payment[]
 
   @@index([id_booking])
+  @@map("dispute")
+}
+
+model Payment {
+  id_payment       Int           @id @default(autoincrement())
+  id_booking       Int
+  amount           Decimal
+  commission       Decimal
+  payment_date     DateTime
+  payment_method   String        @db.VarChar(50)
+  status           PaymentStatus @default(pending)
+  transaction_ref  String?       @unique @db.VarChar(255)
+  created_at       DateTime      @default(now())
+
+  // Remboursement (partiel ou total). refunded_amount inclut la commission
+  // uniquement si l'admin a coché « Rembourser aussi la commission ».
+  refunded_amount  Decimal?
+  refunded_at      DateTime?
+  refund_reason    String?       @db.VarChar(500)
+  id_dispute       Int?
+
+  booking          Booking       @relation(fields: [id_booking], references: [id_booking])
+  dispute          Dispute?      @relation(fields: [id_dispute], references: [id_dispute])
+
+  @@index([id_booking])
+  @@index([id_dispute])
   @@map("payment")
 }
 
@@ -267,6 +316,22 @@ enum PaymentStatus {
   refunded
 
   @@map("payment_status")
+}
+
+enum ReportStatus {
+  pending
+  resolved
+  dismissed
+
+  @@map("report_status")
+}
+
+enum DisputeStatus {
+  open
+  resolved
+  rejected
+
+  @@map("dispute_status")
 }
 
 enum DocumentStatus {

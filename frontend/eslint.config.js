@@ -23,6 +23,8 @@ export default [
         fetch: 'readonly',
         FormData: 'readonly',
         URL: 'readonly',
+        URLSearchParams: 'readonly',
+        Intl: 'readonly',
       },
     },
     rules: {},
