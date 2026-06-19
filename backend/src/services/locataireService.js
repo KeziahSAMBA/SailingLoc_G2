@@ -1,4 +1,5 @@
 import prisma from '../config/db.js';
+import { DOCUMENT_TYPES } from './documentService.js';
 
 // Vue synthétique du tableau de bord locataire : compteurs agrégés en une seule passe.
 export async function getDashboardStats(id_user) {
@@ -12,7 +13,7 @@ export async function getDashboardStats(id_user) {
     favorites,
     unreadMessages,
     nextBooking,
-    pendingDocuments,
+    userDocuments,
     reviewsToLeave,
     recentBookings,
     favoriteBoatsPreview,
@@ -52,9 +53,11 @@ export async function getDashboardStats(id_user) {
         },
       },
     }),
-    // Documents à compléter : en attente de validation ou refusés.
-    prisma.document.count({
-      where: { id_user, status: { in: ['pending', 'refused'] } },
+    // Documents du locataire (type + statut) : sert à calculer les documents
+    // en attente/refusés ET les types obligatoires manquants.
+    prisma.document.findMany({
+      where: { id_user },
+      select: { type: true, status: true },
     }),
     // Réservations terminées pour lesquelles le locataire n'a pas encore laissé d'avis.
     prisma.booking.count({
@@ -101,11 +104,21 @@ export async function getDashboardStats(id_user) {
     }),
   ]);
 
+  // Documents en attente de validation ou refusés (à corriger).
+  const pendingDocuments = userDocuments.filter(
+    (d) => d.status === 'pending' || d.status === 'refused'
+  ).length;
+  // Types obligatoires (rôle locataire) pour lesquels aucun document n'a été déposé.
+  const providedTypes = new Set(userDocuments.map((d) => d.type));
+  const requiredTypes = DOCUMENT_TYPES.locataire || [];
+  const missingDocuments = requiredTypes.filter((t) => !providedTypes.has(t)).length;
+
   return {
     activeBookings,
     favorites,
     unreadMessages,
     pendingDocuments,
+    missingDocuments,
     reviewsToLeave,
     nextBooking: nextBooking && {
       ...nextBooking,

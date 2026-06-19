@@ -254,6 +254,20 @@ function LocataireDashboard() {
   }, []);
 
   const pendingDocuments = stats?.pendingDocuments ?? 0;
+  const missingDocuments = stats?.missingDocuments ?? 0;
+
+  // Message d'alerte documents : combine manquants et en attente/refusés.
+  const docsAlertParts = [];
+  if (missingDocuments > 0) {
+    docsAlertParts.push(
+      `${NUMBER.format(missingDocuments)} manquant${missingDocuments > 1 ? 's' : ''}`
+    );
+  }
+  if (pendingDocuments > 0) {
+    docsAlertParts.push(
+      `${NUMBER.format(pendingDocuments)} en attente ou refusé${pendingDocuments > 1 ? 's' : ''}`
+    );
+  }
 
   return (
     <section aria-labelledby="dashboard-title" aria-busy={loading}>
@@ -273,8 +287,8 @@ function LocataireDashboard() {
         </div>
       )}
 
-      {/* Alerte : documents à compléter (en attente ou refusés). */}
-      {!loading && pendingDocuments > 0 && (
+      {/* Alerte : documents à compléter (manquants, en attente ou refusés). */}
+      {!loading && docsAlertParts.length > 0 && (
         <Link
           to="/locataire/documents"
           role="alert"
@@ -284,9 +298,8 @@ function LocataireDashboard() {
             ⚠️
           </span>
           <span>
-            Vous avez <strong>{NUMBER.format(pendingDocuments)}</strong> document
-            {pendingDocuments > 1 ? 's' : ''} à compléter (en attente ou refusé
-            {pendingDocuments > 1 ? 's' : ''}). Cliquez pour les régulariser.
+            Documents à compléter : <strong>{docsAlertParts.join(' et ')}</strong>. Cliquez pour les
+            régulariser.
           </span>
         </Link>
       )}
