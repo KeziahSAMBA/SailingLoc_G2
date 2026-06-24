@@ -1,17 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SearchBar from '../components/common/SearchBar.jsx';
+import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
 import { FaStar, FaRegStar } from 'react-icons/fa';
-import { MdAnchor, MdPerson, MdLocationOn, MdPeople } from 'react-icons/md';
-import { FaChevronDown, FaChevronUp, FaArrowRight, FaSliders } from 'react-icons/fa6';
+import { MdPerson, MdLocationOn, MdPeople } from 'react-icons/md';
 import portMarseille from '../assets/image/ports/Marseille.webp';
 import portNice from '../assets/image/ports/Nice.webp';
 import portCroatie from '../assets/image/ports/Croatie.webp';
 import portNaples from '../assets/image/ports/Naples.webp';
-import portAthenes from '../assets/image/ports/Athènes.webp';
-import portBordeaux from '../assets/image/ports/Bordeaux.webp';
-import portBrest from '../assets/image/ports/Brest.webp';
-import portGenes from '../assets/image/ports/Gênes.webp';
+import CarrouselBoat from '../components/common/CarrouselBoat.jsx';
+import CarouselBoatTypes from '../components/common/CarouselBoatTypes.jsx';
+import Breadcrumb from '../components/common/FilAriane.jsx';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 
@@ -66,41 +65,6 @@ const BOATS = [
   },
 ];
 
-const SUGGESTIONS = [
-  {
-    id: 1,
-    image: portBordeaux,
-    name: 'Beneteau Flyer 8',
-    location: 'Cannes',
-    price: 220,
-    rating: 4.5,
-  },
-  {
-    id: 2,
-    image: portAthenes,
-    name: 'Zodiac Medline 7.5',
-    location: 'Nice',
-    price: 180,
-    rating: 4.3,
-  },
-  {
-    id: 3,
-    image: portBrest,
-    name: 'Jeanneau Cap Camarat 7.5',
-    location: 'Toulon',
-    price: 310,
-    rating: 4.6,
-  },
-  {
-    id: 4,
-    image: portGenes,
-    name: 'Bénéteau Antares 9',
-    location: 'Antibes',
-    price: 265,
-    rating: 4.4,
-  },
-];
-
 const REVIEWS = [
   {
     id: 1,
@@ -116,6 +80,34 @@ const REVIEWS = [
     date: 'Il y a 3 mois',
     text: 'Très beau voilier pour une sortie entre amis. Le processus de réservation est fluide et transparent. Je recommande sans hésiter.',
   },
+  {
+    id: 3,
+    name: 'Marc Lefebvre',
+    rating: 5,
+    date: 'Il y a 1 mois',
+    text: "Navigation parfaite autour des îles d'Hyères. Le skipper était aux petits soins et très professionnel. Une semaine mémorable !",
+  },
+  {
+    id: 4,
+    name: 'Camille Rousseau',
+    rating: 4,
+    date: 'Il y a 2 mois',
+    text: "Super yacht, très bien équipé. L'embarquement à Saint-Tropez était impeccable. Je reviendrai l'été prochain sans hésiter.",
+  },
+  {
+    id: 5,
+    name: 'Antoine Bernard',
+    rating: 5,
+    date: 'Il y a 5 jours',
+    text: "Week-end en catamaran depuis Marseille, une réussite totale. Réservation simple, bateau conforme aux photos. Bravo à toute l'équipe.",
+  },
+  {
+    id: 6,
+    name: 'Léa Martin',
+    rating: 4,
+    date: 'Il y a 6 semaines',
+    text: 'Magnifique voilier pour un séjour en famille. Les enfants ont adoré. La plateforme est intuitive et le service client très réactif.',
+  },
 ];
 
 const MAP_MARKERS = [
@@ -124,6 +116,26 @@ const MAP_MARKERS = [
   { id: 3, lat: 43.12, lng: 6.13, title: 'Sun Odyssey 410', subtitle: 'Hyères, Port-Cros' },
   { id: 4, lat: 43.27, lng: 6.64, title: "Azimut 60 'Luxury'", subtitle: 'Saint-Tropez, Var' },
 ];
+
+const reviewsCSS = `
+  @keyframes scrollReviews {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .category-carousel-types > div > div:first-child > h2 {
+    color: #000 !important;
+  }
+  .category-carousel-types > div > div:first-child > button {
+    color: #4b5563 !important;
+  }
+  .category-carousel-types > div > div:first-child > button:hover {
+    color: #000 !important;
+  }
+  .category-carousel-types > div > div:last-child > div > div:first-child {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+  }
+`;
 
 const GHOST_BTN_BASE = {
   border: '1px solid rgba(14,165,233,0.95)',
@@ -166,40 +178,6 @@ function StarRating({ rating }) {
           <FaRegStar key={i} className="text-amber-400" style={{ fontSize: '10px' }} />
         )
       )}
-    </div>
-  );
-}
-
-function FilterCheckbox({ label, checked, onChange }) {
-  return (
-    <label className="flex items-center gap-2 py-1 cursor-pointer group">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
-      />
-      <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
-        {label}
-      </span>
-    </label>
-  );
-}
-
-function FilterSection({ title, expanded, onToggle, children }) {
-  return (
-    <div className="border-b border-gray-100 pb-3 mb-3 last:border-0 last:pb-0 last:mb-0">
-      <button onClick={onToggle} className="flex items-center justify-between w-full mb-2 group">
-        <span className="text-sm font-semibold text-gray-700 group-hover:text-sky-600 transition-colors">
-          {title}
-        </span>
-        {expanded ? (
-          <FaChevronUp size={10} className="text-gray-400" />
-        ) : (
-          <FaChevronDown size={10} className="text-gray-400" />
-        )}
-      </button>
-      {expanded && <div className="space-y-0.5">{children}</div>}
     </div>
   );
 }
@@ -277,40 +255,6 @@ function BoatListingCard({ image, badge, rating, type, name, location, capacity,
   );
 }
 
-function SuggestionCard({ image, name, location, price, rating }) {
-  return (
-    <div
-      className="flex overflow-hidden rounded-xl border border-gray-100 bg-white hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer"
-      style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}
-      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 6px 24px rgba(14,165,233,0.25)')}
-      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.07)')}
-    >
-      <div className="w-28 flex-shrink-0 overflow-hidden">
-        <img
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-      </div>
-      <div className="flex flex-col justify-center py-3 px-4 flex-1 min-w-0">
-        <h4 className="text-sm font-semibold text-gray-900 mb-1 truncate">{name}</h4>
-        <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-          <MdLocationOn className="text-sky-400 flex-shrink-0" style={{ fontSize: '11px' }} />
-          {location}
-        </p>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-bold text-gray-900">{price}€</span>
-          <div className="flex items-center gap-1">
-            <StarRating rating={Math.floor(rating)} />
-            <span className="text-xs text-gray-400 ml-0.5">{rating}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ReviewCard({ name, rating, date, text }) {
   return (
     <div
@@ -343,336 +287,200 @@ function ReviewCard({ name, rating, date, text }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function CategoryPage() {
-  const [boatTypeFilters, setBoatTypeFilters] = useState({
-    voilier: false,
-    catamaran: false,
-    yacht: false,
-    moteur: false,
-    semiRigide: false,
-  });
-  const [equipmentFilters, setEquipmentFilters] = useState({
-    skipper: false,
-    cuisine: false,
-    clim: false,
-    wifi: false,
-  });
-  const [selectedCabins, setSelectedCabins] = useState(null);
-  const [typeExpanded, setTypeExpanded] = useState(true);
-  const [equipExpanded, setEquipExpanded] = useState(true);
-  const [cabinsExpanded, setCabinsExpanded] = useState(true);
+  const [headerHeight, setHeaderHeight] = useState(80);
 
-  function resetFilters() {
-    setBoatTypeFilters({
-      voilier: false,
-      catamaran: false,
-      yacht: false,
-      moteur: false,
-      semiRigide: false,
-    });
-    setEquipmentFilters({ skipper: false, cuisine: false, clim: false, wifi: false });
-    setSelectedCabins(null);
-  }
-
-  const activeFiltersCount =
-    Object.values(boatTypeFilters).filter(Boolean).length +
-    Object.values(equipmentFilters).filter(Boolean).length +
-    (selectedCabins !== null ? 1 : 0);
+  useEffect(() => {
+    const onScroll = () => setHeaderHeight(window.scrollY > 10 ? 60 : 80);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <main className="w-full min-h-screen pt-20" style={{ backgroundColor: '#f8fafc' }}>
-      {/* Breadcrumb */}
-      <nav
-        className="flex items-center gap-2 px-8 py-2.5 text-xs text-gray-500 border-b border-sky-100"
-        style={{ backgroundColor: 'rgba(0,78,87,0.05)' }}
-      >
-        <a href="/" className="hover:text-sky-600 transition-colors">
-          Accueil
-        </a>
-        <span className="text-gray-300">/</span>
-        <a href="#" className="hover:text-sky-600 transition-colors">
-          Destinations
-        </a>
-        <span className="text-gray-300">/</span>
-        <span className="font-semibold" style={{ color: 'rgba(14,165,233,0.95)' }}>
-          Méditerranée
-        </span>
-      </nav>
-
-      {/* Search bar — dark teal wrapper matches SearchBar's glass design */}
-      <div
-        className="px-8 py-4"
-        style={{
-          background: 'linear-gradient(105deg, rgb(0,78,87) 0%, rgba(10,49,114,0.92) 100%)',
-        }}
-      >
-        <SearchBar />
-      </div>
-
-      {/* ── 3-column layout ──────────────────────────────────────────────────── */}
-      <div
-        className="flex items-start gap-4 px-4 py-5"
-        style={{ maxWidth: '1600px', margin: '0 auto' }}
-      >
-        {/* ── LEFT : Filter panel ──────────────────────────────────────────── */}
-        <aside className="w-52 flex-shrink-0 sticky top-24 flex flex-col gap-3">
-          {/* Filter card */}
-          <div
-            className="rounded-2xl border border-gray-100 bg-white p-4"
-            style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}
-          >
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-              <span className="flex items-center gap-2 text-xs font-bold text-gray-800 uppercase tracking-wider">
-                <FaSliders className="text-sky-500" size={11} />
-                Filtres
-                {activeFiltersCount > 0 && (
-                  <span
-                    className="text-[10px] text-white rounded-full w-4 h-4 flex items-center justify-center font-bold"
-                    style={{ backgroundColor: 'rgba(14,165,233,0.95)' }}
-                  >
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </span>
-              <button
-                onClick={resetFilters}
-                className="text-xs font-medium transition-colors hover:opacity-70"
-                style={{ color: 'rgba(14,165,233,0.95)' }}
-              >
-                Réinitialiser
-              </button>
+    <main className="w-full min-h-screen pt-20" style={{ backgroundColor: '#fff' }}>
+      <style>{reviewsCSS}</style>
+      {/* Wrapper pour limiter le sticky avant la section avis */}
+      <div>
+        {/*section 1 - searchbar*/}
+        <section
+          className="z-40"
+          style={{
+            position: 'sticky',
+            top: `${headerHeight}px`,
+            borderBottom: '1px solid rgba(0,0,0,0.08)',
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            backdropFilter: 'blur(5px)',
+            transition: 'top 0.3s ease',
+          }}
+        >
+          {/* Ligne 1 : FilterBar + SearchBar */}
+          <div className="flex items-center gap-8 pt-8 pb-1" style={{ paddingLeft: '112px' }}>
+            <FilterBar />
+            <div>
+              <SearchBar />
             </div>
+          </div>
 
-            <FilterSection
-              title="Type de bateau"
-              expanded={typeExpanded}
-              onToggle={() => setTypeExpanded((v) => !v)}
-            >
-              <FilterCheckbox
-                label="Voiliers"
-                checked={boatTypeFilters.voilier}
-                onChange={(e) => setBoatTypeFilters((f) => ({ ...f, voilier: e.target.checked }))}
-              />
-              <FilterCheckbox
-                label="Catamarans"
-                checked={boatTypeFilters.catamaran}
-                onChange={(e) => setBoatTypeFilters((f) => ({ ...f, catamaran: e.target.checked }))}
-              />
-              <FilterCheckbox
-                label="Yachts"
-                checked={boatTypeFilters.yacht}
-                onChange={(e) => setBoatTypeFilters((f) => ({ ...f, yacht: e.target.checked }))}
-              />
-              <FilterCheckbox
-                label="Bateaux à moteur"
-                checked={boatTypeFilters.moteur}
-                onChange={(e) => setBoatTypeFilters((f) => ({ ...f, moteur: e.target.checked }))}
-              />
-              <FilterCheckbox
-                label="Semi-rigides"
-                checked={boatTypeFilters.semiRigide}
-                onChange={(e) =>
-                  setBoatTypeFilters((f) => ({ ...f, semiRigide: e.target.checked }))
-                }
-              />
-            </FilterSection>
+          {/* Ligne 2 : Breadcrumb aligné sous le FilterBar */}
+          <div className="pb-2" style={{ paddingLeft: '112px' }}>
+            <Breadcrumb />
+          </div>
 
-            <FilterSection
-              title="Équipements"
-              expanded={equipExpanded}
-              onToggle={() => setEquipExpanded((v) => !v)}
-            >
-              <FilterCheckbox
-                label="Skipper inclus"
-                checked={equipmentFilters.skipper}
-                onChange={(e) => setEquipmentFilters((f) => ({ ...f, skipper: e.target.checked }))}
-              />
-              <FilterCheckbox
-                label="Cuisine équipée"
-                checked={equipmentFilters.cuisine}
-                onChange={(e) => setEquipmentFilters((f) => ({ ...f, cuisine: e.target.checked }))}
-              />
-              <FilterCheckbox
-                label="Climatisation"
-                checked={equipmentFilters.clim}
-                onChange={(e) => setEquipmentFilters((f) => ({ ...f, clim: e.target.checked }))}
-              />
-              <FilterCheckbox
-                label="Wifi à bord"
-                checked={equipmentFilters.wifi}
-                onChange={(e) => setEquipmentFilters((f) => ({ ...f, wifi: e.target.checked }))}
-              />
-            </FilterSection>
+          {/* Blur strip — fondu sous la searchbar */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-28px',
+              left: 0,
+              right: 0,
+              height: '28px',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, transparent 100%)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+        </section>
 
-            <FilterSection
-              title="Nombre de cabines"
-              expanded={cabinsExpanded}
-              onToggle={() => setCabinsExpanded((v) => !v)}
-            >
-              <div className="flex gap-2 mt-1 flex-wrap">
-                {[1, 2, 3, '4+'].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setSelectedCabins(selectedCabins === n ? null : n)}
-                    className="w-9 h-9 rounded-full text-sm font-semibold border transition-all duration-200"
-                    style={{
-                      backgroundColor: selectedCabins === n ? 'rgba(14,165,233,0.95)' : '#fff',
-                      color: selectedCabins === n ? '#fff' : '#4b5563',
-                      borderColor: selectedCabins === n ? 'rgba(14,165,233,0.95)' : '#e5e7eb',
-                      boxShadow: selectedCabins === n ? '0 2px 8px rgba(14,165,233,0.4)' : 'none',
-                    }}
-                  >
-                    {n}
-                  </button>
-                ))}
+        {/* ── Listings + Carte 50/50 ───────────────────────────────────────────── */}
+        <div
+          className="flex items-start gap-6 px-6 py-6"
+          style={{ maxWidth: '1600px', margin: '0 auto' }}
+        >
+          {/* ── Listings — 50% ───────────────────────────────────────────────── */}
+          <div className="w-1/2 flex flex-col gap-6">
+            {/* Section header */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p
+                  className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4"
+                  style={{ color: 'rgba(14,165,233,0.95)' }}
+                >
+                  Nos recommandations
+                </p>
+                <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-tight">
+                  Liste des propositions
+                </h1>
               </div>
-            </FilterSection>
-          </div>
-
-          {/* Besoin d'aide */}
-          <div
-            className="rounded-2xl border border-sky-100 p-4 text-center"
-            style={{
-              background: 'linear-gradient(135deg, rgba(0,78,87,0.06), rgba(14,165,233,0.07))',
-            }}
-          >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2"
-              style={{
-                background: 'rgba(14,165,233,0.12)',
-                border: '1px solid rgba(14,165,233,0.25)',
-              }}
-            >
-              <MdAnchor className="text-sky-500 text-xl" />
+              <span className="text-sm text-gray-400 font-medium pb-1">
+                156 bateaux disponibles
+              </span>
             </div>
-            <p className="text-sm font-semibold text-gray-800 mb-1">Besoin d&apos;aide ?</p>
-            <p className="text-xs text-gray-500 leading-relaxed mb-3">
-              Nos experts maritimes sont disponibles 7j/7 pour vous accompagner.
-            </p>
-            <a
-              href="#contact"
-              className="text-xs font-semibold transition-colors flex items-center justify-center gap-1 hover:opacity-70"
-              style={{ color: 'rgba(14,165,233,0.95)' }}
-            >
-              Nous contacter <FaArrowRight size={8} />
-            </a>
-          </div>
-        </aside>
 
-        {/* ── CENTER : Listings ────────────────────────────────────────────── */}
-        <div className="flex-1 min-w-0 flex flex-col gap-6">
-          {/* Section header */}
-          <div className="flex items-end justify-between">
-            <div>
-              <p
-                className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4"
-                style={{ color: 'rgba(14,165,233,0.95)' }}
-              >
-                Nos recommandations
-              </p>
-              <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-tight">
-                Liste des propositions
-              </h1>
-            </div>
-            <span className="text-sm text-gray-400 font-medium pb-1">156 bateaux disponibles</span>
-          </div>
-
-          {/* 2×2 grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {BOATS.map((boat) => (
-              <BoatListingCard key={boat.id} {...boat} />
-            ))}
-          </div>
-
-          {/* Voir plus */}
-          <div className="flex justify-center py-2">
-            <GhostButton>Voir plus d&apos;offres</GhostButton>
-          </div>
-
-          {/* Suggestions à proximité */}
-          <section className="flex flex-col gap-4">
-            <div>
-              <p
-                className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4"
-                style={{ color: 'rgba(14,165,233,0.95)' }}
-              >
-                Suggestions
-              </p>
-              <h2 className="text-xl font-bold text-gray-900">Suggestions à proximité</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {SUGGESTIONS.map((s) => (
-                <SuggestionCard key={s.id} {...s} />
-              ))}
-            </div>
-          </section>
-
-          {/* Avis & Commentaires */}
-          <section
-            className="rounded-2xl border border-gray-100 p-6"
-            style={{
-              background: 'linear-gradient(135deg, #ffffff, rgba(235,245,253,0.6))',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-            }}
-          >
-            <div className="text-center mb-5">
-              <p
-                className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4"
-                style={{ color: 'rgba(14,165,233,0.95)' }}
-              >
-                Témoignages
-              </p>
-              <h2 className="text-xl font-bold text-gray-900">Avis &amp; Commentaires</h2>
-            </div>
+            {/* 2×2 grid */}
             <div className="grid grid-cols-2 gap-4">
-              {REVIEWS.map((r) => (
-                <ReviewCard key={r.id} {...r} />
+              {BOATS.map((boat) => (
+                <BoatListingCard key={boat.id} {...boat} />
               ))}
             </div>
-          </section>
 
-          {/* CTA bottom */}
-          <div className="flex flex-col items-center gap-3 pb-8">
-            <p className="text-gray-700 font-semibold text-sm">
-              Vous ne trouvez pas ce que vous cherchez ?
-            </p>
-            <GhostButton>
-              <MdAnchor className="text-base" />
-              Voir toutes nos annonces
-            </GhostButton>
+            {/* Voir plus */}
+            <div className="flex justify-center py-2">
+              <GhostButton>Voir plus d&apos;offres</GhostButton>
+            </div>
           </div>
+
+          {/* ── Carte — 50% ──────────────────────────────────────────────────── */}
+          <aside className="w-1/2 sticky top-24 flex flex-col gap-2">
+            <div className="flex items-center justify-between px-1">
+              <p
+                className="text-xs font-bold tracking-widest uppercase"
+                style={{ color: 'rgba(14,165,233,0.95)' }}
+              >
+                Carte Interactive
+              </p>
+              <span
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5"
+                style={{
+                  backgroundColor: 'rgba(34,197,94,0.12)',
+                  color: '#16a34a',
+                  border: '1px solid rgba(34,197,94,0.3)',
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                Mise à jour Live
+              </span>
+            </div>
+            <MapView
+              markers={MAP_MARKERS}
+              className="h-[660px]"
+              emptyLabel="Aucun bateau à afficher."
+            />
+            <p className="text-[10px] text-gray-400 text-center px-2">
+              Cliquez sur un marqueur pour voir les détails du bateau
+            </p>
+          </aside>
         </div>
 
-        {/* ── RIGHT : Sticky map ───────────────────────────────────────────── */}
-        <aside className="w-72 flex-shrink-0 sticky top-24 flex flex-col gap-2">
-          <div className="flex items-center justify-between px-1">
-            <p
-              className="text-xs font-bold tracking-widest uppercase"
-              style={{ color: 'rgba(14,165,233,0.95)' }}
-            >
-              Carte Interactive
-            </p>
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5"
-              style={{
-                backgroundColor: 'rgba(34,197,94,0.12)',
-                color: '#16a34a',
-                border: '1px solid rgba(34,197,94,0.3)',
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-              Mise à jour Live
-            </span>
+        {/* ── Section — Carrousels bateaux & ports ─────────────────────────────── */}
+        <section
+          id="suggestions"
+          className="relative w-full min-h-screen flex flex-col justify-center gap-10 px-28 py-16 bg-white"
+        >
+          <div className="w-full flex flex-col gap-10 py-10">
+            <div className="category-carousel-types">
+              <CarouselBoatTypes />
+            </div>
+            <CarrouselBoat />
           </div>
-          <MapView
-            markers={MAP_MARKERS}
-            className="h-[560px]"
-            emptyLabel="Aucun bateau à afficher."
-          />
-          <p className="text-[10px] text-gray-400 text-center px-2">
-            Cliquez sur un marqueur pour voir les détails du bateau
-          </p>
-        </aside>
+        </section>
       </div>
+      {/* fin du wrapper sticky */}
+
+      {/* ── Section — Avis clients ────────────────────────────────────────────── */}
+      <section
+        id="avis"
+        className="w-full bg-white flex flex-col items-center justify-center gap-6 px-28 py-16 min-h-screen"
+      >
+        <div className="text-center mb-4">
+          <h2 className="text-md font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+            Avis clients
+          </h2>
+          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900">
+            Ce que nos navigateurs disent de nous
+          </h1>
+        </div>
+
+        <div className="flex flex-col gap-6 w-full">
+          {[
+            { reviews: REVIEWS.slice(0, 3), direction: 'normal' },
+            { reviews: REVIEWS.slice(3), direction: 'reverse' },
+          ].map(({ reviews, direction }, rowIdx) => {
+            const duration = Math.max(reviews.length, 1) * 15;
+            return (
+              <div
+                key={rowIdx}
+                className="w-full overflow-x-hidden py-4"
+                style={{
+                  maskImage:
+                    'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+                  WebkitMaskImage:
+                    'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.querySelector('.reviews-track').style.animationPlayState =
+                    'paused';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.querySelector('.reviews-track').style.animationPlayState =
+                    'running';
+                }}
+              >
+                <div
+                  className="reviews-track flex gap-6 w-max"
+                  style={{
+                    animation: `scrollReviews ${duration}s linear infinite ${direction}`,
+                  }}
+                >
+                  {[...reviews, ...reviews, ...reviews, ...reviews].map((review, i) => (
+                    <ReviewCard key={i} {...review} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </main>
   );
 }

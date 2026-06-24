@@ -3,13 +3,13 @@ import { FiSearch } from 'react-icons/fi';
 
 function DateInput({ label }) {
   return (
-    <div className="group flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
-      <span className="text-white text-[10px] font-semibold uppercase tracking-wide mb-0.5">
+    <div className="group flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full hover:bg-black/10 transition-colors cursor-pointer">
+      <span className="text-black text-[10px] font-semibold uppercase tracking-wide mb-0.5">
         {label}
       </span>
       <input
         type="date"
-        className="bg-transparent text-white/80 outline-none text-xs cursor-pointer"
+        className="bg-transparent text-black/80 outline-none text-xs cursor-pointer"
       />
     </div>
   );
@@ -19,9 +19,17 @@ function SearchBar() {
   const [destination, setDestination] = useState('');
 
   return (
-    <div className="flex items-stretch bg-white/5 backdrop-blur- border border-white/10 rounded-full shadow-xl max-w-4xl mx-auto p-0.5 gap-0">
-      <div className="flex-1 flex flex-col justify-center px-6 py-0.5 mx-0.5 rounded-full hover:bg-white/10 transition-colors">
-        <span className="text-white text-[10px] font-semibold uppercase tracking-wide mb-0.5">
+    <div
+      className="flex items-stretch rounded-full shadow-xl max-w-4xl mx-auto p-0.5 gap-0 border"
+      style={{
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        borderColor: 'rgba(0,0,0,0.1)',
+        backdropFilter: 'blur(40px)',
+        WebkitBackdropFilter: 'blur(40px)',
+      }}
+    >
+      <div className="flex-1 flex flex-col justify-center px-6 py-0.5 mx-0.5 rounded-full hover:bg-black/10 transition-colors">
+        <span className="text-black text-[10px] font-semibold uppercase tracking-wide mb-0.5">
           Destination
         </span>
         <input
@@ -29,25 +37,25 @@ function SearchBar() {
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
           placeholder="Lieu / Port de départ"
-          className="bg-transparent text-white placeholder-white/50 outline-none text-xs"
+          className="bg-transparent text-black placeholder-black/50 outline-none text-xs"
         />
       </div>
 
-      <div className="w-px bg-white/20 self-center h-5" />
+      <div className="w-px bg-black/20 self-center h-5" />
       <DateInput label="Dates arrivée" />
-      <div className="w-px bg-white/20 self-center h-5" />
+      <div className="w-px bg-black/20 self-center h-5" />
       <DateInput label="Dates retour" />
-      <div className="w-px bg-white/20 self-center h-5" />
+      <div className="w-px bg-black/20 self-center h-5" />
 
-      <div className="flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full hover:bg-white/10 transition-colors">
-        <span className="text-white text-[10px] font-semibold uppercase tracking-wide mb-0.5">
+      <div className="flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full hover:bg-black/10 transition-colors">
+        <span className="text-black text-[10px] font-semibold uppercase tracking-wide mb-0.5">
           Voyageurs
         </span>
         <input
           type="number"
           min="1"
           placeholder="Nombre de personnes"
-          className="w-29 bg-transparent text-white placeholder-white/50 outline-none text-xs"
+          className="w-29 bg-transparent text-black placeholder-black/50 outline-none text-xs"
         />
       </div>
 
