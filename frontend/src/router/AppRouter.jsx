@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
+import CategoryPage from '../pages/CategoryPage.jsx';
 import DashboardPage from '../pages/DashboardPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
@@ -27,6 +28,7 @@ function AppRouter({ location }) {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<HomePage />} />
       <Route path="/register" element={<HomePage />} />
+      <Route path="/categorie" element={<CategoryPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route
         path="/forgot-password"

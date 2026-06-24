@@ -12,7 +12,7 @@ const BURGER_ITEMS = [
 ];
 
 const NAV_LINKS = [
-  ['Découvrir', '/'],
+  ['Découvrir', '/categorie'],
   ['Contact', '#contact'],
   ['À propos', '/a-propos'],
 ];
