@@ -119,8 +119,7 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
         </h2>
       </div>
 
-      <div className="flex flex-col items-center gap-3">
-        {/* Filtre rôle */}
+      <div className="flex items-center gap-4">
         <div className="flex gap-2">
           {ROLE_FILTERS.map((opt) => (
             <button
@@ -137,22 +136,17 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
           ))}
         </div>
 
-        {/* Filtre tri */}
-        <div className="flex flex-wrap gap-2 justify-center">
+        <select
+          value={sort}
+          onChange={(e) => handleSort(e.target.value)}
+          className="text-sm border border-gray-200 rounded-full px-3 py-1 text-gray-600 bg-white cursor-pointer focus:outline-none focus:border-sky-400 focus:text-sky-500"
+        >
           {SORT_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => handleSort(opt.value)}
-              className={`px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 ${
-                sort === opt.value
-                  ? 'bg-sky-500 text-white border-sky-500 shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-sky-400 hover:text-sky-500'
-              }`}
-            >
+            <option key={opt.value} value={opt.value}>
               {opt.label}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Grille 2×2 */}
