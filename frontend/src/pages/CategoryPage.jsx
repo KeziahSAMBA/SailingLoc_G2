@@ -2,147 +2,32 @@ import { useState, useEffect } from 'react';
 import SearchBarV2 from '../components/common/SearchBarV2.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
-import { FaStar, FaRegStar } from 'react-icons/fa';
 import { MdPerson, MdLocationOn, MdPeople, MdCalendarToday } from 'react-icons/md';
-import portMarseille from '../assets/image/ports/Marseille.webp';
-import portNice from '../assets/image/ports/Nice.webp';
-import portCroatie from '../assets/image/ports/Croatie.webp';
-import portNaples from '../assets/image/ports/Naples.webp';
-import CarrouselBoat from '../components/common/CarrouselBoat.jsx';
-import CarouselBoatTypes from '../components/common/CarouselBoatTypes.jsx';
+import { FaStar } from 'react-icons/fa';
+import ClientReviews from '../components/common/ClientReviews.jsx';
+import Carrousel from '../components/common/Carrousel.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
+import { fetchBoats } from '../services/boatService.js';
+import { fetchPorts } from '../services/portService.js';
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// ─── Mock Data ───────────────────────────────────────────────────────────────
+const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 
-const BOATS = [
-  {
-    id: 1,
-    image: portMarseille,
-    badge: 'Coup de cœur',
-    rating: 4.9,
-    type: 'Voilier',
-    name: "Oceanis 46.1 'Serenity'",
-    location: 'Marseille, Vieux-Port',
-    capacity: 10,
-    skipper: true,
-    price: 450,
-    availability: ['15 juin – 31 août', '5 – 20 sept'],
-  },
-  {
-    id: 2,
-    image: portNice,
-    badge: null,
-    rating: 4.8,
-    type: 'Catamaran',
-    name: "Lagoon 42 'Horizon'",
-    location: 'Ajaccio, Corse',
-    capacity: 12,
-    skipper: true,
-    price: 850,
-    availability: ['1 juil – 15 août'],
-  },
-  {
-    id: 3,
-    image: portCroatie,
-    badge: null,
-    rating: 4.7,
-    type: 'Voilier',
-    name: 'Sun Odyssey 410',
-    location: 'Hyères, Port-Cros',
-    capacity: 8,
-    skipper: true,
-    price: 390,
-    availability: ['20 juin – 25 août', '1 – 15 oct'],
-  },
-  {
-    id: 4,
-    image: portNaples,
-    badge: 'Coup de cœur',
-    rating: 5,
-    type: 'Yacht',
-    name: "Azimut 60 'Luxury'",
-    location: 'Saint-Tropez, Var',
-    capacity: 15,
-    skipper: true,
-    price: 2400,
-    availability: ['10 juil – 30 août'],
-  },
-];
-
-const REVIEWS = [
-  {
-    id: 1,
-    name: 'Julien Morel',
-    rating: 5,
-    date: 'Il y a 2 semaines',
-    text: "Une expérience incroyable en Corse. Le Lagoon 42 était dans un état impeccable. L'équipe de SailingLoc est d'un professionnalisme rare.",
-  },
-  {
-    id: 2,
-    name: 'Sophie Durant',
-    rating: 4,
-    date: 'Il y a 3 mois',
-    text: 'Très beau voilier pour une sortie entre amis. Le processus de réservation est fluide et transparent. Je recommande sans hésiter.',
-  },
-  {
-    id: 3,
-    name: 'Marc Lefebvre',
-    rating: 5,
-    date: 'Il y a 1 mois',
-    text: "Navigation parfaite autour des îles d'Hyères. Le skipper était aux petits soins et très professionnel. Une semaine mémorable !",
-  },
-  {
-    id: 4,
-    name: 'Camille Rousseau',
-    rating: 4,
-    date: 'Il y a 2 mois',
-    text: "Super yacht, très bien équipé. L'embarquement à Saint-Tropez était impeccable. Je reviendrai l'été prochain sans hésiter.",
-  },
-  {
-    id: 5,
-    name: 'Antoine Bernard',
-    rating: 5,
-    date: 'Il y a 5 jours',
-    text: "Week-end en catamaran depuis Marseille, une réussite totale. Réservation simple, bateau conforme aux photos. Bravo à toute l'équipe.",
-  },
-  {
-    id: 6,
-    name: 'Léa Martin',
-    rating: 4,
-    date: 'Il y a 6 semaines',
-    text: 'Magnifique voilier pour un séjour en famille. Les enfants ont adoré. La plateforme est intuitive et le service client très réactif.',
-  },
-];
-
-const MAP_MARKERS = [
-  { id: 1, lat: 43.3, lng: 5.37, title: 'Oceanis 46.1', subtitle: 'Marseille, Vieux-Port' },
-  { id: 2, lat: 41.93, lng: 8.74, title: "Lagoon 42 'Horizon'", subtitle: 'Ajaccio, Corse' },
-  { id: 3, lat: 43.12, lng: 6.13, title: 'Sun Odyssey 410', subtitle: 'Hyères, Port-Cros' },
-  { id: 4, lat: 43.27, lng: 6.64, title: "Azimut 60 'Luxury'", subtitle: 'Saint-Tropez, Var' },
-];
-
-const reviewsCSS = `
-  @keyframes scrollReviews {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-  .category-carousel-types > div > div:first-child > h2 {
-    color: #000 !important;
-  }
-  .category-carousel-types > div > div:first-child > button {
-    color: #4b5563 !important;
-  }
-  .category-carousel-types > div > div:first-child > button:hover {
-    color: #000 !important;
-  }
-  .category-carousel-types > div > div:last-child > div > div:first-child {
-    background: rgba(0, 0, 0, 0.04) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-  }
-`;
+const toBoatCard = (boat) => ({
+  id: boat.id_boat,
+  image: boat.images[0]?.url ?? '',
+  badge: boat.avg_rating >= 4.8 ? 'Coup de cœur' : null,
+  rating: boat.avg_rating,
+  type: boat.type,
+  name: boat.name,
+  location: boat.port?.city ?? '',
+  capacity: boat.capacity,
+  skipper: boat.with_skipper,
+  price: Number(boat.daily_price),
+  availability: boat.availabilities
+    .slice(0, 2)
+    .map((a) => `${fmtDate(a.start_date)} – ${fmtDate(a.end_date)}`),
+});
 
 const GHOST_BTN_BASE = {
   border: '1px solid rgba(14,165,233,0.95)',
@@ -154,9 +39,10 @@ const GHOST_BTN_BASE = {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function GhostButton({ children, className = '' }) {
+function GhostButton({ children, className = '', onClick }) {
   return (
     <button
+      onClick={onClick}
       className={`flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium whitespace-nowrap ${className}`}
       style={GHOST_BTN_BASE}
       onMouseEnter={(e) => {
@@ -172,20 +58,6 @@ function GhostButton({ children, className = '' }) {
     >
       {children}
     </button>
-  );
-}
-
-function StarRating({ rating }) {
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: 5 }, (_, i) =>
-        i < Math.round(rating) ? (
-          <FaStar key={i} className="text-amber-400" style={{ fontSize: '10px' }} />
-        ) : (
-          <FaRegStar key={i} className="text-amber-400" style={{ fontSize: '10px' }} />
-        )
-      )}
-    </div>
   );
 }
 
@@ -291,37 +163,13 @@ function BoatListingCard({
   );
 }
 
-function ReviewCard({ name, rating, date, text }) {
-  return (
-    <div
-      className="flex-shrink-0 flex flex-col gap-3 p-8 rounded-2xl bg-white border border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] hover:-translate-y-1 transition-all duration-300"
-      style={{ width: 'calc((100vw - 224px - 48px) / 3)' }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0"
-          style={{ background: 'rgba(14,165,233,0.85)' }}
-        >
-          <MdPerson className="text-xl" />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-gray-800 font-semibold text-sm leading-tight">{name}</span>
-          <span className="text-gray-400 text-xs">{date}</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <StarRating rating={rating} />
-        <span className="text-gray-500 text-xs">{rating}/5</span>
-      </div>
-      <p className="text-gray-600 text-xs leading-relaxed">{text}</p>
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function CategoryPage() {
   const [headerHeight, setHeaderHeight] = useState(80);
+  const [mapMarkers, setMapMarkers] = useState([]);
+  const [boats, setBoats] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(8);
 
   useEffect(() => {
     const onScroll = () => setHeaderHeight(window.scrollY > 10 ? 60 : 80);
@@ -329,9 +177,33 @@ function CategoryPage() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    fetchPorts()
+      .then(({ data }) =>
+        setMapMarkers(
+          data
+            .filter(
+              (p) => Number.isFinite(Number(p.latitude)) && Number.isFinite(Number(p.longitude))
+            )
+            .map((p) => ({
+              id: p.id_port,
+              lat: Number(p.latitude),
+              lng: Number(p.longitude),
+              title: p.city,
+              subtitle: p.country,
+              available: p.country === 'France',
+            }))
+        )
+      )
+      .catch(() => {});
+
+    fetchBoats()
+      .then(({ data }) => setBoats(data.map(toBoatCard)))
+      .catch(() => {});
+  }, []);
+
   return (
     <main className="w-full min-h-screen pt-20" style={{ backgroundColor: '#fff' }}>
-      <style>{reviewsCSS}</style>
       {/* Wrapper pour limiter le sticky avant la section avis */}
       <div>
         {/*section 1 - searchbar*/}
@@ -398,15 +270,19 @@ function CategoryPage() {
 
             {/* 2×2 grid */}
             <div className="grid grid-cols-2 gap-4">
-              {BOATS.map((boat) => (
+              {boats.slice(0, visibleCount).map((boat) => (
                 <BoatListingCard key={boat.id} {...boat} />
               ))}
             </div>
 
             {/* Voir plus */}
-            <div className="flex justify-center py-2">
-              <GhostButton>Voir plus d&apos;offres</GhostButton>
-            </div>
+            {visibleCount < boats.length && (
+              <div className="flex justify-center py-2">
+                <GhostButton onClick={() => setVisibleCount((n) => n + 4)}>
+                  Voir plus d&apos;offres
+                </GhostButton>
+              </div>
+            )}
           </div>
 
           {/* ── Carte — 50% ──────────────────────────────────────────────────── */}
@@ -431,7 +307,7 @@ function CategoryPage() {
               </span>
             </div>
             <MapView
-              markers={MAP_MARKERS}
+              markers={mapMarkers}
               className="h-[660px]"
               emptyLabel="Aucun bateau à afficher."
             />
@@ -443,67 +319,12 @@ function CategoryPage() {
 
         {/* ── Section — Carrousels bateaux & ports ─────────────────────────────── */}
         <section id="suggestions" className="relative w-full flex flex-col gap-8 px-28 py-10">
-          <div className="w-full flex flex-col gap-8">
-            <div className="category-carousel-types">
-              <CarouselBoatTypes />
-            </div>
-            <CarrouselBoat />
-          </div>
+          <Carrousel theme="light" />
         </section>
       </div>
       {/* fin du wrapper sticky */}
-
       {/* ── Section — Avis clients ────────────────────────────────────────────── */}
-      <section id="avis" className="w-full bg-white flex flex-col items-center gap-6 px-28 py-10">
-        <div className="text-center mb-4">
-          <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
-            Avis clients
-          </p>
-          <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
-            Ce que nos navigateurs disent de nous
-          </h2>
-        </div>
-
-        <div className="flex flex-col gap-6 w-full">
-          {[
-            { reviews: REVIEWS.slice(0, 3), direction: 'normal' },
-            { reviews: REVIEWS.slice(3), direction: 'reverse' },
-          ].map(({ reviews, direction }, rowIdx) => {
-            const duration = Math.max(reviews.length, 1) * 15;
-            return (
-              <div
-                key={rowIdx}
-                className="w-full overflow-x-hidden py-4"
-                style={{
-                  maskImage:
-                    'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
-                  WebkitMaskImage:
-                    'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
-                }}
-                onMouseEnter={(e) => {
-                  const track = e.currentTarget.querySelector('.reviews-track');
-                  if (track) track.style.animationPlayState = 'paused';
-                }}
-                onMouseLeave={(e) => {
-                  const track = e.currentTarget.querySelector('.reviews-track');
-                  if (track) track.style.animationPlayState = 'running';
-                }}
-              >
-                <div
-                  className="reviews-track flex gap-6 w-max"
-                  style={{
-                    animation: `scrollReviews ${duration}s linear infinite ${direction}`,
-                  }}
-                >
-                  {[...reviews, ...reviews, ...reviews, ...reviews].map((review, i) => (
-                    <ReviewCard key={`${review.id}_${i}`} {...review} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <ClientReviews id="avis" className="py-10" />
     </main>
   );
 }

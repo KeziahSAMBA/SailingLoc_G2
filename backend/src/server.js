@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import boatRoutes from './routes/boatRoutes.js';
+import portRoutes from './routes/portRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
@@ -86,6 +87,7 @@ const resetPasswordLimiter = rateLimit({
 app.use('/api/users/reset-password', resetPasswordLimiter);
 
 app.use('/api/boats', boatRoutes);
+app.use('/api/ports', portRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/documents', documentRoutes);

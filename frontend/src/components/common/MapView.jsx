@@ -19,6 +19,17 @@ const defaultIcon = L.icon({
   shadowSize: [41, 41],
 });
 
+const greyIcon = L.icon({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+  className: 'marker-grey',
+});
+
 // Centre/zoom par défaut : France métropolitaine.
 const FRANCE_CENTER = [46.6, 2.3];
 const FRANCE_ZOOM = 5;
@@ -40,6 +51,8 @@ function FitBounds({ points }) {
   return null;
 }
 
+const GREY_ICON_CSS = `.marker-grey { filter: grayscale(1) brightness(0.75); opacity: 0.7; }`;
+
 function MapView({ markers = [], className = '', emptyLabel = 'Aucun point à afficher.' }) {
   const points = markers.filter((m) => Number.isFinite(m.lat) && Number.isFinite(m.lng));
 
@@ -50,6 +63,7 @@ function MapView({ markers = [], className = '', emptyLabel = 'Aucun point à af
     <div
       className={`relative z-0 isolate overflow-hidden rounded-2xl border border-slate-800 ${className}`}
     >
+      <style>{GREY_ICON_CSS}</style>
       <MapContainer
         center={FRANCE_CENTER}
         zoom={FRANCE_ZOOM}
@@ -62,11 +76,18 @@ function MapView({ markers = [], className = '', emptyLabel = 'Aucun point à af
         />
         <FitBounds points={points} />
         {points.map((m) => (
-          <Marker key={m.id} position={[m.lat, m.lng]} icon={defaultIcon}>
+          <Marker
+            key={m.id}
+            position={[m.lat, m.lng]}
+            icon={m.available === false ? greyIcon : defaultIcon}
+          >
             <Popup>
               <div className="text-sm">
                 <div className="font-semibold">{m.title}</div>
                 {m.subtitle && <div className="text-slate-500">{m.subtitle}</div>}
+                {m.available === false && (
+                  <div className="mt-1 text-slate-400 italic">Bientôt disponible</div>
+                )}
                 {m.badge != null && (
                   <div className="mt-1 text-slate-700">
                     {m.badge} bateau{m.badge > 1 ? 'x' : ''}
