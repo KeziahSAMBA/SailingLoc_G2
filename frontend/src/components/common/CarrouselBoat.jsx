@@ -11,6 +11,7 @@ import portNaples from '../../assets/image/ports/Naples.webp';
 import portCroatie from '../../assets/image/ports/Croatie.webp';
 import portAthenes from '../../assets/image/ports/Athènes.webp';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
+import { Link } from 'react-router-dom';
 
 const portSlides = [
   {
@@ -203,12 +204,13 @@ const CarrouselBoat = () => (
       <h2 className="font-semibold text-black" style={{ fontSize: '20px', lineHeight: '22px' }}>
         Choisissez votre port de départ
       </h2>
-      <button
+      <Link
+        to="/categorie"
         className="flex items-center gap-1.5 text-gray-600 hover:text-black transition-colors ml-4"
         style={{ fontSize: '16px' }}
       >
         Voir plus <FaArrowRight size={10} />
-      </button>
+      </Link>
     </div>
     <PortCarousel slides={portSlides} visibleCount={5} imageSize="small" />
   </div>

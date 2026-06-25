@@ -26,6 +26,10 @@ function AppContent() {
         ? 'register'
         : null;
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [location.pathname]);
+
   // Si un utilisateur est déjà connecté, on ne montre pas la popup d'auth.
   useEffect(() => {
     if (!loading && user && activeAuthTab) {

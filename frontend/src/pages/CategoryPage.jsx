@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import SearchBar from '../components/common/SearchBar.jsx';
+import SearchBarV2 from '../components/common/SearchBarV2.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
 import { FaStar, FaRegStar } from 'react-icons/fa';
-import { MdPerson, MdLocationOn, MdPeople } from 'react-icons/md';
+import { MdPerson, MdLocationOn, MdPeople, MdCalendarToday } from 'react-icons/md';
 import portMarseille from '../assets/image/ports/Marseille.webp';
 import portNice from '../assets/image/ports/Nice.webp';
 import portCroatie from '../assets/image/ports/Croatie.webp';
@@ -26,6 +26,7 @@ const BOATS = [
     capacity: 10,
     skipper: true,
     price: 450,
+    availability: ['15 juin – 31 août', '5 – 20 sept'],
   },
   {
     id: 2,
@@ -38,6 +39,7 @@ const BOATS = [
     capacity: 12,
     skipper: true,
     price: 850,
+    availability: ['1 juil – 15 août'],
   },
   {
     id: 3,
@@ -50,6 +52,7 @@ const BOATS = [
     capacity: 8,
     skipper: true,
     price: 390,
+    availability: ['20 juin – 25 août', '1 – 15 oct'],
   },
   {
     id: 4,
@@ -62,6 +65,7 @@ const BOATS = [
     capacity: 15,
     skipper: true,
     price: 2400,
+    availability: ['10 juil – 30 août'],
   },
 ];
 
@@ -132,8 +136,11 @@ const reviewsCSS = `
     color: #000 !important;
   }
   .category-carousel-types > div > div:last-child > div > div:first-child {
-    background-color: rgba(0, 0, 0, 0.05) !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
   }
 `;
 
@@ -182,7 +189,18 @@ function StarRating({ rating }) {
   );
 }
 
-function BoatListingCard({ image, badge, rating, type, name, location, capacity, skipper, price }) {
+function BoatListingCard({
+  image,
+  badge,
+  rating,
+  type,
+  name,
+  location,
+  capacity,
+  skipper,
+  price,
+  availability,
+}) {
   return (
     <article
       className="rounded-2xl overflow-hidden border border-gray-100 bg-white hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
@@ -224,7 +242,7 @@ function BoatListingCard({ image, badge, rating, type, name, location, capacity,
           <MdLocationOn className="text-sky-400 flex-shrink-0" />
           {location}
         </p>
-        <div className="flex items-center gap-3 text-xs text-gray-400 mb-3 pb-3 border-b border-gray-50">
+        <div className="flex items-center gap-3 text-xs text-gray-400 mb-2 pb-2 border-b border-gray-50">
           <span className="flex items-center gap-1">
             <MdPeople className="text-sky-300" />
             {capacity} Pers.
@@ -236,6 +254,24 @@ function BoatListingCard({ image, badge, rating, type, name, location, capacity,
             </span>
           )}
         </div>
+        {availability?.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap mb-3">
+            <MdCalendarToday className="text-sky-400 flex-shrink-0" style={{ fontSize: '12px' }} />
+            {availability.map((period) => (
+              <span
+                key={period}
+                className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: 'rgba(14,165,233,0.08)',
+                  color: 'rgba(14,165,233,0.95)',
+                  border: '1px solid rgba(14,165,233,0.2)',
+                }}
+              >
+                {period}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-0.5">
             <span className="text-xl font-bold text-gray-900">{price}€</span>
@@ -258,20 +294,18 @@ function BoatListingCard({ image, badge, rating, type, name, location, capacity,
 function ReviewCard({ name, rating, date, text }) {
   return (
     <div
-      className="flex flex-col gap-3 p-5 rounded-2xl bg-white border border-gray-100 hover:-translate-y-0.5 transition-all duration-300"
-      style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}
-      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 6px 24px rgba(14,165,233,0.2)')}
-      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.07)')}
+      className="flex-shrink-0 flex flex-col gap-3 p-8 rounded-2xl bg-white border border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] hover:-translate-y-1 transition-all duration-300"
+      style={{ width: 'calc((100vw - 224px - 48px) / 3)' }}
     >
       <div className="flex items-center gap-3">
         <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-white flex-shrink-0"
+          className="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0"
           style={{ background: 'rgba(14,165,233,0.85)' }}
         >
-          <MdPerson className="text-lg" />
+          <MdPerson className="text-xl" />
         </div>
-        <div>
-          <span className="text-gray-800 font-semibold text-sm block leading-tight">{name}</span>
+        <div className="flex flex-col">
+          <span className="text-gray-800 font-semibold text-sm leading-tight">{name}</span>
           <span className="text-gray-400 text-xs">{date}</span>
         </div>
       </div>
@@ -313,11 +347,9 @@ function CategoryPage() {
           }}
         >
           {/* Ligne 1 : FilterBar + SearchBar */}
-          <div className="flex items-center gap-8 pt-8 pb-1" style={{ paddingLeft: '112px' }}>
+          <div className="flex items-center gap-8 pt-8" style={{ paddingLeft: '112px' }}>
             <FilterBar />
-            <div>
-              <SearchBar />
-            </div>
+            <SearchBarV2 />
           </div>
 
           {/* Ligne 2 : Breadcrumb aligné sous le FilterBar */}
@@ -343,10 +375,7 @@ function CategoryPage() {
         </section>
 
         {/* ── Listings + Carte 50/50 ───────────────────────────────────────────── */}
-        <div
-          className="flex items-start gap-6 px-6 py-6"
-          style={{ maxWidth: '1600px', margin: '0 auto' }}
-        >
+        <div className="flex items-start gap-6 px-28 py-6">
           {/* ── Listings — 50% ───────────────────────────────────────────────── */}
           <div className="w-1/2 flex flex-col gap-6">
             {/* Section header */}
@@ -356,11 +385,11 @@ function CategoryPage() {
                   className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4"
                   style={{ color: 'rgba(14,165,233,0.95)' }}
                 >
-                  Nos recommandations
+                  Selon vos recherches
                 </p>
-                <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-tight">
+                <h2 className="text-2xl font-bold text-gray-900 pt-4 uppercase tracking-tight">
                   Liste des propositions
-                </h1>
+                </h2>
               </div>
               <span className="text-sm text-gray-400 font-medium pb-1">
                 156 bateaux disponibles
@@ -413,11 +442,8 @@ function CategoryPage() {
         </div>
 
         {/* ── Section — Carrousels bateaux & ports ─────────────────────────────── */}
-        <section
-          id="suggestions"
-          className="relative w-full min-h-screen flex flex-col justify-center gap-10 px-28 py-16 bg-white"
-        >
-          <div className="w-full flex flex-col gap-10 py-10">
+        <section id="suggestions" className="relative w-full flex flex-col gap-8 px-28 py-10">
+          <div className="w-full flex flex-col gap-8">
             <div className="category-carousel-types">
               <CarouselBoatTypes />
             </div>
@@ -428,17 +454,14 @@ function CategoryPage() {
       {/* fin du wrapper sticky */}
 
       {/* ── Section — Avis clients ────────────────────────────────────────────── */}
-      <section
-        id="avis"
-        className="w-full bg-white flex flex-col items-center justify-center gap-6 px-28 py-16 min-h-screen"
-      >
+      <section id="avis" className="w-full bg-white flex flex-col items-center gap-6 px-28 py-10">
         <div className="text-center mb-4">
-          <h2 className="text-md font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+          <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
             Avis clients
-          </h2>
-          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900">
+          </p>
+          <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
             Ce que nos navigateurs disent de nous
-          </h1>
+          </h2>
         </div>
 
         <div className="flex flex-col gap-6 w-full">
@@ -458,12 +481,12 @@ function CategoryPage() {
                     'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.querySelector('.reviews-track').style.animationPlayState =
-                    'paused';
+                  const track = e.currentTarget.querySelector('.reviews-track');
+                  if (track) track.style.animationPlayState = 'paused';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.querySelector('.reviews-track').style.animationPlayState =
-                    'running';
+                  const track = e.currentTarget.querySelector('.reviews-track');
+                  if (track) track.style.animationPlayState = 'running';
                 }}
               >
                 <div
@@ -473,7 +496,7 @@ function CategoryPage() {
                   }}
                 >
                   {[...reviews, ...reviews, ...reviews, ...reviews].map((review, i) => (
-                    <ReviewCard key={i} {...review} />
+                    <ReviewCard key={`${review.id}_${i}`} {...review} />
                   ))}
                 </div>
               </div>

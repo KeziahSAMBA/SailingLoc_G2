@@ -9,7 +9,8 @@ import portValence from '../../assets/image/ports/Valence.webp';
 import portBordeaux from '../../assets/image/ports/Bordeaux.webp';
 import portNice from '../../assets/image/ports/Nice.webp';
 import portBrest from '../../assets/image/ports/Brest.webp';
-import { FaArrowRight } from 'react-icons/fa6';
+import { FaArrowRight, FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
+import { Link } from 'react-router-dom';
 
 const voilierSlides = [
   {
@@ -77,7 +78,6 @@ const penicheSlides = [
 const GAP = 16;
 const PADDING = 16;
 const SPRING = { type: 'spring', stiffness: 40, damping: 20 };
-const VELOCITY_THRESHOLD = 500;
 
 function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
   const range = [
@@ -89,26 +89,31 @@ function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
 
   return (
     <motion.div
-      className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20 cursor-grab active:cursor-grabbing"
+      className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20"
       style={{ width: itemWidth, height: 220, rotateY }}
     >
-      <img
-        src={slide.img}
-        alt={slide.label}
-        className="w-full h-full object-cover"
-        loading="lazy"
-        draggable={false}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
-      <div className="absolute top-3 left-3 text-white font-semibold" style={{ fontSize: '15px' }}>
-        {title}
-      </div>
-      <div className="absolute bottom-3 left-3 right-3">
-        <div className="text-white font-semibold" style={{ fontSize: '14px' }}>
-          {slide.label}
+      <div className="block w-full h-full cursor-pointer">
+        <img
+          src={slide.img}
+          alt={slide.label}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          draggable={false}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
+        <div
+          className="absolute top-3 left-3 text-white font-semibold"
+          style={{ fontSize: '15px' }}
+        >
+          {title}
         </div>
-        <div className="text-white/80" style={{ fontSize: '13px', lineHeight: '16px' }}>
-          {slide.description}
+        <div className="absolute bottom-3 left-3 right-3">
+          <div className="text-white font-semibold" style={{ fontSize: '14px' }}>
+            {slide.label}
+          </div>
+          <div className="text-white/80" style={{ fontSize: '13px', lineHeight: '16px' }}>
+            {slide.description}
+          </div>
         </div>
       </div>
     </motion.div>
@@ -185,15 +190,14 @@ function BoatTypeCarousel({
     }
   };
 
-  const handleDragEnd = (_, info) => {
-    const { offset, velocity } = info;
-    const dir =
-      offset.x < 0 || velocity.x < -VELOCITY_THRESHOLD
-        ? 1
-        : offset.x > 0 || velocity.x > VELOCITY_THRESHOLD
-          ? -1
-          : 0;
-    if (dir !== 0) setPosition((p) => Math.max(0, Math.min(p + dir, itemsForRender.length - 1)));
+  const goPrev = () => {
+    if (isAnimating) return;
+    setPosition((p) => Math.max(0, p - 1));
+  };
+
+  const goNext = () => {
+    if (isAnimating) return;
+    setPosition((p) => Math.min(itemsForRender.length - 1, p + 1));
   };
 
   const activeIndex = (position - 1 + slides.length) % slides.length;
@@ -207,11 +211,17 @@ function BoatTypeCarousel({
         onMouseEnter={() => onHoverChange(true)}
         onMouseLeave={() => onHoverChange(false)}
       >
+        <button
+          onClick={goPrev}
+          className="absolute left-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-1 shadow-lg transition-colors"
+          style={{ top: '50%', transform: 'translateY(-50%)' }}
+          aria-label="Précédent"
+        >
+          <FaChevronLeft size={12} className="text-white" />
+        </button>
         {itemWidth > 0 && (
           <motion.div
             className="flex"
-            drag={isAnimating ? false : 'x'}
-            dragConstraints={{}}
             style={{
               width: itemWidth,
               gap: `${GAP}px`,
@@ -219,7 +229,6 @@ function BoatTypeCarousel({
               perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
               x,
             }}
-            onDragEnd={handleDragEnd}
             animate={{ x: -(position * trackItemOffset) }}
             transition={transition}
             onAnimationStart={() => setIsAnimating(true)}
@@ -238,6 +247,14 @@ function BoatTypeCarousel({
             ))}
           </motion.div>
         )}
+        <button
+          onClick={goNext}
+          className="absolute right-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-1 shadow-lg transition-colors"
+          style={{ top: '50%', transform: 'translateY(-50%)' }}
+          aria-label="Suivant"
+        >
+          <FaChevronRight size={12} className="text-white" />
+        </button>
       </div>
 
       <div className="flex gap-2 mt-3">
@@ -265,12 +282,13 @@ const CarouselBoatTypes = () => {
         <h2 className="font-semibold text-white" style={{ fontSize: '20px', lineHeight: '22px' }}>
           Annonces du moment
         </h2>
-        <button
+        <Link
+          to="/categorie"
           className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors ml-4"
           style={{ fontSize: '16px' }}
         >
           Voir plus d'annonces <FaArrowRight size={10} />
-        </button>
+        </Link>
       </div>
       <div className="flex gap-4">
         <BoatTypeCarousel
