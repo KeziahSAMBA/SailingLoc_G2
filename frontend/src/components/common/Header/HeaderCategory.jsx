@@ -240,7 +240,12 @@ function HeaderCategory() {
                         e.preventDefault();
                         scrollToAnchor('contact');
                       }
-                    : undefined
+                    : label === 'Découvrir'
+                      ? (e) => {
+                          e.preventDefault();
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                      : undefined
                 }
                 className="font-medium"
                 style={{

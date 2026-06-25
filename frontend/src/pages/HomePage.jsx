@@ -277,27 +277,26 @@ function HomePage() {
       {/* Section 2 — Carrousels bateaux & ports */}
       <section
         id="suggestions"
-        className="relative w-full min-h-screen flex flex-col justify-center gap-10 px-28 py-16 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_50%,white_65%,white_100%)]"
+        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-6 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_50%,white_65%,white_100%)]"
       >
-        <div className="w-full flex flex-col gap-10 py-10">
+        <div className="w-full flex flex-col gap-8">
           <CarouselBoatTypes />
           <CarrouselBoat />
         </div>
       </section>
 
+      <div id="tutoriel" className="border-t border-gray-200 mx-[168px] scroll-mt-28" />
+
       {/* Section 3 — Tuto */}
-      <section
-        id="tutoriel"
-        className="w-full bg-white flex flex-col items-center justify-center px-28 py-16 gap-0"
-      >
-        <div className="w-full flex flex-col items-center rounded-2xl border border-black/15 shadow-[0_8px_48px_rgba(0,0,0,0.18)] px-16 py-12">
+      <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
+        <div className="w-full flex flex-col items-center rounded-2xl border border-black/15 shadow-[0_8px_48px_rgba(0,0,0,0.18)] px-16 py-10">
           <div className="text-center mb-10">
-            <h2 className="text-md font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+            <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
               Comment ça marche ?
-            </h2>
-            <h1 className="text-3xl md:text-4xl font-semibold text-gray-900">
+            </p>
+            <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
               Réserver un bateau n'a jamais été aussi simple
-            </h1>
+            </h2>
           </div>
 
           <div ref={stepsRef} className="flex items-start w-full mb-10">
@@ -331,15 +330,17 @@ function HomePage() {
         </div>
       </section>
 
+      <div className="border-t border-gray-200 mx-[168px]" />
+
       {/* Section 4 — Proposition de valeur */}
-      <section className="w-full bg-white flex flex-col items-center justify-center px-28 py-16 gap-0">
+      <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
         <div className="text-center mb-10">
-          <h2 className="text-md font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+          <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
             Pourquoi nous choisir ?
-          </h2>
-          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900">
+          </p>
+          <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
             L'expérience marine réinventée
-          </h1>
+          </h2>
         </div>
 
         <div className="grid grid-cols-4 gap-6 w-full mb-10">
@@ -358,18 +359,17 @@ function HomePage() {
         <GhostButton>En savoir plus</GhostButton>
       </section>
 
+      <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-6" />
+
       {/* Section 5 — Avis clients */}
-      <section
-        id="avis"
-        className="w-full bg-white flex flex-col items-center justify-center gap-6 px-28 py-16 min-h-screen"
-      >
+      <section className="w-full bg-white flex flex-col items-center gap-6 px-28 py-8">
         <div className="text-center mb-4">
-          <h2 className="text-md font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+          <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
             Avis clients
-          </h2>
-          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900">
+          </p>
+          <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
             Ce que nos navigateurs disent de nous
-          </h1>
+          </h2>
         </div>
 
         <div className="flex flex-col gap-6 w-full">
@@ -389,12 +389,12 @@ function HomePage() {
                     'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.querySelector('.reviews-track').style.animationPlayState =
-                    'paused';
+                  const track = e.currentTarget.querySelector('.reviews-track');
+                  if (track) track.style.animationPlayState = 'paused';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.querySelector('.reviews-track').style.animationPlayState =
-                    'running';
+                  const track = e.currentTarget.querySelector('.reviews-track');
+                  if (track) track.style.animationPlayState = 'running';
                 }}
               >
                 <div
@@ -402,7 +402,7 @@ function HomePage() {
                   style={{ animation: `scrollReviews ${duration}s linear infinite ${direction}` }}
                 >
                   {[...reviews, ...reviews, ...reviews, ...reviews].map((review, i) => (
-                    <ReviewCard key={i} {...review} />
+                    <ReviewCard key={`${review.name}_${i}`} {...review} />
                   ))}
                 </div>
               </div>

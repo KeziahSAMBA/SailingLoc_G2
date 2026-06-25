@@ -6,8 +6,8 @@ import logoLong from '../../../assets/image/SL_logo/logo SL long.webp';
 
 const BURGER_ITEMS = [
   { label: 'Chercher une location', anchor: 'hero' },
-  { label: 'Tutoriel', anchor: 'tutoriel' },
   { label: 'Nos suggestions', anchor: 'suggestions' },
+  { label: 'Tutoriel', anchor: 'tutoriel' },
   { label: 'Avis & commentaires', anchor: 'avis' },
 ];
 
@@ -227,7 +227,12 @@ function Header() {
                         e.preventDefault();
                         scrollToAnchor('contact');
                       }
-                    : undefined
+                    : label === 'Découvrir' && location.pathname === '/categorie'
+                      ? (e) => {
+                          e.preventDefault();
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                      : undefined
                 }
                 className="font-medium"
                 style={{
