@@ -2,7 +2,13 @@ import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
 
 export async function getBoats(req, res) {
-  const boats = await prisma.boat.findMany({ include: { owner: true } });
+  const boats = await prisma.boat.findMany({
+    where: { is_published: true },
+    include: {
+      port: true,
+      images: { orderBy: { order: 'asc' } },
+    },
+  });
   res.json(boats);
 }
 

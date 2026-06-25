@@ -5,8 +5,7 @@ import { SiAppstore, SiGoogleplay } from 'react-icons/si';
 import logoLong from '../assets/image/SL_logo/logo SL long.webp';
 import { MdVerified, MdAnchor, MdSearch, MdEventAvailable, MdPerson } from 'react-icons/md';
 import { FaShieldAlt, FaHandshake, FaStar, FaRegStar } from 'react-icons/fa';
-import CarrouselBoat from '../components/common/CarrouselBoat.jsx';
-import CarouselBoatTypes from '../components/common/CarouselBoatTypes.jsx';
+import Carrousel from '../components/common/Carrousel.jsx';
 
 const dotFlowCSS = `
   @keyframes dotMove {
@@ -277,11 +276,10 @@ function HomePage() {
       {/* Section 2 — Carrousels bateaux & ports */}
       <section
         id="suggestions"
-        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-6 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_50%,white_65%,white_100%)]"
+        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-6 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)]"
       >
         <div className="w-full flex flex-col gap-8">
-          <CarouselBoatTypes />
-          <CarrouselBoat />
+          <Carrousel />
         </div>
       </section>
 

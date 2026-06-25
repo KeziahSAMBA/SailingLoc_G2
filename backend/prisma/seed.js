@@ -21,6 +21,7 @@ async function main() {
   // CASCADE purge aussi les tables dépendantes (refresh_token, etc.).
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE
+      boat_availability, boat_equipment,
       booking_document, payment, review, image, user_boat_favorite,
       dispute, boat_report, message, document, booking, boat, port, "user"
     RESTART IDENTITY CASCADE
@@ -48,15 +49,29 @@ async function main() {
 
   // Ports
   await prisma.$executeRawUnsafe(`
-    INSERT INTO port (name, city, country, department, region, latitude, longitude) VALUES
-    ('Port Vieux',           'Antibes',           'France', '06', 'Provence-Alpes-Côte d''Azur', 43.584100,  7.125300),
-    ('Port de la Joliette',  'Marseille',         'France', '13', 'Provence-Alpes-Côte d''Azur', 43.351900,  5.355300),
-    ('Port des Minimes',     'La Rochelle',       'France', '17', 'Nouvelle-Aquitaine',          46.146700, -1.174400),
-    ('Port de Socoa',        'Saint-Jean-de-Luz', 'France', '64', 'Nouvelle-Aquitaine',          43.393900, -1.681600),
-    ('Port Camargue',        'Le Grau-du-Roi',    'France', '30', 'Occitanie',                   43.524500,  4.134200),
-    ('Port de Cannes',       'Cannes',            'France', '06', 'Provence-Alpes-Côte d''Azur', 43.547700,  7.017700),
-    ('Port de Saint-Tropez', 'Saint-Tropez',      'France', '83', 'Provence-Alpes-Côte d''Azur', 43.272800,  6.638100),
-    ('Port de Brest',        'Brest',             'France', '29', 'Bretagne',                    48.387200, -4.494900)
+    INSERT INTO port (name, city, country, department, region, latitude, longitude, image_url) VALUES
+    ('Port Vieux',           'Antibes',           'France', '06', 'Provence-Alpes-Côte d''Azur', 43.584100,  7.125300, 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800'),
+    ('Port de la Joliette',  'Marseille',         'France', '13', 'Provence-Alpes-Côte d''Azur', 43.351900,  5.355300, 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800'),
+    ('Port des Minimes',     'La Rochelle',       'France', '17', 'Nouvelle-Aquitaine',          46.146700, -1.174400, 'https://images.unsplash.com/photo-1559666126-84f389727b9a?w=800'),
+    ('Port de Socoa',        'Saint-Jean-de-Luz', 'France', '64', 'Nouvelle-Aquitaine',          43.393900, -1.681600, 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800'),
+    ('Port Camargue',        'Le Grau-du-Roi',    'France', '30', 'Occitanie',                   43.524500,  4.134200, 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'),
+    ('Port de Cannes',       'Cannes',            'France', '06', 'Provence-Alpes-Côte d''Azur', 43.547700,  7.017700, 'https://images.unsplash.com/photo-1540946485063-a40da27545f8?w=800'),
+    ('Port de Saint-Tropez', 'Saint-Tropez',      'France', '83', 'Provence-Alpes-Côte d''Azur', 43.272800,  6.638100, 'https://images.unsplash.com/photo-1519659528534-7fd733a832a0?w=800'),
+    ('Port de Brest',        'Brest',             'France', '29', 'Bretagne',                    48.387200, -4.494900, 'https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=800')
+    ON CONFLICT (name) DO NOTHING
+  `);
+
+  // Ports additionnels issus des données du carrousel
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO port (name, city, country, department, region, latitude, longitude, image_url) VALUES
+    ('Port de Nice',      'Nice',      'France',  '06', 'Provence-Alpes-Côte d''Azur', 43.699300,  7.274900, 'https://images.unsplash.com/photo-1533760881669-80db4d7b341d?w=800'),
+    ('Port de Bordeaux',  'Bordeaux',  'France',  '33', 'Nouvelle-Aquitaine',          44.840400, -0.570100, 'https://images.unsplash.com/photo-1548515894-b4fabb59e9af?w=800'),
+    ('Port de Barcelone', 'Barcelone', 'Espagne', NULL,  NULL,                          41.356800,  2.188200, 'https://images.unsplash.com/photo-1552083375-1447ce886485?w=800'),
+    ('Port de Valence',   'Valence',   'Espagne', NULL,  NULL,                          39.451800, -0.323200, 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?w=800'),
+    ('Port de Gênes',     'Gênes',     'Italie',  NULL,  NULL,                          44.398800,  8.957800, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800'),
+    ('Port de Naples',    'Naples',    'Italie',  NULL,  NULL,                          40.842200, 14.268100, 'https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=800'),
+    ('Port de Split',     'Split',     'Croatie', NULL,  NULL,                          43.508800, 16.440400, 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800'),
+    ('Port du Pirée',     'Athènes',   'Grèce',   NULL,  NULL,                          37.945400, 23.641800, 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800')
     ON CONFLICT (name) DO NOTHING
   `);
 
@@ -71,6 +86,23 @@ async function main() {
     (4, 7, 'Côte d''Azur',   'catamaran', 15.50, 'Diesel 2x50cv', TRUE,  750.00, 10, 2021, 'FR-STP-006', 'Grand catamaran de luxe avec skipper, départ Saint-Tropez. Vue imprenable sur la côte.',        TRUE),
     (5, 8, 'Finistère',       'voilier',   11.00, 'Diesel 28cv',   FALSE, 260.00, 5,  2014, 'FR-BRT-007', 'Voilier robuste taillé pour la Bretagne et ses eaux parfois agitées.',                          TRUE),
     (5, 5, 'Camargue Spirit', 'catamaran', 11.00, 'Diesel 2x30cv', FALSE, 500.00, 6,  2017, 'FR-GDR-008', 'Catamaran confortable au départ de Port Camargue, idéal pour explorer la côte languedocienne.', FALSE)
+    ON CONFLICT (registration) DO NOTHING
+  `);
+
+  // Bateaux additionnels issus des données du carrousel
+  // Ports référencés : 2=Marseille, 3=La Rochelle, 7=Saint-Tropez, 8=Brest,
+  //                    9=Nice, 10=Bordeaux, 11=Barcelone (ids 9-16 créés juste avant)
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO boat (id_user, id_port, name, type, size, engine, with_skipper, daily_price, capacity, build_year, registration, description, is_published) VALUES
+    (2, 2,  'Voilier Océanis 40',     'voilier',   12.20, 'Diesel 28cv',   FALSE, 420.00,  6, 2019, 'FR-MRS-009', 'Voilier performant et confortable, idéal pour naviguer en Méditerranée.',                    TRUE),
+    (3, 9,  'Catamaran Lagoon 42',    'catamaran', 12.80, 'Diesel 2x30cv', FALSE, 580.00,  8, 2020, 'FR-NIC-010', 'Catamaran moderne et spacieux, parfait pour des croisières en famille sur la Côte d''Azur.', TRUE),
+    (4, 10, 'Péniche La Garonne',     'peniche',   18.00, 'Diesel 45cv',   FALSE, 180.00,  6, 2008, 'FR-BDX-011', 'Découvrez les vignobles bordelais depuis l''eau à bord de cette péniche chaleureuse.',      TRUE),
+    (5, 3,  'Voilier Bénéteau First', 'voilier',    9.80, 'Diesel 22cv',   FALSE, 320.00,  4, 2017, 'FR-LRO-012', 'Voilier maniable et rapide pour explorer les îles de Ré et d''Oléron.',                    TRUE),
+    (2, 8,  'Armor Voile',            'voilier',   11.50, 'Diesel 27cv',   FALSE, 290.00,  5, 2013, 'FR-BRT-013', 'Voilier robuste taillé pour les eaux bretonnes et les marées de la Bretagne Nord.',         TRUE),
+    (3, 11, 'Catamaran Méditerranée', 'catamaran', 14.50, 'Diesel 2x45cv', TRUE,  650.00, 10, 2022, 'ES-BCN-014', 'Grand catamaran avec skipper au départ de Barcelone. Explorez la Costa Brava.',             TRUE),
+    (4, 1,  'Voilier de Régate',      'voilier',   10.50, 'Diesel 24cv',   FALSE, 310.00,  4, 2018, 'FR-ANT-015', 'Voilier rapide et nerveux, taillé pour la compétition et les sensations fortes.',           TRUE),
+    (5, 7,  'Catamaran Prestige',     'catamaran', 16.00, 'Diesel 2x60cv', TRUE,  850.00, 12, 2023, 'FR-STP-016', 'Catamaran de luxe avec skipper, prestations haut de gamme pour une croisière d''exception.',  TRUE),
+    (2, 10, 'Péniche Fluviale Adour', 'peniche',   20.00, 'Diesel 50cv',   FALSE, 220.00,  8, 2010, 'FR-BDX-017', 'Explorez la France par ses voies navigables à bord de cette péniche confortable.',          FALSE)
     ON CONFLICT (registration) DO NOTHING
   `);
 
@@ -219,6 +251,27 @@ async function main() {
     ON CONFLICT DO NOTHING
   `);
 
+  // Images des bateaux additionnels (ids 9-17)
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO image (id_boat, id_user, url, type, "order") VALUES
+    ( 9, NULL, 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=1200', 'principale', 0),
+    ( 9, NULL, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200', 'galerie',    1),
+    (10, NULL, 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1200', 'principale', 0),
+    (10, NULL, 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?w=1200', 'galerie',    1),
+    (11, NULL, 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200', 'principale', 0),
+    (12, NULL, 'https://images.unsplash.com/photo-1559666126-84f389727b9a?w=1200', 'principale', 0),
+    (12, NULL, 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200', 'galerie',    1),
+    (13, NULL, 'https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=1200', 'principale', 0),
+    (13, NULL, 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1200', 'galerie',    1),
+    (14, NULL, 'https://images.unsplash.com/photo-1533760881669-80db4d7b341d?w=1200', 'principale', 0),
+    (14, NULL, 'https://images.unsplash.com/photo-1548515894-b4fabb59e9af?w=1200', 'galerie',    1),
+    (15, NULL, 'https://images.unsplash.com/photo-1540946485063-a40da27545f8?w=1200', 'principale', 0),
+    (16, NULL, 'https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?w=1200', 'principale', 0),
+    (16, NULL, 'https://images.unsplash.com/photo-1552083375-1447ce886485?w=1200', 'galerie',    1),
+    (17, NULL, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200', 'principale', 0)
+    ON CONFLICT DO NOTHING
+  `);
+
   // Favorites
   await prisma.$executeRawUnsafe(`
     INSERT INTO user_boat_favorite (id_user, id_boat) VALUES
@@ -259,6 +312,271 @@ async function main() {
     (7,  10, 'Caution non restituée par le propriétaire après la location.',         'open',     NULL),
     (8,  11, 'Annulation tardive du propriétaire, frais de transport engagés.',      'resolved', 'Remboursement intégral effectué par la plateforme.'),
     (12, 9,  'Désaccord sur l''état de propreté du bateau à la livraison.',          'rejected', 'Photos fournies non probantes, litige écarté.')
+    ON CONFLICT DO NOTHING
+  `);
+
+  // Disponibilités des bateaux (carrousel "liste des produits")
+  // Bateaux publiés : 1-7, 9-16. Bateaux non publiés : 8, 17 (pas de dispo affichée).
+  // price_override NULL = utiliser le daily_price du bateau.
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO boat_availability (id_boat, start_date, end_date, is_available, price_override, notes) VALUES
+    -- Le Mistral (voilier, Antibes)
+    (1, '2026-07-01', '2026-07-31', TRUE,  NULL,   'Disponible tout juillet'),
+    (1, '2026-08-01', '2026-08-31', TRUE,  390.00, 'Tarif haute saison août'),
+    (1, '2026-09-01', '2026-10-31', TRUE,  NULL,   'Arrière-saison disponible'),
+    -- Soleil Levant (catamaran, Marseille)
+    (2, '2026-07-05', '2026-07-19', TRUE,  NULL,   'Semaines disponibles'),
+    (2, '2026-08-10', '2026-08-31', TRUE,  750.00, 'Haute saison — tarif majoré'),
+    (2, '2026-09-01', '2026-09-30', TRUE,  NULL,   'Septembre en mer'),
+    -- Atlantique (voilier, La Rochelle)
+    (3, '2026-07-01', '2026-08-31', TRUE,  NULL,   'Été complet disponible'),
+    (3, '2026-10-01', '2026-10-31', TRUE,  250.00, 'Week-ends d''automne'),
+    -- Euskal Herria (moteur, Saint-Jean-de-Luz)
+    (4, '2026-07-01', '2026-07-14', TRUE,  NULL,   'Première quinzaine de juillet'),
+    (4, '2026-07-28', '2026-08-31', TRUE,  460.00, 'Haute saison'),
+    (4, '2026-09-01', '2026-09-30', TRUE,  NULL,   'Croisières côtières septembre'),
+    -- Belle de Cannes (voilier, Cannes)
+    (5, '2026-07-01', '2026-07-31', TRUE,  NULL,   'Juillet disponible'),
+    (5, '2026-08-15', '2026-08-31', TRUE,  430.00, 'Fin août — îles de Lérins'),
+    (5, '2026-09-01', '2026-09-30', TRUE,  NULL,   'Arrière-saison azuréenne'),
+    -- Côte d''Azur (catamaran, Saint-Tropez)
+    (6, '2026-07-01', '2026-07-31', TRUE,  NULL,   'Juillet — réservez tôt'),
+    (6, '2026-08-01', '2026-08-31', TRUE,  820.00, 'Haute saison — prix premium'),
+    (6, '2026-09-01', '2026-10-15', TRUE,  NULL,   'Septembre-octobre disponible'),
+    -- Finistère (voilier, Brest)
+    (7, '2026-07-01', '2026-08-31', TRUE,  NULL,   'Saison bretonne'),
+    (7, '2026-09-01', '2026-09-30', TRUE,  240.00, 'Cap Finistère en automne'),
+    -- Voilier Océanis 40 (Marseille)
+    (9, '2026-07-01', '2026-07-31', TRUE,  NULL,   'Juillet disponible'),
+    (9, '2026-08-01', '2026-08-31', TRUE,  460.00, 'Haute saison'),
+    (9, '2026-09-01', '2026-10-31', TRUE,  NULL,   'Arrière-saison méditerranéenne'),
+    -- Catamaran Lagoon 42 (Nice)
+    (10, '2026-07-01', '2026-08-31', TRUE, NULL,   'Été sur la Côte d''Azur'),
+    (10, '2026-09-01', '2026-09-30', TRUE, 550.00, 'Septembre en Méditerranée'),
+    -- Péniche La Garonne (Bordeaux)
+    (11, '2026-07-01', '2026-08-31', TRUE, NULL,   'Croisières fluviales estivales'),
+    (11, '2026-09-01', '2026-11-30', TRUE, NULL,   'Vendanges et tourisme automnal'),
+    -- Voilier Bénéteau First (La Rochelle)
+    (12, '2026-07-01', '2026-08-31', TRUE, NULL,   'Îles de Ré et Oléron'),
+    (12, '2026-09-01', '2026-10-15', TRUE, 290.00, 'Arrière-saison atlantique'),
+    -- Armor Voile (Brest)
+    (13, '2026-07-01', '2026-08-31', TRUE, NULL,   'Bretagne Nord en été'),
+    (13, '2026-09-01', '2026-09-30', TRUE, 270.00, 'Septembre breton'),
+    -- Catamaran Méditerranée (Barcelone)
+    (14, '2026-07-01', '2026-08-31', TRUE, NULL,   'Costa Brava — été'),
+    (14, '2026-09-01', '2026-10-31', TRUE, 600.00, 'Automne méditerranéen'),
+    -- Voilier de Régate (Antibes)
+    (15, '2026-07-01', '2026-08-31', TRUE, NULL,   'Régates et croisières'),
+    (15, '2026-09-01', '2026-09-30', TRUE, 280.00, 'Septembre en PACA'),
+    -- Catamaran Prestige (Saint-Tropez)
+    (16, '2026-07-01', '2026-07-31', TRUE, NULL,   'Juillet prestige'),
+    (16, '2026-08-01', '2026-08-31', TRUE, 920.00, 'Haute saison — expérience premium'),
+    (16, '2026-09-01', '2026-10-15', TRUE, NULL,   'Arrière-saison luxueuse')
+    ON CONFLICT DO NOTHING
+  `);
+
+  // Équipements des bateaux (fiche produit / carrousel)
+  // Catégories : navigation, sécurité, confort, cuisine, divertissement
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO boat_equipment (id_boat, category, name) VALUES
+    -- Boat 1 : Le Mistral (voilier 12.5m)
+    (1, 'navigation',     'GPS chartplotter tactile'),
+    (1, 'navigation',     'VHF radio'),
+    (1, 'navigation',     'Pilote automatique'),
+    (1, 'navigation',     'Sondeur'),
+    (1, 'sécurité',       'Gilets de sauvetage x6'),
+    (1, 'sécurité',       'Radeau de survie 6 personnes'),
+    (1, 'sécurité',       'Extincteurs'),
+    (1, 'confort',        'Douche de cockpit'),
+    (1, 'cuisine',        'Cuisinière à gaz 2 feux'),
+    (1, 'cuisine',        'Réfrigérateur 50L'),
+    -- Boat 2 : Soleil Levant (catamaran 14m)
+    (2, 'navigation',     'GPS chartplotter tactile'),
+    (2, 'navigation',     'VHF radio'),
+    (2, 'navigation',     'Pilote automatique'),
+    (2, 'navigation',     'AIS'),
+    (2, 'sécurité',       'Gilets de sauvetage x8'),
+    (2, 'sécurité',       'Radeau de survie 8 personnes'),
+    (2, 'sécurité',       'EPIRB'),
+    (2, 'confort',        'Air conditionné'),
+    (2, 'confort',        'Douche extérieure'),
+    (2, 'cuisine',        'Cuisinière à gaz 3 feux'),
+    (2, 'cuisine',        'Réfrigérateur 80L'),
+    (2, 'cuisine',        'Micro-ondes'),
+    (2, 'divertissement', 'Enceinte Bluetooth'),
+    (2, 'divertissement', 'Masques et tubas x4'),
+    -- Boat 3 : Atlantique (voilier 10m)
+    (3, 'navigation',     'GPS chartplotter'),
+    (3, 'navigation',     'VHF radio'),
+    (3, 'sécurité',       'Gilets de sauvetage x4'),
+    (3, 'sécurité',       'Extincteurs'),
+    (3, 'sécurité',       'Feux de détresse'),
+    (3, 'confort',        'WC marin'),
+    (3, 'cuisine',        'Cuisinière à gaz 2 feux'),
+    (3, 'cuisine',        'Réfrigérateur 40L'),
+    -- Boat 4 : Euskal Herria (moteur 9.5m)
+    (4, 'navigation',     'GPS chartplotter'),
+    (4, 'navigation',     'VHF radio'),
+    (4, 'navigation',     'Sondeur'),
+    (4, 'sécurité',       'Gilets de sauvetage x5'),
+    (4, 'sécurité',       'Extincteurs'),
+    (4, 'sécurité',       'EPIRB'),
+    (4, 'confort',        'Bimini (protection solaire)'),
+    (4, 'cuisine',        'Réfrigérateur 30L'),
+    (4, 'divertissement', 'Enceinte Bluetooth'),
+    -- Boat 5 : Belle de Cannes (voilier 13m)
+    (5, 'navigation',     'GPS chartplotter tactile'),
+    (5, 'navigation',     'VHF radio'),
+    (5, 'navigation',     'Pilote automatique'),
+    (5, 'navigation',     'AIS'),
+    (5, 'sécurité',       'Gilets de sauvetage x6'),
+    (5, 'sécurité',       'Radeau de survie 6 personnes'),
+    (5, 'sécurité',       'EPIRB'),
+    (5, 'confort',        'Douche de cockpit'),
+    (5, 'confort',        'WC marin'),
+    (5, 'cuisine',        'Cuisinière à gaz 3 feux'),
+    (5, 'cuisine',        'Réfrigérateur 60L'),
+    (5, 'divertissement', 'Masques et tubas x4'),
+    -- Boat 6 : Côte d''Azur (catamaran 15.5m — luxe)
+    (6, 'navigation',     'GPS chartplotter tactile'),
+    (6, 'navigation',     'VHF radio'),
+    (6, 'navigation',     'Pilote automatique'),
+    (6, 'navigation',     'AIS'),
+    (6, 'navigation',     'Radar'),
+    (6, 'sécurité',       'Gilets de sauvetage x10'),
+    (6, 'sécurité',       'Radeau de survie 10 personnes'),
+    (6, 'sécurité',       'EPIRB'),
+    (6, 'confort',        'Air conditionné'),
+    (6, 'confort',        'Douche extérieure'),
+    (6, 'confort',        'WC marin x2'),
+    (6, 'cuisine',        'Cuisinière à gaz 4 feux'),
+    (6, 'cuisine',        'Réfrigérateur 120L'),
+    (6, 'cuisine',        'Micro-ondes'),
+    (6, 'cuisine',        'Cafetière'),
+    (6, 'divertissement', 'Enceinte Bluetooth'),
+    (6, 'divertissement', 'Masques et tubas x6'),
+    (6, 'divertissement', 'Paddleboard x2'),
+    -- Boat 7 : Finistère (voilier 11m — côtes bretonnes)
+    (7, 'navigation',     'GPS chartplotter'),
+    (7, 'navigation',     'VHF radio'),
+    (7, 'navigation',     'Pilote automatique'),
+    (7, 'navigation',     'Sondeur'),
+    (7, 'sécurité',       'Gilets de sauvetage x5'),
+    (7, 'sécurité',       'Radeau de survie 5 personnes'),
+    (7, 'sécurité',       'EPIRB'),
+    (7, 'sécurité',       'Combinaisons de survie x2'),
+    (7, 'confort',        'Chauffage'),
+    (7, 'confort',        'WC marin'),
+    (7, 'cuisine',        'Cuisinière à gaz 2 feux'),
+    (7, 'cuisine',        'Réfrigérateur 50L'),
+    -- Boat 9 : Voilier Océanis 40 (Marseille)
+    (9, 'navigation',     'GPS chartplotter tactile'),
+    (9, 'navigation',     'VHF radio'),
+    (9, 'navigation',     'Pilote automatique'),
+    (9, 'sécurité',       'Gilets de sauvetage x6'),
+    (9, 'sécurité',       'Radeau de survie 6 personnes'),
+    (9, 'sécurité',       'EPIRB'),
+    (9, 'confort',        'Douche extérieure'),
+    (9, 'cuisine',        'Cuisinière à gaz 3 feux'),
+    (9, 'cuisine',        'Réfrigérateur 60L'),
+    (9, 'divertissement', 'Masques et tubas x4'),
+    -- Boat 10 : Catamaran Lagoon 42 (Nice)
+    (10, 'navigation',     'GPS chartplotter tactile'),
+    (10, 'navigation',     'VHF radio'),
+    (10, 'navigation',     'Pilote automatique'),
+    (10, 'navigation',     'AIS'),
+    (10, 'sécurité',       'Gilets de sauvetage x8'),
+    (10, 'sécurité',       'Radeau de survie 8 personnes'),
+    (10, 'sécurité',       'EPIRB'),
+    (10, 'confort',        'Air conditionné'),
+    (10, 'confort',        'Douche extérieure'),
+    (10, 'cuisine',        'Cuisinière à gaz 3 feux'),
+    (10, 'cuisine',        'Réfrigérateur 90L'),
+    (10, 'cuisine',        'Micro-ondes'),
+    (10, 'divertissement', 'Enceinte Bluetooth'),
+    (10, 'divertissement', 'Masques et tubas x4'),
+    (10, 'divertissement', 'Paddleboard'),
+    -- Boat 11 : Péniche La Garonne (Bordeaux)
+    (11, 'navigation',     'GPS fluvial'),
+    (11, 'navigation',     'VHF fluviale'),
+    (11, 'sécurité',       'Gilets de sauvetage x6'),
+    (11, 'sécurité',       'Extincteurs'),
+    (11, 'confort',        'Chauffage central'),
+    (11, 'confort',        'Salon intérieur'),
+    (11, 'confort',        'Terrasse avant'),
+    (11, 'cuisine',        'Cuisinière à gaz 4 feux'),
+    (11, 'cuisine',        'Réfrigérateur 120L'),
+    (11, 'cuisine',        'Four'),
+    (11, 'cuisine',        'Micro-ondes'),
+    (11, 'divertissement', 'TV'),
+    (11, 'divertissement', 'Vélos pliants x2'),
+    -- Boat 12 : Voilier Bénéteau First (La Rochelle)
+    (12, 'navigation',     'GPS chartplotter'),
+    (12, 'navigation',     'VHF radio'),
+    (12, 'navigation',     'Pilote automatique'),
+    (12, 'sécurité',       'Gilets de sauvetage x4'),
+    (12, 'sécurité',       'Extincteurs'),
+    (12, 'sécurité',       'EPIRB'),
+    (12, 'confort',        'WC marin'),
+    (12, 'cuisine',        'Cuisinière à gaz 2 feux'),
+    (12, 'cuisine',        'Réfrigérateur 40L'),
+    -- Boat 13 : Armor Voile (Brest)
+    (13, 'navigation',     'GPS chartplotter'),
+    (13, 'navigation',     'VHF radio'),
+    (13, 'navigation',     'Sondeur'),
+    (13, 'sécurité',       'Gilets de sauvetage x5'),
+    (13, 'sécurité',       'Radeau de survie 5 personnes'),
+    (13, 'sécurité',       'EPIRB'),
+    (13, 'sécurité',       'Combinaisons de survie x2'),
+    (13, 'confort',        'Chauffage'),
+    (13, 'cuisine',        'Cuisinière à gaz 2 feux'),
+    (13, 'cuisine',        'Réfrigérateur 50L'),
+    -- Boat 14 : Catamaran Méditerranée (Barcelone)
+    (14, 'navigation',     'GPS chartplotter tactile'),
+    (14, 'navigation',     'VHF radio'),
+    (14, 'navigation',     'Pilote automatique'),
+    (14, 'navigation',     'AIS'),
+    (14, 'sécurité',       'Gilets de sauvetage x10'),
+    (14, 'sécurité',       'Radeau de survie 10 personnes'),
+    (14, 'sécurité',       'EPIRB'),
+    (14, 'confort',        'Air conditionné'),
+    (14, 'confort',        'Douche extérieure'),
+    (14, 'cuisine',        'Cuisinière à gaz 4 feux'),
+    (14, 'cuisine',        'Réfrigérateur 100L'),
+    (14, 'cuisine',        'Micro-ondes'),
+    (14, 'divertissement', 'Enceinte Bluetooth'),
+    (14, 'divertissement', 'Masques et tubas x6'),
+    (14, 'divertissement', 'Paddleboard x2'),
+    -- Boat 15 : Voilier de Régate (Antibes)
+    (15, 'navigation',     'GPS chartplotter'),
+    (15, 'navigation',     'VHF radio'),
+    (15, 'navigation',     'Pilote automatique'),
+    (15, 'sécurité',       'Gilets de sauvetage x4'),
+    (15, 'sécurité',       'Extincteurs'),
+    (15, 'sécurité',       'EPIRB'),
+    (15, 'confort',        'Bimini (protection solaire)'),
+    (15, 'cuisine',        'Réfrigérateur 30L'),
+    -- Boat 16 : Catamaran Prestige (Saint-Tropez — luxe)
+    (16, 'navigation',     'GPS chartplotter tactile 12"'),
+    (16, 'navigation',     'VHF radio'),
+    (16, 'navigation',     'Pilote automatique'),
+    (16, 'navigation',     'AIS'),
+    (16, 'navigation',     'Radar'),
+    (16, 'sécurité',       'Gilets de sauvetage x12'),
+    (16, 'sécurité',       'Radeau de survie 12 personnes'),
+    (16, 'sécurité',       'EPIRB'),
+    (16, 'confort',        'Air conditionné'),
+    (16, 'confort',        'Douche extérieure chaude'),
+    (16, 'confort',        'WC marin x3'),
+    (16, 'confort',        'Jacuzzi de cockpit'),
+    (16, 'cuisine',        'Cuisinière à gaz 4 feux + four'),
+    (16, 'cuisine',        'Réfrigérateur 150L'),
+    (16, 'cuisine',        'Micro-ondes'),
+    (16, 'cuisine',        'Cafetière Nespresso'),
+    (16, 'divertissement', 'Enceinte Bluetooth premium'),
+    (16, 'divertissement', 'Masques et tubas x6'),
+    (16, 'divertissement', 'Paddleboard x2'),
+    (16, 'divertissement', 'Kayak x1')
     ON CONFLICT DO NOTHING
   `);
 

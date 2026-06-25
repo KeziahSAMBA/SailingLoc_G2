@@ -8,8 +8,7 @@ import portMarseille from '../assets/image/ports/Marseille.webp';
 import portNice from '../assets/image/ports/Nice.webp';
 import portCroatie from '../assets/image/ports/Croatie.webp';
 import portNaples from '../assets/image/ports/Naples.webp';
-import CarrouselBoat from '../components/common/CarrouselBoat.jsx';
-import CarouselBoatTypes from '../components/common/CarouselBoatTypes.jsx';
+import Carrousel from '../components/common/Carrousel.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
@@ -125,22 +124,6 @@ const reviewsCSS = `
   @keyframes scrollReviews {
     0%   { transform: translateX(0); }
     100% { transform: translateX(-50%); }
-  }
-  .category-carousel-types > div > div:first-child > h2 {
-    color: #000 !important;
-  }
-  .category-carousel-types > div > div:first-child > button {
-    color: #4b5563 !important;
-  }
-  .category-carousel-types > div > div:first-child > button:hover {
-    color: #000 !important;
-  }
-  .category-carousel-types > div > div:last-child > div > div:first-child {
-    background: rgba(0, 0, 0, 0.04) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
   }
 `;
 
@@ -443,12 +426,7 @@ function CategoryPage() {
 
         {/* ── Section — Carrousels bateaux & ports ─────────────────────────────── */}
         <section id="suggestions" className="relative w-full flex flex-col gap-8 px-28 py-10">
-          <div className="w-full flex flex-col gap-8">
-            <div className="category-carousel-types">
-              <CarouselBoatTypes />
-            </div>
-            <CarrouselBoat />
-          </div>
+          <Carrousel theme="light" />
         </section>
       </div>
       {/* fin du wrapper sticky */}
