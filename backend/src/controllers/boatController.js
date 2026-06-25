@@ -7,9 +7,32 @@ export async function getBoats(req, res) {
     include: {
       port: true,
       images: { orderBy: { order: 'asc' } },
+      availabilities: {
+        where: { is_available: true },
+        orderBy: { start_date: 'asc' },
+      },
+      bookings: {
+        select: {
+          reviews: {
+            where: { status: 'validated', deleted_at: null },
+            select: { rating: true },
+          },
+        },
+      },
     },
   });
-  res.json(boats);
+
+  const result = boats.map((b) => {
+    const allReviews = b.bookings.flatMap((bk) => bk.reviews);
+    const avg =
+      allReviews.length > 0
+        ? Math.round((allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length) * 10) / 10
+        : null;
+    const { bookings, ...boat } = b;
+    return { ...boat, avg_rating: avg };
+  });
+
+  res.json(result);
 }
 
 export async function uploadBoat(req, res) {

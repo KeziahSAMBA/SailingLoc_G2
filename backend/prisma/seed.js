@@ -216,6 +216,62 @@ async function main() {
     ON CONFLICT DO NOTHING
   `);
 
+  // Bookings supplémentaires pour diversifier les avis
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO booking (id_user, id_boat, start_date, end_date, status, total_amount, booking_date) VALUES
+    ( 6,  9, '2025-03-01', '2025-03-06', 'confirmed', 2100.00, '2025-01-15 10:00:00'),
+    ( 7, 10, '2025-04-10', '2025-04-16', 'confirmed', 3480.00, '2025-02-20 14:00:00'),
+    ( 8, 12, '2025-05-05', '2025-05-09', 'confirmed', 1280.00, '2025-03-10 09:00:00'),
+    ( 9,  7, '2025-02-15', '2025-02-20', 'confirmed', 1300.00, '2024-12-01 11:00:00'),
+    (10,  3, '2025-01-10', '2025-01-15', 'confirmed', 1400.00, '2024-11-20 08:00:00'),
+    (11,  1, '2024-12-20', '2024-12-27', 'confirmed', 2450.00, '2024-10-15 10:00:00'),
+    (12,  5, '2024-11-05', '2024-11-10', 'confirmed', 1950.00, '2024-09-20 15:00:00'),
+    (13,  6, '2024-10-01', '2024-10-08', 'confirmed', 5250.00, '2024-08-15 13:00:00'),
+    ( 6, 14, '2025-06-01', '2025-06-08', 'confirmed', 4550.00, '2025-04-01 09:00:00'),
+    ( 7,  4, '2025-04-20', '2025-04-24', 'confirmed', 1680.00, '2025-02-28 16:00:00'),
+    ( 8,  2, '2024-09-05', '2024-09-12', 'confirmed', 4760.00, '2024-07-10 10:00:00'),
+    ( 9, 15, '2026-01-15', '2026-01-20', 'confirmed', 1550.00, '2025-11-01 08:00:00')
+    ON CONFLICT DO NOTHING
+  `);
+
+  // Avis supplémentaires — notes variées (1 à 5) et dates étalées sur 2024-2026
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO review (id_user, id_booking, rating, comment, status, created_at) VALUES
+    ( 6, 15, 2, 'Déçu par l''état général du bateau, plusieurs équipements défaillants lors de notre séjour.',              'validated', '2025-03-07 10:00:00'),
+    ( 7, 16, 5, 'Catamaran absolument magnifique, vue époustouflante sur la Côte d''Azur. Je reviendrai sans hésiter !',    'validated', '2025-04-17 09:00:00'),
+    ( 8, 17, 1, 'Bateau en très mauvais état, rien ne correspondait à l''annonce. Expérience vraiment décevante.',          'validated', '2025-05-10 14:00:00'),
+    ( 9, 18, 4, 'Très agréable séjour en Bretagne, bateau fiable et bien équipé. Propriétaire très sympathique.',           'validated', '2025-02-21 16:00:00'),
+    (10, 19, 3, 'Location correcte mais quelques défauts à signaler. Dans l''ensemble acceptable sans être exceptionnel.',   'validated', '2025-01-16 11:00:00'),
+    (11, 20, 5, 'Noël en mer absolument inoubliable, bateau impeccable et propriétaire aux petits soins. Bravo !',          'validated', '2024-12-28 10:00:00'),
+    (12, 21, 1, 'Expérience très décevante, bateau sale et mal entretenu. Je déconseille fortement cette location.',        'validated', '2024-11-11 08:00:00'),
+    (13, 22, 2, 'Communication difficile avec le propriétaire, prestation bien en deçà de ce qui était annoncé.',           'validated', '2024-10-09 15:00:00'),
+    ( 6, 23, 5, 'Magnifique croisière en Méditerranée, skipper au top et bateau luxueux. Une expérience parfaite !',        'validated', '2025-06-09 17:00:00'),
+    ( 7, 24, 4, 'Beau bateau à moteur idéal pour les excursions côtières. Propriétaire réactif et très disponible.',       'validated', '2025-04-25 11:00:00'),
+    ( 8, 25, 3, 'Bonne semaine dans l''ensemble, quelques petits points à améliorer mais rien de rédhibitoire.',            'validated', '2024-09-13 09:00:00'),
+    ( 9, 26, 5, 'Excellente location en début d''année, parfait pour s''évader du quotidien. Fortement recommandé !',      'validated', '2026-01-21 13:00:00')
+    ON CONFLICT DO NOTHING
+  `);
+
+  // Bookings de propriétaires (ils louent des bateaux qu'ils ne possèdent pas)
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO booking (id_user, id_boat, start_date, end_date, status, total_amount, booking_date) VALUES
+    (2, 6,  '2025-03-10', '2025-03-15', 'confirmed', 3750.00, '2025-01-20 10:00:00'),
+    (3, 7,  '2025-04-15', '2025-04-20', 'confirmed', 1300.00, '2025-02-10 09:00:00'),
+    (4, 2,  '2025-05-20', '2025-05-25', 'confirmed', 3400.00, '2025-03-15 14:00:00'),
+    (5, 3,  '2025-06-10', '2025-06-15', 'confirmed', 1400.00, '2025-04-05 11:00:00')
+    ON CONFLICT DO NOTHING
+  `);
+
+  // Avis de propriétaires
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO review (id_user, id_booking, rating, comment, status, created_at) VALUES
+    (2, 27, 5, 'Catamaran de rêve, vue époustouflante sur Saint-Tropez. En tant que propriétaire moi-même, j''apprécie vraiment le soin apporté à l''entretien.',   'validated', '2025-03-16 10:00:00'),
+    (3, 28, 4, 'Superbe voilier breton, robuste et parfaitement équipé pour des eaux parfois agitées. Une belle découverte !',                                        'validated', '2025-04-21 09:00:00'),
+    (4, 29, 5, 'Le Soleil Levant est un catamaran exceptionnel. Luc a fait un travail remarquable sur l''entretien et l''accueil. Je recommande vivement.',          'validated', '2025-05-26 14:00:00'),
+    (5, 30, 4, 'Très belle expérience sur l''Atlantique. Claire est une hôte formidable, voilier en parfait état. Je repars avec de beaux souvenirs.',               'validated', '2025-06-16 11:00:00')
+    ON CONFLICT DO NOTHING
+  `);
+
   // Images
   await prisma.$executeRawUnsafe(`
     INSERT INTO image (id_boat, id_user, url, type, "order") VALUES
