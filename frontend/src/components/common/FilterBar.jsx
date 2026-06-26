@@ -5,9 +5,13 @@ import { FaChevronDown, FaChevronUp, FaXmark } from 'react-icons/fa6';
 const BOAT_TYPE_LABELS = {
   voilier: 'Voiliers',
   catamaran: 'Catamarans',
-  yacht: 'Yachts',
+  trimaran: 'Trimarans',
   moteur: 'Bateaux à moteur',
-  semiRigide: 'Semi-rigides',
+  peniche: 'Péniches',
+  jet_ski: 'Jet-skis',
+  hors_bord: 'Hors-bords',
+  gulet: 'Gulets',
+  sans_permis: 'Sans permis',
 };
 
 const EQUIPMENT_LABELS = {
@@ -57,9 +61,13 @@ function FilterBar() {
   const [boatTypeFilters, setBoatTypeFilters] = useState({
     voilier: false,
     catamaran: false,
-    yacht: false,
+    trimaran: false,
     moteur: false,
-    semiRigide: false,
+    peniche: false,
+    jet_ski: false,
+    hors_bord: false,
+    gulet: false,
+    sans_permis: false,
   });
   const [equipmentFilters, setEquipmentFilters] = useState({
     skipper: false,
@@ -67,6 +75,7 @@ function FilterBar() {
     clim: false,
     wifi: false,
   });
+  const [sansPermis, setSansPermis] = useState(false);
   const [selectedCabins, setSelectedCabins] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const containerRef = useRef(null);
@@ -85,11 +94,16 @@ function FilterBar() {
     setBoatTypeFilters({
       voilier: false,
       catamaran: false,
-      yacht: false,
+      trimaran: false,
       moteur: false,
-      semiRigide: false,
+      peniche: false,
+      jet_ski: false,
+      hors_bord: false,
+      gulet: false,
+      sans_permis: false,
     });
     setEquipmentFilters({ skipper: false, cuisine: false, clim: false, wifi: false });
+    setSansPermis(false);
     setSelectedCabins(null);
   }
 
@@ -108,6 +122,9 @@ function FilterBar() {
         label: EQUIPMENT_LABELS[k],
         onRemove: () => setEquipmentFilters((f) => ({ ...f, [k]: false })),
       })),
+    ...(sansPermis
+      ? [{ key: 'sansPermis', label: 'Sans permis', onRemove: () => setSansPermis(false) }]
+      : []),
     ...(selectedCabins !== null
       ? [
           {
@@ -190,9 +207,13 @@ function FilterBar() {
                 {[
                   ['voilier', 'Voiliers'],
                   ['catamaran', 'Catamarans'],
-                  ['yacht', 'Yachts'],
+                  ['trimaran', 'Trimarans'],
                   ['moteur', 'Bateaux à moteur'],
-                  ['semiRigide', 'Semi-rigides'],
+                  ['peniche', 'Péniches'],
+                  ['jet_ski', 'Jet-skis'],
+                  ['hors_bord', 'Hors-bords'],
+                  ['gulet', 'Gulets'],
+                  ['sans_permis', 'Sans permis'],
                 ].map(([key, label]) => (
                   <FilterCheckbox
                     key={key}
@@ -226,6 +247,18 @@ function FilterBar() {
                   />
                 ))}
               </div>
+            </div>
+
+            {/* Sans permis */}
+            <div className="px-8">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
+                Permis
+              </p>
+              <FilterCheckbox
+                label="Sans permis requis"
+                checked={sansPermis}
+                onChange={(e) => setSansPermis(e.target.checked)}
+              />
             </div>
 
             {/* Nombre de cabines */}

@@ -26,12 +26,12 @@ function StarRating({ rating }) {
   );
 }
 
-function ReviewCard({ name, role, rating, date, text }) {
+function ReviewCard({ name, role, rating, date, text, avatar }) {
   return (
     <div className="flex flex-col gap-2 py-3 px-5">
       <div className="flex items-center gap-2">
         <img
-          src={nameToAvatarUrl(name)}
+          src={avatar ?? nameToAvatarUrl(name)}
           alt={name}
           className="w-9 h-9 rounded-full object-cover flex-shrink-0"
         />

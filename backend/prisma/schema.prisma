@@ -90,8 +90,9 @@ model Boat {
   build_year      Int?
   registration    String   @unique @db.VarChar(50)
   description     String?
-  is_published    Boolean  @default(false)
-  created_at      DateTime @default(now())
+  is_published      Boolean  @default(false)
+  license_required  Boolean  @default(true)
+  created_at        DateTime @default(now())
   updated_at      DateTime?
   deleted_at      DateTime?
 

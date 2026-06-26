@@ -15,17 +15,29 @@ const portToSlide = (port) => ({
   available: port.country === 'France',
 });
 
-const boatToSlide = (boat, descFn) => ({
-  id: boat.id_boat,
-  label: boat.name,
-  description: descFn ? descFn(boat) : `${boat.port?.city ?? ''} · ${boat.daily_price} €/jour`,
-  img: boat.images?.[0]?.url ?? '',
-  available: boat.is_published,
-});
+const boatToSlide = (boat) => {
+  const nextAvail = boat.availabilities?.[0];
+  const fmt = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  const dateStr =
+    nextAvail?.start_date && nextAvail?.end_date
+      ? `${fmt(nextAvail.start_date)} - ${fmt(nextAvail.end_date)}`
+      : null;
+  return {
+    id: boat.id_boat,
+    label: boat.name,
+    city: boat.port?.city ?? null,
+    dateStr,
+    capacity: boat.capacity ?? null,
+    price: boat.daily_price,
+    rating: boat.avg_rating != null ? `★ ${boat.avg_rating}` : null,
+    img: boat.images?.[0]?.url ?? '',
+    available: boat.is_published,
+  };
+};
 
 // ─── Composant générique de carrousel ─────────────────────────────────────────
 
-const PortCarousel = ({ slides, visibleCount = 5, imageSize = 'small' }) => {
+const PortCarousel = ({ slides, visibleCount = 5, imageSize = 'small', variant = 'default' }) => {
   const maxIndex = slides.length - visibleCount;
   const [index, setIndex] = useState(0);
   const slideWidthPct = 100 / slides.length;
@@ -63,48 +75,172 @@ const PortCarousel = ({ slides, visibleCount = 5, imageSize = 'small' }) => {
               className="flex flex-col cursor-pointer group px-1.5"
               style={{ width: `${slideWidthPct}%` }}
             >
-              <div
-                className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
-                style={{ aspectRatio }}
-              >
-                <img
-                  src={slide.img}
-                  alt={slide.label}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
-                />
-                {!slide.available && (
-                  <>
-                    <div className="absolute inset-0 bg-black/60" />
-                    <div className="absolute inset-0 flex items-center justify-center">
+              {variant === 'overlay' ? (
+                <>
+                  <div
+                    className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
+                    style={{ aspectRatio }}
+                  >
+                    <img
+                      src={slide.img}
+                      alt={slide.label}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    {slide.available ? (
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-black/30" />
+                    ) : (
+                      <>
+                        <div className="absolute inset-0 bg-black/60" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span
+                            className="text-white font-semibold text-center px-2"
+                            style={{
+                              fontSize: '13px',
+                              lineHeight: '14px',
+                              letterSpacing: '0.05em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Bientôt disponible
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-col gap-0.5">
+                    <span
+                      className="font-semibold text-black truncate"
+                      style={{ lineHeight: '15px' }}
+                    >
+                      <span style={{ fontSize: '14px' }}>{slide.label}</span>
+                      {slide.city && (
+                        <span className="text-gray-500" style={{ fontSize: '12px' }}>
+                          {' '}
+                          · {slide.city}
+                        </span>
+                      )}
+                    </span>
+                    {(slide.dateStr || slide.capacity) && (
                       <span
-                        className="text-white font-semibold text-center px-2"
-                        style={{
-                          fontSize: '13px',
-                          lineHeight: '14px',
-                          letterSpacing: '0.05em',
-                          textTransform: 'uppercase',
-                        }}
+                        className="text-gray-600"
+                        style={{ fontSize: '12px', lineHeight: '15px' }}
                       >
-                        Bientôt disponible
+                        {[slide.dateStr, slide.capacity ? `${slide.capacity} pers.` : null]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </span>
-                    </div>
-                  </>
-                )}
-              </div>
-              <span
-                className="mt-1 text-center font-semibold text-black"
-                style={{ fontSize: '15px', lineHeight: '18px' }}
-              >
-                {slide.label}
-              </span>
-              {slide.description && (
-                <span
-                  className="text-center text-gray-600"
-                  style={{ fontSize: '13px', lineHeight: '16px' }}
+                    )}
+                    <span
+                      className="text-gray-600"
+                      style={{ fontSize: '12px', lineHeight: '15px' }}
+                    >
+                      {[`${slide.price} €/j`, slide.rating].filter(Boolean).join(' · ')}
+                    </span>
+                  </div>
+                </>
+              ) : variant === 'port' ? (
+                <div
+                  className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
+                  style={{ aspectRatio }}
                 >
-                  {slide.description}
-                </span>
+                  <img
+                    src={slide.img}
+                    alt={slide.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                  {slide.available ? (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/80" />
+                      <div className="absolute inset-0 flex items-center justify-center px-3">
+                        <span
+                          className="text-white font-semibold text-center"
+                          style={{ fontSize: '15px', lineHeight: '19px' }}
+                        >
+                          {slide.label}
+                        </span>
+                      </div>
+                      {slide.description && (
+                        <div
+                          className="absolute bottom-3 left-3 right-3 text-white/75 text-center"
+                          style={{ fontSize: '11px', lineHeight: '14px' }}
+                        >
+                          {slide.description}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-black/60" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-2">
+                        <span
+                          className="text-white font-semibold text-center"
+                          style={{ fontSize: '15px', lineHeight: '19px' }}
+                        >
+                          {slide.label}
+                        </span>
+                        <span
+                          className="text-white/70 text-center"
+                          style={{
+                            fontSize: '11px',
+                            lineHeight: '14px',
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Bientôt disponible
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
+                    style={{ aspectRatio }}
+                  >
+                    <img
+                      src={slide.img}
+                      alt={slide.label}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    {!slide.available && (
+                      <>
+                        <div className="absolute inset-0 bg-black/60" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span
+                            className="text-white font-semibold text-center px-2"
+                            style={{
+                              fontSize: '13px',
+                              lineHeight: '14px',
+                              letterSpacing: '0.05em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Bientôt disponible
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <span
+                    className="mt-1 text-center font-semibold text-black"
+                    style={{ fontSize: '15px', lineHeight: '18px' }}
+                  >
+                    {slide.label}
+                  </span>
+                  {slide.description && (
+                    <span
+                      className="text-center text-gray-600"
+                      style={{ fontSize: '13px', lineHeight: '16px' }}
+                    >
+                      {slide.description}
+                    </span>
+                  )}
+                </>
               )}
             </div>
           ))}
@@ -133,6 +269,7 @@ const CarouselSection = ({
   linkLabel = 'Voir plus',
   linkTo = '/categorie',
   theme = 'light',
+  variant = 'default',
 }) => {
   const titleColor = theme === 'dark' ? 'text-white' : 'text-black';
   const linkColor =
@@ -154,7 +291,12 @@ const CarouselSection = ({
           {linkLabel} <FaArrowRight size={10} />
         </Link>
       </div>
-      <PortCarousel slides={slides} visibleCount={visibleCount} imageSize={imageSize} />
+      <PortCarousel
+        slides={slides}
+        visibleCount={visibleCount}
+        imageSize={imageSize}
+        variant={variant}
+      />
     </div>
   );
 };
@@ -165,7 +307,7 @@ const GAP = 16;
 const PADDING = 16;
 const SPRING = { type: 'spring', stiffness: 40, damping: 20 };
 
-function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
+function SlideItem({ slide, index, itemWidth, trackItemOffset, x }) {
   const range = [
     -(index + 1) * trackItemOffset,
     -index * trackItemOffset,
@@ -191,15 +333,25 @@ function SlideItem({ slide, index, itemWidth, trackItemOffset, x, title }) {
           className="absolute top-3 left-3 text-white font-semibold"
           style={{ fontSize: '15px' }}
         >
-          {title}
+          {slide.label}
         </div>
         <div className="absolute bottom-3 left-3 right-3">
-          <div className="text-white font-semibold" style={{ fontSize: '14px' }}>
-            {slide.label}
-          </div>
-          <div className="text-white/80" style={{ fontSize: '13px', lineHeight: '16px' }}>
-            {slide.description}
-          </div>
+          {slide.subtitle && (
+            <div
+              className="text-white/70 font-semibold"
+              style={{ fontSize: '11px', lineHeight: '14px' }}
+            >
+              {slide.subtitle}
+            </div>
+          )}
+          {slide.description && (
+            <div
+              className="text-white/80"
+              style={{ fontSize: '11px', lineHeight: '14px', marginTop: '2px' }}
+            >
+              {slide.description}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -210,7 +362,7 @@ function BoatTypeCarousel({
   slides,
   title,
   initialSlide = 1,
-  interval = 4000,
+  interval = 8000,
   isHovered,
   onHoverChange,
   theme = 'dark',
@@ -375,75 +527,108 @@ const Carrousel = ({ theme = 'dark' }) => {
   }, []);
 
   const boatTypeSections = useMemo(() => {
-    const toTypeSlide = (boat) => ({
-      id: boat.id_boat,
-      label: boat.name,
-      description: boat.description ?? '',
-      img: boat.images?.[0]?.url ?? '',
-    });
-    return [
-      {
-        slides: boats
-          .filter((b) => b.type === 'voilier' && b.images?.length)
-          .slice(0, 3)
-          .map(toTypeSlide),
-        title: 'Voilier',
-        initialSlide: 1,
-        interval: 4000,
-      },
-      {
-        slides: boats
-          .filter((b) => b.type === 'catamaran' && b.images?.length)
-          .slice(0, 3)
-          .map(toTypeSlide),
-        title: 'Catamaran',
-        initialSlide: 1,
-        interval: 5000,
-      },
-      {
-        slides: boats
-          .filter((b) => b.type === 'peniche' && b.images?.length)
-          .slice(0, 3)
-          .map(toTypeSlide),
-        title: 'Péniche',
-        initialSlide: 1,
-        interval: 4500,
-      },
-    ];
+    const toTypeSlide = (boat) => {
+      const nextAvail = boat.availabilities?.[0];
+      const fmt = (d) =>
+        new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      const dateStr =
+        nextAvail?.start_date && nextAvail?.end_date
+          ? `${fmt(nextAvail.start_date)} - ${fmt(nextAvail.end_date)}`
+          : null;
+      const shortDesc = boat.description
+        ? boat.description.length > 55
+          ? boat.description.slice(0, 55) + '…'
+          : boat.description
+        : null;
+      const ratingStr = boat.avg_rating != null ? `★ ${boat.avg_rating}` : null;
+
+      return {
+        id: boat.id_boat,
+        label: boat.name,
+        subtitle: [
+          boat.port?.city,
+          dateStr,
+          boat.capacity ? `${boat.capacity} pers.` : null,
+          `${boat.daily_price} €/j`,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        description: [shortDesc, ratingStr].filter(Boolean).join(' · '),
+        img: boat.images?.[0]?.url ?? '',
+      };
+    };
+
+    const TYPE_LABELS = {
+      voilier: 'Voilier',
+      catamaran: 'Catamaran',
+      peniche: 'Péniche',
+      moteur: 'Bateau à moteur',
+      trimaran: 'Trimaran',
+      hors_bord: 'Hors-bord',
+      jet_ski: 'Jet-ski',
+      gulet: 'Gulet',
+      sans_permis: 'Sans permis',
+    };
+
+    const groups = {};
+    for (const boat of boats) {
+      if (!groups[boat.type]) groups[boat.type] = [];
+      if (groups[boat.type].length < 3) groups[boat.type].push(boat);
+    }
+
+    const FEATURED = ['voilier', 'jet_ski', 'sans_permis'];
+
+    return FEATURED.filter((type) => groups[type]?.length > 0).map((type, i) => ({
+      slides: groups[type].map(toTypeSlide),
+      title: TYPE_LABELS[type] ?? type,
+      initialSlide: 1,
+      interval: 8000 + i * 500,
+    }));
   }, [boats]);
 
   const carouselSections = useMemo(
     () => [
       {
         title: 'Choisissez votre port de départ',
-        slides: ports.map(portToSlide),
+        slides: ports
+          .filter(
+            (p) =>
+              p.country !== 'France' ||
+              ['Brest', 'La Rochelle', 'Bordeaux', 'Marseille', 'Nice'].includes(p.city)
+          )
+          .map(portToSlide),
         themed: true,
+        variant: 'port',
       },
       {
         title: 'Annonces consultées récemment',
-        slides: boats.slice(0, 6).map((b) => boatToSlide(b)),
+        slides: boats.slice(0, 6).map(boatToSlide),
         linkLabel: 'Voir toutes mes annonces',
+        variant: 'overlay',
       },
       {
         title: "Destinations d'intérêt",
         slides: ports.slice(0, 7).map(portToSlide),
         linkLabel: 'Explorer les destinations',
+        variant: 'port',
       },
       {
         title: 'Bateaux les plus populaires',
         slides: [...boats]
           .sort((a, b) => Number(b.daily_price) - Number(a.daily_price))
           .slice(0, 5)
-          .map((b) => boatToSlide(b, (boat) => `★★★★★ · ${boat.port?.city ?? ''}`)),
+          .map(boatToSlide),
         linkLabel: 'Voir le classement',
+        variant: 'overlay',
       },
       {
         title: 'Locations les moins chères',
         slides: [...boats]
           .sort((a, b) => Number(a.daily_price) - Number(b.daily_price))
           .slice(0, 5)
-          .map((b) => boatToSlide(b, (boat) => `À partir de ${boat.daily_price} €/jour`)),
+          .map(boatToSlide),
         linkLabel: 'Voir les bons plans',
+        variant: 'overlay',
       },
     ],
     [boats, ports]
@@ -492,13 +677,14 @@ const Carrousel = ({ theme = 'dark' }) => {
 
       {carouselSections
         .filter((s) => s.slides.length > 0)
-        .map(({ title, slides, linkLabel, themed }) => (
+        .map(({ title, slides, linkLabel, themed, variant }) => (
           <CarouselSection
             key={title}
             title={title}
             slides={slides}
             linkLabel={linkLabel}
             theme={themed ? theme : 'light'}
+            variant={variant}
           />
         ))}
     </div>

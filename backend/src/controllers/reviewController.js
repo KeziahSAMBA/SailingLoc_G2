@@ -11,7 +11,17 @@ export async function getPublicReviews(req, res) {
         comment: true,
         created_at: true,
         user: {
-          select: { first_name: true, last_name: true, role: true },
+          select: {
+            first_name: true,
+            last_name: true,
+            role: true,
+            images: {
+              where: { type: 'profil', deleted_at: null },
+              select: { url: true },
+              take: 1,
+              orderBy: { order: 'asc' },
+            },
+          },
         },
       },
     });
@@ -28,6 +38,7 @@ export async function getPublicReviews(req, res) {
         year: 'numeric',
       }),
       text: r.comment,
+      avatar: r.user.images[0]?.url ?? null,
     }));
 
     res.json(formatted);
