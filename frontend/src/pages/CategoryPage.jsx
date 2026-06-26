@@ -183,7 +183,11 @@ function CategoryPage() {
         setMapMarkers(
           data
             .filter(
-              (p) => Number.isFinite(Number(p.latitude)) && Number.isFinite(Number(p.longitude))
+              (p) =>
+                Number.isFinite(Number(p.latitude)) &&
+                Number.isFinite(Number(p.longitude)) &&
+                (p.country !== 'France' ||
+                  ['Brest', 'La Rochelle', 'Bordeaux', 'Marseille', 'Nice'].includes(p.city))
             )
             .map((p) => ({
               id: p.id_port,
