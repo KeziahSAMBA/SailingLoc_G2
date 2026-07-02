@@ -144,7 +144,7 @@ function Header() {
       <nav className="w-1/3 flex justify-center">
         <ul className="flex gap-10 list-none m-0 p-0">
           {[
-            ['Découvrir', '/'],
+            ['Découvrir', '/categorie'],
             ['Contact', '/contact'],
             ['À propos', '/a-propos'],
           ].map(([label, href]) => (
