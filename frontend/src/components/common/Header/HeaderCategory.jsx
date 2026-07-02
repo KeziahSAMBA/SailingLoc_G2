@@ -4,10 +4,14 @@ import { useAuth } from '../../../hooks/useAuth.jsx';
 import logo from '../../../assets/image/SL_logo/logo SL.webp';
 import logoLong from '../../../assets/image/SL_logo/logo SL long.webp';
 
+const SKY = '#0ea5e9';
+const SKY_BORDER = 'rgba(14, 165, 233, 0.45)';
+const SKY_HOVER_BG = 'rgba(14, 165, 233, 0.08)';
+
 const BURGER_ITEMS = [
   { label: 'Chercher une location', anchor: 'hero' },
-  { label: 'Nos suggestions', anchor: 'suggestions' },
   { label: 'Tutoriel', anchor: 'tutoriel' },
+  { label: 'Nos suggestions', anchor: 'suggestions' },
   { label: 'Avis & commentaires', anchor: 'avis' },
 ];
 
@@ -17,30 +21,30 @@ const NAV_LINKS = [
   ['À propos', '/a-propos'],
 ];
 
-const UserIcon = ({ size }) => (
+const UserIcon = ({ size, color }) => (
   <span
     className="rounded-full flex items-center justify-center flex-shrink-0"
     style={{
       width: size,
       height: size,
-      border: '1px solid rgba(255, 255, 255, 0.6)',
+      border: `1px solid ${color === '#fff' ? 'rgba(255,255,255,0.6)' : SKY_BORDER}`,
       transition: 'width 0.3s ease, height 0.3s ease',
     }}
   >
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
     </svg>
   </span>
 );
 
-const ChevronDown = ({ open }) => (
+const ChevronDown = ({ open, color }) => (
   <svg
     width="10"
     height="10"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="#fff"
+    stroke={color}
     strokeWidth="2"
     style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
   >
@@ -50,8 +54,8 @@ const ChevronDown = ({ open }) => (
 
 function getAuthBtnStyle(scrolled) {
   return {
-    color: '#fff',
-    border: '1px solid rgba(255, 255, 255, 0.5)',
+    color: scrolled ? '#fff' : SKY,
+    border: `1px solid ${scrolled ? 'rgba(255,255,255,0.5)' : SKY_BORDER}`,
     backgroundColor: 'transparent',
     fontSize: scrolled ? '0.75rem' : '0.80rem',
     padding: scrolled ? '5px 14px' : '7px 16px',
@@ -59,18 +63,20 @@ function getAuthBtnStyle(scrolled) {
   };
 }
 
-const authBtnHover = {
-  onMouseEnter: (e) => {
-    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-    e.currentTarget.style.borderColor = '#fff';
-  },
-  onMouseLeave: (e) => {
-    e.currentTarget.style.backgroundColor = 'transparent';
-    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.5)';
-  },
-};
+function makeAuthBtnHover(scrolled) {
+  return {
+    onMouseEnter: (e) => {
+      e.currentTarget.style.backgroundColor = scrolled ? 'rgba(255,255,255,0.15)' : SKY_HOVER_BG;
+      e.currentTarget.style.borderColor = scrolled ? '#fff' : SKY;
+    },
+    onMouseLeave: (e) => {
+      e.currentTarget.style.backgroundColor = 'transparent';
+      e.currentTarget.style.borderColor = scrolled ? 'rgba(255,255,255,0.5)' : SKY_BORDER;
+    },
+  };
+}
 
-function Header() {
+function HeaderCategory() {
   const [lang, setLang] = useState('FR');
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -117,15 +123,18 @@ function Header() {
   }
 
   const iconSize = scrolled ? '14px' : '16px';
+  const textColor = scrolled ? '#fff' : SKY;
+  const authHover = makeAuthBtnHover(scrolled);
 
   return (
     <header
       className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
       style={{
         height: scrolled ? '60px' : '80px',
-        backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
-        borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
-        boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
+        backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.92)',
+        backdropFilter: scrolled ? 'none' : 'blur(12px)',
+        WebkitBackdropFilter: scrolled ? 'none' : 'blur(12px)',
+        boxShadow: scrolled ? '0 2px 12px rgba(0, 0, 0, 0.08)' : '0 4px 20px rgba(0, 0, 0, 0.08)',
         transition: 'height 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease',
       }}
     >
@@ -139,27 +148,33 @@ function Header() {
             aria-label="Menu"
           >
             <span
-              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
+              className="block w-5 h-[1.5px] rounded transition-all duration-300"
+              style={{
+                backgroundColor: textColor,
+                transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none',
+              }}
             />
             <span
-              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ opacity: menuOpen ? 0 : 1 }}
+              className="block w-5 h-[1.5px] rounded transition-all duration-300"
+              style={{ backgroundColor: textColor, opacity: menuOpen ? 0 : 1 }}
             />
             <span
-              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }}
+              className="block w-5 h-[1.5px] rounded transition-all duration-300"
+              style={{
+                backgroundColor: textColor,
+                transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none',
+              }}
             />
           </button>
 
-          {/* Dropdown — panneau latéral gauche */}
+          {/* Dropdown — panneau latéral gauche — transparent + blur */}
           <div
             className="fixed left-0 overflow-hidden"
             style={{
               top: scrolled ? '60px' : '80px',
               width: '260px',
               height: `calc(100vh - ${scrolled ? '60px' : '80px'})`,
-              backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.25)',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(5px)',
               WebkitBackdropFilter: 'blur(14px)',
               borderRight: '1px solid rgba(255, 255, 255, 0.15)',
@@ -175,11 +190,9 @@ function Header() {
                   key={label}
                   onClick={() => scrollToAnchor(anchor)}
                   className="flex items-center flex-1 px-5 text-base font-medium transition-colors text-left"
-                  style={{ color: scrolled ? '#0A3172' : '#fff' }}
+                  style={{ color: '#0A3172' }}
                   onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = scrolled
-                      ? 'rgba(10, 49, 114, 0.06)'
-                      : 'rgba(255, 255, 255, 0.1)')
+                    (e.currentTarget.style.backgroundColor = 'rgba(10, 49, 114, 0.06)')
                   }
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
@@ -227,7 +240,7 @@ function Header() {
                         e.preventDefault();
                         scrollToAnchor('contact');
                       }
-                    : label === 'Découvrir' && location.pathname === '/categorie'
+                    : label === 'Découvrir'
                       ? (e) => {
                           e.preventDefault();
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -236,9 +249,9 @@ function Header() {
                 }
                 className="font-medium"
                 style={{
-                  color: '#fff',
+                  color: textColor,
                   fontSize: scrolled ? '0.90rem' : '1.15rem',
-                  backgroundImage: 'linear-gradient(#fff, #fff)',
+                  backgroundImage: `linear-gradient(${textColor}, ${textColor})`,
                   backgroundRepeat: 'no-repeat',
                   backgroundSize: '0% 1px',
                   backgroundPosition: '0 100%',
@@ -267,17 +280,17 @@ function Header() {
           {['FR', 'EN'].map((l, i) => (
             <span key={l} className="flex items-center gap-1">
               {i === 1 && (
-                <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.9rem' }}>/</span>
+                <span style={{ color: textColor, opacity: 0.4, fontSize: '0.9rem' }}>/</span>
               )}
               <button
                 onClick={() => setLang(l)}
                 className="px-1 font-medium"
                 style={{
-                  color: '#fff',
+                  color: textColor,
                   opacity: lang === l ? 1 : 0.45,
                   fontWeight: lang === l ? 700 : 500,
                   fontSize: scrolled ? '0.7rem' : '0.75rem',
-                  backgroundImage: 'linear-gradient(#fff, #fff)',
+                  backgroundImage: `linear-gradient(${textColor}, ${textColor})`,
                   backgroundRepeat: 'no-repeat',
                   backgroundSize: '0% 1px',
                   backgroundPosition: '0 100%',
@@ -301,11 +314,11 @@ function Header() {
               onClick={() => setUserMenuOpen((o) => !o)}
               className="flex items-center gap-2 rounded-full transition-all whitespace-nowrap"
               style={getAuthBtnStyle(scrolled)}
-              {...authBtnHover}
+              {...authHover}
             >
-              <UserIcon size={iconSize} />
+              <UserIcon size={iconSize} color={textColor} />
               {user.first_name}
-              <ChevronDown open={userMenuOpen} />
+              <ChevronDown open={userMenuOpen} color={textColor} />
             </button>
 
             {userMenuOpen && (
@@ -414,9 +427,9 @@ function Header() {
             onClick={() => navigate('/login', { state: { backgroundLocation: location } })}
             className="flex items-center gap-2 rounded-full transition-all whitespace-nowrap"
             style={getAuthBtnStyle(scrolled)}
-            {...authBtnHover}
+            {...authHover}
           >
-            <UserIcon size={iconSize} />
+            <UserIcon size={iconSize} color={textColor} />
             Se connecter / S&apos;inscrire
           </button>
         )}
@@ -425,4 +438,4 @@ function Header() {
   );
 }
 
-export default Header;
+export default HeaderCategory;

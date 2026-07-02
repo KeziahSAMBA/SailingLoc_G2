@@ -66,6 +66,7 @@ model Port {
   region      String?  @db.VarChar(100)
   latitude    Decimal?
   longitude   Decimal?
+  image_url   String?  @db.VarChar(500)
   created_at  DateTime @default(now())
   updated_at  DateTime?
   deleted_at  DateTime?
@@ -89,8 +90,9 @@ model Boat {
   build_year      Int?
   registration    String   @unique @db.VarChar(50)
   description     String?
-  is_published    Boolean  @default(false)
-  created_at      DateTime @default(now())
+  is_published      Boolean  @default(false)
+  license_required  Boolean  @default(true)
+  created_at        DateTime @default(now())
   updated_at      DateTime?
   deleted_at      DateTime?
 
@@ -100,6 +102,8 @@ model Boat {
   images          Image[]
   favoriteUsers   UserBoatFavorite[]
   reports         BoatReport[]
+  availabilities  BoatAvailability[]
+  equipment       BoatEquipment[]
 
   @@index([id_user])
   @@index([id_port])
@@ -348,4 +352,33 @@ enum ReviewStatus {
   refused
 
   @@map("review_status")
+}
+
+model BoatAvailability {
+  id_availability  Int      @id @default(autoincrement())
+  id_boat          Int
+  start_date       DateTime @db.Date
+  end_date         DateTime @db.Date
+  is_available     Boolean  @default(true)
+  price_override   Decimal?
+  notes            String?  @db.VarChar(255)
+  created_at       DateTime @default(now())
+
+  boat             Boat     @relation(fields: [id_boat], references: [id_boat])
+
+  @@index([id_boat])
+  @@map("boat_availability")
+}
+
+model BoatEquipment {
+  id_equipment  Int      @id @default(autoincrement())
+  id_boat       Int
+  category      String   @db.VarChar(50)
+  name          String   @db.VarChar(150)
+  created_at    DateTime @default(now())
+
+  boat          Boat     @relation(fields: [id_boat], references: [id_boat])
+
+  @@index([id_boat])
+  @@map("boat_equipment")
 }
