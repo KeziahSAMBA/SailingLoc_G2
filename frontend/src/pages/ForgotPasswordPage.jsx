@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { requestPasswordReset } from '../services/authService.js';
-import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
 const inputClass =
   'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
