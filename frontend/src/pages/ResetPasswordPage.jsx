@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { resetPassword, verifyResetToken } from '../services/authService.js';
 import { useToast } from '../hooks/useToast.jsx';
 import PasswordField from '../components/auth/PasswordField.jsx';
-import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';

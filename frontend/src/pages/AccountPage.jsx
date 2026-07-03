@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth.jsx';
 import { useToast } from '../hooks/useToast.jsx';
 import { updateMe, changePassword } from '../services/authService.js';
 import PasswordField from '../components/auth/PasswordField.jsx';
-import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;

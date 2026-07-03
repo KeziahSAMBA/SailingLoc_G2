@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
@@ -37,46 +37,111 @@ const boatToSlide = (boat) => {
 
 // ─── Composant générique de carrousel ─────────────────────────────────────────
 
-const PortCarousel = ({ slides, visibleCount = 5, imageSize = 'small', variant = 'default' }) => {
-  const maxIndex = slides.length - visibleCount;
-  const [index, setIndex] = useState(0);
-  const slideWidthPct = 100 / slides.length;
-  const trackWidthPct = (slides.length / visibleCount) * 100;
-  const aspectRatio = imageSize === 'small' ? '4 / 3' : '1 / 1';
+const PortCarousel = memo(
+  ({ slides, visibleCount = 5, imageSize = 'small', variant = 'default' }) => {
+    const maxIndex = slides.length - visibleCount;
+    const [index, setIndex] = useState(0);
+    const slideWidthPct = 100 / slides.length;
+    const trackWidthPct = (slides.length / visibleCount) * 100;
+    const aspectRatio = imageSize === 'small' ? '4 / 3' : '1 / 1';
 
-  const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
-  const next = useCallback(() => setIndex((i) => Math.min(maxIndex, i + 1)), [maxIndex]);
+    const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
+    const next = useCallback(() => setIndex((i) => Math.min(maxIndex, i + 1)), [maxIndex]);
 
-  return (
-    <div className="relative p-4">
-      {index > 0 && (
-        <button
-          onClick={prev}
-          className="absolute left-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
-          style={{ transform: 'translate(-50%, 0)', top: '40%' }}
-          aria-label="Précédent"
-        >
-          <FaChevronLeft size={12} className="text-gray-700" />
-        </button>
-      )}
+    return (
+      <div className="relative p-4">
+        {index > 0 && (
+          <button
+            onClick={prev}
+            className="absolute left-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
+            style={{ transform: 'translate(-50%, 0)', top: '40%' }}
+            aria-label="Précédent"
+          >
+            <FaChevronLeft size={12} className="text-gray-700" />
+          </button>
+        )}
 
-      <div className="overflow-hidden rounded-xl">
-        <div
-          className="flex"
-          style={{
-            width: `${trackWidthPct}%`,
-            transform: `translateX(${-index * slideWidthPct}%)`,
-            transition: 'transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          }}
-        >
-          {slides.map((slide) => (
-            <div
-              key={slide.id}
-              className="flex flex-col cursor-pointer group px-1.5"
-              style={{ width: `${slideWidthPct}%` }}
-            >
-              {variant === 'overlay' ? (
-                <>
+        <div className="overflow-hidden rounded-xl">
+          <div
+            className="flex"
+            style={{
+              width: `${trackWidthPct}%`,
+              transform: `translateX(${-index * slideWidthPct}%)`,
+              transition: 'transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+              willChange: 'transform',
+            }}
+          >
+            {slides.map((slide) => (
+              <div
+                key={slide.id}
+                className="flex flex-col cursor-pointer group px-1.5"
+                style={{ width: `${slideWidthPct}%` }}
+              >
+                {variant === 'overlay' ? (
+                  <>
+                    <div
+                      className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
+                      style={{ aspectRatio }}
+                    >
+                      <img
+                        src={slide.img}
+                        alt={slide.label}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      {slide.available ? (
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-black/30" />
+                      ) : (
+                        <>
+                          <div className="absolute inset-0 bg-black/60" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span
+                              className="text-white font-semibold text-center px-2"
+                              style={{
+                                fontSize: '13px',
+                                lineHeight: '14px',
+                                letterSpacing: '0.05em',
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              Bientôt disponible
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="mt-1 flex flex-col gap-0.5">
+                      <span
+                        className="font-semibold text-black truncate"
+                        style={{ lineHeight: '15px' }}
+                      >
+                        <span style={{ fontSize: '14px' }}>{slide.label}</span>
+                        {slide.city && (
+                          <span className="text-gray-500" style={{ fontSize: '12px' }}>
+                            {' '}
+                            · {slide.city}
+                          </span>
+                        )}
+                      </span>
+                      {(slide.dateStr || slide.capacity) && (
+                        <span
+                          className="text-gray-600"
+                          style={{ fontSize: '12px', lineHeight: '15px' }}
+                        >
+                          {[slide.dateStr, slide.capacity ? `${slide.capacity} pers.` : null]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                      )}
+                      <span
+                        className="text-gray-600"
+                        style={{ fontSize: '12px', lineHeight: '15px' }}
+                      >
+                        {[`${slide.price} €/j`, slide.rating].filter(Boolean).join(' · ')}
+                      </span>
+                    </div>
+                  </>
+                ) : variant === 'port' ? (
                   <div
                     className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
                     style={{ aspectRatio }}
@@ -88,15 +153,39 @@ const PortCarousel = ({ slides, visibleCount = 5, imageSize = 'small', variant =
                       loading="lazy"
                     />
                     {slide.available ? (
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-black/30" />
+                      <>
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/80" />
+                        <div className="absolute inset-0 flex items-center justify-center px-3">
+                          <span
+                            className="text-white font-semibold text-center"
+                            style={{ fontSize: '15px', lineHeight: '19px' }}
+                          >
+                            {slide.label}
+                          </span>
+                        </div>
+                        {slide.description && (
+                          <div
+                            className="absolute bottom-3 left-3 right-3 text-white/75 text-center"
+                            style={{ fontSize: '11px', lineHeight: '14px' }}
+                          >
+                            {slide.description}
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <>
                         <div className="absolute inset-0 bg-black/60" />
-                        <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-2">
                           <span
-                            className="text-white font-semibold text-center px-2"
+                            className="text-white font-semibold text-center"
+                            style={{ fontSize: '15px', lineHeight: '19px' }}
+                          >
+                            {slide.label}
+                          </span>
+                          <span
+                            className="text-white/70 text-center"
                             style={{
-                              fontSize: '13px',
+                              fontSize: '11px',
                               lineHeight: '14px',
                               letterSpacing: '0.05em',
                               textTransform: 'uppercase',
@@ -108,158 +197,72 @@ const PortCarousel = ({ slides, visibleCount = 5, imageSize = 'small', variant =
                       </>
                     )}
                   </div>
-                  <div className="mt-1 flex flex-col gap-0.5">
-                    <span
-                      className="font-semibold text-black truncate"
-                      style={{ lineHeight: '15px' }}
+                ) : (
+                  <>
+                    <div
+                      className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
+                      style={{ aspectRatio }}
                     >
-                      <span style={{ fontSize: '14px' }}>{slide.label}</span>
-                      {slide.city && (
-                        <span className="text-gray-500" style={{ fontSize: '12px' }}>
-                          {' '}
-                          · {slide.city}
-                        </span>
+                      <img
+                        src={slide.img}
+                        alt={slide.label}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      {!slide.available && (
+                        <>
+                          <div className="absolute inset-0 bg-black/60" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span
+                              className="text-white font-semibold text-center px-2"
+                              style={{
+                                fontSize: '13px',
+                                lineHeight: '14px',
+                                letterSpacing: '0.05em',
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              Bientôt disponible
+                            </span>
+                          </div>
+                        </>
                       )}
+                    </div>
+                    <span
+                      className="mt-1 text-center font-semibold text-black"
+                      style={{ fontSize: '15px', lineHeight: '18px' }}
+                    >
+                      {slide.label}
                     </span>
-                    {(slide.dateStr || slide.capacity) && (
+                    {slide.description && (
                       <span
-                        className="text-gray-600"
-                        style={{ fontSize: '12px', lineHeight: '15px' }}
+                        className="text-center text-gray-600"
+                        style={{ fontSize: '13px', lineHeight: '16px' }}
                       >
-                        {[slide.dateStr, slide.capacity ? `${slide.capacity} pers.` : null]
-                          .filter(Boolean)
-                          .join(' · ')}
+                        {slide.description}
                       </span>
                     )}
-                    <span
-                      className="text-gray-600"
-                      style={{ fontSize: '12px', lineHeight: '15px' }}
-                    >
-                      {[`${slide.price} €/j`, slide.rating].filter(Boolean).join(' · ')}
-                    </span>
-                  </div>
-                </>
-              ) : variant === 'port' ? (
-                <div
-                  className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
-                  style={{ aspectRatio }}
-                >
-                  <img
-                    src={slide.img}
-                    alt={slide.label}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                  {slide.available ? (
-                    <>
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/80" />
-                      <div className="absolute inset-0 flex items-center justify-center px-3">
-                        <span
-                          className="text-white font-semibold text-center"
-                          style={{ fontSize: '15px', lineHeight: '19px' }}
-                        >
-                          {slide.label}
-                        </span>
-                      </div>
-                      {slide.description && (
-                        <div
-                          className="absolute bottom-3 left-3 right-3 text-white/75 text-center"
-                          style={{ fontSize: '11px', lineHeight: '14px' }}
-                        >
-                          {slide.description}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="absolute inset-0 bg-black/60" />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-2">
-                        <span
-                          className="text-white font-semibold text-center"
-                          style={{ fontSize: '15px', lineHeight: '19px' }}
-                        >
-                          {slide.label}
-                        </span>
-                        <span
-                          className="text-white/70 text-center"
-                          style={{
-                            fontSize: '11px',
-                            lineHeight: '14px',
-                            letterSpacing: '0.05em',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          Bientôt disponible
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div
-                    className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
-                    style={{ aspectRatio }}
-                  >
-                    <img
-                      src={slide.img}
-                      alt={slide.label}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    {!slide.available && (
-                      <>
-                        <div className="absolute inset-0 bg-black/60" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span
-                            className="text-white font-semibold text-center px-2"
-                            style={{
-                              fontSize: '13px',
-                              lineHeight: '14px',
-                              letterSpacing: '0.05em',
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            Bientôt disponible
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <span
-                    className="mt-1 text-center font-semibold text-black"
-                    style={{ fontSize: '15px', lineHeight: '18px' }}
-                  >
-                    {slide.label}
-                  </span>
-                  {slide.description && (
-                    <span
-                      className="text-center text-gray-600"
-                      style={{ fontSize: '13px', lineHeight: '16px' }}
-                    >
-                      {slide.description}
-                    </span>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {index < maxIndex && (
-        <button
-          onClick={next}
-          className="absolute right-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
-          style={{ transform: 'translate(50%, 0)', top: '40%' }}
-          aria-label="Suivant"
-        >
-          <FaChevronRight size={12} className="text-gray-700" />
-        </button>
-      )}
-    </div>
-  );
-};
+        {index < maxIndex && (
+          <button
+            onClick={next}
+            className="absolute right-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
+            style={{ transform: 'translate(50%, 0)', top: '40%' }}
+            aria-label="Suivant"
+          >
+            <FaChevronRight size={12} className="text-gray-700" />
+          </button>
+        )}
+      </div>
+    );
+  }
+);
 
 const CarouselSection = ({
   title,
@@ -305,9 +308,18 @@ const CarouselSection = ({
 
 const GAP = 16;
 const PADDING = 16;
-const SPRING = { type: 'spring', stiffness: 40, damping: 20 };
+// Même ratio d'amortissement que { stiffness: 40, damping: 20 } (~1.58), juste ~1.8x plus rapide :
+// moins de frames à composer pour un rendu visuel identique (pas de rebond ajouté).
+const SPRING = { type: 'spring', stiffness: 130, damping: 36 };
 
-function SlideItem({ slide, index, itemWidth, trackItemOffset, x }) {
+const SlideItem = memo(function SlideItem({
+  slide,
+  index,
+  itemWidth,
+  trackItemOffset,
+  x,
+  priority,
+}) {
   const range = [
     -(index + 1) * trackItemOffset,
     -index * trackItemOffset,
@@ -318,14 +330,15 @@ function SlideItem({ slide, index, itemWidth, trackItemOffset, x }) {
   return (
     <motion.div
       className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20"
-      style={{ width: itemWidth, height: 220, rotateY }}
+      style={{ width: itemWidth, height: 220, rotateY, willChange: 'transform' }}
     >
       <div className="block w-full h-full cursor-pointer">
         <img
           src={slide.img}
           alt={slide.label}
           className="w-full h-full object-cover"
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchpriority={priority ? 'high' : 'low'}
           draggable={false}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
@@ -356,49 +369,66 @@ function SlideItem({ slide, index, itemWidth, trackItemOffset, x }) {
       </div>
     </motion.div>
   );
-}
+});
 
-function BoatTypeCarousel({
+const BoatTypeCarousel = memo(function BoatTypeCarousel({
   slides,
-  title,
   initialSlide = 1,
   interval = 8000,
-  isHovered,
-  onHoverChange,
   theme = 'dark',
 }) {
   const outerRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
   const [itemWidth, setItemWidth] = useState(0);
   const trackItemOffset = itemWidth + GAP;
-
-  useLayoutEffect(() => {
-    const el = outerRef.current;
-    if (!el) return;
-    const measure = () => setItemWidth(el.clientWidth - PADDING * 2);
-    measure();
-    const ro = new window.ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   const itemsForRender = useMemo(() => [slides[slides.length - 1], ...slides, slides[0]], [slides]);
   const [position, setPosition] = useState(initialSlide);
   const [isJumping, setIsJumping] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const x = useMotionValue(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const x = useMotionValue(-initialSlide * GAP);
+
+  // Mesure + positionnement initial dans le même effet de layout (avant le premier paint)
+  // pour éviter un slide-in animé parasite au chargement de la page.
+  useLayoutEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const width = el.clientWidth - PADDING * 2;
+      setItemWidth(width);
+      setIsJumping(true);
+      x.set(-initialSlide * (width + GAP));
+      window.requestAnimationFrame(() => setIsJumping(false));
+    };
+    measure();
+    const ro = new window.ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [initialSlide, x]);
 
   useEffect(() => {
     setPosition(initialSlide);
-    x.set(-initialSlide * trackItemOffset);
-  }, [slides.length, trackItemOffset]);
+  }, [slides.length, initialSlide]);
 
   useEffect(() => {
-    if (isHovered || itemsForRender.length <= 1) return;
+    const el = outerRef.current;
+    if (!el) return;
+    const observer = new window.IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isHovered || !isVisible || itemsForRender.length <= 1) return;
     const timer = setInterval(() => {
       setPosition((p) => Math.min(p + 1, itemsForRender.length - 1));
     }, interval);
     return () => clearInterval(timer);
-  }, [isHovered, itemsForRender.length, interval]);
+  }, [isHovered, isVisible, itemsForRender.length, interval]);
 
   const jumpTo = useCallback(
     (pos) => {
@@ -443,11 +473,17 @@ function BoatTypeCarousel({
     <div className="relative flex-1 flex flex-col items-center">
       <div
         ref={outerRef}
-        className={`relative overflow-hidden rounded-[12px] p-4 flex justify-center ${theme === 'light' ? 'border border-black/10 bg-black/[0.03]' : 'border border-white/15 bg-white/5'}`}
-        style={{ width: '100%', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
-        onMouseEnter={() => onHoverChange(true)}
-        onMouseLeave={() => onHoverChange(false)}
+        className={`relative overflow-hidden rounded-[12px] p-4 flex justify-center ${theme === 'light' ? 'border border-black/10' : 'border border-white/15'}`}
+        style={{ width: '100%' }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        {/* Fond flouté isolé des enfants animés en 3D : évite de recomposer le blur à chaque frame de la transition. */}
+        <div
+          aria-hidden="true"
+          className={`absolute inset-0 -z-10 ${theme === 'light' ? 'bg-black/[0.03]' : 'bg-white/5'}`}
+          style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        />
         <button
           onClick={goPrev}
           className="absolute left-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-1 shadow-lg transition-colors"
@@ -464,6 +500,7 @@ function BoatTypeCarousel({
               gap: `${GAP}px`,
               perspective: 800,
               perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
+              willChange: 'transform',
               x,
             }}
             animate={{ x: -(position * trackItemOffset) }}
@@ -479,7 +516,7 @@ function BoatTypeCarousel({
                 itemWidth={itemWidth}
                 trackItemOffset={trackItemOffset}
                 x={x}
-                title={title}
+                priority={index === initialSlide}
               />
             ))}
           </motion.div>
@@ -508,12 +545,11 @@ function BoatTypeCarousel({
       </div>
     </div>
   );
-}
+});
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 const Carrousel = ({ theme = 'dark' }) => {
-  const [isHovered, setIsHovered] = useState(false);
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
 
@@ -664,11 +700,8 @@ const Carrousel = ({ theme = 'dark' }) => {
               <BoatTypeCarousel
                 key={title}
                 slides={slides}
-                title={title}
                 initialSlide={initialSlide}
                 interval={interval}
-                isHovered={isHovered}
-                onHoverChange={setIsHovered}
                 theme={theme}
               />
             ))}

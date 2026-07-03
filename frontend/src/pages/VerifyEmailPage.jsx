@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { verifyEmail } from '../services/authService.js';
-import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
 function VerifyEmailPage() {
   const [searchParams] = useSearchParams();

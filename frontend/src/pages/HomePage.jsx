@@ -7,6 +7,7 @@ import { MdVerified, MdAnchor, MdSearch, MdEventAvailable } from 'react-icons/md
 import { FaShieldAlt, FaHandshake } from 'react-icons/fa';
 import Carrousel from '../components/common/Carrousel.jsx';
 import ClientReviews from '../components/common/ClientReviews.jsx';
+import GhostButton from '../components/common/GhostButton.jsx';
 
 const dotFlowCSS = `
   @keyframes dotMove {
@@ -18,36 +19,6 @@ const dotFlowCSS = `
     100% { left: calc(100% + 20px); opacity: 0; }
   }
 `;
-
-const GHOST_BTN_BASE = {
-  border: '1px solid rgba(14,165,233,0.95)',
-  boxShadow: '0 2px 8px rgba(10,49,114,0.3)',
-  backgroundColor: '#fff',
-  color: 'rgba(14,165,233,0.95)',
-  transition: 'background-color 0.2s, color 0.2s, box-shadow 0.2s',
-};
-
-function GhostButton({ children, href = '#', className = '' }) {
-  return (
-    <a
-      href={href}
-      className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap ${className}`}
-      style={GHOST_BTN_BASE}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.95)';
-        e.currentTarget.style.color = '#fff';
-        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.5)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = '#fff';
-        e.currentTarget.style.color = 'rgba(14,165,233,0.95)';
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(10,49,114,0.3)';
-      }}
-    >
-      {children}
-    </a>
-  );
-}
 
 function DataDots({ active }) {
   const dots = useMemo(

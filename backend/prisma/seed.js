@@ -51,11 +51,11 @@ async function main() {
   // IDs attribués dans l'ordre d'insertion : 1=Marseille, 2=La Rochelle, 3=Brest, 4=Nice, 5=Bordeaux
   await prisma.$executeRawUnsafe(`
     INSERT INTO port (name, city, country, department, region, latitude, longitude, image_url) VALUES
-    ('Port de la Joliette', 'Marseille',   'France', '13', 'Provence-Alpes-Côte d''Azur', 43.351900,  5.355300, 'https://images.unsplash.com/photo-1496309838698-63bfac391248?w=800'),
-    ('Port des Minimes',    'La Rochelle', 'France', '17', 'Nouvelle-Aquitaine',          46.146700, -1.174400, 'https://images.unsplash.com/photo-1627333010297-56d4881b8da6?w=800'),
-    ('Port de Brest',       'Brest',       'France', '29', 'Bretagne',                    48.387200, -4.494900, 'https://images.unsplash.com/photo-1553637391-2f8d6aab82ae?w=800'),
-    ('Port de Nice',        'Nice',        'France', '06', 'Provence-Alpes-Côte d''Azur', 43.699300,  7.274900, 'https://images.unsplash.com/photo-1527675756500-16aac2af73bf?w=800'),
-    ('Port de Bordeaux',    'Bordeaux',    'France', '33', 'Nouvelle-Aquitaine',          44.840400, -0.570100, 'https://images.unsplash.com/photo-1482261748897-3288731f2ec5?w=800')
+    ('Port de la Joliette', 'Marseille',   'France', '13', 'Provence-Alpes-Côte d''Azur', 43.351900,  5.355300, 'https://images.unsplash.com/photo-1496309838698-63bfac391248?auto=format&fit=crop&w=800&q=80'),
+    ('Port des Minimes',    'La Rochelle', 'France', '17', 'Nouvelle-Aquitaine',          46.146700, -1.174400, 'https://images.unsplash.com/photo-1627333010297-56d4881b8da6?auto=format&fit=crop&w=800&q=80'),
+    ('Port de Brest',       'Brest',       'France', '29', 'Bretagne',                    48.387200, -4.494900, 'https://images.unsplash.com/photo-1553637391-2f8d6aab82ae?auto=format&fit=crop&w=800&q=80'),
+    ('Port de Nice',        'Nice',        'France', '06', 'Provence-Alpes-Côte d''Azur', 43.699300,  7.274900, 'https://images.unsplash.com/photo-1527675756500-16aac2af73bf?auto=format&fit=crop&w=800&q=80'),
+    ('Port de Bordeaux',    'Bordeaux',    'France', '33', 'Nouvelle-Aquitaine',          44.840400, -0.570100, 'https://images.unsplash.com/photo-1482261748897-3288731f2ec5?auto=format&fit=crop&w=800&q=80')
     ON CONFLICT (name) DO NOTHING
   `);
 
@@ -63,12 +63,12 @@ async function main() {
   // IDs : 6=Barcelone, 7=Valence, 8=Gênes, 9=Naples, 10=Split, 11=Athènes
   await prisma.$executeRawUnsafe(`
     INSERT INTO port (name, city, country, department, region, latitude, longitude, image_url) VALUES
-    ('Port de Barcelone', 'Barcelone', 'Espagne', NULL, NULL, 41.356800,  2.188200, 'https://images.unsplash.com/photo-1591907303049-a5e5df26bcb9?w=800'),
-    ('Port de Valence',   'Valence',   'Espagne', NULL, NULL, 39.451800, -0.323200, 'https://images.unsplash.com/photo-1667990304125-0a719a004428?w=800'),
-    ('Port de Gênes',     'Gênes',     'Italie',  NULL, NULL, 44.398800,  8.957800, 'https://images.unsplash.com/photo-1756917894648-7a74e7aefd72?w=800'),
-    ('Port de Naples',    'Naples',    'Italie',  NULL, NULL, 40.842200, 14.268100, 'https://images.unsplash.com/photo-1567202170721-bd01fbdea30a?w=800'),
-    ('Port de Split',     'Split',     'Croatie', NULL, NULL, 43.508800, 16.440400, 'https://images.unsplash.com/photo-1715868815633-015b7dc5595f?w=800'),
-    ('Port du Pirée',     'Athènes',   'Grèce',   NULL, NULL, 37.945400, 23.641800, 'https://images.unsplash.com/photo-1747571443369-e21d1e2ce292?w=800')
+    ('Port de Barcelone', 'Barcelone', 'Espagne', NULL, NULL, 41.356800,  2.188200, 'https://images.unsplash.com/photo-1591907303049-a5e5df26bcb9?auto=format&fit=crop&w=800&q=80'),
+    ('Port de Valence',   'Valence',   'Espagne', NULL, NULL, 39.451800, -0.323200, 'https://images.unsplash.com/photo-1667990304125-0a719a004428?auto=format&fit=crop&w=800&q=80'),
+    ('Port de Gênes',     'Gênes',     'Italie',  NULL, NULL, 44.398800,  8.957800, 'https://images.unsplash.com/photo-1756917894648-7a74e7aefd72?auto=format&fit=crop&w=800&q=80'),
+    ('Port de Naples',    'Naples',    'Italie',  NULL, NULL, 40.842200, 14.268100, 'https://images.unsplash.com/photo-1567202170721-bd01fbdea30a?auto=format&fit=crop&w=800&q=80'),
+    ('Port de Split',     'Split',     'Croatie', NULL, NULL, 43.508800, 16.440400, 'https://images.unsplash.com/photo-1715868815633-015b7dc5595f?auto=format&fit=crop&w=800&q=80'),
+    ('Port du Pirée',     'Athènes',   'Grèce',   NULL, NULL, 37.945400, 23.641800, 'https://images.unsplash.com/photo-1747571443369-e21d1e2ce292?auto=format&fit=crop&w=800&q=80')
     ON CONFLICT (name) DO NOTHING
   `);
 
@@ -1111,18 +1111,18 @@ async function main() {
     (44, NULL, 'https://images.pexels.com/photos/28409024/pexels-photo-28409024.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
     (25, NULL, 'https://images.pexels.com/photos/18636561/pexels-photo-18636561.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 1),
     (26, NULL, 'https://images.pexels.com/photos/29867681/pexels-photo-29867681.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 1),
-    -- Gulets (bateaux 28, 29, 45, 46, 47) — Wikimedia Commons gulets turcs
-    (28, NULL, 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Turkey.Bodrum023.jpg', 'bateau', 0),
-    (29, NULL, 'https://upload.wikimedia.org/wikipedia/commons/4/41/Bodrum_03.jpg', 'bateau', 0),
-    (45, NULL, 'https://upload.wikimedia.org/wikipedia/commons/c/cb/Bodrum_06.jpg', 'bateau', 0),
-    (46, NULL, 'https://upload.wikimedia.org/wikipedia/commons/3/39/Bodrum_05.jpg', 'bateau', 0),
-    (47, NULL, 'https://upload.wikimedia.org/wikipedia/commons/2/23/Ingiliz_limani_04510_-_6115.jpg', 'bateau', 0),
-    (28, NULL, 'https://upload.wikimedia.org/wikipedia/commons/5/53/Marmaris%2C_%C5%BCaglowiec_-_25_IX_2011_r.SDC11988.jpg', 'bateau', 1),
+    -- Gulets (bateaux 28, 29, 45, 46, 47) — Pexels gulets turcs (léger + négociation WebP auto)
+    (28, NULL, 'https://images.pexels.com/photos/4170111/pexels-photo-4170111.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
+    (29, NULL, 'https://images.pexels.com/photos/18192882/pexels-photo-18192882.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
+    (45, NULL, 'https://images.pexels.com/photos/13274525/pexels-photo-13274525.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
+    (46, NULL, 'https://images.pexels.com/photos/17233512/pexels-photo-17233512.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
+    (47, NULL, 'https://images.pexels.com/photos/34787494/pexels-photo-34787494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
+    (28, NULL, 'https://images.pexels.com/photos/35740501/pexels-photo-35740501.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 1),
     -- Bateaux sans permis (bateaux 32, 33, 34, 48, 49) — Pexels petits bateaux open
     (32, NULL, 'https://images.pexels.com/photos/13581883/pexels-photo-13581883.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
     (33, NULL, 'https://images.pexels.com/photos/9599914/pexels-photo-9599914.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
     (34, NULL, 'https://images.pexels.com/photos/6785289/pexels-photo-6785289.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
-    (48, NULL, 'https://images.pexels.com/photos/4261119/pexels-photo-4261119.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
+    (48, NULL, 'https://images.pexels.com/photos/28170856/pexels-photo-28170856.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0),
     (49, NULL, 'https://images.pexels.com/photos/11686040/pexels-photo-11686040.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0)
     ON CONFLICT DO NOTHING
   `);

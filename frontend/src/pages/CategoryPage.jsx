@@ -7,8 +7,10 @@ import { FaStar } from 'react-icons/fa';
 import ClientReviews from '../components/common/ClientReviews.jsx';
 import Carrousel from '../components/common/Carrousel.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
+import GhostButton from '../components/common/GhostButton.jsx';
 import { fetchBoats } from '../services/boatService.js';
 import { fetchPorts } from '../services/portService.js';
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -29,37 +31,7 @@ const toBoatCard = (boat) => ({
     .map((a) => `${fmtDate(a.start_date)} – ${fmtDate(a.end_date)}`),
 });
 
-const GHOST_BTN_BASE = {
-  border: '1px solid rgba(14,165,233,0.95)',
-  boxShadow: '0 2px 8px rgba(10,49,114,0.3)',
-  backgroundColor: '#fff',
-  color: 'rgba(14,165,233,0.95)',
-  transition: 'background-color 0.2s, color 0.2s, box-shadow 0.2s',
-};
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function GhostButton({ children, className = '', onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium whitespace-nowrap ${className}`}
-      style={GHOST_BTN_BASE}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.95)';
-        e.currentTarget.style.color = '#fff';
-        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.5)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = '#fff';
-        e.currentTarget.style.color = 'rgba(14,165,233,0.95)';
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(10,49,114,0.3)';
-      }}
-    >
-      {children}
-    </button>
-  );
-}
 
 function BoatListingCard({
   image,
@@ -74,12 +46,7 @@ function BoatListingCard({
   availability,
 }) {
   return (
-    <article
-      className="rounded-2xl overflow-hidden border border-gray-100 bg-white hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
-      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.1)' }}
-      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 32px rgba(14,165,233,0.35)')}
-      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.1)')}
-    >
+    <article className="rounded-2xl overflow-hidden border border-gray-100 bg-white hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.35)] transition-all duration-300 group cursor-pointer shadow-[0_4px_24px_rgba(0,0,0,0.1)]">
       <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
         <img
           src={image}
@@ -150,10 +117,8 @@ function BoatListingCard({
             <span className="text-xs text-gray-400">/jour</span>
           </div>
           <button
-            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors"
-            style={{ backgroundColor: 'rgba(14,165,233,0.95)' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgb(0,78,87)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.95)')}
+            type="button"
+            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors bg-[rgba(14,165,233,0.95)] hover:bg-[rgb(0,78,87)]"
           >
             Réserver
           </button>
@@ -166,13 +131,13 @@ function BoatListingCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function CategoryPage() {
-  const [headerHeight, setHeaderHeight] = useState(80);
+  const [scrolled, setScrolled] = useState(false);
   const [mapMarkers, setMapMarkers] = useState([]);
   const [boats, setBoats] = useState([]);
   const [visibleCount, setVisibleCount] = useState(8);
 
   useEffect(() => {
-    const onScroll = () => setHeaderHeight(window.scrollY > 10 ? 60 : 80);
+    const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -207,33 +172,27 @@ function CategoryPage() {
   }, []);
 
   return (
-    <main className="w-full min-h-screen pt-20" style={{ backgroundColor: '#fff' }}>
-      {/* Wrapper pour limiter le sticky avant la section avis */}
+    <main className="w-full min-h-screen pt-20 bg-white">
       <div>
-        {/*section 1 - searchbar*/}
+        {/* Section 1 — Searchbar sticky */}
         <section
           className="z-40"
           style={{
             position: 'sticky',
-            top: `${headerHeight}px`,
+            top: scrolled ? '60px' : '80px',
             borderBottom: '1px solid rgba(0,0,0,0.08)',
             backgroundColor: 'rgba(255,255,255,0.7)',
             backdropFilter: 'blur(5px)',
             transition: 'top 0.3s ease',
           }}
         >
-          {/* Ligne 1 : FilterBar + SearchBar */}
-          <div className="flex items-center gap-8 pt-8" style={{ paddingLeft: '112px' }}>
+          <div className="flex items-center gap-8 pt-8 pl-28">
             <FilterBar />
             <SearchBarV2 />
           </div>
-
-          {/* Ligne 2 : Breadcrumb aligné sous le FilterBar */}
-          <div className="pb-2" style={{ paddingLeft: '112px' }}>
+          <div className="pb-2 pl-28">
             <Breadcrumb />
           </div>
-
-          {/* Blur strip — fondu sous la searchbar */}
           <div
             style={{
               position: 'absolute',
@@ -250,17 +209,13 @@ function CategoryPage() {
           />
         </section>
 
-        {/* ── Listings + Carte 50/50 ───────────────────────────────────────────── */}
+        {/* Section 2 — Listings + Carte 50/50 */}
         <div className="flex items-start gap-6 px-28 py-6">
-          {/* ── Listings — 50% ───────────────────────────────────────────────── */}
+          {/* Listings — 50% */}
           <div className="w-1/2 flex flex-col gap-6">
-            {/* Section header */}
             <div className="flex items-end justify-between">
               <div>
-                <p
-                  className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4"
-                  style={{ color: 'rgba(14,165,233,0.95)' }}
-                >
+                <p className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4 text-[rgba(14,165,233,0.95)]">
                   Selon vos recherches
                 </p>
                 <h2 className="text-2xl font-bold text-gray-900 pt-4 uppercase tracking-tight">
@@ -268,18 +223,16 @@ function CategoryPage() {
                 </h2>
               </div>
               <span className="text-sm text-gray-400 font-medium pb-1">
-                156 bateaux disponibles
+                {boats.length} bateaux disponibles
               </span>
             </div>
 
-            {/* 2×2 grid */}
             <div className="grid grid-cols-2 gap-4">
               {boats.slice(0, visibleCount).map((boat) => (
                 <BoatListingCard key={boat.id} {...boat} />
               ))}
             </div>
 
-            {/* Voir plus */}
             {visibleCount < boats.length && (
               <div className="flex justify-center py-2">
                 <GhostButton onClick={() => setVisibleCount((n) => n + 4)}>
@@ -289,13 +242,10 @@ function CategoryPage() {
             )}
           </div>
 
-          {/* ── Carte — 50% ──────────────────────────────────────────────────── */}
+          {/* Carte — 50% */}
           <aside className="w-1/2 sticky top-24 flex flex-col gap-2">
             <div className="flex items-center justify-between px-1">
-              <p
-                className="text-xs font-bold tracking-widest uppercase"
-                style={{ color: 'rgba(14,165,233,0.95)' }}
-              >
+              <p className="text-xs font-bold tracking-widest uppercase text-[rgba(14,165,233,0.95)]">
                 Carte Interactive
               </p>
               <span
@@ -321,13 +271,13 @@ function CategoryPage() {
           </aside>
         </div>
 
-        {/* ── Section — Carrousels bateaux & ports ─────────────────────────────── */}
+        {/* Section 3 — Carrousels */}
         <section id="suggestions" className="relative w-full flex flex-col gap-8 px-28 py-10">
           <Carrousel theme="light" />
         </section>
       </div>
-      {/* fin du wrapper sticky */}
-      {/* ── Section — Avis clients ────────────────────────────────────────────── */}
+
+      {/* Section 4 — Avis clients */}
       <ClientReviews id="avis" className="py-10" />
     </main>
   );

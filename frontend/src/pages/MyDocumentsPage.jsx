@@ -7,7 +7,7 @@ import {
   deleteDocument,
   fetchDocumentFile,
 } from '../services/documentService.js';
-import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
 // Documents obligatoires selon le rôle (doit correspondre au backend).
 const DOC_TYPES_BY_ROLE = {
