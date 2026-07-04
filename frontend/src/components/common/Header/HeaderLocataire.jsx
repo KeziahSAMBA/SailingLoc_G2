@@ -14,11 +14,11 @@ const CENTER_NAV = [
 ];
 
 const USER_MENU_ITEMS = [
-  { label: 'Mon dashboard', to: '/dashboard' },
-  { label: 'Mon compte', to: '/account' },
-  { label: 'Mes documents', to: '/documents' },
-  { label: 'Mes réservations', to: '/dashboard' },
-  { label: 'Mes favoris', to: '/dashboard' },
+  { label: 'Mon dashboard', to: '/locataire' },
+  { label: 'Compte', to: '/locataire/compte' },
+  { label: 'Mes documents', to: '/locataire/documents' },
+  { label: 'Mes réservations', to: '/locataire/reservations' },
+  { label: 'Favoris', to: '/locataire/favoris' },
   { label: 'Déconnexion', action: 'logout', danger: true },
 ];
 
@@ -27,7 +27,7 @@ function HeaderLocataire() {
     <DashboardHeader
       leftGroups={[{ items: NAV_LOCATAIRE, heightPercent: '55%' }]}
       centerNav={CENTER_NAV}
-      profileHref="/account"
+      profileHref="/locataire/compte"
       rightMenuItems={USER_MENU_ITEMS}
       rightVariant="stretch"
       rightHeightPercent="65%"
