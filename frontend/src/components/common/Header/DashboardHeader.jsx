@@ -1,5 +1,5 @@
 import { Fragment, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FiMail } from 'react-icons/fi';
 import { useAuth } from '../../../hooks/useAuth.jsx';
 import { nameToAvatarUrl } from '../../../utils/avatar.js';
@@ -33,6 +33,8 @@ function DashboardHeader({
   const navRef = useRef(null);
   const rightMenuRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const onCategoriePage = location.pathname === '/categorie';
   const { user, logout } = useAuth();
 
   const displayName = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') : '';
@@ -58,14 +60,30 @@ function DashboardHeader({
   return (
     <header
       className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
-      style={{
-        height: scrolled ? '60px' : '80px',
-        backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
-        borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
-        boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
-        transition: 'height 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease',
-      }}
+      style={{ height: scrolled ? '60px' : '80px', transition: 'height 0.3s ease' }}
     >
+      {/*
+        Background lives on its own layer (not on <header> itself) because a
+        backdrop-filter on an element makes it a new containing block for
+        fixed-position descendants — which would break the SidePanels' own
+        backdrop-filter (they're nested inside <header>).
+      */}
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          backgroundColor: scrolled
+            ? 'rgba(10, 49, 114, 0.95)'
+            : onCategoriePage
+              ? 'rgba(0, 0, 0, 0.10)'
+              : 'rgba(255, 255, 255, 0.05)',
+          borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
+          boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
+          backdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
+          WebkitBackdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
+          transition: 'box-shadow 0.3s ease, background-color 0.3s ease',
+        }}
+      />
+
       {/* Gauche — Burger nav + Logo (33%) */}
       <div className="w-1/3 flex items-center gap-4 pl-4">
         {leftGroups && (
@@ -78,7 +96,13 @@ function DashboardHeader({
               <BurgerIcon open={navOpen} />
             </button>
 
-            <SidePanel side="left" open={navOpen} scrolled={scrolled} width="260px">
+            <SidePanel
+              side="left"
+              open={navOpen}
+              scrolled={scrolled}
+              width="260px"
+              darkerOverlay={onCategoriePage}
+            >
               <div style={{ height: '100%' }}>
                 {leftGroups.map((group, groupIdx) => (
                   <Fragment key={groupIdx}>
@@ -232,7 +256,13 @@ function DashboardHeader({
             <BurgerIcon open={rightMenuOpen} />
           </button>
 
-          <SidePanel side="right" open={rightMenuOpen} scrolled={scrolled} width={rightPanelWidth}>
+          <SidePanel
+            side="right"
+            open={rightMenuOpen}
+            scrolled={scrolled}
+            width={rightPanelWidth}
+            darkerOverlay={onCategoriePage}
+          >
             <div
               className={rightVariant === 'compact' ? 'flex flex-col pt-2' : 'flex flex-col'}
               style={rightVariant === 'stretch' ? { height: rightHeightPercent } : undefined}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import bateauVideo from '../assets/video/video_bateau_3.mp4';
 import SearchBarV2 from '../components/common/SearchBarV2.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -174,6 +175,19 @@ function CategoryPage() {
   return (
     <main className="w-full min-h-screen pt-20 bg-white">
       <div>
+        {/* Section 0 — Vidéo derrière le header */}
+        <section className="relative w-full -mt-20 overflow-hidden" style={{ height: '80px' }}>
+          <video
+            src={bateauVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover object-[center_70%]"
+          />
+          <div className="absolute inset-0 bg-black/35" />
+        </section>
+
         {/* Section 1 — Searchbar sticky */}
         <section
           className="z-40"

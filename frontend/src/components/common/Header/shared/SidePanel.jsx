@@ -1,4 +1,4 @@
-function SidePanel({ side, open, scrolled, width, children }) {
+function SidePanel({ side, open, scrolled, width, children, darkerOverlay = false }) {
   const panelTop = scrolled ? '60px' : '80px';
   const isLeft = side === 'left';
 
@@ -9,7 +9,11 @@ function SidePanel({ side, open, scrolled, width, children }) {
         top: panelTop,
         width,
         height: `calc(100vh - ${panelTop})`,
-        backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.25)',
+        backgroundColor: scrolled
+          ? 'rgba(255, 255, 255, 0.95)'
+          : darkerOverlay
+            ? 'rgba(0, 0, 0, 0.45)'
+            : 'rgba(0, 0, 0, 0.25)',
         backdropFilter: 'blur(5px)',
         WebkitBackdropFilter: 'blur(14px)',
         [isLeft ? 'borderRight' : 'borderLeft']: '1px solid rgba(255, 255, 255, 0.15)',
