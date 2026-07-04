@@ -725,3 +725,5 @@ const Carrousel = ({ theme = 'dark' }) => {
 };
 
 export default Carrousel;
+
+//TODO : Ajouter option favoris
