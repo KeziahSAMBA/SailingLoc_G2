@@ -71,6 +71,15 @@ function DashboardHeader({
     }
   }
 
+  function handleLogoClick(e) {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/');
+    }
+  }
+
   return (
     <header
       className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
@@ -154,7 +163,7 @@ function DashboardHeader({
           </div>
         )}
 
-        <HeaderLogo scrolled={scrolled} />
+        <HeaderLogo scrolled={scrolled} onClick={handleLogoClick} />
       </div>
 
       {/* Centre — Navigation (33%) */}
