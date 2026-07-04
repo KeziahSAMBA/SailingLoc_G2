@@ -7,11 +7,11 @@ import logoLong from '../../../assets/image/SL_logo/logo SL long.webp';
 const NAV_ITEMS = ['Chercher une location', 'Tutoriel', 'Nos suggestions', 'Avis & commentaires'];
 
 const USER_MENU_ITEMS = [
-  { label: 'Mon dashboard', to: '/dashboard' },
-  { label: 'Compte', to: '/account' },
-  { label: 'Mes documents', to: '/documents' },
-  { label: 'Mes réservations', to: '/dashboard' },
-  { label: 'Favoris', to: '/dashboard' },
+  { label: 'Mon dashboard', to: '/locataire' },
+  { label: 'Compte', to: '/locataire/compte' },
+  { label: 'Mes documents', to: '/locataire/documents' },
+  { label: 'Mes réservations', to: '/locataire/reservations' },
+  { label: 'Favoris', to: '/locataire/favoris' },
   { label: 'Déconnexion', action: 'logout', danger: true },
 ];
 
@@ -182,10 +182,10 @@ function Header() {
       <div className="w-1/3 flex items-center justify-end gap-3 pr-4">
         {/* Nom + Icône utilisateur — lien vers le profil */}
         <a
-          href="/account"
+          href="/locataire/compte"
           onClick={(e) => {
             e.preventDefault();
-            navigate('/account');
+            navigate('/locataire/compte');
           }}
           className="flex items-center gap-3 group"
           style={{ textDecoration: 'none' }}
