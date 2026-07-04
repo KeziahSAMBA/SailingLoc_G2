@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { FaStar, FaRegStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import api from '../../services/api.js';
 
@@ -12,7 +12,29 @@ function nameToAvatarUrl(name) {
 
 const ROLE_LABELS = { proprietaire: 'Propriétaire', locataire: 'Locataire' };
 
-function StarRating({ rating }) {
+// Données statiques côté API : un seul fetch pour toute la session,
+// partagé entre tous les montages du composant sur les différentes pages.
+let reviewsCache = null;
+let reviewsPromise = null;
+
+function fetchReviews() {
+  if (reviewsCache) return Promise.resolve(reviewsCache);
+  if (!reviewsPromise) {
+    reviewsPromise = api
+      .get('/reviews/public')
+      .then(({ data }) => {
+        reviewsCache = data.map((r) => ({ ...r, avatar: r.avatar ?? nameToAvatarUrl(r.name) }));
+        return reviewsCache;
+      })
+      .catch((err) => {
+        reviewsPromise = null;
+        throw err;
+      });
+  }
+  return reviewsPromise;
+}
+
+const StarRating = memo(function StarRating({ rating }) {
   return (
     <div className="flex gap-0.5">
       {Array.from({ length: 5 }, (_, i) =>
@@ -24,15 +46,19 @@ function StarRating({ rating }) {
       )}
     </div>
   );
-}
+});
 
-function ReviewCard({ name, role, rating, date, text, avatar }) {
+const ReviewCard = memo(function ReviewCard({ name, role, rating, date, text, avatar }) {
   return (
     <div className="flex flex-col gap-2 py-3 px-5">
       <div className="flex items-center gap-2">
         <img
-          src={avatar ?? nameToAvatarUrl(name)}
+          src={avatar}
           alt={name}
+          width={36}
+          height={36}
+          loading="lazy"
+          decoding="async"
           className="w-9 h-9 rounded-full object-cover flex-shrink-0"
         />
         <div className="flex flex-col">
@@ -49,7 +75,7 @@ function ReviewCard({ name, role, rating, date, text, avatar }) {
       <p className="text-gray-600 text-sm leading-relaxed">{text}</p>
     </div>
   );
-}
+});
 
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Plus récents' },
@@ -83,17 +109,30 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
   const [page, setPage] = useState(0);
 
   useEffect(() => {
-    api
-      .get('/reviews/public')
-      .then(({ data }) => setReviews(data))
-      .catch(() => {});
+    let cancelled = false;
+    fetchReviews()
+      .then((data) => {
+        if (!cancelled) setReviews(data);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error(err);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const filtered = roleFilter === 'all' ? reviews : reviews.filter((r) => r.role === roleFilter);
-  const sorted = sortReviews(filtered, sort);
+  const filtered = useMemo(
+    () => (roleFilter === 'all' ? reviews : reviews.filter((r) => r.role === roleFilter)),
+    [reviews, roleFilter]
+  );
+  const sorted = useMemo(() => sortReviews(filtered, sort), [filtered, sort]);
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages - 1);
-  const visible = sorted.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+  const visible = useMemo(
+    () => sorted.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE),
+    [sorted, currentPage]
+  );
 
   function handleSort(value) {
     setSort(value);
@@ -151,8 +190,8 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
 
       {/* Grille 2×2 */}
       <div className="w-3/4 grid grid-cols-3 gap-6">
-        {visible.map((review, i) => (
-          <ReviewCard key={`${review.id ?? review.name}_${i}`} {...review} />
+        {visible.map((review) => (
+          <ReviewCard key={review.id ?? `${review.name}_${review.created_at}`} {...review} />
         ))}
       </div>
 
