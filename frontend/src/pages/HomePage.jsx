@@ -295,3 +295,5 @@ function HomePage() {
 }
 
 export default HomePage;
+
+//TODO : Connecter les boutons restant aux pages

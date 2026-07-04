@@ -60,3 +60,5 @@ function SearchBar() {
 }
 
 export default SearchBar;
+
+//TODO : Activer search bar sur page catégorie et landing page

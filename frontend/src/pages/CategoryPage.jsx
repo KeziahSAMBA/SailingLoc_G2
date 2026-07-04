@@ -298,3 +298,7 @@ function CategoryPage() {
 }
 
 export default CategoryPage;
+
+//TODO : Refonte affichage produit
+//TODO : Activer filtre bar recherche et filtre zoom carte
+//TODO : Activer favoris produit

@@ -289,3 +289,6 @@ function DashboardHeader({
 }
 
 export default DashboardHeader;
+
+//TODO : Tester extension vidéo header sur filtreBar
+//TODO : Ancre titre menu burger header
