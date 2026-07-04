@@ -2,7 +2,8 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 const NAV = [
   { to: '/admin', label: 'Dashboard', end: true },
-  { to: '/admin/spectateur', label: 'Vue spectateur' },
+  { to: '/admin/spectateur', label: 'Vue locataire', end: true },
+  { to: '/admin/spectateur/proprietaire', label: 'Vue propriétaire' },
   { to: '/admin/users', label: 'Utilisateurs' },
   { to: '/admin/comments', label: 'Commentaires' },
   { to: '/admin/publications', label: 'Publication' },
