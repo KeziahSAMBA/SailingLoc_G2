@@ -1,10 +1,10 @@
 import DashboardHeader from './DashboardHeader.jsx';
 
 const NAV_LOCATAIRE = [
-  'Chercher une location',
-  'Tutoriel',
-  'Nos suggestions',
-  'Avis & commentaires',
+  { label: 'Chercher une location', anchor: 'hero' },
+  { label: 'Tutoriel', anchor: 'tutoriel' },
+  { label: 'Nos suggestions', anchor: 'suggestions' },
+  { label: 'Avis & commentaires', anchor: 'avis' },
 ];
 
 const CENTER_NAV = [

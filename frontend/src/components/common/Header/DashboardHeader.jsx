@@ -57,6 +57,20 @@ function DashboardHeader({
     else if (item.to) navigate(item.to);
   }
 
+  function scrollToAnchor(anchor) {
+    setNavOpen(false);
+    const scroll = () => {
+      const el = document.getElementById(anchor);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+    if (location.pathname === '/') {
+      scroll();
+    } else {
+      navigate('/');
+      setTimeout(scroll, 300);
+    }
+  }
+
   return (
     <header
       className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
@@ -107,11 +121,20 @@ function DashboardHeader({
                 {leftGroups.map((group, groupIdx) => (
                   <Fragment key={groupIdx}>
                     <div className="flex flex-col" style={{ height: group.heightPercent }}>
-                      {group.items.map((item) => (
-                        <PanelLink key={item} scrolled={scrolled} stretch>
-                          {item}
-                        </PanelLink>
-                      ))}
+                      {group.items.map((item) => {
+                        const label = typeof item === 'string' ? item : item.label;
+                        const anchor = typeof item === 'string' ? null : item.anchor;
+                        return (
+                          <PanelLink
+                            key={label}
+                            scrolled={scrolled}
+                            stretch
+                            onClick={anchor ? () => scrollToAnchor(anchor) : undefined}
+                          >
+                            {label}
+                          </PanelLink>
+                        );
+                      })}
                     </div>
                     {groupIdx < leftGroups.length - 1 && (
                       <div
@@ -289,6 +312,3 @@ function DashboardHeader({
 }
 
 export default DashboardHeader;
-
-//TODO : Tester extension vidéo header sur filtreBar
-//TODO : Ancre titre menu burger header

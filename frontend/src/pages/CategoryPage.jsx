@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import bateauVideo from '../assets/video/video_bateau_3.mp4';
-import SearchBarV2 from '../components/common/SearchBarV2.jsx';
+import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
 import { MdPerson, MdLocationOn, MdPeople, MdCalendarToday } from 'react-icons/md';
@@ -30,6 +31,7 @@ const toBoatCard = (boat) => ({
   availability: boat.availabilities
     .slice(0, 2)
     .map((a) => `${fmtDate(a.start_date)} – ${fmtDate(a.end_date)}`),
+  rawAvailabilities: boat.availabilities,
 });
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -132,16 +134,42 @@ function BoatListingCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function CategoryPage() {
+  const [searchParams] = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
   const [mapMarkers, setMapMarkers] = useState([]);
   const [boats, setBoats] = useState([]);
   const [visibleCount, setVisibleCount] = useState(8);
+
+  const destinationQuery = (searchParams.get('destination') ?? '').trim().toLowerCase();
+  const startQuery = searchParams.get('start');
+  const endQuery = searchParams.get('end');
+  const travelersQuery = Number(searchParams.get('travelers')) || null;
+
+  const filteredBoats = boats.filter((boat) => {
+    if (destinationQuery && !boat.location.toLowerCase().includes(destinationQuery)) return false;
+    if (travelersQuery && boat.capacity < travelersQuery) return false;
+    if (startQuery && endQuery) {
+      const reqStart = new Date(startQuery);
+      const reqEnd = new Date(endQuery);
+      const hasOverlap = boat.rawAvailabilities.some((a) => {
+        const availStart = new Date(a.start_date);
+        const availEnd = new Date(a.end_date);
+        return availStart <= reqEnd && availEnd >= reqStart;
+      });
+      if (!hasOverlap) return false;
+    }
+    return true;
+  });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    setVisibleCount(8);
+  }, [searchParams.toString()]);
 
   useEffect(() => {
     fetchPorts()
@@ -175,7 +203,7 @@ function CategoryPage() {
   return (
     <main className="w-full min-h-screen pt-20 bg-white">
       <div>
-        {/* Section 0 — Vidéo derrière le header */}
+        {/* Section 0 — Vidéo derrière le header uniquement */}
         <section className="relative w-full -mt-20 overflow-hidden" style={{ height: '80px' }}>
           <video
             src={bateauVideo}
@@ -197,12 +225,13 @@ function CategoryPage() {
             borderBottom: '1px solid rgba(0,0,0,0.08)',
             backgroundColor: 'rgba(255,255,255,0.7)',
             backdropFilter: 'blur(5px)',
+            WebkitBackdropFilter: 'blur(5px)',
             transition: 'top 0.3s ease',
           }}
         >
           <div className="flex items-center gap-8 pt-8 pl-28">
             <FilterBar />
-            <SearchBarV2 />
+            <SearchBar />
           </div>
           <div className="pb-2 pl-28">
             <Breadcrumb />
@@ -237,17 +266,23 @@ function CategoryPage() {
                 </h2>
               </div>
               <span className="text-sm text-gray-400 font-medium pb-1">
-                {boats.length} bateaux disponibles
+                {filteredBoats.length} bateaux disponibles
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {boats.slice(0, visibleCount).map((boat) => (
-                <BoatListingCard key={boat.id} {...boat} />
-              ))}
-            </div>
+            {filteredBoats.length === 0 ? (
+              <p className="text-sm text-gray-500 py-6">
+                Aucune offre ne correspond à votre recherche.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                {filteredBoats.slice(0, visibleCount).map((boat) => (
+                  <BoatListingCard key={boat.id} {...boat} />
+                ))}
+              </div>
+            )}
 
-            {visibleCount < boats.length && (
+            {visibleCount < filteredBoats.length && (
               <div className="flex justify-center py-2">
                 <GhostButton onClick={() => setVisibleCount((n) => n + 4)}>
                   Voir plus d&apos;offres

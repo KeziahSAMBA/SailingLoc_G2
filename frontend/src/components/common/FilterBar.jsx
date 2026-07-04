@@ -57,7 +57,7 @@ function FilterCheckbox({ label, checked, onChange }) {
   );
 }
 
-function FilterBar() {
+function FilterBar({ light = false }) {
   const [boatTypeFilters, setBoatTypeFilters] = useState({
     voilier: false,
     catamaran: false,
@@ -140,31 +140,37 @@ function FilterBar() {
     <div className="relative inline-block" ref={containerRef}>
       {/* Header — always visible */}
       <div
-        className="flex items-center gap-3 px-4 py-2 rounded-full cursor-pointer select-none border hover:bg-black/10 transition-colors"
+        className={`flex items-center gap-3 px-4 py-2 rounded-full cursor-pointer select-none border transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         style={{
-          backgroundColor: 'rgba(0,0,0,0.05)',
-          borderColor: 'rgba(0,0,0,0.1)',
+          backgroundColor: light ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+          borderColor: light ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)',
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
         }}
         onClick={() => setFilterOpen((v) => !v)}
       >
         <div className="flex items-center gap-2">
-          <FaSliders className="text-black/70" size={13} />
-          <span className="text-black text-[10px] font-semibold uppercase tracking-wide">
+          <FaSliders className={light ? 'text-white/80' : 'text-black/70'} size={13} />
+          <span
+            className={`text-[10px] font-semibold uppercase tracking-wide ${light ? 'text-white' : 'text-black'}`}
+          >
             Filtres
           </span>
         </div>
 
         {activeChips.length > 0 && (
           <>
-            <div className="w-px h-3 bg-black/20" />
+            <div className={`w-px h-3 ${light ? 'bg-white/30' : 'bg-black/20'}`} />
             <div className="flex items-center gap-1.5 flex-nowrap">
               {activeChips.slice(0, 2).map((chip) => (
                 <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
               ))}
               {activeChips.length > 2 && (
-                <span className="text-[10px] font-semibold text-black/50">...</span>
+                <span
+                  className={`text-[10px] font-semibold ${light ? 'text-white/70' : 'text-black/50'}`}
+                >
+                  ...
+                </span>
               )}
             </div>
           </>
@@ -176,14 +182,14 @@ function FilterBar() {
               e.stopPropagation();
               resetFilters();
             }}
-            className="text-[10px] font-medium text-black/60 hover:text-black transition-colors uppercase tracking-wide"
+            className={`text-[10px] font-medium transition-colors uppercase tracking-wide ${light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
           >
             Réinitialiser
           </button>
           {filterOpen ? (
-            <FaChevronUp size={9} className="text-black/50" />
+            <FaChevronUp size={9} className={light ? 'text-white/70' : 'text-black/50'} />
           ) : (
-            <FaChevronDown size={9} className="text-black/50" />
+            <FaChevronDown size={9} className={light ? 'text-white/70' : 'text-black/50'} />
           )}
         </div>
       </div>

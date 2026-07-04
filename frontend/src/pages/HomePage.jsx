@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo, Fragment } from 'react';
+import { useNavigate } from 'react-router-dom';
 import bateauVideo from '../assets/video/video_bateau_3.mp4';
 import SearchBar from '../components/common/SearchBar.jsx';
 import { SiAppstore, SiGoogleplay } from 'react-icons/si';
@@ -106,6 +107,7 @@ const APP_LINKS = [
 ];
 
 function HomePage() {
+  const navigate = useNavigate();
   const stepsRef = useRef(null);
   const videoRef = useRef(null);
   const [dotsActive, setDotsActive] = useState(false);
@@ -170,7 +172,7 @@ function HomePage() {
               de France
             </p>
           </div>
-          <SearchBar />
+          <SearchBar light />
           <div className="text-center">
             <p className="text-white/70 text-xs mb-2 tracking-widest uppercase">
               Rejoignez notre application mobile
@@ -241,7 +243,9 @@ function HomePage() {
             ))}
           </div>
 
-          <GhostButton>
+          <GhostButton
+            onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
+          >
             <MdSearch className="text-base" />
             Lancer ma recherche
           </GhostButton>
@@ -274,7 +278,7 @@ function HomePage() {
           ))}
         </div>
 
-        <GhostButton>En savoir plus</GhostButton>
+        <GhostButton onClick={() => navigate('/a-propos')}>En savoir plus</GhostButton>
       </section>
 
       <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-10" />
@@ -285,7 +289,7 @@ function HomePage() {
           <p className="text-gray-700 font-semibold text-lg">
             L'horizon n'attend pas. Votre bateau non plus.
           </p>
-          <GhostButton className="font-semibold text-lg">
+          <GhostButton className="font-semibold text-lg" onClick={() => navigate('/categorie')}>
             Trouver mon bateau <MdAnchor className="text-base" />
           </GhostButton>
         </div>
@@ -296,4 +300,4 @@ function HomePage() {
 
 export default HomePage;
 
-//TODO : Connecter les boutons restant aux pages
+//TODO : Activer la traduction en anglais
