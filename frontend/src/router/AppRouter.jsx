@@ -22,6 +22,13 @@ import LocataireAccount from '../components/locataire/LocataireAccount.jsx';
 import LocataireDocuments from '../components/locataire/LocataireDocuments.jsx';
 import LocataireReservations from '../components/locataire/LocataireReservations.jsx';
 import LocataireFavorites from '../components/locataire/LocataireFavorites.jsx';
+import ProprietaireLayout from '../components/proprietaire/ProprietaireLayout.jsx';
+import ProprietaireDashboard from '../components/proprietaire/ProprietaireDashboard.jsx';
+import ProprietaireAccount from '../components/proprietaire/ProprietaireAccount.jsx';
+import ProprietaireDocuments from '../components/proprietaire/ProprietaireDocuments.jsx';
+import ProprietaireReservations from '../components/proprietaire/ProprietaireReservations.jsx';
+import ProprietaireRevenus from '../components/proprietaire/ProprietaireRevenus.jsx';
+import ProprietaireBoats from '../components/proprietaire/ProprietaireBoats.jsx';
 import AccountPage from '../pages/AccountPage.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
 import MessagesPage from '../pages/MessagesPage.jsx';
@@ -100,6 +107,21 @@ function AppRouter({ location }) {
           </RequireRole>
         }
       />
+      <Route
+        path="/proprietaire"
+        element={
+          <RequireRole role="proprietaire">
+            <ProprietaireLayout />
+          </RequireRole>
+        }
+      >
+        <Route index element={<ProprietaireDashboard />} />
+        <Route path="compte" element={<ProprietaireAccount />} />
+        <Route path="documents" element={<ProprietaireDocuments />} />
+        <Route path="reservations" element={<ProprietaireReservations />} />
+        <Route path="revenus" element={<ProprietaireRevenus />} />
+        <Route path="bateaux" element={<ProprietaireBoats />} />
+      </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route
         path="/admin"
