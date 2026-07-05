@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
-import DashboardPage from '../pages/DashboardPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminLayout from '../components/admin/AdminLayout.jsx';
@@ -29,7 +28,6 @@ import ProprietaireDocuments from '../components/proprietaire/ProprietaireDocume
 import ProprietaireReservations from '../components/proprietaire/ProprietaireReservations.jsx';
 import ProprietaireRevenus from '../components/proprietaire/ProprietaireRevenus.jsx';
 import ProprietaireBoats from '../components/proprietaire/ProprietaireBoats.jsx';
-import AccountPage from '../pages/AccountPage.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
 import MessagesPage from '../pages/MessagesPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
@@ -59,22 +57,6 @@ function AppRouter({ location }) {
           <RequireGuest>
             <ResetPasswordPage />
           </RequireGuest>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <RequireRole>
-            <DashboardPage />
-          </RequireRole>
-        }
-      />
-      <Route
-        path="/account"
-        element={
-          <RequireRole>
-            <AccountPage />
-          </RequireRole>
         }
       />
       <Route

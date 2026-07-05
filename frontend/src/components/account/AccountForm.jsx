@@ -23,8 +23,7 @@ const EMPTY_PASSWORD_FORM = {
 
 // Formulaires d'édition du compte (infos personnelles + mot de passe).
 // Composant "présentation seule" du contenu : l'enveloppe (fond, en-tête de page)
-// est fournie par la page hôte — réutilisé par AccountPage (plein écran) et par
-// l'espace locataire (dans le dashboard).
+// est fournie par la page hôte — utilisé par l'espace locataire (dans le dashboard).
 function AccountForm() {
   const { user, updateUser, logout } = useAuth();
   const { showToast } = useToast();

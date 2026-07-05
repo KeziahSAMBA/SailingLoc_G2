@@ -21,6 +21,7 @@ import {
   postFavorite,
   deleteFavorite,
 } from '../controllers/locataireController.js';
+import { getDashboard as getProprietaireDashboard } from '../controllers/proprietaireController.js';
 
 const router = Router();
 
@@ -37,6 +38,12 @@ router.get('/me', protect, me);
 router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
 router.get('/me/dashboard', protect, requireRole('locataire'), getDashboard);
+router.get(
+  '/me/proprietaire/dashboard',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireDashboard
+);
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
 router.post('/me/favorites/:id_boat', protect, requireRole('locataire'), postFavorite);

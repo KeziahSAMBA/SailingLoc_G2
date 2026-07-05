@@ -294,7 +294,13 @@ function Header() {
                   type="button"
                   onClick={() => {
                     setUserMenuOpen(false);
-                    navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+                    navigate(
+                      user.role === 'admin'
+                        ? '/admin'
+                        : user.role === 'proprietaire'
+                          ? '/proprietaire'
+                          : '/locataire'
+                    );
                   }}
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
@@ -319,7 +325,13 @@ function Header() {
                   type="button"
                   onClick={() => {
                     setUserMenuOpen(false);
-                    navigate('/account');
+                    navigate(
+                      user.role === 'admin'
+                        ? '/admin'
+                        : user.role === 'proprietaire'
+                          ? '/proprietaire/compte'
+                          : '/locataire/compte'
+                    );
                   }}
                   className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
