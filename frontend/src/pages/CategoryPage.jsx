@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bateauVideo from '../assets/video/video_bateau_3.mp4';
+import bateauBg from '../assets/image/paysage/cote_azur.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -82,7 +83,7 @@ function BoatListingCard({
 }) {
   const { t } = useTranslation();
   return (
-    <article className="rounded-2xl overflow-hidden border border-gray-100 bg-white hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.35)] transition-all duration-300 group cursor-pointer shadow-[0_4px_24px_rgba(0,0,0,0.1)]">
+    <article className="relative rounded-3xl overflow-hidden border border-white/50 bg-white/20 backdrop-blur-2xl backdrop-saturate-150 hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-white/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)]">
       <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
         <img
           src={image}
@@ -90,11 +91,12 @@ function BoatListingCard({
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
         {badge && (
           <div
-            className="absolute top-3 left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
+            className="absolute top-3 left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm border border-white/30"
             style={{
-              backgroundColor: 'rgba(14,165,233,0.95)',
+              backgroundColor: 'rgba(14,165,233,0.8)',
               boxShadow: '0 2px 8px rgba(14,165,233,0.5)',
             }}
           >
@@ -102,32 +104,38 @@ function BoatListingCard({
           </div>
         )}
         <div
-          className="absolute top-3 right-3 flex items-center gap-1 rounded-full px-2 py-1"
-          style={{ backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)' }}
+          className="absolute top-3 right-3 flex items-center gap-1 rounded-full px-2 py-1 backdrop-blur-lg backdrop-saturate-150 border border-white/50"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.3)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}
         >
           <FaStar className="text-amber-400" style={{ fontSize: '11px' }} />
-          <span className="text-xs font-semibold text-gray-700">{rating}</span>
+          <span className="text-xs font-semibold text-gray-800">{rating}</span>
         </div>
       </div>
 
-      <div className="p-4">
-        <p className="text-[10px] font-bold tracking-widest text-sky-500 uppercase mb-1">{type}</p>
+      <div
+        className="relative p-4 bg-white/15 backdrop-blur-xl backdrop-saturate-150 border-t border-white/30"
+        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)' }}
+      >
+        <p className="text-[10px] font-bold tracking-widest text-sky-600 uppercase mb-1">{type}</p>
         <div className="flex items-center justify-between gap-2 mb-1">
           <h3 className="text-[15px] font-bold text-gray-900 leading-tight">{name}</h3>
           <FavoriteButton isFavorite={isFavorite} onToggle={() => onToggleFavorite(id)} size={18} />
         </div>
-        <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+        <p className="text-xs text-gray-600 flex items-center gap-1 mb-2">
           <MdLocationOn className="text-sky-400 flex-shrink-0" />
           {location}
         </p>
-        <div className="flex items-center gap-3 text-xs text-gray-400 mb-2 pb-2 border-b border-gray-50">
+        <div className="flex items-center gap-3 text-xs text-gray-500 mb-2 pb-2 border-b border-white/40">
           <span className="flex items-center gap-1">
-            <MdPeople className="text-sky-300" />
+            <MdPeople className="text-sky-400" />
             {t('category.card.persons', { count: capacity })}
           </span>
           {skipper && (
             <span className="flex items-center gap-1">
-              <MdPerson className="text-sky-300" />
+              <MdPerson className="text-sky-400" />
               {t('category.card.skipperIncluded')}
             </span>
           )}
@@ -138,11 +146,11 @@ function BoatListingCard({
             {availability.map((period) => (
               <span
                 key={period}
-                className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                className="text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-md"
                 style={{
-                  backgroundColor: 'rgba(14,165,233,0.08)',
-                  color: 'rgba(14,165,233,0.95)',
-                  border: '1px solid rgba(14,165,233,0.2)',
+                  backgroundColor: 'rgba(14,165,233,0.15)',
+                  color: 'rgba(3,105,161,0.95)',
+                  border: '1px solid rgba(14,165,233,0.3)',
                 }}
               >
                 {period}
@@ -153,11 +161,11 @@ function BoatListingCard({
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-0.5">
             <span className="text-xl font-bold text-gray-900">{price}€</span>
-            <span className="text-xs text-gray-400">{t('category.card.perDay')}</span>
+            <span className="text-xs text-gray-500">{t('category.card.perDay')}</span>
           </div>
           <button
             type="button"
-            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors bg-[rgba(14,165,233,0.95)] hover:bg-[rgb(0,78,87)]"
+            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-all backdrop-blur-md border border-white/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(0,78,87,0.85)] hover:border-white/20"
           >
             {t('category.card.book')}
           </button>
@@ -376,82 +384,95 @@ function CategoryPage() {
           />
         </section>
 
-        {/* Section 2 — Listings + Carte 50/50 */}
-        <div id="resultats" className="flex items-start gap-6 px-28 py-6 scroll-mt-[120px]">
-          {/* Listings — 50% */}
-          <div className="w-1/2 flex flex-col gap-6">
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4 text-[rgba(14,165,233,0.95)]">
-                  {t('category.results.kicker')}
+        {/* Fond photo bateau — démarre sous la searchbar, couvre listings + carrousels */}
+        <div
+          className="relative"
+          style={{
+            backgroundImage: `linear-gradient(to bottom, rgba(2,44,74,0.55), rgba(2,44,74,0.35) 40%, rgba(2,44,74,0.6)), url(${bateauBg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+          }}
+        >
+          {/* Section 2 — Listings + Carte 50/50 */}
+          <div id="resultats" className="flex items-start gap-6 px-28 py-6 scroll-mt-[120px]">
+            {/* Listings — 50% */}
+            <div className="w-1/2 flex flex-col gap-6 relative">
+              <div className="relative z-10 flex flex-col gap-6">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4 text-sky-300">
+                      {t('category.results.kicker')}
+                    </p>
+                    <h2 className="text-2xl font-bold text-white pt-4 uppercase tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                      {t('category.results.title')}
+                    </h2>
+                  </div>
+                  <span className="text-sm text-white/80 font-medium pb-1">
+                    {t('category.results.count', { count: filteredBoats.length })}
+                  </span>
+                </div>
+
+                {filteredBoats.length === 0 ? (
+                  <p className="text-sm text-white/80 py-6">{t('category.results.empty')}</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    {filteredBoats.slice(0, visibleCount).map((boat) => (
+                      <BoatListingCard
+                        key={boat.id}
+                        {...boat}
+                        isFavorite={favoriteIds.has(boat.id)}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {visibleCount < filteredBoats.length && (
+                  <div className="flex justify-center py-2">
+                    <GhostButton onClick={() => setVisibleCount((n) => n + 4)}>
+                      {t('category.results.loadMore')}
+                    </GhostButton>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Carte — 50% */}
+            <aside className="w-1/2 sticky top-24 flex flex-col gap-2">
+              <div className="flex items-center justify-between px-1">
+                <p className="text-xs font-bold tracking-widest uppercase text-[rgba(14,165,233,0.95)]">
+                  {t('category.map.title')}
                 </p>
-                <h2 className="text-2xl font-bold text-gray-900 pt-4 uppercase tracking-tight">
-                  {t('category.results.title')}
-                </h2>
+                <span
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5"
+                  style={{
+                    backgroundColor: 'rgba(34,197,94,0.12)',
+                    color: '#16a34a',
+                    border: '1px solid rgba(34,197,94,0.3)',
+                  }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                  {t('category.map.live')}
+                </span>
               </div>
-              <span className="text-sm text-gray-400 font-medium pb-1">
-                {t('category.results.count', { count: filteredBoats.length })}
-              </span>
-            </div>
-
-            {filteredBoats.length === 0 ? (
-              <p className="text-sm text-gray-500 py-6">{t('category.results.empty')}</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {filteredBoats.slice(0, visibleCount).map((boat) => (
-                  <BoatListingCard
-                    key={boat.id}
-                    {...boat}
-                    isFavorite={favoriteIds.has(boat.id)}
-                    onToggleFavorite={toggleFavorite}
-                  />
-                ))}
-              </div>
-            )}
-
-            {visibleCount < filteredBoats.length && (
-              <div className="flex justify-center py-2">
-                <GhostButton onClick={() => setVisibleCount((n) => n + 4)}>
-                  {t('category.results.loadMore')}
-                </GhostButton>
-              </div>
-            )}
+              <MapView
+                markers={mapMarkers}
+                focusMarkers={focusMapMarkers}
+                className="h-[660px]"
+                emptyLabel={t('category.map.empty')}
+                onBoundsChange={(bounds) =>
+                  setMapBounds({
+                    north: bounds.getNorth(),
+                    south: bounds.getSouth(),
+                    east: bounds.getEast(),
+                    west: bounds.getWest(),
+                  })
+                }
+              />
+              <p className="text-[10px] text-gray-400 text-center px-2">{t('category.map.hint')}</p>
+            </aside>
           </div>
-
-          {/* Carte — 50% */}
-          <aside className="w-1/2 sticky top-24 flex flex-col gap-2">
-            <div className="flex items-center justify-between px-1">
-              <p className="text-xs font-bold tracking-widest uppercase text-[rgba(14,165,233,0.95)]">
-                {t('category.map.title')}
-              </p>
-              <span
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5"
-                style={{
-                  backgroundColor: 'rgba(34,197,94,0.12)',
-                  color: '#16a34a',
-                  border: '1px solid rgba(34,197,94,0.3)',
-                }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-                {t('category.map.live')}
-              </span>
-            </div>
-            <MapView
-              markers={mapMarkers}
-              focusMarkers={focusMapMarkers}
-              className="h-[660px]"
-              emptyLabel={t('category.map.empty')}
-              onBoundsChange={(bounds) =>
-                setMapBounds({
-                  north: bounds.getNorth(),
-                  south: bounds.getSouth(),
-                  east: bounds.getEast(),
-                  west: bounds.getWest(),
-                })
-              }
-            />
-            <p className="text-[10px] text-gray-400 text-center px-2">{t('category.map.hint')}</p>
-          </aside>
         </div>
 
         {/* Section 3 — Carrousels */}
