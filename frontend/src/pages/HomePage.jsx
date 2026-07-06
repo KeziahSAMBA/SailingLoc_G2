@@ -198,14 +198,14 @@ function HomePage() {
       {/* Section 2 — Carrousels bateaux & ports */}
       <section
         id="suggestions"
-        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-6 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)]"
+        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[96px] bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)]"
       >
         <div className="w-full flex flex-col gap-8">
           <Carrousel />
         </div>
       </section>
 
-      <div id="tutoriel" className="border-t border-gray-200 mx-[168px] scroll-mt-28" />
+      <div id="tutoriel" className="border-t border-gray-200 mx-[168px] scroll-mt-[128px]" />
 
       {/* Section 3 — Tuto */}
       <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
@@ -255,7 +255,10 @@ function HomePage() {
       <div className="border-t border-gray-200 mx-[168px]" />
 
       {/* Section 4 — Proposition de valeur */}
-      <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
+      <section
+        id="proposition-valeur"
+        className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0 scroll-mt-[112px]"
+      >
         <div className="text-center mb-10">
           <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
             Pourquoi nous choisir ?
@@ -281,7 +284,7 @@ function HomePage() {
         <GhostButton onClick={() => navigate('/a-propos')}>En savoir plus</GhostButton>
       </section>
 
-      <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-10" />
+      <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-[96px]" />
 
       {/* Section 5 — Avis clients */}
       <ClientReviews className="py-8">
@@ -301,3 +304,5 @@ function HomePage() {
 export default HomePage;
 
 //TODO : Activer la traduction en anglais
+//TODO : Ajuster le positionnement des ancres
+//TODO : Ancre "Contact" du header à connecter au footer

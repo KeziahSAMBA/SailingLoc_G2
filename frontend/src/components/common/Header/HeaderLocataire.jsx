@@ -1,10 +1,18 @@
+import { useLocation } from 'react-router-dom';
 import DashboardHeader from './DashboardHeader.jsx';
 
 const NAV_LOCATAIRE = [
   { label: 'Chercher une location', anchor: 'hero' },
-  { label: 'Tutoriel', anchor: 'tutoriel' },
   { label: 'Nos suggestions', anchor: 'suggestions' },
+  { label: 'Tutoriel', anchor: 'tutoriel' },
+  { label: 'Pourquoi nous choisir ?', anchor: 'proposition-valeur' },
   { label: 'Avis & commentaires', anchor: 'avis' },
+];
+
+const NAV_LOCATAIRE_CATEGORY = [
+  { label: 'Nos bateaux', anchor: 'resultats', path: '/categorie' },
+  { label: 'Nos suggestions', anchor: 'suggestions', path: '/categorie' },
+  { label: 'Avis & commentaires', anchor: 'avis', path: '/categorie' },
 ];
 
 const CENTER_NAV = [
@@ -23,9 +31,13 @@ const USER_MENU_ITEMS = [
 ];
 
 function HeaderLocataire() {
+  const location = useLocation();
+  const onCategoriePage = location.pathname === '/categorie';
+  const navItems = onCategoriePage ? NAV_LOCATAIRE_CATEGORY : NAV_LOCATAIRE;
+
   return (
     <DashboardHeader
-      leftGroups={[{ items: NAV_LOCATAIRE, heightPercent: '55%' }]}
+      leftGroups={[{ items: navItems, heightPercent: onCategoriePage ? '41%' : '69%' }]}
       centerNav={CENTER_NAV}
       profileHref="/locataire/compte"
       rightMenuItems={USER_MENU_ITEMS}

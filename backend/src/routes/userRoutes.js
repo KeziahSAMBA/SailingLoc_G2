@@ -18,6 +18,7 @@ import {
   getDashboard,
   getMyBookings,
   getMyFavorites,
+  postFavorite,
   deleteFavorite,
 } from '../controllers/locataireController.js';
 
@@ -38,6 +39,7 @@ router.patch('/me/password', protect, changeMyPassword);
 router.get('/me/dashboard', protect, requireRole('locataire'), getDashboard);
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
+router.post('/me/favorites/:id_boat', protect, requireRole('locataire'), postFavorite);
 router.delete('/me/favorites/:id_boat', protect, requireRole('locataire'), deleteFavorite);
 
 export default router;

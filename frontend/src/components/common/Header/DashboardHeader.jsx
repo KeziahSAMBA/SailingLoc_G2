@@ -57,16 +57,16 @@ function DashboardHeader({
     else if (item.to) navigate(item.to);
   }
 
-  function scrollToAnchor(anchor) {
+  function scrollToAnchor(anchor, targetPath = '/') {
     setNavOpen(false);
     const scroll = () => {
       const el = document.getElementById(anchor);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
-    if (location.pathname === '/') {
+    if (location.pathname === targetPath) {
       scroll();
     } else {
-      navigate('/');
+      navigate(targetPath);
       setTimeout(scroll, 300);
     }
   }
@@ -133,12 +133,13 @@ function DashboardHeader({
                       {group.items.map((item) => {
                         const label = typeof item === 'string' ? item : item.label;
                         const anchor = typeof item === 'string' ? null : item.anchor;
+                        const path = typeof item === 'string' ? '/' : (item.path ?? '/');
                         return (
                           <PanelLink
                             key={label}
                             scrolled={scrolled}
                             stretch
-                            onClick={anchor ? () => scrollToAnchor(anchor) : undefined}
+                            onClick={anchor ? () => scrollToAnchor(anchor, path) : undefined}
                           >
                             {label}
                           </PanelLink>
@@ -175,7 +176,11 @@ function DashboardHeader({
                 href={to}
                 onClick={(e) => {
                   e.preventDefault();
-                  navigate(to);
+                  if (to === location.pathname) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    navigate(to);
+                  }
                 }}
                 className="font-medium"
                 style={{

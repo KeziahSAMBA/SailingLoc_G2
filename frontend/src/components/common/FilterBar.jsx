@@ -11,14 +11,11 @@ const BOAT_TYPE_LABELS = {
   jet_ski: 'Jet-skis',
   hors_bord: 'Hors-bords',
   gulet: 'Gulets',
-  sans_permis: 'Sans permis',
 };
 
-const EQUIPMENT_LABELS = {
-  skipper: 'Skipper inclus',
-  cuisine: 'Cuisine équipée',
-  clim: 'Climatisation',
-  wifi: 'Wifi à bord',
+const SORT_LABELS = {
+  rating: 'Les mieux notés',
+  popularity: 'Les plus populaires',
 };
 
 function FilterChip({ label, onRemove }) {
@@ -57,26 +54,39 @@ function FilterCheckbox({ label, checked, onChange }) {
   );
 }
 
-function FilterBar({ light = false }) {
-  const [boatTypeFilters, setBoatTypeFilters] = useState({
-    voilier: false,
-    catamaran: false,
-    trimaran: false,
-    moteur: false,
-    peniche: false,
-    jet_ski: false,
-    hors_bord: false,
-    gulet: false,
-    sans_permis: false,
-  });
-  const [equipmentFilters, setEquipmentFilters] = useState({
-    skipper: false,
-    cuisine: false,
-    clim: false,
-    wifi: false,
-  });
-  const [sansPermis, setSansPermis] = useState(false);
-  const [selectedCabins, setSelectedCabins] = useState(null);
+function FilterRadio({ name, label, checked, onChange }) {
+  return (
+    <label className="flex items-center gap-2 py-1 cursor-pointer group">
+      <input
+        type="radio"
+        name={name}
+        checked={checked}
+        onChange={onChange}
+        className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
+      />
+      <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+        {label}
+      </span>
+    </label>
+  );
+}
+
+function FilterBar({
+  light = false,
+  boatTypeFilters,
+  onBoatTypeChange,
+  licenseFilter,
+  onLicenseFilterChange,
+  skipperFilter,
+  onSkipperFilterChange,
+  sortBy,
+  onSortByChange,
+  priceRange,
+  onPriceRangeChange,
+  coupDeCoeurFilter,
+  onCoupDeCoeurFilterChange,
+  onReset,
+}) {
   const [filterOpen, setFilterOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -90,47 +100,55 @@ function FilterBar({ light = false }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function resetFilters() {
-    setBoatTypeFilters({
-      voilier: false,
-      catamaran: false,
-      trimaran: false,
-      moteur: false,
-      peniche: false,
-      jet_ski: false,
-      hors_bord: false,
-      gulet: false,
-      sans_permis: false,
-    });
-    setEquipmentFilters({ skipper: false, cuisine: false, clim: false, wifi: false });
-    setSansPermis(false);
-    setSelectedCabins(null);
-  }
-
   const activeChips = [
     ...Object.entries(boatTypeFilters)
       .filter(([, v]) => v)
       .map(([k]) => ({
         key: k,
         label: BOAT_TYPE_LABELS[k],
-        onRemove: () => setBoatTypeFilters((f) => ({ ...f, [k]: false })),
+        onRemove: () => onBoatTypeChange({ ...boatTypeFilters, [k]: false }),
       })),
-    ...Object.entries(equipmentFilters)
-      .filter(([, v]) => v)
-      .map(([k]) => ({
-        key: k,
-        label: EQUIPMENT_LABELS[k],
-        onRemove: () => setEquipmentFilters((f) => ({ ...f, [k]: false })),
-      })),
-    ...(sansPermis
-      ? [{ key: 'sansPermis', label: 'Sans permis', onRemove: () => setSansPermis(false) }]
-      : []),
-    ...(selectedCabins !== null
+    ...(licenseFilter !== 'any'
       ? [
           {
-            key: 'cabins',
-            label: `${selectedCabins} cabine${selectedCabins === 1 ? '' : 's'}`,
-            onRemove: () => setSelectedCabins(null),
+            key: 'license',
+            label: licenseFilter === 'not_required' ? 'Sans permis' : 'Avec permis',
+            onRemove: () => onLicenseFilterChange('any'),
+          },
+        ]
+      : []),
+    ...(skipperFilter !== 'any'
+      ? [
+          {
+            key: 'skipper',
+            label: skipperFilter === 'included' ? 'Skipper inclus' : 'Sans skipper',
+            onRemove: () => onSkipperFilterChange('any'),
+          },
+        ]
+      : []),
+    ...(priceRange.min || priceRange.max
+      ? [
+          {
+            key: 'price',
+            label:
+              priceRange.min && priceRange.max
+                ? `${priceRange.min}€ – ${priceRange.max}€`
+                : priceRange.min
+                  ? `Dès ${priceRange.min}€`
+                  : `Jusqu'à ${priceRange.max}€`,
+            onRemove: () => onPriceRangeChange({ min: '', max: '' }),
+          },
+        ]
+      : []),
+    ...(sortBy !== 'relevance'
+      ? [{ key: 'sort', label: SORT_LABELS[sortBy], onRemove: () => onSortByChange('relevance') }]
+      : []),
+    ...(coupDeCoeurFilter
+      ? [
+          {
+            key: 'coup_de_coeur',
+            label: 'Coup de cœur',
+            onRemove: () => onCoupDeCoeurFilterChange(false),
           },
         ]
       : []),
@@ -180,7 +198,7 @@ function FilterBar({ light = false }) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              resetFilters();
+              onReset();
             }}
             className={`text-[10px] font-medium transition-colors uppercase tracking-wide ${light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
           >
@@ -197,7 +215,7 @@ function FilterBar({ light = false }) {
       {/* Expanded filter panel */}
       {filterOpen && (
         <div
-          className="absolute left-0 mt-2 rounded-xl p-5 z-10 w-fit"
+          className="absolute left-0 mt-2 rounded-xl p-6 z-10 w-fit min-w-[900px]"
           style={{
             backgroundColor: 'rgba(255,255,255,0.98)',
             boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
@@ -205,7 +223,7 @@ function FilterBar({ light = false }) {
         >
           <div className="flex gap-0 divide-x divide-gray-100">
             {/* Type de bateau */}
-            <div className="pr-8">
+            <div className="pr-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 Type de bateau
               </p>
@@ -219,75 +237,103 @@ function FilterBar({ light = false }) {
                   ['jet_ski', 'Jet-skis'],
                   ['hors_bord', 'Hors-bords'],
                   ['gulet', 'Gulets'],
-                  ['sans_permis', 'Sans permis'],
                 ].map(([key, label]) => (
                   <FilterCheckbox
                     key={key}
                     label={label}
                     checked={boatTypeFilters[key]}
-                    onChange={(e) => setBoatTypeFilters((f) => ({ ...f, [key]: e.target.checked }))}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Équipements */}
-            <div className="px-8">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                Équipements
-              </p>
-              <div className="space-y-1.5">
-                {[
-                  ['skipper', 'Skipper inclus'],
-                  ['cuisine', 'Cuisine équipée'],
-                  ['clim', 'Climatisation'],
-                  ['wifi', 'Wifi à bord'],
-                ].map(([key, label]) => (
-                  <FilterCheckbox
-                    key={key}
-                    label={label}
-                    checked={equipmentFilters[key]}
                     onChange={(e) =>
-                      setEquipmentFilters((f) => ({ ...f, [key]: e.target.checked }))
+                      onBoatTypeChange({ ...boatTypeFilters, [key]: e.target.checked })
                     }
                   />
                 ))}
               </div>
             </div>
 
-            {/* Sans permis */}
-            <div className="px-8">
+            {/* Permis */}
+            <div className="px-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 Permis
               </p>
-              <FilterCheckbox
-                label="Sans permis requis"
-                checked={sansPermis}
-                onChange={(e) => setSansPermis(e.target.checked)}
-              />
+              <div className="space-y-1.5">
+                <FilterCheckbox
+                  label="Sans permis requis"
+                  checked={licenseFilter === 'not_required'}
+                  onChange={(e) => onLicenseFilterChange(e.target.checked ? 'not_required' : 'any')}
+                />
+                <FilterCheckbox
+                  label="Avec permis"
+                  checked={licenseFilter === 'required'}
+                  onChange={(e) => onLicenseFilterChange(e.target.checked ? 'required' : 'any')}
+                />
+                <FilterCheckbox
+                  label="Skipper inclus"
+                  checked={skipperFilter === 'included'}
+                  onChange={(e) => onSkipperFilterChange(e.target.checked ? 'included' : 'any')}
+                />
+                <FilterCheckbox
+                  label="Sans skipper inclus"
+                  checked={skipperFilter === 'excluded'}
+                  onChange={(e) => onSkipperFilterChange(e.target.checked ? 'excluded' : 'any')}
+                />
+              </div>
             </div>
 
-            {/* Nombre de cabines */}
-            <div className="pl-8">
+            {/* Prix par jour */}
+            <div className="px-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                Nombre de cabines
+                Prix / jour
               </p>
-              <div className="flex gap-2 flex-wrap">
-                {[1, 2, 3, '4+'].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setSelectedCabins(selectedCabins === n ? null : n)}
-                    className="w-9 h-9 rounded-full text-sm font-semibold border transition-all duration-200"
-                    style={{
-                      backgroundColor: selectedCabins === n ? 'rgba(14,165,233,0.95)' : '#fff',
-                      color: selectedCabins === n ? '#fff' : '#4b5563',
-                      borderColor: selectedCabins === n ? 'rgba(14,165,233,0.95)' : '#e5e7eb',
-                      boxShadow: selectedCabins === n ? '0 2px 8px rgba(14,165,233,0.4)' : 'none',
-                    }}
-                  >
-                    {n}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Min €"
+                  value={priceRange.min}
+                  onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
+                  className="w-20 px-2 py-1 text-sm border border-gray-200 rounded-lg outline-none focus:border-sky-400"
+                />
+                <span className="text-gray-400">–</span>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Max €"
+                  value={priceRange.max}
+                  onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
+                  className="w-20 px-2 py-1 text-sm border border-gray-200 rounded-lg outline-none focus:border-sky-400"
+                />
+              </div>
+            </div>
+
+            {/* Trier par */}
+            <div className="pl-10">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
+                Trier par
+              </p>
+              <div className="space-y-1.5">
+                <FilterRadio
+                  name="sortBy"
+                  label="Pertinence"
+                  checked={sortBy === 'relevance'}
+                  onChange={() => onSortByChange('relevance')}
+                />
+                <FilterRadio
+                  name="sortBy"
+                  label="Les mieux notés"
+                  checked={sortBy === 'rating'}
+                  onChange={() => onSortByChange('rating')}
+                />
+                <FilterRadio
+                  name="sortBy"
+                  label="Les plus populaires"
+                  checked={sortBy === 'popularity'}
+                  onChange={() => onSortByChange('popularity')}
+                />
+                <FilterCheckbox
+                  label="Coup de cœur"
+                  checked={coupDeCoeurFilter}
+                  onChange={(e) => onCoupDeCoeurFilterChange(e.target.checked)}
+                />
               </div>
             </div>
           </div>

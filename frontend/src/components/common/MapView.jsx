@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -51,10 +51,31 @@ function FitBounds({ points }) {
   return null;
 }
 
+// Notifie le parent des limites visibles de la carte à chaque déplacement/zoom,
+// pour permettre de filtrer une liste externe sur la zone affichée.
+function BoundsWatcher({ onBoundsChange }) {
+  const map = useMapEvents({
+    moveend: () => onBoundsChange(map.getBounds()),
+  });
+  return null;
+}
+
 const GREY_ICON_CSS = `.marker-grey { filter: grayscale(1) brightness(0.75); opacity: 0.7; }`;
 
-function MapView({ markers = [], className = '', emptyLabel = 'Aucun point à afficher.' }) {
+function MapView({
+  markers = [],
+  focusMarkers,
+  className = '',
+  emptyLabel = 'Aucun point à afficher.',
+  onBoundsChange,
+}) {
   const points = markers.filter((m) => Number.isFinite(m.lat) && Number.isFinite(m.lng));
+  // Par défaut la vue se recadre sur tous les marqueurs. `focusMarkers` permet à
+  // l'appelant de restreindre ce recadrage (ex : uniquement les ports correspondant
+  // à une recherche), sans changer les marqueurs réellement affichés sur la carte.
+  const fitPoints = (focusMarkers ?? markers).filter(
+    (m) => Number.isFinite(m.lat) && Number.isFinite(m.lng)
+  );
 
   return (
     // `isolate` + `z-0` créent un stacking context : les z-index internes de Leaflet
@@ -74,7 +95,8 @@ function MapView({ markers = [], className = '', emptyLabel = 'Aucun point à af
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <FitBounds points={points} />
+        <FitBounds points={fitPoints} />
+        {onBoundsChange && <BoundsWatcher onBoundsChange={onBoundsChange} />}
         {points.map((m) => (
           <Marker
             key={m.id}
@@ -90,7 +112,7 @@ function MapView({ markers = [], className = '', emptyLabel = 'Aucun point à af
                 )}
                 {m.badge != null && (
                   <div className="mt-1 text-slate-700">
-                    {m.badge} bateau{m.badge > 1 ? 'x' : ''}
+                    {m.badge} bateau{m.badge === 1 ? '' : 'x'}
                   </div>
                 )}
               </div>

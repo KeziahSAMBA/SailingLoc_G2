@@ -79,8 +79,8 @@ async function main() {
     (2, 4, 'Le Mistral',      'voilier',   12.50, 'Diesel 30cv',   FALSE, 350.00, 6,  2015, 'FR-NIC-001', 'Magnifique voilier idéal pour la Méditerranée. Équipé de tous les instruments modernes.',                  TRUE),
     (2, 1, 'Soleil Levant',   'catamaran', 14.00, 'Diesel 2x40cv', TRUE,  680.00, 8,  2018, 'FR-MRS-002', 'Catamaran spacieux avec skipper expérimenté. Parfait pour les familles et groupes.',                      TRUE),
     (3, 2, 'Atlantique',      'voilier',   10.00, 'Diesel 25cv',   FALSE, 280.00, 4,  2012, 'FR-LRO-003', 'Voilier sobre et fiable pour naviguer sur l''Atlantique. Idéal pour les amateurs confirmés.',            TRUE),
-    (3, 5, 'L''Aquitaine',   'moteur',     9.50, 'Essence 150cv', FALSE, 420.00, 5,  2020, 'FR-BDX-004', 'Bateau à moteur rapide et puissant, idéal pour les croisières sur la Gironde et le littoral atlantique.', TRUE),
-    (4, 4, 'Belle de Nice',   'voilier',   13.00, 'Diesel 35cv',   FALSE, 390.00, 6,  2016, 'FR-NIC-005', 'Voilier élégant amarré à Nice, parfait pour explorer la Côte d''Azur et ses criques.',                  TRUE),
+    (3, 5, 'L''Aquitaine',   'moteur',     9.50, 'Essence 150cv', TRUE,  420.00, 5,  2020, 'FR-BDX-004', 'Bateau à moteur rapide et puissant avec skipper en option, idéal pour les croisières sur la Gironde et le littoral atlantique.', TRUE),
+    (4, 4, 'Belle de Nice',   'voilier',   13.00, 'Diesel 35cv',   TRUE,  390.00, 6,  2016, 'FR-NIC-005', 'Voilier élégant amarré à Nice, avec skipper disponible pour explorer la Côte d''Azur et ses criques.',                  TRUE),
     (4, 4, 'Côte d''Azur',   'catamaran', 15.50, 'Diesel 2x50cv', TRUE,  750.00, 10, 2021, 'FR-NIC-006', 'Grand catamaran de luxe avec skipper, départ de Nice. Vue imprenable sur la Côte d''Azur.',             TRUE),
     (5, 3, 'Finistère',       'voilier',   11.00, 'Diesel 28cv',   FALSE, 260.00, 5,  2014, 'FR-BRT-007', 'Voilier robuste taillé pour la Bretagne et ses eaux parfois agitées.',                                   TRUE),
     (5, 1, 'Camargue Spirit', 'catamaran', 11.00, 'Diesel 2x30cv', FALSE, 500.00, 6,  2017, 'FR-MRS-008', 'Catamaran confortable au départ de Marseille, idéal pour explorer la côte méditerranéenne et la Camargue.', FALSE)
@@ -267,12 +267,16 @@ async function main() {
   `);
 
   // Avis de propriétaires
+  // NB : id_booking pointe sur les réservations créées juste au-dessus (bloc
+  // "Bookings de propriétaires", IDs 33-36) — avant correction ces avis
+  // référençaient à tort 27-30 (des réservations d'un tout autre lot) et se
+  // retrouvaient donc comptés sur les mauvais bateaux.
   await prisma.$executeRawUnsafe(`
     INSERT INTO review (id_user, id_booking, rating, comment, status, created_at) VALUES
-    (2, 27, 5, 'Catamaran de rêve, vue époustouflante sur la Côte d''Azur. En tant que propriétaire moi-même, j''apprécie vraiment le soin apporté à l''entretien.', 'validated', '2025-03-16 10:00:00'),
-    (3, 28, 4, 'Superbe voilier breton, robuste et parfaitement équipé pour des eaux parfois agitées. Une belle découverte !',                                        'validated', '2025-04-21 09:00:00'),
-    (4, 29, 5, 'Le Soleil Levant est un catamaran exceptionnel. Luc a fait un travail remarquable sur l''entretien et l''accueil. Je recommande vivement.',          'validated', '2025-05-26 14:00:00'),
-    (5, 30, 4, 'Très belle expérience sur l''Atlantique. Claire est une hôte formidable, voilier en parfait état. Je repars avec de beaux souvenirs.',               'validated', '2025-06-16 11:00:00')
+    (2, 33, 5, 'Catamaran de rêve, vue époustouflante sur la Côte d''Azur. En tant que propriétaire moi-même, j''apprécie vraiment le soin apporté à l''entretien.', 'validated', '2025-03-16 10:00:00'),
+    (3, 34, 4, 'Superbe voilier breton, robuste et parfaitement équipé pour des eaux parfois agitées. Une belle découverte !',                                        'validated', '2025-04-21 09:00:00'),
+    (4, 35, 5, 'Le Soleil Levant est un catamaran exceptionnel. Luc a fait un travail remarquable sur l''entretien et l''accueil. Je recommande vivement.',          'validated', '2025-05-26 14:00:00'),
+    (5, 36, 4, 'Très belle expérience sur l''Atlantique. Claire est une hôte formidable, voilier en parfait état. Je repars avec de beaux souvenirs.',               'validated', '2025-06-16 11:00:00')
     ON CONFLICT DO NOTHING
   `);
 
@@ -284,10 +288,13 @@ async function main() {
     ON CONFLICT DO NOTHING
   `);
 
+  // NB : id_booking pointait à tort sur 31/32 (réservations des boats 2 et 15,
+  // d'un autre lot) au lieu de 37/38, les vraies réservations du boat 11 créées
+  // juste au-dessus — même bug de dérive d'IDs que les autres blocs corrigés.
   await prisma.$executeRawUnsafe(`
     INSERT INTO review (id_user, id_booking, rating, comment, status, created_at) VALUES
-    ( 9, 31, 4, 'Très agréable séjour fluvial, péniche bien équipée et parfaite pour découvrir les vignobles bordelais en famille.', 'validated', '2025-06-09 10:00:00'),
-    (12, 32, 5, 'Expérience inoubliable sur la Garonne ! Péniche spacieuse, confortable, je recommande vivement.', 'validated', '2025-08-16 09:00:00')
+    ( 9, 37, 4, 'Très agréable séjour fluvial, péniche bien équipée et parfaite pour découvrir les vignobles bordelais en famille.', 'validated', '2025-06-09 10:00:00'),
+    (12, 38, 5, 'Expérience inoubliable sur la Garonne ! Péniche spacieuse, confortable, je recommande vivement.', 'validated', '2025-08-16 09:00:00')
     ON CONFLICT DO NOTHING
   `);
 
@@ -628,6 +635,11 @@ async function main() {
     UPDATE boat SET is_published = TRUE WHERE registration = 'FR-BDX-017'
   `);
 
+  // Péniche La Garonne (boat 11) : bateau habitable fluvial, location sans permis.
+  await prisma.$executeRawUnsafe(`
+    UPDATE boat SET license_required = FALSE WHERE registration = 'FR-BDX-011'
+  `);
+
   // Troisième péniche : "Douce Gironde" à Bordeaux (port 10)
   await prisma.$executeRawUnsafe(`
     INSERT INTO boat (id_user, id_port, name, type, size, engine, with_skipper, daily_price, capacity, build_year, registration, description, is_published) VALUES
@@ -646,7 +658,7 @@ async function main() {
     ON CONFLICT DO NOTHING
   `);
 
-  // Bookings pour boats 17 et 18 (IDs 33 et 34)
+  // Bookings pour boats 17 et 18 (IDs 39 et 40 — 38 réservations déjà créées avant ce bloc)
   await prisma.$executeRawUnsafe(`
     INSERT INTO booking (id_user, id_boat, start_date, end_date, status, total_amount, booking_date) VALUES
     ( 7, 17, '2025-07-20', '2025-07-27', 'confirmed', 1540.00, '2025-05-15 10:00:00'),
@@ -655,10 +667,12 @@ async function main() {
   `);
 
   // Avis pour ces bookings (IDs 27 et 28)
+  // NB : id_booking pointait à tort sur 33/34 (des réservations d'un autre
+  // lot) au lieu de 39/40, ce qui comptait ces avis sur les mauvais bateaux.
   await prisma.$executeRawUnsafe(`
     INSERT INTO review (id_user, id_booking, rating, comment, status, created_at) VALUES
-    ( 7, 33, 4, 'Belle croisière sur l''Adour, péniche confortable, idéale pour les Landes et le Pays Basque.', 'validated', '2025-07-28 11:00:00'),
-    (10, 34, 5, 'Coup de cœur pour cette péniche bordelaise ! Vue unique sur la Gironde et les vignobles, équipement impeccable.', 'validated', '2025-08-13 09:00:00')
+    ( 7, 39, 4, 'Belle croisière sur l''Adour, péniche confortable, idéale pour les Landes et le Pays Basque.', 'validated', '2025-07-28 11:00:00'),
+    (10, 40, 5, 'Coup de cœur pour cette péniche bordelaise ! Vue unique sur la Gironde et les vignobles, équipement impeccable.', 'validated', '2025-08-13 09:00:00')
     ON CONFLICT DO NOTHING
   `);
 
@@ -694,7 +708,9 @@ async function main() {
   // ── Nouveaux types de bateaux ─────────────────────────────────────────────────
   // IDs attribués dans l'ordre d'insertion :
   //   19-21 = trimaran | 22-24 = hors_bord | 25-27 = jet_ski
-  //   28-29 = gulet    | 30-31 = moteur (supplémentaires) | 32-34 = sans_permis
+  //   28-29 = gulet    | 30-31 = moteur (supplémentaires) | 32-34 = hors_bord (petits open, sans permis)
+  // NB : "sans permis" n'est pas un type de coque à part — c'est le champ license_required
+  // (FALSE) qui porte cette info. Ces bateaux sont des hors-bords <= 6cv comme les autres.
   // license_required est explicite pour les nouveaux bateaux.
   // Les bateaux existants (1-18) héritent du DEFAULT TRUE de la migration.
   await prisma.$executeRawUnsafe(`
@@ -702,7 +718,7 @@ async function main() {
     -- Trimarans
     (2, 4, 'Trimaran Azur',       'trimaran',  13.50, 'Diesel 2x30cv', FALSE, 480.00, 8, 2019, 'FR-NIC-019', 'Trimaran performant au départ de Nice, alliant stabilité et vitesse sur la Côte d''Azur.', TRUE, TRUE),
     (5, 3, 'Trimaran Finistère',  'trimaran',  12.00, 'Diesel 2x25cv', FALSE, 350.00, 6, 2016, 'FR-BRT-020', 'Trimaran robuste idéal pour les eaux bretonnes, à la fois rapide et stable par mer formée.', TRUE, TRUE),
-    (3, 2, 'Trimaran Atlantique', 'trimaran',  14.50, 'Diesel 2x35cv', FALSE, 520.00, 8, 2021, 'FR-LRO-021', 'Grand trimaran au départ de La Rochelle pour des croisières rapides vers les îles de Ré et Oléron.', TRUE, TRUE),
+    (3, 2, 'Trimaran Atlantique', 'trimaran',  14.50, 'Diesel 2x35cv', TRUE,  520.00, 8, 2021, 'FR-LRO-021', 'Grand trimaran au départ de La Rochelle, skipper disponible pour des croisières rapides vers les îles de Ré et Oléron.', TRUE, TRUE),
     -- Hors-bords (< 6 cv — sans permis requis)
     (3, 2, 'Zodiac N-ZO 550',   'hors_bord', 5.50, 'Yamaha 6cv',  FALSE,  90.00, 5, 2021, 'FR-LRO-022', 'Semi-rigide léger et maniable, parfait pour découvrir les côtes charentaises sans permis.', TRUE, FALSE),
     (2, 1, 'Quicksilver 490',   'hors_bord', 4.90, 'Mercury 6cv', FALSE,  80.00, 4, 2020, 'FR-MRS-023', 'Annexe open idéale pour les balades côtières en famille autour de Marseille, sans permis requis.', TRUE, FALSE),
@@ -717,20 +733,20 @@ async function main() {
     -- Bateaux à moteur supplémentaires (pour compléter à 3 pour le carrousel)
     (3, 1, 'Cranchi E30 Enduro','moteur',     9.80, 'Diesel 200cv', FALSE, 380.00, 6, 2020, 'FR-MRS-030', 'Bateau à moteur open puissant et confortable, parfait pour les excursions côtières depuis Marseille.', TRUE, TRUE),
     (5, 4, 'Four Winns 310',    'moteur',    10.50, 'Diesel 250cv', FALSE, 450.00, 8, 2019, 'FR-NIC-031', 'Cruiser à moteur élégant au départ de Nice, idéal pour les sorties en famille sur la Côte d''Azur.', TRUE, TRUE),
-    -- Bateaux sans permis (petits open électriques/6cv — aucun permis requis)
-    (3, 2, 'Open 16 Électrique',  'sans_permis', 4.90, 'Électrique 3kW', FALSE, 70.00, 4, 2022, 'FR-LRO-032', 'Petit bateau électrique silencieux, idéal pour découvrir les côtes de La Rochelle en famille, sans aucun permis.', TRUE, FALSE),
-    (2, 1, 'Bayliner Element E16','sans_permis', 4.80, 'Électrique 3kW', FALSE, 65.00, 4, 2021, 'FR-MRS-033', 'Open sans permis au départ de Marseille, parfait pour une balade en calanques avec les enfants.', TRUE, FALSE),
-    (4, 4, 'Quicksilver 505 Open','sans_permis', 5.05, 'Honda 6cv',      FALSE, 75.00, 5, 2023, 'FR-NIC-034', 'Bateau open sans permis au départ de Nice pour explorer les criques de la Côte d''Azur en toute liberté.', TRUE, FALSE),
+    -- Hors-bords supplémentaires (petits open électriques/6cv — aucun permis requis)
+    (3, 2, 'Open 16 Électrique',  'hors_bord', 4.90, 'Électrique 3kW', FALSE, 70.00, 4, 2022, 'FR-LRO-032', 'Petit bateau électrique silencieux, idéal pour découvrir les côtes de La Rochelle en famille, sans aucun permis.', TRUE, FALSE),
+    (2, 1, 'Bayliner Element E16','hors_bord', 4.80, 'Électrique 3kW', FALSE, 65.00, 4, 2021, 'FR-MRS-033', 'Open sans permis au départ de Marseille, parfait pour une balade en calanques avec les enfants.', TRUE, FALSE),
+    (4, 4, 'Quicksilver 505 Open','hors_bord', 5.05, 'Honda 6cv',      FALSE, 75.00, 5, 2023, 'FR-NIC-034', 'Bateau open sans permis au départ de Nice pour explorer les criques de la Côte d''Azur en toute liberté.', TRUE, FALSE),
     -- ── Compléments pour atteindre 5 par type (IDs 35-49) ─────────────────────
     -- Moteur (35-36)
     (4, 3, 'Jeanneau Merry Fisher 895', 'moteur',  9.00, 'Diesel 175cv', FALSE, 340.00, 6, 2018, 'FR-BRT-035', 'Vedette de pêche-promenade robuste au départ de Brest, idéale pour explorer la rade et les îles du Finistère.', TRUE, TRUE),
     (5, 2, 'Boston Whaler 270',         'moteur',  8.50, 'Diesel 220cv', FALSE, 410.00, 8, 2020, 'FR-LRO-036', 'Open insubmersible et puissant au départ de La Rochelle, parfait pour les sorties sportives côtières.', TRUE, TRUE),
     -- Péniche (37-38)
-    (2, 5, 'Péniche Canal du Midi', 'peniche', 19.00, 'Diesel 48cv', FALSE, 200.00, 7, 2005, 'FR-BDX-037', 'Péniche traditionnelle pour naviguer sur la Garonne et remonter vers le Canal du Midi depuis Bordeaux.', TRUE, TRUE),
-    (3, 5, 'Péniche Girondine',     'peniche', 16.00, 'Diesel 40cv', FALSE, 160.00, 6, 2003, 'FR-BDX-038', 'Péniche classique idéale pour une escapade fluviale paisible entre Bordeaux et l''estuaire de la Gironde.', TRUE, TRUE),
+    (2, 5, 'Péniche Canal du Midi', 'peniche', 19.00, 'Diesel 48cv', FALSE, 200.00, 7, 2005, 'FR-BDX-037', 'Péniche traditionnelle pour naviguer sur la Garonne et remonter vers le Canal du Midi depuis Bordeaux. Location sans permis (bateau habitable fluvial).', TRUE, FALSE),
+    (3, 2, 'Péniche Girondine',     'peniche', 16.00, 'Diesel 40cv', FALSE, 160.00, 6, 2003, 'FR-LRO-038', 'Péniche classique idéale pour une escapade fluviale paisible entre La Rochelle et le Marais poitevin. Aucun permis requis.', TRUE, FALSE),
     -- Trimaran (39-40)
     (4, 1, 'Trimaran Côte d''Azur', 'trimaran', 13.00, 'Diesel 2x28cv', FALSE, 460.00, 7, 2018, 'FR-MRS-039', 'Trimaran performant au départ de Marseille, équilibrant stabilité et vitesse sur la Méditerranée.', TRUE, TRUE),
-    (3, 4, 'Trimaran Grand Large',  'trimaran', 15.00, 'Diesel 2x40cv', FALSE, 550.00, 9, 2022, 'FR-NIC-040', 'Grand trimaran luxueux depuis Nice, conçu pour des croisières hauturières rapides et confortables.', TRUE, TRUE),
+    (3, 6, 'Trimaran Grand Large',  'trimaran', 15.00, 'Diesel 2x40cv', FALSE, 550.00, 9, 2022, 'ES-BCN-040', 'Grand trimaran luxueux depuis Barcelone, conçu pour des croisières hauturières rapides le long de la Costa Brava.', TRUE, TRUE),
     -- Hors-bord (41-42)
     (5, 3, 'Rib 500 Pro',         'hors_bord', 5.00, 'Yamaha 6cv', FALSE, 85.00, 5, 2022, 'FR-BRT-041', 'Semi-rigide sans permis au départ de Brest pour des balades côtières en famille dans la rade.', TRUE, FALSE),
     (2, 5, 'Capelli Tempest 500', 'hors_bord', 5.20, 'Honda 6cv',  FALSE, 80.00, 5, 2021, 'FR-BDX-042', 'Annexe légère sans permis au départ de Bordeaux, parfaite pour explorer les rives de la Garonne.', TRUE, FALSE),
@@ -740,10 +756,10 @@ async function main() {
     -- Gulet (45-47)
     (5, 2, 'Gulet Neptune',     'gulet', 16.00, 'Diesel 140cv', TRUE, 700.00,  8, 2010, 'FR-LRO-045', 'Gulet traditionnel en bois depuis La Rochelle, idéal pour des croisières côtières avec skipper expérimenté.', TRUE, TRUE),
     (3, 3, 'Gulet Bretagne',    'gulet', 17.00, 'Diesel 150cv', TRUE, 750.00, 10, 2013, 'FR-BRT-046', 'Gulet robuste au départ de Brest, conçu pour les eaux bretonnes et les croisières vers les archipels.', TRUE, TRUE),
-    (2, 5, 'Gulet Grand Large', 'gulet', 19.00, 'Diesel 170cv', TRUE, 850.00, 12, 2017, 'FR-BDX-047', 'Grand gulet au départ de Bordeaux pour descendre la Gironde jusqu''à l''Atlantique avec skipper à bord.', TRUE, TRUE),
-    -- Sans permis (48-49)
-    (5, 3, 'Zodiac Medline 5.5',  'sans_permis', 5.50, 'Électrique 2kW', FALSE, 60.00, 4, 2023, 'FR-BRT-048', 'Bateau électrique silencieux sans permis au départ de Brest, idéal pour les sorties nature en rade.', TRUE, FALSE),
-    (3, 5, 'Plastimo Open 4.5',   'sans_permis', 4.50, 'Honda 6cv',      FALSE, 55.00, 4, 2022, 'FR-BDX-049', 'Open sans permis depuis Bordeaux pour découvrir la Garonne et ses rives viticoles en toute simplicité.', TRUE, FALSE)
+    (2, 6, 'Gulet Grand Large', 'gulet', 19.00, 'Diesel 170cv', TRUE, 850.00, 12, 2017, 'ES-BCN-047', 'Grand gulet au départ de Barcelone pour explorer la Costa Brava avec skipper à bord.', TRUE, TRUE),
+    -- Hors-bords (48-49, sans permis)
+    (5, 3, 'Zodiac Medline 5.5',  'hors_bord', 5.50, 'Électrique 2kW', FALSE, 60.00, 4, 2023, 'FR-BRT-048', 'Bateau électrique silencieux sans permis au départ de Brest, idéal pour les sorties nature en rade.', TRUE, FALSE),
+    (3, 5, 'Plastimo Open 4.5',   'hors_bord', 4.50, 'Honda 6cv',      FALSE, 55.00, 4, 2022, 'FR-BDX-049', 'Open sans permis depuis Bordeaux pour découvrir la Garonne et ses rives viticoles en toute simplicité.', TRUE, FALSE)
     ON CONFLICT (registration) DO NOTHING
   `);
 
@@ -790,7 +806,7 @@ async function main() {
     (37, '2026-07-01', '2026-08-31', TRUE, NULL,   'Croisières estivales'),
     (37, '2026-09-01', '2026-10-31', TRUE, 180.00, 'Vendanges et automne'),
     (38, '2026-07-01', '2026-08-31', TRUE, NULL,   'Saison fluviale'),
-    (38, '2026-09-01', '2026-10-31', TRUE, NULL,   'Automne bordelais'),
+    (38, '2026-09-01', '2026-10-31', TRUE, NULL,   'Automne dans le Marais poitevin'),
     (39, '2026-07-01', '2026-08-31', TRUE, NULL,   'Été méditerranéen'),
     (39, '2026-09-01', '2026-10-15', TRUE, 430.00, 'Arrière-saison'),
     (40, '2026-07-01', '2026-08-31', TRUE, NULL,   'Été Côte d''Azur'),
@@ -803,8 +819,8 @@ async function main() {
     (45, '2026-09-01', '2026-10-15', TRUE, 650.00, 'Arrière-saison'),
     (46, '2026-07-01', '2026-08-31', TRUE, NULL,   'Saison bretonne'),
     (46, '2026-09-01', '2026-09-30', TRUE, 700.00, 'Septembre breton'),
-    (47, '2026-07-01', '2026-08-31', TRUE, NULL,   'Été bordeaux-atlantique'),
-    (47, '2026-09-01', '2026-10-31', TRUE, 800.00, 'Vendanges en Gironde'),
+    (47, '2026-07-01', '2026-08-31', TRUE, NULL,   'Été sur la Costa Brava'),
+    (47, '2026-09-01', '2026-10-31', TRUE, 800.00, 'Arrière-saison méditerranéenne'),
     (48, '2026-05-01', '2026-10-31', TRUE, NULL,   'Saison complète — Brest'),
     (49, '2026-05-01', '2026-10-31', TRUE, NULL,   'Saison complète — Bordeaux')
     ON CONFLICT DO NOTHING
@@ -1050,7 +1066,7 @@ async function main() {
     (47, 'cuisine',        'Four'),
     (47, 'divertissement', 'Enceinte Bluetooth'),
     (47, 'divertissement', 'Paddleboard x2'),
-    -- Sans permis (48-49)
+    -- Hors-bords (48-49, sans permis)
     (48, 'navigation', 'GPS portable'),
     (48, 'sécurité',   'Gilets de sauvetage x4'),
     (48, 'sécurité',   'Extincteurs'),
@@ -1133,6 +1149,70 @@ async function main() {
     (49, NULL, 'https://images.pexels.com/photos/11686040/pexels-photo-11686040.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', 'bateau', 0)
     ON CONFLICT DO NOTHING
   `);
+
+  // ── Avis pour les bateaux encore sans note ────────────────────────────────────
+  // Boats 13-16 (voiliers/catamarans d'origine jamais réservés) et 19-49 (nouveaux
+  // types) n'ont aucun avis validé : avg_rating y est donc null et le frontend
+  // affiche "★ Nouveau" à leur place. On veut réserver ce libellé aux bateaux
+  // qu'un utilisateur ajoute réellement lui-même, donc chaque bateau de seed doit
+  // avoir au moins un avis validé.
+  // Boat 8 (Camargue Spirit) est délibérément exclu : il reste non publié en
+  // permanence (cas de test pour la modération/les signalements), donc il n'est
+  // jamais visible dans les carrousels et n'a pas besoin de note.
+  // On utilise Prisma Client (et non du SQL avec des IDs codés en dur) pour que
+  // les id_booking/id_review générés soient toujours corrects, contrairement aux
+  // blocs ci-dessus qui avaient dérivé au fil des éditions du fichier.
+  const MISSING_RATING_BOAT_IDS = [
+    4, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
+    38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+  ];
+  const REVIEWER_POOL = [6, 7, 8, 9, 10, 11, 12, 13];
+  const RATING_POOL = [5, 4, 5, 4, 3, 5, 4, 5, 3, 4];
+  const COMMENT_TEMPLATES = [
+    (n) => `Très belle expérience à bord de ${n}, tout était conforme à l'annonce.`,
+    (n) => `${n} correspond parfaitement à la description, je recommande cette location.`,
+    (n) => `Séjour agréable avec ${n}, propriétaire réactif et bateau bien entretenu.`,
+    (n) => `Bonne découverte avec ${n}, quelques petits détails à améliorer mais rien de grave.`,
+    (n) => `${n} était impeccable, une location sans mauvaise surprise.`,
+  ];
+
+  const missingRatingBoats = await prisma.boat.findMany({
+    where: { id_boat: { in: MISSING_RATING_BOAT_IDS } },
+  });
+
+  for (const [i, boat] of missingRatingBoats.entries()) {
+    const nights = 5;
+    const startDate = new Date('2025-05-01T00:00:00Z');
+    startDate.setDate(startDate.getDate() + i * 3);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + nights);
+    const reviewDate = new Date(endDate);
+    reviewDate.setDate(reviewDate.getDate() + 2);
+    const reviewerId = REVIEWER_POOL[i % REVIEWER_POOL.length];
+
+    const booking = await prisma.booking.create({
+      data: {
+        id_user: reviewerId,
+        id_boat: boat.id_boat,
+        start_date: startDate,
+        end_date: endDate,
+        status: 'confirmed',
+        total_amount: Number(boat.daily_price) * nights,
+        booking_date: startDate,
+      },
+    });
+
+    await prisma.review.create({
+      data: {
+        id_user: reviewerId,
+        id_booking: booking.id_booking,
+        rating: RATING_POOL[i % RATING_POOL.length],
+        comment: COMMENT_TEMPLATES[i % COMMENT_TEMPLATES.length](boat.name),
+        status: 'validated',
+        created_at: reviewDate,
+      },
+    });
+  }
 
   console.log('Seed completed.');
 }
