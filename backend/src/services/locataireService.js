@@ -220,6 +220,15 @@ export async function listFavorites(id_user) {
   }));
 }
 
+// Ajoute un bateau aux favoris du locataire (idempotent).
+export async function addFavorite(id_user, id_boat) {
+  await prisma.userBoatFavorite.upsert({
+    where: { id_user_id_boat: { id_user, id_boat } },
+    create: { id_user, id_boat },
+    update: {},
+  });
+}
+
 // Retire un bateau des favoris du locataire (idempotent).
 export async function removeFavorite(id_user, id_boat) {
   await prisma.userBoatFavorite.deleteMany({ where: { id_user, id_boat } });

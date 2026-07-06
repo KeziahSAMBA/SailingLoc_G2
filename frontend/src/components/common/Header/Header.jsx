@@ -1,13 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth.jsx';
-import logo from '../../../assets/image/SL_logo/logo SL.webp';
-import logoLong from '../../../assets/image/SL_logo/logo SL long.webp';
+import { useScrolled } from './shared/useScrolled.js';
+import { useClickOutside } from './shared/useClickOutside.js';
+import HeaderLogo from './shared/HeaderLogo.jsx';
+import BurgerIcon from './shared/BurgerIcon.jsx';
+import SidePanel from './shared/SidePanel.jsx';
+import PanelLink from './shared/PanelLink.jsx';
 
 const BURGER_ITEMS = [
   { label: 'Chercher une location', anchor: 'hero' },
   { label: 'Nos suggestions', anchor: 'suggestions' },
   { label: 'Tutoriel', anchor: 'tutoriel' },
+  { label: 'Pourquoi nous choisir ?', anchor: 'proposition-valeur' },
+  { label: 'Avis & commentaires', anchor: 'avis' },
+];
+
+const CATEGORY_BURGER_ITEMS = [
+  { label: 'Nos bateaux', anchor: 'resultats' },
+  { label: 'Nos suggestions', anchor: 'suggestions' },
   { label: 'Avis & commentaires', anchor: 'avis' },
 ];
 
@@ -72,7 +83,7 @@ const authBtnHover = {
 
 function Header() {
   const [lang, setLang] = useState('FR');
-  const [scrolled, setScrolled] = useState(false);
+  const scrolled = useScrolled();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -81,31 +92,21 @@ function Header() {
   const location = useLocation();
   const { user, logout, loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  useClickOutside([
+    [menuRef, () => setMenuOpen(false)],
+    [userMenuRef, () => setUserMenuOpen(false)],
+  ]);
 
-  useEffect(() => {
-    const onClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
-    };
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, []);
-
-  function scrollToAnchor(anchor) {
+  function scrollToAnchor(anchor, targetPath = '/') {
     setMenuOpen(false);
     const scroll = () => {
       const el = document.getElementById(anchor);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
-    if (location.pathname === '/') {
+    if (location.pathname === targetPath) {
       scroll();
     } else {
-      navigate('/');
+      navigate(targetPath);
       setTimeout(scroll, 300);
     }
   }
@@ -116,19 +117,45 @@ function Header() {
     navigate('/', { replace: true });
   }
 
+  function handleLogoClick(e) {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/');
+    }
+  }
+
   const iconSize = scrolled ? '14px' : '16px';
+  const onCategoriePage = location.pathname === '/categorie';
 
   return (
     <header
       className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
-      style={{
-        height: scrolled ? '60px' : '80px',
-        backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
-        borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
-        boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
-        transition: 'height 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease',
-      }}
+      style={{ height: scrolled ? '60px' : '80px', transition: 'height 0.3s ease' }}
     >
+      {/*
+        Background lives on its own layer (not on <header> itself) because a
+        backdrop-filter on an element makes it a new containing block for
+        fixed-position descendants — which would break the SidePanel's own
+        backdrop-filter (it's nested inside <header>).
+      */}
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          backgroundColor: scrolled
+            ? 'rgba(10, 49, 114, 0.95)'
+            : onCategoriePage
+              ? 'rgba(0, 0, 0, 0.10)'
+              : 'rgba(255, 255, 255, 0.05)',
+          borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
+          boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
+          backdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
+          WebkitBackdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
+          transition: 'box-shadow 0.3s ease, background-color 0.3s ease',
+        }}
+      />
+
       {/* Gauche — Burger + Logo (33%) */}
       <div className="w-1/3 flex items-center gap-4 pl-4">
         {/* Burger */}
@@ -138,80 +165,33 @@ function Header() {
             className="flex flex-col justify-center gap-[5px] p-1"
             aria-label="Menu"
           >
-            <span
-              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
-            />
-            <span
-              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ opacity: menuOpen ? 0 : 1 }}
-            />
-            <span
-              className="block w-5 h-[1.5px] bg-white rounded transition-all duration-300"
-              style={{ transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }}
-            />
+            <BurgerIcon open={menuOpen} />
           </button>
 
-          {/* Dropdown — panneau latéral gauche */}
-          <div
-            className="fixed left-0 overflow-hidden"
-            style={{
-              top: scrolled ? '60px' : '80px',
-              width: '260px',
-              height: `calc(100vh - ${scrolled ? '60px' : '80px'})`,
-              backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.25)',
-              backdropFilter: 'blur(5px)',
-              WebkitBackdropFilter: 'blur(14px)',
-              borderRight: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '4px 0 24px rgba(0,0,0,0.2)',
-              transform: menuOpen ? 'translateX(0)' : 'translateX(-100%)',
-              pointerEvents: menuOpen ? 'auto' : 'none',
-              transition: 'top 0.3s ease, height 0.3s ease, transform 0.3s ease',
-            }}
+          <SidePanel
+            side="left"
+            open={menuOpen}
+            scrolled={scrolled}
+            width="260px"
+            darkerOverlay={onCategoriePage}
           >
-            <div className="flex flex-col" style={{ height: '55%' }}>
-              {BURGER_ITEMS.map(({ label, anchor }) => (
-                <button
+            <div className="flex flex-col" style={{ height: onCategoriePage ? '41%' : '69%' }}>
+              {(onCategoriePage ? CATEGORY_BURGER_ITEMS : BURGER_ITEMS).map(({ label, anchor }) => (
+                <PanelLink
                   key={label}
-                  onClick={() => scrollToAnchor(anchor)}
-                  className="flex items-center flex-1 px-5 text-base font-medium transition-colors text-left"
-                  style={{ color: scrolled ? '#0A3172' : '#fff' }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = scrolled
-                      ? 'rgba(10, 49, 114, 0.06)'
-                      : 'rgba(255, 255, 255, 0.1)')
-                  }
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  scrolled={scrolled}
+                  stretch
+                  onClick={() => scrollToAnchor(anchor, onCategoriePage ? '/categorie' : '/')}
                 >
                   {label}
-                </button>
+                </PanelLink>
               ))}
             </div>
-          </div>
+          </SidePanel>
         </div>
 
         {/* Logo */}
-        <button
-          onClick={() => {
-            if (location.pathname === '/') {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-              navigate('/');
-            }
-          }}
-          className="flex items-center"
-        >
-          <img
-            src={scrolled ? logoLong : logo}
-            alt="SailingLoc"
-            style={{
-              height: scrolled ? '40px' : '54px',
-              transition: 'height 0.3s ease',
-              width: 'auto',
-              objectFit: 'contain',
-            }}
-          />
-        </button>
+        <HeaderLogo scrolled={scrolled} onClick={handleLogoClick} />
       </div>
 
       {/* Centre — Navigation (33%) */}

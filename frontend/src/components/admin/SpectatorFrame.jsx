@@ -16,18 +16,25 @@ function normalizePath(value) {
   return v.startsWith('/') ? v : `/${v}`;
 }
 
-// Force le mode spectateur dans l'iframe : ajoute ?spectator=1 (ou
-// &spectator=1 si l'admin a déjà tapé des query params). AuthContext lit ce
-// flag au boot pour ne pas restaurer la session admin dans l'iframe.
-function withSpectator(p) {
-  if (!p) return '/?spectator=1';
+// Force le mode spectateur dans l'iframe : ajoute ?spectator=<mode> (ou
+// &spectator=<mode> si l'admin a déjà tapé des query params). AuthContext lit
+// ce flag au boot pour ne pas restaurer la session admin dans l'iframe (et
+// afficher un faux compte de démo si le mode correspond à un rôle).
+function withSpectator(p, mode) {
+  if (!p) return `/?spectator=${mode}`;
   const [pathPart, queryPart = ''] = p.split('?');
   const params = new URLSearchParams(queryPart);
-  params.set('spectator', '1');
+  params.set('spectator', mode);
   return `${pathPart}?${params.toString()}`;
 }
 
-function AdminSpectateurPage() {
+/**
+ * Aperçu live du site public (ou d'un faux compte de démo) dans une iframe,
+ * embarqué dans l'espace admin. Partagé par les pages "Vue locataire" et
+ * "Vue propriétaire" — chacune fixe son propre `mode` et son propre contenu
+ * de bannière, et peut diverger librement au-delà de ce socle commun.
+ */
+function SpectatorFrame({ mode, title, description, banner }) {
   // `path` = ce qui est dans la barre d'adresse (édité par l'admin).
   // `src` = ce qui est réellement chargé dans l'iframe (validé par submit).
   const [path, setPath] = useState('/');
@@ -53,10 +60,10 @@ function AdminSpectateurPage() {
     setTimeout(() => setSrc(normalizePath(path)), 0);
   }
 
-  // URL réellement injectée dans l'iframe (toujours en mode spectateur visiteur :
-  // le login depuis l'iframe est bloqué par AuthContext pour ne pas écraser la
+  // URL réellement injectée dans l'iframe (toujours en mode spectateur : le
+  // login depuis l'iframe est bloqué par AuthContext pour ne pas écraser la
   // session admin du parent).
-  const iframeSrc = src ? withSpectator(src) : '';
+  const iframeSrc = src ? withSpectator(src, mode) : '';
 
   // ESC pour sortir du plein écran.
   useEffect(() => {
@@ -119,7 +126,7 @@ function AdminSpectateurPage() {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col bg-slate-950 p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-bold text-white">Vue spectateur — plein écran</h1>
+          <h1 className="text-lg font-bold text-white">{title} — plein écran</h1>
           <button
             type="button"
             onClick={() => setFullscreen(false)}
@@ -152,10 +159,8 @@ function AdminSpectateurPage() {
     <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Vue spectateur</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Aperçu live du site public à l'intérieur de l'espace admin.
-          </p>
+          <h1 className="text-2xl font-bold text-white">{title}</h1>
+          <p className="mt-1 text-sm text-slate-400">{description}</p>
         </div>
         <button
           type="button"
@@ -166,12 +171,8 @@ function AdminSpectateurPage() {
         </button>
       </div>
 
-      {/* Vue spectateur = visiteur uniquement. Le login depuis l'iframe est
-          désactivé pour ne pas écraser le cookie admin du parent. */}
       <div className="mt-3 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs text-sky-200">
-        👁️ Vue <strong>visiteur non connecté</strong>. La connexion réelle depuis l'iframe est
-        désactivée. Pour tester un compte locataire/propriétaire, ouvrez un{' '}
-        <strong>onglet privé</strong> de votre navigateur.
+        {banner}
       </div>
 
       <div className="mt-3">{urlBar}</div>
@@ -201,4 +202,4 @@ function AdminSpectateurPage() {
   );
 }
 
-export default AdminSpectateurPage;
+export default SpectatorFrame;

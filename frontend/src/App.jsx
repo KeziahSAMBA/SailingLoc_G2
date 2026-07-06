@@ -4,7 +4,6 @@ import AppRouter from './router/AppRouter.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { useAuth } from './hooks/useAuth.jsx';
 import Header from './components/common/Header/Header.jsx';
-import HeaderCategory from './components/common/Header/HeaderCategory.jsx';
 import HeaderAdmin from './components/common/Header/HeaderAdmin.jsx';
 import HeaderProprio from './components/common/Header/HeaderProprio.jsx';
 import HeaderLocataire from './components/common/Header/HeaderLocataire.jsx';
@@ -26,9 +25,12 @@ function AppContent() {
         ? 'register'
         : null;
 
+  // Scroll en haut uniquement pour un vrai changement de page — pas quand
+  // /login ou /register s'ouvre en pop-up par-dessus la page actuelle
+  // (routesLocation reste alors la page de fond, donc la dépendance ne change pas).
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [location.pathname]);
+  }, [routesLocation.pathname]);
 
   // Si un utilisateur est déjà connecté, on ne montre pas la popup d'auth.
   useEffect(() => {
@@ -51,8 +53,6 @@ function AppContent() {
 
   const showAuthModal = activeAuthTab && !user && !loading;
 
-  const isCategoryPage = location.pathname.startsWith('/categorie');
-
   // Header dédié selon le rôle (les composants de common/Header). Invité ou pendant
   // le chargement de la session : header public générique.
   function renderHeader() {
@@ -64,7 +64,7 @@ function AppContent() {
       case 'locataire':
         return <HeaderLocataire />;
       default:
-        return isCategoryPage ? <HeaderCategory /> : <Header />;
+        return <Header />;
     }
   }
 

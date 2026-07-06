@@ -33,27 +33,55 @@ function loadInitialSession() {
 // Mode « spectateur » : utilisé par la page admin /admin/spectateur qui embarque
 // le site public dans une iframe. Quand le flag est présent, on saute la requête
 // /refresh au boot pour que l'utilisateur apparaisse comme un visiteur non
-// connecté, sans toucher au cookie refresh réel (qui reste valide dans son
-// onglet d'origine). Le flag se transmet via ?spectator=1 (premier chargement)
-// et est persisté en sessionStorage pour survivre aux navigations internes.
+// connecté (ou un faux compte de démo selon le rôle demandé), sans toucher au
+// cookie refresh réel (qui reste valide dans son onglet d'origine). Le flag se
+// transmet via ?spectator=<mode> (premier chargement) et est persisté en
+// sessionStorage pour survivre aux navigations internes.
 //
 // /!\ sessionStorage est partagée entre l'iframe et son parent quand ils sont
 // sur la même origine. Pour éviter que le flag posé dans l'iframe ne déconnecte
 // l'onglet admin parent au prochain reload, on n'active la vérification que si
 // on est effectivement dans une iframe (window.self !== window.top).
-function isSpectatorMode() {
+function getSpectatorParam() {
   try {
-    if (window.self === window.top) return false; // Fenêtre principale → jamais spectateur.
-    const fromUrl = new URLSearchParams(window.location.search).get('spectator') === '1';
+    if (window.self === window.top) return null; // Fenêtre principale → jamais spectateur.
+    const fromUrl = new URLSearchParams(window.location.search).get('spectator');
     if (fromUrl) {
-      window.sessionStorage.setItem('spectator', '1');
-      return true;
+      window.sessionStorage.setItem('spectator', fromUrl);
+      return fromUrl;
     }
-    return window.sessionStorage.getItem('spectator') === '1';
+    return window.sessionStorage.getItem('spectator');
   } catch {
-    return false;
+    return null;
   }
 }
+
+function isSpectatorMode() {
+  return Boolean(getSpectatorParam());
+}
+
+// Faux comptes utilisés uniquement pour l'aperçu visuel dans l'iframe spectateur :
+// aucune vraie session/API derrière, juste de quoi afficher le bon header/layout.
+const SPECTATOR_USERS = {
+  proprietaire: {
+    id_user: null,
+    email: 'apercu.proprietaire@sailingloc.fr',
+    role: 'proprietaire',
+    first_name: '',
+    last_name: '',
+    phone: null,
+    avatar: null,
+  },
+  locataire: {
+    id_user: null,
+    email: 'apercu.locataire@sailingloc.fr',
+    role: 'locataire',
+    first_name: '',
+    last_name: '',
+    phone: null,
+    avatar: null,
+  },
+};
 
 export function AuthProvider({ children }) {
   const { showToast } = useToast();
@@ -63,9 +91,10 @@ export function AuthProvider({ children }) {
   // Au chargement, tente de récupérer une session via le cookie refresh.
   // Sauf en mode spectateur : on reste guest sans appeler /refresh.
   useEffect(() => {
-    if (isSpectatorMode()) {
+    const spectatorParam = getSpectatorParam();
+    if (spectatorParam) {
       setAccessToken(null);
-      setUser(null);
+      setUser(spectatorParam === '1' ? null : (SPECTATOR_USERS[spectatorParam] ?? null));
       setLoading(false);
       return undefined;
     }
@@ -128,6 +157,12 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(
     async ({ silent = false } = {}) => {
+      // En mode spectateur, le user est un faux compte de démo : pas de vraie
+      // session à révoquer, et appeler l'API partagerait le cookie du parent.
+      if (isSpectatorMode()) {
+        setUser(null);
+        return;
+      }
       try {
         await apiLogout();
       } catch (err) {

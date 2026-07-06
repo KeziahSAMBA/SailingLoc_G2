@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import SearchBarV2 from '../components/common/SearchBarV2.jsx';
+import { useSearchParams } from 'react-router-dom';
+import bateauVideo from '../assets/video/video_bateau_3.mp4';
+import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
 import { MdPerson, MdLocationOn, MdPeople, MdCalendarToday } from 'react-icons/md';
@@ -7,8 +9,12 @@ import { FaStar } from 'react-icons/fa';
 import ClientReviews from '../components/common/ClientReviews.jsx';
 import Carrousel from '../components/common/Carrousel.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
+import GhostButton from '../components/common/GhostButton.jsx';
+import FavoriteButton from '../components/common/FavoriteButton.jsx';
+import { useFavorites } from '../hooks/useFavorites.js';
 import { fetchBoats } from '../services/boatService.js';
 import { fetchPorts } from '../services/portService.js';
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -16,52 +22,50 @@ const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric',
 const toBoatCard = (boat) => ({
   id: boat.id_boat,
   image: boat.images[0]?.url ?? '',
-  badge: boat.avg_rating >= 4.8 ? 'Coup de cœur' : null,
+  badge: null,
   rating: boat.avg_rating,
   type: boat.type,
   name: boat.name,
   location: boat.port?.city ?? '',
+  portLat: Number(boat.port?.latitude),
+  portLng: Number(boat.port?.longitude),
   capacity: boat.capacity,
   skipper: boat.with_skipper,
+  licenseRequired: boat.license_required,
+  bookingCount: boat.booking_count ?? 0,
   price: Number(boat.daily_price),
   availability: boat.availabilities
     .slice(0, 2)
     .map((a) => `${fmtDate(a.start_date)} – ${fmtDate(a.end_date)}`),
+  rawAvailabilities: boat.availabilities,
 });
 
-const GHOST_BTN_BASE = {
-  border: '1px solid rgba(14,165,233,0.95)',
-  boxShadow: '0 2px 8px rgba(10,49,114,0.3)',
-  backgroundColor: '#fff',
-  color: 'rgba(14,165,233,0.95)',
-  transition: 'background-color 0.2s, color 0.2s, box-shadow 0.2s',
-};
+// "Coup de cœur" : intersection stricte popularité + note, pas juste un seuil de
+// note isolé — sinon un bateau jamais réservé mais bien noté decrocherait le badge.
+// Bornes calibrées sur le seed actuel (~48 bateaux) pour retomber dans une
+// fourchette de 5 à 10 bateaux ; à ajuster si le volume de données change.
+const COUP_DE_COEUR_MIN_BOOKINGS = 2;
+const COUP_DE_COEUR_MIN_RATING = 4;
+const COUP_DE_COEUR_MAX_COUNT = 10;
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function GhostButton({ children, className = '', onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium whitespace-nowrap ${className}`}
-      style={GHOST_BTN_BASE}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.95)';
-        e.currentTarget.style.color = '#fff';
-        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.5)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = '#fff';
-        e.currentTarget.style.color = 'rgba(14,165,233,0.95)';
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(10,49,114,0.3)';
-      }}
-    >
-      {children}
-    </button>
+function computeCoupDeCoeurIds(boats) {
+  return new Set(
+    boats
+      .filter(
+        (b) =>
+          b.bookingCount >= COUP_DE_COEUR_MIN_BOOKINGS &&
+          (b.rating ?? 0) >= COUP_DE_COEUR_MIN_RATING
+      )
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || b.bookingCount - a.bookingCount)
+      .slice(0, COUP_DE_COEUR_MAX_COUNT)
+      .map((b) => b.id)
   );
 }
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
 function BoatListingCard({
+  id,
   image,
   badge,
   rating,
@@ -72,14 +76,11 @@ function BoatListingCard({
   skipper,
   price,
   availability,
+  isFavorite,
+  onToggleFavorite,
 }) {
   return (
-    <article
-      className="rounded-2xl overflow-hidden border border-gray-100 bg-white hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
-      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.1)' }}
-      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 32px rgba(14,165,233,0.35)')}
-      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.1)')}
-    >
+    <article className="rounded-2xl overflow-hidden border border-gray-100 bg-white hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.35)] transition-all duration-300 group cursor-pointer shadow-[0_4px_24px_rgba(0,0,0,0.1)]">
       <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
         <img
           src={image}
@@ -109,7 +110,10 @@ function BoatListingCard({
 
       <div className="p-4">
         <p className="text-[10px] font-bold tracking-widest text-sky-500 uppercase mb-1">{type}</p>
-        <h3 className="text-[15px] font-bold text-gray-900 mb-1 leading-tight">{name}</h3>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <h3 className="text-[15px] font-bold text-gray-900 leading-tight">{name}</h3>
+          <FavoriteButton isFavorite={isFavorite} onToggle={() => onToggleFavorite(id)} size={18} />
+        </div>
         <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
           <MdLocationOn className="text-sky-400 flex-shrink-0" />
           {location}
@@ -150,10 +154,8 @@ function BoatListingCard({
             <span className="text-xs text-gray-400">/jour</span>
           </div>
           <button
-            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors"
-            style={{ backgroundColor: 'rgba(14,165,233,0.95)' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgb(0,78,87)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(14,165,233,0.95)')}
+            type="button"
+            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors bg-[rgba(14,165,233,0.95)] hover:bg-[rgb(0,78,87)]"
           >
             Réserver
           </button>
@@ -165,75 +167,196 @@ function BoatListingCard({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+const EMPTY_BOAT_TYPE_FILTERS = {
+  voilier: false,
+  catamaran: false,
+  trimaran: false,
+  moteur: false,
+  peniche: false,
+  jet_ski: false,
+  hors_bord: false,
+  gulet: false,
+};
+
 function CategoryPage() {
-  const [headerHeight, setHeaderHeight] = useState(80);
-  const [mapMarkers, setMapMarkers] = useState([]);
+  const [searchParams] = useSearchParams();
+  const [scrolled, setScrolled] = useState(false);
+  const [ports, setPorts] = useState([]);
   const [boats, setBoats] = useState([]);
   const [visibleCount, setVisibleCount] = useState(8);
+  const [mapBounds, setMapBounds] = useState(null);
+  const { favoriteIds, toggleFavorite } = useFavorites();
+
+  const [boatTypeFilters, setBoatTypeFilters] = useState(EMPTY_BOAT_TYPE_FILTERS);
+  const [licenseFilter, setLicenseFilter] = useState('any');
+  const [skipperFilter, setSkipperFilter] = useState('any');
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [sortBy, setSortBy] = useState('relevance');
+  const [coupDeCoeurFilter, setCoupDeCoeurFilter] = useState(false);
+
+  function resetFilters() {
+    setBoatTypeFilters(EMPTY_BOAT_TYPE_FILTERS);
+    setLicenseFilter('any');
+    setSkipperFilter('any');
+    setPriceRange({ min: '', max: '' });
+    setSortBy('relevance');
+    setCoupDeCoeurFilter(false);
+  }
+
+  const destinationQuery = (searchParams.get('destination') ?? '').trim().toLowerCase();
+  const startQuery = searchParams.get('start');
+  const endQuery = searchParams.get('end');
+  const travelersQuery = Number(searchParams.get('travelers')) || null;
+  const activeBoatTypes = Object.keys(boatTypeFilters).filter((key) => boatTypeFilters[key]);
+  const minPrice = Number(priceRange.min) || null;
+  const maxPrice = Number(priceRange.max) || null;
+
+  const filteredBoats = boats
+    .filter((boat) => {
+      if (destinationQuery && !boat.location.toLowerCase().includes(destinationQuery)) return false;
+      if (travelersQuery && boat.capacity < travelersQuery) return false;
+      if (startQuery && endQuery) {
+        const reqStart = new Date(startQuery);
+        const reqEnd = new Date(endQuery);
+        const hasOverlap = boat.rawAvailabilities.some((a) => {
+          const availStart = new Date(a.start_date);
+          const availEnd = new Date(a.end_date);
+          return availStart <= reqEnd && availEnd >= reqStart;
+        });
+        if (!hasOverlap) return false;
+      }
+      if (activeBoatTypes.length > 0 && !activeBoatTypes.includes(boat.type)) return false;
+      if (coupDeCoeurFilter && boat.badge !== 'Coup de cœur') return false;
+      if (skipperFilter === 'included' && !boat.skipper) return false;
+      if (skipperFilter === 'excluded' && boat.skipper) return false;
+      if (licenseFilter === 'not_required' && boat.licenseRequired) return false;
+      if (licenseFilter === 'required' && !boat.licenseRequired) return false;
+      if (minPrice && boat.price < minPrice) return false;
+      if (maxPrice && boat.price > maxPrice) return false;
+      if (
+        mapBounds &&
+        (boat.portLat < mapBounds.south ||
+          boat.portLat > mapBounds.north ||
+          boat.portLng < mapBounds.west ||
+          boat.portLng > mapBounds.east)
+      )
+        return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'rating') return (b.rating ?? 0) - (a.rating ?? 0);
+      if (sortBy === 'popularity') return b.bookingCount - a.bookingCount;
+      return travelersQuery ? a.capacity - b.capacity : 0;
+    });
+
+  // Un port est "lancé" (marqueur coloré) dès qu'il a au moins un bateau publié ;
+  // sinon il reste grisé "Bientôt disponible", quels que soient les filtres actifs.
+  const launchedCities = new Set(boats.map((b) => b.location));
+  const matchCountByCity = filteredBoats.reduce((acc, b) => {
+    acc[b.location] = (acc[b.location] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const mapMarkers = ports
+    .filter((p) => Number.isFinite(Number(p.latitude)) && Number.isFinite(Number(p.longitude)))
+    .map((p) => {
+      const launched = launchedCities.has(p.city);
+      return {
+        id: p.id_port,
+        lat: Number(p.latitude),
+        lng: Number(p.longitude),
+        title: p.city,
+        subtitle: p.country,
+        available: launched,
+        badge: launched ? (matchCountByCity[p.city] ?? 0) : null,
+      };
+    });
+
+  // Recadre la carte sur les ports correspondant à la destination recherchée ;
+  // sans destination, on garde la vue d'ensemble (tous les marqueurs).
+  const focusMapMarkers = destinationQuery
+    ? mapMarkers.filter((m) => m.title.toLowerCase().includes(destinationQuery))
+    : mapMarkers;
 
   useEffect(() => {
-    const onScroll = () => setHeaderHeight(window.scrollY > 10 ? 60 : 80);
+    const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
+    setVisibleCount(8);
+  }, [searchParams.toString()]);
+
+  useEffect(() => {
     fetchPorts()
-      .then(({ data }) =>
-        setMapMarkers(
-          data
-            .filter(
-              (p) =>
-                Number.isFinite(Number(p.latitude)) &&
-                Number.isFinite(Number(p.longitude)) &&
-                (p.country !== 'France' ||
-                  ['Brest', 'La Rochelle', 'Bordeaux', 'Marseille', 'Nice'].includes(p.city))
-            )
-            .map((p) => ({
-              id: p.id_port,
-              lat: Number(p.latitude),
-              lng: Number(p.longitude),
-              title: p.city,
-              subtitle: p.country,
-              available: p.country === 'France',
-            }))
-        )
-      )
+      .then(({ data }) => setPorts(data))
       .catch(() => {});
 
     fetchBoats()
-      .then(({ data }) => setBoats(data.map(toBoatCard)))
+      .then(({ data }) => {
+        const mapped = data.map(toBoatCard);
+        const coupDeCoeurIds = computeCoupDeCoeurIds(mapped);
+        setBoats(
+          mapped.map((b) => ({
+            ...b,
+            badge: coupDeCoeurIds.has(b.id) ? 'Coup de cœur' : null,
+          }))
+        );
+      })
       .catch(() => {});
   }, []);
 
   return (
-    <main className="w-full min-h-screen pt-20" style={{ backgroundColor: '#fff' }}>
-      {/* Wrapper pour limiter le sticky avant la section avis */}
+    <main className="w-full min-h-screen pt-20 bg-white">
       <div>
-        {/*section 1 - searchbar*/}
+        {/* Section 0 — Vidéo derrière le header uniquement */}
+        <section className="relative w-full -mt-20 overflow-hidden" style={{ height: '80px' }}>
+          <video
+            src={bateauVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover object-[center_70%]"
+          />
+          <div className="absolute inset-0 bg-black/35" />
+        </section>
+
+        {/* Section 1 — Searchbar sticky */}
         <section
           className="z-40"
           style={{
             position: 'sticky',
-            top: `${headerHeight}px`,
+            top: scrolled ? '60px' : '80px',
             borderBottom: '1px solid rgba(0,0,0,0.08)',
             backgroundColor: 'rgba(255,255,255,0.7)',
             backdropFilter: 'blur(5px)',
+            WebkitBackdropFilter: 'blur(5px)',
             transition: 'top 0.3s ease',
           }}
         >
-          {/* Ligne 1 : FilterBar + SearchBar */}
-          <div className="flex items-center gap-8 pt-8" style={{ paddingLeft: '112px' }}>
-            <FilterBar />
-            <SearchBarV2 />
+          <div className="flex items-center gap-8 pt-8 pl-28">
+            <FilterBar
+              boatTypeFilters={boatTypeFilters}
+              onBoatTypeChange={setBoatTypeFilters}
+              licenseFilter={licenseFilter}
+              onLicenseFilterChange={setLicenseFilter}
+              skipperFilter={skipperFilter}
+              onSkipperFilterChange={setSkipperFilter}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              priceRange={priceRange}
+              onPriceRangeChange={setPriceRange}
+              coupDeCoeurFilter={coupDeCoeurFilter}
+              onCoupDeCoeurFilterChange={setCoupDeCoeurFilter}
+              onReset={resetFilters}
+            />
+            <SearchBar />
           </div>
-
-          {/* Ligne 2 : Breadcrumb aligné sous le FilterBar */}
-          <div className="pb-2" style={{ paddingLeft: '112px' }}>
+          <div className="pb-2 pl-28">
             <Breadcrumb />
           </div>
-
-          {/* Blur strip — fondu sous la searchbar */}
           <div
             style={{
               position: 'absolute',
@@ -250,17 +373,13 @@ function CategoryPage() {
           />
         </section>
 
-        {/* ── Listings + Carte 50/50 ───────────────────────────────────────────── */}
-        <div className="flex items-start gap-6 px-28 py-6">
-          {/* ── Listings — 50% ───────────────────────────────────────────────── */}
+        {/* Section 2 — Listings + Carte 50/50 */}
+        <div id="resultats" className="flex items-start gap-6 px-28 py-6 scroll-mt-[112px]">
+          {/* Listings — 50% */}
           <div className="w-1/2 flex flex-col gap-6">
-            {/* Section header */}
             <div className="flex items-end justify-between">
               <div>
-                <p
-                  className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4"
-                  style={{ color: 'rgba(14,165,233,0.95)' }}
-                >
+                <p className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4 text-[rgba(14,165,233,0.95)]">
                   Selon vos recherches
                 </p>
                 <h2 className="text-2xl font-bold text-gray-900 pt-4 uppercase tracking-tight">
@@ -268,19 +387,28 @@ function CategoryPage() {
                 </h2>
               </div>
               <span className="text-sm text-gray-400 font-medium pb-1">
-                156 bateaux disponibles
+                {filteredBoats.length} bateaux disponibles
               </span>
             </div>
 
-            {/* 2×2 grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {boats.slice(0, visibleCount).map((boat) => (
-                <BoatListingCard key={boat.id} {...boat} />
-              ))}
-            </div>
+            {filteredBoats.length === 0 ? (
+              <p className="text-sm text-gray-500 py-6">
+                Aucune offre ne correspond à votre recherche.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                {filteredBoats.slice(0, visibleCount).map((boat) => (
+                  <BoatListingCard
+                    key={boat.id}
+                    {...boat}
+                    isFavorite={favoriteIds.has(boat.id)}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ))}
+              </div>
+            )}
 
-            {/* Voir plus */}
-            {visibleCount < boats.length && (
+            {visibleCount < filteredBoats.length && (
               <div className="flex justify-center py-2">
                 <GhostButton onClick={() => setVisibleCount((n) => n + 4)}>
                   Voir plus d&apos;offres
@@ -289,13 +417,10 @@ function CategoryPage() {
             )}
           </div>
 
-          {/* ── Carte — 50% ──────────────────────────────────────────────────── */}
+          {/* Carte — 50% */}
           <aside className="w-1/2 sticky top-24 flex flex-col gap-2">
             <div className="flex items-center justify-between px-1">
-              <p
-                className="text-xs font-bold tracking-widest uppercase"
-                style={{ color: 'rgba(14,165,233,0.95)' }}
-              >
+              <p className="text-xs font-bold tracking-widest uppercase text-[rgba(14,165,233,0.95)]">
                 Carte Interactive
               </p>
               <span
@@ -312,8 +437,17 @@ function CategoryPage() {
             </div>
             <MapView
               markers={mapMarkers}
+              focusMarkers={focusMapMarkers}
               className="h-[660px]"
               emptyLabel="Aucun bateau à afficher."
+              onBoundsChange={(bounds) =>
+                setMapBounds({
+                  north: bounds.getNorth(),
+                  south: bounds.getSouth(),
+                  east: bounds.getEast(),
+                  west: bounds.getWest(),
+                })
+              }
             />
             <p className="text-[10px] text-gray-400 text-center px-2">
               Cliquez sur un marqueur pour voir les détails du bateau
@@ -321,16 +455,21 @@ function CategoryPage() {
           </aside>
         </div>
 
-        {/* ── Section — Carrousels bateaux & ports ─────────────────────────────── */}
-        <section id="suggestions" className="relative w-full flex flex-col gap-8 px-28 py-10">
+        {/* Section 3 — Carrousels */}
+        <section
+          id="suggestions"
+          className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[112px]"
+        >
           <Carrousel theme="light" />
         </section>
       </div>
-      {/* fin du wrapper sticky */}
-      {/* ── Section — Avis clients ────────────────────────────────────────────── */}
-      <ClientReviews id="avis" className="py-10" />
+
+      {/* Section 4 — Avis clients */}
+      <ClientReviews id="avis" className="py-10 scroll-mt-[96px]" />
     </main>
   );
 }
 
 export default CategoryPage;
+
+//TODO : Refonte affichage produit

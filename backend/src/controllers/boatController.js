@@ -4,12 +4,14 @@ import { createBooking } from '../services/bookingService.js';
 const BOAT_INCLUDE = {
   port: true,
   images: { orderBy: { order: 'asc' } },
+  equipment: true,
   availabilities: {
     where: { is_available: true },
     orderBy: { start_date: 'asc' },
   },
   bookings: {
     select: {
+      status: true,
       reviews: {
         where: { status: 'validated', deleted_at: null },
         select: { rating: true },
@@ -25,8 +27,9 @@ function enrichWithRating(boats) {
       allReviews.length > 0
         ? Math.round((allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length) * 10) / 10
         : null;
+    const booking_count = b.bookings.filter((bk) => bk.status === 'confirmed').length;
     const { bookings, ...boat } = b;
-    return { ...boat, avg_rating: avg };
+    return { ...boat, avg_rating: avg, booking_count };
   });
 }
 

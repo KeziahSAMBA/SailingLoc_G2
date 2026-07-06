@@ -1,9 +1,13 @@
 import js from '@eslint/js';
+import react from 'eslint-plugin-react';
 
 export default [
   js.configs.recommended,
   {
     files: ['src/**/*.{js,jsx}'],
+    plugins: {
+      react,
+    },
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -25,8 +29,11 @@ export default [
         URL: 'readonly',
         URLSearchParams: 'readonly',
         Intl: 'readonly',
+        AbortController: 'readonly',
       },
     },
-    rules: {},
+    rules: {
+      'react/jsx-uses-vars': 'error',
+    },
   },
 ];
