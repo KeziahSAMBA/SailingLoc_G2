@@ -21,7 +21,11 @@ import {
   postFavorite,
   deleteFavorite,
 } from '../controllers/locataireController.js';
-import { getDashboard as getProprietaireDashboard } from '../controllers/proprietaireController.js';
+import {
+  getDashboard as getProprietaireDashboard,
+  getMyBookings as getProprietaireBookings,
+  patchBooking as patchProprietaireBooking,
+} from '../controllers/proprietaireController.js';
 
 const router = Router();
 
@@ -43,6 +47,18 @@ router.get(
   protect,
   requireRole('proprietaire'),
   getProprietaireDashboard
+);
+router.get(
+  '/me/proprietaire/bookings',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireBookings
+);
+router.patch(
+  '/me/proprietaire/bookings/:id_booking',
+  protect,
+  requireRole('proprietaire'),
+  patchProprietaireBooking
 );
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
