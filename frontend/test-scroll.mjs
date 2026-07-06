@@ -8,7 +8,9 @@ await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
 await page.waitForTimeout(1000);
 
 // Scroll down to a static carousel section, well past the top of the page.
-const staticSection = page.locator('h2:has-text("Annonces consultées récemment")').locator('xpath=../..');
+const staticSection = page
+  .locator('h2:has-text("Annonces consultées récemment")')
+  .locator('xpath=../..');
 await staticSection.scrollIntoViewIfNeeded();
 await page.waitForTimeout(300);
 
@@ -39,7 +41,9 @@ console.log('scrollY after closing modal:', scrollYAfterClose);
 
 console.log(
   'RESULT:',
-  scrollYAfterOpen > 100 && scrollYAfterClose > 100 ? 'PASS (scroll preserved)' : 'FAIL (scroll reset to top)'
+  scrollYAfterOpen > 100 && scrollYAfterClose > 100
+    ? 'PASS (scroll preserved)'
+    : 'FAIL (scroll reset to top)'
 );
 
 await browser.close();

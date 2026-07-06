@@ -2,23 +2,33 @@ import { chromium } from 'playwright';
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
-page.on('console', (msg) => { if (msg.type() === 'error') console.log('CONSOLE ERROR:', msg.text()); });
+page.on('console', (msg) => {
+  if (msg.type() === 'error') console.log('CONSOLE ERROR:', msg.text());
+});
 page.on('pageerror', (err) => console.log('PAGEERROR:', err.message));
 
 await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
 await page.waitForTimeout(1500);
 
 // --- 1. Anonymous visitor: heart icons visible on boat cards, not on port cards ---
-const heartButtons = page.locator('button[aria-label="Ajouter aux favoris"], button[aria-label="Retirer des favoris"]');
+const heartButtons = page.locator(
+  'button[aria-label="Ajouter aux favoris"], button[aria-label="Retirer des favoris"]'
+);
 console.log('heart buttons found (anonymous):', await heartButtons.count());
 
 // Port carousel section ("Choisissez votre port de départ") should have 0 hearts inside it
-const portSection = page.locator('h2:has-text("Choisissez votre port de départ")').locator('xpath=../..');
-const heartsInPortSection = portSection.locator('button[aria-label="Ajouter aux favoris"], button[aria-label="Retirer des favoris"]');
+const portSection = page
+  .locator('h2:has-text("Choisissez votre port de départ")')
+  .locator('xpath=../..');
+const heartsInPortSection = portSection.locator(
+  'button[aria-label="Ajouter aux favoris"], button[aria-label="Retirer des favoris"]'
+);
 console.log('hearts inside port section (should be 0):', await heartsInPortSection.count());
 
 // Click a heart in a static (non-animating) section while logged out -> should navigate to /login and show AuthModal
-const staticSection = page.locator('h2:has-text("Annonces consultées récemment")').locator('xpath=../..');
+const staticSection = page
+  .locator('h2:has-text("Annonces consultées récemment")')
+  .locator('xpath=../..');
 const staticHeart = staticSection
   .locator('button[aria-label="Ajouter aux favoris"], button[aria-label="Retirer des favoris"]')
   .first();
@@ -26,7 +36,11 @@ await staticHeart.scrollIntoViewIfNeeded();
 await staticHeart.click({ force: true });
 await page.waitForTimeout(800);
 console.log('URL after clicking heart while logged out:', page.url());
-const authModalVisible = await page.locator('text=/Connexion|Se connecter/i').first().isVisible().catch(() => false);
+const authModalVisible = await page
+  .locator('text=/Connexion|Se connecter/i')
+  .first()
+  .isVisible()
+  .catch(() => false);
 console.log('Auth modal visible:', authModalVisible);
 
 // --- 2. Log in as a locataire test account ---
@@ -48,7 +62,9 @@ await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
 await page.waitForTimeout(1500);
 
 // --- 3. Toggle a favorite as logged-in locataire ---
-const staticSection2 = page.locator('h2:has-text("Annonces consultées récemment")').locator('xpath=../..');
+const staticSection2 = page
+  .locator('h2:has-text("Annonces consultées récemment")')
+  .locator('xpath=../..');
 const heartButtons2 = staticSection2.locator(
   'button[aria-label="Ajouter aux favoris"], button[aria-label="Retirer des favoris"]'
 );
@@ -77,7 +93,9 @@ console.log('first heart label after click:', labelAfter);
 // Reload and verify persistence
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(1500);
-const staticSection3 = page.locator('h2:has-text("Annonces consultées récemment")').locator('xpath=../..');
+const staticSection3 = page
+  .locator('h2:has-text("Annonces consultées récemment")')
+  .locator('xpath=../..');
 const heartButtons3 = staticSection3.locator(
   'button[aria-label="Ajouter aux favoris"], button[aria-label="Retirer des favoris"]'
 );

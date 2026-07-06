@@ -1,5 +1,6 @@
 const { chromium } = require('playwright');
-const shotDir = 'C:/Users/kezia/AppData/Local/Temp/claude/c--Users-kezia-ProjetsFormation-SailingLoc-G2/620a1b47-6826-4cd0-8a6d-bda4be1d989b/scratchpad';
+const shotDir =
+  'C:/Users/kezia/AppData/Local/Temp/claude/c--Users-kezia-ProjetsFormation-SailingLoc-G2/620a1b47-6826-4cd0-8a6d-bda4be1d989b/scratchpad';
 
 (async () => {
   const browser = await chromium.launch();

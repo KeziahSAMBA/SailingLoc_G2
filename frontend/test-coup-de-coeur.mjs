@@ -8,7 +8,10 @@ await page.goto('http://localhost:5173/categorie', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1500);
 
 const badgeCount = await page.locator('text=Coup de cœur').count();
-console.log('"Coup de cœur" badges shown on cards (page 1, may be capped by visibleCount):', badgeCount);
+console.log(
+  '"Coup de cœur" badges shown on cards (page 1, may be capped by visibleCount):',
+  badgeCount
+);
 
 // Open filter panel and toggle the new checkbox
 await page.locator('text=Filtres').first().click();
@@ -25,9 +28,11 @@ const grid = page.locator('.grid.grid-cols-2').first();
 const cardsShown = await grid.locator('article').count();
 console.log('boat cards shown in grid after filter:', cardsShown);
 
-const allBadged = await grid.locator('article').evaluateAll((articles) =>
-  articles.map((a) => a.innerText.toLowerCase().includes('coup de cœur'))
-);
+const allBadged = await grid
+  .locator('article')
+  .evaluateAll((articles) =>
+    articles.map((a) => a.innerText.toLowerCase().includes('coup de cœur'))
+  );
 console.log('all visible cards have the badge:', allBadged.every(Boolean), allBadged);
 
 const firstArticleText = await grid.locator('article').first().innerText();
