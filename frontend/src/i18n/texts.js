@@ -244,6 +244,8 @@ export const TEXTS = {
     destinationPlaceholder: { fr: 'Lieu / Port de départ', en: 'Place / Departure port' },
     arrival: { fr: 'Dates arrivée', en: 'Arrival date' },
     departure: { fr: 'Dates retour', en: 'Return date' },
+    addDate: { fr: 'Ajouter une date', en: 'Add a date' },
+    datesAvailable: { fr: 'Dates disponibles', en: 'Available dates' },
     travelers: { fr: 'Voyageurs', en: 'Travelers' },
     travelersPlaceholder: { fr: 'Nombre de personnes', en: 'Number of people' },
     search: { fr: 'Rechercher', en: 'Search' },
