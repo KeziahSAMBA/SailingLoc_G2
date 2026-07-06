@@ -24,3 +24,8 @@ export function updateBookingStatus(idBooking, action, reason) {
 export function getPayments() {
   return api.get('/users/me/proprietaire/payments');
 }
+
+// Liste des bateaux du propriétaire avec leur statut d'annonce.
+export function getBoats() {
+  return api.get('/users/me/proprietaire/boats');
+}

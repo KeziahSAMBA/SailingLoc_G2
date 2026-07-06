@@ -1293,6 +1293,24 @@ async function main() {
     });
   }
 
+  // Statuts d'annonce des bateaux : en ligne → publiée, dépubliée → en attente
+  // de validation ; plus deux exemples brouillon / refusé pour l'espace propriétaire.
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO boat (id_user, id_port, name, type, size, engine, with_skipper, daily_price, capacity, build_year, registration, description, is_published, license_required) VALUES
+    (3, 2, 'Sloop Horizon',     'voilier', 9.80, 'Diesel 20cv',   FALSE, 240.00, 4, 2010, 'FR-LRO-050', 'Annonce en cours de rédaction : description et photos à compléter avant soumission.', FALSE, TRUE),
+    (2, 1, 'Vedette Calanques', 'moteur',  8.50, 'Essence 200cv', FALSE, 380.00, 6, 2019, 'FR-MRS-051', 'Vedette rapide pour explorer les calanques au départ de Marseille.', FALSE, TRUE)
+    ON CONFLICT (registration) DO NOTHING
+  `);
+  await prisma.$executeRawUnsafe(`
+    UPDATE boat SET status = CASE WHEN is_published THEN 'published'::boat_status ELSE 'pending'::boat_status END
+  `);
+  await prisma.$executeRawUnsafe(`
+    UPDATE boat SET status = 'draft' WHERE registration = 'FR-LRO-050'
+  `);
+  await prisma.$executeRawUnsafe(`
+    UPDATE boat SET status = 'refused' WHERE registration = 'FR-MRS-051'
+  `);
+
   console.log('Seed completed.');
 }
 

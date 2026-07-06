@@ -155,6 +155,46 @@ export async function listBookings(id_user) {
   }));
 }
 
+// Liste des bateaux du propriétaire (plus récents d'abord) avec leur statut
+// d'annonce (brouillon, en attente de validation, publiée, refusée).
+export async function listBoats(id_user) {
+  const boats = await prisma.boat.findMany({
+    where: { id_user, deleted_at: null },
+    orderBy: { created_at: 'desc' },
+    select: {
+      id_boat: true,
+      name: true,
+      type: true,
+      daily_price: true,
+      capacity: true,
+      registration: true,
+      status: true,
+      created_at: true,
+      port: { select: { name: true, city: true } },
+      images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+      _count: {
+        select: {
+          bookings: { where: { deleted_at: null, status: 'pending' } },
+        },
+      },
+    },
+  });
+
+  return boats.map((b) => ({
+    id_boat: b.id_boat,
+    name: b.name,
+    type: b.type,
+    daily_price: Number(b.daily_price),
+    capacity: b.capacity,
+    registration: b.registration,
+    status: b.status,
+    created_at: b.created_at,
+    port: b.port,
+    image: b.images?.[0]?.url ?? null,
+    pending_bookings: b._count.bookings,
+  }));
+}
+
 // Historique des paiements reçus sur les bateaux du propriétaire (plus récents
 // d'abord), avec les totaux : brut encaissé, commissions SailingLoc déduites et
 // net propriétaire — calculés sur les paiements réussis uniquement (même règle

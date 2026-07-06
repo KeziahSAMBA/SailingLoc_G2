@@ -91,6 +91,9 @@ model Boat {
   registration    String   @unique @db.VarChar(50)
   description     String?
   is_published      Boolean  @default(false)
+  // Statut de l'annonce : brouillon → en attente de validation → publiée/refusée.
+  // is_published reste la source de visibilité publique (status 'published' ⇔ true).
+  status            BoatStatus @default(draft)
   license_required  Boolean  @default(true)
   created_at        DateTime @default(now())
   updated_at      DateTime?
@@ -302,6 +305,15 @@ enum UserRole {
   locataire
 
   @@map("user_role")
+}
+
+enum BoatStatus {
+  draft
+  pending
+  published
+  refused
+
+  @@map("boat_status")
 }
 
 enum BookingStatus {

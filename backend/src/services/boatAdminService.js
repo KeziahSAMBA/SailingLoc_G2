@@ -50,7 +50,12 @@ export async function setBoatPublished(id_boat, is_published) {
   const publishing = Boolean(is_published);
   const updated = await prisma.boat.update({
     where: { id_boat: id },
-    data: { is_published: publishing, updated_at: new Date() },
+    // Le statut d'annonce suit la décision : validée → publiée, retirée → refusée.
+    data: {
+      is_published: publishing,
+      status: publishing ? 'published' : 'refused',
+      updated_at: new Date(),
+    },
   });
 
   // Dépublication = sanction : on clôt les signalements en attente du bateau

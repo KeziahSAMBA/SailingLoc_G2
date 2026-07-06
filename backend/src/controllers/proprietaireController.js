@@ -1,5 +1,6 @@
 import {
   getDashboardStats,
+  listBoats,
   listBookings,
   listPayments,
   setBookingStatus,
@@ -18,6 +19,15 @@ export async function getMyBookings(req, res) {
   try {
     const bookings = await listBookings(req.user.id_user);
     res.json({ bookings });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyBoats(req, res) {
+  try {
+    const boats = await listBoats(req.user.id_user);
+    res.json({ boats });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
