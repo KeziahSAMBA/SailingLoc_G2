@@ -16,6 +16,11 @@ export function getFavorites() {
   return api.get('/users/me/favorites');
 }
 
+// Ajoute un bateau aux favoris.
+export function addFavorite(idBoat) {
+  return api.post(`/users/me/favorites/${idBoat}`);
+}
+
 // Retire un bateau des favoris.
 export function removeFavorite(idBoat) {
   return api.delete(`/users/me/favorites/${idBoat}`);

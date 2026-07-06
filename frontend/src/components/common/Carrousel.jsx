@@ -4,6 +4,8 @@ import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 import { fetchBoats } from '../../services/boatService';
 import { fetchPorts } from '../../services/portService';
+import { useFavorites } from '../../hooks/useFavorites.js';
+import FavoriteButton from './FavoriteButton.jsx';
 
 // ─── Transformateurs DB → slide ───────────────────────────────────────────────
 
@@ -29,7 +31,7 @@ const boatToSlide = (boat) => {
     dateStr,
     capacity: boat.capacity ?? null,
     price: boat.daily_price,
-    rating: boat.avg_rating != null ? `★ ${boat.avg_rating}` : null,
+    rating: boat.avg_rating != null ? `★ ${boat.avg_rating}` : '★ Nouveau',
     img: boat.images?.[0]?.url ?? '',
     available: boat.is_published,
   };
@@ -38,7 +40,14 @@ const boatToSlide = (boat) => {
 // ─── Composant générique de carrousel ─────────────────────────────────────────
 
 const PortCarousel = memo(
-  ({ slides, visibleCount = 5, imageSize = 'small', variant = 'default' }) => {
+  ({
+    slides,
+    visibleCount = 5,
+    imageSize = 'small',
+    variant = 'default',
+    favoriteIds,
+    onToggleFavorite,
+  }) => {
     const maxIndex = slides.length - visibleCount;
     const [index, setIndex] = useState(0);
     const slideWidthPct = 100 / slides.length;
@@ -109,6 +118,11 @@ const PortCarousel = memo(
                           </div>
                         </>
                       )}
+                      <FavoriteButton
+                        isFavorite={favoriteIds.has(slide.id)}
+                        onToggle={() => onToggleFavorite(slide.id)}
+                        className="absolute top-2 right-2 z-10"
+                      />
                     </div>
                     <div className="mt-1 flex flex-col gap-0.5">
                       <span
@@ -227,6 +241,11 @@ const PortCarousel = memo(
                           </div>
                         </>
                       )}
+                      <FavoriteButton
+                        isFavorite={favoriteIds.has(slide.id)}
+                        onToggle={() => onToggleFavorite(slide.id)}
+                        className="absolute top-2 right-2 z-10"
+                      />
                     </div>
                     <span
                       className="mt-1 text-center font-semibold text-black"
@@ -273,6 +292,8 @@ const CarouselSection = ({
   linkTo = '/categorie',
   theme = 'light',
   variant = 'default',
+  favoriteIds,
+  onToggleFavorite,
 }) => {
   const titleColor = theme === 'dark' ? 'text-white' : 'text-black';
   const linkColor =
@@ -299,6 +320,8 @@ const CarouselSection = ({
         visibleCount={visibleCount}
         imageSize={imageSize}
         variant={variant}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={onToggleFavorite}
       />
     </div>
   );
@@ -319,6 +342,8 @@ const SlideItem = memo(function SlideItem({
   trackItemOffset,
   x,
   priority,
+  isFavorite,
+  onToggleFavorite,
 }) {
   const range = [
     -(index + 1) * trackItemOffset,
@@ -342,6 +367,11 @@ const SlideItem = memo(function SlideItem({
           draggable={false}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
+        <FavoriteButton
+          isFavorite={isFavorite}
+          onToggle={() => onToggleFavorite(slide.id)}
+          className="absolute top-3 right-3 z-10"
+        />
         <div
           className="absolute top-3 left-3 text-white font-semibold"
           style={{ fontSize: '15px' }}
@@ -376,6 +406,8 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
   initialSlide = 1,
   interval = 8000,
   theme = 'dark',
+  favoriteIds,
+  onToggleFavorite,
 }) {
   const outerRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -517,6 +549,8 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
                 trackItemOffset={trackItemOffset}
                 x={x}
                 priority={index === initialSlide}
+                isFavorite={favoriteIds.has(slide.id)}
+                onToggleFavorite={onToggleFavorite}
               />
             ))}
           </motion.div>
@@ -552,6 +586,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 const Carrousel = ({ theme = 'dark' }) => {
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
+  const { favoriteIds, toggleFavorite } = useFavorites();
 
   useEffect(() => {
     fetchBoats()
@@ -576,7 +611,7 @@ const Carrousel = ({ theme = 'dark' }) => {
           ? boat.description.slice(0, 55) + '…'
           : boat.description
         : null;
-      const ratingStr = boat.avg_rating != null ? `★ ${boat.avg_rating}` : null;
+      const ratingStr = boat.avg_rating != null ? `★ ${boat.avg_rating}` : '★ Nouveau';
 
       return {
         id: boat.id_boat,
@@ -607,10 +642,15 @@ const Carrousel = ({ theme = 'dark' }) => {
     };
 
     const groups = {};
+    const sansPermis = [];
     for (const boat of boats) {
       if (!groups[boat.type]) groups[boat.type] = [];
       if (groups[boat.type].length < 3) groups[boat.type].push(boat);
+      // "sans permis" n'est pas un type de coque : c'est license_required === false
+      // (voir backend/prisma/seed.js), donc ce groupe se construit à part.
+      if (boat.license_required === false && sansPermis.length < 3) sansPermis.push(boat);
     }
+    groups.sans_permis = sansPermis;
 
     const FEATURED = ['voilier', 'jet_ski', 'sans_permis'];
 
@@ -651,7 +691,7 @@ const Carrousel = ({ theme = 'dark' }) => {
       {
         title: 'Bateaux les plus populaires',
         slides: [...boats]
-          .sort((a, b) => Number(b.daily_price) - Number(a.daily_price))
+          .sort((a, b) => Number(b.booking_count) - Number(a.booking_count))
           .slice(0, 5)
           .map(boatToSlide),
         linkLabel: 'Voir le classement',
@@ -703,6 +743,8 @@ const Carrousel = ({ theme = 'dark' }) => {
                 initialSlide={initialSlide}
                 interval={interval}
                 theme={theme}
+                favoriteIds={favoriteIds}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
         </div>
@@ -718,6 +760,8 @@ const Carrousel = ({ theme = 'dark' }) => {
             linkLabel={linkLabel}
             theme={themed ? theme : 'light'}
             variant={variant}
+            favoriteIds={favoriteIds}
+            onToggleFavorite={toggleFavorite}
           />
         ))}
     </div>
@@ -725,5 +769,3 @@ const Carrousel = ({ theme = 'dark' }) => {
 };
 
 export default Carrousel;
-
-//TODO : Ajouter option favoris

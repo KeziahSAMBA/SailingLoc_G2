@@ -12,6 +12,13 @@ const BURGER_ITEMS = [
   { label: 'Chercher une location', anchor: 'hero' },
   { label: 'Nos suggestions', anchor: 'suggestions' },
   { label: 'Tutoriel', anchor: 'tutoriel' },
+  { label: 'Pourquoi nous choisir ?', anchor: 'proposition-valeur' },
+  { label: 'Avis & commentaires', anchor: 'avis' },
+];
+
+const CATEGORY_BURGER_ITEMS = [
+  { label: 'Nos bateaux', anchor: 'resultats' },
+  { label: 'Nos suggestions', anchor: 'suggestions' },
   { label: 'Avis & commentaires', anchor: 'avis' },
 ];
 
@@ -90,16 +97,16 @@ function Header() {
     [userMenuRef, () => setUserMenuOpen(false)],
   ]);
 
-  function scrollToAnchor(anchor) {
+  function scrollToAnchor(anchor, targetPath = '/') {
     setMenuOpen(false);
     const scroll = () => {
       const el = document.getElementById(anchor);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
-    if (location.pathname === '/') {
+    if (location.pathname === targetPath) {
       scroll();
     } else {
-      navigate('/');
+      navigate(targetPath);
       setTimeout(scroll, 300);
     }
   }
@@ -143,8 +150,8 @@ function Header() {
               : 'rgba(255, 255, 255, 0.05)',
           borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
           boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
-          backdropFilter: !scrolled && onCategoriePage ? 'blur(5px)' : undefined,
-          WebkitBackdropFilter: !scrolled && onCategoriePage ? 'blur(5px)' : undefined,
+          backdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
+          WebkitBackdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
           transition: 'box-shadow 0.3s ease, background-color 0.3s ease',
         }}
       />
@@ -168,13 +175,13 @@ function Header() {
             width="260px"
             darkerOverlay={onCategoriePage}
           >
-            <div className="flex flex-col" style={{ height: '55%' }}>
-              {BURGER_ITEMS.map(({ label, anchor }) => (
+            <div className="flex flex-col" style={{ height: onCategoriePage ? '41%' : '69%' }}>
+              {(onCategoriePage ? CATEGORY_BURGER_ITEMS : BURGER_ITEMS).map(({ label, anchor }) => (
                 <PanelLink
                   key={label}
                   scrolled={scrolled}
                   stretch
-                  onClick={() => scrollToAnchor(anchor)}
+                  onClick={() => scrollToAnchor(anchor, onCategoriePage ? '/categorie' : '/')}
                 >
                   {label}
                 </PanelLink>

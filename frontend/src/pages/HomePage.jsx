@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo, Fragment } from 'react';
+import { useNavigate } from 'react-router-dom';
 import bateauVideo from '../assets/video/video_bateau_3.mp4';
 import SearchBar from '../components/common/SearchBar.jsx';
 import { SiAppstore, SiGoogleplay } from 'react-icons/si';
@@ -106,6 +107,7 @@ const APP_LINKS = [
 ];
 
 function HomePage() {
+  const navigate = useNavigate();
   const stepsRef = useRef(null);
   const videoRef = useRef(null);
   const [dotsActive, setDotsActive] = useState(false);
@@ -170,7 +172,7 @@ function HomePage() {
               de France
             </p>
           </div>
-          <SearchBar />
+          <SearchBar light />
           <div className="text-center">
             <p className="text-white/70 text-xs mb-2 tracking-widest uppercase">
               Rejoignez notre application mobile
@@ -196,14 +198,14 @@ function HomePage() {
       {/* Section 2 — Carrousels bateaux & ports */}
       <section
         id="suggestions"
-        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-6 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)]"
+        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[96px] bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)]"
       >
         <div className="w-full flex flex-col gap-8">
           <Carrousel />
         </div>
       </section>
 
-      <div id="tutoriel" className="border-t border-gray-200 mx-[168px] scroll-mt-28" />
+      <div id="tutoriel" className="border-t border-gray-200 mx-[168px] scroll-mt-[128px]" />
 
       {/* Section 3 — Tuto */}
       <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
@@ -241,7 +243,9 @@ function HomePage() {
             ))}
           </div>
 
-          <GhostButton>
+          <GhostButton
+            onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
+          >
             <MdSearch className="text-base" />
             Lancer ma recherche
           </GhostButton>
@@ -251,7 +255,10 @@ function HomePage() {
       <div className="border-t border-gray-200 mx-[168px]" />
 
       {/* Section 4 — Proposition de valeur */}
-      <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
+      <section
+        id="proposition-valeur"
+        className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0 scroll-mt-[112px]"
+      >
         <div className="text-center mb-10">
           <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
             Pourquoi nous choisir ?
@@ -274,10 +281,10 @@ function HomePage() {
           ))}
         </div>
 
-        <GhostButton>En savoir plus</GhostButton>
+        <GhostButton onClick={() => navigate('/a-propos')}>En savoir plus</GhostButton>
       </section>
 
-      <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-10" />
+      <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-[96px]" />
 
       {/* Section 5 — Avis clients */}
       <ClientReviews className="py-8">
@@ -285,7 +292,7 @@ function HomePage() {
           <p className="text-gray-700 font-semibold text-lg">
             L'horizon n'attend pas. Votre bateau non plus.
           </p>
-          <GhostButton className="font-semibold text-lg">
+          <GhostButton className="font-semibold text-lg" onClick={() => navigate('/categorie')}>
             Trouver mon bateau <MdAnchor className="text-base" />
           </GhostButton>
         </div>
@@ -296,4 +303,6 @@ function HomePage() {
 
 export default HomePage;
 
-//TODO : Connecter les boutons restant aux pages
+//TODO : Activer la traduction en anglais
+//TODO : Ajuster le positionnement des ancres
+//TODO : Ancre "Contact" du header à connecter au footer

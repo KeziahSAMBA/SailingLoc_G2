@@ -25,9 +25,12 @@ function AppContent() {
         ? 'register'
         : null;
 
+  // Scroll en haut uniquement pour un vrai changement de page — pas quand
+  // /login ou /register s'ouvre en pop-up par-dessus la page actuelle
+  // (routesLocation reste alors la page de fond, donc la dépendance ne change pas).
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [location.pathname]);
+  }, [routesLocation.pathname]);
 
   // Si un utilisateur est déjà connecté, on ne montre pas la popup d'auth.
   useEffect(() => {

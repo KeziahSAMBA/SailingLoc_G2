@@ -57,6 +57,29 @@ function DashboardHeader({
     else if (item.to) navigate(item.to);
   }
 
+  function scrollToAnchor(anchor, targetPath = '/') {
+    setNavOpen(false);
+    const scroll = () => {
+      const el = document.getElementById(anchor);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+    if (location.pathname === targetPath) {
+      scroll();
+    } else {
+      navigate(targetPath);
+      setTimeout(scroll, 300);
+    }
+  }
+
+  function handleLogoClick(e) {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/');
+    }
+  }
+
   return (
     <header
       className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
@@ -107,11 +130,21 @@ function DashboardHeader({
                 {leftGroups.map((group, groupIdx) => (
                   <Fragment key={groupIdx}>
                     <div className="flex flex-col" style={{ height: group.heightPercent }}>
-                      {group.items.map((item) => (
-                        <PanelLink key={item} scrolled={scrolled} stretch>
-                          {item}
-                        </PanelLink>
-                      ))}
+                      {group.items.map((item) => {
+                        const label = typeof item === 'string' ? item : item.label;
+                        const anchor = typeof item === 'string' ? null : item.anchor;
+                        const path = typeof item === 'string' ? '/' : (item.path ?? '/');
+                        return (
+                          <PanelLink
+                            key={label}
+                            scrolled={scrolled}
+                            stretch
+                            onClick={anchor ? () => scrollToAnchor(anchor, path) : undefined}
+                          >
+                            {label}
+                          </PanelLink>
+                        );
+                      })}
                     </div>
                     {groupIdx < leftGroups.length - 1 && (
                       <div
@@ -131,7 +164,7 @@ function DashboardHeader({
           </div>
         )}
 
-        <HeaderLogo scrolled={scrolled} />
+        <HeaderLogo scrolled={scrolled} onClick={handleLogoClick} />
       </div>
 
       {/* Centre — Navigation (33%) */}
@@ -143,7 +176,11 @@ function DashboardHeader({
                 href={to}
                 onClick={(e) => {
                   e.preventDefault();
-                  navigate(to);
+                  if (to === location.pathname) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    navigate(to);
+                  }
                 }}
                 className="font-medium"
                 style={{
@@ -289,6 +326,3 @@ function DashboardHeader({
 }
 
 export default DashboardHeader;
-
-//TODO : Tester extension vidéo header sur filtreBar
-//TODO : Ancre titre menu burger header
