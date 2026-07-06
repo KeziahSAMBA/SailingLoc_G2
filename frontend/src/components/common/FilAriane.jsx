@@ -1,12 +1,11 @@
 import { useLocation, Link } from 'react-router-dom';
-
-const PATH_LABELS = {
-  categorie: 'Catégorie',
-};
+import { useTranslation } from 'react-i18next';
 
 function Breadcrumb({ light = false }) {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const segments = pathname.split('/').filter(Boolean);
+  const pathLabels = { categorie: t('breadcrumb.categorie') };
 
   return (
     <nav
@@ -18,11 +17,11 @@ function Breadcrumb({ light = false }) {
           light ? 'hover:text-white/70 transition-colors' : 'hover:text-sky-600 transition-colors'
         }
       >
-        Accueil
+        {t('breadcrumb.home')}
       </Link>
       {segments.map((seg, i) => {
         const path = '/' + segments.slice(0, i + 1).join('/');
-        const label = PATH_LABELS[seg] ?? seg;
+        const label = pathLabels[seg] ?? seg;
         const isLast = i === segments.length - 1;
         return (
           <span key={path} className="flex items-center gap-2">

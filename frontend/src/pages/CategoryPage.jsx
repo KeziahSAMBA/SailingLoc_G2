@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import bateauVideo from '../assets/video/video_bateau_3.mp4';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
@@ -79,6 +80,7 @@ function BoatListingCard({
   isFavorite,
   onToggleFavorite,
 }) {
+  const { t } = useTranslation();
   return (
     <article className="rounded-2xl overflow-hidden border border-gray-100 bg-white hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.35)] transition-all duration-300 group cursor-pointer shadow-[0_4px_24px_rgba(0,0,0,0.1)]">
       <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
@@ -96,7 +98,7 @@ function BoatListingCard({
               boxShadow: '0 2px 8px rgba(14,165,233,0.5)',
             }}
           >
-            {badge}
+            {badge === 'coup_de_coeur' ? t('category.badge.topPick') : badge}
           </div>
         )}
         <div
@@ -121,12 +123,12 @@ function BoatListingCard({
         <div className="flex items-center gap-3 text-xs text-gray-400 mb-2 pb-2 border-b border-gray-50">
           <span className="flex items-center gap-1">
             <MdPeople className="text-sky-300" />
-            {capacity} Pers.
+            {t('category.card.persons', { count: capacity })}
           </span>
           {skipper && (
             <span className="flex items-center gap-1">
               <MdPerson className="text-sky-300" />
-              Skipper inclus
+              {t('category.card.skipperIncluded')}
             </span>
           )}
         </div>
@@ -151,13 +153,13 @@ function BoatListingCard({
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-0.5">
             <span className="text-xl font-bold text-gray-900">{price}€</span>
-            <span className="text-xs text-gray-400">/jour</span>
+            <span className="text-xs text-gray-400">{t('category.card.perDay')}</span>
           </div>
           <button
             type="button"
             className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors bg-[rgba(14,165,233,0.95)] hover:bg-[rgb(0,78,87)]"
           >
-            Réserver
+            {t('category.card.book')}
           </button>
         </div>
       </div>
@@ -179,6 +181,7 @@ const EMPTY_BOAT_TYPE_FILTERS = {
 };
 
 function CategoryPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
   const [ports, setPorts] = useState([]);
@@ -226,7 +229,7 @@ function CategoryPage() {
         if (!hasOverlap) return false;
       }
       if (activeBoatTypes.length > 0 && !activeBoatTypes.includes(boat.type)) return false;
-      if (coupDeCoeurFilter && boat.badge !== 'Coup de cœur') return false;
+      if (coupDeCoeurFilter && boat.badge !== 'coup_de_coeur') return false;
       if (skipperFilter === 'included' && !boat.skipper) return false;
       if (skipperFilter === 'excluded' && boat.skipper) return false;
       if (licenseFilter === 'not_required' && boat.licenseRequired) return false;
@@ -300,7 +303,7 @@ function CategoryPage() {
         setBoats(
           mapped.map((b) => ({
             ...b,
-            badge: coupDeCoeurIds.has(b.id) ? 'Coup de cœur' : null,
+            badge: coupDeCoeurIds.has(b.id) ? 'coup_de_coeur' : null,
           }))
         );
       })
@@ -374,27 +377,25 @@ function CategoryPage() {
         </section>
 
         {/* Section 2 — Listings + Carte 50/50 */}
-        <div id="resultats" className="flex items-start gap-6 px-28 py-6 scroll-mt-[112px]">
+        <div id="resultats" className="flex items-start gap-6 px-28 py-6 scroll-mt-[120px]">
           {/* Listings — 50% */}
           <div className="w-1/2 flex flex-col gap-6">
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4 text-[rgba(14,165,233,0.95)]">
-                  Selon vos recherches
+                  {t('category.results.kicker')}
                 </p>
                 <h2 className="text-2xl font-bold text-gray-900 pt-4 uppercase tracking-tight">
-                  Liste des propositions
+                  {t('category.results.title')}
                 </h2>
               </div>
               <span className="text-sm text-gray-400 font-medium pb-1">
-                {filteredBoats.length} bateaux disponibles
+                {t('category.results.count', { count: filteredBoats.length })}
               </span>
             </div>
 
             {filteredBoats.length === 0 ? (
-              <p className="text-sm text-gray-500 py-6">
-                Aucune offre ne correspond à votre recherche.
-              </p>
+              <p className="text-sm text-gray-500 py-6">{t('category.results.empty')}</p>
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {filteredBoats.slice(0, visibleCount).map((boat) => (
@@ -411,7 +412,7 @@ function CategoryPage() {
             {visibleCount < filteredBoats.length && (
               <div className="flex justify-center py-2">
                 <GhostButton onClick={() => setVisibleCount((n) => n + 4)}>
-                  Voir plus d&apos;offres
+                  {t('category.results.loadMore')}
                 </GhostButton>
               </div>
             )}
@@ -421,7 +422,7 @@ function CategoryPage() {
           <aside className="w-1/2 sticky top-24 flex flex-col gap-2">
             <div className="flex items-center justify-between px-1">
               <p className="text-xs font-bold tracking-widest uppercase text-[rgba(14,165,233,0.95)]">
-                Carte Interactive
+                {t('category.map.title')}
               </p>
               <span
                 className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5"
@@ -432,14 +433,14 @@ function CategoryPage() {
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-                Mise à jour Live
+                {t('category.map.live')}
               </span>
             </div>
             <MapView
               markers={mapMarkers}
               focusMarkers={focusMapMarkers}
               className="h-[660px]"
-              emptyLabel="Aucun bateau à afficher."
+              emptyLabel={t('category.map.empty')}
               onBoundsChange={(bounds) =>
                 setMapBounds({
                   north: bounds.getNorth(),
@@ -449,23 +450,21 @@ function CategoryPage() {
                 })
               }
             />
-            <p className="text-[10px] text-gray-400 text-center px-2">
-              Cliquez sur un marqueur pour voir les détails du bateau
-            </p>
+            <p className="text-[10px] text-gray-400 text-center px-2">{t('category.map.hint')}</p>
           </aside>
         </div>
 
         {/* Section 3 — Carrousels */}
         <section
           id="suggestions"
-          className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[112px]"
+          className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[140px]"
         >
           <Carrousel theme="light" />
         </section>
       </div>
 
       {/* Section 4 — Avis clients */}
-      <ClientReviews id="avis" className="py-10 scroll-mt-[96px]" />
+      <ClientReviews id="avis" className="py-10 scroll-mt-[60px]" />
     </main>
   );
 }

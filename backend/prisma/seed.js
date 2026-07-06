@@ -96,7 +96,7 @@ async function main() {
     (4, 5, 'Péniche La Garonne',     'peniche',   18.00, 'Diesel 45cv',   FALSE, 180.00,  6, 2008, 'FR-BDX-011', 'Découvrez les vignobles bordelais depuis l''eau à bord de cette péniche chaleureuse.',      TRUE),
     (5, 2, 'Voilier Bénéteau First', 'voilier',    9.80, 'Diesel 22cv',   FALSE, 320.00,  4, 2017, 'FR-LRO-012', 'Voilier maniable et rapide pour explorer les îles de Ré et d''Oléron.',                    TRUE),
     (2, 3, 'Armor Voile',            'voilier',   11.50, 'Diesel 27cv',   FALSE, 290.00,  5, 2013, 'FR-BRT-013', 'Voilier robuste taillé pour les eaux bretonnes et les marées de la Bretagne Nord.',         TRUE),
-    (3, 6, 'Catamaran Méditerranée', 'catamaran', 14.50, 'Diesel 2x45cv', TRUE,  650.00, 10, 2022, 'ES-BCN-014', 'Grand catamaran avec skipper au départ de Barcelone. Explorez la Costa Brava.',             TRUE),
+    (3, 1, 'Catamaran Méditerranée', 'catamaran', 14.50, 'Diesel 2x45cv', TRUE,  650.00, 10, 2022, 'ES-BCN-014', 'Grand catamaran avec skipper au départ de Marseille. Explorez les calanques et la Méditerranée.', TRUE),
     (4, 4, 'Voilier de Régate',      'voilier',   10.50, 'Diesel 24cv',   FALSE, 310.00,  4, 2018, 'FR-NIC-015', 'Voilier rapide et nerveux, taillé pour la compétition et les sensations fortes.',           TRUE),
     (5, 4, 'Catamaran Prestige',     'catamaran', 16.00, 'Diesel 2x60cv', TRUE,  850.00, 12, 2023, 'FR-NIC-016', 'Catamaran de luxe avec skipper, prestations haut de gamme pour une croisière d''exception.',  TRUE),
     (2, 5, 'Péniche Fluviale Adour', 'peniche',   20.00, 'Diesel 50cv',   FALSE, 220.00,  8, 2010, 'FR-BDX-017', 'Explorez la France par ses voies navigables à bord de cette péniche confortable.',          FALSE)
@@ -407,8 +407,8 @@ async function main() {
     -- Armor Voile (Brest)
     (13, '2026-07-01', '2026-08-31', TRUE, NULL,   'Bretagne Nord en été'),
     (13, '2026-09-01', '2026-09-30', TRUE, 270.00, 'Septembre breton'),
-    -- Catamaran Méditerranée (Barcelone)
-    (14, '2026-07-01', '2026-08-31', TRUE, NULL,   'Costa Brava — été'),
+    -- Catamaran Méditerranée (Marseille)
+    (14, '2026-07-01', '2026-08-31', TRUE, NULL,   'Calanques — été'),
     (14, '2026-09-01', '2026-10-31', TRUE, 600.00, 'Automne méditerranéen'),
     -- Voilier de Régate (Nice)
     (15, '2026-07-01', '2026-08-31', TRUE, NULL,   'Régates et croisières'),
@@ -576,7 +576,7 @@ async function main() {
     (13, 'confort',        'Chauffage'),
     (13, 'cuisine',        'Cuisinière à gaz 2 feux'),
     (13, 'cuisine',        'Réfrigérateur 50L'),
-    -- Boat 14 : Catamaran Méditerranée (Barcelone)
+    -- Boat 14 : Catamaran Méditerranée (Marseille)
     (14, 'navigation',     'GPS chartplotter tactile'),
     (14, 'navigation',     'VHF radio'),
     (14, 'navigation',     'Pilote automatique'),
@@ -746,7 +746,7 @@ async function main() {
     (3, 2, 'Péniche Girondine',     'peniche', 16.00, 'Diesel 40cv', FALSE, 160.00, 6, 2003, 'FR-LRO-038', 'Péniche classique idéale pour une escapade fluviale paisible entre La Rochelle et le Marais poitevin. Aucun permis requis.', TRUE, FALSE),
     -- Trimaran (39-40)
     (4, 1, 'Trimaran Côte d''Azur', 'trimaran', 13.00, 'Diesel 2x28cv', FALSE, 460.00, 7, 2018, 'FR-MRS-039', 'Trimaran performant au départ de Marseille, équilibrant stabilité et vitesse sur la Méditerranée.', TRUE, TRUE),
-    (3, 6, 'Trimaran Grand Large',  'trimaran', 15.00, 'Diesel 2x40cv', FALSE, 550.00, 9, 2022, 'ES-BCN-040', 'Grand trimaran luxueux depuis Barcelone, conçu pour des croisières hauturières rapides le long de la Costa Brava.', TRUE, TRUE),
+    (3, 4, 'Trimaran Grand Large',  'trimaran', 15.00, 'Diesel 2x40cv', FALSE, 550.00, 9, 2022, 'ES-BCN-040', 'Grand trimaran luxueux depuis Nice, conçu pour des croisières hauturières rapides le long de la Côte d''Azur.', TRUE, TRUE),
     -- Hors-bord (41-42)
     (5, 3, 'Rib 500 Pro',         'hors_bord', 5.00, 'Yamaha 6cv', FALSE, 85.00, 5, 2022, 'FR-BRT-041', 'Semi-rigide sans permis au départ de Brest pour des balades côtières en famille dans la rade.', TRUE, FALSE),
     (2, 5, 'Capelli Tempest 500', 'hors_bord', 5.20, 'Honda 6cv',  FALSE, 80.00, 5, 2021, 'FR-BDX-042', 'Annexe légère sans permis au départ de Bordeaux, parfaite pour explorer les rives de la Garonne.', TRUE, FALSE),
@@ -756,7 +756,7 @@ async function main() {
     -- Gulet (45-47)
     (5, 2, 'Gulet Neptune',     'gulet', 16.00, 'Diesel 140cv', TRUE, 700.00,  8, 2010, 'FR-LRO-045', 'Gulet traditionnel en bois depuis La Rochelle, idéal pour des croisières côtières avec skipper expérimenté.', TRUE, TRUE),
     (3, 3, 'Gulet Bretagne',    'gulet', 17.00, 'Diesel 150cv', TRUE, 750.00, 10, 2013, 'FR-BRT-046', 'Gulet robuste au départ de Brest, conçu pour les eaux bretonnes et les croisières vers les archipels.', TRUE, TRUE),
-    (2, 6, 'Gulet Grand Large', 'gulet', 19.00, 'Diesel 170cv', TRUE, 850.00, 12, 2017, 'ES-BCN-047', 'Grand gulet au départ de Barcelone pour explorer la Costa Brava avec skipper à bord.', TRUE, TRUE),
+    (2, 2, 'Gulet Grand Large', 'gulet', 19.00, 'Diesel 170cv', TRUE, 850.00, 12, 2017, 'ES-BCN-047', 'Grand gulet au départ de La Rochelle pour explorer les îles de Ré et d''Oléron avec skipper à bord.', TRUE, TRUE),
     -- Hors-bords (48-49, sans permis)
     (5, 3, 'Zodiac Medline 5.5',  'hors_bord', 5.50, 'Électrique 2kW', FALSE, 60.00, 4, 2023, 'FR-BRT-048', 'Bateau électrique silencieux sans permis au départ de Brest, idéal pour les sorties nature en rade.', TRUE, FALSE),
     (3, 5, 'Plastimo Open 4.5',   'hors_bord', 4.50, 'Honda 6cv',      FALSE, 55.00, 4, 2022, 'FR-BDX-049', 'Open sans permis depuis Bordeaux pour découvrir la Garonne et ses rives viticoles en toute simplicité.', TRUE, FALSE)

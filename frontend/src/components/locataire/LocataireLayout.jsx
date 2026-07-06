@@ -1,14 +1,16 @@
 import { NavLink, Outlet } from 'react-router-dom';
-
-const NAV = [
-  { to: '/locataire', label: 'Dashboard', end: true },
-  { to: '/locataire/compte', label: 'Compte' },
-  { to: '/locataire/documents', label: 'Mes documents' },
-  { to: '/locataire/reservations', label: 'Mes réservations' },
-  { to: '/locataire/favoris', label: 'Mes favoris' },
-];
+import { useTranslation } from 'react-i18next';
 
 function LocataireLayout() {
+  const { t } = useTranslation();
+  const nav = [
+    { to: '/locataire', label: t('locataireLayout.nav.dashboard'), end: true },
+    { to: '/locataire/compte', label: t('locataireLayout.nav.account') },
+    { to: '/locataire/documents', label: t('locataireLayout.nav.documents') },
+    { to: '/locataire/reservations', label: t('locataireLayout.nav.reservations') },
+    { to: '/locataire/favoris', label: t('locataireLayout.nav.favorites') },
+  ];
+
   return (
     // Fond sombre : indispensable pour que le texte blanc du header reste lisible.
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -17,14 +19,14 @@ function LocataireLayout() {
             colonne latérale à partir de lg. */}
         <aside className="w-full lg:w-60 lg:shrink-0">
           <nav
-            aria-label="Navigation espace locataire"
+            aria-label={t('locataireLayout.navAria')}
             className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 lg:sticky lg:top-[96px]"
           >
             <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Mon espace
+              {t('locataireLayout.mySpace')}
             </p>
             <div className="flex gap-1 overflow-x-auto lg:flex-col">
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}

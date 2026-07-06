@@ -164,6 +164,7 @@ function AdminPortsPage() {
     title: p.name,
     subtitle: [p.city, p.region].filter(Boolean).join(' · '),
     badge: p.boats_count ?? 0,
+    available: (p.boats_count ?? 0) > 0,
   }));
 
   return (
