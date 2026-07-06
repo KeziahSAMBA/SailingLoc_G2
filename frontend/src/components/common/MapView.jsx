@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { FiRefreshCw } from 'react-icons/fi';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -62,6 +63,37 @@ function BoundsWatcher({ onBoundsChange }) {
 
 const GREY_ICON_CSS = `.marker-grey { filter: grayscale(1) brightness(0.75); opacity: 0.7; }`;
 
+// Zoom sur un port au clic, sans dépasser le niveau de zoom déjà atteint par l'utilisateur.
+const MARKER_ZOOM = 13;
+
+function ZoomableMarker({ marker }) {
+  const map = useMap();
+  return (
+    <Marker
+      position={[marker.lat, marker.lng]}
+      icon={marker.available === false ? greyIcon : defaultIcon}
+      eventHandlers={{
+        click: () => map.flyTo([marker.lat, marker.lng], Math.max(map.getZoom(), MARKER_ZOOM)),
+      }}
+    >
+      <Popup>
+        <div className="text-sm">
+          <div className="font-semibold">{marker.title}</div>
+          {marker.subtitle && <div className="text-slate-500">{marker.subtitle}</div>}
+          {marker.available === false && (
+            <div className="mt-1 text-slate-400 italic">Bientôt disponible</div>
+          )}
+          {marker.badge != null && (
+            <div className="mt-1 text-slate-700">
+              {marker.badge} bateau{marker.badge === 1 ? '' : 'x'}
+            </div>
+          )}
+        </div>
+      </Popup>
+    </Marker>
+  );
+}
+
 function MapView({
   markers = [],
   focusMarkers,
@@ -76,6 +108,22 @@ function MapView({
   const fitPoints = (focusMarkers ?? markers).filter(
     (m) => Number.isFinite(m.lat) && Number.isFinite(m.lng)
   );
+  const mapRef = useRef(null);
+
+  function handleResetView() {
+    const map = mapRef.current;
+    if (!map) return;
+    if (fitPoints.length === 1) {
+      map.flyTo([fitPoints[0].lat, fitPoints[0].lng], 11);
+    } else if (fitPoints.length > 1) {
+      map.flyToBounds(
+        fitPoints.map((p) => [p.lat, p.lng]),
+        { padding: [40, 40] }
+      );
+    } else {
+      map.flyTo(FRANCE_CENTER, FRANCE_ZOOM);
+    }
+  }
 
   return (
     // `isolate` + `z-0` créent un stacking context : les z-index internes de Leaflet
@@ -86,6 +134,7 @@ function MapView({
     >
       <style>{GREY_ICON_CSS}</style>
       <MapContainer
+        ref={mapRef}
         center={FRANCE_CENTER}
         zoom={FRANCE_ZOOM}
         scrollWheelZoom
@@ -98,28 +147,18 @@ function MapView({
         <FitBounds points={fitPoints} />
         {onBoundsChange && <BoundsWatcher onBoundsChange={onBoundsChange} />}
         {points.map((m) => (
-          <Marker
-            key={m.id}
-            position={[m.lat, m.lng]}
-            icon={m.available === false ? greyIcon : defaultIcon}
-          >
-            <Popup>
-              <div className="text-sm">
-                <div className="font-semibold">{m.title}</div>
-                {m.subtitle && <div className="text-slate-500">{m.subtitle}</div>}
-                {m.available === false && (
-                  <div className="mt-1 text-slate-400 italic">Bientôt disponible</div>
-                )}
-                {m.badge != null && (
-                  <div className="mt-1 text-slate-700">
-                    {m.badge} bateau{m.badge === 1 ? '' : 'x'}
-                  </div>
-                )}
-              </div>
-            </Popup>
-          </Marker>
+          <ZoomableMarker key={m.id} marker={m} />
         ))}
       </MapContainer>
+      <button
+        type="button"
+        onClick={handleResetView}
+        title="Réinitialiser la carte"
+        aria-label="Réinitialiser la carte"
+        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-white text-slate-700 shadow-md hover:bg-slate-100 transition-colors"
+      >
+        <FiRefreshCw size={15} />
+      </button>
       {points.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-[400] flex items-center justify-center bg-slate-950/40 text-sm text-slate-200">
           {emptyLabel}

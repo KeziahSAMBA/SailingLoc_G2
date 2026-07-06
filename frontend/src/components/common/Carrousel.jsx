@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchBoats } from '../../services/boatService';
 import { fetchPorts } from '../../services/portService';
 import { useFavorites } from '../../hooks/useFavorites.js';
@@ -48,6 +48,7 @@ const PortCarousel = memo(
     variant = 'default',
     favoriteIds,
     onToggleFavorite,
+    onSlideClick,
   }) => {
     const { t } = useTranslation();
     const maxIndex = slides.length - visibleCount;
@@ -87,6 +88,7 @@ const PortCarousel = memo(
                 key={slide.id}
                 className="flex flex-col cursor-pointer group px-1.5"
                 style={{ width: `${slideWidthPct}%` }}
+                onClick={() => onSlideClick?.(slide)}
               >
                 {variant === 'overlay' ? (
                   <>
@@ -303,6 +305,7 @@ const CarouselSection = ({
   variant = 'default',
   favoriteIds,
   onToggleFavorite,
+  onSlideClick,
 }) => {
   const { t } = useTranslation();
   const titleColor = theme === 'dark' ? 'text-white' : 'text-black';
@@ -332,6 +335,7 @@ const CarouselSection = ({
         variant={variant}
         favoriteIds={favoriteIds}
         onToggleFavorite={onToggleFavorite}
+        onSlideClick={onSlideClick}
       />
     </div>
   );
@@ -596,9 +600,17 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 
 const Carrousel = ({ theme = 'dark' }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
   const { favoriteIds, toggleFavorite } = useFavorites();
+
+  // Un port "bientôt disponible" n'a aucun bateau : cliquer dessus n'amènerait
+  // qu'une page catégorie vide, donc on ignore le clic dans ce cas.
+  function handlePortClick(slide) {
+    if (!slide.available) return;
+    navigate(`/categorie?destination=${encodeURIComponent(slide.label)}`);
+  }
 
   useEffect(() => {
     fetchBoats()
@@ -774,6 +786,7 @@ const Carrousel = ({ theme = 'dark' }) => {
             variant={variant}
             favoriteIds={favoriteIds}
             onToggleFavorite={toggleFavorite}
+            onSlideClick={variant === 'port' ? handlePortClick : undefined}
           />
         ))}
     </div>

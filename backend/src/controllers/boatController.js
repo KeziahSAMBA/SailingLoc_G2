@@ -12,6 +12,8 @@ const BOAT_INCLUDE = {
   bookings: {
     select: {
       status: true,
+      start_date: true,
+      end_date: true,
       reviews: {
         where: { status: 'validated', deleted_at: null },
         select: { rating: true },
@@ -19,6 +21,10 @@ const BOAT_INCLUDE = {
     },
   },
 };
+
+// Statuts qui bloquent réellement les dates dans le calendrier (une réservation
+// refusée ou annulée libère la période).
+const BLOCKING_BOOKING_STATUSES = ['pending', 'confirmed'];
 
 function enrichWithRating(boats) {
   return boats.map((b) => {
@@ -28,8 +34,11 @@ function enrichWithRating(boats) {
         ? Math.round((allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length) * 10) / 10
         : null;
     const booking_count = b.bookings.filter((bk) => bk.status === 'confirmed').length;
+    const booked_ranges = b.bookings
+      .filter((bk) => BLOCKING_BOOKING_STATUSES.includes(bk.status))
+      .map((bk) => ({ start_date: bk.start_date, end_date: bk.end_date }));
     const { bookings, ...boat } = b;
-    return { ...boat, avg_rating: avg, booking_count };
+    return { ...boat, avg_rating: avg, booking_count, booked_ranges };
   });
 }
 

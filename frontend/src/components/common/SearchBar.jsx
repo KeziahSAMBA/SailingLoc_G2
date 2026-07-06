@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { FiSearch, FiX } from 'react-icons/fi';
 import { fetchPorts } from '../../services/portService.js';
 import { fetchBoats } from '../../services/boatService.js';
+import DateRangePicker from './DateRangePicker.jsx';
 
 const DIACRITICS_REGEX = /[̀-ͯ]/g;
 
@@ -21,24 +22,17 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function DateInput({ label, value, onChange, light }) {
-  return (
-    <div
-      className={`group flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full transition-colors cursor-pointer ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
-    >
-      <span
-        className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
-      >
-        {label}
-      </span>
-      <input
-        type="date"
-        value={value}
-        onChange={onChange}
-        className={`bg-transparent outline-none text-xs cursor-pointer ${light ? 'text-white/80' : 'text-black/80'}`}
-      />
-    </div>
-  );
+function isWithinRange(day, startStr, endStr) {
+  const day0 = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  const start0 = new Date(
+    start.getUTCFullYear(),
+    start.getUTCMonth(),
+    start.getUTCDate()
+  ).getTime();
+  const end0 = new Date(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()).getTime();
+  return day0 >= start0 && day0 <= end0;
 }
 
 function SearchBar({ light = false }) {
@@ -52,6 +46,7 @@ function SearchBar({ light = false }) {
   const [travelers, setTravelers] = useState(searchParams.get('travelers') ?? '');
 
   const [ports, setPorts] = useState([]);
+  const [boats, setBoats] = useState([]);
   const [destinationFocused, setDestinationFocused] = useState(false);
   const [nearestSuggestion, setNearestSuggestion] = useState(null);
 
@@ -63,6 +58,7 @@ function SearchBar({ light = false }) {
       .then(([portsRes, boatsRes]) => {
         const launchedCities = new Set(boatsRes.data.map((b) => b.port?.city));
         setPorts(portsRes.data.filter((p) => launchedCities.has(p.city)));
+        setBoats(boatsRes.data);
       })
       .catch(() => {});
   }, []);
@@ -71,6 +67,29 @@ function SearchBar({ light = false }) {
   const localMatches = ports.filter(
     (p) => !trimmedDestination || normalize(p.city).includes(normalize(trimmedDestination))
   );
+
+  // Un jour est disponible si au moins un bateau publié (dans la destination
+  // recherchée, si renseignée) a une période d'ouverture couvrant ce jour et
+  // n'a pas de réservation active (pending/confirmed) ce même jour.
+  function isDateAvailable(day) {
+    const normalizedDestination = normalize(trimmedDestination);
+    return boats.some((boat) => {
+      if (
+        normalizedDestination &&
+        !normalize(boat.port?.city || '').includes(normalizedDestination)
+      ) {
+        return false;
+      }
+      const inOpenWindow = (boat.availabilities || []).some((a) =>
+        isWithinRange(day, a.start_date, a.end_date)
+      );
+      if (!inOpenWindow) return false;
+      const isBooked = (boat.booked_ranges || []).some((r) =>
+        isWithinRange(day, r.start_date, r.end_date)
+      );
+      return !isBooked;
+    });
+  }
 
   // Aucun port ne correspond au texte saisi : on géocode la destination (Nominatim,
   // OSM déjà utilisé pour la carte) pour proposer le port disponible le plus proche.
@@ -156,7 +175,10 @@ function SearchBar({ light = false }) {
         <input
           type="text"
           value={destination}
-          onChange={(e) => setDestination(e.target.value)}
+          onChange={(e) => {
+            setDestination(e.target.value);
+            setDestinationFocused(true);
+          }}
           onFocus={() => setDestinationFocused(true)}
           onBlur={() => setTimeout(() => setDestinationFocused(false), 150)}
           placeholder={t('searchBar.destinationPlaceholder')}
@@ -171,6 +193,7 @@ function SearchBar({ light = false }) {
                   <button
                     key={p.id_port}
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => selectDestination(p.city)}
                     className="w-full text-left px-4 py-1.5 text-xs text-gray-700 hover:bg-sky-50 hover:text-sky-700 transition-colors"
                   >
@@ -180,6 +203,7 @@ function SearchBar({ light = false }) {
               : nearestSuggestion && (
                   <button
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => selectDestination(nearestSuggestion.city)}
                     className="w-full text-left px-4 py-2 text-xs text-gray-600 hover:bg-sky-50 transition-colors"
                   >
@@ -193,17 +217,12 @@ function SearchBar({ light = false }) {
       </div>
 
       <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
-      <DateInput
-        label={t('searchBar.arrival')}
-        value={start}
-        onChange={(e) => setStart(e.target.value)}
-        light={light}
-      />
-      <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
-      <DateInput
-        label={t('searchBar.departure')}
-        value={end}
-        onChange={(e) => setEnd(e.target.value)}
+      <DateRangePicker
+        start={start}
+        end={end}
+        onChangeStart={setStart}
+        onChangeEnd={setEnd}
+        isDateAvailable={isDateAvailable}
         light={light}
       />
       <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
