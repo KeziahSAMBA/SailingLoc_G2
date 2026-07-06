@@ -18,3 +18,9 @@ export function updateBookingStatus(idBooking, action, reason) {
     reason,
   });
 }
+
+// Historique des paiements reçus sur les bateaux du propriétaire, avec les
+// totaux (brut, commissions déduites, net).
+export function getPayments() {
+  return api.get('/users/me/proprietaire/payments');
+}

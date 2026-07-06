@@ -1,6 +1,7 @@
 import {
   getDashboardStats,
   listBookings,
+  listPayments,
   setBookingStatus,
 } from '../services/proprietaireService.js';
 
@@ -17,6 +18,15 @@ export async function getMyBookings(req, res) {
   try {
     const bookings = await listBookings(req.user.id_user);
     res.json({ bookings });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyPayments(req, res) {
+  try {
+    const { totals, payments } = await listPayments(req.user.id_user);
+    res.json({ totals, payments });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

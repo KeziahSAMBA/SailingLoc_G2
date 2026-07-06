@@ -24,6 +24,7 @@ import {
 import {
   getDashboard as getProprietaireDashboard,
   getMyBookings as getProprietaireBookings,
+  getMyPayments as getProprietairePayments,
   patchBooking as patchProprietaireBooking,
 } from '../controllers/proprietaireController.js';
 
@@ -59,6 +60,12 @@ router.patch(
   protect,
   requireRole('proprietaire'),
   patchProprietaireBooking
+);
+router.get(
+  '/me/proprietaire/payments',
+  protect,
+  requireRole('proprietaire'),
+  getProprietairePayments
 );
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);

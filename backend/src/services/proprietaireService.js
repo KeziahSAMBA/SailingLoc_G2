@@ -155,6 +155,65 @@ export async function listBookings(id_user) {
   }));
 }
 
+// Historique des paiements reçus sur les bateaux du propriétaire (plus récents
+// d'abord), avec les totaux : brut encaissé, commissions SailingLoc déduites et
+// net propriétaire — calculés sur les paiements réussis uniquement (même règle
+// que l'admin : pending/failed ne sont pas du chiffre d'affaires).
+export async function listPayments(id_user) {
+  const payments = await prisma.payment.findMany({
+    where: { booking: { deleted_at: null, boat: { id_user, deleted_at: null } } },
+    orderBy: { payment_date: 'desc' },
+    include: {
+      booking: {
+        select: {
+          id_booking: true,
+          start_date: true,
+          end_date: true,
+          boat: { select: { name: true } },
+          user: { select: { first_name: true, last_name: true } },
+        },
+      },
+    },
+  });
+
+  const totals = { gross: 0, commission: 0, net: 0, success_count: 0 };
+  for (const p of payments) {
+    if (p.status !== 'success') continue;
+    totals.gross += Number(p.amount);
+    totals.commission += Number(p.commission);
+    totals.success_count += 1;
+  }
+  totals.net = totals.gross - totals.commission;
+
+  return {
+    totals,
+    payments: payments.map((p) => ({
+      id_payment: p.id_payment,
+      transaction_ref: p.transaction_ref,
+      payment_date: p.payment_date,
+      payment_method: p.payment_method,
+      status: p.status,
+      amount: Number(p.amount),
+      commission: Number(p.commission),
+      net: Number(p.amount) - Number(p.commission),
+      refunded_amount: p.refunded_amount != null ? Number(p.refunded_amount) : null,
+      refunded_at: p.refunded_at,
+      refund_reason: p.refund_reason,
+      booking: p.booking
+        ? {
+            id_booking: p.booking.id_booking,
+            start_date: p.booking.start_date,
+            end_date: p.booking.end_date,
+            boat_name: p.booking.boat?.name || null,
+            locataire: [p.booking.user?.first_name, p.booking.user?.last_name]
+              .filter(Boolean)
+              .join(' '),
+          }
+        : null,
+    })),
+  };
+}
+
 // Transitions autorisées pour le propriétaire sur une réservation de ses bateaux.
 const BOOKING_ACTIONS = {
   confirm: { from: ['pending'], to: 'confirmed' },
