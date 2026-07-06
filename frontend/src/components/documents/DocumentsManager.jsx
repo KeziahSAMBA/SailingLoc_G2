@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useToast } from '../../hooks/useToast.jsx';
 import {
@@ -9,45 +10,64 @@ import {
 } from '../../services/documentService.js';
 
 // Documents obligatoires selon le rôle (doit correspondre au backend).
-const DOC_TYPES_BY_ROLE = {
-  locataire: [
-    { key: 'permis_conduire', label: 'Permis bateau', desc: 'Permis bateau côtier ou fluvial.' },
-    {
-      key: 'piece_identite',
-      label: "Pièce d'identité",
-      desc: "Carte nationale d'identité ou passeport en cours de validité.",
-    },
-    {
-      key: 'cv_nautique',
-      label: 'CV nautique',
-      desc: 'Document décrivant votre expérience de navigation.',
-    },
-  ],
-  proprietaire: [
-    { key: 'permis', label: 'Permis', desc: 'Permis bateau ou de conduire.' },
-    { key: 'assurance', label: 'Assurance', desc: 'Attestation d’assurance du bateau.' },
-    {
-      key: 'cv_marin',
-      label: 'CV marin',
-      desc: 'Document décrivant votre expérience maritime. Optionnel — requis seulement si vous proposez vos services de skipper avec votre bateau.',
-      optional: true,
-    },
-    {
-      key: 'acte_francisation',
-      label: 'Acte de francisation',
-      desc: 'Certificat d’immatriculation du bateau (carte d’enregistrement). Plusieurs possibles — chacun ne peut être rattaché qu’à une seule annonce.',
-      multiple: true,
-    },
-  ],
-};
+function getDocTypesByRole(t) {
+  return {
+    locataire: [
+      {
+        key: 'permis_conduire',
+        label: t('documentsManager.docTypes.locataire.permis_conduire.label'),
+        desc: t('documentsManager.docTypes.locataire.permis_conduire.desc'),
+      },
+      {
+        key: 'piece_identite',
+        label: t('documentsManager.docTypes.locataire.piece_identite.label'),
+        desc: t('documentsManager.docTypes.locataire.piece_identite.desc'),
+      },
+      {
+        key: 'cv_nautique',
+        label: t('documentsManager.docTypes.locataire.cv_nautique.label'),
+        desc: t('documentsManager.docTypes.locataire.cv_nautique.desc'),
+      },
+    ],
+    proprietaire: [
+      {
+        key: 'permis',
+        label: t('documentsManager.docTypes.proprietaire.permis.label'),
+        desc: t('documentsManager.docTypes.proprietaire.permis.desc'),
+      },
+      {
+        key: 'assurance',
+        label: t('documentsManager.docTypes.proprietaire.assurance.label'),
+        desc: t('documentsManager.docTypes.proprietaire.assurance.desc'),
+      },
+      {
+        key: 'cv_marin',
+        label: t('documentsManager.docTypes.proprietaire.cv_marin.label'),
+        desc: t('documentsManager.docTypes.proprietaire.cv_marin.desc'),
+      },
+      {
+        key: 'acte_francisation',
+        label: t('documentsManager.docTypes.proprietaire.acte_francisation.label'),
+        desc: t('documentsManager.docTypes.proprietaire.acte_francisation.desc'),
+        multiple: true,
+      },
+    ],
+  };
+}
 
-const STATUS = {
-  pending: { label: 'En attente de validation', cls: 'bg-amber-500/15 text-amber-300' },
-  validated: { label: 'Validé', cls: 'bg-emerald-500/15 text-emerald-300' },
-  refused: { label: 'Refusé', cls: 'bg-red-500/15 text-red-300' },
-};
+function getStatus(t) {
+  return {
+    pending: { label: t('documentsManager.status.pending'), cls: 'bg-amber-100 text-amber-800' },
+    validated: {
+      label: t('documentsManager.status.validated'),
+      cls: 'bg-emerald-100 text-emerald-800',
+    },
+    refused: { label: t('documentsManager.status.refused'), cls: 'bg-red-100 text-red-700' },
+  };
+}
 
 function DocumentRow({ config, docs, onChanged }) {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [file, setFile] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -56,7 +76,7 @@ function DocumentRow({ config, docs, onChanged }) {
 
   async function handleUpload() {
     if (!file) {
-      setError('Sélectionnez un fichier.');
+      setError(t('documentsManager.selectFile'));
       return;
     }
     setError('');
@@ -65,10 +85,10 @@ function DocumentRow({ config, docs, onChanged }) {
       await uploadDocument(config.key, file);
       setFile(null);
       if (inputRef.current) inputRef.current.value = '';
-      showToast(`${config.label} envoyé.`, 'success');
+      showToast(t('documentsManager.uploadSuccess', { label: config.label }), 'success');
       onChanged();
     } catch (err) {
-      setError(err.response?.data?.message || "Échec de l'envoi.");
+      setError(err.response?.data?.message || t('documentsManager.uploadError'));
     } finally {
       setBusy(false);
     }
@@ -82,7 +102,7 @@ function DocumentRow({ config, docs, onChanged }) {
       window.open(url, '_blank', 'noopener');
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch {
-      setError("Impossible d'ouvrir le document.");
+      setError(t('documentsManager.viewError'));
     }
   }
 
@@ -91,22 +111,26 @@ function DocumentRow({ config, docs, onChanged }) {
     setError('');
     try {
       await deleteDocument(doc.id_document);
-      showToast(`${config.label} supprimé.`, 'success');
+      showToast(t('documentsManager.deleteSuccess', { label: config.label }), 'success');
       onChanged();
     } catch (err) {
-      setError(err.response?.data?.message || 'Échec de la suppression.');
+      setError(err.response?.data?.message || t('documentsManager.deleteError'));
     } finally {
       setBusy(false);
     }
   }
 
+  const status = getStatus(t);
   const hasDocs = docs.length > 0;
   const headerBadge = config.multiple
     ? hasDocs
-      ? { label: `${docs.length} fichier(s)`, cls: 'bg-slate-500/15 text-slate-300' }
+      ? {
+          label: t('documentsManager.filesCount', { count: docs.length }),
+          cls: 'bg-slate-100 text-slate-600',
+        }
       : null
     : hasDocs
-      ? STATUS[docs[0].status]
+      ? status[docs[0].status]
       : null;
 
   return (
@@ -121,12 +145,12 @@ function DocumentRow({ config, docs, onChanged }) {
             headerBadge ? headerBadge.cls : 'bg-slate-800 text-slate-400'
           }`}
         >
-          {headerBadge ? headerBadge.label : config.optional ? 'Optionnel' : 'Non fourni'}
+          {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
         </span>
       </div>
 
       {docs.map((doc) => {
-        const st = STATUS[doc.status];
+        const st = status[doc.status];
         return (
           <div
             key={doc.id_document}
@@ -143,7 +167,7 @@ function DocumentRow({ config, docs, onChanged }) {
               onClick={() => handleView(doc)}
               className="text-xs font-semibold text-[#5AB4EC] hover:underline"
             >
-              Voir
+              {t('documentsManager.view')}
             </button>
             <button
               type="button"
@@ -151,7 +175,7 @@ function DocumentRow({ config, docs, onChanged }) {
               disabled={busy}
               className="ml-auto text-xs font-semibold text-red-300 hover:underline disabled:opacity-50"
             >
-              Supprimer
+              {t('documentsManager.delete')}
             </button>
           </div>
         );
@@ -174,13 +198,17 @@ function DocumentRow({ config, docs, onChanged }) {
           disabled={busy || !file}
           className="rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {busy ? 'Envoi…' : config.multiple ? 'Ajouter' : hasDocs ? 'Remplacer' : 'Envoyer'}
+          {busy
+            ? t('documentsManager.sending')
+            : config.multiple
+              ? t('documentsManager.add')
+              : hasDocs
+                ? t('documentsManager.replace')
+                : t('documentsManager.send')}
         </button>
       </div>
 
-      <p className="mt-2 text-xs text-slate-500">
-        Formats acceptés : PDF, JPG, PNG — 5 Mo maximum.
-      </p>
+      <p className="mt-2 text-xs text-slate-400">{t('documentsManager.acceptedFormats')}</p>
 
       {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
     </article>
@@ -191,8 +219,9 @@ function DocumentRow({ config, docs, onChanged }) {
 // Contenu seul : l'enveloppe (fond, en-tête de page) est fournie par la page hôte.
 // `onCounts` remonte la progression (fournis / total) pour l'afficher où l'hôte veut.
 function DocumentsManager({ onCounts }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const docTypes = DOC_TYPES_BY_ROLE[user?.role] || [];
+  const docTypes = getDocTypesByRole(t)[user?.role] || [];
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -214,14 +243,14 @@ function DocumentsManager({ onCounts }) {
   }, {});
   // Le compteur « fournis / total » ne concerne que les documents obligatoires
   // (les optionnels, comme le CV marin du propriétaire, n'y entrent pas).
-  const requiredTypes = docTypes.filter((t) => !t.optional);
-  const providedCount = requiredTypes.filter((t) => (docsByType[t.key] || []).length > 0).length;
+  const requiredTypes = docTypes.filter((dt) => !dt.optional);
+  const providedCount = requiredTypes.filter((dt) => (docsByType[dt.key] || []).length > 0).length;
 
   useEffect(() => {
     if (onCounts) onCounts({ provided: providedCount, total: requiredTypes.length });
   }, [onCounts, providedCount, requiredTypes.length]);
 
-  if (loading) return <p className="text-slate-200">Chargement…</p>;
+  if (loading) return <p className="text-slate-200">{t('documentsManager.loading')}</p>;
 
   return (
     <div className="space-y-5">

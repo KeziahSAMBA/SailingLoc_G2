@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { getDashboard } from '../../services/locataireService.js';
 
@@ -16,12 +17,14 @@ const DATE_SHORT = new Intl.DateTimeFormat('fr-FR', {
   year: '2-digit',
 });
 
-const BOOKING_STATUS = {
-  pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
-  confirmed: { label: 'Confirmée', cls: 'bg-emerald-500/15 text-emerald-300' },
-  refused: { label: 'Refusée', cls: 'bg-red-500/15 text-red-300' },
-  cancelled: { label: 'Annulée', cls: 'bg-slate-500/15 text-slate-300' },
-};
+function getBookingStatus(t) {
+  return {
+    pending: { label: t('bookingStatus.pending'), cls: 'bg-amber-500/15 text-amber-300' },
+    confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-emerald-500/15 text-emerald-300' },
+    refused: { label: t('bookingStatus.refused'), cls: 'bg-red-500/15 text-red-300' },
+    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-slate-500/15 text-slate-300' },
+  };
+}
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
 const FOCUS_RING =
@@ -45,12 +48,17 @@ function daysUntil(value) {
 }
 
 function StatCard({ label, value, accent, to, loading }) {
+  const { t } = useTranslation();
   const display = loading ? '…' : NUMBER.format(value ?? 0);
   return (
     <li>
       <Link
         to={to}
-        aria-label={loading ? `${label} : chargement en cours` : `${label} : ${display}`}
+        aria-label={
+          loading
+            ? t('locataireDashboard.statLoading', { label })
+            : t('locataireDashboard.statValue', { label, value: display })
+        }
         className={`block rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:border-slate-600 hover:bg-slate-900 ${FOCUS_RING}`}
       >
         <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -65,6 +73,7 @@ function StatCard({ label, value, accent, to, loading }) {
 }
 
 function NextBookingCard({ booking }) {
+  const { t } = useTranslation();
   const days = daysUntil(booking.start_date);
   const port = booking.boat?.port;
 
@@ -76,7 +85,7 @@ function NextBookingCard({ booking }) {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-[#5AB4EC]">
-            Prochaine réservation
+            {t('locataireDashboard.nextBooking.label')}
           </p>
           <h3 className="mt-1 text-xl font-bold text-white sm:text-2xl">{booking.boat?.name}</h3>
           {(booking.boat?.type || port) && (
@@ -88,20 +97,22 @@ function NextBookingCard({ booking }) {
           )}
         </div>
         <span className="rounded-full bg-[#5AB4EC]/15 px-3 py-1 text-sm font-semibold text-[#5AB4EC]">
-          {days === 0 ? "Aujourd'hui" : `Dans ${days} j`}
+          {days === 0
+            ? t('locataireDashboard.nextBooking.today')
+            : t('locataireDashboard.nextBooking.inDays', { days })}
         </span>
       </header>
 
       <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm">
         <div>
-          <dt className="text-slate-400">Dates</dt>
+          <dt className="text-slate-400">{t('locataireDashboard.nextBooking.dates')}</dt>
           <dd className="font-medium text-slate-100">
             <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time> →{' '}
             <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
           </dd>
         </div>
         <div>
-          <dt className="text-slate-400">Montant</dt>
+          <dt className="text-slate-400">{t('locataireDashboard.nextBooking.amount')}</dt>
           <dd className="font-medium text-slate-100">{EURO.format(booking.total_amount ?? 0)}</dd>
         </div>
       </dl>
@@ -110,7 +121,11 @@ function NextBookingCard({ booking }) {
 }
 
 function StatusBadge({ status }) {
-  const meta = BOOKING_STATUS[status] || { label: status, cls: 'bg-slate-500/15 text-slate-300' };
+  const { t } = useTranslation();
+  const meta = getBookingStatus(t)[status] || {
+    label: status,
+    cls: 'bg-slate-500/15 text-slate-300',
+  };
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
       {meta.label}
@@ -119,6 +134,7 @@ function StatusBadge({ status }) {
 }
 
 function RecentBookings({ bookings }) {
+  const { t } = useTranslation();
   return (
     <section
       aria-labelledby="recent-bookings-title"
@@ -126,18 +142,20 @@ function RecentBookings({ bookings }) {
     >
       <header className="flex items-center justify-between gap-3">
         <h2 id="recent-bookings-title" className="text-sm font-semibold text-slate-200">
-          Dernières réservations
+          {t('locataireDashboard.recentBookings.title')}
         </h2>
         <Link
           to="/locataire/reservations"
           className={`rounded text-xs font-medium text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
         >
-          Tout voir
+          {t('locataireDashboard.recentBookings.seeAll')}
         </Link>
       </header>
 
       {bookings.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-400">Vous n&apos;avez pas encore de réservation.</p>
+        <p className="mt-4 text-sm text-slate-400">
+          {t('locataireDashboard.recentBookings.empty')}
+        </p>
       ) : (
         <ul className="mt-4 divide-y divide-slate-800">
           {bookings.map((b) => (
@@ -167,6 +185,7 @@ function RecentBookings({ bookings }) {
 }
 
 function FavoritesPreview({ favorites }) {
+  const { t } = useTranslation();
   return (
     <section
       aria-labelledby="favorites-title"
@@ -174,19 +193,19 @@ function FavoritesPreview({ favorites }) {
     >
       <header className="flex items-center justify-between gap-3">
         <h2 id="favorites-title" className="text-sm font-semibold text-slate-200">
-          Mes favoris
+          {t('locataireDashboard.favoritesPreview.title')}
         </h2>
         <Link
           to="/locataire/favoris"
           className={`rounded text-xs font-medium text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
         >
-          Tout voir
+          {t('locataireDashboard.favoritesPreview.seeAll')}
         </Link>
       </header>
 
       {favorites.length === 0 ? (
         <p className="mt-4 text-sm text-slate-400">
-          Aucun favori pour l&apos;instant. Explorez les bateaux et ajoutez-en !
+          {t('locataireDashboard.favoritesPreview.empty')}
         </p>
       ) : (
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -220,7 +239,8 @@ function FavoritesPreview({ favorites }) {
                       {[f.boat?.type, f.boat?.port?.city].filter(Boolean).join(' · ')}
                     </span>
                     <span className="mt-1 block text-xs font-semibold text-[#5AB4EC]">
-                      {EURO.format(f.boat?.daily_price ?? 0)} / jour
+                      {EURO.format(f.boat?.daily_price ?? 0)}{' '}
+                      {t('locataireDashboard.favoritesPreview.perDay')}
                     </span>
                   </figcaption>
                 </figure>
@@ -234,6 +254,7 @@ function FavoritesPreview({ favorites }) {
 }
 
 function LocataireDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -241,15 +262,13 @@ function LocataireDashboard() {
 
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
-    document.title = 'Tableau de bord — SailingLoc';
-  }, []);
+    document.title = t('locataireDashboard.pageTitle');
+  }, [t]);
 
   useEffect(() => {
     getDashboard()
       .then((res) => setStats(res.data.stats))
-      .catch((err) =>
-        setError(err.response?.data?.message || 'Erreur de chargement du tableau de bord.')
-      )
+      .catch((err) => setError(err.response?.data?.message || t('locataireDashboard.loadError')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -259,23 +278,19 @@ function LocataireDashboard() {
   // Message d'alerte documents : combine manquants et en attente/refusés.
   const docsAlertParts = [];
   if (missingDocuments > 0) {
-    docsAlertParts.push(
-      `${NUMBER.format(missingDocuments)} manquant${missingDocuments > 1 ? 's' : ''}`
-    );
+    docsAlertParts.push(t('locataireDashboard.docsAlert.missing', { count: missingDocuments }));
   }
   if (pendingDocuments > 0) {
-    docsAlertParts.push(
-      `${NUMBER.format(pendingDocuments)} en attente ou refusé${pendingDocuments > 1 ? 's' : ''}`
-    );
+    docsAlertParts.push(t('locataireDashboard.docsAlert.pending', { count: pendingDocuments }));
   }
 
   return (
     <section aria-labelledby="dashboard-title" aria-busy={loading}>
       <h1 id="dashboard-title" className="text-2xl font-bold text-white">
-        Tableau de bord
+        {t('locataireDashboard.title')}
       </h1>
       <p className="mt-1 text-sm text-slate-400">
-        Bonjour {user?.first_name}, voici un aperçu de votre activité.
+        {t('locataireDashboard.greeting', { name: user?.first_name })}
       </p>
 
       {error && (
@@ -298,49 +313,50 @@ function LocataireDashboard() {
             ⚠️
           </span>
           <span>
-            Documents à compléter : <strong>{docsAlertParts.join(' et ')}</strong>. Cliquez pour les
-            régulariser.
+            {t('locataireDashboard.docsAlert.prefix')}{' '}
+            <strong>{docsAlertParts.join(` ${t('locataireDashboard.docsAlert.and')} `)}</strong>.{' '}
+            {t('locataireDashboard.docsAlert.suffix')}
           </span>
         </Link>
       )}
 
       {/* Prochaine réservation : carte large mise en avant. */}
       {!loading && stats?.nextBooking && (
-        <section className="mt-6" aria-label="Prochaine réservation">
+        <section className="mt-6" aria-label={t('locataireDashboard.nextBooking.sectionAria')}>
           <NextBookingCard booking={stats.nextBooking} />
         </section>
       )}
 
       <h2 className="sr-only" id="kpis-title">
-        Indicateurs clés
+        {t('locataireDashboard.kpisTitle')}
       </h2>
       <ul
         aria-labelledby="kpis-title"
         className="mt-6 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
-          label="Réservations en cours"
+          label={t('locataireDashboard.stats.activeBookings')}
           accent="text-white"
           value={stats?.activeBookings}
           to="/locataire/reservations"
           loading={loading}
         />
         <StatCard
-          label="Avis à laisser"
+          label={t('locataireDashboard.stats.reviewsToLeave')}
           accent="text-emerald-400"
           value={stats?.reviewsToLeave}
           to="/locataire/reservations"
           loading={loading}
         />
         <StatCard
-          label="Favoris"
+          label={t('locataireDashboard.stats.favorites')}
           accent="text-[#5AB4EC]"
           value={stats?.favorites}
           to="/locataire/favoris"
           loading={loading}
         />
         <StatCard
-          label="Messages non lus"
+          label={t('locataireDashboard.stats.unreadMessages')}
           accent="text-amber-400"
           value={stats?.unreadMessages}
           to="/locataire/messages"

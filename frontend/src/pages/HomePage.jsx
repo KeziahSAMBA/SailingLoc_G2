@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import bateauVideo from '../assets/video/video_bateau_3.mp4';
 import SearchBar from '../components/common/SearchBar.jsx';
 import { SiAppstore, SiGoogleplay } from 'react-icons/si';
@@ -57,49 +58,53 @@ function DataDots({ active }) {
   );
 }
 
-const STEPS = [
-  {
-    num: 1,
-    icon: <MdSearch />,
-    title: 'Recherchez',
-    text: 'Utilisez nos filtres précis pour trouver le bateau idéal selon vos dates et votre budget.',
-  },
-  {
-    num: 2,
-    icon: <MdEventAvailable />,
-    title: 'Réservez',
-    text: 'Échangez avec le propriétaire et confirmez votre réservation en quelques clics via notre interface sécurisée.',
-  },
-  {
-    num: 3,
-    icon: <MdAnchor />,
-    title: 'Naviguez',
-    text: "Le jour J, faites l'état des lieux, recevez les clés et profitez de votre aventure sur l'eau.",
-  },
-];
+function getSteps(t) {
+  return [
+    {
+      num: 1,
+      icon: <MdSearch />,
+      title: t('home.steps.step1.title'),
+      text: t('home.steps.step1.text'),
+    },
+    {
+      num: 2,
+      icon: <MdEventAvailable />,
+      title: t('home.steps.step2.title'),
+      text: t('home.steps.step2.text'),
+    },
+    {
+      num: 3,
+      icon: <MdAnchor />,
+      title: t('home.steps.step3.title'),
+      text: t('home.steps.step3.text'),
+    },
+  ];
+}
 
-const VALUE_CARDS = [
-  {
-    icon: <MdAnchor className="text-3xl text-sky-500" />,
-    title: 'Flotte sélectionnée',
-    text: 'Chaque bateau est vérifié et validé par notre équipe pour garantir qualité et sécurité à bord.',
-  },
-  {
-    icon: <FaShieldAlt className="text-3xl text-sky-500" />,
-    title: 'Paiement sécurisé',
-    text: 'Vos transactions sont protégées de bout en bout. Réservez en toute confiance, sans mauvaise surprise.',
-  },
-  {
-    icon: <FaHandshake className="text-3xl text-sky-500" />,
-    title: 'Propriétaires passionnés',
-    text: 'Louez directement auprès de marins expérimentés qui partagent leur passion et leurs conseils.',
-  },
-  {
-    icon: <MdVerified className="text-3xl text-sky-500" />,
-    title: 'Assistance 7j/7',
-    text: 'Notre équipe est disponible à tout moment pour vous accompagner avant, pendant et après votre sortie.',
-  },
-];
+function getValueCards(t) {
+  return [
+    {
+      icon: <MdAnchor className="text-3xl text-sky-500" />,
+      title: t('home.values.fleet.title'),
+      text: t('home.values.fleet.text'),
+    },
+    {
+      icon: <FaShieldAlt className="text-3xl text-sky-500" />,
+      title: t('home.values.payment.title'),
+      text: t('home.values.payment.text'),
+    },
+    {
+      icon: <FaHandshake className="text-3xl text-sky-500" />,
+      title: t('home.values.owners.title'),
+      text: t('home.values.owners.text'),
+    },
+    {
+      icon: <MdVerified className="text-3xl text-sky-500" />,
+      title: t('home.values.support.title'),
+      text: t('home.values.support.text'),
+    },
+  ];
+}
 
 const APP_LINKS = [
   { icon: <SiAppstore />, label: 'App Store', href: 'https://apps.apple.com' },
@@ -107,10 +112,13 @@ const APP_LINKS = [
 ];
 
 function HomePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const stepsRef = useRef(null);
   const videoRef = useRef(null);
   const [dotsActive, setDotsActive] = useState(false);
+  const STEPS = useMemo(() => getSteps(t), [t]);
+  const VALUE_CARDS = useMemo(() => getValueCards(t), [t]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -167,15 +175,12 @@ function HomePage() {
         <div className="relative flex-1 flex flex-col items-center justify-center gap-20 text-center">
           <div>
             <img src={logoLong} alt="SailingLoc" className="h-20 mx-auto mb-4" />
-            <p className="text-gray-300 text-xl">
-              Réservez le bateau de vos rêves auprès de propriétaires passionnés dans tous les ports
-              de France
-            </p>
+            <p className="text-gray-300 text-xl">{t('home.hero.tagline')}</p>
           </div>
           <SearchBar light />
           <div className="text-center">
             <p className="text-white/70 text-xs mb-2 tracking-widest uppercase">
-              Rejoignez notre application mobile
+              {t('home.hero.mobileApp')}
             </p>
             <div className="flex justify-center gap-2">
               {APP_LINKS.map(({ icon, label, href }) => (
@@ -198,24 +203,24 @@ function HomePage() {
       {/* Section 2 — Carrousels bateaux & ports */}
       <section
         id="suggestions"
-        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[96px] bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)]"
+        className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[45px] bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)]"
       >
         <div className="w-full flex flex-col gap-8">
           <Carrousel />
         </div>
       </section>
 
-      <div id="tutoriel" className="border-t border-gray-200 mx-[168px] scroll-mt-[128px]" />
+      <div id="tutoriel" className="border-t border-gray-200 mx-[168px] scroll-mt-[115px]" />
 
       {/* Section 3 — Tuto */}
       <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
         <div className="w-full flex flex-col items-center rounded-2xl border border-black/15 shadow-[0_8px_48px_rgba(0,0,0,0.18)] px-16 py-10">
           <div className="text-center mb-10">
             <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
-              Comment ça marche ?
+              {t('home.steps.kicker')}
             </p>
             <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
-              Réserver un bateau n'a jamais été aussi simple
+              {t('home.steps.title')}
             </h2>
           </div>
 
@@ -247,7 +252,7 @@ function HomePage() {
             onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
           >
             <MdSearch className="text-base" />
-            Lancer ma recherche
+            {t('home.steps.cta')}
           </GhostButton>
         </div>
       </section>
@@ -257,14 +262,14 @@ function HomePage() {
       {/* Section 4 — Proposition de valeur */}
       <section
         id="proposition-valeur"
-        className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0 scroll-mt-[112px]"
+        className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0 scroll-mt-[130px]"
       >
         <div className="text-center mb-10">
           <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
-            Pourquoi nous choisir ?
+            {t('home.values.kicker')}
           </p>
           <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
-            L'expérience marine réinventée
+            {t('home.values.title')}
           </h2>
         </div>
 
@@ -281,19 +286,17 @@ function HomePage() {
           ))}
         </div>
 
-        <GhostButton onClick={() => navigate('/a-propos')}>En savoir plus</GhostButton>
+        <GhostButton onClick={() => navigate('/a-propos')}>{t('home.values.cta')}</GhostButton>
       </section>
 
-      <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-[96px]" />
+      <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-[60px]" />
 
       {/* Section 5 — Avis clients */}
       <ClientReviews className="py-8">
         <div className="flex flex-col items-center gap-4 mt-10">
-          <p className="text-gray-700 font-semibold text-lg">
-            L'horizon n'attend pas. Votre bateau non plus.
-          </p>
+          <p className="text-gray-700 font-semibold text-lg">{t('home.reviews.tagline')}</p>
           <GhostButton className="font-semibold text-lg" onClick={() => navigate('/categorie')}>
-            Trouver mon bateau <MdAnchor className="text-base" />
+            {t('home.reviews.cta')} <MdAnchor className="text-base" />
           </GhostButton>
         </div>
       </ClientReviews>
@@ -302,7 +305,3 @@ function HomePage() {
 }
 
 export default HomePage;
-
-//TODO : Activer la traduction en anglais
-//TODO : Ajuster le positionnement des ancres
-//TODO : Ancre "Contact" du header à connecter au footer

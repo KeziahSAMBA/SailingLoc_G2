@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useToast } from '../../hooks/useToast.jsx';
 import {
@@ -15,11 +16,11 @@ const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 
 const inputClass =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
+  'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
 const readonlyClass =
-  'w-full rounded-lg border border-slate-800 bg-slate-800/60 px-4 py-2.5 text-slate-400 cursor-not-allowed';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-300';
-const errorClass = 'mt-1 block text-xs text-red-300';
+  'w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-500 cursor-not-allowed';
+const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
+const errorClass = 'mt-1 block text-xs text-red-600';
 
 const EMPTY_PASSWORD_FORM = {
   currentPassword: '',
@@ -29,8 +30,10 @@ const EMPTY_PASSWORD_FORM = {
 
 // Formulaires d'édition du compte (infos personnelles + mot de passe).
 // Composant "présentation seule" du contenu : l'enveloppe (fond, en-tête de page)
-// est fournie par la page hôte — utilisé par les espaces locataire et propriétaire.
+// est fournie par la page hôte — réutilisé par AccountPage (plein écran) et par
+// l'espace locataire (dans le dashboard).
 function AccountForm() {
+  const { t } = useTranslation();
   const { user, updateUser, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -91,10 +94,12 @@ function AccountForm() {
 
   function validate() {
     const newErrors = {};
-    if (!form.first_name.trim()) newErrors.first_name = 'Le prénom est requis.';
-    if (!form.last_name.trim()) newErrors.last_name = 'Le nom est requis.';
+    if (!form.first_name.trim())
+      newErrors.first_name = t('accountForm.personalInfo.errors.firstNameRequired');
+    if (!form.last_name.trim())
+      newErrors.last_name = t('accountForm.personalInfo.errors.lastNameRequired');
     if (form.phone.trim() && !PHONE_REGEX.test(form.phone.trim())) {
-      newErrors.phone = 'Le numéro de téléphone est invalide.';
+      newErrors.phone = t('accountForm.personalInfo.errors.phoneInvalid');
     }
     return newErrors;
   }
@@ -120,9 +125,9 @@ function AccountForm() {
         last_name: updated.last_name || '',
         phone: updated.phone || '',
       });
-      showToast('Vos informations ont été mises à jour.', 'success');
+      showToast(t('accountForm.personalInfo.updateSuccess'), 'success');
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Une erreur est survenue.');
+      setServerError(err.response?.data?.message || t('accountForm.genericError'));
     } finally {
       setSaving(false);
     }
@@ -152,13 +157,13 @@ function AccountForm() {
 
   function validatePwd() {
     const newErrors = {};
-    if (!pwdForm.currentPassword) newErrors.currentPassword = 'Le mot de passe actuel est requis.';
+    if (!pwdForm.currentPassword)
+      newErrors.currentPassword = t('accountForm.password.errors.currentRequired');
     if (!PASSWORD_REGEX.test(pwdForm.newPassword)) {
-      newErrors.newPassword =
-        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule et un caractère spécial.';
+      newErrors.newPassword = t('accountForm.password.errors.newInvalid');
     }
     if (pwdForm.newPassword !== pwdForm.confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas.';
+      newErrors.confirmPassword = t('accountForm.password.errors.mismatch');
     }
     return newErrors;
   }
@@ -181,11 +186,11 @@ function AccountForm() {
       setPwdForm(EMPTY_PASSWORD_FORM);
       // Toutes les sessions sont révoquées côté serveur : on déconnecte et on
       // redirige vers la connexion pour que l'utilisateur entre son nouveau mot de passe.
-      showToast('Mot de passe mis à jour. Reconnectez-vous.', 'success');
+      showToast(t('accountForm.password.updateSuccess'), 'success');
       await logout({ silent: true });
       navigate(user?.role === 'admin' ? '/admin/login' : '/');
     } catch (err) {
-      setPwdServerError(err.response?.data?.message || 'Une erreur est survenue.');
+      setPwdServerError(err.response?.data?.message || t('accountForm.genericError'));
     } finally {
       setPwdSaving(false);
     }
@@ -194,8 +199,10 @@ function AccountForm() {
   return (
     <>
       {/* Informations personnelles */}
-      <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
-        <h2 className="mb-5 text-lg font-semibold text-white">Informations personnelles</h2>
+      <article className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
+        <h2 className="mb-5 text-lg font-semibold text-slate-900">
+          {t('accountForm.personalInfo.title')}
+        </h2>
 
         {/* Photo de profil : visible dans le header et la messagerie. */}
         <div className="mb-6 flex flex-wrap items-center gap-4">
@@ -236,7 +243,7 @@ function AccountForm() {
         {serverError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
           >
             {serverError}
           </div>
@@ -246,7 +253,7 @@ function AccountForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="first_name" className={labelClass}>
-                Prénom
+                {t('accountForm.personalInfo.firstName')}
               </label>
               <input
                 id="first_name"
@@ -263,7 +270,7 @@ function AccountForm() {
 
             <div>
               <label htmlFor="last_name" className={labelClass}>
-                Nom
+                {t('accountForm.personalInfo.lastName')}
               </label>
               <input
                 id="last_name"
@@ -281,7 +288,10 @@ function AccountForm() {
 
           <div>
             <label htmlFor="email" className={labelClass}>
-              Email <span className="font-normal text-slate-500">(non modifiable)</span>
+              {t('accountForm.personalInfo.email')}{' '}
+              <span className="font-normal text-slate-400">
+                {t('accountForm.personalInfo.emailReadonly')}
+              </span>
             </label>
             <input
               id="email"
@@ -295,7 +305,10 @@ function AccountForm() {
 
           <div>
             <label htmlFor="phone" className={labelClass}>
-              Téléphone <span className="font-normal text-slate-500">(facultatif)</span>
+              {t('accountForm.personalInfo.phone')}{' '}
+              <span className="font-normal text-slate-400">
+                {t('accountForm.personalInfo.phoneOptional')}
+              </span>
             </label>
             <input
               id="phone"
@@ -304,7 +317,7 @@ function AccountForm() {
               value={form.phone}
               onChange={handleChange}
               autoComplete="tel"
-              placeholder="+33 6 12 34 56 78"
+              placeholder={t('accountForm.personalInfo.phonePlaceholder')}
               aria-invalid={Boolean(errors.phone)}
               className={inputClass}
             />
@@ -316,32 +329,32 @@ function AccountForm() {
               type="button"
               onClick={handleCancel}
               disabled={!dirty || saving}
-              className="rounded-full border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Annuler
+              {t('accountForm.personalInfo.cancel')}
             </button>
             <button
               type="submit"
               disabled={!dirty || saving}
-              className="flex-1 rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+              {saving ? t('accountForm.personalInfo.saving') : t('accountForm.personalInfo.save')}
             </button>
           </div>
         </form>
       </article>
 
       {/* Mot de passe */}
-      <article className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
-        <h2 className="mb-1 text-lg font-semibold text-white">Modifier mon mot de passe</h2>
-        <p className="mb-5 text-sm text-slate-400">
-          Pour des raisons de sécurité, votre mot de passe actuel est requis.
-        </p>
+      <article className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
+        <h2 className="mb-1 text-lg font-semibold text-slate-900">
+          {t('accountForm.password.title')}
+        </h2>
+        <p className="mb-5 text-sm text-slate-500">{t('accountForm.password.subtitle')}</p>
 
         {pwdServerError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
           >
             {pwdServerError}
           </div>
@@ -350,10 +363,9 @@ function AccountForm() {
         <form onSubmit={handlePwdSubmit} noValidate className="space-y-4">
           <div>
             <label htmlFor="currentPassword" className={labelClass}>
-              Mot de passe actuel
+              {t('accountForm.password.current')}
             </label>
             <PasswordField
-              variant="dark"
               id="currentPassword"
               name="currentPassword"
               value={pwdForm.currentPassword}
@@ -368,10 +380,9 @@ function AccountForm() {
 
           <div>
             <label htmlFor="newPassword" className={labelClass}>
-              Nouveau mot de passe
+              {t('accountForm.password.new')}
             </label>
             <PasswordField
-              variant="dark"
               id="newPassword"
               name="newPassword"
               value={pwdForm.newPassword}
@@ -381,17 +392,16 @@ function AccountForm() {
               ariaDescribedBy="newPassword-hint"
             />
             <small id="newPassword-hint" className="mt-1 block text-xs text-slate-500">
-              12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
+              {t('accountForm.password.hint')}
             </small>
             {pwdErrors.newPassword && <span className={errorClass}>{pwdErrors.newPassword}</span>}
           </div>
 
           <div>
             <label htmlFor="confirmPassword" className={labelClass}>
-              Confirmer le nouveau mot de passe
+              {t('accountForm.password.confirm')}
             </label>
             <PasswordField
-              variant="dark"
               id="confirmPassword"
               name="confirmPassword"
               value={pwdForm.confirmPassword}
@@ -408,9 +418,9 @@ function AccountForm() {
             <button
               type="submit"
               disabled={pwdSaving}
-              className="w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {pwdSaving ? 'Mise à jour…' : 'Modifier le mot de passe'}
+              {pwdSaving ? t('accountForm.password.updating') : t('accountForm.password.submit')}
             </button>
           </div>
         </form>

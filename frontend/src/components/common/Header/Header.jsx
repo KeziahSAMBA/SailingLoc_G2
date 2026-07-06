@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../hooks/useAuth.jsx';
 import { useScrolled } from './shared/useScrolled.js';
 import { useClickOutside } from './shared/useClickOutside.js';
@@ -8,25 +9,31 @@ import BurgerIcon from './shared/BurgerIcon.jsx';
 import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
 
-const BURGER_ITEMS = [
-  { label: 'Chercher une location', anchor: 'hero' },
-  { label: 'Nos suggestions', anchor: 'suggestions' },
-  { label: 'Tutoriel', anchor: 'tutoriel' },
-  { label: 'Pourquoi nous choisir ?', anchor: 'proposition-valeur' },
-  { label: 'Avis & commentaires', anchor: 'avis' },
-];
+function getBurgerItems(t) {
+  return [
+    { label: t('header.burger.search'), anchor: 'hero' },
+    { label: t('header.burger.suggestions'), anchor: 'suggestions' },
+    { label: t('header.burger.tutorial'), anchor: 'tutoriel' },
+    { label: t('header.burger.whyUs'), anchor: 'proposition-valeur' },
+    { label: t('header.burger.reviews'), anchor: 'avis' },
+  ];
+}
 
-const CATEGORY_BURGER_ITEMS = [
-  { label: 'Nos bateaux', anchor: 'resultats' },
-  { label: 'Nos suggestions', anchor: 'suggestions' },
-  { label: 'Avis & commentaires', anchor: 'avis' },
-];
+function getCategoryBurgerItems(t) {
+  return [
+    { label: t('header.burgerCategory.boats'), anchor: 'resultats' },
+    { label: t('header.burgerCategory.suggestions'), anchor: 'suggestions' },
+    { label: t('header.burgerCategory.reviews'), anchor: 'avis' },
+  ];
+}
 
-const NAV_LINKS = [
-  ['Découvrir', '/categorie'],
-  ['Contact', '/contact'],
-  ['À propos', '/a-propos'],
-];
+function getNavLinks(t) {
+  return [
+    [t('header.nav.discover'), '/categorie'],
+    [t('header.nav.contact'), '#contact'],
+    [t('header.nav.about'), '/a-propos'],
+  ];
+}
 
 const UserIcon = ({ size }) => (
   <span
@@ -82,7 +89,7 @@ const authBtnHover = {
 };
 
 function Header() {
-  const [lang, setLang] = useState('FR');
+  const { t, i18n } = useTranslation();
   const scrolled = useScrolled();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -176,16 +183,18 @@ function Header() {
             darkerOverlay={onCategoriePage}
           >
             <div className="flex flex-col" style={{ height: onCategoriePage ? '41%' : '69%' }}>
-              {(onCategoriePage ? CATEGORY_BURGER_ITEMS : BURGER_ITEMS).map(({ label, anchor }) => (
-                <PanelLink
-                  key={label}
-                  scrolled={scrolled}
-                  stretch
-                  onClick={() => scrollToAnchor(anchor, onCategoriePage ? '/categorie' : '/')}
-                >
-                  {label}
-                </PanelLink>
-              ))}
+              {(onCategoriePage ? getCategoryBurgerItems(t) : getBurgerItems(t)).map(
+                ({ label, anchor }) => (
+                  <PanelLink
+                    key={label}
+                    scrolled={scrolled}
+                    stretch
+                    onClick={() => scrollToAnchor(anchor, onCategoriePage ? '/categorie' : '/')}
+                  >
+                    {label}
+                  </PanelLink>
+                )
+              )}
             </div>
           </SidePanel>
         </div>
@@ -197,17 +206,17 @@ function Header() {
       {/* Centre — Navigation (33%) */}
       <nav className="w-1/3 flex justify-center">
         <ul className="flex gap-10 list-none m-0 p-0">
-          {NAV_LINKS.map(([label, href]) => (
-            <li key={label}>
+          {getNavLinks(t).map(([label, href]) => (
+            <li key={href}>
               <a
                 href={href}
                 onClick={
                   href === '#contact'
                     ? (e) => {
                         e.preventDefault();
-                        scrollToAnchor('contact');
+                        scrollToAnchor('contact', location.pathname);
                       }
-                    : label === 'Découvrir' && location.pathname === '/categorie'
+                    : href === '/categorie' && location.pathname === '/categorie'
                       ? (e) => {
                           e.preventDefault();
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -244,18 +253,18 @@ function Header() {
       {/* Droite — Langue + Connexion (33%) */}
       <div className="w-1/3 flex items-center justify-end gap-4 pr-4">
         <div className="flex items-center gap-1">
-          {['FR', 'EN'].map((l, i) => (
+          {['fr', 'en'].map((l, i) => (
             <span key={l} className="flex items-center gap-1">
               {i === 1 && (
                 <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.9rem' }}>/</span>
               )}
               <button
-                onClick={() => setLang(l)}
+                onClick={() => i18n.changeLanguage(l)}
                 className="px-1 font-medium"
                 style={{
                   color: '#fff',
-                  opacity: lang === l ? 1 : 0.45,
-                  fontWeight: lang === l ? 700 : 500,
+                  opacity: i18n.language === l ? 1 : 0.45,
+                  fontWeight: i18n.language === l ? 700 : 500,
                   fontSize: scrolled ? '0.7rem' : '0.75rem',
                   backgroundImage: 'linear-gradient(#fff, #fff)',
                   backgroundRepeat: 'no-repeat',
@@ -267,7 +276,7 @@ function Header() {
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundSize = '100% 1px')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundSize = '0% 1px')}
               >
-                {l}
+                {l.toUpperCase()}
               </button>
             </span>
           ))}
@@ -319,7 +328,7 @@ function Header() {
                     <rect x="14" y="12" width="7" height="9" />
                     <rect x="3" y="16" width="7" height="5" />
                   </svg>
-                  Mon dashboard
+                  {t('header.auth.dashboard')}
                 </button>
                 <button
                   type="button"
@@ -348,7 +357,7 @@ function Header() {
                     <circle cx="12" cy="8" r="4" />
                     <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
                   </svg>
-                  Mon compte
+                  {t('header.auth.account')}
                 </button>
                 {(user.role === 'locataire' || user.role === 'proprietaire') && (
                   <button
@@ -374,7 +383,7 @@ function Header() {
                       <line x1="16" y1="13" x2="8" y2="13" />
                       <line x1="16" y1="17" x2="8" y2="17" />
                     </svg>
-                    Mes documents
+                    {t('header.auth.documents')}
                   </button>
                 )}
                 <button
@@ -396,7 +405,7 @@ function Header() {
                     <polyline points="16 17 21 12 16 7" />
                     <line x1="21" y1="12" x2="9" y2="12" />
                   </svg>
-                  Se déconnecter
+                  {t('header.auth.logout')}
                 </button>
               </div>
             )}
@@ -409,7 +418,7 @@ function Header() {
             {...authBtnHover}
           >
             <UserIcon size={iconSize} />
-            Se connecter / S&apos;inscrire
+            {t('header.auth.login')}
           </button>
         )}
       </div>

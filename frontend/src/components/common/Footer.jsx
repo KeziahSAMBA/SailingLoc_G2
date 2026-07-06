@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import logoLong from '../../assets/image/SL_logo/logo SL long.webp';
 import bgImage from '../../assets/image/image_bateau/bateau_searchbar.webp';
 import {
@@ -39,23 +40,27 @@ const SOCIAL_LINKS = [
   },
 ];
 
-const HELP_LINKS = [
-  'Comment trouver et réserver un bateau ?',
-  'Quels documents sont requis pour louer ?',
-  'Comment annuler ou modifier une réservation ?',
-  'Quels modes de paiement sont acceptés ?',
-  'Comment mettre mon bateau en location ?',
-  'Les bateaux sont-ils assurés pendant la location ?',
-  'Comment laisser un avis après ma location ?',
-  "Que faire en cas d'incident en mer ?",
-  'Une autre question ? Contactez-nous en direct',
-];
+function getHelpLinks(t) {
+  return [
+    t('footer.helpLinks.findBoat'),
+    t('footer.helpLinks.documents'),
+    t('footer.helpLinks.cancel'),
+    t('footer.helpLinks.payment'),
+    t('footer.helpLinks.listBoat'),
+    t('footer.helpLinks.insurance'),
+    t('footer.helpLinks.review'),
+    t('footer.helpLinks.incident'),
+    t('footer.helpLinks.other'),
+  ];
+}
 
-const INFO_LINKS = [
-  { label: 'Mentions légales', href: '#' },
-  { label: 'Politique de confidentialité', href: '#' },
-  { label: "Conditions générales d'utilisation", href: '#' },
-];
+function getInfoLinks(t) {
+  return [
+    { label: t('footer.infoLinks.legal'), href: '#' },
+    { label: t('footer.infoLinks.privacy'), href: '#' },
+    { label: t('footer.infoLinks.terms'), href: '#' },
+  ];
+}
 
 const appBtnStyle = {
   color: '#fff',
@@ -65,6 +70,10 @@ const appBtnStyle = {
 };
 
 const Footer = () => {
+  const { t } = useTranslation();
+  const helpLinks = getHelpLinks(t);
+  const infoLinks = getInfoLinks(t);
+
   return (
     <footer
       id="contact"
@@ -126,9 +135,9 @@ const Footer = () => {
         </div>
 
         {/* Ligne B — titres */}
-        <h3 className="text-white font-semibold text-lg">Contact</h3>
-        <h3 className="text-white font-semibold text-lg">Aide &amp; Assistance</h3>
-        <h3 className="text-white font-semibold text-lg">Informations</h3>
+        <h3 className="text-white font-semibold text-lg">{t('footer.contact')}</h3>
+        <h3 className="text-white font-semibold text-lg">{t('footer.help')}</h3>
+        <h3 className="text-white font-semibold text-lg">{t('footer.info')}</h3>
 
         {/* Ligne C — contenu */}
         <ul className="space-y-2 text-sm">
@@ -145,13 +154,13 @@ const Footer = () => {
           <li className="flex items-center gap-2">
             <FaComments className="text-blue-400" />
             <a href="#" className="hover:text-white transition-colors">
-              Chat en ligne
+              {t('footer.chat')}
             </a>
           </li>
         </ul>
 
         <ul className="space-y-2 text-sm">
-          {HELP_LINKS.map((text) => (
+          {helpLinks.map((text) => (
             <li key={text}>
               <a href="#" className="hover:text-white transition-colors">
                 {text}
@@ -161,18 +170,18 @@ const Footer = () => {
           <li className="pt-1 border-t border-white/20">
             <a href="#" className="flex items-center gap-2 hover:text-white transition-colors">
               <FaCircleInfo className="text-blue-400 flex-shrink-0" />
-              <span>Information complémentaire</span>
+              <span>{t('footer.moreInfo')}</span>
             </a>
           </li>
         </ul>
 
         <ul className="space-y-2 text-sm">
-          <li>Fondée en 2023</li>
+          <li>{t('footer.founded')}</li>
           <li className="flex items-center gap-1.5">
             <FaLocationDot className="text-blue-400 flex-shrink-0" />
-            <span>12 Quai du Port, 13002 Marseille, France</span>
+            <span>{t('footer.address')}</span>
           </li>
-          {INFO_LINKS.map(({ label, href }) => (
+          {infoLinks.map(({ label, href }) => (
             <li key={label}>
               <a href={href} className="hover:text-white transition-colors">
                 {label}
@@ -185,12 +194,8 @@ const Footer = () => {
       {/* Copyright */}
       <div className="w-full mt-8 pb-6 pt-4 border-t border-white/20">
         <p className="text-white/60 text-xs flex items-center gap-1 whitespace-nowrap">
-          © 2023–2026 SailingLoc. Tous droits réservés.{' '}
-          <FaTriangleExclamation className="text-yellow-400/70 shrink-0" />
-          <span className="text-white/40">
-            Projet fictif à des fins pédagogiques — aucun achat/réservation réelle. Toute
-            ressemblance avec un site existant est fortuite.
-          </span>
+          {t('footer.copyright')} <FaTriangleExclamation className="text-yellow-400/70 shrink-0" />
+          <span className="text-white/40">{t('footer.disclaimer')}</span>
         </p>
       </div>
     </footer>

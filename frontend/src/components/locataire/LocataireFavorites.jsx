@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../hooks/useToast.jsx';
 import { getFavorites, removeFavorite } from '../../services/locataireService.js';
 
@@ -14,6 +15,7 @@ const FOCUS_RING =
 const capitalize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 function FavoriteRow({ favorite, onRemove, removing }) {
+  const { t } = useTranslation();
   const boat = favorite.boat;
   return (
     <article className="flex flex-col gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:flex-row sm:items-center">
@@ -41,7 +43,9 @@ function FavoriteRow({ favorite, onRemove, removing }) {
             .join(' — ')}
         </p>
         {boat?.capacity ? (
-          <p className="mt-0.5 text-xs text-slate-400">{boat.capacity} personnes</p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {t('locataireFavorites.persons', { count: boat.capacity })}
+          </p>
         ) : null}
       </div>
 
@@ -50,7 +54,7 @@ function FavoriteRow({ favorite, onRemove, removing }) {
           <span className="font-semibold text-[#5AB4EC]">
             {EURO.format(boat?.daily_price ?? 0)}
           </span>{' '}
-          / jour
+          {t('locataireFavorites.perDay')}
         </p>
         <button
           type="button"
@@ -58,7 +62,7 @@ function FavoriteRow({ favorite, onRemove, removing }) {
           disabled={removing}
           className={`shrink-0 rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
         >
-          {removing ? 'Retrait…' : 'Retirer'}
+          {removing ? t('locataireFavorites.removing') : t('locataireFavorites.remove')}
         </button>
       </div>
     </article>
@@ -66,6 +70,7 @@ function FavoriteRow({ favorite, onRemove, removing }) {
 }
 
 function LocataireFavorites() {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,21 +79,24 @@ function LocataireFavorites() {
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    document.title = 'Mes favoris — SailingLoc';
-  }, []);
+    document.title = t('locataireFavorites.pageTitle');
+  }, [t]);
 
   useEffect(() => {
     getFavorites()
       .then((res) => setFavorites(res.data.favorites || []))
-      .catch((err) => setError(err.response?.data?.message || 'Erreur de chargement des favoris.'))
+      .catch((err) => setError(err.response?.data?.message || t('locataireFavorites.loadError')))
       .finally(() => setLoading(false));
   }, []);
 
   // Filtres dynamiques : « Tous » + les types de bateau réellement présents.
   const filters = useMemo(() => {
     const types = [...new Set(favorites.map((f) => f.boat?.type).filter(Boolean))];
-    return [{ key: 'all', label: 'Tous' }, ...types.map((t) => ({ key: t, label: capitalize(t) }))];
-  }, [favorites]);
+    return [
+      { key: 'all', label: t('locataireFavorites.all') },
+      ...types.map((type) => ({ key: type, label: capitalize(type) })),
+    ];
+  }, [favorites, t]);
 
   const filtered = useMemo(
     () => (filter === 'all' ? favorites : favorites.filter((f) => f.boat?.type === filter)),
@@ -100,9 +108,9 @@ function LocataireFavorites() {
     try {
       await removeFavorite(idBoat);
       setFavorites((prev) => prev.filter((f) => f.boat.id_boat !== idBoat));
-      showToast('Bateau retiré de vos favoris.', 'success');
+      showToast(t('locataireFavorites.removeSuccess'), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec du retrait.', 'error');
+      showToast(err.response?.data?.message || t('locataireFavorites.removeError'), 'error');
     } finally {
       setRemovingId(null);
     }
@@ -112,11 +120,9 @@ function LocataireFavorites() {
     <section aria-labelledby="favorites-title">
       <header className="mb-6">
         <h1 id="favorites-title" className="text-2xl font-bold text-white">
-          Mes favoris
+          {t('locataireFavorites.title')}
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Les bateaux que vous avez enregistrés pour les retrouver facilement.
-        </p>
+        <p className="mt-1 text-sm text-slate-400">{t('locataireFavorites.subtitle')}</p>
       </header>
 
       {error && (
@@ -130,7 +136,11 @@ function LocataireFavorites() {
 
       {/* Filtres par type de bateau (toujours affichés s'il y a des favoris) */}
       {!loading && favorites.length > 0 && (
-        <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Filtrer par type">
+        <div
+          className="mb-5 flex flex-wrap gap-2"
+          role="group"
+          aria-label={t('locataireFavorites.filterAria')}
+        >
           {filters.map((f) => {
             const active = filter === f.key;
             return (
@@ -153,12 +163,12 @@ function LocataireFavorites() {
       )}
 
       {loading ? (
-        <p className="text-slate-300">Chargement…</p>
+        <p className="text-slate-300">{t('locataireFavorites.loading')}</p>
       ) : filtered.length === 0 ? (
         <p className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-8 text-center text-sm text-slate-400">
           {favorites.length === 0
-            ? "Aucun favori pour l'instant. Explorez les bateaux et ajoutez-en !"
-            : 'Aucun favori pour ce filtre.'}
+            ? t('locataireFavorites.emptyAll')
+            : t('locataireFavorites.emptyFiltered')}
         </p>
       ) : (
         <ul className="space-y-4">
