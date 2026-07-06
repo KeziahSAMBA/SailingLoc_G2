@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useToast } from '../../hooks/useToast.jsx';
 import { updateMe, changePassword } from '../../services/authService.js';
@@ -26,6 +27,7 @@ const EMPTY_PASSWORD_FORM = {
 // est fournie par la page hôte — réutilisé par AccountPage (plein écran) et par
 // l'espace locataire (dans le dashboard).
 function AccountForm() {
+  const { t } = useTranslation();
   const { user, updateUser, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -53,10 +55,12 @@ function AccountForm() {
 
   function validate() {
     const newErrors = {};
-    if (!form.first_name.trim()) newErrors.first_name = 'Le prénom est requis.';
-    if (!form.last_name.trim()) newErrors.last_name = 'Le nom est requis.';
+    if (!form.first_name.trim())
+      newErrors.first_name = t('accountForm.personalInfo.errors.firstNameRequired');
+    if (!form.last_name.trim())
+      newErrors.last_name = t('accountForm.personalInfo.errors.lastNameRequired');
     if (form.phone.trim() && !PHONE_REGEX.test(form.phone.trim())) {
-      newErrors.phone = 'Le numéro de téléphone est invalide.';
+      newErrors.phone = t('accountForm.personalInfo.errors.phoneInvalid');
     }
     return newErrors;
   }
@@ -82,9 +86,9 @@ function AccountForm() {
         last_name: updated.last_name || '',
         phone: updated.phone || '',
       });
-      showToast('Vos informations ont été mises à jour.', 'success');
+      showToast(t('accountForm.personalInfo.updateSuccess'), 'success');
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Une erreur est survenue.');
+      setServerError(err.response?.data?.message || t('accountForm.genericError'));
     } finally {
       setSaving(false);
     }
@@ -114,13 +118,13 @@ function AccountForm() {
 
   function validatePwd() {
     const newErrors = {};
-    if (!pwdForm.currentPassword) newErrors.currentPassword = 'Le mot de passe actuel est requis.';
+    if (!pwdForm.currentPassword)
+      newErrors.currentPassword = t('accountForm.password.errors.currentRequired');
     if (!PASSWORD_REGEX.test(pwdForm.newPassword)) {
-      newErrors.newPassword =
-        'Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule et un caractère spécial.';
+      newErrors.newPassword = t('accountForm.password.errors.newInvalid');
     }
     if (pwdForm.newPassword !== pwdForm.confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas.';
+      newErrors.confirmPassword = t('accountForm.password.errors.mismatch');
     }
     return newErrors;
   }
@@ -143,11 +147,11 @@ function AccountForm() {
       setPwdForm(EMPTY_PASSWORD_FORM);
       // Toutes les sessions sont révoquées côté serveur : on déconnecte et on
       // redirige vers la connexion pour que l'utilisateur entre son nouveau mot de passe.
-      showToast('Mot de passe mis à jour. Reconnectez-vous.', 'success');
+      showToast(t('accountForm.password.updateSuccess'), 'success');
       await logout({ silent: true });
       navigate(user?.role === 'admin' ? '/admin/login' : '/');
     } catch (err) {
-      setPwdServerError(err.response?.data?.message || 'Une erreur est survenue.');
+      setPwdServerError(err.response?.data?.message || t('accountForm.genericError'));
     } finally {
       setPwdSaving(false);
     }
@@ -157,7 +161,9 @@ function AccountForm() {
     <>
       {/* Informations personnelles */}
       <article className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-        <h2 className="mb-5 text-lg font-semibold text-slate-900">Informations personnelles</h2>
+        <h2 className="mb-5 text-lg font-semibold text-slate-900">
+          {t('accountForm.personalInfo.title')}
+        </h2>
 
         {serverError && (
           <div
@@ -172,7 +178,7 @@ function AccountForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="first_name" className={labelClass}>
-                Prénom
+                {t('accountForm.personalInfo.firstName')}
               </label>
               <input
                 id="first_name"
@@ -189,7 +195,7 @@ function AccountForm() {
 
             <div>
               <label htmlFor="last_name" className={labelClass}>
-                Nom
+                {t('accountForm.personalInfo.lastName')}
               </label>
               <input
                 id="last_name"
@@ -207,7 +213,10 @@ function AccountForm() {
 
           <div>
             <label htmlFor="email" className={labelClass}>
-              Email <span className="font-normal text-slate-400">(non modifiable)</span>
+              {t('accountForm.personalInfo.email')}{' '}
+              <span className="font-normal text-slate-400">
+                {t('accountForm.personalInfo.emailReadonly')}
+              </span>
             </label>
             <input
               id="email"
@@ -221,7 +230,10 @@ function AccountForm() {
 
           <div>
             <label htmlFor="phone" className={labelClass}>
-              Téléphone <span className="font-normal text-slate-400">(facultatif)</span>
+              {t('accountForm.personalInfo.phone')}{' '}
+              <span className="font-normal text-slate-400">
+                {t('accountForm.personalInfo.phoneOptional')}
+              </span>
             </label>
             <input
               id="phone"
@@ -230,7 +242,7 @@ function AccountForm() {
               value={form.phone}
               onChange={handleChange}
               autoComplete="tel"
-              placeholder="+33 6 12 34 56 78"
+              placeholder={t('accountForm.personalInfo.phonePlaceholder')}
               aria-invalid={Boolean(errors.phone)}
               className={inputClass}
             />
@@ -244,14 +256,14 @@ function AccountForm() {
               disabled={!dirty || saving}
               className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Annuler
+              {t('accountForm.personalInfo.cancel')}
             </button>
             <button
               type="submit"
               disabled={!dirty || saving}
               className="flex-1 rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+              {saving ? t('accountForm.personalInfo.saving') : t('accountForm.personalInfo.save')}
             </button>
           </div>
         </form>
@@ -259,10 +271,10 @@ function AccountForm() {
 
       {/* Mot de passe */}
       <article className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-        <h2 className="mb-1 text-lg font-semibold text-slate-900">Modifier mon mot de passe</h2>
-        <p className="mb-5 text-sm text-slate-500">
-          Pour des raisons de sécurité, votre mot de passe actuel est requis.
-        </p>
+        <h2 className="mb-1 text-lg font-semibold text-slate-900">
+          {t('accountForm.password.title')}
+        </h2>
+        <p className="mb-5 text-sm text-slate-500">{t('accountForm.password.subtitle')}</p>
 
         {pwdServerError && (
           <div
@@ -276,7 +288,7 @@ function AccountForm() {
         <form onSubmit={handlePwdSubmit} noValidate className="space-y-4">
           <div>
             <label htmlFor="currentPassword" className={labelClass}>
-              Mot de passe actuel
+              {t('accountForm.password.current')}
             </label>
             <PasswordField
               id="currentPassword"
@@ -293,7 +305,7 @@ function AccountForm() {
 
           <div>
             <label htmlFor="newPassword" className={labelClass}>
-              Nouveau mot de passe
+              {t('accountForm.password.new')}
             </label>
             <PasswordField
               id="newPassword"
@@ -305,14 +317,14 @@ function AccountForm() {
               ariaDescribedBy="newPassword-hint"
             />
             <small id="newPassword-hint" className="mt-1 block text-xs text-slate-500">
-              12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
+              {t('accountForm.password.hint')}
             </small>
             {pwdErrors.newPassword && <span className={errorClass}>{pwdErrors.newPassword}</span>}
           </div>
 
           <div>
             <label htmlFor="confirmPassword" className={labelClass}>
-              Confirmer le nouveau mot de passe
+              {t('accountForm.password.confirm')}
             </label>
             <PasswordField
               id="confirmPassword"
@@ -333,7 +345,7 @@ function AccountForm() {
               disabled={pwdSaving}
               className="w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {pwdSaving ? 'Mise à jour…' : 'Modifier le mot de passe'}
+              {pwdSaving ? t('accountForm.password.updating') : t('accountForm.password.submit')}
             </button>
           </div>
         </form>

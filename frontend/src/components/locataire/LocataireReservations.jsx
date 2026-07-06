@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getBookings } from '../../services/locataireService.js';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -8,20 +9,24 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-const BOOKING_STATUS = {
-  pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
-  confirmed: { label: 'Confirmée', cls: 'bg-emerald-500/15 text-emerald-300' },
-  refused: { label: 'Refusée', cls: 'bg-red-500/15 text-red-300' },
-  cancelled: { label: 'Annulée', cls: 'bg-slate-500/15 text-slate-300' },
-};
+function getBookingStatus(t) {
+  return {
+    pending: { label: t('bookingStatus.pending'), cls: 'bg-amber-500/15 text-amber-300' },
+    confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-emerald-500/15 text-emerald-300' },
+    refused: { label: t('bookingStatus.refused'), cls: 'bg-red-500/15 text-red-300' },
+    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-slate-500/15 text-slate-300' },
+  };
+}
 
-const FILTERS = [
-  { key: 'all', label: 'Toutes' },
-  { key: 'pending', label: 'En attente' },
-  { key: 'confirmed', label: 'Confirmées' },
-  { key: 'cancelled', label: 'Annulées' },
-  { key: 'refused', label: 'Refusées' },
-];
+function getFilters(t) {
+  return [
+    { key: 'all', label: t('locataireReservations.filters.all') },
+    { key: 'pending', label: t('locataireReservations.filters.pending') },
+    { key: 'confirmed', label: t('locataireReservations.filters.confirmed') },
+    { key: 'cancelled', label: t('locataireReservations.filters.cancelled') },
+    { key: 'refused', label: t('locataireReservations.filters.refused') },
+  ];
+}
 
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
@@ -39,7 +44,8 @@ function isPast(value) {
 }
 
 function BookingCard({ booking }) {
-  const meta = BOOKING_STATUS[booking.status] || {
+  const { t } = useTranslation();
+  const meta = getBookingStatus(t)[booking.status] || {
     label: booking.status,
     cls: 'bg-slate-500/15 text-slate-300',
   };
@@ -78,20 +84,20 @@ function BookingCard({ booking }) {
 
           <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
             <div>
-              <dt className="text-slate-400">Dates</dt>
+              <dt className="text-slate-400">{t('locataireReservations.dates')}</dt>
               <dd className="font-medium text-slate-100">
                 <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time> →{' '}
                 <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
               </dd>
             </div>
             <div>
-              <dt className="text-slate-400">Montant</dt>
+              <dt className="text-slate-400">{t('locataireReservations.amount')}</dt>
               <dd className="font-medium text-slate-100">
                 {EURO.format(booking.total_amount ?? 0)}
               </dd>
             </div>
             <div>
-              <dt className="text-slate-400">Réservée le</dt>
+              <dt className="text-slate-400">{t('locataireReservations.bookedOn')}</dt>
               <dd className="font-medium text-slate-100">
                 <time dateTime={booking.booking_date}>{fmtDate(booking.booking_date)}</time>
               </dd>
@@ -100,14 +106,18 @@ function BookingCard({ booking }) {
 
           {booking.status === 'cancelled' && booking.cancellation_reason && (
             <p className="mt-3 rounded-lg bg-slate-800/60 px-3 py-2 text-xs text-slate-300">
-              <span className="font-semibold">Annulation :</span> {booking.cancellation_reason}
-              {booking.cancellation_date && ` (le ${fmtDate(booking.cancellation_date)})`}
+              <span className="font-semibold">{t('locataireReservations.cancellation')}</span>{' '}
+              {booking.cancellation_reason}
+              {booking.cancellation_date &&
+                ` ${t('locataireReservations.cancelledOn', { date: fmtDate(booking.cancellation_date) })}`}
             </p>
           )}
 
           {showReviewHint && (
             <p className="mt-3 text-xs font-medium text-[#5AB4EC]">
-              {booking.reviewed ? '✓ Avis déposé' : '★ Pensez à laisser un avis sur cette location'}
+              {booking.reviewed
+                ? t('locataireReservations.reviewDone')
+                : t('locataireReservations.reviewHint')}
             </p>
           )}
         </div>
@@ -117,21 +127,21 @@ function BookingCard({ booking }) {
 }
 
 function LocataireReservations() {
+  const { t } = useTranslation();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  const filters = useMemo(() => getFilters(t), [t]);
 
   useEffect(() => {
-    document.title = 'Mes réservations — SailingLoc';
-  }, []);
+    document.title = t('locataireReservations.pageTitle');
+  }, [t]);
 
   useEffect(() => {
     getBookings()
       .then((res) => setBookings(res.data.bookings || []))
-      .catch((err) =>
-        setError(err.response?.data?.message || 'Erreur de chargement des réservations.')
-      )
+      .catch((err) => setError(err.response?.data?.message || t('locataireReservations.loadError')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -144,11 +154,9 @@ function LocataireReservations() {
     <section aria-labelledby="reservations-title">
       <header className="mb-6">
         <h1 id="reservations-title" className="text-2xl font-bold text-white">
-          Mes réservations
+          {t('locataireReservations.title')}
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Retrouvez l&apos;ensemble de vos locations, passées et à venir.
-        </p>
+        <p className="mt-1 text-sm text-slate-400">{t('locataireReservations.subtitle')}</p>
       </header>
 
       {error && (
@@ -161,8 +169,12 @@ function LocataireReservations() {
       )}
 
       {/* Filtres par statut */}
-      <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Filtrer par statut">
-        {FILTERS.map((f) => {
+      <div
+        className="mb-5 flex flex-wrap gap-2"
+        role="group"
+        aria-label={t('locataireReservations.filterAria')}
+      >
+        {filters.map((f) => {
           const active = filter === f.key;
           return (
             <button
@@ -183,12 +195,12 @@ function LocataireReservations() {
       </div>
 
       {loading ? (
-        <p className="text-slate-300">Chargement…</p>
+        <p className="text-slate-300">{t('locataireReservations.loading')}</p>
       ) : filtered.length === 0 ? (
         <p className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-8 text-center text-sm text-slate-400">
           {bookings.length === 0
-            ? 'Vous n’avez aucune réservation pour le moment.'
-            : 'Aucune réservation pour ce filtre.'}
+            ? t('locataireReservations.emptyAll')
+            : t('locataireReservations.emptyFiltered')}
         </p>
       ) : (
         <ul className="space-y-4">

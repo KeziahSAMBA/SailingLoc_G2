@@ -1,30 +1,33 @@
+import { useTranslation } from 'react-i18next';
 import DashboardHeader from './DashboardHeader.jsx';
 
-const NAV_PROPRIO = ['Voir mes bateaux', 'Publier un bateau'];
-
-const CENTER_NAV = [
-  { label: 'Mes publications', to: '/' },
-  { label: 'Contact', to: '/contact' },
-  { label: 'À propos', to: '/a-propos' },
-];
-
-const USER_MENU_ITEMS = [
-  { label: 'Mon dashboard', to: '/dashboard' },
-  { label: 'Mon compte', to: '/account' },
-  { label: 'Mes documents', to: '/documents' },
-  { label: 'Mes réservations', to: '/dashboard' },
-  { label: 'Mes transactions', to: '/dashboard' },
-  { label: 'Mes bateaux', to: '/dashboard' },
-  { label: 'Déconnexion', action: 'logout', danger: true },
-];
-
 function HeaderProprio() {
+  const { t } = useTranslation();
+
+  const navProprio = [t('headerProprio.nav.myBoats'), t('headerProprio.nav.publish')];
+
+  const centerNav = [
+    { label: t('headerProprio.center.publications'), to: '/' },
+    { label: t('headerProprio.center.contact'), anchor: 'contact' },
+    { label: t('headerProprio.center.about'), to: '/a-propos' },
+  ];
+
+  const userMenuItems = [
+    { label: t('headerProprio.menu.dashboard'), to: '/dashboard' },
+    { label: t('headerProprio.menu.account'), to: '/account' },
+    { label: t('headerProprio.menu.documents'), to: '/documents' },
+    { label: t('headerProprio.menu.reservations'), to: '/dashboard' },
+    { label: t('headerProprio.menu.transactions'), to: '/dashboard' },
+    { label: t('headerProprio.menu.boats'), to: '/dashboard' },
+    { label: t('headerProprio.menu.logout'), action: 'logout', danger: true },
+  ];
+
   return (
     <DashboardHeader
-      leftGroups={[{ items: NAV_PROPRIO, heightPercent: '28%' }]}
-      centerNav={CENTER_NAV}
+      leftGroups={[{ items: navProprio, heightPercent: '28%' }]}
+      centerNav={centerNav}
       profileHref="/account"
-      rightMenuItems={USER_MENU_ITEMS}
+      rightMenuItems={userMenuItems}
       rightVariant="stretch"
       rightHeightPercent="77%"
       showMessages
