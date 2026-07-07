@@ -23,6 +23,7 @@ import {
 } from '../controllers/locataireController.js';
 import {
   getDashboard as getProprietaireDashboard,
+  getMyBoat as getProprietaireBoat,
   getMyBoats as getProprietaireBoats,
   getMyBookings as getProprietaireBookings,
   getMyPayments as getProprietairePayments,
@@ -69,6 +70,12 @@ router.get(
   getProprietairePayments
 );
 router.get('/me/proprietaire/boats', protect, requireRole('proprietaire'), getProprietaireBoats);
+router.get(
+  '/me/proprietaire/boats/:id_boat',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireBoat
+);
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
 router.post('/me/favorites/:id_boat', protect, requireRole('locataire'), postFavorite);

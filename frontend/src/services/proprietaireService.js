@@ -29,3 +29,27 @@ export function getPayments() {
 export function getBoats() {
   return api.get('/users/me/proprietaire/boats');
 }
+
+// Crée une annonce de bateau (multipart : champs + photos + disponibilités).
+export function createBoat(formData) {
+  return api.post('/boats', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
+// Détail d'un de mes bateaux (pré-remplissage du formulaire d'édition).
+export function getBoat(idBoat) {
+  return api.get(`/users/me/proprietaire/boats/${idBoat}`);
+}
+
+// Met à jour un brouillon ou une annonce (mêmes données que la création).
+export function updateBoat(idBoat, formData) {
+  return api.put(`/boats/${idBoat}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
+// Supprime un brouillon ou une annonce (bloqué si réservations à venir).
+export function deleteBoat(idBoat) {
+  return api.delete(`/boats/${idBoat}`);
+}

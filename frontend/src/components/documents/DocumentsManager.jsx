@@ -30,7 +30,7 @@ const DOC_TYPES_BY_ROLE = {
     {
       key: 'acte_francisation',
       label: 'Acte de francisation',
-      desc: 'Vous pouvez en déposer plusieurs (un par bateau).',
+      desc: 'Certificat d’immatriculation du bateau (carte d’enregistrement). Plusieurs possibles — chacun ne peut être rattaché qu’à une seule annonce.',
       multiple: true,
     },
   ],

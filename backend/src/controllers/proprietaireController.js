@@ -1,4 +1,5 @@
 import {
+  getBoat,
   getDashboardStats,
   listBoats,
   listBookings,
@@ -28,6 +29,15 @@ export async function getMyBoats(req, res) {
   try {
     const boats = await listBoats(req.user.id_user);
     res.json({ boats });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyBoat(req, res) {
+  try {
+    const boat = await getBoat(req.user.id_user, req.params.id_boat);
+    res.json({ boat });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
+import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
 
 const BOAT_INCLUDE = {
   port: true,
@@ -65,28 +66,53 @@ export async function getBoatsByType(req, res) {
   res.json(sections);
 }
 
-export async function uploadBoat(req, res) {
-  const { title, description, price, location } = req.body;
-  const ownerId = req.user?.id_user;
+// Fichiers reçus par upload.fields : photos publiques + acte de francisation privé.
+function boatFiles(req) {
+  return {
+    images: req.files?.images || [],
+    acteFrancisation: req.files?.acte_francisation?.[0] || null,
+  };
+}
 
-  if (!ownerId) {
-    return res.status(401).json({ message: 'Owner required' });
+// Mise à jour d'un brouillon d'annonce par son propriétaire.
+export async function putBoat(req, res) {
+  try {
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const boat = await updateBoat(
+      req.user.id_user,
+      req.params.id_boat,
+      req.body,
+      boatFiles(req),
+      origin
+    );
+    res.json({ boat });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
   }
+}
 
-  const images = req.files ? req.files.map((file) => file.filename) : [];
+// Suppression (soft delete) d'un brouillon ou d'une annonce par son propriétaire.
+export async function removeBoat(req, res) {
+  try {
+    await deleteBoat(req.user.id_user, req.params.id_boat);
+    res.json({ deleted: true });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
 
-  const boat = await prisma.boat.create({
-    data: {
-      title,
-      description,
-      price: Number(price),
-      location,
-      ownerId,
-      images,
-    },
-  });
-
-  res.status(201).json(boat);
+// Création d'une annonce par un propriétaire : caractéristiques + photos +
+// acte de francisation + port (réutilisé s'il existe, créé sinon) + disponibilités.
+export async function uploadBoat(req, res) {
+  try {
+    // Origine publique du backend pour construire les URLs des photos servies
+    // en statique (/uploads).
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const boat = await createBoat(req.user.id_user, req.body, boatFiles(req), origin);
+    res.status(201).json({ boat });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
 }
 
 export async function createBookingController(req, res) {

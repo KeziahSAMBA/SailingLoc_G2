@@ -1,24 +1,31 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import DocumentsManager from '../documents/DocumentsManager.jsx';
 
 function ProprietaireDocuments() {
+  const [counts, setCounts] = useState({ provided: 0, total: 0 });
+  const onCounts = useCallback((c) => setCounts(c), []);
+
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
     document.title = 'Mes documents — SailingLoc';
   }, []);
 
   return (
-    <section aria-labelledby="documents-title">
-      <h1 id="documents-title" className="text-2xl font-bold text-white">
-        Mes documents
-      </h1>
-      <p className="mt-1 text-sm text-slate-400">
-        Déposez et suivez la validation de vos documents.
-      </p>
+    <section aria-labelledby="documents-title" className="mx-auto w-full max-w-2xl">
+      <header className="mb-6">
+        <h1 id="documents-title" className="text-2xl font-bold text-white">
+          Mes documents
+        </h1>
+        <p className="mt-1 text-sm text-slate-400">
+          Déposez vos documents (PDF, JPG ou PNG, 5 Mo max) : ils seront vérifiés par notre équipe.
+          Les cartes grises déposées ici sont réutilisables dans vos annonces.
+        </p>
+        <p className="mt-2 text-sm font-semibold text-slate-200">
+          {counts.provided} / {counts.total} types fournis
+        </p>
+      </header>
 
-      {/* Structure : le gestionnaire de documents sera branché ici. */}
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-        <p className="text-sm text-slate-400">Contenu à venir.</p>
-      </div>
+      <DocumentsManager onCounts={onCounts} />
     </section>
   );
 }

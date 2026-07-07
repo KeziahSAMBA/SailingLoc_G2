@@ -28,6 +28,7 @@ import ProprietaireDocuments from '../components/proprietaire/ProprietaireDocume
 import ProprietaireReservations from '../components/proprietaire/ProprietaireReservations.jsx';
 import ProprietaireRevenus from '../components/proprietaire/ProprietaireRevenus.jsx';
 import ProprietaireBoats from '../components/proprietaire/ProprietaireBoats.jsx';
+import ProprietaireBoatForm from '../components/proprietaire/ProprietaireBoatForm.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
 import MessagesPage from '../pages/MessagesPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
@@ -103,6 +104,8 @@ function AppRouter({ location }) {
         <Route path="reservations" element={<ProprietaireReservations />} />
         <Route path="revenus" element={<ProprietaireRevenus />} />
         <Route path="bateaux" element={<ProprietaireBoats />} />
+        <Route path="bateaux/nouveau" element={<ProprietaireBoatForm />} />
+        <Route path="bateaux/:id/modifier" element={<ProprietaireBoatForm />} />
       </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route

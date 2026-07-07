@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getBoats } from '../../services/proprietaireService.js';
+import { Link } from 'react-router-dom';
+import { getBoats, deleteBoat } from '../../services/proprietaireService.js';
+import { useToast } from '../../hooks/useToast.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -26,7 +28,7 @@ const FILTERS = [
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
 
-function BoatCard({ boat }) {
+function BoatCard({ boat, busy, onDelete }) {
   const meta = BOAT_STATUS[boat.status] || {
     label: boat.status,
     cls: 'bg-slate-500/15 text-slate-300',
@@ -66,13 +68,18 @@ function BoatCard({ boat }) {
         </header>
 
         <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+          {/* Champs possiblement vides sur un brouillon. */}
           <div className="flex items-baseline gap-1.5">
             <dt className="text-xs text-slate-400">Prix / jour</dt>
-            <dd className="font-medium text-slate-100">{EURO.format(boat.daily_price ?? 0)}</dd>
+            <dd className="font-medium text-slate-100">
+              {boat.daily_price != null ? EURO.format(boat.daily_price) : '—'}
+            </dd>
           </div>
           <div className="flex items-baseline gap-1.5">
             <dt className="text-xs text-slate-400">Capacité</dt>
-            <dd className="font-medium text-slate-100">{boat.capacity} pers.</dd>
+            <dd className="font-medium text-slate-100">
+              {boat.capacity != null ? `${boat.capacity} pers.` : '—'}
+            </dd>
           </div>
         </dl>
 
@@ -85,9 +92,26 @@ function BoatCard({ boat }) {
 
         {boat.status === 'refused' && (
           <p className="mt-3 rounded-lg bg-red-500/10 px-3 py-1.5 text-xs text-red-300">
-            Annonce retirée par la modération. Contactez le support pour une nouvelle vérification.
+            Annonce retirée par la modération : modifiez-la pour la soumettre à nouveau.
           </p>
         )}
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            to={`/proprietaire/bateaux/${boat.id_boat}/modifier`}
+            className={`rounded-full bg-[#0A3172] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0d3d8c] ${FOCUS_RING}`}
+          >
+            {boat.status === 'draft' ? 'Modifier le brouillon' : 'Modifier'}
+          </Link>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onDelete(boat)}
+            className={`rounded-full border border-red-500/40 px-4 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+          >
+            Supprimer
+          </button>
+        </div>
       </div>
     </article>
   );
@@ -98,6 +122,10 @@ function ProprietaireBoats() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  // Modal de confirmation de suppression : bateau ciblé + envoi en cours.
+  const [toDelete, setToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const { showToast } = useToast();
 
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
@@ -123,6 +151,33 @@ function ProprietaireBoats() {
     return c;
   }, [boats]);
 
+  // Fermeture de la modal au clavier (Échap), sauf pendant l'envoi.
+  useEffect(() => {
+    if (!toDelete) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !deleting) setToDelete(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [toDelete, deleting]);
+
+  async function confirmDelete() {
+    setDeleting(true);
+    try {
+      await deleteBoat(toDelete.id_boat);
+      setBoats((prev) => prev.filter((b) => b.id_boat !== toDelete.id_boat));
+      showToast(
+        toDelete.status === 'draft' ? 'Brouillon supprimé.' : 'Annonce supprimée.',
+        'success'
+      );
+      setToDelete(null);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Une erreur est survenue.', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <section aria-labelledby="boats-title">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
@@ -134,13 +189,12 @@ function ProprietaireBoats() {
             Vos annonces et leur statut : brouillon, en attente de validation, publiée ou refusée.
           </p>
         </div>
-        {/* Structure : ouvrira le formulaire d'ajout de bateau. */}
-        <button
-          type="button"
+        <Link
+          to="/proprietaire/bateaux/nouveau"
           className={`shrink-0 rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0d3d8c] ${FOCUS_RING}`}
         >
           + Ajouter un bateau
-        </button>
+        </Link>
       </header>
 
       {error && (
@@ -188,10 +242,62 @@ function ProprietaireBoats() {
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((b) => (
             <li key={b.id_boat}>
-              <BoatCard boat={b} />
+              <BoatCard
+                boat={b}
+                busy={deleting && toDelete?.id_boat === b.id_boat}
+                onDelete={setToDelete}
+              />
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Modal de confirmation de suppression */}
+      {toDelete && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => !deleting && setToDelete(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-boat-title"
+            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="delete-boat-title" className="text-lg font-semibold text-white">
+              {toDelete.status === 'draft' ? 'Supprimer le brouillon' : 'Supprimer l’annonce'}
+            </h2>
+            <p className="mt-1 text-sm text-slate-400">
+              {toDelete.name}
+              {toDelete.port && ` — ${toDelete.port.name} · ${toDelete.port.city}`}
+            </p>
+            <p className="mt-3 text-sm text-slate-300">
+              {toDelete.status === 'published'
+                ? 'L’annonce ne sera plus visible des locataires. Cette action est définitive.'
+                : 'Cette action est définitive.'}
+            </p>
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setToDelete(null)}
+                className={`rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+              >
+                Retour
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={confirmDelete}
+                className={`rounded-full bg-red-600/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+              >
+                {deleting ? 'Suppression…' : 'Supprimer définitivement'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );
