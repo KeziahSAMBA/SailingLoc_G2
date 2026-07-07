@@ -359,6 +359,21 @@ function validateBoatPayload(payload, isDraft) {
   };
 }
 
+// Proposer un skipper exige un CV marin déposé (en attente ou validé) : c'est
+// le document optionnel du propriétaire qui devient requis dans ce cas.
+// Contrôlé à la soumission uniquement (jamais sur un brouillon).
+async function ensureSkipperCv(id_user) {
+  const cvCount = await prisma.document.count({
+    where: { id_user, type: 'cv_marin', status: { in: ['pending', 'validated'] } },
+  });
+  if (cvCount === 0) {
+    throw Object.assign(
+      new Error('Pour proposer un skipper, déposez d’abord votre CV marin dans « Mes documents ».'),
+      { status: 400 }
+    );
+  }
+}
+
 // Port de l'annonce : obligatoire à la soumission, optionnel en brouillon.
 async function resolveBoatPort(payload, isDraft) {
   if (payload.id_port || payload.port_name) {
@@ -413,6 +428,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
   const fields = validateBoatPayload(payload, isDraft);
   const availabilities = parseAvailabilities(payload.availabilities);
   const port = await resolveBoatPort(payload, isDraft);
+  if (!isDraft && fields.with_skipper) await ensureSkipperCv(id_user);
 
   try {
     const boat = await prisma.$transaction(async (tx) => {
@@ -566,6 +582,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
   const fields = validateBoatPayload(payload, isDraft);
   const availabilities = parseAvailabilities(payload.availabilities);
   const port = await resolveBoatPort(payload, isDraft);
+  if (!isDraft && fields.with_skipper) await ensureSkipperCv(id_user);
 
   let keptImageIds = [];
   try {

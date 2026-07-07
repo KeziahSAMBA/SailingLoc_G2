@@ -18,7 +18,7 @@ function ProprietaireDocuments() {
         </h1>
         <p className="mt-1 text-sm text-slate-400">
           Déposez vos documents (PDF, JPG ou PNG, 5 Mo max) : ils seront vérifiés par notre équipe.
-          Les cartes grises déposées ici sont réutilisables dans vos annonces.
+          Les actes de francisation déposés ici sont réutilisables dans vos annonces.
         </p>
         <p className="mt-2 text-sm font-semibold text-slate-200">
           {counts.provided} / {counts.total} types fournis

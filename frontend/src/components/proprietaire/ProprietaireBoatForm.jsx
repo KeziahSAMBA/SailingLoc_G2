@@ -551,7 +551,10 @@ function ProprietaireBoatForm() {
                 onChange={handleChange}
                 className="h-4 w-4 accent-[#5AB4EC]"
               />
-              Skipper proposé
+              <span>
+                Skipper proposé{' '}
+                <span className="text-xs text-slate-500">(CV marin requis dans Mes documents)</span>
+              </span>
             </label>
 
             <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-200">
