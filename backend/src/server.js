@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 import { initConfig } from './config/appConfig.js';
 
 const { PORT, APP_URL } = initConfig();
@@ -92,6 +93,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 

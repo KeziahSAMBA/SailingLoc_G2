@@ -44,6 +44,7 @@ function HeaderLocataire() {
       rightVariant="stretch"
       rightHeightPercent="65%"
       showMessages
+      messagesTo="/locataire/messages"
     />
   );
 }

@@ -6,6 +6,7 @@ const NAV = [
   { to: '/locataire/documents', label: 'Mes documents' },
   { to: '/locataire/reservations', label: 'Mes réservations' },
   { to: '/locataire/favoris', label: 'Mes favoris' },
+  { to: '/locataire/messages', label: 'Messagerie' },
 ];
 
 function LocataireLayout() {

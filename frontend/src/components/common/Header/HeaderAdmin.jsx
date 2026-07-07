@@ -21,6 +21,8 @@ function HeaderAdmin() {
       rightMenuItems={ADMIN_MENU_ITEMS}
       rightVariant="compact"
       rightPanelWidth="280px"
+      showMessages
+      messagesTo="/admin/messages"
     />
   );
 }
