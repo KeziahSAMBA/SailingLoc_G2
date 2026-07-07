@@ -74,6 +74,9 @@ function Messenger({ externalUser = null }) {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
+  // Mobile : la liste et le fil occupent la même place — on affiche l'un OU
+  // l'autre (la liste par défaut). En lg+, les deux sont côte à côte.
+  const [listOpen, setListOpen] = useState(true);
 
   const loadConversations = useCallback(() => {
     getConversations()
@@ -93,7 +96,10 @@ function Messenger({ externalUser = null }) {
 
   // Ouverture d'une conversation choisie par la page hôte (recherche admin).
   useEffect(() => {
-    if (externalUser) setSelected(externalUser);
+    if (externalUser) {
+      setSelected(externalUser);
+      setListOpen(false);
+    }
   }, [externalUser]);
 
   // Chargement du fil à la sélection (les non-lus passent lus côté serveur),
@@ -214,12 +220,31 @@ function Messenger({ externalUser = null }) {
     }
   }
 
+  const totalUnread = conversations.reduce((sum, c) => sum + c.unread, 0);
+
   return (
     <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-      {/* Conversations */}
+      {/* Mobile : quand le fil est affiché, bouton pour revenir à la liste. */}
+      {!listOpen && (
+        <button
+          type="button"
+          onClick={() => setListOpen(true)}
+          className={`flex w-fit items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800 lg:hidden ${FOCUS_RING}`}
+        >
+          ← Conversations
+          {totalUnread > 0 && (
+            <span className="rounded-full bg-[#5AB4EC] px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
+              {totalUnread}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Conversations : sur mobile la liste occupe la place du fil (l'un OU
+          l'autre) ; sur grand écran les deux sont côte à côte. */}
       <aside
         aria-label="Conversations"
-        className="rounded-2xl border border-slate-800 bg-slate-900/70"
+        className={`${listOpen ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex`}
       >
         <h2 className="border-b border-slate-800 px-4 py-3 text-sm font-semibold text-slate-200">
           Conversations
@@ -229,21 +254,25 @@ function Messenger({ externalUser = null }) {
         ) : conversations.length === 0 ? (
           <p className="px-4 py-6 text-sm text-slate-400">Aucune conversation pour le moment.</p>
         ) : (
-          <ul className="max-h-[430px] divide-y divide-slate-800 overflow-y-auto">
+          <ul className="max-h-[60vh] divide-y divide-slate-800 overflow-y-auto lg:max-h-[430px]">
             {conversations.map((c) => {
               const active = selected?.id_user === c.user.id_user;
               return (
                 <li key={c.user.id_user}>
                   <button
                     type="button"
-                    onClick={() => setSelected(c.user)}
+                    onClick={() => {
+                      setSelected(c.user);
+                      // Mobile : choisir une conversation referme le panneau.
+                      setListOpen(false);
+                    }}
                     aria-current={active || undefined}
                     className={`block w-full px-4 py-3 text-left transition ${FOCUS_RING} ${
                       active ? 'bg-[#0A3172]/40' : 'hover:bg-slate-800/60'
                     }`}
                   >
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-slate-100">
+                      <span className="min-w-0 truncate text-sm font-semibold text-slate-100">
                         {displayName(c.user)}
                       </span>
                       <span className="shrink-0 text-[10px] text-slate-500">
@@ -251,7 +280,7 @@ function Messenger({ externalUser = null }) {
                       </span>
                     </span>
                     <span className="mt-0.5 flex items-center justify-between gap-2">
-                      <span className="truncate text-xs text-slate-400">
+                      <span className="min-w-0 truncate text-xs text-slate-400">
                         {c.last_message?.from_me ? 'Vous : ' : ''}
                         {c.last_message?.deleted ? (
                           <span className="italic">Message supprimé</span>
@@ -279,7 +308,7 @@ function Messenger({ externalUser = null }) {
       {/* Fil ouvert */}
       <section
         aria-label="Fil de discussion"
-        className="flex min-h-[480px] flex-col rounded-2xl border border-slate-800 bg-slate-900/70"
+        className={`${listOpen ? 'hidden' : 'flex'} min-h-[480px] min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex`}
       >
         {!selected ? (
           <p className="m-auto px-6 text-center text-sm text-slate-400">
