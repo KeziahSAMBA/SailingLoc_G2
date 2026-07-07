@@ -3,8 +3,8 @@ import { useToast } from '../../hooks/useToast.jsx';
 import { listPorts, createPort, deletePort } from '../../services/adminService.js';
 import { IconBtn, TrashIcon } from './AdminActions.jsx';
 import MapView from '../common/MapView.jsx';
+import { loadPortCatalog } from '../../utils/portCatalog.js';
 
-const CATALOG_URL = '/geo/Port_Maritime_FRA.json';
 const MAX_RESULTS = 50;
 
 // Régions administratives (mêmes libellés que ceux déduits côté serveur).
@@ -34,31 +34,6 @@ const inputClass =
 
 function fmtCoord(v) {
   return v == null ? '—' : Number(v).toFixed(4);
-}
-
-// Le catalogue JSON (GeoJSON IGN) n'expose pas les mêmes clés que notre table :
-// on ne garde que les ports nommés et on les déduplique par nom. CdCommune (code
-// INSEE) sert au serveur à déduire la région.
-function parseCatalog(features) {
-  const seen = new Set();
-  const out = [];
-  for (const f of features || []) {
-    const p = f.properties || {};
-    const name = p.NomPort && String(p.NomPort).trim();
-    if (!name) continue;
-    const key = name.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({
-      name,
-      city: (p.LbCommune && String(p.LbCommune).trim()) || '',
-      country: 'France',
-      insee: p.CdCommune || null,
-      latitude: typeof p.CoordYPort === 'number' ? p.CoordYPort : null,
-      longitude: typeof p.CoordXPort === 'number' ? p.CoordXPort : null,
-    });
-  }
-  return out.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 }
 
 function AdminPortsPage() {
@@ -106,10 +81,7 @@ function AdminPortsPage() {
     setCatalogLoading(true);
     setCatalogError('');
     try {
-      const res = await fetch(CATALOG_URL);
-      if (!res.ok) throw new Error('fetch failed');
-      const data = await res.json();
-      setCatalog(parseCatalog(data.features));
+      setCatalog(await loadPortCatalog());
     } catch {
       setCatalogError('Impossible de charger le catalogue des ports.');
     } finally {

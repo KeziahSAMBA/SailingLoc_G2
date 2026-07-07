@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
-import DashboardPage from '../pages/DashboardPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminLayout from '../components/admin/AdminLayout.jsx';
@@ -22,7 +21,14 @@ import LocataireAccount from '../components/locataire/LocataireAccount.jsx';
 import LocataireDocuments from '../components/locataire/LocataireDocuments.jsx';
 import LocataireReservations from '../components/locataire/LocataireReservations.jsx';
 import LocataireFavorites from '../components/locataire/LocataireFavorites.jsx';
-import AccountPage from '../pages/AccountPage.jsx';
+import ProprietaireLayout from '../components/proprietaire/ProprietaireLayout.jsx';
+import ProprietaireDashboard from '../components/proprietaire/ProprietaireDashboard.jsx';
+import ProprietaireAccount from '../components/proprietaire/ProprietaireAccount.jsx';
+import ProprietaireDocuments from '../components/proprietaire/ProprietaireDocuments.jsx';
+import ProprietaireReservations from '../components/proprietaire/ProprietaireReservations.jsx';
+import ProprietaireRevenus from '../components/proprietaire/ProprietaireRevenus.jsx';
+import ProprietaireBoats from '../components/proprietaire/ProprietaireBoats.jsx';
+import ProprietaireBoatForm from '../components/proprietaire/ProprietaireBoatForm.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
 import MessagesPage from '../pages/MessagesPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
@@ -55,22 +61,6 @@ function AppRouter({ location }) {
         }
       />
       <Route
-        path="/dashboard"
-        element={
-          <RequireRole>
-            <DashboardPage />
-          </RequireRole>
-        }
-      />
-      <Route
-        path="/account"
-        element={
-          <RequireRole>
-            <AccountPage />
-          </RequireRole>
-        }
-      />
-      <Route
         path="/documents"
         element={
           <RequireRole role={['locataire', 'proprietaire']}>
@@ -100,6 +90,23 @@ function AppRouter({ location }) {
           </RequireRole>
         }
       />
+      <Route
+        path="/proprietaire"
+        element={
+          <RequireRole role="proprietaire">
+            <ProprietaireLayout />
+          </RequireRole>
+        }
+      >
+        <Route index element={<ProprietaireDashboard />} />
+        <Route path="compte" element={<ProprietaireAccount />} />
+        <Route path="documents" element={<ProprietaireDocuments />} />
+        <Route path="reservations" element={<ProprietaireReservations />} />
+        <Route path="revenus" element={<ProprietaireRevenus />} />
+        <Route path="bateaux" element={<ProprietaireBoats />} />
+        <Route path="bateaux/nouveau" element={<ProprietaireBoatForm />} />
+        <Route path="bateaux/:id/modifier" element={<ProprietaireBoatForm />} />
+      </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route
         path="/admin"

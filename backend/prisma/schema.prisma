@@ -79,31 +79,36 @@ model Port {
 model Boat {
   id_boat         Int      @id @default(autoincrement())
   id_user         Int
-  id_port         Int
+  // Nullable pour les brouillons : renseignés au plus tard à la soumission.
+  id_port         Int?
   name            String   @db.VarChar(150)
   type            String   @db.VarChar(50)
-  size            Decimal
+  size            Decimal?
   engine          String?  @db.VarChar(100)
   with_skipper    Boolean  @default(false)
-  daily_price     Decimal
-  capacity        Int
+  daily_price     Decimal?
+  capacity        Int?
   build_year      Int?
-  registration    String   @unique @db.VarChar(50)
+  registration    String?  @unique @db.VarChar(50)
   description     String?
   is_published      Boolean  @default(false)
+  // Statut de l'annonce : brouillon → en attente de validation → publiée/refusée.
+  // is_published reste la source de visibilité publique (status 'published' ⇔ true).
+  status            BoatStatus @default(draft)
   license_required  Boolean  @default(true)
   created_at        DateTime @default(now())
   updated_at      DateTime?
   deleted_at      DateTime?
 
   owner           User     @relation("OwnerBoats", fields: [id_user], references: [id_user])
-  port            Port     @relation(fields: [id_port], references: [id_port])
+  port            Port?    @relation(fields: [id_port], references: [id_port])
   bookings        Booking[]
   images          Image[]
   favoriteUsers   UserBoatFavorite[]
   reports         BoatReport[]
   availabilities  BoatAvailability[]
   equipment       BoatEquipment[]
+  documents       Document[]
 
   @@index([id_user])
   @@index([id_port])
@@ -201,6 +206,8 @@ model Payment {
 model Document {
   id_document   Int            @id @default(autoincrement())
   id_user       Int
+  // Document rattaché à un bateau (ex. acte de francisation) plutôt qu'à l'utilisateur seul.
+  id_boat       Int?
   type          String         @db.VarChar(50)
   file_name     String         @db.VarChar(255)
   file_url      String         @db.VarChar(500)
@@ -210,8 +217,10 @@ model Document {
   updated_at    DateTime?
 
   user          User           @relation(fields: [id_user], references: [id_user])
+  boat          Boat?          @relation(fields: [id_boat], references: [id_boat])
   bookings      BookingDocument[]
 
+  @@index([id_boat])
   @@map("document")
 }
 
@@ -302,6 +311,15 @@ enum UserRole {
   locataire
 
   @@map("user_role")
+}
+
+enum BoatStatus {
+  draft
+  pending
+  published
+  refused
+
+  @@map("boat_status")
 }
 
 enum BookingStatus {

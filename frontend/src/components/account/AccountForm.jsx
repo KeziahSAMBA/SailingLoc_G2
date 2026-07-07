@@ -9,11 +9,11 @@ const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
+  'w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
 const readonlyClass =
-  'w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-500 cursor-not-allowed';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
-const errorClass = 'mt-1 block text-xs text-red-600';
+  'w-full rounded-lg border border-slate-800 bg-slate-800/60 px-4 py-2.5 text-slate-400 cursor-not-allowed';
+const labelClass = 'mb-1.5 block text-sm font-medium text-slate-300';
+const errorClass = 'mt-1 block text-xs text-red-300';
 
 const EMPTY_PASSWORD_FORM = {
   currentPassword: '',
@@ -23,8 +23,7 @@ const EMPTY_PASSWORD_FORM = {
 
 // Formulaires d'édition du compte (infos personnelles + mot de passe).
 // Composant "présentation seule" du contenu : l'enveloppe (fond, en-tête de page)
-// est fournie par la page hôte — réutilisé par AccountPage (plein écran) et par
-// l'espace locataire (dans le dashboard).
+// est fournie par la page hôte — utilisé par les espaces locataire et propriétaire.
 function AccountForm() {
   const { user, updateUser, logout } = useAuth();
   const { showToast } = useToast();
@@ -156,13 +155,13 @@ function AccountForm() {
   return (
     <>
       {/* Informations personnelles */}
-      <article className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-        <h2 className="mb-5 text-lg font-semibold text-slate-900">Informations personnelles</h2>
+      <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
+        <h2 className="mb-5 text-lg font-semibold text-white">Informations personnelles</h2>
 
         {serverError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
           >
             {serverError}
           </div>
@@ -207,7 +206,7 @@ function AccountForm() {
 
           <div>
             <label htmlFor="email" className={labelClass}>
-              Email <span className="font-normal text-slate-400">(non modifiable)</span>
+              Email <span className="font-normal text-slate-500">(non modifiable)</span>
             </label>
             <input
               id="email"
@@ -221,7 +220,7 @@ function AccountForm() {
 
           <div>
             <label htmlFor="phone" className={labelClass}>
-              Téléphone <span className="font-normal text-slate-400">(facultatif)</span>
+              Téléphone <span className="font-normal text-slate-500">(facultatif)</span>
             </label>
             <input
               id="phone"
@@ -242,14 +241,14 @@ function AccountForm() {
               type="button"
               onClick={handleCancel}
               disabled={!dirty || saving}
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={!dirty || saving}
-              className="flex-1 rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
             </button>
@@ -258,16 +257,16 @@ function AccountForm() {
       </article>
 
       {/* Mot de passe */}
-      <article className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-        <h2 className="mb-1 text-lg font-semibold text-slate-900">Modifier mon mot de passe</h2>
-        <p className="mb-5 text-sm text-slate-500">
+      <article className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
+        <h2 className="mb-1 text-lg font-semibold text-white">Modifier mon mot de passe</h2>
+        <p className="mb-5 text-sm text-slate-400">
           Pour des raisons de sécurité, votre mot de passe actuel est requis.
         </p>
 
         {pwdServerError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
           >
             {pwdServerError}
           </div>
@@ -279,6 +278,7 @@ function AccountForm() {
               Mot de passe actuel
             </label>
             <PasswordField
+              variant="dark"
               id="currentPassword"
               name="currentPassword"
               value={pwdForm.currentPassword}
@@ -296,6 +296,7 @@ function AccountForm() {
               Nouveau mot de passe
             </label>
             <PasswordField
+              variant="dark"
               id="newPassword"
               name="newPassword"
               value={pwdForm.newPassword}
@@ -315,6 +316,7 @@ function AccountForm() {
               Confirmer le nouveau mot de passe
             </label>
             <PasswordField
+              variant="dark"
               id="confirmPassword"
               name="confirmPassword"
               value={pwdForm.confirmPassword}
@@ -331,7 +333,7 @@ function AccountForm() {
             <button
               type="submit"
               disabled={pwdSaving}
-              className="w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pwdSaving ? 'Mise à jour…' : 'Modifier le mot de passe'}
             </button>

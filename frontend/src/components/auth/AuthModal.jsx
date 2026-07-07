@@ -63,8 +63,15 @@ function AuthModal({ activeTab, onClose }) {
         <div
           role="tablist"
           aria-label="Connexion ou inscription"
-          className="mb-6 mt-2 flex rounded-full bg-slate-100 p-1"
+          className="relative mb-6 mt-2 flex rounded-full bg-slate-100 p-1"
         >
+          {/* Indicateur coulissant : glisse entre les deux onglets au changement. */}
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-[#0A3172] shadow transition-transform duration-300 ease-out ${
+              activeTab === 'register' ? 'translate-x-full' : 'translate-x-0'
+            }`}
+          />
           {[
             { key: 'login', label: 'Connexion', onClick: goToLogin },
             { key: 'register', label: 'Inscription', onClick: goToRegister },
@@ -77,10 +84,8 @@ function AuthModal({ activeTab, onClose }) {
                 type="button"
                 aria-selected={isActive}
                 onClick={tab.onClick}
-                className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-[#0A3172] text-white shadow'
-                    : 'text-slate-500 hover:text-slate-700'
+                className={`relative z-10 flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
+                  isActive ? 'text-white' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
                 {tab.label}
@@ -93,7 +98,11 @@ function AuthModal({ activeTab, onClose }) {
           {activeTab === 'login' ? 'Connexion à SailingLoc' : 'Inscription à SailingLoc'}
         </h2>
 
-        <div role="tabpanel">
+        <div
+          role="tabpanel"
+          key={activeTab}
+          className={activeTab === 'login' ? 'auth-panel-login' : 'auth-panel-register'}
+        >
           {activeTab === 'login' ? (
             <LoginForm onSwitchToRegister={goToRegister} />
           ) : (

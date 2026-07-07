@@ -9,12 +9,12 @@ const CENTER_NAV = [
 ];
 
 const USER_MENU_ITEMS = [
-  { label: 'Mon dashboard', to: '/dashboard' },
-  { label: 'Mon compte', to: '/account' },
-  { label: 'Mes documents', to: '/documents' },
-  { label: 'Mes réservations', to: '/dashboard' },
-  { label: 'Mes transactions', to: '/dashboard' },
-  { label: 'Mes bateaux', to: '/dashboard' },
+  { label: 'Mon dashboard', to: '/proprietaire' },
+  { label: 'Mon compte', to: '/proprietaire/compte' },
+  { label: 'Mes documents', to: '/proprietaire/documents' },
+  { label: 'Mes réservations', to: '/proprietaire/reservations' },
+  { label: 'Mes revenus', to: '/proprietaire/revenus' },
+  { label: 'Mes bateaux', to: '/proprietaire/bateaux' },
   { label: 'Déconnexion', action: 'logout', danger: true },
 ];
 
@@ -23,7 +23,7 @@ function HeaderProprio() {
     <DashboardHeader
       leftGroups={[{ items: NAV_PROPRIO, heightPercent: '28%' }]}
       centerNav={CENTER_NAV}
-      profileHref="/account"
+      profileHref="/proprietaire/compte"
       rightMenuItems={USER_MENU_ITEMS}
       rightVariant="stretch"
       rightHeightPercent="77%"

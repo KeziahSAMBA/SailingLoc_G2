@@ -151,6 +151,85 @@ async function main() {
     ON CONFLICT (transaction_ref) DO NOTHING
   `);
 
+  // Paiements des locations confirmées — alimente la page « Mes revenus » des
+  // propriétaires (net = montant − commission de 10 %). Paiement le lendemain
+  // de la réservation ; une tentative échouée (n°56) pour la variété des statuts.
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO payment (id_booking, amount, commission, payment_date, payment_method, status, transaction_ref) VALUES
+    (15,  2450.00,  245.00, '2026-05-16 14:45:00', 'bank_transfer', 'success', 'TXN-2026-1015'),
+    (16,  3750.00,  375.00, '2026-06-02 15:52:00', 'card',          'success', 'TXN-2026-1016'),
+    (17,  4760.00,  476.00, '2026-05-21 16:59:00', 'card',          'success', 'TXN-2026-1017'),
+    (18,  1950.00,  195.00, '2026-06-06 17:06:00', 'bank_transfer', 'success', 'TXN-2026-1018'),
+    (19,  1300.00,  130.00, '2026-06-11 18:13:00', 'card',          'success', 'TXN-2026-1019'),
+    (21,  2100.00,  210.00, '2025-01-16 10:27:00', 'bank_transfer', 'success', 'TXN-2025-1021'),
+    (22,  3480.00,  348.00, '2025-02-21 11:34:00', 'card',          'success', 'TXN-2025-1022'),
+    (23,  1280.00,  128.00, '2025-03-11 12:41:00', 'card',          'success', 'TXN-2025-1023'),
+    (24,  1300.00,  130.00, '2024-12-02 13:48:00', 'bank_transfer', 'success', 'TXN-2024-1024'),
+    (25,  1400.00,  140.00, '2024-11-21 14:55:00', 'card',          'success', 'TXN-2024-1025'),
+    (26,  2450.00,  245.00, '2024-10-16 15:02:00', 'card',          'success', 'TXN-2024-1026'),
+    (27,  1950.00,  195.00, '2024-09-21 16:09:00', 'bank_transfer', 'success', 'TXN-2024-1027'),
+    (28,  5250.00,  525.00, '2024-08-16 17:16:00', 'card',          'success', 'TXN-2024-1028'),
+    (29,  4550.00,  455.00, '2025-04-02 18:23:00', 'card',          'success', 'TXN-2025-1029'),
+    (30,  1680.00,  168.00, '2025-03-01 09:30:00', 'bank_transfer', 'success', 'TXN-2025-1030'),
+    (31,  4760.00,  476.00, '2024-07-11 10:37:00', 'card',          'success', 'TXN-2024-1031'),
+    (32,  1550.00,  155.00, '2025-11-02 11:44:00', 'card',          'success', 'TXN-2025-1032'),
+    (33,  3750.00,  375.00, '2025-01-21 12:51:00', 'bank_transfer', 'success', 'TXN-2025-1033'),
+    (34,  1300.00,  130.00, '2025-02-11 13:58:00', 'card',          'success', 'TXN-2025-1034'),
+    (35,  3400.00,  340.00, '2025-03-16 14:05:00', 'card',          'success', 'TXN-2025-1035'),
+    (36,  1400.00,  140.00, '2025-04-06 15:12:00', 'bank_transfer', 'success', 'TXN-2025-1036'),
+    (37,  1260.00,  126.00, '2025-04-11 16:19:00', 'card',          'success', 'TXN-2025-1037'),
+    (38,   900.00,   90.00, '2025-06-21 17:26:00', 'card',          'success', 'TXN-2025-1038'),
+    (39,  1540.00,  154.00, '2025-05-16 18:33:00', 'bank_transfer', 'success', 'TXN-2025-1039'),
+    (40,  1750.00,  175.00, '2025-06-11 09:40:00', 'card',          'success', 'TXN-2025-1040'),
+    (41,  2100.00,  210.00, '2025-05-02 10:47:00', 'card',          'success', 'TXN-2025-1041'),
+    (42,  1450.00,  145.00, '2025-05-05 11:54:00', 'bank_transfer', 'success', 'TXN-2025-1042'),
+    (43,  3250.00,  325.00, '2025-05-08 12:01:00', 'card',          'success', 'TXN-2025-1043'),
+    (44,  1550.00,  155.00, '2025-05-11 13:08:00', 'card',          'success', 'TXN-2025-1044'),
+    (45,  4250.00,  425.00, '2025-05-14 14:15:00', 'bank_transfer', 'success', 'TXN-2025-1045'),
+    (46,  2400.00,  240.00, '2025-05-17 15:22:00', 'card',          'success', 'TXN-2025-1046'),
+    (47,  1750.00,  175.00, '2025-05-20 16:29:00', 'card',          'success', 'TXN-2025-1047'),
+    (48,  2600.00,  260.00, '2025-05-23 17:36:00', 'bank_transfer', 'success', 'TXN-2025-1048'),
+    (49,   450.00,   45.00, '2025-05-26 18:43:00', 'card',          'success', 'TXN-2025-1049'),
+    (50,   400.00,   40.00, '2025-05-29 09:50:00', 'card',          'success', 'TXN-2025-1050'),
+    (51,   425.00,   42.50, '2025-06-01 10:57:00', 'bank_transfer', 'success', 'TXN-2025-1051'),
+    (52,   750.00,   75.00, '2025-06-04 11:04:00', 'card',          'success', 'TXN-2025-1052'),
+    (53,   650.00,   65.00, '2025-06-07 12:11:00', 'card',          'success', 'TXN-2025-1053'),
+    (54,   600.00,   60.00, '2025-06-10 13:18:00', 'bank_transfer', 'success', 'TXN-2025-1054'),
+    (55,  4500.00,  450.00, '2025-06-13 14:25:00', 'card',          'success', 'TXN-2025-1055'),
+    (56,  4000.00,  400.00, '2025-06-16 15:32:00', 'card',          'success', 'TXN-2025-1056'),
+    (57,  1900.00,  190.00, '2025-06-19 16:39:00', 'bank_transfer', 'success', 'TXN-2025-1057'),
+    (58,  2250.00,  225.00, '2025-06-22 17:46:00', 'card',          'success', 'TXN-2025-1058'),
+    (59,   350.00,   35.00, '2025-06-25 18:53:00', 'card',          'success', 'TXN-2025-1059'),
+    (60,   325.00,   32.50, '2025-06-28 09:00:00', 'bank_transfer', 'success', 'TXN-2025-1060'),
+    (61,   375.00,   37.50, '2025-07-01 10:07:00', 'card',          'success', 'TXN-2025-1061'),
+    (62,  1700.00,  170.00, '2025-07-04 11:14:00', 'card',          'success', 'TXN-2025-1062'),
+    (63,  2050.00,  205.00, '2025-07-07 12:21:00', 'bank_transfer', 'success', 'TXN-2025-1063'),
+    (64,  1000.00,  100.00, '2025-07-10 13:28:00', 'card',          'success', 'TXN-2025-1064'),
+    (65,   800.00,   80.00, '2025-07-13 14:35:00', 'card',          'success', 'TXN-2025-1065'),
+    (66,  2300.00,  230.00, '2025-07-16 15:42:00', 'bank_transfer', 'success', 'TXN-2025-1066'),
+    (67,  2750.00,  275.00, '2025-07-19 16:49:00', 'card',          'success', 'TXN-2025-1067'),
+    (68,   425.00,   42.50, '2025-07-22 17:56:00', 'card',          'success', 'TXN-2025-1068'),
+    (69,   400.00,   40.00, '2025-07-25 18:03:00', 'bank_transfer', 'success', 'TXN-2025-1069'),
+    (70,   550.00,   55.00, '2025-07-28 09:10:00', 'card',          'success', 'TXN-2025-1070'),
+    (71,   625.00,   62.50, '2025-07-31 10:17:00', 'card',          'success', 'TXN-2025-1071'),
+    (72,  3500.00,  350.00, '2025-08-03 11:24:00', 'bank_transfer', 'success', 'TXN-2025-1072'),
+    (73,  3750.00,  375.00, '2025-08-06 12:31:00', 'card',          'success', 'TXN-2025-1073'),
+    (74,  4250.00,  425.00, '2025-08-09 13:38:00', 'card',          'success', 'TXN-2025-1074'),
+    (75,   300.00,   30.00, '2025-08-12 14:45:00', 'bank_transfer', 'success', 'TXN-2025-1075'),
+    (76,   275.00,   27.50, '2025-08-15 15:52:00', 'card',          'success', 'TXN-2025-1076'),
+    (56,  4000.00,  400.00, '2025-06-16 09:20:00', 'card',          'failed',  'TXN-2025-1056F')
+    ON CONFLICT (transaction_ref) DO NOTHING
+  `);
+
+  // Paiements remboursés suite aux annulations (la commission SailingLoc est
+  // conservée : refunded_amount = montant hors commission).
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO payment (id_booking, amount, commission, payment_date, payment_method, status, transaction_ref, refunded_amount, refunded_at, refund_reason) VALUES
+    ( 4, 1680.00, 168.00, '2025-06-21 13:00:00', 'card',          'refunded', 'TXN-2025-1004', 1680.00, '2025-06-25 10:00:00', 'Changement de plans personnels'),
+    (14, 1260.00, 126.00, '2025-08-16 11:00:00', 'card',          'refunded', 'TXN-2025-1014', 1260.00, '2025-08-20 09:00:00', 'Problème de santé')
+    ON CONFLICT (transaction_ref) DO NOTHING
+  `);
+
   // Documents
   await prisma.$executeRawUnsafe(`
     INSERT INTO document (id_user, type, file_name, file_url, upload_date, status) VALUES
@@ -1213,6 +1292,24 @@ async function main() {
       },
     });
   }
+
+  // Statuts d'annonce des bateaux : en ligne → publiée, dépubliée → en attente
+  // de validation ; plus deux exemples brouillon / refusé pour l'espace propriétaire.
+  await prisma.$executeRawUnsafe(`
+    INSERT INTO boat (id_user, id_port, name, type, size, engine, with_skipper, daily_price, capacity, build_year, registration, description, is_published, license_required) VALUES
+    (3, 2, 'Sloop Horizon',     'voilier', 9.80, 'Diesel 20cv',   FALSE, 240.00, 4, 2010, 'FR-LRO-050', 'Annonce en cours de rédaction : description et photos à compléter avant soumission.', FALSE, TRUE),
+    (2, 1, 'Vedette Calanques', 'moteur',  8.50, 'Essence 200cv', FALSE, 380.00, 6, 2019, 'FR-MRS-051', 'Vedette rapide pour explorer les calanques au départ de Marseille.', FALSE, TRUE)
+    ON CONFLICT (registration) DO NOTHING
+  `);
+  await prisma.$executeRawUnsafe(`
+    UPDATE boat SET status = CASE WHEN is_published THEN 'published'::boat_status ELSE 'pending'::boat_status END
+  `);
+  await prisma.$executeRawUnsafe(`
+    UPDATE boat SET status = 'draft' WHERE registration = 'FR-LRO-050'
+  `);
+  await prisma.$executeRawUnsafe(`
+    UPDATE boat SET status = 'refused' WHERE registration = 'FR-MRS-051'
+  `);
 
   console.log('Seed completed.');
 }

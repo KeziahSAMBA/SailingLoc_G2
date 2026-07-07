@@ -26,20 +26,25 @@ const DOC_TYPES_BY_ROLE = {
   proprietaire: [
     { key: 'permis', label: 'Permis', desc: 'Permis bateau ou de conduire.' },
     { key: 'assurance', label: 'Assurance', desc: 'Attestation d’assurance du bateau.' },
-    { key: 'cv_marin', label: 'CV marin', desc: 'Document décrivant votre expérience maritime.' },
+    {
+      key: 'cv_marin',
+      label: 'CV marin',
+      desc: 'Document décrivant votre expérience maritime. Optionnel — requis seulement si vous proposez vos services de skipper avec votre bateau.',
+      optional: true,
+    },
     {
       key: 'acte_francisation',
       label: 'Acte de francisation',
-      desc: 'Vous pouvez en déposer plusieurs (un par bateau).',
+      desc: 'Certificat d’immatriculation du bateau (carte d’enregistrement). Plusieurs possibles — chacun ne peut être rattaché qu’à une seule annonce.',
       multiple: true,
     },
   ],
 };
 
 const STATUS = {
-  pending: { label: 'En attente de validation', cls: 'bg-amber-100 text-amber-800' },
-  validated: { label: 'Validé', cls: 'bg-emerald-100 text-emerald-800' },
-  refused: { label: 'Refusé', cls: 'bg-red-100 text-red-700' },
+  pending: { label: 'En attente de validation', cls: 'bg-amber-500/15 text-amber-300' },
+  validated: { label: 'Validé', cls: 'bg-emerald-500/15 text-emerald-300' },
+  refused: { label: 'Refusé', cls: 'bg-red-500/15 text-red-300' },
 };
 
 function DocumentRow({ config, docs, onChanged }) {
@@ -98,25 +103,25 @@ function DocumentRow({ config, docs, onChanged }) {
   const hasDocs = docs.length > 0;
   const headerBadge = config.multiple
     ? hasDocs
-      ? { label: `${docs.length} fichier(s)`, cls: 'bg-slate-100 text-slate-600' }
+      ? { label: `${docs.length} fichier(s)`, cls: 'bg-slate-500/15 text-slate-300' }
       : null
     : hasDocs
       ? STATUS[docs[0].status]
       : null;
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+    <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">{config.label}</h2>
-          <p className="mt-1 text-sm text-slate-500">{config.desc}</p>
+          <h2 className="text-base font-semibold text-white">{config.label}</h2>
+          <p className="mt-1 text-sm text-slate-400">{config.desc}</p>
         </div>
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-            headerBadge ? headerBadge.cls : 'bg-slate-100 text-slate-500'
+            headerBadge ? headerBadge.cls : 'bg-slate-800 text-slate-400'
           }`}
         >
-          {headerBadge ? headerBadge.label : 'Non fourni'}
+          {headerBadge ? headerBadge.label : config.optional ? 'Optionnel' : 'Non fourni'}
         </span>
       </div>
 
@@ -125,9 +130,9 @@ function DocumentRow({ config, docs, onChanged }) {
         return (
           <div
             key={doc.id_document}
-            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 px-4 py-3"
+            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-slate-800/60 px-4 py-3"
           >
-            <span className="truncate text-sm font-medium text-slate-700">{doc.file_name}</span>
+            <span className="truncate text-sm font-medium text-slate-200">{doc.file_name}</span>
             {st && (
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>
                 {st.label}
@@ -136,7 +141,7 @@ function DocumentRow({ config, docs, onChanged }) {
             <button
               type="button"
               onClick={() => handleView(doc)}
-              className="text-xs font-semibold text-[#0A3172] hover:underline"
+              className="text-xs font-semibold text-[#5AB4EC] hover:underline"
             >
               Voir
             </button>
@@ -144,7 +149,7 @@ function DocumentRow({ config, docs, onChanged }) {
               type="button"
               onClick={() => handleDelete(doc)}
               disabled={busy}
-              className="ml-auto text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+              className="ml-auto text-xs font-semibold text-red-300 hover:underline disabled:opacity-50"
             >
               Supprimer
             </button>
@@ -161,23 +166,23 @@ function DocumentRow({ config, docs, onChanged }) {
             setFile(e.target.files?.[0] || null);
             setError('');
           }}
-          className="block w-full max-w-xs text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-[#0A3172]/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#0A3172] hover:file:bg-[#0A3172]/20"
+          className="block w-full max-w-xs text-sm text-slate-400 file:mr-3 file:rounded-full file:border-0 file:bg-[#5AB4EC]/15 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#5AB4EC] hover:file:bg-[#5AB4EC]/25"
         />
         <button
           type="button"
           onClick={handleUpload}
           disabled={busy || !file}
-          className="rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy ? 'Envoi…' : config.multiple ? 'Ajouter' : hasDocs ? 'Remplacer' : 'Envoyer'}
         </button>
       </div>
 
-      <p className="mt-2 text-xs text-slate-400">
+      <p className="mt-2 text-xs text-slate-500">
         Formats acceptés : PDF, JPG, PNG — 5 Mo maximum.
       </p>
 
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
     </article>
   );
 }
@@ -207,11 +212,14 @@ function DocumentsManager({ onCounts }) {
     (acc[d.type] = acc[d.type] || []).push(d);
     return acc;
   }, {});
-  const providedCount = docTypes.filter((t) => (docsByType[t.key] || []).length > 0).length;
+  // Le compteur « fournis / total » ne concerne que les documents obligatoires
+  // (les optionnels, comme le CV marin du propriétaire, n'y entrent pas).
+  const requiredTypes = docTypes.filter((t) => !t.optional);
+  const providedCount = requiredTypes.filter((t) => (docsByType[t.key] || []).length > 0).length;
 
   useEffect(() => {
-    if (onCounts) onCounts({ provided: providedCount, total: docTypes.length });
-  }, [onCounts, providedCount, docTypes.length]);
+    if (onCounts) onCounts({ provided: providedCount, total: requiredTypes.length });
+  }, [onCounts, providedCount, requiredTypes.length]);
 
   if (loading) return <p className="text-slate-200">Chargement…</p>;
 

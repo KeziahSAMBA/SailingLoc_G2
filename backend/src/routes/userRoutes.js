@@ -21,6 +21,14 @@ import {
   postFavorite,
   deleteFavorite,
 } from '../controllers/locataireController.js';
+import {
+  getDashboard as getProprietaireDashboard,
+  getMyBoat as getProprietaireBoat,
+  getMyBoats as getProprietaireBoats,
+  getMyBookings as getProprietaireBookings,
+  getMyPayments as getProprietairePayments,
+  patchBooking as patchProprietaireBooking,
+} from '../controllers/proprietaireController.js';
 
 const router = Router();
 
@@ -37,6 +45,37 @@ router.get('/me', protect, me);
 router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
 router.get('/me/dashboard', protect, requireRole('locataire'), getDashboard);
+router.get(
+  '/me/proprietaire/dashboard',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireDashboard
+);
+router.get(
+  '/me/proprietaire/bookings',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireBookings
+);
+router.patch(
+  '/me/proprietaire/bookings/:id_booking',
+  protect,
+  requireRole('proprietaire'),
+  patchProprietaireBooking
+);
+router.get(
+  '/me/proprietaire/payments',
+  protect,
+  requireRole('proprietaire'),
+  getProprietairePayments
+);
+router.get('/me/proprietaire/boats', protect, requireRole('proprietaire'), getProprietaireBoats);
+router.get(
+  '/me/proprietaire/boats/:id_boat',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireBoat
+);
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
 router.post('/me/favorites/:id_boat', protect, requireRole('locataire'), postFavorite);
