@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import bateauVideo from '../assets/video/video_bateau_3.mp4';
 import bateauBg from '../assets/image/paysage/cote_azur.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
@@ -64,6 +63,47 @@ function computeCoupDeCoeurIds(boats) {
   );
 }
 
+// Les coordonnées GPS des ports (seed) tombent parfois côté ville plutôt que sur le
+// bassin portuaire lui-même (pas de tracé terre/eau pour corriger ça automatiquement) ;
+// petits décalages manuels fournis pour recentrer sur le port réel.
+const PORT_POSITION_OFFSETS = {
+  Bordeaux: { dLat: 0, dLng: 0.002536 }, // 150m est + 50m est
+  Marseille: { dLat: -0.005718, dLng: -0.010944 }, // 900m sud-ouest + 250m ouest
+  Nice: { dLat: -0.007174, dLng: 0.01053 }, // 1200m sud-est + 50m nord
+  'La Rochelle': { dLat: 0, dLng: 0.000648 }, // 50m est
+  Brest: { dLat: 0, dLng: -0.000677 }, // 50m ouest
+};
+
+function correctPortPosition(city, lat, lng) {
+  const offset = PORT_POSITION_OFFSETS[city];
+  if (!offset) return { lat, lng };
+  return { lat: lat + offset.dLat, lng: lng + offset.dLng };
+}
+
+// Dispersion artificielle des bateaux autour de leur port : les coordonnées GPS
+// réelles ne sont connues qu'au niveau du port (tous les bateaux d'un même port
+// partagent exactement la même position), donc pour l'affichage carte "pins bateaux"
+// au fort zoom on répartit chaque bateau à un point pseudo-aléatoire mais stable
+// (dérivé de son id) dans un rayon d'environ 45m autour du point corrigé du port — on
+// n'a pas de tracé terre/eau donc on reste très serré sur le port lui-même plutôt que
+// de risquer de déborder sur la ville ou le large.
+const BOAT_SCATTER_RADIUS_DEG = 0.0004;
+
+function pseudoRandom(seed) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function scatterBoatPosition(id, portLat, portLng) {
+  const angle = pseudoRandom(id * 12.9898) * 2 * Math.PI;
+  const radius = Math.sqrt(pseudoRandom(id * 78.233));
+  const latRad = (portLat * Math.PI) / 180;
+  return {
+    lat: portLat + radius * BOAT_SCATTER_RADIUS_DEG * Math.sin(angle),
+    lng: portLng + (radius * BOAT_SCATTER_RADIUS_DEG * Math.cos(angle)) / Math.cos(latRad),
+  };
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function BoatListingCard({
@@ -80,10 +120,16 @@ function BoatListingCard({
   availability,
   isFavorite,
   onToggleFavorite,
+  highlighted,
+  onSelect,
 }) {
   const { t } = useTranslation();
   return (
-    <article className="relative rounded-3xl overflow-hidden border border-white/50 bg-white/20 backdrop-blur-2xl backdrop-saturate-150 hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-white/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)]">
+    <article
+      id={`boat-${id}`}
+      onClick={() => onSelect?.(id)}
+      className={`relative rounded-3xl overflow-hidden border bg-white/20 backdrop-blur-2xl backdrop-saturate-150 hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-white/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] ${highlighted ? 'border-sky-400 ring-4 ring-sky-400/60' : 'border-white/50'}`}
+    >
       <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
         <img
           src={image}
@@ -116,7 +162,7 @@ function BoatListingCard({
       </div>
 
       <div
-        className="relative p-4 bg-white/15 backdrop-blur-xl backdrop-saturate-150 border-t border-white/30"
+        className="relative px-4 pt-4 pb-1 bg-white/15 backdrop-blur-xl backdrop-saturate-150 border-t border-white/30"
         style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)' }}
       >
         <p className="text-[10px] font-bold tracking-widest text-sky-600 uppercase mb-1">{type}</p>
@@ -165,6 +211,7 @@ function BoatListingCard({
           </div>
           <button
             type="button"
+            onClick={(e) => e.stopPropagation()}
             className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-all backdrop-blur-md border border-white/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(0,78,87,0.85)] hover:border-white/20"
           >
             {t('category.card.book')}
@@ -192,10 +239,15 @@ function CategoryPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
+  // Header fixe (60/80px) + barre filtre/recherche/fil d'ariane sticky (~116px) :
+  // offset réel au-dessus de la carte, pour qu'elle tienne entière dans l'écran visible.
+  const mapStickyTop = (scrolled ? 60 : 80) + 116;
   const [ports, setPorts] = useState([]);
   const [boats, setBoats] = useState([]);
   const [visibleCount, setVisibleCount] = useState(8);
   const [mapBounds, setMapBounds] = useState(null);
+  const [highlightedBoatId, setHighlightedBoatId] = useState(null);
+  const [focusBoat, setFocusBoat] = useState(null);
   const { favoriteIds, toggleFavorite } = useFavorites();
 
   const [boatTypeFilters, setBoatTypeFilters] = useState(EMPTY_BOAT_TYPE_FILTERS);
@@ -244,14 +296,16 @@ function CategoryPage() {
       if (licenseFilter === 'required' && !boat.licenseRequired) return false;
       if (minPrice && boat.price < minPrice) return false;
       if (maxPrice && boat.price > maxPrice) return false;
-      if (
-        mapBounds &&
-        (boat.portLat < mapBounds.south ||
-          boat.portLat > mapBounds.north ||
-          boat.portLng < mapBounds.west ||
-          boat.portLng > mapBounds.east)
-      )
-        return false;
+      if (mapBounds) {
+        const { lat, lng } = correctPortPosition(boat.location, boat.portLat, boat.portLng);
+        if (
+          lat < mapBounds.south ||
+          lat > mapBounds.north ||
+          lng < mapBounds.west ||
+          lng > mapBounds.east
+        )
+          return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -272,10 +326,11 @@ function CategoryPage() {
     .filter((p) => Number.isFinite(Number(p.latitude)) && Number.isFinite(Number(p.longitude)))
     .map((p) => {
       const launched = launchedCities.has(p.city);
+      const { lat, lng } = correctPortPosition(p.city, Number(p.latitude), Number(p.longitude));
       return {
         id: p.id_port,
-        lat: Number(p.latitude),
-        lng: Number(p.longitude),
+        lat,
+        lng,
         title: p.city,
         subtitle: p.country,
         available: launched,
@@ -284,10 +339,27 @@ function CategoryPage() {
     });
 
   // Recadre la carte sur les ports correspondant à la destination recherchée ;
-  // sans destination, on garde la vue d'ensemble (tous les marqueurs).
+  // sans destination, on recadre sur les ports disponibles (tous en France pour
+  // l'instant) plutôt que sur l'ensemble des ports (dont certains à l'étranger,
+  // "bientôt disponibles"), qui ferait dézoomer inutilement sur toute l'Europe.
   const focusMapMarkers = destinationQuery
     ? mapMarkers.filter((m) => m.title.toLowerCase().includes(destinationQuery))
-    : mapMarkers;
+    : mapMarkers.filter((m) => m.available);
+
+  // Pins bateaux individuels (avec prix), affichés par MapView au-delà d'un certain
+  // niveau de zoom — dispersés artificiellement autour du port (cf. scatterBoatPosition).
+  const boatMapMarkers = filteredBoats
+    .filter((b) => Number.isFinite(b.portLat) && Number.isFinite(b.portLng))
+    .map((b) => {
+      const { lat, lng } = correctPortPosition(b.location, b.portLat, b.portLng);
+      return {
+        id: b.id,
+        ...scatterBoatPosition(b.id, lat, lng),
+        price: b.price,
+        name: b.name,
+        city: b.location,
+      };
+    });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -318,97 +390,116 @@ function CategoryPage() {
       .catch(() => {});
   }, []);
 
+  // Clic sur un pin bateau : révèle la carte correspondante dans la liste (en
+  // augmentant visibleCount si besoin) puis scroll+surligne dessus.
+  function handleBoatMapSelect(boat) {
+    const idx = filteredBoats.findIndex((b) => b.id === boat.id);
+    if (idx === -1) return;
+    if (idx >= visibleCount) setVisibleCount(idx + 1);
+    setHighlightedBoatId(boat.id);
+  }
+
+  // Clic sur une fiche produit : zoome la carte sur le pin bateau correspondant.
+  function handleBoatCardClick(boatId) {
+    const boatMarker = boatMapMarkers.find((b) => b.id === boatId);
+    if (!boatMarker) return;
+    setFocusBoat({ lat: boatMarker.lat, lng: boatMarker.lng });
+  }
+
+  useEffect(() => {
+    if (highlightedBoatId == null) return undefined;
+    document
+      .getElementById(`boat-${highlightedBoatId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const timer = setTimeout(() => setHighlightedBoatId(null), 2500);
+    return () => clearTimeout(timer);
+  }, [highlightedBoatId, visibleCount]);
+
   return (
     <main className="w-full min-h-screen pt-20 bg-white">
       <div>
-        {/* Section 0 — Vidéo derrière le header uniquement */}
-        <section className="relative w-full -mt-20 overflow-hidden" style={{ height: '80px' }}>
-          <video
-            src={bateauVideo}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover object-[center_70%]"
-          />
-          <div className="absolute inset-0 bg-black/35" />
-        </section>
-
-        {/* Section 1 — Searchbar sticky */}
-        <section
-          className="z-40"
-          style={{
-            position: 'sticky',
-            top: scrolled ? '60px' : '80px',
-            borderBottom: '1px solid rgba(0,0,0,0.08)',
-            backgroundColor: 'rgba(255,255,255,0.7)',
-            backdropFilter: 'blur(5px)',
-            WebkitBackdropFilter: 'blur(5px)',
-            transition: 'top 0.3s ease',
-          }}
-        >
-          <div className="flex items-center gap-8 pt-8 pl-28">
-            <FilterBar
-              boatTypeFilters={boatTypeFilters}
-              onBoatTypeChange={setBoatTypeFilters}
-              licenseFilter={licenseFilter}
-              onLicenseFilterChange={setLicenseFilter}
-              skipperFilter={skipperFilter}
-              onSkipperFilterChange={setSkipperFilter}
-              sortBy={sortBy}
-              onSortByChange={setSortBy}
-              priceRange={priceRange}
-              onPriceRangeChange={setPriceRange}
-              coupDeCoeurFilter={coupDeCoeurFilter}
-              onCoupDeCoeurFilterChange={setCoupDeCoeurFilter}
-              onReset={resetFilters}
-            />
-            <SearchBar />
-          </div>
-          <div className="pb-2 pl-28">
-            <Breadcrumb />
-          </div>
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-28px',
-              left: 0,
-              right: 0,
-              height: '28px',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              background: 'linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, transparent 100%)',
-              pointerEvents: 'none',
-              zIndex: 1,
-            }}
-          />
-        </section>
-
-        {/* Fond photo bateau — démarre sous la searchbar, couvre listings + carrousels */}
+        {/* Fond photo bateau — englobe le strip sous le header, la searchbar et les résultats */}
         <div
           className="relative"
           style={{
-            backgroundImage: `linear-gradient(to bottom, rgba(2,44,74,0.55), rgba(2,44,74,0.35) 40%, rgba(2,44,74,0.6)), url(${bateauBg})`,
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed',
           }}
         >
+          {/* Section 0 — Strip sous le header uniquement */}
+          <section className="relative w-full -mt-20" style={{ height: '80px' }} />
+
+          {/* Section 1 — Searchbar sticky */}
+          <section
+            className="z-40"
+            style={{
+              position: 'sticky',
+              top: scrolled ? '60px' : '80px',
+              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
+              backdropFilter: scrolled ? 'blur(5px)' : 'none',
+              WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
+              borderBottom: scrolled ? '1px solid rgba(255,255,255,0.3)' : '1px solid transparent',
+              transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
+            }}
+          >
+            <div className="flex items-center gap-8 pt-8 pl-28">
+              <FilterBar
+                light
+                compact={scrolled}
+                boatTypeFilters={boatTypeFilters}
+                onBoatTypeChange={setBoatTypeFilters}
+                licenseFilter={licenseFilter}
+                onLicenseFilterChange={setLicenseFilter}
+                skipperFilter={skipperFilter}
+                onSkipperFilterChange={setSkipperFilter}
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                priceRange={priceRange}
+                onPriceRangeChange={setPriceRange}
+                coupDeCoeurFilter={coupDeCoeurFilter}
+                onCoupDeCoeurFilterChange={setCoupDeCoeurFilter}
+                onReset={resetFilters}
+              />
+              <SearchBar light compact={scrolled} />
+            </div>
+            <div className="pb-2 pl-28">
+              <Breadcrumb light compact={scrolled} />
+            </div>
+          </section>
+
           {/* Section 2 — Listings + Carte 50/50 */}
           <div id="resultats" className="flex items-start gap-6 px-28 py-6 scroll-mt-[120px]">
             {/* Listings — 50% */}
             <div className="w-1/2 flex flex-col gap-6 relative">
               <div className="relative z-10 flex flex-col gap-6">
                 <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-xs font-bold tracking-widest uppercase mb-1 underline underline-offset-4 text-sky-300">
+                  <div
+                    className="flex flex-col items-start gap-3 rounded-2xl border px-4 py-3"
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      borderColor: 'rgba(255,255,255,0.2)',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                    }}
+                  >
+                    <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-sky-500">
                       {t('category.results.kicker')}
                     </p>
-                    <h2 className="text-2xl font-bold text-white pt-4 uppercase tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                    <h2 className="text-2xl font-bold text-white uppercase tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                       {t('category.results.title')}
                     </h2>
                   </div>
-                  <span className="text-sm text-white/80 font-medium pb-1">
+                  <span
+                    className="text-sm text-white/80 font-medium rounded-full border px-3 py-1"
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      borderColor: 'rgba(255,255,255,0.2)',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                    }}
+                  >
                     {t('category.results.count', { count: filteredBoats.length })}
                   </span>
                 </div>
@@ -423,6 +514,8 @@ function CategoryPage() {
                         {...boat}
                         isFavorite={favoriteIds.has(boat.id)}
                         onToggleFavorite={toggleFavorite}
+                        highlighted={highlightedBoatId === boat.id}
+                        onSelect={handleBoatCardClick}
                       />
                     ))}
                   </div>
@@ -439,37 +532,55 @@ function CategoryPage() {
             </div>
 
             {/* Carte — 50% */}
-            <aside className="w-1/2 sticky top-24 flex flex-col gap-2">
-              <div className="flex items-center justify-between px-1">
-                <p className="text-xs font-bold tracking-widest uppercase text-[rgba(14,165,233,0.95)]">
-                  {t('category.map.title')}
-                </p>
-                <span
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1.5"
+            {/* Offset sticky = hauteur du header fixe + hauteur de la barre filtre/recherche/fil
+                d'ariane (toutes deux sticky au-dessus) + un petit espace de respiration. */}
+            <aside
+              className="w-1/2 sticky flex flex-col gap-2"
+              style={{ top: `${mapStickyTop}px`, transition: 'top 0.3s ease' }}
+            >
+              <div
+                className="flex flex-col rounded-2xl border overflow-hidden"
+                style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+              >
+                <div
+                  className="flex items-center justify-between px-4 py-2"
                   style={{
-                    backgroundColor: 'rgba(34,197,94,0.12)',
-                    color: '#16a34a',
-                    border: '1px solid rgba(34,197,94,0.3)',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
                   }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-                  {t('category.map.live')}
-                </span>
+                  <p className="text-xs font-bold tracking-widest uppercase text-sky-500">
+                    {t('category.map.title')}
+                  </p>
+                  <span
+                    className="text-[10px] font-semibold flex items-center gap-1.5"
+                    style={{ color: '#16a34a' }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                    {t('category.map.live')}
+                  </span>
+                </div>
+                <div style={{ height: `calc(100vh - ${mapStickyTop}px - 56px)` }}>
+                  <MapView
+                    markers={mapMarkers}
+                    boatMarkers={boatMapMarkers}
+                    focusMarkers={focusMapMarkers}
+                    focusBoat={focusBoat}
+                    className="h-full !rounded-none !border-0"
+                    emptyLabel={t('category.map.empty')}
+                    onBoatSelect={handleBoatMapSelect}
+                    onBoundsChange={(bounds) =>
+                      setMapBounds({
+                        north: bounds.getNorth(),
+                        south: bounds.getSouth(),
+                        east: bounds.getEast(),
+                        west: bounds.getWest(),
+                      })
+                    }
+                  />
+                </div>
               </div>
-              <MapView
-                markers={mapMarkers}
-                focusMarkers={focusMapMarkers}
-                className="h-[660px]"
-                emptyLabel={t('category.map.empty')}
-                onBoundsChange={(bounds) =>
-                  setMapBounds({
-                    north: bounds.getNorth(),
-                    south: bounds.getSouth(),
-                    east: bounds.getEast(),
-                    west: bounds.getWest(),
-                  })
-                }
-              />
               <p className="text-[10px] text-gray-400 text-center px-2">{t('category.map.hint')}</p>
             </aside>
           </div>
