@@ -229,6 +229,9 @@ model Message {
   id_sender     Int
   id_receiver   Int
   content       String
+  // 'text' (normal), 'support_welcome' (accueil auto), 'support_resolved'
+  // (demande marquée traitée par l'admin).
+  type          String   @default("text") @db.VarChar(30)
   sent_at       DateTime
   is_read       Boolean  @default(false)
   read_at       DateTime?

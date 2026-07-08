@@ -5,6 +5,8 @@ import {
   countUnread,
   updateMessage,
   deleteMessage,
+  contactSupport,
+  resolveSupport,
 } from '../services/messageService.js';
 
 export async function getConversations(req, res) {
@@ -58,6 +60,24 @@ export async function removeMessage(req, res) {
     const scope = req.query.scope === 'all' ? 'all' : 'me';
     await deleteMessage(req.user, req.params.id_message, scope);
     res.json({ deleted: true });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function postSupport(req, res) {
+  try {
+    const result = await contactSupport(req.user);
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function postResolveSupport(req, res) {
+  try {
+    const message = await resolveSupport(req.user, req.params.id_user);
+    res.status(201).json({ message });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

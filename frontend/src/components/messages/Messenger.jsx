@@ -5,7 +5,9 @@ import {
   sendMessage,
   updateMessage,
   deleteMessage,
+  resolveSupport,
 } from '../../services/messageService.js';
+import { useAuth } from '../../hooks/useAuth.jsx';
 import { useToast } from '../../hooks/useToast.jsx';
 
 const ROLE_LABEL = { locataire: 'Locataire', proprietaire: 'Propriétaire', admin: 'SailingLoc' };
@@ -65,6 +67,7 @@ function displayName(user) {
 // `externalUser` permet à la page hôte (ex. recherche admin) d'ouvrir une
 // conversation avec quelqu'un qui n'apparaît pas encore dans la liste.
 function Messenger({ externalUser = null }) {
+  const { user: me } = useAuth();
   const { showToast } = useToast();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -196,6 +199,23 @@ function Messenger({ externalUser = null }) {
     }
   }
 
+  // Admin : marque la demande support de l'interlocuteur comme traitée.
+  const [resolving, setResolving] = useState(false);
+  async function handleResolve() {
+    if (!selected || resolving) return;
+    setResolving(true);
+    try {
+      const res = await resolveSupport(selected.id_user);
+      setMessages((prev) => [...prev, res.data.message]);
+      showToast('Demande marquée comme traitée.', 'success');
+      loadConversations();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Échec de l’opération.', 'error');
+    } finally {
+      setResolving(false);
+    }
+  }
+
   async function handleDelete(idMessage, scope) {
     const key = `${idMessage}:${scope}`;
     if (confirmKey !== key) {
@@ -316,9 +336,23 @@ function Messenger({ externalUser = null }) {
           </p>
         ) : (
           <>
-            <header className="border-b border-slate-800 px-4 py-3">
-              <p className="text-sm font-semibold text-white">{displayName(selected)}</p>
-              <p className="text-xs text-slate-500">{ROLE_LABEL[selected.role] || selected.role}</p>
+            <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-white">{displayName(selected)}</p>
+                <p className="text-xs text-slate-500">
+                  {ROLE_LABEL[selected.role] || selected.role}
+                </p>
+              </div>
+              {me?.role === 'admin' && selected.role !== 'admin' && (
+                <button
+                  type="button"
+                  onClick={handleResolve}
+                  disabled={resolving}
+                  className={`shrink-0 rounded-full border border-emerald-500/40 px-4 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {resolving ? 'Clôture…' : '✔ Marquer comme traité'}
+                </button>
+              )}
             </header>
 
             <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
@@ -329,134 +363,143 @@ function Messenger({ externalUser = null }) {
                   Aucun message pour l’instant : écrivez le premier !
                 </p>
               ) : (
-                messages.map((m) => (
-                  <div
-                    key={m.id_message}
-                    className={`group flex items-start gap-1 ${
-                      m.from_me ? 'flex-row-reverse' : 'flex-row'
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
-                        m.from_me
-                          ? 'rounded-br-sm bg-[#0A3172] text-white'
-                          : 'rounded-bl-sm bg-slate-800 text-slate-100'
-                      }`}
-                    >
-                      {editing?.id_message === m.id_message ? (
-                        /* Édition inline du message */
-                        <form onSubmit={submitEdit} className="flex items-center gap-2">
-                          <label htmlFor={`edit-${m.id_message}`} className="sr-only">
-                            Modifier le message
-                          </label>
-                          <input
-                            id={`edit-${m.id_message}`}
-                            type="text"
-                            value={editing.value}
-                            onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-                            maxLength={2000}
-                            autoFocus
-                            className="w-56 rounded-lg border border-slate-500 bg-slate-900/60 px-2 py-1 text-sm text-white outline-none focus:border-[#5AB4EC]"
-                          />
-                          <button
-                            type="submit"
-                            aria-label="Enregistrer la modification"
-                            className="text-[#5AB4EC] hover:text-white"
-                          >
-                            ✓
-                          </button>
-                          <button
-                            type="button"
-                            aria-label="Annuler la modification"
-                            onClick={() => setEditing(null)}
-                            className="text-slate-300 hover:text-white"
-                          >
-                            ✕
-                          </button>
-                        </form>
-                      ) : m.deleted ? (
-                        <p className="italic text-slate-400">Message supprimé</p>
-                      ) : (
-                        <p className="whitespace-pre-wrap break-words">{m.content}</p>
-                      )}
-                      <p
-                        className={`mt-1 flex items-center justify-end gap-0.5 text-right text-[10px] ${
-                          m.from_me ? 'text-slate-300/70' : 'text-slate-500'
-                        }`}
-                      >
-                        {m.edited && <span className="mr-1 italic">modifié</span>}
-                        {fmtTime(m.sent_at)}
-                        {m.from_me && !m.deleted && <ReadReceipt read={m.read} />}
-                        {m.from_me && !m.deleted && m.id_message === lastMineId && (
-                          <span className={m.read ? 'text-[#5AB4EC]' : undefined}>
-                            {m.read ? 'Lu' : 'Envoyé'}
-                          </span>
-                        )}
+                messages.map((m) =>
+                  m.type === 'support_resolved' ? (
+                    /* Marqueur système : la demande a été clôturée. */
+                    <div key={m.id_message} className="flex justify-center py-1">
+                      <p className="rounded-full bg-emerald-500/10 px-4 py-1 text-center text-xs italic text-emerald-300">
+                        ✔ Demande marquée comme traitée · {fmtTime(m.sent_at)}
                       </p>
                     </div>
-
-                    {/* Menu ⋯ : Modifier / Supprimer pour tout le monde (mes
-                        messages), Supprimer pour moi (tous). */}
-                    <div className="relative" onMouseDown={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        aria-label="Actions sur le message"
-                        aria-expanded={menuFor === m.id_message}
-                        onClick={() => {
-                          setMenuFor(menuFor === m.id_message ? null : m.id_message);
-                          setConfirmKey(null);
-                        }}
-                        className={`rounded-full px-1.5 py-0.5 text-slate-500 opacity-60 transition hover:bg-slate-800 hover:text-slate-200 group-hover:opacity-100 ${FOCUS_RING}`}
+                  ) : (
+                    <div
+                      key={m.id_message}
+                      className={`group flex items-start gap-1 ${
+                        m.from_me ? 'flex-row-reverse' : 'flex-row'
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
+                          m.from_me
+                            ? 'rounded-br-sm bg-[#0A3172] text-white'
+                            : 'rounded-bl-sm bg-slate-800 text-slate-100'
+                        }`}
                       >
-                        ⋯
-                      </button>
-                      {menuFor === m.id_message && (
-                        <div
-                          role="menu"
-                          className={`absolute z-20 mt-1 w-56 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 text-sm shadow-xl ${
-                            m.from_me ? 'right-0' : 'left-0'
+                        {editing?.id_message === m.id_message ? (
+                          /* Édition inline du message */
+                          <form onSubmit={submitEdit} className="flex items-center gap-2">
+                            <label htmlFor={`edit-${m.id_message}`} className="sr-only">
+                              Modifier le message
+                            </label>
+                            <input
+                              id={`edit-${m.id_message}`}
+                              type="text"
+                              value={editing.value}
+                              onChange={(e) => setEditing({ ...editing, value: e.target.value })}
+                              maxLength={2000}
+                              autoFocus
+                              className="w-56 rounded-lg border border-slate-500 bg-slate-900/60 px-2 py-1 text-sm text-white outline-none focus:border-[#5AB4EC]"
+                            />
+                            <button
+                              type="submit"
+                              aria-label="Enregistrer la modification"
+                              className="text-[#5AB4EC] hover:text-white"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="Annuler la modification"
+                              onClick={() => setEditing(null)}
+                              className="text-slate-300 hover:text-white"
+                            >
+                              ✕
+                            </button>
+                          </form>
+                        ) : m.deleted ? (
+                          <p className="italic text-slate-400">Message supprimé</p>
+                        ) : (
+                          <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                        )}
+                        <p
+                          className={`mt-1 flex items-center justify-end gap-0.5 text-right text-[10px] ${
+                            m.from_me ? 'text-slate-300/70' : 'text-slate-500'
                           }`}
                         >
-                          {m.from_me && !m.deleted && (
-                            <>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  setEditing({ id_message: m.id_message, value: m.content });
-                                  setMenuFor(null);
-                                }}
-                                className="block w-full px-3 py-2 text-left text-slate-100 transition hover:bg-slate-700"
-                              >
-                                Modifier
-                              </button>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => handleDelete(m.id_message, 'all')}
-                                className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-slate-700"
-                              >
-                                {confirmKey === `${m.id_message}:all`
-                                  ? 'Confirmer la suppression ?'
-                                  : 'Supprimer pour tout le monde'}
-                              </button>
-                            </>
+                          {m.edited && <span className="mr-1 italic">modifié</span>}
+                          {fmtTime(m.sent_at)}
+                          {m.from_me && !m.deleted && <ReadReceipt read={m.read} />}
+                          {m.from_me && !m.deleted && m.id_message === lastMineId && (
+                            <span className={m.read ? 'text-[#5AB4EC]' : undefined}>
+                              {m.read ? 'Lu' : 'Envoyé'}
+                            </span>
                           )}
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => handleDelete(m.id_message, 'me')}
-                            className="block w-full px-3 py-2 text-left text-slate-300 transition hover:bg-slate-700"
+                        </p>
+                      </div>
+
+                      {/* Menu ⋯ : Modifier / Supprimer pour tout le monde (mes
+                        messages), Supprimer pour moi (tous). */}
+                      <div className="relative" onMouseDown={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          aria-label="Actions sur le message"
+                          aria-expanded={menuFor === m.id_message}
+                          onClick={() => {
+                            setMenuFor(menuFor === m.id_message ? null : m.id_message);
+                            setConfirmKey(null);
+                          }}
+                          className={`rounded-full px-1.5 py-0.5 text-slate-500 opacity-60 transition hover:bg-slate-800 hover:text-slate-200 group-hover:opacity-100 ${FOCUS_RING}`}
+                        >
+                          ⋯
+                        </button>
+                        {menuFor === m.id_message && (
+                          <div
+                            role="menu"
+                            className={`absolute z-20 mt-1 w-56 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 text-sm shadow-xl ${
+                              m.from_me ? 'right-0' : 'left-0'
+                            }`}
                           >
-                            {confirmKey === `${m.id_message}:me`
-                              ? 'Confirmer la suppression ?'
-                              : 'Supprimer pour moi'}
-                          </button>
-                        </div>
-                      )}
+                            {m.from_me && !m.deleted && (
+                              <>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setEditing({ id_message: m.id_message, value: m.content });
+                                    setMenuFor(null);
+                                  }}
+                                  className="block w-full px-3 py-2 text-left text-slate-100 transition hover:bg-slate-700"
+                                >
+                                  Modifier
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => handleDelete(m.id_message, 'all')}
+                                  className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-slate-700"
+                                >
+                                  {confirmKey === `${m.id_message}:all`
+                                    ? 'Confirmer la suppression ?'
+                                    : 'Supprimer pour tout le monde'}
+                                </button>
+                              </>
+                            )}
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => handleDelete(m.id_message, 'me')}
+                              className="block w-full px-3 py-2 text-left text-slate-300 transition hover:bg-slate-700"
+                            >
+                              {confirmKey === `${m.id_message}:me`
+                                ? 'Confirmer la suppression ?'
+                                : 'Supprimer pour moi'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                )
               )}
               <div ref={bottomRef} />
             </div>

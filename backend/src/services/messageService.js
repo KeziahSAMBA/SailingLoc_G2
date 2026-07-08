@@ -137,6 +137,7 @@ export async function getThread(me, id_other) {
       id_message: true,
       id_sender: true,
       content: true,
+      type: true,
       sent_at: true,
       is_read: true,
       updated_at: true,
@@ -165,6 +166,7 @@ export async function getThread(me, id_other) {
       // Le contenu d'un message supprimé n'est jamais renvoyé.
       content: m.deleted_at ? null : m.content,
       deleted: Boolean(m.deleted_at),
+      type: m.type,
       sent_at: m.sent_at,
       from_me: m.id_sender === me.id_user,
       // Accusé de lecture, seulement pertinent pour mes propres messages.
@@ -290,4 +292,113 @@ export async function deleteMessage(me, id_message, scope) {
         ? { sender_deleted_at: new Date() }
         : { receiver_deleted_at: new Date() },
   });
+}
+
+// Message d'accueil envoyé automatiquement par le support à l'ouverture d'une
+// nouvelle demande.
+const SUPPORT_WELCOME =
+  'Bonjour ! Nous avons bien reçu votre demande : décrivez-nous votre question, ' +
+  'un conseiller SailingLoc vous répond au plus vite (du lundi au samedi, 9 h – 18 h).';
+
+// Ouvre (ou retrouve) la conversation support de l'utilisateur.
+// - Premier contact : admin choisi au hasard (il peut y avoir plusieurs
+//   comptes admin) + message d'accueil automatique.
+// - Demande en cours (pas encore marquée « traitée » par l'admin) : pas de
+//   nouvel accueil — donc jamais répété à chaque message envoyé.
+// - Demande précédente marquée traitée : nouveau problème → le même admin
+//   renvoie l'accueil.
+export async function contactSupport(me) {
+  const last = await prisma.message.findFirst({
+    where: {
+      OR: [
+        { id_sender: me.id_user, receiver: { role: 'admin' } },
+        { id_receiver: me.id_user, sender: { role: 'admin' } },
+      ],
+    },
+    orderBy: { sent_at: 'desc' },
+    select: {
+      sender: { select: { id_user: true, first_name: true, last_name: true, role: true } },
+      receiver: { select: { id_user: true, first_name: true, last_name: true, role: true } },
+    },
+  });
+
+  let admin;
+  if (last) {
+    admin = last.sender.role === 'admin' ? last.sender : last.receiver;
+
+    const lastWelcome = await prisma.message.findFirst({
+      where: { id_receiver: me.id_user, type: 'support_welcome' },
+      orderBy: { sent_at: 'desc' },
+      select: { sent_at: true },
+    });
+    if (lastWelcome) {
+      const resolved = await prisma.message.count({
+        where: {
+          id_receiver: me.id_user,
+          type: 'support_resolved',
+          sent_at: { gt: lastWelcome.sent_at },
+        },
+      });
+      if (resolved === 0) {
+        // Demande encore ouverte : on n'empile pas les accueils.
+        return { admin: publicUser(admin), first_contact: false };
+      }
+    }
+    // Demande précédente marquée traitée (ou conversation d'avant l'accueil
+    // automatique) : on repart sur un nouvel accueil.
+  } else {
+    const admins = await prisma.user.findMany({
+      where: { role: 'admin', is_active: true },
+      select: { id_user: true, first_name: true, last_name: true, role: true },
+    });
+    if (admins.length === 0) {
+      throw Object.assign(new Error('Le support est indisponible pour le moment.'), {
+        status: 503,
+      });
+    }
+    admin = admins[Math.floor(Math.random() * admins.length)];
+  }
+
+  await prisma.message.create({
+    data: {
+      id_sender: admin.id_user,
+      id_receiver: me.id_user,
+      content: SUPPORT_WELCOME,
+      type: 'support_welcome',
+      sent_at: new Date(),
+    },
+  });
+  return { admin: publicUser(admin), first_contact: true };
+}
+
+// L'admin marque la demande support d'un utilisateur comme traitée : un
+// marqueur système est ajouté au fil, et le prochain passage par la page
+// Contact rouvrira une nouvelle demande (nouvel accueil).
+export async function resolveSupport(admin, id_user) {
+  const userId = Number(id_user);
+  const target = await prisma.user.findUnique({
+    where: { id_user: userId },
+    select: { id_user: true, role: true },
+  });
+  if (!target || target.role === 'admin') {
+    throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
+  }
+
+  const message = await prisma.message.create({
+    data: {
+      id_sender: admin.id_user,
+      id_receiver: userId,
+      content:
+        'Votre demande a été marquée comme traitée. Besoin d’autre chose ? Repassez par la page Contact.',
+      type: 'support_resolved',
+      sent_at: new Date(),
+    },
+  });
+  return {
+    id_message: message.id_message,
+    content: message.content,
+    type: message.type,
+    sent_at: message.sent_at,
+    from_me: true,
+  };
 }
