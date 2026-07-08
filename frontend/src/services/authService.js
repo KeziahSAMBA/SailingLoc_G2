@@ -68,3 +68,17 @@ export async function verifyResetToken(token) {
   const response = await api.get(`/users/reset-password/${token}`);
   return response.data;
 }
+
+// Remplace la photo de profil (multipart, champ 'avatar').
+export function updateAvatar(file) {
+  const form = new FormData();
+  form.append('avatar', file);
+  return api.patch('/users/me/avatar', form, {
+    headers: { 'Content-Type': undefined },
+  });
+}
+
+// Supprime la photo de profil (retour à l'avatar généré).
+export function deleteAvatar() {
+  return api.delete('/users/me/avatar');
+}

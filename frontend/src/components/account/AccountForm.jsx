@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useToast } from '../../hooks/useToast.jsx';
-import { updateMe, changePassword } from '../../services/authService.js';
+import {
+  updateMe,
+  changePassword,
+  updateAvatar,
+  deleteAvatar,
+} from '../../services/authService.js';
+import { nameToAvatarUrl } from '../../utils/avatar.js';
 import PasswordField from '../auth/PasswordField.jsx';
 
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
@@ -28,6 +34,39 @@ function AccountForm() {
   const { user, updateUser, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  // --- Photo de profil ---
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(' ');
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setAvatarBusy(true);
+    try {
+      const res = await updateAvatar(file);
+      updateUser(res.data.user);
+      showToast('Photo de profil mise à jour.', 'success');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Échec de l’envoi de la photo.', 'error');
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
+  async function handleAvatarDelete() {
+    setAvatarBusy(true);
+    try {
+      const res = await deleteAvatar();
+      updateUser(res.data.user);
+      showToast('Photo de profil supprimée.', 'success');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Échec de la suppression.', 'error');
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
 
   // --- Informations personnelles ---
   const [form, setForm] = useState({
@@ -157,6 +196,42 @@ function AccountForm() {
       {/* Informations personnelles */}
       <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
         <h2 className="mb-5 text-lg font-semibold text-white">Informations personnelles</h2>
+
+        {/* Photo de profil : visible dans le header et la messagerie. */}
+        <div className="mb-6 flex flex-wrap items-center gap-4">
+          <img
+            src={user?.avatar || nameToAvatarUrl(displayName || 'SailingLoc')}
+            alt="Votre photo de profil"
+            className="h-20 w-20 rounded-full border-2 border-slate-700 object-cover"
+          />
+          <div className="flex flex-wrap gap-3">
+            <label
+              className={`cursor-pointer rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
+            >
+              {avatarBusy ? 'Envoi…' : 'Changer la photo'}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleAvatarChange}
+                disabled={avatarBusy}
+                className="sr-only"
+              />
+            </label>
+            {user?.avatar && (
+              <button
+                type="button"
+                onClick={handleAvatarDelete}
+                disabled={avatarBusy}
+                className="rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50"
+              >
+                Supprimer la photo
+              </button>
+            )}
+          </div>
+          <p className="w-full text-xs text-slate-500">
+            JPG, PNG ou WebP — 3 Mo max. Sans photo, un avatar est généré automatiquement.
+          </p>
+        </div>
 
         {serverError && (
           <div

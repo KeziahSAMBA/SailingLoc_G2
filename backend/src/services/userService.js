@@ -1,4 +1,6 @@
+import fs from 'fs';
 import bcrypt from 'bcryptjs';
+import prisma from '../config/db.js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import {
@@ -34,6 +36,8 @@ function publicUser(user) {
     first_name: user.first_name,
     last_name: user.last_name,
     phone: user.phone,
+    // Photo de profil déposée par l'utilisateur (null → avatar généré côté front).
+    avatar: user.images?.[0]?.url ?? null,
   };
 }
 
@@ -498,4 +502,45 @@ export async function verifyEmail(token) {
     email_verified: true,
     email_verification_token: null,
   });
+}
+
+// Remplace la photo de profil : l'ancienne (ligne + fichier local) est
+// supprimée, la nouvelle enregistrée comme image de type 'avatar'.
+export async function updateAvatar(id_user, file, origin) {
+  if (!file) {
+    throw Object.assign(new Error('Aucune image fournie.'), { status: 400 });
+  }
+
+  const previous = await prisma.image.findMany({
+    where: { id_user, type: 'avatar' },
+    select: { id_image: true, url: true },
+  });
+  await prisma.image.deleteMany({ where: { id_user, type: 'avatar' } });
+  for (const img of previous) {
+    const idx = img.url.indexOf('/uploads/avatars/');
+    if (idx !== -1) {
+      fs.unlink(img.url.slice(idx + 1), () => {});
+    }
+  }
+
+  await prisma.image.create({
+    data: { id_user, type: 'avatar', url: `${origin}/uploads/avatars/${file.filename}` },
+  });
+  return getCurrentUser(id_user);
+}
+
+// Supprime la photo de profil (retour à l'avatar généré).
+export async function removeAvatar(id_user) {
+  const previous = await prisma.image.findMany({
+    where: { id_user, type: 'avatar' },
+    select: { url: true },
+  });
+  await prisma.image.deleteMany({ where: { id_user, type: 'avatar' } });
+  for (const img of previous) {
+    const idx = img.url.indexOf('/uploads/avatars/');
+    if (idx !== -1) {
+      fs.unlink(img.url.slice(idx + 1), () => {});
+    }
+  }
+  return getCurrentUser(id_user);
 }

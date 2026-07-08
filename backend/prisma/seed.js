@@ -47,6 +47,27 @@ async function main() {
     ON CONFLICT (email, role) DO NOTHING
   `);
 
+  // Photos de profil : réservées aux comptes de démonstration du seed
+  // (les vrais inscrits ont un avatar à initiales généré côté front tant
+  // qu'ils n'ont pas déposé de photo). Photo déterministe par nom.
+  const seedAvatarUrl = (name) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    const gender = Math.abs(hash) % 2 === 0 ? 'women' : 'men';
+    const index = (Math.abs(hash) % 70) + 1;
+    return `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
+  };
+  const seedUsers = await prisma.user.findMany({
+    select: { id_user: true, first_name: true, last_name: true },
+  });
+  await prisma.image.createMany({
+    data: seedUsers.map((u) => ({
+      id_user: u.id_user,
+      type: 'avatar',
+      url: seedAvatarUrl(`${u.first_name} ${u.last_name}`),
+    })),
+  });
+
   // Ports — 5 ports français disponibles (cohérents avec le filtre du carrousel)
   // IDs attribués dans l'ordre d'insertion : 1=Marseille, 2=La Rochelle, 3=Brest, 4=Nice, 5=Bordeaux
   await prisma.$executeRawUnsafe(`
