@@ -23,6 +23,7 @@ function HeaderAdmin() {
       rightPanelWidth="280px"
       showMessages
       messagesTo="/admin/messages"
+      languageAsFlags={false}
     />
   );
 }

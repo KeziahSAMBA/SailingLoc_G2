@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FiMail } from 'react-icons/fi';
 import { useAuth } from '../../../hooks/useAuth.jsx';
 import { getUnreadCount } from '../../../services/messageService.js';
@@ -10,6 +11,7 @@ import HeaderLogo from './shared/HeaderLogo.jsx';
 import BurgerIcon from './shared/BurgerIcon.jsx';
 import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
+import { LANGUAGES } from './shared/languages.js';
 
 /**
  * Header shared by every authenticated role (admin, propriétaire, locataire).
@@ -29,7 +31,9 @@ function DashboardHeader({
   showMessages = false,
   // Destination de l'icône messagerie (l'admin a sa page dédiée).
   messagesTo = '/messages',
+  languageAsFlags = true,
 }) {
+  const { t, i18n } = useTranslation();
   const scrolled = useScrolled();
   const [navOpen, setNavOpen] = useState(false);
   const [rightMenuOpen, setRightMenuOpen] = useState(false);
@@ -117,15 +121,9 @@ function DashboardHeader({
       <div
         className="absolute inset-0 -z-10"
         style={{
-          backgroundColor: scrolled
-            ? 'rgba(10, 49, 114, 0.95)'
-            : onCategoriePage
-              ? 'rgba(0, 0, 0, 0.10)'
-              : 'rgba(255, 255, 255, 0.05)',
+          backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
           borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
           boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
-          backdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
-          WebkitBackdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
           transition: 'box-shadow 0.3s ease, background-color 0.3s ease',
         }}
       />
@@ -137,7 +135,7 @@ function DashboardHeader({
             <button
               onClick={() => setNavOpen((o) => !o)}
               className="flex flex-col justify-center gap-[5px] p-1"
-              aria-label="Menu navigation"
+              aria-label={t('dashboardHeader.menuAria')}
             >
               <BurgerIcon open={navOpen} />
             </button>
@@ -193,13 +191,15 @@ function DashboardHeader({
       {/* Centre — Navigation (33%) */}
       <nav className="w-1/3 flex justify-center">
         <ul className={`flex ${centerGapClass} list-none m-0 p-0`} style={{ whiteSpace: 'nowrap' }}>
-          {centerNav.map(({ label, to }) => (
+          {centerNav.map(({ label, to, anchor }) => (
             <li key={label} style={{ whiteSpace: 'nowrap' }}>
               <a
-                href={to}
+                href={anchor ? `#${anchor}` : to}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (to === location.pathname) {
+                  if (anchor) {
+                    scrollToAnchor(anchor, location.pathname);
+                  } else if (to === location.pathname) {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   } else {
                     navigate(to);
@@ -233,8 +233,58 @@ function DashboardHeader({
         </ul>
       </nav>
 
-      {/* Droite — Icône utilisateur + Burger menu (33%) */}
+      {/* Droite — Langue + Icône utilisateur + Burger menu (33%) */}
       <div className="w-1/3 flex items-center justify-end gap-3 pr-4">
+        <div className="flex items-center gap-2.5">
+          {languageAsFlags
+            ? LANGUAGES.map(({ code, Flag, label }) => (
+                <button
+                  key={code}
+                  onClick={() => i18n.changeLanguage(code)}
+                  aria-label={label}
+                  title={label}
+                  className="rounded-[3px] overflow-hidden transition-transform hover:scale-110"
+                  style={{
+                    width: scrolled ? '20px' : '24px',
+                    height: scrolled ? '14px' : '17px',
+                    opacity: i18n.language === code ? 1 : 0.45,
+                    boxShadow: '0 0 0 1px rgba(255,255,255,0.4)',
+                    transition:
+                      'width 0.3s ease, height 0.3s ease, opacity 0.2s ease, transform 0.2s ease',
+                  }}
+                >
+                  <Flag className="w-full h-full block" />
+                </button>
+              ))
+            : LANGUAGES.map(({ code }, i) => (
+                <span key={code} className="flex items-center gap-1">
+                  {i === 1 && (
+                    <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.9rem' }}>/</span>
+                  )}
+                  <button
+                    onClick={() => i18n.changeLanguage(code)}
+                    className="px-1 font-medium"
+                    style={{
+                      color: '#fff',
+                      opacity: i18n.language === code ? 1 : 0.45,
+                      fontWeight: i18n.language === code ? 700 : 500,
+                      fontSize: scrolled ? '0.7rem' : '0.75rem',
+                      backgroundImage: 'linear-gradient(#fff, #fff)',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '0% 1px',
+                      backgroundPosition: '0 100%',
+                      paddingBottom: '2px',
+                      transition: 'font-size 0.3s ease, background-size 0.35s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundSize = '100% 1px')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundSize = '0% 1px')}
+                  >
+                    {code.toUpperCase()}
+                  </button>
+                </span>
+              ))}
+        </div>
+
         <a
           href={profileHref}
           onClick={(e) => {
@@ -295,13 +345,11 @@ function DashboardHeader({
             style={{
               width: scrolled ? '32px' : '40px',
               height: scrolled ? '32px' : '40px',
-              border: '1.5px solid rgba(255, 255, 255, 0.7)',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              transition: 'width 0.3s ease, height 0.3s ease, background-color 0.2s ease',
+              transition: 'width 0.3s ease, height 0.3s ease, opacity 0.2s ease',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
-            aria-label={unread > 0 ? `Messagerie — ${unread} message(s) non lu(s)` : 'Messagerie'}
+            aria-label={t('dashboardHeader.messagesAria')}
           >
             <FiMail size={scrolled ? 18 : 22} color="#fff" />
             {unread > 0 && (
@@ -319,7 +367,7 @@ function DashboardHeader({
           <button
             onClick={() => setRightMenuOpen((o) => !o)}
             className="flex flex-col justify-center gap-[5px] p-1 ml-1"
-            aria-label="Menu utilisateur"
+            aria-label={t('dashboardHeader.userMenuAria')}
           >
             <BurgerIcon open={rightMenuOpen} />
           </button>

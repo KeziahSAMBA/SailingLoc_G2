@@ -1,22 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaSliders } from 'react-icons/fa6';
 import { FaChevronDown, FaChevronUp, FaXmark } from 'react-icons/fa6';
 
-const BOAT_TYPE_LABELS = {
-  voilier: 'Voiliers',
-  catamaran: 'Catamarans',
-  trimaran: 'Trimarans',
-  moteur: 'Bateaux à moteur',
-  peniche: 'Péniches',
-  jet_ski: 'Jet-skis',
-  hors_bord: 'Hors-bords',
-  gulet: 'Gulets',
-};
+function getBoatTypeLabels(t) {
+  return {
+    voilier: t('filterBar.boatType.voilier'),
+    catamaran: t('filterBar.boatType.catamaran'),
+    trimaran: t('filterBar.boatType.trimaran'),
+    moteur: t('filterBar.boatType.moteur'),
+    peniche: t('filterBar.boatType.peniche'),
+    jet_ski: t('filterBar.boatType.jet_ski'),
+    hors_bord: t('filterBar.boatType.hors_bord'),
+    gulet: t('filterBar.boatType.gulet'),
+  };
+}
 
-const SORT_LABELS = {
-  rating: 'Les mieux notés',
-  popularity: 'Les plus populaires',
-};
+function getSortLabels(t) {
+  return {
+    rating: t('filterBar.sort.rating'),
+    popularity: t('filterBar.sort.popularity'),
+  };
+}
 
 function FilterChip({ label, onRemove }) {
   return (
@@ -73,6 +78,7 @@ function FilterRadio({ name, label, checked, onChange }) {
 
 function FilterBar({
   light = false,
+  compact = false,
   boatTypeFilters,
   onBoatTypeChange,
   licenseFilter,
@@ -87,8 +93,11 @@ function FilterBar({
   onCoupDeCoeurFilterChange,
   onReset,
 }) {
+  const { t } = useTranslation();
   const [filterOpen, setFilterOpen] = useState(false);
   const containerRef = useRef(null);
+  const boatTypeLabels = getBoatTypeLabels(t);
+  const sortLabels = getSortLabels(t);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -105,14 +114,17 @@ function FilterBar({
       .filter(([, v]) => v)
       .map(([k]) => ({
         key: k,
-        label: BOAT_TYPE_LABELS[k],
+        label: boatTypeLabels[k],
         onRemove: () => onBoatTypeChange({ ...boatTypeFilters, [k]: false }),
       })),
     ...(licenseFilter !== 'any'
       ? [
           {
             key: 'license',
-            label: licenseFilter === 'not_required' ? 'Sans permis' : 'Avec permis',
+            label:
+              licenseFilter === 'not_required'
+                ? t('filterBar.license.chipNotRequired')
+                : t('filterBar.license.chipRequired'),
             onRemove: () => onLicenseFilterChange('any'),
           },
         ]
@@ -121,7 +133,10 @@ function FilterBar({
       ? [
           {
             key: 'skipper',
-            label: skipperFilter === 'included' ? 'Skipper inclus' : 'Sans skipper',
+            label:
+              skipperFilter === 'included'
+                ? t('filterBar.skipper.included')
+                : t('filterBar.skipper.chipExcluded'),
             onRemove: () => onSkipperFilterChange('any'),
           },
         ]
@@ -132,22 +147,22 @@ function FilterBar({
             key: 'price',
             label:
               priceRange.min && priceRange.max
-                ? `${priceRange.min}€ – ${priceRange.max}€`
+                ? t('filterBar.price.range', { min: priceRange.min, max: priceRange.max })
                 : priceRange.min
-                  ? `Dès ${priceRange.min}€`
-                  : `Jusqu'à ${priceRange.max}€`,
+                  ? t('filterBar.price.from', { price: priceRange.min })
+                  : t('filterBar.price.upTo', { price: priceRange.max }),
             onRemove: () => onPriceRangeChange({ min: '', max: '' }),
           },
         ]
       : []),
     ...(sortBy !== 'relevance'
-      ? [{ key: 'sort', label: SORT_LABELS[sortBy], onRemove: () => onSortByChange('relevance') }]
+      ? [{ key: 'sort', label: sortLabels[sortBy], onRemove: () => onSortByChange('relevance') }]
       : []),
     ...(coupDeCoeurFilter
       ? [
           {
             key: 'coup_de_coeur',
-            label: 'Coup de cœur',
+            label: t('filterBar.coupDeCoeur'),
             onRemove: () => onCoupDeCoeurFilterChange(false),
           },
         ]
@@ -160,10 +175,18 @@ function FilterBar({
       <div
         className={`flex items-center gap-3 px-4 py-2 rounded-full cursor-pointer select-none border transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         style={{
-          backgroundColor: light ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-          borderColor: light ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
+          backgroundColor: compact
+            ? 'rgba(0,0,0,0.45)'
+            : light
+              ? 'rgba(255,255,255,0.1)'
+              : 'rgba(0,0,0,0.05)',
+          borderColor: compact
+            ? 'rgba(255,255,255,0.15)'
+            : light
+              ? 'rgba(255,255,255,0.3)'
+              : 'rgba(0,0,0,0.1)',
+          backdropFilter: compact ? 'blur(5px)' : 'blur(40px)',
+          WebkitBackdropFilter: compact ? 'blur(14px)' : 'blur(40px)',
         }}
         onClick={() => setFilterOpen((v) => !v)}
       >
@@ -172,7 +195,7 @@ function FilterBar({
           <span
             className={`text-[10px] font-semibold uppercase tracking-wide ${light ? 'text-white' : 'text-black'}`}
           >
-            Filtres
+            {t('filterBar.label')}
           </span>
         </div>
 
@@ -202,7 +225,7 @@ function FilterBar({
             }}
             className={`text-[10px] font-medium transition-colors uppercase tracking-wide ${light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
           >
-            Réinitialiser
+            {t('filterBar.reset')}
           </button>
           {filterOpen ? (
             <FaChevronUp size={9} className={light ? 'text-white/70' : 'text-black/50'} />
@@ -225,19 +248,10 @@ function FilterBar({
             {/* Type de bateau */}
             <div className="pr-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                Type de bateau
+                {t('filterBar.boatType.title')}
               </p>
               <div className="space-y-1.5">
-                {[
-                  ['voilier', 'Voiliers'],
-                  ['catamaran', 'Catamarans'],
-                  ['trimaran', 'Trimarans'],
-                  ['moteur', 'Bateaux à moteur'],
-                  ['peniche', 'Péniches'],
-                  ['jet_ski', 'Jet-skis'],
-                  ['hors_bord', 'Hors-bords'],
-                  ['gulet', 'Gulets'],
-                ].map(([key, label]) => (
+                {Object.entries(boatTypeLabels).map(([key, label]) => (
                   <FilterCheckbox
                     key={key}
                     label={label}
@@ -253,26 +267,26 @@ function FilterBar({
             {/* Permis */}
             <div className="px-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                Permis
+                {t('filterBar.license.title')}
               </p>
               <div className="space-y-1.5">
                 <FilterCheckbox
-                  label="Sans permis requis"
+                  label={t('filterBar.license.notRequired')}
                   checked={licenseFilter === 'not_required'}
                   onChange={(e) => onLicenseFilterChange(e.target.checked ? 'not_required' : 'any')}
                 />
                 <FilterCheckbox
-                  label="Avec permis"
+                  label={t('filterBar.license.required')}
                   checked={licenseFilter === 'required'}
                   onChange={(e) => onLicenseFilterChange(e.target.checked ? 'required' : 'any')}
                 />
                 <FilterCheckbox
-                  label="Skipper inclus"
+                  label={t('filterBar.skipper.included')}
                   checked={skipperFilter === 'included'}
                   onChange={(e) => onSkipperFilterChange(e.target.checked ? 'included' : 'any')}
                 />
                 <FilterCheckbox
-                  label="Sans skipper inclus"
+                  label={t('filterBar.skipper.excluded')}
                   checked={skipperFilter === 'excluded'}
                   onChange={(e) => onSkipperFilterChange(e.target.checked ? 'excluded' : 'any')}
                 />
@@ -282,13 +296,13 @@ function FilterBar({
             {/* Prix par jour */}
             <div className="px-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                Prix / jour
+                {t('filterBar.price.title')}
               </p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   min="0"
-                  placeholder="Min €"
+                  placeholder={t('filterBar.price.min')}
                   value={priceRange.min}
                   onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
                   className="w-20 px-2 py-1 text-sm border border-gray-200 rounded-lg outline-none focus:border-sky-400"
@@ -297,7 +311,7 @@ function FilterBar({
                 <input
                   type="number"
                   min="0"
-                  placeholder="Max €"
+                  placeholder={t('filterBar.price.max')}
                   value={priceRange.max}
                   onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
                   className="w-20 px-2 py-1 text-sm border border-gray-200 rounded-lg outline-none focus:border-sky-400"
@@ -308,29 +322,29 @@ function FilterBar({
             {/* Trier par */}
             <div className="pl-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                Trier par
+                {t('filterBar.sort.title')}
               </p>
               <div className="space-y-1.5">
                 <FilterRadio
                   name="sortBy"
-                  label="Pertinence"
+                  label={t('filterBar.sort.relevance')}
                   checked={sortBy === 'relevance'}
                   onChange={() => onSortByChange('relevance')}
                 />
                 <FilterRadio
                   name="sortBy"
-                  label="Les mieux notés"
+                  label={t('filterBar.sort.rating')}
                   checked={sortBy === 'rating'}
                   onChange={() => onSortByChange('rating')}
                 />
                 <FilterRadio
                   name="sortBy"
-                  label="Les plus populaires"
+                  label={t('filterBar.sort.popularity')}
                   checked={sortBy === 'popularity'}
                   onChange={() => onSortByChange('popularity')}
                 />
                 <FilterCheckbox
-                  label="Coup de cœur"
+                  label={t('filterBar.coupDeCoeur')}
                   checked={coupDeCoeurFilter}
                   onChange={(e) => onCoupDeCoeurFilterChange(e.target.checked)}
                 />

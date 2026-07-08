@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchBoats } from '../../services/boatService';
 import { fetchPorts } from '../../services/portService';
 import { useFavorites } from '../../hooks/useFavorites.js';
@@ -17,7 +18,7 @@ const portToSlide = (port) => ({
   available: port.country === 'France',
 });
 
-const boatToSlide = (boat) => {
+const boatToSlide = (boat, t) => {
   const nextAvail = boat.availabilities?.[0];
   const fmt = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   const dateStr =
@@ -31,7 +32,10 @@ const boatToSlide = (boat) => {
     dateStr,
     capacity: boat.capacity ?? null,
     price: boat.daily_price,
-    rating: boat.avg_rating != null ? `★ ${boat.avg_rating}` : '★ Nouveau',
+    rating:
+      boat.avg_rating != null
+        ? `★ ${boat.avg_rating}${boat.review_count > 0 ? ` (${boat.review_count})` : ''}`
+        : t('carrousel.newRating'),
     img: boat.images?.[0]?.url ?? '',
     available: boat.is_published,
   };
@@ -47,7 +51,9 @@ const PortCarousel = memo(
     variant = 'default',
     favoriteIds,
     onToggleFavorite,
+    onSlideClick,
   }) => {
+    const { t } = useTranslation();
     const maxIndex = slides.length - visibleCount;
     const [index, setIndex] = useState(0);
     const slideWidthPct = 100 / slides.length;
@@ -64,7 +70,7 @@ const PortCarousel = memo(
             onClick={prev}
             className="absolute left-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
             style={{ transform: 'translate(-50%, 0)', top: '40%' }}
-            aria-label="Précédent"
+            aria-label={t('carrousel.prev')}
           >
             <FaChevronLeft size={12} className="text-gray-700" />
           </button>
@@ -85,6 +91,7 @@ const PortCarousel = memo(
                 key={slide.id}
                 className="flex flex-col cursor-pointer group px-1.5"
                 style={{ width: `${slideWidthPct}%` }}
+                onClick={() => onSlideClick?.(slide)}
               >
                 {variant === 'overlay' ? (
                   <>
@@ -113,7 +120,7 @@ const PortCarousel = memo(
                                 textTransform: 'uppercase',
                               }}
                             >
-                              Bientôt disponible
+                              {t('carrousel.soon')}
                             </span>
                           </div>
                         </>
@@ -121,6 +128,7 @@ const PortCarousel = memo(
                       <FavoriteButton
                         isFavorite={favoriteIds.has(slide.id)}
                         onToggle={() => onToggleFavorite(slide.id)}
+                        size={26}
                         className="absolute top-2 right-2 z-10"
                       />
                     </div>
@@ -142,7 +150,12 @@ const PortCarousel = memo(
                           className="text-gray-600"
                           style={{ fontSize: '12px', lineHeight: '15px' }}
                         >
-                          {[slide.dateStr, slide.capacity ? `${slide.capacity} pers.` : null]
+                          {[
+                            slide.dateStr,
+                            slide.capacity
+                              ? t('carrousel.persons', { count: slide.capacity })
+                              : null,
+                          ]
                             .filter(Boolean)
                             .join(' · ')}
                         </span>
@@ -151,7 +164,9 @@ const PortCarousel = memo(
                         className="text-gray-600"
                         style={{ fontSize: '12px', lineHeight: '15px' }}
                       >
-                        {[`${slide.price} €/j`, slide.rating].filter(Boolean).join(' · ')}
+                        {[`${slide.price} ${t('carrousel.perDay')}`, slide.rating]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </span>
                     </div>
                   </>
@@ -205,7 +220,7 @@ const PortCarousel = memo(
                               textTransform: 'uppercase',
                             }}
                           >
-                            Bientôt disponible
+                            {t('carrousel.soon')}
                           </span>
                         </div>
                       </>
@@ -236,7 +251,7 @@ const PortCarousel = memo(
                                 textTransform: 'uppercase',
                               }}
                             >
-                              Bientôt disponible
+                              {t('carrousel.soon')}
                             </span>
                           </div>
                         </>
@@ -244,6 +259,7 @@ const PortCarousel = memo(
                       <FavoriteButton
                         isFavorite={favoriteIds.has(slide.id)}
                         onToggle={() => onToggleFavorite(slide.id)}
+                        size={26}
                         className="absolute top-2 right-2 z-10"
                       />
                     </div>
@@ -273,7 +289,7 @@ const PortCarousel = memo(
             onClick={next}
             className="absolute right-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
             style={{ transform: 'translate(50%, 0)', top: '40%' }}
-            aria-label="Suivant"
+            aria-label={t('carrousel.next')}
           >
             <FaChevronRight size={12} className="text-gray-700" />
           </button>
@@ -288,13 +304,15 @@ const CarouselSection = ({
   slides,
   visibleCount = 5,
   imageSize = 'small',
-  linkLabel = 'Voir plus',
+  linkLabel,
   linkTo = '/categorie',
   theme = 'light',
   variant = 'default',
   favoriteIds,
   onToggleFavorite,
+  onSlideClick,
 }) => {
+  const { t } = useTranslation();
   const titleColor = theme === 'dark' ? 'text-white' : 'text-black';
   const linkColor =
     theme === 'dark' ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-black';
@@ -312,7 +330,7 @@ const CarouselSection = ({
           className={`flex items-center gap-1.5 transition-colors ml-4 ${linkColor}`}
           style={{ fontSize: '16px' }}
         >
-          {linkLabel} <FaArrowRight size={10} />
+          {linkLabel ?? t('carrousel.seeMore')} <FaArrowRight size={10} />
         </Link>
       </div>
       <PortCarousel
@@ -322,6 +340,7 @@ const CarouselSection = ({
         variant={variant}
         favoriteIds={favoriteIds}
         onToggleFavorite={onToggleFavorite}
+        onSlideClick={onSlideClick}
       />
     </div>
   );
@@ -370,6 +389,7 @@ const SlideItem = memo(function SlideItem({
         <FavoriteButton
           isFavorite={isFavorite}
           onToggle={() => onToggleFavorite(slide.id)}
+          size={26}
           className="absolute top-3 right-3 z-10"
         />
         <div
@@ -409,6 +429,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
   favoriteIds,
   onToggleFavorite,
 }) {
+  const { t } = useTranslation();
   const outerRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [itemWidth, setItemWidth] = useState(0);
@@ -520,7 +541,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
           onClick={goPrev}
           className="absolute left-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-1 shadow-lg transition-colors"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
-          aria-label="Précédent"
+          aria-label={t('carrousel.prev')}
         >
           <FaChevronLeft size={12} className="text-white" />
         </button>
@@ -559,7 +580,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
           onClick={goNext}
           className="absolute right-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-1 shadow-lg transition-colors"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
-          aria-label="Suivant"
+          aria-label={t('carrousel.next')}
         >
           <FaChevronRight size={12} className="text-white" />
         </button>
@@ -584,9 +605,18 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 const Carrousel = ({ theme = 'dark' }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
   const { favoriteIds, toggleFavorite } = useFavorites();
+
+  // Un port "bientôt disponible" n'a aucun bateau : cliquer dessus n'amènerait
+  // qu'une page catégorie vide, donc on ignore le clic dans ce cas.
+  function handlePortClick(slide) {
+    if (!slide.available) return;
+    navigate(`/categorie?destination=${encodeURIComponent(slide.label)}`);
+  }
 
   useEffect(() => {
     fetchBoats()
@@ -611,7 +641,10 @@ const Carrousel = ({ theme = 'dark' }) => {
           ? boat.description.slice(0, 55) + '…'
           : boat.description
         : null;
-      const ratingStr = boat.avg_rating != null ? `★ ${boat.avg_rating}` : '★ Nouveau';
+      const ratingStr =
+        boat.avg_rating != null
+          ? `★ ${boat.avg_rating}${boat.review_count > 0 ? ` (${boat.review_count})` : ''}`
+          : t('carrousel.newRating');
 
       return {
         id: boat.id_boat,
@@ -619,8 +652,8 @@ const Carrousel = ({ theme = 'dark' }) => {
         subtitle: [
           boat.port?.city,
           dateStr,
-          boat.capacity ? `${boat.capacity} pers.` : null,
-          `${boat.daily_price} €/j`,
+          boat.capacity ? t('carrousel.persons', { count: boat.capacity }) : null,
+          `${boat.daily_price} ${t('carrousel.perDay')}`,
         ]
           .filter(Boolean)
           .join(' · '),
@@ -630,15 +663,15 @@ const Carrousel = ({ theme = 'dark' }) => {
     };
 
     const TYPE_LABELS = {
-      voilier: 'Voilier',
-      catamaran: 'Catamaran',
-      peniche: 'Péniche',
-      moteur: 'Bateau à moteur',
-      trimaran: 'Trimaran',
-      hors_bord: 'Hors-bord',
-      jet_ski: 'Jet-ski',
-      gulet: 'Gulet',
-      sans_permis: 'Sans permis',
+      voilier: t('carrousel.boatType.voilier'),
+      catamaran: t('carrousel.boatType.catamaran'),
+      peniche: t('carrousel.boatType.peniche'),
+      moteur: t('carrousel.boatType.moteur'),
+      trimaran: t('carrousel.boatType.trimaran'),
+      hors_bord: t('carrousel.boatType.hors_bord'),
+      jet_ski: t('carrousel.boatType.jet_ski'),
+      gulet: t('carrousel.boatType.gulet'),
+      sans_permis: t('carrousel.boatType.sans_permis'),
     };
 
     const groups = {};
@@ -660,12 +693,12 @@ const Carrousel = ({ theme = 'dark' }) => {
       initialSlide: 1,
       interval: 8000 + i * 500,
     }));
-  }, [boats]);
+  }, [boats, t]);
 
   const carouselSections = useMemo(
     () => [
       {
-        title: 'Choisissez votre port de départ',
+        title: t('carrousel.sections.ports'),
         slides: ports
           .filter(
             (p) =>
@@ -677,37 +710,37 @@ const Carrousel = ({ theme = 'dark' }) => {
         variant: 'port',
       },
       {
-        title: 'Annonces consultées récemment',
-        slides: boats.slice(0, 6).map(boatToSlide),
-        linkLabel: 'Voir toutes mes annonces',
+        title: t('carrousel.sections.recent'),
+        slides: boats.slice(0, 6).map((boat) => boatToSlide(boat, t)),
+        linkLabel: t('carrousel.sections.recentLink'),
         variant: 'overlay',
       },
       {
-        title: "Destinations d'intérêt",
+        title: t('carrousel.sections.destinations'),
         slides: ports.slice(0, 7).map(portToSlide),
-        linkLabel: 'Explorer les destinations',
+        linkLabel: t('carrousel.sections.destinationsLink'),
         variant: 'port',
       },
       {
-        title: 'Bateaux les plus populaires',
+        title: t('carrousel.sections.popular'),
         slides: [...boats]
           .sort((a, b) => Number(b.booking_count) - Number(a.booking_count))
           .slice(0, 5)
-          .map(boatToSlide),
-        linkLabel: 'Voir le classement',
+          .map((boat) => boatToSlide(boat, t)),
+        linkLabel: t('carrousel.sections.popularLink'),
         variant: 'overlay',
       },
       {
-        title: 'Locations les moins chères',
+        title: t('carrousel.sections.cheapest'),
         slides: [...boats]
           .sort((a, b) => Number(a.daily_price) - Number(b.daily_price))
           .slice(0, 5)
-          .map(boatToSlide),
-        linkLabel: 'Voir les bons plans',
+          .map((boat) => boatToSlide(boat, t)),
+        linkLabel: t('carrousel.sections.cheapestLink'),
         variant: 'overlay',
       },
     ],
-    [boats, ports]
+    [boats, ports, t]
   );
 
   const headerTitle = theme === 'light' ? 'text-black' : 'text-white';
@@ -723,14 +756,14 @@ const Carrousel = ({ theme = 'dark' }) => {
             className={`font-semibold ${headerTitle}`}
             style={{ fontSize: '20px', lineHeight: '22px' }}
           >
-            Annonces du moment
+            {t('carrousel.sections.current')}
           </h2>
           <Link
             to="/categorie"
             className={`flex items-center gap-1.5 transition-colors ml-4 ${headerLink}`}
             style={{ fontSize: '16px' }}
           >
-            Voir plus d'annonces <FaArrowRight size={10} />
+            {t('carrousel.sections.currentLink')} <FaArrowRight size={10} />
           </Link>
         </div>
         <div className="flex gap-4">
@@ -762,6 +795,7 @@ const Carrousel = ({ theme = 'dark' }) => {
             variant={variant}
             favoriteIds={favoriteIds}
             onToggleFavorite={toggleFavorite}
+            onSlideClick={variant === 'port' ? handlePortClick : undefined}
           />
         ))}
     </div>

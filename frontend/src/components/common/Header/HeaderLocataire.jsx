@@ -1,46 +1,53 @@
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import DashboardHeader from './DashboardHeader.jsx';
 
-const NAV_LOCATAIRE = [
-  { label: 'Chercher une location', anchor: 'hero' },
-  { label: 'Nos suggestions', anchor: 'suggestions' },
-  { label: 'Tutoriel', anchor: 'tutoriel' },
-  { label: 'Pourquoi nous choisir ?', anchor: 'proposition-valeur' },
-  { label: 'Avis & commentaires', anchor: 'avis' },
-];
-
-const NAV_LOCATAIRE_CATEGORY = [
-  { label: 'Nos bateaux', anchor: 'resultats', path: '/categorie' },
-  { label: 'Nos suggestions', anchor: 'suggestions', path: '/categorie' },
-  { label: 'Avis & commentaires', anchor: 'avis', path: '/categorie' },
-];
-
-const CENTER_NAV = [
-  { label: 'Découvrir', to: '/categorie' },
-  { label: 'Contact', to: '/contact' },
-  { label: 'À propos', to: '/a-propos' },
-];
-
-const USER_MENU_ITEMS = [
-  { label: 'Mon dashboard', to: '/locataire' },
-  { label: 'Compte', to: '/locataire/compte' },
-  { label: 'Mes documents', to: '/locataire/documents' },
-  { label: 'Mes réservations', to: '/locataire/reservations' },
-  { label: 'Favoris', to: '/locataire/favoris' },
-  { label: 'Déconnexion', action: 'logout', danger: true },
-];
-
 function HeaderLocataire() {
+  const { t } = useTranslation();
   const location = useLocation();
   const onCategoriePage = location.pathname === '/categorie';
-  const navItems = onCategoriePage ? NAV_LOCATAIRE_CATEGORY : NAV_LOCATAIRE;
+
+  const navLocataire = [
+    { label: t('headerLocataire.nav.search'), anchor: 'hero' },
+    { label: t('headerLocataire.nav.suggestions'), anchor: 'suggestions' },
+    { label: t('headerLocataire.nav.tutorial'), anchor: 'tutoriel' },
+    { label: t('headerLocataire.nav.whyUs'), anchor: 'proposition-valeur' },
+    { label: t('headerLocataire.nav.reviews'), anchor: 'avis' },
+  ];
+
+  const navLocataireCategory = [
+    { label: t('headerLocataire.navCategory.boats'), anchor: 'resultats', path: '/categorie' },
+    {
+      label: t('headerLocataire.navCategory.suggestions'),
+      anchor: 'suggestions',
+      path: '/categorie',
+    },
+    { label: t('headerLocataire.navCategory.reviews'), anchor: 'avis', path: '/categorie' },
+  ];
+
+  const centerNav = [
+    { label: t('headerLocataire.center.discover'), to: '/categorie' },
+    { label: t('headerLocataire.center.contact'), to: '/contact' },
+    { label: t('headerLocataire.center.about'), to: '/a-propos' },
+  ];
+
+  const userMenuItems = [
+    { label: t('headerLocataire.menu.dashboard'), to: '/locataire' },
+    { label: t('headerLocataire.menu.account'), to: '/locataire/compte' },
+    { label: t('headerLocataire.menu.documents'), to: '/locataire/documents' },
+    { label: t('headerLocataire.menu.reservations'), to: '/locataire/reservations' },
+    { label: t('headerLocataire.menu.favorites'), to: '/locataire/favoris' },
+    { label: t('headerLocataire.menu.logout'), action: 'logout', danger: true },
+  ];
+
+  const navItems = onCategoriePage ? navLocataireCategory : navLocataire;
 
   return (
     <DashboardHeader
       leftGroups={[{ items: navItems, heightPercent: onCategoriePage ? '41%' : '69%' }]}
-      centerNav={CENTER_NAV}
+      centerNav={centerNav}
       profileHref="/locataire/compte"
-      rightMenuItems={USER_MENU_ITEMS}
+      rightMenuItems={userMenuItems}
       rightVariant="stretch"
       rightHeightPercent="65%"
       showMessages
