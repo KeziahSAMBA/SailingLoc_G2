@@ -12,6 +12,7 @@ import AdminBookingsPage from '../components/admin/AdminBookingsPage.jsx';
 import AdminCommentsPage from '../components/admin/AdminCommentsPage.jsx';
 import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
 import AdminTransactionsPage from '../components/admin/AdminTransactionsPage.jsx';
+import AdminMessagesPage from '../components/admin/AdminMessagesPage.jsx';
 import AdminSpectateurLocatairePage from '../components/admin/AdminSpectateurLocatairePage.jsx';
 import AdminSpectateurProprietairePage from '../components/admin/AdminSpectateurProprietairePage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
@@ -21,6 +22,7 @@ import LocataireAccount from '../components/locataire/LocataireAccount.jsx';
 import LocataireDocuments from '../components/locataire/LocataireDocuments.jsx';
 import LocataireReservations from '../components/locataire/LocataireReservations.jsx';
 import LocataireFavorites from '../components/locataire/LocataireFavorites.jsx';
+import LocataireMessages from '../components/locataire/LocataireMessages.jsx';
 import ProprietaireLayout from '../components/proprietaire/ProprietaireLayout.jsx';
 import ProprietaireDashboard from '../components/proprietaire/ProprietaireDashboard.jsx';
 import ProprietaireAccount from '../components/proprietaire/ProprietaireAccount.jsx';
@@ -29,8 +31,8 @@ import ProprietaireReservations from '../components/proprietaire/ProprietaireRes
 import ProprietaireRevenus from '../components/proprietaire/ProprietaireRevenus.jsx';
 import ProprietaireBoats from '../components/proprietaire/ProprietaireBoats.jsx';
 import ProprietaireBoatForm from '../components/proprietaire/ProprietaireBoatForm.jsx';
+import ProprietaireMessages from '../components/proprietaire/ProprietaireMessages.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
-import MessagesPage from '../pages/MessagesPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import RequireRole from '../components/common/RequireRole.jsx';
@@ -81,15 +83,8 @@ function AppRouter({ location }) {
         <Route path="documents" element={<LocataireDocuments />} />
         <Route path="reservations" element={<LocataireReservations />} />
         <Route path="favoris" element={<LocataireFavorites />} />
+        <Route path="messages" element={<LocataireMessages />} />
       </Route>
-      <Route
-        path="/messages"
-        element={
-          <RequireRole role={['locataire', 'proprietaire']}>
-            <MessagesPage />
-          </RequireRole>
-        }
-      />
       <Route
         path="/proprietaire"
         element={
@@ -106,6 +101,7 @@ function AppRouter({ location }) {
         <Route path="bateaux" element={<ProprietaireBoats />} />
         <Route path="bateaux/nouveau" element={<ProprietaireBoatForm />} />
         <Route path="bateaux/:id/modifier" element={<ProprietaireBoatForm />} />
+        <Route path="messages" element={<ProprietaireMessages />} />
       </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route
@@ -127,6 +123,7 @@ function AppRouter({ location }) {
         <Route path="bookings" element={<AdminBookingsPage />} />
         <Route path="ports" element={<AdminPortsPage />} />
         <Route path="transactions" element={<AdminTransactionsPage />} />
+        <Route path="messages" element={<AdminMessagesPage />} />
       </Route>
     </Routes>
   );

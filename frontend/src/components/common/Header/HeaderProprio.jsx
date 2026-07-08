@@ -28,6 +28,7 @@ function HeaderProprio() {
       rightVariant="stretch"
       rightHeightPercent="77%"
       showMessages
+      messagesTo="/proprietaire/messages"
     />
   );
 }

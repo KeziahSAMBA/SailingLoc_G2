@@ -7,6 +7,7 @@ const NAV = [
   { to: '/proprietaire/reservations', label: 'Mes réservations' },
   { to: '/proprietaire/revenus', label: 'Mes revenus' },
   { to: '/proprietaire/bateaux', label: 'Mes bateaux' },
+  { to: '/proprietaire/messages', label: 'Messagerie' },
 ];
 
 function ProprietaireLayout() {

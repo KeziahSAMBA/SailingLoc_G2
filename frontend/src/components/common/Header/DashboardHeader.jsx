@@ -1,7 +1,8 @@
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FiMail } from 'react-icons/fi';
 import { useAuth } from '../../../hooks/useAuth.jsx';
+import { getUnreadCount } from '../../../services/messageService.js';
 import { nameToAvatarUrl } from '../../../utils/avatar.js';
 import { useScrolled } from './shared/useScrolled.js';
 import { useClickOutside } from './shared/useClickOutside.js';
@@ -26,6 +27,8 @@ function DashboardHeader({
   rightHeightPercent,
   rightPanelWidth = '260px',
   showMessages = false,
+  // Destination de l'icône messagerie (l'admin a sa page dédiée).
+  messagesTo = '/messages',
 }) {
   const scrolled = useScrolled();
   const [navOpen, setNavOpen] = useState(false);
@@ -36,6 +39,26 @@ function DashboardHeader({
   const location = useLocation();
   const onCategoriePage = location.pathname === '/categorie';
   const { user, logout } = useAuth();
+  // Badge de messages non lus sur l'icône messagerie : rafraîchi à chaque
+  // navigation ET en direct quand un fil est lu (événement émis par la
+  // messagerie, qui vit sur la même page).
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!showMessages || !user) return undefined;
+    const refresh = () =>
+      getUnreadCount()
+        .then((res) => setUnread(res.data.unread || 0))
+        .catch(() => setUnread(0));
+    refresh();
+    window.addEventListener('sailingloc:messages-read', refresh);
+    // Quasi temps réel : un message entrant fait apparaître le badge en ~5 s,
+    // où qu'on soit dans le dashboard (même rythme que la messagerie).
+    const interval = setInterval(refresh, 5000);
+    return () => {
+      window.removeEventListener('sailingloc:messages-read', refresh);
+      clearInterval(interval);
+    };
+  }, [showMessages, user, location.pathname]);
 
   const displayName = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') : '';
 
@@ -267,8 +290,8 @@ function DashboardHeader({
 
         {showMessages && (
           <button
-            onClick={() => navigate('/messages')}
-            className="rounded-full flex items-center justify-center flex-shrink-0"
+            onClick={() => navigate(messagesTo)}
+            className="relative rounded-full flex items-center justify-center flex-shrink-0"
             style={{
               width: scrolled ? '32px' : '40px',
               height: scrolled ? '32px' : '40px',
@@ -278,9 +301,17 @@ function DashboardHeader({
             }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
-            aria-label="Messagerie"
+            aria-label={unread > 0 ? `Messagerie — ${unread} message(s) non lu(s)` : 'Messagerie'}
           >
             <FiMail size={scrolled ? 18 : 22} color="#fff" />
+            {unread > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#5AB4EC] px-1 text-[10px] font-bold text-slate-950"
+              >
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
           </button>
         )}
 

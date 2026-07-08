@@ -234,7 +234,11 @@ model Message {
   read_at       DateTime?
   created_at    DateTime @default(now())
   updated_at    DateTime?
+  // Suppression « pour tout le monde » (l'expéditeur retire le message des deux côtés).
   deleted_at    DateTime?
+  // Suppression « pour moi » : chaque côté peut masquer le message chez lui seulement.
+  sender_deleted_at   DateTime?
+  receiver_deleted_at DateTime?
 
   sender        User     @relation("SenderMessages", fields: [id_sender], references: [id_user])
   receiver      User     @relation("ReceiverMessages", fields: [id_receiver], references: [id_user])
