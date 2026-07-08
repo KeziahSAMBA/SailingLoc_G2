@@ -1,15 +1,28 @@
 import prisma from '../config/db.js';
 
+// Avatar de l'utilisateur : image la plus récente de type 'avatar'.
+const AVATAR_INCLUDE = {
+  images: {
+    where: { type: 'avatar', deleted_at: null },
+    orderBy: { created_at: 'desc' },
+    take: 1,
+    select: { url: true },
+  },
+};
+
 export async function findUserByEmail(email) {
   return prisma.user.findMany({ where: { email } });
 }
 
 export async function findUserByEmailAndRole(email, role) {
-  return prisma.user.findUnique({ where: { email_role: { email, role } } });
+  return prisma.user.findUnique({
+    where: { email_role: { email, role } },
+    include: AVATAR_INCLUDE,
+  });
 }
 
 export async function findUserById(id_user) {
-  return prisma.user.findUnique({ where: { id_user } });
+  return prisma.user.findUnique({ where: { id_user }, include: AVATAR_INCLUDE });
 }
 
 export async function findUserByResetToken(reset_token) {
@@ -47,5 +60,5 @@ export async function createUser(data) {
 }
 
 export async function updateUser(id_user, data) {
-  return prisma.user.update({ where: { id_user }, data });
+  return prisma.user.update({ where: { id_user }, data, include: AVATAR_INCLUDE });
 }

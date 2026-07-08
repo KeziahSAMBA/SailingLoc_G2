@@ -16,6 +16,7 @@ import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
 import AdminTransactionsPage from '../components/admin/AdminTransactionsPage.jsx';
 import AdminMessagesPage from '../components/admin/AdminMessagesPage.jsx';
 import AdminContactPage from '../components/admin/AdminContactPage.jsx';
+import AdminAccountPage from '../components/admin/AdminAccountPage.jsx';
 import AdminSpectateurLocatairePage from '../components/admin/AdminSpectateurLocatairePage.jsx';
 import AdminSpectateurProprietairePage from '../components/admin/AdminSpectateurProprietairePage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
@@ -129,6 +130,7 @@ function AppRouter({ location }) {
         <Route path="transactions" element={<AdminTransactionsPage />} />
         <Route path="messages" element={<AdminMessagesPage />} />
         <Route path="contact" element={<AdminContactPage />} />
+        <Route path="compte" element={<AdminAccountPage />} />
       </Route>
       {/* Attrape-tout : toute route inconnue affiche la page 404. */}
       <Route path="*" element={<NotFoundPage />} />
