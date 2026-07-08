@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaPhone, FaEnvelope, FaComments } from 'react-icons/fa6';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { sendContactRequest } from '../services/contactService.js';
 import { contactSupport } from '../services/messageService.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
@@ -49,6 +50,10 @@ const FOCUS_LIGHT =
 const cardClass =
   'rounded-2xl border border-black/15 bg-white p-6 shadow-[0_8px_48px_rgba(0,0,0,0.10)]';
 
+const inputLight =
+  'w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20';
+const labelLight = 'mb-1.5 block text-sm font-medium text-gray-700';
+
 function ContactPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -71,6 +76,42 @@ function ContactPage() {
       navigate(messagesPath);
     } finally {
       setChatBusy(false);
+    }
+  }
+
+  // Formulaire de contact — pré-rempli pour un utilisateur connecté.
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [formBusy, setFormBusy] = useState(false);
+  const [formSent, setFormSent] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || [user.first_name, user.last_name].filter(Boolean).join(' '),
+        email: prev.email || user.email || '',
+      }));
+    }
+  }, [user]);
+
+  function handleFormChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+    setFormError('');
+    setFormBusy(true);
+    try {
+      await sendContactRequest(form);
+      setFormSent(true);
+      setForm((prev) => ({ ...prev, subject: '', message: '' }));
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Une erreur est survenue, réessayez.');
+    } finally {
+      setFormBusy(false);
     }
   }
 
@@ -162,6 +203,130 @@ function ContactPage() {
               </a>
             </li>
           </ul>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-4xl border-t border-gray-200" />
+
+      {/* Formulaire de contact */}
+      <section aria-labelledby="form-title" className="w-full bg-white px-4 py-14">
+        <div className="mx-auto w-full max-w-2xl">
+          <div className="mb-10 text-center">
+            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-700 underline underline-offset-4">
+              Écrivez-nous
+            </p>
+            <h2 id="form-title" className="text-3xl font-semibold text-gray-900 md:text-4xl">
+              Envoyer un message
+            </h2>
+          </div>
+
+          {formSent ? (
+            <div
+              role="status"
+              className="rounded-2xl border border-emerald-300 bg-emerald-50 px-6 py-8 text-center"
+            >
+              <p className="text-lg font-semibold text-emerald-800">Message bien envoyé !</p>
+              <p className="mt-2 text-sm text-emerald-700">
+                Notre équipe vous répondra à l&apos;adresse indiquée sous 24 h ouvrées.
+              </p>
+              <button
+                type="button"
+                onClick={() => setFormSent(false)}
+                className={`mt-4 font-medium text-sky-700 hover:underline ${FOCUS_LIGHT}`}
+              >
+                Envoyer un autre message
+              </button>
+            </div>
+          ) : (
+            <form
+              onSubmit={handleFormSubmit}
+              className="rounded-2xl border border-black/15 bg-white p-8 shadow-[0_8px_48px_rgba(0,0,0,0.10)]"
+            >
+              {formError && (
+                <div
+                  role="alert"
+                  className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+                >
+                  {formError}
+                </div>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="contact-name" className={labelLight}>
+                    Nom *
+                  </label>
+                  <input
+                    id="contact-name"
+                    name="name"
+                    type="text"
+                    required
+                    maxLength={150}
+                    value={form.name}
+                    onChange={handleFormChange}
+                    autoComplete="name"
+                    className={inputLight}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="contact-email" className={labelLight}>
+                    Email *
+                  </label>
+                  <input
+                    id="contact-email"
+                    name="email"
+                    type="email"
+                    required
+                    maxLength={255}
+                    value={form.email}
+                    onChange={handleFormChange}
+                    autoComplete="email"
+                    className={inputLight}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="contact-subject" className={labelLight}>
+                    Objet *
+                  </label>
+                  <input
+                    id="contact-subject"
+                    name="subject"
+                    type="text"
+                    required
+                    maxLength={200}
+                    value={form.subject}
+                    onChange={handleFormChange}
+                    placeholder="Ex. : question sur une réservation"
+                    className={inputLight}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="contact-message" className={labelLight}>
+                    Message *
+                  </label>
+                  <textarea
+                    id="contact-message"
+                    name="message"
+                    rows={5}
+                    required
+                    maxLength={5000}
+                    value={form.message}
+                    onChange={handleFormChange}
+                    placeholder="Décrivez votre demande…"
+                    className={inputLight}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={formBusy}
+                className={`mt-6 w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_LIGHT}`}
+              >
+                {formBusy ? 'Envoi…' : 'Envoyer le message'}
+              </button>
+            </form>
+          )}
         </div>
       </section>
 

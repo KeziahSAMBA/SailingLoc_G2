@@ -320,6 +320,22 @@ enum UserRole {
   @@map("user_role")
 }
 
+// Demandes envoyées via le formulaire public de la page Contact, suivies par
+// l'admin (statut « nouvelle » → « traitée »).
+model ContactRequest {
+  id_request   Int       @id @default(autoincrement())
+  name         String    @db.VarChar(150)
+  email        String    @db.VarChar(255)
+  subject      String    @db.VarChar(200)
+  message      String
+  status       String    @default("new") @db.VarChar(20)
+  created_at   DateTime  @default(now())
+  processed_at DateTime?
+
+  @@index([status])
+  @@map("contact_request")
+}
+
 enum BoatStatus {
   draft
   pending

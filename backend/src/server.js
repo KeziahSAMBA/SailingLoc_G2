@@ -9,6 +9,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
+import { postContactRequest } from './controllers/contactRequestController.js';
 import { initConfig } from './config/appConfig.js';
 
 const { PORT, APP_URL } = initConfig();
@@ -86,6 +87,16 @@ const resetPasswordLimiter = rateLimit({
   message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
 });
 app.use('/api/users/reset-password', resetPasswordLimiter);
+
+// Formulaire public de contact : limité pour éviter le spam.
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de messages envoyés. Réessayez dans une heure.' },
+});
+app.post('/api/contact', contactLimiter, postContactRequest);
 
 app.use('/api/boats', boatRoutes);
 app.use('/api/ports', portRoutes);

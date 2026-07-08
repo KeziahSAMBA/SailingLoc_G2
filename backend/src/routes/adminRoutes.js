@@ -32,6 +32,11 @@ import {
 import { adminListPayments, adminPaymentStats } from '../controllers/paymentAdminController.js';
 import { protect, requireAdmin } from '../middlewares/authMiddleware.js';
 
+import {
+  adminListContactRequests,
+  adminPatchContactRequest,
+} from '../controllers/contactRequestController.js';
+
 const router = Router();
 
 // Espace d'administration, monté sous /api/admin.
@@ -66,5 +71,9 @@ router.delete('/ports/:id', protect, requireAdmin, adminDeletePort);
 
 router.get('/payments', protect, requireAdmin, adminListPayments);
 router.get('/payments/stats', protect, requireAdmin, adminPaymentStats);
+
+// Demandes du formulaire de contact public.
+router.get('/contact-requests', protect, requireAdmin, adminListContactRequests);
+router.patch('/contact-requests/:id_request', protect, requireAdmin, adminPatchContactRequest);
 
 export default router;

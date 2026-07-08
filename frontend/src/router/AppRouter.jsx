@@ -14,6 +14,7 @@ import AdminCommentsPage from '../components/admin/AdminCommentsPage.jsx';
 import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
 import AdminTransactionsPage from '../components/admin/AdminTransactionsPage.jsx';
 import AdminMessagesPage from '../components/admin/AdminMessagesPage.jsx';
+import AdminContactPage from '../components/admin/AdminContactPage.jsx';
 import AdminSpectateurLocatairePage from '../components/admin/AdminSpectateurLocatairePage.jsx';
 import AdminSpectateurProprietairePage from '../components/admin/AdminSpectateurProprietairePage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
@@ -126,6 +127,7 @@ function AppRouter({ location }) {
         <Route path="ports" element={<AdminPortsPage />} />
         <Route path="transactions" element={<AdminTransactionsPage />} />
         <Route path="messages" element={<AdminMessagesPage />} />
+        <Route path="contact" element={<AdminContactPage />} />
       </Route>
     </Routes>
   );
