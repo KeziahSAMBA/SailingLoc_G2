@@ -5,8 +5,8 @@ import bateauBg from '../assets/image/paysage/cote_azur.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
-import { MdPerson, MdLocationOn, MdPeople, MdCalendarToday } from 'react-icons/md';
-import { FaStar } from 'react-icons/fa';
+import { MdLocationOn, MdPeople, MdCalendarToday } from 'react-icons/md';
+import { FaCrown } from 'react-icons/fa';
 import ClientReviews from '../components/common/ClientReviews.jsx';
 import Carrousel from '../components/common/Carrousel.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
@@ -25,6 +25,7 @@ const toBoatCard = (boat) => ({
   image: boat.images[0]?.url ?? '',
   badge: null,
   rating: boat.avg_rating,
+  reviewCount: boat.review_count ?? 0,
   type: boat.type,
   name: boat.name,
   location: boat.port?.city ?? '',
@@ -111,11 +112,13 @@ function BoatListingCard({
   image,
   badge,
   rating,
+  reviewCount,
   type,
   name,
   location,
   capacity,
   skipper,
+  licenseRequired,
   price,
   availability,
   isFavorite,
@@ -128,9 +131,9 @@ function BoatListingCard({
     <article
       id={`boat-${id}`}
       onClick={() => onSelect?.(id)}
-      className={`relative rounded-3xl overflow-hidden border bg-white/20 backdrop-blur-2xl backdrop-saturate-150 hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-white/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] ${highlighted ? 'border-sky-400 ring-4 ring-sky-400/60' : 'border-white/50'}`}
+      className={`relative rounded-3xl overflow-hidden border hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-white/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] ${highlighted ? 'border-sky-400 ring-4 ring-sky-400/60' : 'border-white/50'}`}
     >
-      <div className="relative overflow-hidden" style={{ aspectRatio: '16/9' }}>
+      <div className="relative overflow-hidden" style={{ aspectRatio: '7/5' }}>
         <img
           src={image}
           alt={name}
@@ -140,79 +143,125 @@ function BoatListingCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
         {badge && (
           <div
-            className="absolute top-3 left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm border border-white/30"
+            className="absolute top-3 left-3 flex items-center gap-1 text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm border border-white/30"
             style={{
               backgroundColor: 'rgba(14,165,233,0.8)',
               boxShadow: '0 2px 8px rgba(14,165,233,0.5)',
             }}
           >
+            <FaCrown style={{ fontSize: '9px' }} />
             {badge === 'coup_de_coeur' ? t('category.badge.topPick') : badge}
           </div>
         )}
-        <div
-          className="absolute top-3 right-3 flex items-center gap-1 rounded-full px-2 py-1 backdrop-blur-lg backdrop-saturate-150 border border-white/50"
-          style={{
-            backgroundColor: 'rgba(255,255,255,0.3)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}
-        >
-          <FaStar className="text-amber-400" style={{ fontSize: '11px' }} />
-          <span className="text-xs font-semibold text-gray-800">{rating}</span>
-        </div>
+        <FavoriteButton
+          isFavorite={isFavorite}
+          onToggle={() => onToggleFavorite(id)}
+          size={26}
+          className="absolute top-3 right-3 z-10"
+        />
       </div>
 
       <div
-        className="relative px-4 pt-4 pb-1 bg-white/15 backdrop-blur-xl backdrop-saturate-150 border-t border-white/30"
-        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)' }}
+        className="relative p-3 border-t"
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.1)',
+          borderColor: 'rgba(255,255,255,0.3)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
       >
-        <p className="text-[10px] font-bold tracking-widest text-sky-600 uppercase mb-1">{type}</p>
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <h3 className="text-[15px] font-bold text-gray-900 leading-tight">{name}</h3>
-          <FavoriteButton isFavorite={isFavorite} onToggle={() => onToggleFavorite(id)} size={18} />
-        </div>
-        <p className="text-xs text-gray-600 flex items-center gap-1 mb-2">
-          <MdLocationOn className="text-sky-400 flex-shrink-0" />
-          {location}
-        </p>
-        <div className="flex items-center gap-3 text-xs text-gray-500 mb-2 pb-2 border-b border-white/40">
-          <span className="flex items-center gap-1">
-            <MdPeople className="text-sky-400" />
-            {t('category.card.persons', { count: capacity })}
-          </span>
-          {skipper && (
-            <span className="flex items-center gap-1">
-              <MdPerson className="text-sky-400" />
-              {t('category.card.skipperIncluded')}
+        {/* Nom + type */}
+        <div className="flex items-center justify-between gap-1 mb-2">
+          <div className="flex items-baseline gap-1 min-w-0">
+            <h3 className="text-[15px] font-bold text-white leading-tight truncate">{name}</h3>
+            <span className="text-white/50 flex-shrink-0">-</span>
+            <span className="text-[10px] font-bold tracking-widest text-sky-500 uppercase flex-shrink-0">
+              {type}
             </span>
+          </div>
+          <span className="text-xs font-semibold text-white flex-shrink-0">
+            {rating != null ? (
+              <>
+                <span className="text-amber-400">★</span> {rating}
+                {reviewCount > 0 && <span className="text-white/70"> ({reviewCount})</span>}
+              </>
+            ) : (
+              t('category.card.new')
+            )}
+          </span>
+        </div>
+
+        {/* Lieu + dates */}
+        <div className="flex items-center justify-between gap-1 mb-2 pb-2 border-b border-white/40">
+          <span className="text-xs text-white/80 flex items-center gap-1 min-w-0">
+            <MdLocationOn className="text-sky-500 flex-shrink-0" style={{ fontSize: '13px' }} />
+            <span className="truncate">{location}</span>
+          </span>
+          {availability?.length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap justify-end flex-shrink-0">
+              <MdCalendarToday
+                className="text-sky-500 flex-shrink-0"
+                style={{ fontSize: '12px' }}
+              />
+              {availability.map((period) => (
+                <span
+                  key={period}
+                  className="text-[10px] font-medium px-1 py-0.5 rounded-full backdrop-blur-md"
+                  style={{
+                    backgroundColor: 'rgba(14,165,233,0.15)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                  }}
+                >
+                  {period}
+                </span>
+              ))}
+            </div>
           )}
         </div>
-        {availability?.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap mb-3">
-            <MdCalendarToday className="text-sky-400 flex-shrink-0" style={{ fontSize: '12px' }} />
-            {availability.map((period) => (
-              <span
-                key={period}
-                className="text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-md"
-                style={{
-                  backgroundColor: 'rgba(14,165,233,0.15)',
-                  color: 'rgba(3,105,161,0.95)',
-                  border: '1px solid rgba(14,165,233,0.3)',
-                }}
-              >
-                {period}
-              </span>
-            ))}
+
+        {/* Personnes + badges skipper/permis */}
+        <div className="flex items-center justify-between gap-1 mb-2">
+          <span className="flex items-center gap-1 text-xs text-white/70 flex-shrink-0">
+            <MdPeople className="text-sky-500" style={{ fontSize: '14px' }} />
+            {t('category.card.persons', { count: capacity })}
+          </span>
+          <div className="flex items-center gap-1 flex-wrap justify-end">
+            <span
+              className="text-[9px] font-medium px-1 py-0.5 rounded-full backdrop-blur-md"
+              style={{
+                backgroundColor: 'rgba(14,165,233,0.15)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.3)',
+              }}
+            >
+              {skipper ? t('category.card.skipperIncluded') : t('category.card.skipperExcluded')}
+            </span>
+            <span
+              className="text-[9px] font-medium px-1 py-0.5 rounded-full backdrop-blur-md"
+              style={{
+                backgroundColor: 'rgba(14,165,233,0.15)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.3)',
+              }}
+            >
+              {licenseRequired
+                ? t('category.card.licenseRequired')
+                : t('category.card.noLicenseRequired')}
+            </span>
           </div>
-        )}
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-0.5">
-            <span className="text-xl font-bold text-gray-900">{price}€</span>
-            <span className="text-xs text-gray-500">{t('category.card.perDay')}</span>
+        </div>
+
+        {/* Prix + Réserver */}
+        <div className="flex items-center justify-between gap-1">
+          <div className="flex items-baseline gap-1">
+            <span className="text-[15px] font-bold text-white">{price} €</span>
+            <span className="text-xs text-white/70">{t('category.card.perDay')}</span>
           </div>
           <button
             type="button"
             onClick={(e) => e.stopPropagation()}
-            className="text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-all backdrop-blur-md border border-white/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(0,78,87,0.85)] hover:border-white/20"
+            className="text-white text-[11px] font-semibold px-2 py-1 rounded-full transition-all backdrop-blur-md border border-white/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(10,49,114,0.95)] hover:border-white/20"
           >
             {t('category.card.book')}
           </button>
@@ -470,13 +519,13 @@ function CategoryPage() {
           </section>
 
           {/* Section 2 — Listings + Carte 50/50 */}
-          <div id="resultats" className="flex items-start gap-6 px-28 py-6 scroll-mt-[120px]">
+          <div id="resultats" className="flex items-start gap-6 px-28 py-5 scroll-mt-[120px]">
             {/* Listings — 50% */}
-            <div className="w-1/2 flex flex-col gap-6 relative">
-              <div className="relative z-10 flex flex-col gap-6">
+            <div className="w-1/2 flex flex-col gap-5 relative">
+              <div className="relative z-10 flex flex-col gap-5">
                 <div className="flex items-end justify-between">
                   <div
-                    className="flex flex-col items-start gap-3 rounded-2xl border px-4 py-3"
+                    className="flex flex-col items-start gap-3 rounded-2xl border px-4 py-2.5"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.1)',
                       borderColor: 'rgba(255,255,255,0.2)',
@@ -602,5 +651,3 @@ function CategoryPage() {
 }
 
 export default CategoryPage;
-
-//TODO : Refonte affichage produit

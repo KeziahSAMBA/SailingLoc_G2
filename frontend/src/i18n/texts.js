@@ -187,8 +187,12 @@ export const TEXTS = {
     },
     card: {
       persons: { fr: '{{count}} Pers.', en: '{{count}} people' },
+      new: { fr: 'Nouveau', en: 'New' },
       skipperIncluded: { fr: 'Skipper inclus', en: 'Skipper included' },
-      perDay: { fr: '/jour', en: '/day' },
+      skipperExcluded: { fr: 'Sans skipper', en: 'No skipper' },
+      licenseRequired: { fr: 'Avec permis', en: 'License required' },
+      noLicenseRequired: { fr: 'Sans permis', en: 'No license' },
+      perDay: { fr: '/ jour', en: '/ day' },
       book: { fr: 'Réserver', en: 'Book' },
     },
     badge: {
@@ -242,9 +246,8 @@ export const TEXTS = {
   searchBar: {
     destination: { fr: 'Destination', en: 'Destination' },
     destinationPlaceholder: { fr: 'Lieu / Port de départ', en: 'Place / Departure port' },
-    arrival: { fr: 'Dates arrivée', en: 'Arrival date' },
-    departure: { fr: 'Dates retour', en: 'Return date' },
-    addDate: { fr: 'Ajouter une date', en: 'Add a date' },
+    dates: { fr: 'Dates', en: 'Dates' },
+    addDate: { fr: 'Ajouter des dates', en: 'Add dates' },
     datesAvailable: { fr: 'Dates disponibles', en: 'Available dates' },
     travelers: { fr: 'Voyageurs', en: 'Travelers' },
     travelersPlaceholder: { fr: 'Nombre de personnes', en: 'Number of people' },

@@ -57,12 +57,12 @@ function getDocTypesByRole(t) {
 
 function getStatus(t) {
   return {
-    pending: { label: t('documentsManager.status.pending'), cls: 'bg-amber-100 text-amber-800' },
+    pending: { label: t('documentsManager.status.pending'), cls: 'bg-amber-500/15 text-amber-300' },
     validated: {
       label: t('documentsManager.status.validated'),
-      cls: 'bg-emerald-100 text-emerald-800',
+      cls: 'bg-emerald-500/15 text-emerald-300',
     },
-    refused: { label: t('documentsManager.status.refused'), cls: 'bg-red-100 text-red-700' },
+    refused: { label: t('documentsManager.status.refused'), cls: 'bg-red-500/15 text-red-300' },
   };
 }
 
@@ -126,7 +126,7 @@ function DocumentRow({ config, docs, onChanged }) {
     ? hasDocs
       ? {
           label: t('documentsManager.filesCount', { count: docs.length }),
-          cls: 'bg-slate-100 text-slate-600',
+          cls: 'bg-slate-500/15 text-slate-300',
         }
       : null
     : hasDocs

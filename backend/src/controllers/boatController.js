@@ -39,7 +39,13 @@ function enrichWithRating(boats) {
       .filter((bk) => BLOCKING_BOOKING_STATUSES.includes(bk.status))
       .map((bk) => ({ start_date: bk.start_date, end_date: bk.end_date }));
     const { bookings, ...boat } = b;
-    return { ...boat, avg_rating: avg, booking_count, booked_ranges };
+    return {
+      ...boat,
+      avg_rating: avg,
+      review_count: allReviews.length,
+      booking_count,
+      booked_ranges,
+    };
   });
 }
 
