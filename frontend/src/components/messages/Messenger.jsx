@@ -244,7 +244,7 @@ function Messenger({ externalUser = null }) {
           l'autre) ; sur grand écran les deux sont côte à côte. */}
       <aside
         aria-label="Conversations"
-        className={`${listOpen ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex`}
+        className={`${listOpen ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex lg:h-[70vh] lg:max-h-[720px] lg:min-h-[420px]`}
       >
         <h2 className="border-b border-slate-800 px-4 py-3 text-sm font-semibold text-slate-200">
           Conversations
@@ -254,7 +254,7 @@ function Messenger({ externalUser = null }) {
         ) : conversations.length === 0 ? (
           <p className="px-4 py-6 text-sm text-slate-400">Aucune conversation pour le moment.</p>
         ) : (
-          <ul className="max-h-[60vh] divide-y divide-slate-800 overflow-y-auto lg:max-h-[430px]">
+          <ul className="max-h-[60vh] divide-y divide-slate-800 overflow-y-auto lg:max-h-none lg:flex-1">
             {conversations.map((c) => {
               const active = selected?.id_user === c.user.id_user;
               return (
@@ -308,7 +308,7 @@ function Messenger({ externalUser = null }) {
       {/* Fil ouvert */}
       <section
         aria-label="Fil de discussion"
-        className={`${listOpen ? 'hidden' : 'flex'} min-h-[480px] min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex`}
+        className={`${listOpen ? 'hidden' : 'flex'} h-[70vh] max-h-[720px] min-h-[420px] min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex`}
       >
         {!selected ? (
           <p className="m-auto px-6 text-center text-sm text-slate-400">

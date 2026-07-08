@@ -46,64 +46,82 @@ async function canMessage(sender, id_receiver) {
 }
 
 // Conversations de l'utilisateur : un interlocuteur par entrée, avec le
-// dernier message et le nombre de non-lus.
+// dernier message et le nombre de non-lus. Ce endpoint est pollé par le
+// front : une seule requête SQL (DISTINCT ON) ramène juste le nécessaire au
+// lieu de charger tout l'historique et de regrouper en JS.
+// Règles conservées : les messages supprimés « pour moi » sont ignorés, ceux
+// supprimés pour tout le monde restent listés (placeholder) mais ne comptent
+// pas dans les non-lus.
 export async function listConversations(id_user) {
-  const messages = await prisma.message.findMany({
-    // Exclut ce que j'ai supprimé « pour moi » ; les messages supprimés pour
-    // tout le monde restent listés (placeholder « Message supprimé »).
-    where: {
-      OR: [
-        { id_sender: id_user, sender_deleted_at: null },
-        { id_receiver: id_user, receiver_deleted_at: null },
-      ],
-    },
-    orderBy: { sent_at: 'desc' },
-    select: {
-      id_message: true,
-      id_sender: true,
-      id_receiver: true,
-      content: true,
-      sent_at: true,
-      is_read: true,
-      deleted_at: true,
-      sender: { select: { id_user: true, first_name: true, last_name: true, role: true } },
-      receiver: { select: { id_user: true, first_name: true, last_name: true, role: true } },
-    },
-  });
+  const rows = await prisma.$queryRaw`
+    WITH mine AS (
+      SELECT
+        CASE WHEN m.id_sender = ${id_user} THEN m.id_receiver ELSE m.id_sender END AS other_id,
+        m.content,
+        m.sent_at,
+        m.deleted_at,
+        (m.id_sender = ${id_user}) AS from_me
+      FROM message m
+      WHERE (m.id_sender = ${id_user} AND m.sender_deleted_at IS NULL)
+         OR (m.id_receiver = ${id_user} AND m.receiver_deleted_at IS NULL)
+    ),
+    last_msg AS (
+      SELECT DISTINCT ON (other_id) * FROM mine ORDER BY other_id, sent_at DESC
+    )
+    SELECT
+      l.other_id,
+      l.content,
+      l.sent_at,
+      l.deleted_at,
+      l.from_me,
+      u.first_name,
+      u.last_name,
+      u.role::text AS role,
+      (
+        SELECT COUNT(*)::int FROM message x
+        WHERE x.id_sender = l.other_id
+          AND x.id_receiver = ${id_user}
+          AND x.is_read = FALSE
+          AND x.deleted_at IS NULL
+          AND x.receiver_deleted_at IS NULL
+      ) AS unread
+    FROM last_msg l
+    JOIN "user" u ON u.id_user = l.other_id
+    ORDER BY l.sent_at DESC
+  `;
 
-  const byUser = new Map();
-  for (const m of messages) {
-    const other = m.id_sender === id_user ? m.receiver : m.sender;
-    let conv = byUser.get(other.id_user);
-    if (!conv) {
-      conv = {
-        user: publicUser(other),
-        last_message: {
-          content: m.deleted_at ? null : m.content,
-          deleted: Boolean(m.deleted_at),
-          sent_at: m.sent_at,
-          from_me: m.id_sender === id_user,
-        },
-        unread: 0,
-      };
-      byUser.set(other.id_user, conv);
-    }
-    if (m.id_receiver === id_user && !m.is_read && !m.deleted_at) conv.unread += 1;
-  }
-  return [...byUser.values()];
+  return rows.map((r) => ({
+    user: {
+      id_user: r.other_id,
+      first_name: r.first_name,
+      last_name: r.last_name,
+      role: r.role,
+    },
+    last_message: {
+      content: r.deleted_at ? null : r.content,
+      deleted: Boolean(r.deleted_at),
+      sent_at: r.sent_at,
+      from_me: r.from_me,
+    },
+    unread: r.unread,
+  }));
 }
 
 // Fil de discussion avec un interlocuteur (ordre chronologique) ; les messages
-// reçus sont marqués lus au passage.
+// reçus sont marqués lus au passage. Même règle d'accès que l'envoi
+// (canMessage) : sans lien avec cet utilisateur, on ne révèle ni son
+// existence ni ses informations (anti-énumération).
 export async function getThread(me, id_other) {
   const otherId = Number(id_other);
+  const notFound = () => Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
+  if (!Number.isInteger(otherId) || otherId === me.id_user) throw notFound();
+  if (!(await canMessage(me, otherId))) throw notFound();
+
   const other = await prisma.user.findUnique({
     where: { id_user: otherId },
     select: { id_user: true, first_name: true, last_name: true, role: true },
   });
-  if (!other) {
-    throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
-  }
+  if (!other) throw notFound();
 
   const messages = await prisma.message.findMany({
     // Les messages supprimés pour tout le monde restent dans le fil (bulle
@@ -127,7 +145,15 @@ export async function getThread(me, id_other) {
   });
 
   await prisma.message.updateMany({
-    where: { id_sender: otherId, id_receiver: me.id_user, is_read: false, deleted_at: null },
+    // Un message supprimé « pour moi » n'est pas affiché, donc pas lu : on ne
+    // fausse pas l'accusé de lecture côté expéditeur.
+    where: {
+      id_sender: otherId,
+      id_receiver: me.id_user,
+      is_read: false,
+      deleted_at: null,
+      receiver_deleted_at: null,
+    },
     // updated_at est réservé aux modifications de contenu (badge « modifié »).
     data: { is_read: true, read_at: new Date() },
   });

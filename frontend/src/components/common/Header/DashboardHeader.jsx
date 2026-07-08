@@ -51,7 +51,9 @@ function DashboardHeader({
         .catch(() => setUnread(0));
     refresh();
     window.addEventListener('sailingloc:messages-read', refresh);
-    const interval = setInterval(refresh, 15000);
+    // Quasi temps réel : un message entrant fait apparaître le badge en ~5 s,
+    // où qu'on soit dans le dashboard (même rythme que la messagerie).
+    const interval = setInterval(refresh, 5000);
     return () => {
       window.removeEventListener('sailingloc:messages-read', refresh);
       clearInterval(interval);
