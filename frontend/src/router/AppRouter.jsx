@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
 import ContactPage from '../pages/ContactPage.jsx';
+import NotFoundPage from '../pages/NotFoundPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminLayout from '../components/admin/AdminLayout.jsx';
@@ -129,6 +130,8 @@ function AppRouter({ location }) {
         <Route path="messages" element={<AdminMessagesPage />} />
         <Route path="contact" element={<AdminContactPage />} />
       </Route>
+      {/* Attrape-tout : toute route inconnue affiche la page 404. */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
