@@ -7,6 +7,8 @@ import {
   getUnreadCount,
   patchMessage,
   removeMessage,
+  postSupport,
+  postResolveSupport,
 } from '../controllers/messageController.js';
 
 const router = Router();
@@ -27,6 +29,10 @@ router.get(
   getThreadWith
 );
 router.post('/', protect, requireRole('locataire', 'proprietaire', 'admin'), postMessage);
+// Ouvre la conversation support (admin choisi côté serveur).
+router.post('/support', protect, requireRole('locataire', 'proprietaire'), postSupport);
+// L'admin clôt la demande support d'un utilisateur.
+router.post('/support/:id_user/resolve', protect, requireRole('admin'), postResolveSupport);
 router.patch(
   '/:id_message',
   protect,

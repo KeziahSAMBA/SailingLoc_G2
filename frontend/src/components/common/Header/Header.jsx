@@ -24,7 +24,7 @@ const CATEGORY_BURGER_ITEMS = [
 
 const NAV_LINKS = [
   ['Découvrir', '/categorie'],
-  ['Contact', '#contact'],
+  ['Contact', '/contact'],
   ['À propos', '/a-propos'],
 ];
 

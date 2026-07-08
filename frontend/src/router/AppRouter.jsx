@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
+import ContactPage from '../pages/ContactPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminLayout from '../components/admin/AdminLayout.jsx';
@@ -13,6 +14,7 @@ import AdminCommentsPage from '../components/admin/AdminCommentsPage.jsx';
 import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
 import AdminTransactionsPage from '../components/admin/AdminTransactionsPage.jsx';
 import AdminMessagesPage from '../components/admin/AdminMessagesPage.jsx';
+import AdminContactPage from '../components/admin/AdminContactPage.jsx';
 import AdminSpectateurLocatairePage from '../components/admin/AdminSpectateurLocatairePage.jsx';
 import AdminSpectateurProprietairePage from '../components/admin/AdminSpectateurProprietairePage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
@@ -45,6 +47,7 @@ function AppRouter({ location }) {
       <Route path="/login" element={<HomePage />} />
       <Route path="/register" element={<HomePage />} />
       <Route path="/categorie" element={<CategoryPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route
         path="/forgot-password"
@@ -124,6 +127,7 @@ function AppRouter({ location }) {
         <Route path="ports" element={<AdminPortsPage />} />
         <Route path="transactions" element={<AdminTransactionsPage />} />
         <Route path="messages" element={<AdminMessagesPage />} />
+        <Route path="contact" element={<AdminContactPage />} />
       </Route>
     </Routes>
   );

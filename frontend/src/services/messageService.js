@@ -29,3 +29,14 @@ export function updateMessage(idMessage, content) {
 export function deleteMessage(idMessage, scope) {
   return api.delete(`/messages/${idMessage}`, { params: { scope } });
 }
+
+// Ouvre la conversation support : le serveur choisit l'admin (au hasard au
+// premier contact, avec message d'accueil automatique).
+export function contactSupport() {
+  return api.post('/messages/support');
+}
+
+// L'admin marque la demande support d'un utilisateur comme traitée.
+export function resolveSupport(idUser) {
+  return api.post(`/messages/support/${idUser}/resolve`);
+}
