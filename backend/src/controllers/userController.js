@@ -1,4 +1,6 @@
 import {
+  updateAvatar,
+  removeAvatar,
   create,
   adminCreate,
   verifyEmail,
@@ -194,6 +196,25 @@ export async function confirmEmail(req, res) {
   try {
     await verifyEmail(req.params.token);
     res.json({ message: 'Email confirmé. Vous pouvez maintenant vous connecter.' });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function patchMyAvatar(req, res) {
+  try {
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const user = await updateAvatar(req.user.id_user, req.file, origin);
+    res.json({ user });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function deleteMyAvatar(req, res) {
+  try {
+    const user = await removeAvatar(req.user.id_user);
+    res.json({ user });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

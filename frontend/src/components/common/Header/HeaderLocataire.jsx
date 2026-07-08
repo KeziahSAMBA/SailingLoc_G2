@@ -27,7 +27,7 @@ function HeaderLocataire() {
 
   const centerNav = [
     { label: t('headerLocataire.center.discover'), to: '/categorie' },
-    { label: t('headerLocataire.center.contact'), anchor: 'contact' },
+    { label: t('headerLocataire.center.contact'), to: '/contact' },
     { label: t('headerLocataire.center.about'), to: '/a-propos' },
   ];
 
@@ -51,6 +51,7 @@ function HeaderLocataire() {
       rightVariant="stretch"
       rightHeightPercent="65%"
       showMessages
+      messagesTo="/locataire/messages"
     />
   );
 }

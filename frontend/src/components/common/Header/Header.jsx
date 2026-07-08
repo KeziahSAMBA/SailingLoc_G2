@@ -8,6 +8,7 @@ import HeaderLogo from './shared/HeaderLogo.jsx';
 import BurgerIcon from './shared/BurgerIcon.jsx';
 import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
+import { LANGUAGES } from './shared/languages.js';
 
 function getBurgerItems(t) {
   return [
@@ -150,15 +151,9 @@ function Header() {
       <div
         className="absolute inset-0 -z-10"
         style={{
-          backgroundColor: scrolled
-            ? 'rgba(10, 49, 114, 0.95)'
-            : onCategoriePage
-              ? 'rgba(0, 0, 0, 0.10)'
-              : 'rgba(255, 255, 255, 0.05)',
+          backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
           borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
           boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
-          backdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
-          WebkitBackdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
           transition: 'box-shadow 0.3s ease, background-color 0.3s ease',
         }}
       />
@@ -252,33 +247,25 @@ function Header() {
 
       {/* Droite — Langue + Connexion (33%) */}
       <div className="w-1/3 flex items-center justify-end gap-4 pr-4">
-        <div className="flex items-center gap-1">
-          {['fr', 'en'].map((l, i) => (
-            <span key={l} className="flex items-center gap-1">
-              {i === 1 && (
-                <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.9rem' }}>/</span>
-              )}
-              <button
-                onClick={() => i18n.changeLanguage(l)}
-                className="px-1 font-medium"
-                style={{
-                  color: '#fff',
-                  opacity: i18n.language === l ? 1 : 0.45,
-                  fontWeight: i18n.language === l ? 700 : 500,
-                  fontSize: scrolled ? '0.7rem' : '0.75rem',
-                  backgroundImage: 'linear-gradient(#fff, #fff)',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '0% 1px',
-                  backgroundPosition: '0 100%',
-                  paddingBottom: '2px',
-                  transition: 'font-size 0.3s ease, background-size 0.35s ease',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundSize = '100% 1px')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundSize = '0% 1px')}
-              >
-                {l.toUpperCase()}
-              </button>
-            </span>
+        <div className="flex items-center gap-2.5">
+          {LANGUAGES.map(({ code, Flag, label }) => (
+            <button
+              key={code}
+              onClick={() => i18n.changeLanguage(code)}
+              aria-label={label}
+              title={label}
+              className="rounded-[3px] overflow-hidden transition-transform hover:scale-110"
+              style={{
+                width: scrolled ? '20px' : '24px',
+                height: scrolled ? '14px' : '17px',
+                opacity: i18n.language === code ? 1 : 0.45,
+                boxShadow: '0 0 0 1px rgba(255,255,255,0.4)',
+                transition:
+                  'width 0.3s ease, height 0.3s ease, opacity 0.2s ease, transform 0.2s ease',
+              }}
+            >
+              <Flag className="w-full h-full block" />
+            </button>
           ))}
         </div>
 
@@ -303,7 +290,13 @@ function Header() {
                   type="button"
                   onClick={() => {
                     setUserMenuOpen(false);
-                    navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+                    navigate(
+                      user.role === 'admin'
+                        ? '/admin'
+                        : user.role === 'proprietaire'
+                          ? '/proprietaire'
+                          : '/locataire'
+                    );
                   }}
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
@@ -328,7 +321,13 @@ function Header() {
                   type="button"
                   onClick={() => {
                     setUserMenuOpen(false);
-                    navigate('/account');
+                    navigate(
+                      user.role === 'admin'
+                        ? '/admin'
+                        : user.role === 'proprietaire'
+                          ? '/proprietaire/compte'
+                          : '/locataire/compte'
+                    );
                   }}
                   className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >

@@ -119,21 +119,17 @@ function DateRangePicker({ start, end, onChangeStart, onChangeEnd, isDateAvailab
   const cells = buildMonthGrid(month);
   const canGoPrev = isBeforeDay(today, month) || month.getMonth() === today.getMonth();
 
+  const displayValue = startDate
+    ? `${dateFormatter.format(startDate)}${endDate ? ` - ${dateFormatter.format(endDate)}` : ''}`
+    : '';
+
   return (
     <div ref={containerRef} className="relative flex items-stretch">
       <DateField
-        label={t('searchBar.arrival')}
-        displayValue={startDate ? dateFormatter.format(startDate) : ''}
+        label={t('searchBar.dates')}
+        displayValue={displayValue}
         placeholder={t('searchBar.addDate')}
         onClick={() => openAt(startDate)}
-        light={light}
-      />
-      <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
-      <DateField
-        label={t('searchBar.departure')}
-        displayValue={endDate ? dateFormatter.format(endDate) : ''}
-        placeholder={t('searchBar.addDate')}
-        onClick={() => openAt(endDate || startDate)}
         light={light}
       />
 

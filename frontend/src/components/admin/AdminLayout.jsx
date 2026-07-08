@@ -11,6 +11,9 @@ const NAV = [
   { to: '/admin/bookings', label: 'Réservations' },
   { to: '/admin/ports', label: 'Ports' },
   { to: '/admin/transactions', label: 'Transaction' },
+  { to: '/admin/messages', label: 'Messagerie' },
+  { to: '/admin/contact', label: 'Demandes contact' },
+  { to: '/admin/compte', label: 'Compte' },
 ];
 
 function AdminLayout() {

@@ -95,3 +95,12 @@ export function listPayments(params) {
 export function getPaymentStats() {
   return api.get('/admin/payments/stats');
 }
+
+// Demandes du formulaire de contact public.
+export function listContactRequests(params) {
+  return api.get('/admin/contact-requests', { params });
+}
+
+export function setContactRequestStatus(id, status) {
+  return api.patch(`/admin/contact-requests/${id}`, { status });
+}

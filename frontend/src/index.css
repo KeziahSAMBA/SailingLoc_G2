@@ -36,3 +36,41 @@ input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
 }
+
+/* Transition du panneau d'auth lors du passage Connexion <-> Inscription. */
+@keyframes authSlideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes authSlideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.auth-panel-login {
+  animation: authSlideFromLeft 0.32s ease-out;
+}
+
+.auth-panel-register {
+  animation: authSlideFromRight 0.32s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-panel-login,
+  .auth-panel-register {
+    animation: none;
+  }
+}

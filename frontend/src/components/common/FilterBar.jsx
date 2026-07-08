@@ -78,6 +78,7 @@ function FilterRadio({ name, label, checked, onChange }) {
 
 function FilterBar({
   light = false,
+  compact = false,
   boatTypeFilters,
   onBoatTypeChange,
   licenseFilter,
@@ -174,10 +175,18 @@ function FilterBar({
       <div
         className={`flex items-center gap-3 px-4 py-2 rounded-full cursor-pointer select-none border transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         style={{
-          backgroundColor: light ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-          borderColor: light ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
+          backgroundColor: compact
+            ? 'rgba(0,0,0,0.45)'
+            : light
+              ? 'rgba(255,255,255,0.1)'
+              : 'rgba(0,0,0,0.05)',
+          borderColor: compact
+            ? 'rgba(255,255,255,0.15)'
+            : light
+              ? 'rgba(255,255,255,0.3)'
+              : 'rgba(0,0,0,0.1)',
+          backdropFilter: compact ? 'blur(5px)' : 'blur(40px)',
+          WebkitBackdropFilter: compact ? 'blur(14px)' : 'blur(40px)',
         }}
         onClick={() => setFilterOpen((v) => !v)}
       >

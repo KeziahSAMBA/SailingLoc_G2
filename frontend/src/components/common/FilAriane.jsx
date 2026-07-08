@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-function Breadcrumb({ light = false }) {
+function Breadcrumb({ light = false, compact = false }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const segments = pathname.split('/').filter(Boolean);
@@ -9,7 +9,13 @@ function Breadcrumb({ light = false }) {
 
   return (
     <nav
-      className={`flex items-center gap-2 py-1 px-4 rounded-full text-xs ${light ? 'text-white' : 'text-black'}`}
+      className={`inline-flex items-center gap-1.5 py-0.5 px-2 rounded-full text-xs border ${light ? 'text-white' : 'text-black'}`}
+      style={{
+        backgroundColor: compact ? 'transparent' : 'rgba(255,255,255,0.1)',
+        borderColor: compact ? 'transparent' : 'rgba(255,255,255,0.3)',
+        backdropFilter: compact ? 'none' : 'blur(40px)',
+        WebkitBackdropFilter: compact ? 'none' : 'blur(40px)',
+      }}
     >
       <Link
         to="/"
@@ -27,7 +33,10 @@ function Breadcrumb({ light = false }) {
           <span key={path} className="flex items-center gap-2">
             <span className={light ? 'text-white/60' : 'text-gray-900'}>/</span>
             {isLast ? (
-              <span className="font-semibold" style={{ color: 'rgba(14,165,233,0.95)' }}>
+              <span
+                className="font-semibold"
+                style={{ color: compact ? '#0A3172' : 'rgba(14,165,233,0.95)' }}
+              >
                 {label}
               </span>
             ) : (

@@ -32,7 +32,10 @@ const boatToSlide = (boat, t) => {
     dateStr,
     capacity: boat.capacity ?? null,
     price: boat.daily_price,
-    rating: boat.avg_rating != null ? `★ ${boat.avg_rating}` : t('carrousel.newRating'),
+    rating:
+      boat.avg_rating != null
+        ? `★ ${boat.avg_rating}${boat.review_count > 0 ? ` (${boat.review_count})` : ''}`
+        : t('carrousel.newRating'),
     img: boat.images?.[0]?.url ?? '',
     available: boat.is_published,
   };
@@ -125,6 +128,7 @@ const PortCarousel = memo(
                       <FavoriteButton
                         isFavorite={favoriteIds.has(slide.id)}
                         onToggle={() => onToggleFavorite(slide.id)}
+                        size={26}
                         className="absolute top-2 right-2 z-10"
                       />
                     </div>
@@ -255,6 +259,7 @@ const PortCarousel = memo(
                       <FavoriteButton
                         isFavorite={favoriteIds.has(slide.id)}
                         onToggle={() => onToggleFavorite(slide.id)}
+                        size={26}
                         className="absolute top-2 right-2 z-10"
                       />
                     </div>
@@ -384,6 +389,7 @@ const SlideItem = memo(function SlideItem({
         <FavoriteButton
           isFavorite={isFavorite}
           onToggle={() => onToggleFavorite(slide.id)}
+          size={26}
           className="absolute top-3 right-3 z-10"
         />
         <div
@@ -635,7 +641,10 @@ const Carrousel = ({ theme = 'dark' }) => {
           ? boat.description.slice(0, 55) + '…'
           : boat.description
         : null;
-      const ratingStr = boat.avg_rating != null ? `★ ${boat.avg_rating}` : t('carrousel.newRating');
+      const ratingStr =
+        boat.avg_rating != null
+          ? `★ ${boat.avg_rating}${boat.review_count > 0 ? ` (${boat.review_count})` : ''}`
+          : t('carrousel.newRating');
 
       return {
         id: boat.id_boat,

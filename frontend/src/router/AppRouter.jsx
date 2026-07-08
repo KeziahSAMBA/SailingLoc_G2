@@ -1,7 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
-import DashboardPage from '../pages/DashboardPage.jsx';
+import ContactPage from '../pages/ContactPage.jsx';
+import NotFoundPage from '../pages/NotFoundPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminLayout from '../components/admin/AdminLayout.jsx';
@@ -13,6 +14,9 @@ import AdminBookingsPage from '../components/admin/AdminBookingsPage.jsx';
 import AdminCommentsPage from '../components/admin/AdminCommentsPage.jsx';
 import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
 import AdminTransactionsPage from '../components/admin/AdminTransactionsPage.jsx';
+import AdminMessagesPage from '../components/admin/AdminMessagesPage.jsx';
+import AdminContactPage from '../components/admin/AdminContactPage.jsx';
+import AdminAccountPage from '../components/admin/AdminAccountPage.jsx';
 import AdminSpectateurLocatairePage from '../components/admin/AdminSpectateurLocatairePage.jsx';
 import AdminSpectateurProprietairePage from '../components/admin/AdminSpectateurProprietairePage.jsx';
 import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
@@ -22,9 +26,17 @@ import LocataireAccount from '../components/locataire/LocataireAccount.jsx';
 import LocataireDocuments from '../components/locataire/LocataireDocuments.jsx';
 import LocataireReservations from '../components/locataire/LocataireReservations.jsx';
 import LocataireFavorites from '../components/locataire/LocataireFavorites.jsx';
-import AccountPage from '../pages/AccountPage.jsx';
+import LocataireMessages from '../components/locataire/LocataireMessages.jsx';
+import ProprietaireLayout from '../components/proprietaire/ProprietaireLayout.jsx';
+import ProprietaireDashboard from '../components/proprietaire/ProprietaireDashboard.jsx';
+import ProprietaireAccount from '../components/proprietaire/ProprietaireAccount.jsx';
+import ProprietaireDocuments from '../components/proprietaire/ProprietaireDocuments.jsx';
+import ProprietaireReservations from '../components/proprietaire/ProprietaireReservations.jsx';
+import ProprietaireRevenus from '../components/proprietaire/ProprietaireRevenus.jsx';
+import ProprietaireBoats from '../components/proprietaire/ProprietaireBoats.jsx';
+import ProprietaireBoatForm from '../components/proprietaire/ProprietaireBoatForm.jsx';
+import ProprietaireMessages from '../components/proprietaire/ProprietaireMessages.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
-import MessagesPage from '../pages/MessagesPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import RequireRole from '../components/common/RequireRole.jsx';
@@ -37,6 +49,7 @@ function AppRouter({ location }) {
       <Route path="/login" element={<HomePage />} />
       <Route path="/register" element={<HomePage />} />
       <Route path="/categorie" element={<CategoryPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route
         path="/forgot-password"
@@ -52,22 +65,6 @@ function AppRouter({ location }) {
           <RequireGuest>
             <ResetPasswordPage />
           </RequireGuest>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <RequireRole>
-            <DashboardPage />
-          </RequireRole>
-        }
-      />
-      <Route
-        path="/account"
-        element={
-          <RequireRole>
-            <AccountPage />
-          </RequireRole>
         }
       />
       <Route
@@ -91,15 +88,26 @@ function AppRouter({ location }) {
         <Route path="documents" element={<LocataireDocuments />} />
         <Route path="reservations" element={<LocataireReservations />} />
         <Route path="favoris" element={<LocataireFavorites />} />
+        <Route path="messages" element={<LocataireMessages />} />
       </Route>
       <Route
-        path="/messages"
+        path="/proprietaire"
         element={
-          <RequireRole role={['locataire', 'proprietaire']}>
-            <MessagesPage />
+          <RequireRole role="proprietaire">
+            <ProprietaireLayout />
           </RequireRole>
         }
-      />
+      >
+        <Route index element={<ProprietaireDashboard />} />
+        <Route path="compte" element={<ProprietaireAccount />} />
+        <Route path="documents" element={<ProprietaireDocuments />} />
+        <Route path="reservations" element={<ProprietaireReservations />} />
+        <Route path="revenus" element={<ProprietaireRevenus />} />
+        <Route path="bateaux" element={<ProprietaireBoats />} />
+        <Route path="bateaux/nouveau" element={<ProprietaireBoatForm />} />
+        <Route path="bateaux/:id/modifier" element={<ProprietaireBoatForm />} />
+        <Route path="messages" element={<ProprietaireMessages />} />
+      </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route
         path="/admin"
@@ -120,7 +128,12 @@ function AppRouter({ location }) {
         <Route path="bookings" element={<AdminBookingsPage />} />
         <Route path="ports" element={<AdminPortsPage />} />
         <Route path="transactions" element={<AdminTransactionsPage />} />
+        <Route path="messages" element={<AdminMessagesPage />} />
+        <Route path="contact" element={<AdminContactPage />} />
+        <Route path="compte" element={<AdminAccountPage />} />
       </Route>
+      {/* Attrape-tout : toute route inconnue affiche la page 404. */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

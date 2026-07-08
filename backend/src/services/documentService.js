@@ -18,7 +18,8 @@ export const DOCUMENT_TYPES = {
   proprietaire: ['permis', 'assurance', 'cv_marin', 'acte_francisation'],
 };
 
-// Types pour lesquels l'utilisateur peut déposer PLUSIEURS fichiers (pas de remplacement).
+// Types pour lesquels l'utilisateur peut déposer PLUSIEURS fichiers (pas de
+// remplacement) : un par bateau.
 const MULTI_TYPES = ['acte_francisation'];
 
 // On n'expose jamais le chemin disque (file_url) : l'accès au fichier passe
@@ -30,6 +31,8 @@ function publicDocument(doc) {
     file_name: doc.file_name,
     status: doc.status,
     upload_date: doc.upload_date,
+    // Bateau auquel le document est rattaché (ex. acte de francisation) — null sinon.
+    id_boat: doc.id_boat ?? null,
   };
 }
 
@@ -151,6 +154,14 @@ export async function deleteMyDocument(id_user, id_document) {
   const doc = await findDocumentById(id);
   if (!doc || doc.id_user !== id_user) {
     throw Object.assign(new Error('Document introuvable.'), { status: 404 });
+  }
+  // Un document rattaché à une annonce (ex. acte de francisation) ne se
+  // supprime pas d'ici : il faut d'abord le remplacer depuis le bateau.
+  if (doc.id_boat) {
+    throw Object.assign(
+      new Error('Ce document est rattaché à une annonce : remplacez-le depuis le bateau concerné.'),
+      { status: 400 }
+    );
   }
   removeFileQuiet(doc.file_url);
   await deleteDocumentRepo(id);

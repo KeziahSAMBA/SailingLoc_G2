@@ -1,8 +1,9 @@
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiMail } from 'react-icons/fi';
 import { useAuth } from '../../../hooks/useAuth.jsx';
+import { getUnreadCount } from '../../../services/messageService.js';
 import { nameToAvatarUrl } from '../../../utils/avatar.js';
 import { useScrolled } from './shared/useScrolled.js';
 import { useClickOutside } from './shared/useClickOutside.js';
@@ -10,6 +11,7 @@ import HeaderLogo from './shared/HeaderLogo.jsx';
 import BurgerIcon from './shared/BurgerIcon.jsx';
 import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
+import { LANGUAGES } from './shared/languages.js';
 
 /**
  * Header shared by every authenticated role (admin, propriétaire, locataire).
@@ -27,6 +29,9 @@ function DashboardHeader({
   rightHeightPercent,
   rightPanelWidth = '260px',
   showMessages = false,
+  // Destination de l'icône messagerie (l'admin a sa page dédiée).
+  messagesTo = '/messages',
+  languageAsFlags = true,
 }) {
   const { t, i18n } = useTranslation();
   const scrolled = useScrolled();
@@ -38,6 +43,26 @@ function DashboardHeader({
   const location = useLocation();
   const onCategoriePage = location.pathname === '/categorie';
   const { user, logout } = useAuth();
+  // Badge de messages non lus sur l'icône messagerie : rafraîchi à chaque
+  // navigation ET en direct quand un fil est lu (événement émis par la
+  // messagerie, qui vit sur la même page).
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!showMessages || !user) return undefined;
+    const refresh = () =>
+      getUnreadCount()
+        .then((res) => setUnread(res.data.unread || 0))
+        .catch(() => setUnread(0));
+    refresh();
+    window.addEventListener('sailingloc:messages-read', refresh);
+    // Quasi temps réel : un message entrant fait apparaître le badge en ~5 s,
+    // où qu'on soit dans le dashboard (même rythme que la messagerie).
+    const interval = setInterval(refresh, 5000);
+    return () => {
+      window.removeEventListener('sailingloc:messages-read', refresh);
+      clearInterval(interval);
+    };
+  }, [showMessages, user, location.pathname]);
 
   const displayName = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') : '';
 
@@ -96,15 +121,9 @@ function DashboardHeader({
       <div
         className="absolute inset-0 -z-10"
         style={{
-          backgroundColor: scrolled
-            ? 'rgba(10, 49, 114, 0.95)'
-            : onCategoriePage
-              ? 'rgba(0, 0, 0, 0.10)'
-              : 'rgba(255, 255, 255, 0.05)',
+          backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
           borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
           boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
-          backdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
-          WebkitBackdropFilter: !scrolled && onCategoriePage ? 'blur(1px)' : undefined,
           transition: 'box-shadow 0.3s ease, background-color 0.3s ease',
         }}
       />
@@ -216,34 +235,54 @@ function DashboardHeader({
 
       {/* Droite — Langue + Icône utilisateur + Burger menu (33%) */}
       <div className="w-1/3 flex items-center justify-end gap-3 pr-4">
-        <div className="flex items-center gap-1">
-          {['fr', 'en'].map((l, i) => (
-            <span key={l} className="flex items-center gap-1">
-              {i === 1 && (
-                <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.9rem' }}>/</span>
-              )}
-              <button
-                onClick={() => i18n.changeLanguage(l)}
-                className="px-1 font-medium"
-                style={{
-                  color: '#fff',
-                  opacity: i18n.language === l ? 1 : 0.45,
-                  fontWeight: i18n.language === l ? 700 : 500,
-                  fontSize: scrolled ? '0.7rem' : '0.75rem',
-                  backgroundImage: 'linear-gradient(#fff, #fff)',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '0% 1px',
-                  backgroundPosition: '0 100%',
-                  paddingBottom: '2px',
-                  transition: 'font-size 0.3s ease, background-size 0.35s ease',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundSize = '100% 1px')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundSize = '0% 1px')}
-              >
-                {l.toUpperCase()}
-              </button>
-            </span>
-          ))}
+        <div className="flex items-center gap-2.5">
+          {languageAsFlags
+            ? LANGUAGES.map(({ code, Flag, label }) => (
+                <button
+                  key={code}
+                  onClick={() => i18n.changeLanguage(code)}
+                  aria-label={label}
+                  title={label}
+                  className="rounded-[3px] overflow-hidden transition-transform hover:scale-110"
+                  style={{
+                    width: scrolled ? '20px' : '24px',
+                    height: scrolled ? '14px' : '17px',
+                    opacity: i18n.language === code ? 1 : 0.45,
+                    boxShadow: '0 0 0 1px rgba(255,255,255,0.4)',
+                    transition:
+                      'width 0.3s ease, height 0.3s ease, opacity 0.2s ease, transform 0.2s ease',
+                  }}
+                >
+                  <Flag className="w-full h-full block" />
+                </button>
+              ))
+            : LANGUAGES.map(({ code }, i) => (
+                <span key={code} className="flex items-center gap-1">
+                  {i === 1 && (
+                    <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.9rem' }}>/</span>
+                  )}
+                  <button
+                    onClick={() => i18n.changeLanguage(code)}
+                    className="px-1 font-medium"
+                    style={{
+                      color: '#fff',
+                      opacity: i18n.language === code ? 1 : 0.45,
+                      fontWeight: i18n.language === code ? 700 : 500,
+                      fontSize: scrolled ? '0.7rem' : '0.75rem',
+                      backgroundImage: 'linear-gradient(#fff, #fff)',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '0% 1px',
+                      backgroundPosition: '0 100%',
+                      paddingBottom: '2px',
+                      transition: 'font-size 0.3s ease, background-size 0.35s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundSize = '100% 1px')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundSize = '0% 1px')}
+                  >
+                    {code.toUpperCase()}
+                  </button>
+                </span>
+              ))}
         </div>
 
         <a
@@ -301,18 +340,26 @@ function DashboardHeader({
 
         {showMessages && (
           <button
-            onClick={() => navigate('/messages')}
-            className="flex items-center justify-center flex-shrink-0"
+            onClick={() => navigate(messagesTo)}
+            className="relative rounded-full flex items-center justify-center flex-shrink-0"
             style={{
               width: scrolled ? '32px' : '40px',
               height: scrolled ? '32px' : '40px',
               transition: 'width 0.3s ease, height 0.3s ease, opacity 0.2s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.75')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
             aria-label={t('dashboardHeader.messagesAria')}
           >
             <FiMail size={scrolled ? 18 : 22} color="#fff" />
+            {unread > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#5AB4EC] px-1 text-[10px] font-bold text-slate-950"
+              >
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
           </button>
         )}
 

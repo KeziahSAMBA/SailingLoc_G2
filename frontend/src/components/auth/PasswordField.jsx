@@ -1,7 +1,17 @@
 import { useState } from 'react';
 
-const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 pr-11 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
+// Deux variantes : claire (formulaires d'auth sur carte blanche) et sombre
+// (formulaires des dashboards, ex. « Mon compte »).
+const INPUT_CLASSES = {
+  light:
+    'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 pr-11 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20',
+  dark: 'w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 pr-11 text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20',
+};
+
+const TOGGLE_CLASSES = {
+  light: 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
+  dark: 'text-slate-400 hover:bg-slate-800 hover:text-slate-200',
+};
 
 function EyeIcon() {
   return (
@@ -52,6 +62,7 @@ function PasswordField({
   required = false,
   ariaInvalid,
   ariaDescribedBy,
+  variant = 'light',
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -67,14 +78,14 @@ function PasswordField({
         aria-required={required || undefined}
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedBy}
-        className={inputClass}
+        className={INPUT_CLASSES[variant]}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
         aria-pressed={visible}
-        className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+        className={`absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-md transition ${TOGGLE_CLASSES[variant]}`}
       >
         {visible ? <EyeOffIcon /> : <EyeIcon />}
       </button>
