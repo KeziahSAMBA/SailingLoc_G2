@@ -679,6 +679,7 @@ export const TEXTS = {
       en: "You don't have any booking yet.",
     },
     emptyFiltered: { fr: 'Aucune réservation pour ce filtre.', en: 'No bookings for this filter.' },
+    viewProduct: { fr: 'Voir le produit', en: 'View product' },
   },
 
   dashboardPage: {

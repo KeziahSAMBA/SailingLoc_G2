@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth.jsx';
 import DocumentsManager from '../components/documents/DocumentsManager.jsx';
-import bateauBg from '../assets/image/image_bateau/bateau_searchbar.jpg';
+import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
 function MyDocumentsPage() {
   const { t } = useTranslation();

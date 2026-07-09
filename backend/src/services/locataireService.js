@@ -156,6 +156,7 @@ export async function listBookings(id_user) {
       cancellation_date: true,
       boat: {
         select: {
+          id_boat: true,
           name: true,
           type: true,
           port: { select: { name: true, city: true } },
@@ -177,6 +178,7 @@ export async function listBookings(id_user) {
     cancellation_date: b.cancellation_date,
     reviewed: b.reviews.length > 0,
     boat: {
+      id_boat: b.boat?.id_boat,
       name: b.boat?.name,
       type: b.boat?.type,
       port: b.boat?.port,

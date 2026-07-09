@@ -387,6 +387,7 @@ function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (!belowFoldReady || !stepsRef.current) return undefined;
     const observer = new window.IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -396,9 +397,9 @@ function HomePage() {
       },
       { threshold: 0.3 }
     );
-    if (stepsRef.current) observer.observe(stepsRef.current);
+    observer.observe(stepsRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [belowFoldReady]);
 
   return (
     <main className="w-full overflow-x-hidden">
@@ -532,7 +533,7 @@ function HomePage() {
 
           {/* Section 3 — Tuto */}
           <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
-            <div className="w-full flex flex-col items-center rounded-2xl border border-black/15 shadow-[0_8px_48px_rgba(0,0,0,0.18)] px-16 py-10">
+            <div className="w-full flex flex-col items-center px-16 py-10">
               <div className="text-center mb-10">
                 <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
                   {t('home.steps.kicker')}
