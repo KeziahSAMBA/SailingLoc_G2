@@ -16,11 +16,11 @@ const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
+  'w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
 const readonlyClass =
-  'w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-500 cursor-not-allowed';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
-const errorClass = 'mt-1 block text-xs text-red-600';
+  'w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-slate-500 cursor-not-allowed';
+const labelClass = 'mb-1.5 block text-sm font-medium text-slate-300';
+const errorClass = 'mt-1 block text-xs text-red-400';
 
 const EMPTY_PASSWORD_FORM = {
   currentPassword: '',
@@ -199,8 +199,8 @@ function AccountForm() {
   return (
     <>
       {/* Informations personnelles */}
-      <article className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-        <h2 className="mb-5 text-lg font-semibold text-slate-900">
+      <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 shadow-xl">
+        <h2 className="mb-5 text-lg font-semibold text-white">
           {t('accountForm.personalInfo.title')}
         </h2>
 
@@ -243,7 +243,7 @@ function AccountForm() {
         {serverError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
           >
             {serverError}
           </div>
@@ -329,7 +329,7 @@ function AccountForm() {
               type="button"
               onClick={handleCancel}
               disabled={!dirty || saving}
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('accountForm.personalInfo.cancel')}
             </button>
@@ -345,16 +345,14 @@ function AccountForm() {
       </article>
 
       {/* Mot de passe */}
-      <article className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-        <h2 className="mb-1 text-lg font-semibold text-slate-900">
-          {t('accountForm.password.title')}
-        </h2>
-        <p className="mb-5 text-sm text-slate-500">{t('accountForm.password.subtitle')}</p>
+      <article className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-8 shadow-xl">
+        <h2 className="mb-1 text-lg font-semibold text-white">{t('accountForm.password.title')}</h2>
+        <p className="mb-5 text-sm text-slate-400">{t('accountForm.password.subtitle')}</p>
 
         {pwdServerError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
           >
             {pwdServerError}
           </div>
@@ -366,6 +364,7 @@ function AccountForm() {
               {t('accountForm.password.current')}
             </label>
             <PasswordField
+              variant="dark"
               id="currentPassword"
               name="currentPassword"
               value={pwdForm.currentPassword}
@@ -383,6 +382,7 @@ function AccountForm() {
               {t('accountForm.password.new')}
             </label>
             <PasswordField
+              variant="dark"
               id="newPassword"
               name="newPassword"
               value={pwdForm.newPassword}
@@ -402,6 +402,7 @@ function AccountForm() {
               {t('accountForm.password.confirm')}
             </label>
             <PasswordField
+              variant="dark"
               id="confirmPassword"
               name="confirmPassword"
               value={pwdForm.confirmPassword}

@@ -31,7 +31,7 @@ function getCategoryBurgerItems(t) {
 function getNavLinks(t) {
   return [
     [t('header.nav.discover'), '/categorie'],
-    [t('header.nav.contact'), '#contact'],
+    [t('header.nav.contact'), '/contact'],
     [t('header.nav.about'), '/a-propos'],
   ];
 }
@@ -206,17 +206,12 @@ function Header() {
               <a
                 href={href}
                 onClick={
-                  href === '#contact'
+                  href === '/categorie' && location.pathname === '/categorie'
                     ? (e) => {
                         e.preventDefault();
-                        scrollToAnchor('contact', location.pathname);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }
-                    : href === '/categorie' && location.pathname === '/categorie'
-                      ? (e) => {
-                          e.preventDefault();
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                      : undefined
+                    : undefined
                 }
                 className="font-medium"
                 style={{
