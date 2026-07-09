@@ -139,6 +139,13 @@ function ConfidentialitePage() {
           échanges (HTTPS en production), accès aux justificatifs restreint à l’équipe de
           vérification.
         </p>
+        <p>
+          <strong>Chiffrement des données sensibles</strong> : les documents justificatifs (permis,
+          pièces d’identité, attestations) sont stockés de manière chiffrée sur nos serveurs ; les
+          données bancaires sont traitées exclusivement par notre prestataire Stripe, certifié
+          PCI-DSS, et chiffrées de bout en bout — elles ne transitent ni ne sont stockées en clair
+          chez SailingLoc.
+        </p>
       </LegalSection>
 
       <LegalSection title="8. Vos droits">
@@ -150,6 +157,23 @@ function ConfidentialitePage() {
             dpo@sailingloc.fr
           </a>{' '}
           — réponse sous 30 jours.
+        </p>
+        <p>
+          <strong>Droit à l’effacement (art. 17 RGPD)</strong> : vous pouvez demander la suppression
+          de votre compte et de vos données personnelles. Vos informations d’identification (nom,
+          email, téléphone, photo, justificatifs) sont alors effacées ou anonymisées sous 30 jours.
+          Certaines données sont conservées au-delà lorsque la loi l’impose (pièces comptables : 10
+          ans) ; elles sont alors dissociées de votre identité.
+        </p>
+        <p>
+          <strong>Droit à la portabilité (art. 20 RGPD)</strong> : vous pouvez obtenir une copie des
+          données que vous nous avez fournies (profil, annonces, réservations, avis, messages) dans
+          un format structuré et lisible par machine (JSON), afin de les réutiliser ou de les
+          transmettre à un autre service. La demande s’effectue auprès de{' '}
+          <a href="mailto:dpo@sailingloc.fr" className="text-sky-700 hover:underline">
+            dpo@sailingloc.fr
+          </a>
+          .
         </p>
         <p>
           Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation
