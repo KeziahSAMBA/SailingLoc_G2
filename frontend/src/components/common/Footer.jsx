@@ -1,4 +1,8 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../hooks/useAuth.jsx';
+import { contactSupport } from '../../services/messageService.js';
 import logoLong from '../../assets/image/SL_logo/logo SL long.webp';
 import bgImage from '../../assets/image/image_bateau/bateau_searchbar.webp';
 import {
@@ -71,8 +75,30 @@ const appBtnStyle = {
 
 const Footer = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [chatBusy, setChatBusy] = useState(false);
   const helpLinks = getHelpLinks(t);
   const infoLinks = getInfoLinks(t);
+
+  const messagesPath =
+    user?.role === 'proprietaire' ? '/proprietaire/messages' : '/locataire/messages';
+
+  // Le chat = la messagerie interne, comme sur la page Contact. Pour un
+  // utilisateur connecté, le serveur ouvre la conversation support puis on
+  // arrive directement sur le fil ; sinon on redirige vers la connexion.
+  async function openSupportChat() {
+    if (chatBusy) return;
+    setChatBusy(true);
+    try {
+      const res = await contactSupport();
+      navigate(messagesPath, { state: { openUser: res.data.admin } });
+    } catch {
+      navigate(messagesPath);
+    } finally {
+      setChatBusy(false);
+    }
+  }
 
   return (
     <footer
@@ -153,9 +179,20 @@ const Footer = () => {
           </li>
           <li className="flex items-center gap-2">
             <FaComments className="text-blue-400" />
-            <a href="#" className="hover:text-white transition-colors">
-              {t('footer.chat')}
-            </a>
+            {user ? (
+              <button
+                type="button"
+                onClick={openSupportChat}
+                disabled={chatBusy}
+                className="hover:text-white transition-colors disabled:opacity-60"
+              >
+                {chatBusy ? 'Ouverture…' : t('footer.chat')}
+              </button>
+            ) : (
+              <Link to="/login" className="hover:text-white transition-colors">
+                {t('footer.chat')}
+              </Link>
+            )}
           </li>
         </ul>
 
