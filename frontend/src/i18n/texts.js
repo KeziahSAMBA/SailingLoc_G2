@@ -327,6 +327,61 @@ export const TEXTS = {
       privacy: { fr: 'Politique de confidentialité', en: 'Privacy policy' },
       terms: { fr: "Conditions générales d'utilisation", en: 'Terms of service' },
     },
+    manageCookies: { fr: 'Gérer les cookies', en: 'Manage cookies' },
+  },
+
+  cookieConsent: {
+    banner: {
+      title: { fr: 'Cookies & confidentialité', en: 'Cookies & privacy' },
+      body: {
+        fr: 'SailingLoc (via son outil de mesure Matomo, hébergé par nos soins) et ses partenaires (régies publicitaires, réseaux sociaux) souhaitent déposer des cookies pour mesurer l’audience, personnaliser les contenus et afficher des publicités ciblées. Vous pouvez accepter, refuser, ou choisir finalité par finalité. Sans action de votre part, aucun de ces cookies ne sera déposé.',
+        en: 'SailingLoc (via its self-hosted Matomo analytics tool) and its partners (advertising networks, social media) would like to set cookies to measure audience, personalise content and display targeted ads. You can accept, refuse, or choose purpose by purpose. Until you act, none of these cookies will be set.',
+      },
+      acceptAll: { fr: 'Tout accepter', en: 'Accept all' },
+      refuseAll: { fr: 'Tout refuser', en: 'Refuse all' },
+      customize: { fr: 'Personnaliser mes choix', en: 'Customise my choices' },
+    },
+    prefs: {
+      title: { fr: 'Paramétrer les cookies', en: 'Cookie settings' },
+      intro: {
+        fr: 'Choisissez, pour chaque finalité, si SailingLoc et les partenaires indiqués peuvent déposer des cookies. Votre choix est conservé 6 mois, puis nous vous le redemanderons. Vous pouvez le modifier à tout moment via « Gérer les cookies » en bas de page.',
+        en: 'Choose, for each purpose, whether SailingLoc and the listed partners may set cookies. Your choice is kept for 6 months, after which we will ask again. You can change it at any time via “Manage cookies” at the bottom of the page.',
+      },
+      essentialTitle: {
+        fr: 'Cookies essentiels — toujours actifs',
+        en: 'Essential cookies — always on',
+      },
+      essentialDesc: {
+        fr: 'Déposés par SailingLoc uniquement, indispensables au fonctionnement du site et exemptés de consentement : session de connexion, panier de réservation, préférence de langue, mémorisation de vos choix de consentement, sécurité (anti-fraude, répartition de charge).',
+        en: 'Set by SailingLoc only, required for the site to work and exempt from consent: login session, booking cart, language preference, storage of your consent choices, security (anti-fraud, load balancing).',
+      },
+      purposes: {
+        analytics: {
+          name: { fr: 'Mesure d’audience', en: 'Analytics' },
+          desc: {
+            fr: 'Déposés par Matomo, notre outil de mesure hébergé par SailingLoc — aucune donnée n’est transmise à des tiers. Sert à comprendre comment le site est utilisé (pages visitées, provenance) pour améliorer nos services. Cookies conservés 13 mois, données 25 mois au maximum.',
+            en: 'Set by Matomo, our analytics tool hosted by SailingLoc — no data is shared with third parties. Used to understand how the site is used (pages visited, traffic sources) to improve our services. Cookies kept 13 months, data 25 months at most.',
+          },
+        },
+        ads: {
+          name: { fr: 'Publicité & réseaux sociaux', en: 'Advertising & social media' },
+          desc: {
+            fr: 'Déposés par nos régies publicitaires et les réseaux sociaux (Meta, X) pour vous proposer des publicités ciblées et permettre le partage de contenus.',
+            en: 'Set by our advertising partners and social networks (Meta, X) to show you targeted ads and enable content sharing.',
+          },
+        },
+        personalization: {
+          name: { fr: 'Personnalisation du contenu', en: 'Content personalisation' },
+          desc: {
+            fr: 'Déposés par SailingLoc pour adapter les suggestions de bateaux et de destinations à votre navigation.',
+            en: 'Set by SailingLoc to tailor boat and destination suggestions to your browsing.',
+          },
+        },
+      },
+      toggleAria: { fr: 'Activer la finalité {{name}}', en: 'Enable purpose {{name}}' },
+      save: { fr: 'Enregistrer mes choix', en: 'Save my choices' },
+      close: { fr: 'Fermer', en: 'Close' },
+    },
   },
 
   carrousel: {

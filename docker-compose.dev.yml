@@ -77,6 +77,8 @@ services:
       - '5173:5173'
     environment:
       VITE_API_BASE_URL: http://localhost:4000/api
+      # URL publique de Matomo vue par le navigateur (en prod : https://analytics.<domaine>)
+      VITE_MATOMO_URL: http://localhost:8081
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -85,6 +87,44 @@ services:
     networks:
       - sailingloc_network
     command: npm run dev -- --host 0.0.0.0
+
+  # Matomo — mesure d'audience self-hosted (dashboard : http://localhost:8081).
+  # Le script de tracking n'est chargé par le frontend qu'avec le consentement
+  # « mesure d'audience » (voir frontend/src/utils/matomo.js).
+  matomo:
+    image: matomo:latest
+    container_name: sailingloc_matomo_dev
+    restart: unless-stopped
+    environment:
+      MATOMO_DATABASE_HOST: matomo_db
+      MATOMO_DATABASE_DBNAME: ${MATOMO_DB_NAME}
+      MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USER}
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD}
+    ports:
+      - '8081:80'
+    volumes:
+      - matomo_data:/var/www/html
+    depends_on:
+      - matomo_db
+    networks:
+      - sailingloc_network
+
+  # MariaDB dédiée à Matomo (Matomo ne supporte pas PostgreSQL) — isolée de la
+  # base métier, port non publié : accessible uniquement depuis le réseau Docker.
+  matomo_db:
+    image: mariadb:11
+    container_name: sailingloc_matomo_db_dev
+    restart: unless-stopped
+    command: --max-allowed-packet=64MB
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MATOMO_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MATOMO_DB_NAME}
+      MYSQL_USER: ${MATOMO_DB_USER}
+      MYSQL_PASSWORD: ${MATOMO_DB_PASSWORD}
+    volumes:
+      - matomo_db_data:/var/lib/mysql
+    networks:
+      - sailingloc_network
 
   # pgAdmin - PostgreSQL Web Interface
   pgadmin:
@@ -110,6 +150,8 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
+  matomo_data:
+  matomo_db_data:
 
 networks:
   sailingloc_network:

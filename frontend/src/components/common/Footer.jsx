@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { useCookieConsent } from '../../hooks/useCookieConsent.jsx';
 import { contactSupport } from '../../services/messageService.js';
 import logoLong from '../../assets/image/SL_logo/logo SL long.webp';
 import bgImage from '../../assets/image/image_bateau/bateau_searchbar.webp';
@@ -76,6 +77,7 @@ const appBtnStyle = {
 const Footer = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { openPreferences } = useCookieConsent();
   const navigate = useNavigate();
   const [chatBusy, setChatBusy] = useState(false);
   const helpLinks = getHelpLinks(t);
@@ -225,6 +227,17 @@ const Footer = () => {
               </a>
             </li>
           ))}
+          {/* Point d'accès permanent au paramétrage des cookies (CNIL : le
+              retrait du consentement doit rester aussi simple que le dépôt). */}
+          <li>
+            <button
+              type="button"
+              onClick={openPreferences}
+              className="hover:text-white transition-colors"
+            >
+              {t('footer.manageCookies')}
+            </button>
+          </li>
         </ul>
       </div>
 

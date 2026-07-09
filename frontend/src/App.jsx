@@ -9,6 +9,9 @@ import HeaderProprio from './components/common/Header/HeaderProprio.jsx';
 import HeaderLocataire from './components/common/Header/HeaderLocataire.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import Footer from './components/common/Footer.jsx';
+import CookieConsentBanner from './components/common/CookieConsentBanner.jsx';
+import MatomoTracker from './components/common/MatomoTracker.jsx';
+import { CookieConsentProvider } from './context/CookieConsentContext.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -76,6 +79,8 @@ function AppContent() {
       </div>
       {showAuthModal && <AuthModal activeTab={activeAuthTab} onClose={closeAuthModal} />}
       <Footer />
+      <CookieConsentBanner />
+      <MatomoTracker />
     </>
   );
 }
@@ -83,7 +88,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <CookieConsentProvider>
+        <AppContent />
+      </CookieConsentProvider>
     </AuthProvider>
   );
 }
