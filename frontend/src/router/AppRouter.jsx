@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
+import ProductPage from '../pages/ProductPage.jsx';
 import ContactPage from '../pages/ContactPage.jsx';
 import AboutPage from '../pages/AboutPage.jsx';
 import MentionsLegalesPage from '../pages/legal/MentionsLegalesPage.jsx';
@@ -54,6 +55,8 @@ function AppRouter({ location }) {
       <Route path="/login" element={<HomePage />} />
       <Route path="/register" element={<HomePage />} />
       <Route path="/categorie" element={<CategoryPage />} />
+      <Route path="/product" element={<ProductPage />} />
+      <Route path="/product/:id" element={<ProductPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/a-propos" element={<AboutPage />} />
       <Route path="/mentions-legales" element={<MentionsLegalesPage />} />

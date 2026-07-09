@@ -11,7 +11,7 @@ import {
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchBoats } from '../../services/boatService';
 import { fetchPorts } from '../../services/portService';
 import { useFavorites } from '../../hooks/useFavorites.js';
@@ -385,6 +385,7 @@ const SlideItem = memo(function SlideItem({
   priority,
   isFavorite,
   onToggleFavorite,
+  onSlideClick,
 }) {
   const range = [
     -(index + 1) * trackItemOffset,
@@ -395,10 +396,11 @@ const SlideItem = memo(function SlideItem({
 
   return (
     <motion.div
-      className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20"
+      className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20 cursor-pointer"
       style={{ width: itemWidth, height: 220, rotateY, willChange: 'transform' }}
+      onClick={() => onSlideClick?.(slide)}
     >
-      <div className="block w-full h-full cursor-pointer">
+      <div className="block w-full h-full">
         <img
           src={slide.img}
           alt={slide.label}
@@ -450,6 +452,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
   theme = 'dark',
   favoriteIds,
   onToggleFavorite,
+  onSlideClick,
 }) {
   const { t } = useTranslation();
   const outerRef = useRef(null);
@@ -594,6 +597,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
                 priority={index === initialSlide}
                 isFavorite={favoriteIds.has(slide.id)}
                 onToggleFavorite={onToggleFavorite}
+                onSlideClick={onSlideClick}
               />
             ))}
           </motion.div>
@@ -628,10 +632,19 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 
 const Carrousel = ({ theme = 'dark' }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const goToCategory = useCategoryNavigate();
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
   const { favoriteIds, toggleFavorite } = useFavorites();
+
+  const handleBoatClick = useCallback(
+    (slide) => {
+      if (!slide.available) return;
+      navigate(`/product/${slide.id}`);
+    },
+    [navigate]
+  );
 
   // Un port "bientôt disponible" n'a aucun bateau : cliquer dessus n'amènerait
   // qu'une page catégorie vide, donc on ignore le clic dans ce cas.
@@ -684,6 +697,7 @@ const Carrousel = ({ theme = 'dark' }) => {
           .join(' · '),
         description: [shortDesc, ratingStr].filter(Boolean).join(' · '),
         img: boat.images?.[0]?.url ?? '',
+        available: boat.is_published !== false,
       };
     };
 
@@ -808,6 +822,7 @@ const Carrousel = ({ theme = 'dark' }) => {
                 theme={theme}
                 favoriteIds={favoriteIds}
                 onToggleFavorite={toggleFavorite}
+                onSlideClick={handleBoatClick}
               />
             ))}
         </div>
@@ -825,7 +840,7 @@ const Carrousel = ({ theme = 'dark' }) => {
             variant={variant}
             favoriteIds={favoriteIds}
             onToggleFavorite={toggleFavorite}
-            onSlideClick={variant === 'port' ? handlePortClick : undefined}
+            onSlideClick={variant === 'port' ? handlePortClick : handleBoatClick}
           />
         ))}
     </div>

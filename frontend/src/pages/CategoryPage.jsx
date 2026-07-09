@@ -408,7 +408,7 @@ function CategoryPage() {
   const [visibleCount, setVisibleCount] = useState(8);
   const [mapBounds, setMapBounds] = useState(null);
   const [highlightedBoatId, setHighlightedBoatId] = useState(null);
-  const [focusBoat, setFocusBoat] = useState(null);
+  const [focusBoat] = useState(null);
   const { favoriteIds, toggleFavorite } = useFavorites();
 
   const [boatTypeFilters, setBoatTypeFilters] = useState(EMPTY_BOAT_TYPE_FILTERS);
@@ -676,18 +676,13 @@ function CategoryPage() {
     setHighlightedBoatId(boat.id);
   }
 
-  // Clic sur une fiche produit : zoome la carte sur le pin bateau correspondant.
-  // Callback stable (réf "dernière valeur") : les fiches sont mémoïsées, une
-  // nouvelle fonction à chaque rendu annulerait tout le bénéfice du memo.
-  const boatMapMarkersRef = useRef(boatMapMarkers);
-  useEffect(() => {
-    boatMapMarkersRef.current = boatMapMarkers;
-  });
-  const handleBoatCardClick = useCallback((boatId) => {
-    const boatMarker = boatMapMarkersRef.current.find((b) => b.id === boatId);
-    if (!boatMarker) return;
-    setFocusBoat({ lat: boatMarker.lat, lng: boatMarker.lng });
-  }, []);
+  // Clic sur une fiche produit : ouvre la page produit correspondante.
+  const handleBoatCardClick = useCallback(
+    (boatId) => {
+      navigate(`/product/${boatId}`);
+    },
+    [navigate]
+  );
 
   useEffect(() => {
     if (highlightedBoatId == null) return undefined;
