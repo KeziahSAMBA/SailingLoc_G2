@@ -13,6 +13,7 @@ import ClientReviews from '../components/common/ClientReviews.jsx';
 import GhostButton from '../components/common/GhostButton.jsx';
 import {
   onCategoryTransitionRequest,
+  onProductTransitionRequest,
   setTransitionPayload,
   readTransitionPayload,
   clearTransitionPayload,
@@ -274,36 +275,43 @@ function HomePage() {
   const STEPS = useMemo(() => getSteps(t), [t]);
   const VALUE_CARDS = useMemo(() => getValueCards(t), [t]);
 
-  // Séquence de transition vers /categorie : remontée en haut de page, sortie
-  // des éléments du hero (la SearchBar, elle, est mesurée pour l'animation FLIP
-  // jouée à l'arrivée sur CategoryPage), puis navigation réelle.
+  // Séquence de transition vers /categorie ou /product/:id — les deux pages
+  // partagent le même fond fixe, la même sortie (crossfade compris) sert donc
+  // aux deux destinations : remontée en haut de page, sortie des éléments du
+  // hero (la SearchBar, elle, est mesurée pour l'animation FLIP jouée à
+  // l'arrivée), puis navigation réelle.
   useEffect(() => {
     let cancelled = false;
     let navTimer = null;
-    const unsubscribe = onCategoryTransitionRequest(async ({ to }) => {
-      if (transitioningRef.current) return;
-      transitioningRef.current = true;
-      // Défilement gelé jusqu'à la fin de l'arrivée sur /categorie, qui
-      // déverrouille (les sections différées y sont alors montées).
-      lockScroll();
-      // Précharge ET décode le fond de /categorie pendant la remontée : le
-      // décodage du JPEG (~3 Mo) au moment du premier paint ferait saccader
-      // le début du crossfade.
-      const bg = new window.Image();
-      bg.src = categoryBg;
-      bg.decode?.().catch(() => {});
-      await smoothScrollToTop();
-      if (cancelled) return;
-      setExitingToCategory(true);
-      setTransitionPayload('category', {
-        searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
-      });
-      navTimer = setTimeout(() => navigate(to), HERO_EXIT_DURATION);
-    });
+    const beginExit =
+      (target) =>
+      async ({ to }) => {
+        if (transitioningRef.current) return;
+        transitioningRef.current = true;
+        // Défilement gelé jusqu'à la fin de l'arrivée sur la page cible, qui
+        // déverrouille (les sections différées y sont alors montées).
+        lockScroll();
+        // Précharge ET décode le fond de la page cible pendant la remontée : le
+        // décodage du JPEG (~3 Mo) au moment du premier paint ferait saccader
+        // le début du crossfade.
+        const bg = new window.Image();
+        bg.src = categoryBg;
+        bg.decode?.().catch(() => {});
+        await smoothScrollToTop();
+        if (cancelled) return;
+        setExitingToCategory(true);
+        setTransitionPayload(target, {
+          searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
+        });
+        navTimer = setTimeout(() => navigate(to), HERO_EXIT_DURATION);
+      };
+    const unsubCategory = onCategoryTransitionRequest(beginExit('category'));
+    const unsubProduct = onProductTransitionRequest(beginExit('product'));
     return () => {
       cancelled = true;
       clearTimeout(navTimer);
-      unsubscribe();
+      unsubCategory();
+      unsubProduct();
     };
   }, [navigate]);
 

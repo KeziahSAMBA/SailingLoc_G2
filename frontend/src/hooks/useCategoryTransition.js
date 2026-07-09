@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-// Transitions orchestrées entre HomePage et CategoryPage, dans les deux sens.
-// Tous les liens vers /categorie passent par useCategoryNavigate(), ceux vers
-// l'accueil par useHomeNavigate() : depuis la page opposée, le hook délègue à
-// la page courante (via un événement) qui remonte en haut, joue sa sortie et
-// le crossfade avant de naviguer réellement ; sinon navigation directe (idem
-// si l'utilisateur préfère réduire les animations). Le payload module-level
-// transmet la position de la SearchBar à la page d'arrivée pour l'animation
-// FLIP (un état React ne survivrait pas au démontage de la page de départ) ;
-// `target` identifie la page destinataire.
+// Transitions orchestrées entre HomePage, CategoryPage et ProductPage, dans
+// tous les sens. Tous les liens vers /categorie passent par
+// useCategoryNavigate(), ceux vers l'accueil par useHomeNavigate(), ceux vers
+// /product/:id par useProductNavigate() : depuis une page animée, le hook
+// délègue à la page courante (via un événement) qui remonte en haut, joue sa
+// sortie et le crossfade avant de naviguer réellement ; sinon navigation
+// directe (idem si l'utilisateur préfère réduire les animations). Le payload
+// module-level transmet la position de la SearchBar à la page d'arrivée pour
+// l'animation FLIP (un état React ne survivrait pas au démontage de la page
+// de départ) ; `target` identifie la page destinataire.
 
 const CATEGORY_EVENT = 'sailingloc:category-transition';
 const HOME_EVENT = 'sailingloc:home-transition';
+const PRODUCT_EVENT = 'sailingloc:product-transition';
 
 // Durées partagées entre la sortie et l'entrée, dans les deux sens.
 export const HERO_EXIT_DURATION = 1400;
@@ -29,6 +31,29 @@ export const CATEGORY_ENTER_TOTAL =
 // Paires d'easings miroir : l'entrée est la sortie jouée à rebours.
 export const CATEGORY_ENTER_EASING = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
 export const CATEGORY_EXIT_EASING = 'cubic-bezier(0.64, 0, 0.78, 0.39)';
+
+// Glissades partagées par les pages à cascade (catégorie, produit). Des
+// @keyframes plutôt que des transitions : certains blocs ne montent qu'à la
+// réponse de l'API, bien après le premier rendu, et une animation se joue au
+// montage de l'élément quel que soit ce moment.
+export const PAGE_SLIDE_CSS = `
+  @keyframes categorySlideInLeft {
+    from { transform: translateX(-110vw); }
+    to   { transform: none; }
+  }
+  @keyframes categorySlideInRight {
+    from { transform: translateX(110vw); }
+    to   { transform: none; }
+  }
+  @keyframes categorySlideOutLeft {
+    from { transform: none; }
+    to   { transform: translateX(-110vw); }
+  }
+  @keyframes categorySlideOutRight {
+    from { transform: none; }
+    to   { transform: translateX(110vw); }
+  }
+`;
 export const HERO_EXIT_EASING = 'cubic-bezier(0.5, 0, 0.75, 0.2)';
 export const HERO_ENTER_EASING = 'cubic-bezier(0.25, 0.8, 0.5, 1)';
 // Ease-in-out doux (départ et fin progressifs, façon dégradé) pour les fondus
@@ -78,10 +103,21 @@ export function onHomeTransitionRequest(handler) {
   return () => window.removeEventListener(HOME_EVENT, listener);
 }
 
-function useTransitionNavigate(fromPath, matchesTarget, eventName) {
+export function onProductTransitionRequest(handler) {
+  const listener = (e) => handler(e.detail);
+  window.addEventListener(PRODUCT_EVENT, listener);
+  return () => window.removeEventListener(PRODUCT_EVENT, listener);
+}
+
+// La page produit est paramétrée (/product/:id) : correspondance par préfixe,
+// contrairement aux autres pages de départ comparées à l'exact.
+const isOnPath = (pathname, base) =>
+  pathname === base || (base !== '/' && pathname.startsWith(`${base}/`));
+
+function useTransitionNavigate(fromPaths, matchesTarget, eventName) {
   const navigate = useNavigate();
   const location = useLocation();
-  const onFromPage = location.pathname === fromPath;
+  const onFromPage = fromPaths.some((base) => isOnPath(location.pathname, base));
   return useCallback(
     (to) => {
       if (onFromPage && matchesTarget(to) && !prefersReducedMotion()) {
@@ -96,18 +132,26 @@ function useTransitionNavigate(fromPath, matchesTarget, eventName) {
 
 const isCategoryTarget = (to) => to.startsWith('/categorie');
 const isHomeTarget = (to) => to === '/';
+const isProductTarget = (to) => to.startsWith('/product/');
 
 // Remplaçant de navigate() pour les liens menant à /categorie ; toute autre
 // destination est naviguée telle quelle.
 export function useCategoryNavigate() {
-  const goTo = useTransitionNavigate('/', isCategoryTarget, CATEGORY_EVENT);
+  const goTo = useTransitionNavigate(['/', '/product'], isCategoryTarget, CATEGORY_EVENT);
   return useCallback((to = '/categorie') => goTo(to), [goTo]);
 }
 
 // Remplaçant de navigate() pour les liens menant à l'accueil.
 export function useHomeNavigate() {
-  const goTo = useTransitionNavigate('/categorie', isHomeTarget, HOME_EVENT);
+  const goTo = useTransitionNavigate(['/categorie', '/product'], isHomeTarget, HOME_EVENT);
   return useCallback((to = '/') => goTo(to), [goTo]);
+}
+
+// Remplaçant de navigate() pour les liens menant à /product/:id. Depuis la
+// page produit elle-même (bateaux similaires), navigation directe : le
+// composant reste monté au changement d'id, il n'y a pas d'entrée à rejouer.
+export function useProductNavigate() {
+  return useTransitionNavigate(['/', '/categorie'], isProductTarget, PRODUCT_EVENT);
 }
 
 // ─── Intro de première visite (HomePage) ─────────────────────────────────────

@@ -29,37 +29,17 @@ import {
   clearTransitionPayload,
   setTransitionPayload,
   onHomeTransitionRequest,
+  onProductTransitionRequest,
+  useProductNavigate,
   smoothScrollToTop,
   lockScroll,
   unlockScroll,
+  PAGE_SLIDE_CSS,
   CATEGORY_ENTER_STAGGER,
   CATEGORY_ENTER_TOTAL,
   CATEGORY_ENTER_EASING,
   CATEGORY_EXIT_EASING,
 } from '../hooks/useCategoryTransition.js';
-
-// Entrée depuis les marges après la transition accueil → catégorie. Des
-// @keyframes plutôt que des transitions : la grille des fiches produit ne
-// monte qu'à la réponse de l'API, bien après le premier rendu, et une
-// animation se joue au montage de l'élément quel que soit ce moment.
-const slideInCSS = `
-  @keyframes categorySlideInLeft {
-    from { transform: translateX(-110vw); }
-    to   { transform: none; }
-  }
-  @keyframes categorySlideInRight {
-    from { transform: translateX(110vw); }
-    to   { transform: none; }
-  }
-  @keyframes categorySlideOutLeft {
-    from { transform: none; }
-    to   { transform: translateX(-110vw); }
-  }
-  @keyframes categorySlideOutRight {
-    from { transform: none; }
-    to   { transform: translateX(110vw); }
-  }
-`;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -356,8 +336,9 @@ function CategoryPage() {
       unlockScroll();
     }
   }, [enterActive]);
-  // Sortie vers l'accueil en cours : les blocs rejouent leur entrée à rebours.
-  const [exitingToHome, setExitingToHome] = useState(false);
+  // Sortie vers l'accueil ou la page produit en cours : les blocs rejouent
+  // leur entrée à rebours.
+  const [exiting, setExiting] = useState(false);
   const searchBarWrapRef = useRef(null);
   const transitioningRef = useRef(false);
   // Horloge de la cascade d'entrée + styles figés des blocs montés en retard
@@ -371,30 +352,35 @@ function CategoryPage() {
     clearTransitionPayload();
   }, []);
 
-  // Séquence de transition vers l'accueil : remontée en haut de page, sortie
-  // des blocs (la SearchBar, elle, est mesurée pour l'animation FLIP jouée à
-  // l'arrivée sur la HomePage), puis navigation réelle.
+  // Séquence de transition vers l'accueil ou la page produit : remontée en
+  // haut de page, sortie des blocs (la SearchBar, elle, est mesurée pour
+  // l'animation FLIP jouée à l'arrivée), puis navigation réelle.
   useEffect(() => {
     let cancelled = false;
     let navTimer = null;
-    const unsubscribe = onHomeTransitionRequest(async ({ to }) => {
-      if (transitioningRef.current) return;
-      transitioningRef.current = true;
-      // Défilement gelé jusqu'à la fin de l'arrivée sur l'accueil, qui
-      // déverrouille (les sections différées y sont alors montées).
-      lockScroll();
-      await smoothScrollToTop();
-      if (cancelled) return;
-      setExitingToHome(true);
-      setTransitionPayload('home', {
-        searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
-      });
-      navTimer = setTimeout(() => navigate(to), CATEGORY_ENTER_TOTAL);
-    });
+    const beginExit =
+      (target) =>
+      async ({ to }) => {
+        if (transitioningRef.current) return;
+        transitioningRef.current = true;
+        // Défilement gelé jusqu'à la fin de l'arrivée sur la page cible, qui
+        // déverrouille (les sections différées y sont alors montées).
+        lockScroll();
+        await smoothScrollToTop();
+        if (cancelled) return;
+        setExiting(true);
+        setTransitionPayload(target, {
+          searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
+        });
+        navTimer = setTimeout(() => navigate(to), CATEGORY_ENTER_TOTAL);
+      };
+    const unsubHome = onHomeTransitionRequest(beginExit('home'));
+    const unsubProduct = onProductTransitionRequest(beginExit('product'));
     return () => {
       cancelled = true;
       clearTimeout(navTimer);
-      unsubscribe();
+      unsubHome();
+      unsubProduct();
     };
   }, [navigate]);
   // Header fixe (60/80px) + barre filtre/recherche/fil d'ariane sticky (~116px) :
@@ -587,8 +573,8 @@ function CategoryPage() {
     };
   }, [transitionPayload]);
 
-  // Sortie vers l'accueil : l'entrée jouée à rebours — tous les blocs partent
-  // en même temps et disparaissent en cascade inversée (la map d'abord, la
+  // Sortie de page : l'entrée jouée à rebours — tous les blocs partent en
+  // même temps et disparaissent en cascade inversée (la map d'abord, la
   // barre de filtres en dernier), chacun vers sa marge d'origine.
   function slideOutStyle(order, from) {
     const keyframes = from === 'left' ? 'categorySlideOutLeft' : 'categorySlideOutRight';
@@ -606,7 +592,7 @@ function CategoryPage() {
   // Chaque bloc part avec son décalage mais sa durée est allongée d'autant,
   // pour que tous atterrissent à CATEGORY_ENTER_TOTAL pile.
   function slideInStyle(order, from = 'left') {
-    if (exitingToHome) return slideOutStyle(order, from);
+    if (exiting) return slideOutStyle(order, from);
     if (!enterActive) return undefined;
     const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
     const delay = order * CATEGORY_ENTER_STAGGER;
@@ -623,7 +609,7 @@ function CategoryPage() {
   // CATEGORY_ENTER_TOTAL en même temps que les autres blocs. Le style est figé
   // au premier calcul : le recalculer à chaque rendu redémarrerait l'animation.
   function slideInStyleLate(key, order, from = 'left') {
-    if (exitingToHome) return slideOutStyle(order, from);
+    if (exiting) return slideOutStyle(order, from);
     if (!enterActive) return undefined;
     const cache = lateAnimCache.current;
     if (!cache[key]) {
@@ -676,12 +662,14 @@ function CategoryPage() {
     setHighlightedBoatId(boat.id);
   }
 
-  // Clic sur une fiche produit : ouvre la page produit correspondante.
+  // Clic sur une fiche produit : ouvre la page produit correspondante, avec
+  // la transition de sortie (cascade inversée) avant la navigation réelle.
+  const goToProduct = useProductNavigate();
   const handleBoatCardClick = useCallback(
     (boatId) => {
-      navigate(`/product/${boatId}`);
+      goToProduct(`/product/${boatId}`);
     },
-    [navigate]
+    [goToProduct]
   );
 
   useEffect(() => {
@@ -698,7 +686,7 @@ function CategoryPage() {
     // qui casserait les sticky) évite l'ascenseur horizontal pendant l'entrée
     // des blocs depuis la marge droite (translateX(110vw)).
     <main className="w-full min-h-screen pt-20 bg-white overflow-x-clip">
-      <style>{slideInCSS}</style>
+      <style>{PAGE_SLIDE_CSS}</style>
       <div>
         {/* Fond photo bateau — englobe le strip sous le header, la searchbar et les résultats */}
         <div
