@@ -116,8 +116,17 @@ Cela démarre automatiquement :
 - le backend sur [http://localhost:4000](http://localhost:4000)
 - PostgreSQL sur le port `5433`
 - **MailDev** (interface web emails) sur [http://localhost:1080](http://localhost:1080)
+- **Matomo** (mesure d'audience) sur [http://localhost:8081](http://localhost:8081) — avec sa base MariaDB dédiée (interne, non exposée)
 
 > Les emails d'inscription/vérification sont interceptés par MailDev — aucun vrai email n'est envoyé. Ouvrez [http://localhost:1080](http://localhost:1080) pour les consulter.
+
+#### Premier lancement de Matomo (une seule fois)
+
+1. Ouvrir [http://localhost:8081](http://localhost:8081) — l'assistant d'installation se lance (la connexion à la base est pré-remplie via les variables `MATOMO_*` du `.env` racine)
+2. Créer le compte **super-admin** (identifiants personnels, à retenir)
+3. Déclarer le site : nom **SailingLoc**, URL **http://localhost:5173** — il doit recevoir l'**id 1** (attendu par `frontend/src/utils/matomo.js`)
+4. Ignorer l'écran « code de tracking » : le script est injecté par le frontend, uniquement après consentement (voir [Cookies & consentement](#cookies--consentement-cnil--matomo))
+5. Conformité CNIL : dans **Administration → Confidentialité**, activer l'anonymisation des IP et régler la suppression des anciennes données à **25 mois**
 
 Pour arrêter :
 
@@ -178,7 +187,12 @@ Variable frontend à renseigner dans `frontend/.env` :
 
 ```env
 VITE_API_BASE_URL=http://localhost:4000/api
+# Optionnel — mesure d'audience Matomo (nécessite Docker, voir note ci-dessous).
+# Sans cette variable, le tracking est simplement désactivé : le site fonctionne normalement.
+# VITE_MATOMO_URL=http://localhost:8081
 ```
+
+> **Matomo sans Docker ?** Matomo (PHP + MariaDB) n'est pas fourni en méthode locale — l'installer à la main est lourd et inutile pour développer. Deux options : ne rien faire (recommandé — sans `VITE_MATOMO_URL`, le code de tracking est un no-op silencieux), ou lancer uniquement les deux conteneurs Matomo si Docker est disponible : `docker compose -f docker-compose.dev.yml up -d matomo matomo_db`.
 
 #### 4. Lancer MailDev (intercepteur d'emails local)
 
@@ -341,6 +355,31 @@ Documentation complète (architecture, authentification, endpoints) : [`backend/
 | `.vscode/`                    | Configuration éditeur personnelle                      |
 
 > Les fichiers `.env.*.example` sont versionnés et servent de modèles. Copier le bon exemple selon l'environnement (`development`, `staging`, `production`).
+
+### Cookies & consentement (CNIL) — Matomo
+
+Le site embarque une bannière de consentement cookies conforme CNIL :
+
+| Élément                 | Fichier                                                  |
+| ----------------------- | -------------------------------------------------------- |
+| Logique de consentement | `frontend/src/context/CookieConsentContext.jsx`          |
+| Bannière + panneau      | `frontend/src/components/common/CookieConsentBanner.jsx` |
+| Chargeur Matomo         | `frontend/src/utils/matomo.js` + `MatomoTracker.jsx`     |
+
+Fonctionnement :
+
+- Le choix (accord **ou** refus) est stocké 6 mois (`sailingloc_cookie_consent`), puis redemandé
+- 3 finalités opt-in : mesure d'audience (Matomo), publicité & réseaux sociaux, personnalisation
+- Les cookies essentiels (session, langue, sécurité, consentement) sont exemptés et listés dans le panneau
+- « Gérer les cookies » dans le footer rouvre le panneau à tout moment
+
+**Règles à respecter par l'équipe :**
+
+1. **Ne jamais charger un script tiers** (analytics, pixel pub, widget social…) sans vérifier la finalité : `useCookieConsent()` (React) ou `getStoredConsent()` (hors React). Exemple : le tracking Matomo ne se charge que si `consent.analytics === true`
+2. **Ne pas différencier visuellement** les boutons « Tout accepter » / « Tout refuser » (même classe CSS = exigence CNIL, pas un bug)
+3. Si les finalités ou partenaires changent, **incrémenter `CONSENT_VERSION`** dans `CookieConsentContext.jsx` pour redemander le consentement
+
+Consultation des statistiques : [http://localhost:8081](http://localhost:8081) (en prod : sous-domaine HTTPS dédié, ex. `analytics.<domaine>`, défini par `VITE_MATOMO_URL`).
 
 ### CI/CD (GitHub Actions)
 
