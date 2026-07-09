@@ -28,18 +28,11 @@ import {
   HERO_ENTER_EASING,
   INTRO_SOFT_EASING,
   CATEGORY_ENTER_TOTAL,
+  INTRO_BLACK_MS,
+  INTRO_WELCOME_HOLD_MS,
+  INTRO_REVEAL_LAG_MS,
 } from '../hooks/useCategoryTransition.js';
 
-// Chronologie de l'intro de première visite (ms) : logo seul sur fond noir,
-// crossfade vers la vidéo (HERO_EXIT_DURATION), textes d'accueil, puis
-// révélation générale — le bloc logo glisse d'abord, et après un léger délai
-// le header et les blocs du bas arrivent au rythme des transitions de page
-// (CATEGORY_ENTER_TOTAL).
-const INTRO_BLACK_MS = 900;
-// Palier rallongé pour laisser les textes pleinement visibles ~1,2 s malgré
-// leur fondu d'apparition au rythme des autres transitions (1,4 s).
-const INTRO_WELCOME_HOLD_MS = 2600;
-const INTRO_REVEAL_LAG_MS = 400;
 // Fondu des textes de l'intro : apparition et disparition symétriques,
 // opacité + légère dérive verticale, au même rythme que le crossfade.
 const INTRO_TEXT_FADE = `opacity ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}, transform ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}`;

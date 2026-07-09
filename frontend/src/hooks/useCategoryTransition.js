@@ -116,6 +116,7 @@ export function useHomeNavigate() {
 // puis grand déballage (header compris, d'où l'événement de révélation).
 
 const INTRO_SEEN_KEY = 'sailingloc:intro-seen';
+const INTRO_REVEALED_KEY = 'sailingloc:intro-revealed';
 const INTRO_REVEAL_EVENT = 'sailingloc:intro-reveal';
 
 // Page d'entrée réelle de la session, figée au premier chargement du bundle :
@@ -123,6 +124,8 @@ const INTRO_REVEAL_EVENT = 'sailingloc:intro-reveal';
 // s'il navigue vers la home ensuite (le header, déjà monté, serait visible).
 const sessionEntryPath = window.location.pathname;
 
+// Démarrage de l'intro (HomePage uniquement) : une seule fois par session,
+// posé dès le montage pour ne pas la rejouer (StrictMode, remontage...).
 export function shouldPlayIntro() {
   return (
     sessionEntryPath === '/' &&
@@ -135,25 +138,91 @@ export function markIntroSeen() {
   window.sessionStorage.setItem(INTRO_SEEN_KEY, '1');
 }
 
+// Un header en attente de révélation (isIntroPending, ci-dessous) : distinct
+// de shouldPlayIntro(), qui bascule à false dès le montage de la HomePage —
+// avant même que la révélation ait eu lieu. Un header connecté qui se monte
+// en cours de route (le temps que /refresh résolve le rôle) doit encore
+// pouvoir s'accrocher à la révélation à venir tant qu'elle n'a pas eu lieu.
+function isIntroPending() {
+  return (
+    sessionEntryPath === '/' &&
+    !window.sessionStorage.getItem(INTRO_REVEALED_KEY) &&
+    !prefersReducedMotion()
+  );
+}
+
 export function emitIntroReveal() {
+  window.sessionStorage.setItem(INTRO_REVEALED_KEY, '1');
   window.dispatchEvent(new window.CustomEvent(INTRO_REVEAL_EVENT));
 }
 
-// Les headers (public et dashboard) démarrent cachés au-dessus de l'écran
-// pendant l'intro et descendent quand la HomePage émet la révélation.
-// Garde-fou temporel : jamais plus de 12 s sans header, quoi qu'il arrive.
-export function useIntroHeaderReveal() {
-  const [hidden, setHidden] = useState(shouldPlayIntro);
+// Chronologie de l'intro (ms) : logo seul sur fond noir, crossfade vers la
+// vidéo (HERO_EXIT_DURATION), palier textes d'accueil, puis léger délai avant
+// le grand déballage (header, SearchBar, CTA) — voir HomePage.jsx, qui
+// consomme ces mêmes constantes pour construire sa propre timeline.
+export const INTRO_BLACK_MS = 900;
+export const INTRO_WELCOME_HOLD_MS = 2600;
+export const INTRO_REVEAL_LAG_MS = 400;
+// Instant de la révélation du header depuis le montage de la HomePage —
+// réutilisé tel quel par le header dashboard pour reproduire exactement le
+// même délai d'apparition quand il n'y a pas de HomePage à observer.
+export const INTRO_HEADER_REVEAL_DELAY_MS =
+  INTRO_BLACK_MS + HERO_EXIT_DURATION + INTRO_WELCOME_HOLD_MS + INTRO_REVEAL_LAG_MS;
+
+// ─── Révélation du header seul (arrivée directe sur un dashboard) ───────────
+// Si la session s'ouvre (vrai chargement du navigateur, pas une navigation
+// interne après connexion) directement sur /locataire ou /proprietaire, il
+// n'y a pas de HomePage pour émettre la révélation : le header se la
+// déclenche donc lui-même après INTRO_HEADER_REVEAL_DELAY_MS, via exactement
+// le même événement/écouteur/garde-fou que le header de base.
+
+const DASHBOARD_HEADER_SEEN_KEY = 'sailingloc:dashboard-header-seen';
+const DASHBOARD_HEADER_REVEAL_PATHS = ['/locataire', '/proprietaire'];
+
+function isDashboardHeaderEntry() {
+  return DASHBOARD_HEADER_REVEAL_PATHS.some(
+    (base) => sessionEntryPath === base || sessionEntryPath.startsWith(`${base}/`)
+  );
+}
+
+function shouldPlayDashboardHeaderReveal() {
+  return (
+    isDashboardHeaderEntry() &&
+    !window.sessionStorage.getItem(DASHBOARD_HEADER_SEEN_KEY) &&
+    !prefersReducedMotion()
+  );
+}
+
+// Les headers démarrent cachés au-dessus de l'écran et descendent au signal
+// de révélation (même événement, même garde-fou 12 s dans les deux cas) :
+// émis par la HomePage pendant l'intro, ou par le header dashboard lui-même
+// (isDashboard=true) après le même délai, à sa toute première apparition de
+// la session.
+export function useIntroHeaderReveal(isDashboard = false) {
+  const [mode] = useState(() => {
+    if (isIntroPending()) return 'intro';
+    if (isDashboard && shouldPlayDashboardHeaderReveal()) return 'dashboard';
+    return null;
+  });
+  const [hidden, setHidden] = useState(mode !== null);
+
   useEffect(() => {
-    if (!hidden) return undefined;
+    if (mode === null) return undefined;
     const reveal = () => setHidden(false);
     window.addEventListener(INTRO_REVEAL_EVENT, reveal);
     const safety = setTimeout(reveal, 12000);
+    let dashboardTimer = null;
+    if (mode === 'dashboard') {
+      window.sessionStorage.setItem(DASHBOARD_HEADER_SEEN_KEY, '1');
+      dashboardTimer = setTimeout(emitIntroReveal, INTRO_HEADER_REVEAL_DELAY_MS);
+    }
     return () => {
       window.removeEventListener(INTRO_REVEAL_EVENT, reveal);
       clearTimeout(safety);
+      clearTimeout(dashboardTimer);
     };
-  }, [hidden]);
+  }, [mode]);
+
   return hidden;
 }
 

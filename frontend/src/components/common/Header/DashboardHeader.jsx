@@ -39,6 +39,9 @@ function DashboardHeader({
   // Destination de l'icône messagerie (l'admin a sa page dédiée).
   messagesTo = '/messages',
   languageAsFlags = true,
+  // Révélation d'en haut à la première connexion (locataire/propriétaire) —
+  // désactivée pour l'admin, qui n'en a pas besoin.
+  introReveal = true,
 }) {
   const { t, i18n } = useTranslation();
   const scrolled = useScrolled();
@@ -55,7 +58,7 @@ function DashboardHeader({
   const goHome = useHomeNavigate();
   // Pendant l'intro de première visite, le header attend caché au-dessus de
   // l'écran et descend à la révélation.
-  const introHidden = useIntroHeaderReveal();
+  const introHidden = useIntroHeaderReveal(introReveal);
   const onCategoriePage = location.pathname === '/categorie';
   const { user, logout } = useAuth();
   // Badge de messages non lus sur l'icône messagerie : rafraîchi à chaque
