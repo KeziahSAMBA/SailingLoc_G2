@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
 import ContactPage from '../pages/ContactPage.jsx';
+import AboutPage from '../pages/AboutPage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
@@ -50,6 +51,7 @@ function AppRouter({ location }) {
       <Route path="/register" element={<HomePage />} />
       <Route path="/categorie" element={<CategoryPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/a-propos" element={<AboutPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route
         path="/forgot-password"

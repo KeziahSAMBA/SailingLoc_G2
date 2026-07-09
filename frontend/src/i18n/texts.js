@@ -384,6 +384,88 @@ export const TEXTS = {
     },
   },
 
+  aboutPage: {
+    pageTitle: { fr: 'À propos — SailingLoc', en: 'About — SailingLoc' },
+    hero: {
+      title: { fr: 'À propos de SailingLoc', en: 'About SailingLoc' },
+      tagline: {
+        fr: 'La plateforme qui met en relation propriétaires passionnés et amoureux de la mer, dans tous les ports de France.',
+        en: 'The platform connecting passionate boat owners with sea lovers, in every port of France.',
+      },
+    },
+    story: {
+      kicker: { fr: 'Qui sommes-nous ?', en: 'Who are we?' },
+      title: {
+        fr: 'La location de bateaux, entre passionnés',
+        en: 'Boat rental, between enthusiasts',
+      },
+      p1: {
+        fr: 'Née à Marseille en 2023, SailingLoc est partie d’un constat simple : des milliers de bateaux dorment au port la majeure partie de l’année, pendant que des milliers de marins rêvent de larguer les amarres. Nous avons créé la passerelle entre les deux.',
+        en: 'Founded in Marseille in 2023, SailingLoc started from a simple observation: thousands of boats sit idle in harbours most of the year, while thousands of sailors dream of casting off. We built the bridge between the two.',
+      },
+      p2: {
+        fr: 'Chaque annonce est vérifiée par notre équipe — documents, assurance, état du bateau — pour que chaque sortie en mer se fasse en toute confiance. De la voile légère au yacht avec skipper, il y a forcément un bateau pour votre prochaine aventure.',
+        en: 'Every listing is checked by our team — documents, insurance, boat condition — so that every trip starts with peace of mind. From light sailing to skippered yachts, there is a boat for your next adventure.',
+      },
+      imageAlt: {
+        fr: 'Voilier naviguant le long de la côte méditerranéenne',
+        en: 'Sailboat cruising along the Mediterranean coast',
+      },
+    },
+    stats: {
+      boats: { fr: 'Bateaux vérifiés', en: 'Verified boats' },
+      destinations: { fr: 'Destinations', en: 'Destinations' },
+      founded: { fr: 'Année de création', en: 'Founded in' },
+      rating: { fr: 'Note moyenne', en: 'Average rating' },
+    },
+    values: {
+      kicker: { fr: 'Nos valeurs', en: 'Our values' },
+      title: { fr: 'Ce qui nous fait naviguer', en: 'What keeps us sailing' },
+      trust: {
+        title: { fr: 'Confiance', en: 'Trust' },
+        text: {
+          fr: 'Annonces vérifiées, paiements sécurisés, avis modérés : la sérénité avant, pendant et après la location.',
+          en: 'Verified listings, secure payments, moderated reviews: peace of mind before, during and after the rental.',
+        },
+      },
+      passion: {
+        title: { fr: 'Passion', en: 'Passion' },
+        text: {
+          fr: 'Nos propriétaires sont des marins expérimentés qui partagent leurs conseils, leurs itinéraires et leur amour de la mer.',
+          en: 'Our owners are experienced sailors who share their tips, routes and love of the sea.',
+        },
+      },
+      simplicity: {
+        title: { fr: 'Simplicité', en: 'Simplicity' },
+        text: {
+          fr: 'Recherchez, réservez, naviguez : tout se fait en quelques clics, de la demande de réservation à l’état des lieux.',
+          en: 'Search, book, sail: everything happens in a few clicks, from booking request to check-in.',
+        },
+      },
+    },
+    destinations: {
+      kicker: { fr: 'Nos destinations', en: 'Our destinations' },
+      title: {
+        fr: 'Des ports qui font rêver',
+        en: 'Harbours that make you dream',
+      },
+      soon: { fr: 'Bientôt disponible', en: 'Coming soon' },
+      linkAria: {
+        fr: 'Voir les bateaux à {{city}}',
+        en: 'See boats in {{city}}',
+      },
+    },
+    cta: {
+      title: { fr: 'Prêt à larguer les amarres ?', en: 'Ready to cast off?' },
+      text: {
+        fr: 'Trouvez le bateau de vos rêves ou posez-nous vos questions — on s’occupe du reste.',
+        en: 'Find the boat of your dreams or ask us anything — we’ll take care of the rest.',
+      },
+      browse: { fr: 'Trouver un bateau', en: 'Find a boat' },
+      contact: { fr: 'Nous contacter', en: 'Contact us' },
+    },
+  },
+
   carrousel: {
     soon: { fr: 'Bientôt disponible', en: 'Coming soon' },
     prev: { fr: 'Précédent', en: 'Previous' },
