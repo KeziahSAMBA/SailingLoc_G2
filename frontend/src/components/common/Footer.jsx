@@ -61,9 +61,10 @@ function getHelpLinks(t) {
 
 function getInfoLinks(t) {
   return [
-    { label: t('footer.infoLinks.legal'), href: '#' },
-    { label: t('footer.infoLinks.privacy'), href: '#' },
-    { label: t('footer.infoLinks.terms'), href: '#' },
+    { label: t('footer.infoLinks.legal'), href: '/mentions-legales' },
+    { label: t('footer.infoLinks.privacy'), href: '/politique-de-confidentialite' },
+    { label: t('footer.infoLinks.terms'), href: '/cgu' },
+    { label: t('footer.infoLinks.sales'), href: '/cgv' },
   ];
 }
 
@@ -222,9 +223,9 @@ const Footer = () => {
           </li>
           {infoLinks.map(({ label, href }) => (
             <li key={label}>
-              <a href={href} className="hover:text-white transition-colors">
+              <Link to={href} className="hover:text-white transition-colors">
                 {label}
-              </a>
+              </Link>
             </li>
           ))}
           {/* Point d'accès permanent au paramétrage des cookies (CNIL : le
