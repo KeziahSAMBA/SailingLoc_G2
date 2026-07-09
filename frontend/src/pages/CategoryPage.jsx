@@ -15,6 +15,7 @@ import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { fetchBoats } from '../services/boatService.js';
 import { fetchPorts } from '../services/portService.js';
+import { trackSiteSearch } from '../utils/matomo.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -319,6 +320,14 @@ function CategoryPage() {
   const startQuery = searchParams.get('start');
   const endQuery = searchParams.get('end');
   const travelersQuery = Number(searchParams.get('travelers')) || null;
+
+  // Matomo « Recherches sur le site » : une entrée par destination cherchée,
+  // avec le nombre de bateaux correspondants (no-op sans consentement analytics).
+  useEffect(() => {
+    if (!destinationQuery || boats.length === 0) return;
+    const results = boats.filter((b) => b.location.toLowerCase().includes(destinationQuery)).length;
+    trackSiteSearch(destinationQuery, results);
+  }, [destinationQuery, boats]);
   const activeBoatTypes = Object.keys(boatTypeFilters).filter((key) => boatTypeFilters[key]);
   const minPrice = Number(priceRange.min) || null;
   const maxPrice = Number(priceRange.max) || null;

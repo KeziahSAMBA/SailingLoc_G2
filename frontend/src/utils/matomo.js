@@ -48,6 +48,14 @@ export function trackPageView(path) {
   window._paq.push(['trackPageView']);
 }
 
+// Enregistre une recherche interne (rapport « Comportement → Recherches sur
+// le site »). Matomo ne détecte pas nos recherches tout seul : notre paramètre
+// d'URL s'appelle `destination`, pas `q`/`search`, d'où l'appel explicite.
+export function trackSiteSearch(keyword, resultsCount) {
+  if (!loaded || disabled) return;
+  window._paq.push(['trackSiteSearch', keyword, false, resultsCount]);
+}
+
 // Retrait du consentement : on cesse tout envoi et on supprime les cookies
 // first-party déjà posés par Matomo (_pk_*).
 export function disableMatomo() {
