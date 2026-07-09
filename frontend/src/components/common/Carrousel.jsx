@@ -1,12 +1,28 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { fetchBoats } from '../../services/boatService';
 import { fetchPorts } from '../../services/portService';
 import { useFavorites } from '../../hooks/useFavorites.js';
+import { useCategoryNavigate } from '../../hooks/useCategoryTransition.js';
 import FavoriteButton from './FavoriteButton.jsx';
+
+// Clic "navigation simple" : laisse le navigateur gérer les ouvertures en
+// nouvel onglet (ctrl/cmd/shift/clic molette) sans intercepter le lien.
+function isPlainLeftClick(e) {
+  return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+}
 
 // ─── Transformateurs DB → slide ───────────────────────────────────────────────
 
@@ -313,6 +329,7 @@ const CarouselSection = ({
   onSlideClick,
 }) => {
   const { t } = useTranslation();
+  const goToCategory = useCategoryNavigate();
   const titleColor = theme === 'dark' ? 'text-white' : 'text-black';
   const linkColor =
     theme === 'dark' ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-black';
@@ -327,6 +344,11 @@ const CarouselSection = ({
         </h2>
         <Link
           to={linkTo}
+          onClick={(e) => {
+            if (!isPlainLeftClick(e)) return;
+            e.preventDefault();
+            goToCategory(linkTo);
+          }}
           className={`flex items-center gap-1.5 transition-colors ml-4 ${linkColor}`}
           style={{ fontSize: '16px' }}
         >
@@ -606,7 +628,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 
 const Carrousel = ({ theme = 'dark' }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const goToCategory = useCategoryNavigate();
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
   const { favoriteIds, toggleFavorite } = useFavorites();
@@ -615,15 +637,18 @@ const Carrousel = ({ theme = 'dark' }) => {
   // qu'une page catégorie vide, donc on ignore le clic dans ce cas.
   function handlePortClick(slide) {
     if (!slide.available) return;
-    navigate(`/categorie?destination=${encodeURIComponent(slide.label)}`);
+    goToCategory(`/categorie?destination=${encodeURIComponent(slide.label)}`);
   }
 
+  // startTransition : le rendu des sections de carrousels (useMemo lourds +
+  // beaucoup d'images) passe en priorité basse pour ne pas bloquer les
+  // animations de transition en cours.
   useEffect(() => {
     fetchBoats()
-      .then(({ data }) => setBoats(data))
+      .then(({ data }) => startTransition(() => setBoats(data)))
       .catch(console.error);
     fetchPorts()
-      .then(({ data }) => setPorts(data))
+      .then(({ data }) => startTransition(() => setPorts(data)))
       .catch(console.error);
   }, []);
 
@@ -760,6 +785,11 @@ const Carrousel = ({ theme = 'dark' }) => {
           </h2>
           <Link
             to="/categorie"
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return;
+              e.preventDefault();
+              goToCategory();
+            }}
             className={`flex items-center gap-1.5 transition-colors ml-4 ${headerLink}`}
             style={{ fontSize: '16px' }}
           >

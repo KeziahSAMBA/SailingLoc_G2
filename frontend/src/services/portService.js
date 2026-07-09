@@ -1,5 +1,6 @@
 import api from './api.js';
+import { cachedRequest } from './requestCache.js';
 
 export function fetchPorts() {
-  return api.get('/ports');
+  return cachedRequest('ports', () => api.get('/ports'));
 }

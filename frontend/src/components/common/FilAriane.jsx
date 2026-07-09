@@ -1,9 +1,11 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useHomeNavigate } from '../../hooks/useCategoryTransition.js';
 
 function Breadcrumb({ light = false, compact = false }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const goHome = useHomeNavigate();
   const segments = pathname.split('/').filter(Boolean);
   const pathLabels = { categorie: t('breadcrumb.categorie') };
 
@@ -19,6 +21,13 @@ function Breadcrumb({ light = false, compact = false }) {
     >
       <Link
         to="/"
+        onClick={(e) => {
+          // Laisse le navigateur gérer les ouvertures en nouvel onglet
+          // (ctrl/cmd/shift/clic molette) sans intercepter le lien.
+          if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          goHome();
+        }}
         className={
           light ? 'hover:text-white/70 transition-colors' : 'hover:text-sky-600 transition-colors'
         }

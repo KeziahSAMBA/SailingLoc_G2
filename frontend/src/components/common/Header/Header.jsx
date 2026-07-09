@@ -2,6 +2,13 @@ import { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../hooks/useAuth.jsx';
+import {
+  useCategoryNavigate,
+  useHomeNavigate,
+  useIntroHeaderReveal,
+  CATEGORY_ENTER_TOTAL,
+  INTRO_SOFT_EASING,
+} from '../../../hooks/useCategoryTransition.js';
 import { useScrolled } from './shared/useScrolled.js';
 import { useClickOutside } from './shared/useClickOutside.js';
 import HeaderLogo from './shared/HeaderLogo.jsx';
@@ -98,6 +105,11 @@ function Header() {
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const goToCategory = useCategoryNavigate();
+  const goHome = useHomeNavigate();
+  // Pendant l'intro de première visite, le header attend caché au-dessus de
+  // l'écran et descend à la révélation.
+  const introHidden = useIntroHeaderReveal();
   const { user, logout, loading: authLoading } = useAuth();
 
   useClickOutside([
@@ -130,7 +142,7 @@ function Header() {
     if (location.pathname === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      navigate('/');
+      goHome();
     }
   }
 
@@ -140,7 +152,11 @@ function Header() {
   return (
     <header
       className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
-      style={{ height: scrolled ? '60px' : '80px', transition: 'height 0.3s ease' }}
+      style={{
+        height: scrolled ? '60px' : '80px',
+        transform: introHidden ? 'translateY(-110%)' : 'none',
+        transition: `height 0.3s ease, transform ${CATEGORY_ENTER_TOTAL}ms ${INTRO_SOFT_EASING}`,
+      }}
     >
       {/*
         Background lives on its own layer (not on <header> itself) because a
@@ -211,10 +227,14 @@ function Header() {
                         e.preventDefault();
                         scrollToAnchor('contact', location.pathname);
                       }
-                    : href === '/categorie' && location.pathname === '/categorie'
+                    : href === '/categorie'
                       ? (e) => {
                           e.preventDefault();
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          if (location.pathname === '/categorie') {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          } else {
+                            goToCategory();
+                          }
                         }
                       : undefined
                 }

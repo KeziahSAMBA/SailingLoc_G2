@@ -5,6 +5,7 @@ import { FiSearch, FiX } from 'react-icons/fi';
 import { fetchPorts } from '../../services/portService.js';
 import { fetchBoats } from '../../services/boatService.js';
 import DateRangePicker from './DateRangePicker.jsx';
+import { useCategoryNavigate } from '../../hooks/useCategoryTransition.js';
 
 const DIACRITICS_REGEX = /[̀-ͯ]/g;
 
@@ -38,6 +39,7 @@ function isWithinRange(day, startStr, endStr) {
 function SearchBar({ light = false, compact = false }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const goToCategory = useCategoryNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [destination, setDestination] = useState(searchParams.get('destination') ?? '');
@@ -142,7 +144,7 @@ function SearchBar({ light = false, compact = false }) {
     if (start) params.set('start', start);
     if (end) params.set('end', end);
     if (travelers) params.set('travelers', travelers);
-    navigate(`/categorie${params.toString() ? `?${params.toString()}` : ''}`);
+    goToCategory(`/categorie${params.toString() ? `?${params.toString()}` : ''}`);
   }
 
   function handleReset() {
@@ -175,7 +177,7 @@ function SearchBar({ light = false, compact = false }) {
       }}
     >
       <div
-        className={`relative flex-1 flex flex-col justify-center px-6 py-0.5 mx-0.5 rounded-full transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className={`relative flex-1 flex flex-col justify-center text-center px-6 py-0.5 mx-0.5 rounded-full transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
       >
         <span
           className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
@@ -193,7 +195,7 @@ function SearchBar({ light = false, compact = false }) {
           onBlur={() => setTimeout(() => setDestinationFocused(false), 150)}
           placeholder={t('searchBar.destinationPlaceholder')}
           autoComplete="off"
-          className={`bg-transparent outline-none text-xs ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
+          className={`w-full bg-transparent outline-none text-xs text-center ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
         />
 
         {destinationFocused && (localMatches.length > 0 || nearestSuggestion) && (
@@ -238,7 +240,7 @@ function SearchBar({ light = false, compact = false }) {
       <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
 
       <div
-        className={`flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className={`flex flex-col justify-center text-center px-5 py-0.5 mx-0.5 rounded-full transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
       >
         <span
           className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
@@ -251,7 +253,7 @@ function SearchBar({ light = false, compact = false }) {
           value={travelers}
           onChange={(e) => setTravelers(e.target.value)}
           placeholder={t('searchBar.travelersPlaceholder')}
-          className={`w-29 bg-transparent outline-none text-xs ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
+          className={`w-29 bg-transparent outline-none text-xs text-center ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
         />
       </div>
 
