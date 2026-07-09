@@ -87,6 +87,7 @@ export const TEXTS = {
 
   home: {
     hero: {
+      welcome: { fr: 'Bienvenue sur', en: 'Welcome to' },
       tagline: {
         fr: 'Réservez le bateau de vos rêves auprès de propriétaires passionnés dans tous les ports de France',
         en: 'Book the boat of your dreams from passionate owners in every port of France',

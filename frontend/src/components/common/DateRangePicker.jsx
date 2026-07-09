@@ -48,7 +48,7 @@ function DateField({ label, displayValue, placeholder, onClick, light }) {
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full transition-colors cursor-pointer text-left ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+      className={`flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full transition-colors cursor-pointer text-center ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
     >
       <span
         className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
