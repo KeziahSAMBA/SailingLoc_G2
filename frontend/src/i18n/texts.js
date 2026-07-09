@@ -326,6 +326,7 @@ export const TEXTS = {
       legal: { fr: 'Mentions légales', en: 'Legal notice' },
       privacy: { fr: 'Politique de confidentialité', en: 'Privacy policy' },
       terms: { fr: "Conditions générales d'utilisation", en: 'Terms of service' },
+      sales: { fr: 'Conditions générales de vente', en: 'Terms of sale' },
     },
     manageCookies: { fr: 'Gérer les cookies', en: 'Manage cookies' },
   },
