@@ -10,6 +10,7 @@ import {
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bateauBg from '../assets/image/paysage/cote_azur.jpg';
+import productBg from '../assets/image/paysage/crique.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -339,6 +340,14 @@ function CategoryPage() {
   // Sortie vers l'accueil ou la page produit en cours : les blocs rejouent
   // leur entrée à rebours.
   const [exiting, setExiting] = useState(false);
+  // Sortie vers la page produit uniquement : son fond (image différente de
+  // celui de la catégorie) recouvre le nôtre en fondu, pour un raccord
+  // invisible au moment du montage réel de la page produit — cf. exitBgSrc
+  // dans ProductPage.jsx pour le même mécanisme joué en sens inverse. Vers
+  // l'accueil, inutile : on transmet notre image via le payload de
+  // transition (bg ci-dessous), que la HomePage utilise elle-même pour son
+  // propre fondu vers la vidéo.
+  const [exitBgSrc, setExitBgSrc] = useState(null);
   const searchBarWrapRef = useRef(null);
   const transitioningRef = useRef(false);
   // Horloge de la cascade d'entrée + styles figés des blocs montés en retard
@@ -366,11 +375,21 @@ function CategoryPage() {
         // Défilement gelé jusqu'à la fin de l'arrivée sur la page cible, qui
         // déverrouille (les sections différées y sont alors montées).
         lockScroll();
+        if (target === 'product') {
+          // Précharge ET décode le fond de la page produit pendant la
+          // remontée : le décodage du JPEG au moment du premier paint ferait
+          // saccader le début du crossfade.
+          const bg = new window.Image();
+          bg.src = productBg;
+          bg.decode?.().catch(() => {});
+        }
         await smoothScrollToTop();
         if (cancelled) return;
+        if (target === 'product') setExitBgSrc(productBg);
         setExiting(true);
         setTransitionPayload(target, {
           searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
+          bg: bateauBg,
         });
         navTimer = setTimeout(() => navigate(to), CATEGORY_ENTER_TOTAL);
       };
@@ -688,9 +707,12 @@ function CategoryPage() {
     <main className="w-full min-h-screen pt-20 bg-white overflow-x-clip">
       <style>{PAGE_SLIDE_CSS}</style>
       <div>
-        {/* Fond photo bateau — englobe le strip sous le header, la searchbar et les résultats */}
+        {/* Fond photo bateau — englobe le strip sous le header, la searchbar et les résultats.
+            min-h-screen : garantit une couverture plein écran même quand le
+            contenu (chargement en cours, peu de résultats) est plus court
+            que le viewport. */}
         <div
-          className="relative"
+          className="relative min-h-screen"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
             backgroundSize: 'cover',
@@ -698,6 +720,23 @@ function CategoryPage() {
             backgroundAttachment: 'fixed',
           }}
         >
+          {/* Crossfade vers le fond de la page produit pendant la sortie : se
+              pose derrière les blocs (qui glissent hors écran par-dessus) et
+              atterrit à pleine opacité pile pour le montage réel de la page
+              produit, qui utilise nativement cette même image. */}
+          {exitBgSrc && (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${exitBgSrc})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
+                animation: `pageBgFadeIn ${CATEGORY_ENTER_TOTAL}ms ease forwards`,
+              }}
+            />
+          )}
+
           {/* Section 0 — Strip sous le header uniquement */}
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
@@ -738,7 +777,7 @@ function CategoryPage() {
                 <SearchBar light compact={scrolled} />
               </div>
             </div>
-            <div className="pb-2 pl-28" style={slideInStyle(1)}>
+            <div className="pt-3 pb-2 pl-28" style={slideInStyle(1)}>
               <Breadcrumb light compact={scrolled} />
             </div>
           </section>

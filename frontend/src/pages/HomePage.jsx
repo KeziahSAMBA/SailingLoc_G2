@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bateauVideo from '../assets/video/video_bateau_3.mp4';
 import categoryBg from '../assets/image/paysage/cote_azur.jpg';
+import productBg from '../assets/image/paysage/crique.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import { SiAppstore, SiGoogleplay } from 'react-icons/si';
 import logoLong from '../assets/image/SL_logo/logo SL long.webp';
@@ -163,13 +164,17 @@ function HomePage() {
   const searchBarWrapRef = useRef(null);
   const transitioningRef = useRef(false);
   const [dotsActive, setDotsActive] = useState(false);
-  // Sortie vers /categorie en cours : le hero s'anime hors écran et le fond
-  // vidéo laisse place (crossfade) à l'image de fond de la page catégorie.
-  const [exitingToCategory, setExitingToCategory] = useState(false);
-  // Arrivée depuis /categorie : les éléments du hero rentrent depuis leur
-  // marge de sortie, la SearchBar revient en FLIP et l'image de fond de la
-  // catégorie s'efface pour révéler la vidéo.
+  // Sortie vers /categorie ou /product/:id en cours : le hero s'anime hors
+  // écran et le fond vidéo laisse place (crossfade) à l'image de fond de la
+  // page de destination (cf. exitBgSrc, qui varie selon la cible).
+  const [exiting, setExiting] = useState(false);
+  const [exitBgSrc, setExitBgSrc] = useState(categoryBg);
+  // Arrivée depuis /categorie ou /product/:id : les éléments du hero rentrent
+  // depuis leur marge de sortie, la SearchBar revient en FLIP et l'image de
+  // fond de la page de départ (transmise via le payload — cf. son propre
+  // exitBgSrc/bg) s'efface pour révéler la vidéo.
   const [homeArrival] = useState(() => readTransitionPayload('home'));
+  const arrivalBg = homeArrival?.bg ?? categoryBg;
   const [arrivalActive, setArrivalActive] = useState(Boolean(homeArrival));
   // Intro de première visite : machine à phases 'black' → 'video' → 'welcome'
   // → 'reveal' → null (terminée ou pas d'intro).
@@ -275,16 +280,16 @@ function HomePage() {
   const STEPS = useMemo(() => getSteps(t), [t]);
   const VALUE_CARDS = useMemo(() => getValueCards(t), [t]);
 
-  // Séquence de transition vers /categorie ou /product/:id — les deux pages
-  // partagent le même fond fixe, la même sortie (crossfade compris) sert donc
-  // aux deux destinations : remontée en haut de page, sortie des éléments du
-  // hero (la SearchBar, elle, est mesurée pour l'animation FLIP jouée à
-  // l'arrivée), puis navigation réelle.
+  // Séquence de transition vers /categorie ou /product/:id : remontée en haut
+  // de page, sortie des éléments du hero (la SearchBar, elle, est mesurée
+  // pour l'animation FLIP jouée à l'arrivée) pendant que le fond vidéo laisse
+  // place (crossfade) à l'image de fond propre à la page cible, puis
+  // navigation réelle.
   useEffect(() => {
     let cancelled = false;
     let navTimer = null;
     const beginExit =
-      (target) =>
+      (target, targetBg) =>
       async ({ to }) => {
         if (transitioningRef.current) return;
         transitioningRef.current = true;
@@ -295,18 +300,19 @@ function HomePage() {
         // décodage du JPEG (~3 Mo) au moment du premier paint ferait saccader
         // le début du crossfade.
         const bg = new window.Image();
-        bg.src = categoryBg;
+        bg.src = targetBg;
         bg.decode?.().catch(() => {});
         await smoothScrollToTop();
         if (cancelled) return;
-        setExitingToCategory(true);
+        setExitBgSrc(targetBg);
+        setExiting(true);
         setTransitionPayload(target, {
           searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
         });
         navTimer = setTimeout(() => navigate(to), HERO_EXIT_DURATION);
       };
-    const unsubCategory = onCategoryTransitionRequest(beginExit('category'));
-    const unsubProduct = onProductTransitionRequest(beginExit('product'));
+    const unsubCategory = onCategoryTransitionRequest(beginExit('category', categoryBg));
+    const unsubProduct = onProductTransitionRequest(beginExit('product', productBg));
     return () => {
       cancelled = true;
       clearTimeout(navTimer);
@@ -352,7 +358,7 @@ function HomePage() {
   // départ franc) et, au retour de /categorie, rentrent depuis cette même
   // marge (ease-out) — la sortie jouée à rebours.
   const heroSlideStyle = (side) => {
-    if (exitingToCategory) {
+    if (exiting) {
       return {
         transform: `translateX(${side === 'right' ? '110vw' : '-110vw'})`,
         transition: `transform ${HERO_EXIT_DURATION}ms ${HERO_EXIT_EASING}`,
@@ -422,19 +428,21 @@ function HomePage() {
         <div className="absolute inset-0 bg-black/50" />
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-b from-transparent to-[rgb(0,78,87)]" />
 
-        {/* Crossfade façon diaporama : le fond de /categorie (même image + même
-            voile sombre, en attachment fixed comme là-bas) recouvre la vidéo
-            pendant la sortie — et s'efface au retour pour la révéler —, pour
-            un raccord invisible à la navigation dans les deux sens. */}
-        {(exitingToCategory || arrivalActive) && (
+        {/* Crossfade façon diaporama : le fond de la page cible (même image +
+            même voile sombre, en attachment fixed comme là-bas) recouvre la
+            vidéo pendant la sortie — et, à l'arrivée, c'est l'image de la
+            page de départ (arrivalBg, transmise via le payload) qui s'efface
+            pour révéler la vidéo —, pour un raccord invisible à la
+            navigation dans les deux sens. */}
+        {(exiting || arrivalActive) && (
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${categoryBg})`,
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${exiting ? exitBgSrc : arrivalBg})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundAttachment: 'fixed',
-              animation: `${exitingToCategory ? 'categoryBgFadeIn' : 'categoryBgFadeOut'} ${HERO_EXIT_DURATION}ms ease forwards`,
+              animation: `${exiting ? 'categoryBgFadeIn' : 'categoryBgFadeOut'} ${HERO_EXIT_DURATION}ms ease forwards`,
             }}
           />
         )}

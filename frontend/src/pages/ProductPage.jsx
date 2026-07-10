@@ -9,7 +9,8 @@ import {
 } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import bateauBg from '../assets/image/paysage/cote_azur.jpg';
+import bateauBg from '../assets/image/paysage/crique.jpg';
+import categoryBg from '../assets/image/paysage/cote_azur.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -17,8 +18,17 @@ import Carrousel from '../components/common/Carrousel.jsx';
 import ClientReviews from '../components/common/ClientReviews.jsx';
 import GhostButton from '../components/common/GhostButton.jsx';
 import FavoriteButton from '../components/common/FavoriteButton.jsx';
+import ShareButton from '../components/common/ShareButton.jsx';
 import DateRangePicker from '../components/common/DateRangePicker.jsx';
-import { MdLocationOn, MdPeople, MdStraighten, MdVerified, MdInfoOutline } from 'react-icons/md';
+import {
+  MdLocationOn,
+  MdVerified,
+  MdInfoOutline,
+  MdStraighten,
+  MdPeople,
+  MdPerson,
+  MdBadge,
+} from 'react-icons/md';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { fetchBoats } from '../services/boatService.js';
@@ -70,11 +80,13 @@ const GLASS_STYLE = {
   WebkitBackdropFilter: 'blur(20px)',
 };
 
-// Pastilles d'information, reprises des fiches produit de la page catégorie.
-const PILL_STYLE = {
-  backgroundColor: 'rgba(14,165,233,0.15)',
-  color: '#ffffff',
-  border: '1px solid rgba(255,255,255,0.3)',
+// Fond photo bateau partagé par le haut de page et la section avis, qui
+// reprennent tous deux ce même habillage (image + assombrissement).
+const PHOTO_BG_STYLE = {
+  backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundAttachment: 'fixed',
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -101,6 +113,14 @@ function ProductPage() {
   const [belowFoldReady, setBelowFoldReady] = useState(!transitionPayload);
   // Sortie vers l'accueil ou la catégorie : les blocs rejouent leur entrée à rebours.
   const [exiting, setExiting] = useState(false);
+  // Sortie vers la catégorie uniquement : notre fond (image différente de la
+  // sienne) recouvre le sien en fondu, pour un raccord invisible au moment du
+  // montage réel de la page catégorie — cf. le même mécanisme en sens
+  // inverse dans CategoryPage.jsx. Vers l'accueil, inutile : on transmet
+  // plutôt notre image via le payload de transition (bg ci-dessous), que la
+  // HomePage utilise elle-même pour son propre fondu vers la vidéo — sans
+  // quoi la sortie détournerait par l'image de la catégorie.
+  const [exitBgSrc, setExitBgSrc] = useState(null);
   const searchBarWrapRef = useRef(null);
   const transitioningRef = useRef(false);
   // Horloge de la cascade d'entrée + styles figés des blocs montés en retard
@@ -146,11 +166,21 @@ function ProductPage() {
         // Défilement gelé jusqu'à la fin de l'arrivée sur la page cible, qui
         // déverrouille (les sections différées y sont alors montées).
         lockScroll();
+        if (target === 'category') {
+          // Précharge ET décode le fond de la catégorie pendant la remontée :
+          // le décodage du JPEG au moment du premier paint ferait saccader le
+          // début du crossfade.
+          const bg = new window.Image();
+          bg.src = categoryBg;
+          bg.decode?.().catch(() => {});
+        }
         await smoothScrollToTop();
         if (cancelled) return;
+        if (target === 'category') setExitBgSrc(categoryBg);
         setExiting(true);
         setTransitionPayload(target, {
           searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
+          bg: bateauBg,
         });
         navTimer = setTimeout(() => navigate(to), CATEGORY_ENTER_TOTAL);
       };
@@ -269,7 +299,7 @@ function ProductPage() {
   const boat = useMemo(() => boats.find((b) => b.id_boat === boatId) ?? null, [boats, boatId]);
   const price = boat ? Number(boat.daily_price) : 0;
   const images = boat?.images ?? [];
-  const thumbs = images.slice(1, 3);
+  const thumbs = images.slice(1, 5);
   const typeLabel = boat ? t(`carrousel.boatType.${boat.type}`, { defaultValue: boat.type }) : '';
   const isAvailable = (boat?.availabilities?.length ?? 0) > 0;
 
@@ -380,17 +410,30 @@ function ProductPage() {
     <main className="w-full min-h-screen pt-20 bg-white overflow-x-clip">
       <style>{PAGE_SLIDE_CSS}</style>
       <div>
-        {/* Fond photo bateau — même image fixe que la page catégorie, pour un
-            raccord invisible pendant les transitions dans les deux sens. */}
-        <div
-          className="relative"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-          }}
-        >
+        {/* Fond photo bateau — image propre à la page produit ; le raccord
+            invisible aux transitions est assuré par le crossfade ci-dessous
+            plutôt que par une image partagée avec la catégorie.
+            min-h-screen : garantit une couverture plein écran même quand le
+            contenu (chargement en cours, bateau introuvable) est plus court
+            que le viewport. */}
+        <div className="relative min-h-screen" style={PHOTO_BG_STYLE}>
+          {/* Crossfade vers le fond de la page cible pendant la sortie : se
+              pose derrière les blocs (qui glissent hors écran par-dessus) et
+              atterrit à pleine opacité pile pour le montage réel de la page
+              suivante, qui utilise nativement cette même image. */}
+          {exitBgSrc && (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${exitBgSrc})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
+                animation: `pageBgFadeIn ${CATEGORY_ENTER_TOTAL}ms ease forwards`,
+              }}
+            />
+          )}
+
           {/* Section 0 — Strip sous le header uniquement */}
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
@@ -412,7 +455,7 @@ function ProductPage() {
                 <SearchBar light compact={scrolled} />
               </div>
             </div>
-            <div className="pb-2 pl-28" style={slideInStyle(0)}>
+            <div className="pt-3 pb-2 pl-28" style={slideInStyle(0)}>
               <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
             </div>
           </section>
@@ -421,7 +464,7 @@ function ProductPage() {
           {!boatsLoaded && <div style={{ height: '70vh' }} aria-hidden="true" />}
           {boatsLoaded && !boat && (
             <div
-              className="flex flex-col items-center gap-4 px-28 py-24 text-center"
+              className="flex flex-col items-center gap-4 pl-28 pr-20 py-24 text-center"
               style={slideInStyleLate('notFound', 1)}
             >
               <h1 className="text-2xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
@@ -432,53 +475,34 @@ function ProductPage() {
             </div>
           )}
           {boat && (
-            <div className="flex items-start gap-6 px-28 py-5 pb-12">
-              {/* Colonne principale — 2/3 */}
-              <div className="w-2/3 flex flex-col gap-5">
-                {/* Galerie : image principale + deux vues secondaires */}
-                <div className="grid grid-cols-3 gap-4" style={slideInStyleLate('gallery', 1)}>
+            <div className="flex items-start gap-6 pl-28 pr-20 py-5 pb-12">
+              {/* Colonne principale */}
+              <div className="flex-1 min-w-0 flex flex-col gap-5">
+                {/* Galerie : image principale + vues secondaires (jusqu'à 4) */}
+                <div
+                  className="grid grid-cols-4 grid-rows-2 gap-4"
+                  style={{ height: '440px', ...slideInStyleLate('gallery', 1) }}
+                >
                   <div
                     className={`relative rounded-3xl overflow-hidden border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] group ${
-                      thumbs.length > 0 ? 'col-span-2 row-span-2' : 'col-span-3'
+                      thumbs.length > 0 ? 'col-span-2 row-span-2' : 'col-span-4 row-span-2'
                     }`}
-                    style={thumbs.length > 0 ? undefined : { aspectRatio: '16/9' }}
                   >
                     <img
                       src={images[0]?.url ?? ''}
                       alt={boat.name}
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                    <div
-                      className="absolute top-3 left-3 flex items-center gap-1 text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm border border-white/30"
-                      style={{
-                        backgroundColor: 'rgba(14,165,233,0.8)',
-                        boxShadow: '0 2px 8px rgba(14,165,233,0.5)',
-                      }}
-                    >
-                      {typeLabel}
-                    </div>
-                    <FavoriteButton
-                      isFavorite={favoriteIds.has(boat.id_boat)}
-                      onToggle={() => toggleFavorite(boat.id_boat)}
-                      size={26}
-                      className="absolute top-3 right-3 z-10"
-                    />
-                    <p className="absolute bottom-4 left-4 text-white text-lg font-bold drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
-                      {boat.name}
-                      {boat.build_year != null && ` - ${boat.build_year}`}
-                    </p>
                   </div>
                   {thumbs.map((img) => (
                     <div
                       key={img.url}
                       className="relative rounded-3xl overflow-hidden border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)]"
-                      style={{ aspectRatio: '7/5' }}
                     >
                       <img
                         src={img.url}
                         alt={boat.name}
-                        className="w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover"
                         loading="lazy"
                         decoding="async"
                       />
@@ -486,95 +510,203 @@ function ProductPage() {
                   ))}
                 </div>
 
+                {/* Spécifications : juste sous la galerie, dans la même
+                    colonne que les photos plutôt qu'après toute la ligne
+                    (aside compris) — montées après l'animation d'entrée. */}
+                {!belowFoldReady && <div style={{ height: '60vh' }} aria-hidden="true" />}
+                {belowFoldReady && (
+                  <>
+                    {/* Section 3 — Spécifications techniques */}
+                    <section
+                      id="specifications"
+                      className="relative w-full flex flex-col items-start py-6 scroll-mt-[130px]"
+                    >
+                      <div
+                        className="w-full max-w-[919.9px] flex flex-col items-center gap-8 rounded-2xl border px-10 py-8"
+                        style={GLASS_STYLE}
+                      >
+                        <div className="text-center">
+                          <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+                            {t('product.specs.kicker')}
+                          </p>
+                          <h2 className="text-3xl md:text-4xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                            {t('product.specs.title')}
+                          </h2>
+                          <p className="text-sm text-white/70 mt-4">
+                            {t('product.specs.subtitle')}
+                          </p>
+                        </div>
+                        <div className="w-full grid grid-cols-2 gap-x-16">
+                          {specRows.map(([label, value]) => (
+                            <div
+                              key={label}
+                              className="flex items-baseline justify-between gap-4 py-3 border-b border-white/15"
+                            >
+                              <span className="text-xs font-semibold tracking-widest uppercase text-white/60">
+                                {label}
+                              </span>
+                              <span className="text-sm font-semibold text-white text-right">
+                                {value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        {boat.equipment?.length > 0 && (
+                          <div className="w-full flex flex-col items-center gap-4 pt-2 border-t border-white/15">
+                            <p className="text-xs font-bold tracking-widest uppercase text-sky-500">
+                              {t('product.specs.equipment')}
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                              {boat.equipment.map((eq) => (
+                                <span
+                                  key={eq.id_equipment}
+                                  className="text-xs font-medium px-3 py-1 rounded-full backdrop-blur-md"
+                                  style={{
+                                    backgroundColor: 'rgba(14,165,233,0.15)',
+                                    color: '#ffffff',
+                                    border: '1px solid rgba(255,255,255,0.3)',
+                                  }}
+                                >
+                                  {eq.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  </>
+                )}
+              </div>
+
+              {/* Panneau info + réservation — largeur fixe, sticky sous les barres fixes */}
+              <aside
+                className="shrink-0 sticky flex flex-col gap-3"
+                style={{ width: '384px', top: `${panelStickyTop}px`, transition: 'top 0.3s ease' }}
+              >
                 {/* Nom, pastilles d'info et description */}
                 <div
-                  className="rounded-2xl border p-6 flex flex-col gap-4"
-                  style={{ ...GLASS_STYLE, ...slideInStyleLate('info', 2) }}
+                  className="rounded-2xl border px-5 py-2 flex flex-col gap-3"
+                  style={{
+                    width: '397px',
+                    minHeight: '200px',
+                    ...GLASS_STYLE,
+                    ...slideInStyleLate('info', 2),
+                  }}
                 >
+                  {/* Nom + type de bateau, favoris aligné à droite */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <h2 className="text-lg font-bold text-white tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                        {boat.name}
+                      </h2>
+                      <span className="text-white/50">-</span>
+                      <span className="text-xs font-bold tracking-widest text-sky-500 uppercase">
+                        {typeLabel}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <ShareButton url={window.location.href} title={boat.name} size={18} />
+                      <FavoriteButton
+                        isFavorite={favoriteIds.has(boat.id_boat)}
+                        onToggle={() => toggleFavorite(boat.id_boat)}
+                        size={20}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Lieu */}
                   {boat.port && (
                     <p className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-sky-500">
-                      <MdLocationOn style={{ fontSize: '14px' }} />
+                      <MdLocationOn style={{ fontSize: '13px' }} />
                       {portLabel}
                     </p>
                   )}
-                  <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
-                    {boat.name}
-                  </h1>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {boat.size != null && (
-                      <span
-                        className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full backdrop-blur-md"
-                        style={PILL_STYLE}
-                      >
-                        <MdStraighten className="text-sky-400" style={{ fontSize: '13px' }} />
-                        {t('product.header.lengthValue', { size: Number(boat.size) })}
-                      </span>
-                    )}
-                    {boat.capacity != null && (
-                      <span
-                        className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full backdrop-blur-md"
-                        style={PILL_STYLE}
-                      >
-                        <MdPeople className="text-sky-400" style={{ fontSize: '13px' }} />
-                        {t('category.card.persons', { count: boat.capacity })}
-                      </span>
-                    )}
-                    <span
-                      className="text-[11px] font-medium px-2 py-1 rounded-full backdrop-blur-md"
-                      style={PILL_STYLE}
-                    >
-                      {boat.with_skipper
-                        ? t('category.card.skipperIncluded')
-                        : t('category.card.skipperExcluded')}
-                    </span>
-                    <span
-                      className="text-[11px] font-medium px-2 py-1 rounded-full backdrop-blur-md"
-                      style={PILL_STYLE}
-                    >
-                      {boat.license_required
-                        ? t('category.card.licenseRequired')
-                        : t('category.card.noLicenseRequired')}
-                    </span>
-                    <span className="text-xs font-semibold text-white ml-1">
-                      {boat.avg_rating != null ? (
-                        <>
-                          <span className="text-amber-400">★</span> {boat.avg_rating}
-                          {boat.review_count > 0 && (
-                            <span className="text-white/70">
-                              {' '}
-                              ({t('product.header.reviews', { count: boat.review_count })})
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        t('category.card.new')
-                      )}
-                    </span>
-                  </div>
-                  {boat.description && (
-                    <p className="text-sm text-white/80 leading-relaxed">{boat.description}</p>
-                  )}
-                </div>
-              </div>
 
-              {/* Panneau de réservation — 1/3, sticky sous les barres fixes */}
-              <aside
-                className="w-1/3 sticky flex flex-col gap-3"
-                style={{ top: `${panelStickyTop}px`, transition: 'top 0.3s ease' }}
-              >
+                  {/* Info : longueur, capacité, skipper, permis */}
+                  <div className="flex flex-wrap gap-1">
+                    {[
+                      boat.size != null && {
+                        icon: MdStraighten,
+                        label: t('product.header.lengthValue', { size: Number(boat.size) }),
+                      },
+                      boat.capacity != null && {
+                        icon: MdPeople,
+                        label: t('category.card.persons', { count: boat.capacity }),
+                      },
+                      {
+                        icon: MdPerson,
+                        label: boat.with_skipper
+                          ? t('category.card.skipperIncluded')
+                          : t('category.card.skipperExcluded'),
+                      },
+                      {
+                        icon: MdBadge,
+                        label: boat.license_required
+                          ? t('category.card.licenseRequired')
+                          : t('category.card.noLicenseRequired'),
+                      },
+                    ]
+                      .filter(Boolean)
+                      .map(({ icon: Icon, label }) => (
+                        <span
+                          key={label}
+                          className="flex items-center gap-1 text-[11px] font-medium text-white px-1.5 py-0.5 rounded-full backdrop-blur-md"
+                          style={{
+                            backgroundColor: 'rgba(14,165,233,0.15)',
+                            border: '1px solid rgba(255,255,255,0.3)',
+                          }}
+                        >
+                          <Icon className="text-sky-400" style={{ fontSize: '12px' }} />
+                          {label}
+                        </span>
+                      ))}
+                  </div>
+
+                  {/* Description */}
+                  {boat.description && (
+                    <p className="text-xs text-white/80 leading-snug">{boat.description}</p>
+                  )}
+
+                  {/* Rating + nombre de commentaires */}
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                    {boat.review_count > 0 ? (
+                      <>
+                        <span className="text-amber-400">★</span> {boat.avg_rating}
+                        <span className="text-white/70">
+                          {' '}
+                          ({t('product.header.ratings', { count: boat.review_count })}) ·{' '}
+                          <span className="underline">
+                            {t('product.header.comments', { count: boat.comment_count })}
+                          </span>
+                        </span>
+                      </>
+                    ) : (
+                      t('product.header.noReviews')
+                    )}
+                  </p>
+                </div>
+
                 {/* L'animation s'applique aux blocs internes et non à l'<aside>
                     sticky, dont le style transition (top) doit rester. */}
                 <div
-                  className="flex flex-col rounded-2xl border overflow-hidden"
+                  className="relative z-20 flex flex-col rounded-2xl border"
                   style={{
+                    width: '397px',
+                    minHeight: '195px',
                     borderColor: 'rgba(255,255,255,0.2)',
                     ...slideInStyleLate('panel', 3, 'right'),
                   }}
                 >
-                  <div className="flex items-center justify-between px-5 py-4" style={GLASS_STYLE}>
+                  <div
+                    className="flex items-center justify-between px-4 py-3 rounded-t-2xl"
+                    style={GLASS_STYLE}
+                  >
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-2xl font-bold text-white">{price} €</span>
-                      <span className="text-xs text-white/70">{t('category.card.perDay')}</span>
+                      <span className="text-xs text-white/70">
+                        {t('category.card.perDay')} · {t('product.booking.taxIncluded')}
+                      </span>
                     </div>
                     <span
                       className="text-[10px] font-semibold flex items-center gap-1.5"
@@ -591,14 +723,14 @@ function ProductPage() {
                     </span>
                   </div>
                   <div
-                    className="flex flex-col gap-4 px-5 py-4 border-t"
+                    className="flex flex-col gap-3 px-4 py-3 border-t rounded-b-2xl"
                     style={{ ...GLASS_STYLE, borderColor: 'rgba(255,255,255,0.2)' }}
                   >
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-sky-500">
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-sky-500 text-center">
                       {t('product.booking.selectDates')}
                     </p>
                     <div
-                      className="flex justify-center rounded-full border"
+                      className="self-center flex justify-center rounded-full border"
                       style={{
                         backgroundColor: 'rgba(255,255,255,0.1)',
                         borderColor: 'rgba(255,255,255,0.3)',
@@ -611,6 +743,7 @@ function ProductPage() {
                         onChangeEnd={setEnd}
                         isDateAvailable={isDateAvailable}
                         light
+                        panelPlacement="top-right"
                       />
                     </div>
 
@@ -638,7 +771,7 @@ function ProductPage() {
                     <button
                       type="button"
                       onClick={handleBook}
-                      className="w-full text-white text-sm font-semibold px-4 py-2.5 rounded-full transition-all backdrop-blur-md border border-white/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(10,49,114,0.95)] hover:border-white/20"
+                      className="self-center text-white text-sm font-semibold px-6 py-2 rounded-full transition-all backdrop-blur-md border border-white/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(10,49,114,0.95)] hover:border-white/20"
                     >
                       {t('product.booking.book')}
                     </button>
@@ -654,7 +787,7 @@ function ProductPage() {
 
                 {/* Besoin d'aide ? */}
                 <div
-                  className="rounded-2xl border p-4 flex items-start gap-3"
+                  className="rounded-2xl border p-3 flex items-start gap-2"
                   style={{ ...GLASS_STYLE, ...slideInStyleLate('help', 4, 'right') }}
                 >
                   <MdInfoOutline className="text-sky-400 flex-shrink-0 mt-0.5 text-lg" />
@@ -676,109 +809,46 @@ function ProductPage() {
               </aside>
             </div>
           )}
-        </div>
 
-        {/* Sections sous la ligne de flottaison, montées après l'animation
-            d'entrée ; le bloc fantôme conserve la hauteur (et la barre de
-            défilement). */}
-        {!belowFoldReady && <div style={{ height: '60vh' }} aria-hidden="true" />}
-        {belowFoldReady && boat && (
-          <>
-            {/* Section 3 — Spécifications techniques */}
-            <section
-              id="specifications"
-              className="w-full bg-white flex flex-col items-center px-28 py-10 scroll-mt-[130px]"
-            >
-              <div className="text-center mb-10">
-                <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
-                  {t('product.specs.kicker')}
-                </p>
-                <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
-                  {t('product.specs.title')}
-                </h2>
-                <p className="text-sm text-gray-500 mt-4">{t('product.specs.subtitle')}</p>
-              </div>
-              <div className="w-full grid grid-cols-2 gap-x-16">
-                {specRows.map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="flex items-baseline justify-between gap-4 py-3 border-b border-gray-100"
-                  >
-                    <span className="text-xs font-semibold tracking-widest uppercase text-gray-400">
-                      {label}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-800 text-right">{value}</span>
-                  </div>
-                ))}
-              </div>
-              {boat.equipment?.length > 0 && (
-                <div className="w-full mt-10 flex flex-col items-center gap-4">
-                  <p className="text-xs font-bold tracking-widest uppercase text-sky-500">
-                    {t('product.specs.equipment')}
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {boat.equipment.map((eq) => (
-                      <span
-                        key={eq.id_equipment}
-                        className="text-xs font-medium px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-100"
-                      >
-                        {eq.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </section>
-
-            <div className="border-t border-gray-200 mx-[168px]" />
-
-            {/* Section 4 — Localisation */}
+          {/* Section 4 — Localisation : juste le composant MapView, focalisé
+              sur le port du bateau consulté (son seul marqueur), sans habillage
+              annexe (kicker/titre/légende). */}
+          {belowFoldReady && boat && (
             <section
               id="localisation"
-              className="w-full bg-white flex flex-col items-center px-28 py-10 scroll-mt-[130px]"
+              className="relative w-full flex flex-col items-start pl-28 pr-24 py-10 scroll-mt-[130px]"
             >
-              <div className="text-center mb-10">
-                <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
-                  {t('product.location.kicker')}
-                </p>
-                <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
-                  {t('product.location.title')}
-                </h2>
-                {boat.port && (
-                  <p className="text-sm text-gray-500 mt-4">
-                    {t('product.location.subtitle', { port: portLabel })}
-                  </p>
-                )}
-              </div>
-              <div
-                className="w-full rounded-2xl overflow-hidden border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.1)]"
-                style={{ height: '420px' }}
-              >
+              <div className="w-full max-w-[919.9px]" style={{ height: '420px' }}>
                 <MapView
                   markers={portMarkers}
-                  className="h-full !rounded-none !border-0"
+                  className="h-full"
                   emptyLabel={t('category.map.empty')}
                 />
               </div>
-              <p className="text-[10px] text-gray-400 text-center px-2 mt-2">
-                {t('category.map.hint')}
-              </p>
             </section>
+          )}
+        </div>
 
+        {/* Section 5 — Avis clients, également habillée du fond photo + verre. */}
+        {belowFoldReady && (
+          <div className="relative" style={PHOTO_BG_STYLE}>
+            <ClientReviews light id="avis" className="py-10 scroll-mt-[60px]" />
+          </div>
+        )}
+
+        {/* Section 6 — Embarcations similaires : reste sur fond blanc, hors du
+            fond photo (non demandé par la maquette glassmorphism). */}
+        {belowFoldReady && boat && (
+          <>
             <div className="border-t border-gray-200 mx-[168px]" />
-
-            {/* Section 5 — Embarcations similaires */}
             <section
               id="suggestions"
-              className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[140px] bg-white"
+              className="relative w-full flex flex-col gap-8 pl-28 pr-24 py-10 scroll-mt-[140px] bg-white"
             >
               <Carrousel theme="light" similarTo={similarTo} />
             </section>
           </>
         )}
-
-        {/* Section 6 — Avis clients */}
-        {belowFoldReady && <ClientReviews id="avis" className="py-10 scroll-mt-[60px]" />}
       </div>
     </main>
   );

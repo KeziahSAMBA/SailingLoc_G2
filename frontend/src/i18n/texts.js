@@ -211,8 +211,14 @@ export const TEXTS = {
       cta: { fr: 'Retour à la flotte', en: 'Back to the fleet' },
     },
     header: {
-      reviews_one: { fr: '{{count}} avis', en: '{{count}} review' },
-      reviews_other: { fr: '{{count}} avis', en: '{{count}} reviews' },
+      ratings_one: { fr: '{{count}} note', en: '{{count}} rating' },
+      ratings_other: { fr: '{{count}} notes', en: '{{count}} ratings' },
+      comments_one: { fr: '{{count}} commentaire', en: '{{count}} comment' },
+      comments_other: { fr: '{{count}} commentaires', en: '{{count}} comments' },
+      noReviews: {
+        fr: 'Aucun commentaire pour l’instant',
+        en: 'No comments yet',
+      },
       lengthValue: { fr: '{{size}} m', en: '{{size}} m' },
     },
     booking: {
@@ -223,7 +229,8 @@ export const TEXTS = {
       days_other: { fr: '{{count}} jours x {{price}}€', en: '{{count}} days x €{{price}}' },
       skipperService: { fr: 'Service Skipper (inclus)', en: 'Skipper service (included)' },
       free: { fr: 'Gratuit', en: 'Free' },
-      total: { fr: 'Total (hors taxes)', en: 'Total (before taxes)' },
+      total: { fr: 'Total (TTC)', en: 'Total (tax incl.)' },
+      taxIncluded: { fr: 'TTC', en: 'tax incl.' },
       book: { fr: 'Réserver maintenant', en: 'Book now' },
       noCharge: {
         fr: 'Aucun débit immédiat ne sera effectué',
@@ -267,6 +274,16 @@ export const TEXTS = {
         en: 'Departure port: {{port}}',
       },
     },
+  },
+
+  share: {
+    title: { fr: 'Partager', en: 'Share' },
+    copyLink: { fr: 'Copier le lien', en: 'Copy link' },
+    copied: { fr: 'Lien copié !', en: 'Link copied!' },
+    facebook: { fr: 'Facebook', en: 'Facebook' },
+    x: { fr: 'X (Twitter)', en: 'X (Twitter)' },
+    whatsapp: { fr: 'WhatsApp', en: 'WhatsApp' },
+    email: { fr: 'Email', en: 'Email' },
   },
 
   filterBar: {
@@ -322,6 +339,7 @@ export const TEXTS = {
     travelersPlaceholder: { fr: 'Nombre de personnes', en: 'Number of people' },
     search: { fr: 'Rechercher', en: 'Search' },
     resetTitle: { fr: 'Réinitialiser la recherche', en: 'Reset search' },
+    resetDatesTitle: { fr: 'Effacer les dates', en: 'Clear dates' },
     noPortMatch: {
       fr: 'Aucun port à « {{query}} ». Le plus proche :',
       en: 'No port matching "{{query}}". Nearest:',

@@ -64,11 +64,21 @@ const StarRating = memo(function StarRating({ rating }) {
   );
 });
 
-const ReviewCard = memo(function ReviewCard({ name, role, rating, date, text, avatar }) {
+const ReviewCard = memo(function ReviewCard({
+  name,
+  role,
+  rating,
+  date,
+  text,
+  avatar,
+  light = false,
+}) {
   const { t } = useTranslation();
   const roleLabels = getRoleLabels(t);
   return (
-    <div className="flex flex-col gap-2 py-3 px-5">
+    <div
+      className={`flex flex-col gap-2 py-3 px-5 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
+    >
       <div className="flex items-center gap-2">
         <img
           src={avatar}
@@ -80,7 +90,11 @@ const ReviewCard = memo(function ReviewCard({ name, role, rating, date, text, av
           className="w-9 h-9 rounded-full object-cover flex-shrink-0"
         />
         <div className="flex flex-col">
-          <span className="text-gray-800 font-semibold text-sm leading-tight">{name}</span>
+          <span
+            className={`font-semibold text-sm leading-tight ${light ? 'text-white' : 'text-gray-800'}`}
+          >
+            {name}
+          </span>
           {role && (
             <span className="text-sky-500 text-xs font-semibold">{roleLabels[role] ?? role}</span>
           )}
@@ -88,9 +102,11 @@ const ReviewCard = memo(function ReviewCard({ name, role, rating, date, text, av
       </div>
       <div className="flex items-center gap-2">
         <StarRating rating={rating} />
-        <span className="text-gray-400 text-xs">{date}</span>
+        <span className={`text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>{date}</span>
       </div>
-      <p className="text-gray-600 text-sm leading-relaxed">{text}</p>
+      <p className={`text-sm leading-relaxed ${light ? 'text-white/80' : 'text-gray-600'}`}>
+        {text}
+      </p>
     </div>
   );
 });
@@ -108,7 +124,15 @@ function sortReviews(reviews, sort) {
 
 const PAGE_SIZE = 6;
 
-export default function ClientReviews({ id, className = 'py-8', children }) {
+// Mêmes surfaces "verre" que les blocs des pages catégorie/produit sur fond photo.
+const GLASS_STYLE = {
+  backgroundColor: 'rgba(255,255,255,0.1)',
+  borderColor: 'rgba(255,255,255,0.2)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+};
+
+export default function ClientReviews({ id, className = 'py-8', light = false, children }) {
   const { t } = useTranslation();
   const sortOptions = getSortOptions(t);
   const roleFilters = getRoleFilters(t);
@@ -153,16 +177,17 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
     setPage(0);
   }
 
-  return (
-    <section
-      id={id}
-      className={`w-full bg-white flex flex-col items-center gap-5 px-28 ${className}`}
-    >
+  const body = (
+    <>
       <div className="text-center mb-2">
         <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-4 underline underline-offset-4">
           {t('reviews.kicker')}
         </p>
-        <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">{t('reviews.title')}</h2>
+        <h2
+          className={`text-3xl md:text-4xl font-semibold ${light ? 'text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-gray-900'}`}
+        >
+          {t('reviews.title')}
+        </h2>
       </div>
 
       <div className="flex items-center gap-4">
@@ -174,7 +199,9 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
               className={`px-3 py-1 rounded-full text-sm font-semibold border transition-all duration-200 ${
                 roleFilter === opt.value
                   ? 'bg-sky-500 text-white border-sky-500 shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-sky-400 hover:text-sky-500'
+                  : light
+                    ? 'bg-white/10 text-white border-white/30 hover:border-sky-400 hover:text-sky-300'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-sky-400 hover:text-sky-500'
               }`}
             >
               {opt.label}
@@ -185,10 +212,14 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
         <select
           value={sort}
           onChange={(e) => handleSort(e.target.value)}
-          className="text-sm border border-gray-200 rounded-full px-3 py-1 text-gray-600 bg-white cursor-pointer focus:outline-none focus:border-sky-400 focus:text-sky-500"
+          className={`text-sm border rounded-full px-3 py-1 cursor-pointer focus:outline-none ${
+            light
+              ? 'border-white/30 text-white bg-white/10 focus:border-sky-400 focus:text-sky-300'
+              : 'border-gray-200 text-gray-600 bg-white focus:border-sky-400 focus:text-sky-500'
+          }`}
         >
           {sortOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <option key={opt.value} value={opt.value} className="text-gray-900">
               {opt.label}
             </option>
           ))}
@@ -196,9 +227,13 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
       </div>
 
       {/* Grille 2×2 */}
-      <div className="w-3/4 grid grid-cols-3 gap-6">
+      <div className="w-full md:w-3/4 grid grid-cols-3 gap-6">
         {visible.map((review) => (
-          <ReviewCard key={review.id ?? `${review.name}_${review.created_at}`} {...review} />
+          <ReviewCard
+            key={review.id ?? `${review.name}_${review.created_at}`}
+            light={light}
+            {...review}
+          />
         ))}
       </div>
 
@@ -207,25 +242,55 @@ export default function ClientReviews({ id, className = 'py-8', children }) {
         <button
           onClick={() => setPage((p) => Math.max(0, p - 1))}
           disabled={currentPage === 0}
-          className="w-9 h-9 rounded-full flex items-center justify-center border border-gray-200 bg-white text-gray-600 hover:border-sky-500 hover:text-sky-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+          className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
+            light
+              ? 'border-white/30 bg-white/10 text-white hover:border-sky-400 hover:text-sky-300'
+              : 'border-gray-200 bg-white text-gray-600 hover:border-sky-500 hover:text-sky-500 shadow-sm'
+          }`}
         >
           <FaChevronLeft size={13} />
         </button>
 
-        <span className="text-sm text-gray-500 font-medium">
+        <span className={`text-sm font-medium ${light ? 'text-white/80' : 'text-gray-500'}`}>
           {currentPage + 1} / {totalPages}
         </span>
 
         <button
           onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
           disabled={currentPage === totalPages - 1}
-          className="w-9 h-9 rounded-full flex items-center justify-center border border-gray-200 bg-white text-gray-600 hover:border-sky-500 hover:text-sky-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+          className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
+            light
+              ? 'border-white/30 bg-white/10 text-white hover:border-sky-400 hover:text-sky-300'
+              : 'border-gray-200 bg-white text-gray-600 hover:border-sky-500 hover:text-sky-500 shadow-sm'
+          }`}
         >
           <FaChevronRight size={13} />
         </button>
       </div>
 
       {children}
+    </>
+  );
+
+  return (
+    <section
+      id={id}
+      className={
+        light
+          ? `w-full flex flex-col items-start pl-28 pr-24 gap-5 ${className}`
+          : `w-full bg-white flex flex-col items-center gap-5 px-28 ${className}`
+      }
+    >
+      {light ? (
+        <div
+          className="w-full max-w-[919.9px] flex flex-col items-center gap-5 rounded-2xl border px-10 py-8"
+          style={GLASS_STYLE}
+        >
+          {body}
+        </div>
+      ) : (
+        body
+      )}
     </section>
   );
 }

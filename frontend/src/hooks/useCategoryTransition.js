@@ -53,6 +53,10 @@ export const PAGE_SLIDE_CSS = `
     from { transform: none; }
     to   { transform: translateX(110vw); }
   }
+  @keyframes pageBgFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
 `;
 export const HERO_EXIT_EASING = 'cubic-bezier(0.5, 0, 0.75, 0.2)';
 export const HERO_ENTER_EASING = 'cubic-bezier(0.25, 0.8, 0.5, 1)';
