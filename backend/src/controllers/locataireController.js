@@ -5,11 +5,22 @@ import {
   addFavorite,
   removeFavorite,
 } from '../services/locataireService.js';
+import { payBooking } from '../services/bookingService.js';
 
 export async function getDashboard(req, res) {
   try {
     const stats = await getDashboardStats(req.user.id_user);
     res.json({ stats });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+// Paiement simulé d'une réservation « pending » du locataire connecté.
+export async function payMyBooking(req, res) {
+  try {
+    const payment = await payBooking(req.user.id_user, req.params.id_booking);
+    res.status(201).json({ payment });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

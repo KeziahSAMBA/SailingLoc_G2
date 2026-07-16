@@ -9,6 +9,7 @@ import {
   removeBoat,
   getBoats,
   getBoatsByType,
+  createBookingController,
 } from '../controllers/boatController.js';
 
 // Photos servies en statique via /uploads : on garde l'extension d'origine
@@ -71,6 +72,7 @@ const router = Router();
 router.get('/by-type', getBoatsByType);
 router.get('/', getBoats);
 router.post('/', protect, requireRole('proprietaire', 'admin'), uploadFiles, uploadBoat);
+router.post('/:id_boat/bookings', protect, requireRole('locataire'), createBookingController);
 router.put('/:id_boat', protect, requireRole('proprietaire'), uploadFiles, putBoat);
 router.delete('/:id_boat', protect, requireRole('proprietaire'), removeBoat);
 

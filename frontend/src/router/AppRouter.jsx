@@ -55,6 +55,7 @@ import ProprietaireBoats from '../components/proprietaire/ProprietaireBoats.jsx'
 import ProprietaireBoatForm from '../components/proprietaire/ProprietaireBoatForm.jsx';
 import ProprietaireMessages from '../components/proprietaire/ProprietaireMessages.jsx';
 import MyDocumentsPage from '../pages/MyDocumentsPage.jsx';
+import ReservationPage from '../pages/ReservationPage.jsx';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import RequireRole from '../components/common/RequireRole.jsx';
@@ -97,6 +98,14 @@ function AppRouter({ location }) {
         element={
           <RequireRole role={['locataire', 'proprietaire']}>
             <MyDocumentsPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/reservation/:idBoat"
+        element={
+          <RequireRole role="locataire">
+            <ReservationPage />
           </RequireRole>
         }
       />

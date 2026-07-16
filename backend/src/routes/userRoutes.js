@@ -22,6 +22,7 @@ import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import {
   getDashboard,
   getMyBookings,
+  payMyBooking,
   getMyFavorites,
   postFavorite,
   deleteFavorite,
@@ -124,6 +125,7 @@ router.get(
   getProprietaireBoat
 );
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
+router.post('/me/bookings/:id_booking/pay', protect, requireRole('locataire'), payMyBooking);
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
 router.post('/me/favorites/:id_boat', protect, requireRole('locataire'), postFavorite);
 router.delete('/me/favorites/:id_boat', protect, requireRole('locataire'), deleteFavorite);

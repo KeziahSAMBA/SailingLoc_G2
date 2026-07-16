@@ -342,12 +342,25 @@ function ProductPage() {
   const dayCount = countDays(start, end);
   const total = dayCount * price;
 
-  // Pas encore d'API publique de réservation : le CTA amène un visiteur à se
-  // connecter (pop-up par-dessus la page, comme pour les favoris).
+  // Entrée du tunnel de réservation : visiteur → login (pop-up par-dessus la
+  // page, comme pour les favoris) ; locataire avec dates choisies → tunnel.
+  const [bookingHint, setBookingHint] = useState('');
+  useEffect(() => setBookingHint(''), [boatId, start, end]);
+
   function handleBook() {
     if (!user) {
       navigate('/login', { state: { backgroundLocation: location } });
+      return;
     }
+    if (user.role !== 'locataire') {
+      setBookingHint(t('product.booking.locataireOnly'));
+      return;
+    }
+    if (!start || !end) {
+      setBookingHint(t('product.booking.missingDates'));
+      return;
+    }
+    navigate(`/reservation/${boatId}?start=${start}&end=${end}`);
   }
 
   const portLat = Number(boat?.port?.latitude);
@@ -817,6 +830,11 @@ function ProductPage() {
                     >
                       {t('product.booking.book')}
                     </button>
+                    {bookingHint && (
+                      <p role="status" className="text-xs text-center font-semibold text-amber-300">
+                        {bookingHint}
+                      </p>
+                    )}
                     <p className="text-[10px] text-white/60 text-center uppercase tracking-wide">
                       {t('product.booking.noCharge')}
                     </p>

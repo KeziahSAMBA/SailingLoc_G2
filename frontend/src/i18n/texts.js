@@ -232,6 +232,14 @@ export const TEXTS = {
       total: { fr: 'Total (TTC)', en: 'Total (tax incl.)' },
       taxIncluded: { fr: 'TTC', en: 'tax incl.' },
       book: { fr: 'Réserver maintenant', en: 'Book now' },
+      missingDates: {
+        fr: 'Sélectionnez d’abord vos dates de début et de fin.',
+        en: 'Please select your start and end dates first.',
+      },
+      locataireOnly: {
+        fr: 'Seul un compte locataire peut réserver un bateau.',
+        en: 'Only a renter account can book a boat.',
+      },
       noCharge: {
         fr: 'Aucun débit immédiat ne sera effectué',
         en: 'You will not be charged yet',
@@ -272,6 +280,91 @@ export const TEXTS = {
       subtitle: {
         fr: 'Port de départ : {{port}}',
         en: 'Departure port: {{port}}',
+      },
+    },
+  },
+
+  reservation: {
+    title: { fr: 'Réserver ce bateau', en: 'Book this boat' },
+    loading: { fr: 'Chargement…', en: 'Loading…' },
+    working: { fr: 'Un instant…', en: 'One moment…' },
+    invalid: {
+      fr: 'Réservation impossible : bateau introuvable ou dates manquantes.',
+      en: 'Booking unavailable: boat not found or missing dates.',
+    },
+    back: { fr: 'Retour au bateau', en: 'Back to the boat' },
+    previous: { fr: 'Étape précédente', en: 'Previous step' },
+    backToCatalog: { fr: 'Voir le catalogue', en: 'Browse the catalog' },
+    steps: {
+      recap: { fr: 'Récapitulatif', en: 'Summary' },
+      documents: { fr: 'Documents', en: 'Documents' },
+      payment: { fr: 'Paiement', en: 'Payment' },
+    },
+    recap: {
+      title: { fr: 'Votre réservation', en: 'Your booking' },
+      dates: { fr: 'Dates', en: 'Dates' },
+      detail: { fr: 'Détail', en: 'Details' },
+      days_one: { fr: '{{count}} jour × {{price}} €', en: '{{count}} day × €{{price}}' },
+      days_other: { fr: '{{count}} jours × {{price}} €', en: '{{count}} days × €{{price}}' },
+      total: { fr: 'Total (TTC)', en: 'Total (tax incl.)' },
+      confirm: { fr: 'Confirmer et continuer', en: 'Confirm and continue' },
+    },
+    documents: {
+      intro: {
+        fr: 'Pour finaliser votre réservation, vos trois documents (permis, pièce d’identité, CV nautique) doivent être déposés puis validés par l’équipe SailingLoc. Votre demande est conservée 72 heures (annulée automatiquement au-delà), mais les dates ne sont bloquées qu’au paiement : si quelqu’un d’autre paie ce créneau avant vous, votre demande sera annulée.',
+        en: 'To finalise your booking, your three documents (licence, ID, sailing CV) must be uploaded and then validated by the SailingLoc team. Your request is kept for 72 hours (then cancelled automatically), but the dates are only secured at payment: if someone else pays for this slot first, your request will be cancelled.',
+      },
+      notValidated: {
+        fr: 'Vos documents ne sont pas encore tous validés par SailingLoc. Réessayez une fois la validation faite — votre réservation reste enregistrée.',
+        en: 'Your documents have not all been validated by SailingLoc yet. Try again once validated — your booking remains saved.',
+      },
+      continue: { fr: 'Vérifier et continuer', en: 'Check and continue' },
+    },
+    payment: {
+      title: { fr: 'Paiement', en: 'Payment' },
+      amount: { fr: 'Montant à régler', en: 'Amount due' },
+      demo: {
+        fr: 'Paiement de démonstration : aucune donnée bancaire n’est envoyée ni enregistrée.',
+        en: 'Demo payment: no card data is sent or stored.',
+      },
+      name: { fr: 'Titulaire de la carte', en: 'Cardholder name' },
+      number: { fr: 'Numéro de carte', en: 'Card number' },
+      expiry: { fr: 'Expiration', en: 'Expiry' },
+      cvc: { fr: 'CVC', en: 'CVC' },
+      pay: { fr: 'Payer {{total}} €', en: 'Pay €{{total}}' },
+      errors: {
+        name: { fr: 'Indiquez le titulaire de la carte.', en: 'Enter the cardholder name.' },
+        number: { fr: 'Numéro de carte invalide.', en: 'Invalid card number.' },
+        expiry: { fr: 'Date d’expiration invalide (MM/AA).', en: 'Invalid expiry date (MM/YY).' },
+        expired: { fr: 'Cette carte est expirée.', en: 'This card has expired.' },
+        expiresBeforeEnd: {
+          fr: 'La carte doit rester valide jusqu’à la fin de la réservation ({{date}}).',
+          en: 'The card must remain valid until the end of the booking ({{date}}).',
+        },
+        cvc: { fr: 'CVC invalide.', en: 'Invalid CVC.' },
+      },
+    },
+    done: {
+      title: { fr: 'Réservation confirmée !', en: 'Booking confirmed!' },
+      text: {
+        fr: 'Votre réservation de {{boat}} est confirmée. Vous la retrouverez dans « Mes réservations ».',
+        en: 'Your booking of {{boat}} is confirmed. You will find it under “My bookings”.',
+      },
+      ref: { fr: 'Référence : {{ref}}', en: 'Reference: {{ref}}' },
+      myBookings: { fr: 'Mes réservations', en: 'My bookings' },
+    },
+    errors: {
+      createFailed: {
+        fr: 'La création de la réservation a échoué. Veuillez réessayer.',
+        en: 'Creating the booking failed. Please try again.',
+      },
+      checkFailed: {
+        fr: 'Impossible de vérifier vos documents. Veuillez réessayer.',
+        en: 'Could not check your documents. Please try again.',
+      },
+      payFailed: {
+        fr: 'Le paiement a échoué. Veuillez réessayer.',
+        en: 'The payment failed. Please try again.',
       },
     },
   },
