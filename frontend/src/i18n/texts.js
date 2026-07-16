@@ -338,6 +338,8 @@ export const TEXTS = {
     travelers: { fr: 'Voyageurs', en: 'Travelers' },
     travelersPlaceholder: { fr: 'Nombre de personnes', en: 'Number of people' },
     search: { fr: 'Rechercher', en: 'Search' },
+    expandTitle: { fr: 'Déployer la recherche', en: 'Expand search' },
+    collapseTitle: { fr: 'Replier la recherche', en: 'Collapse search' },
     resetTitle: { fr: 'Réinitialiser la recherche', en: 'Reset search' },
     resetDatesTitle: { fr: 'Effacer les dates', en: 'Clear dates' },
     noPortMatch: {

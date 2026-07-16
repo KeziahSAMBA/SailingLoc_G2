@@ -168,6 +168,9 @@ function HomePage() {
   // écran et le fond vidéo laisse place (crossfade) à l'image de fond de la
   // page de destination (cf. exitBgSrc, qui varie selon la cible).
   const [exiting, setExiting] = useState(false);
+  // Cible de la sortie en cours : seule la sortie vers la page produit
+  // rétracte la SearchBar (cf. SearchBar), en douceur, avant la navigation.
+  const [exitTarget, setExitTarget] = useState(null);
   const [exitBgSrc, setExitBgSrc] = useState(categoryBg);
   // Arrivée depuis /categorie ou /product/:id : les éléments du hero rentrent
   // depuis leur marge de sortie, la SearchBar revient en FLIP et l'image de
@@ -242,18 +245,26 @@ function HomePage() {
   }, [arrivalActive]);
 
   // FLIP retour de la SearchBar : de sa position dans la barre sticky de
-  // /categorie vers son emplacement au centre du hero.
+  // /categorie ou /product/:id vers son emplacement au centre du hero.
   useLayoutEffect(() => {
     const from = homeArrival?.searchBarRect;
     const el = searchBarWrapRef.current;
     if (!from || !el) return undefined;
+    // Depuis la page produit, la SearchBar y était rétractée à la mesure du
+    // rect (elle finit de se redéployer pendant la sortie) : un scale calculé
+    // sur ce rect produirait un effet de zoom. On ne garde alors que la
+    // continuité de position (translate seul) — déployée, la barre a déjà
+    // quasiment la taille naturelle du hero, et son bord gauche est le même
+    // rétractée ou déployée.
+    const translateOnly = homeArrival?.from === 'product';
     const to = el.getBoundingClientRect();
     el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
     el.style.transition = 'none';
-    el.style.transform =
-      `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
-      `scale(${from.width / to.width}, ${from.height / to.height})`;
+    el.style.transform = translateOnly
+      ? `translate(${from.left - to.left}px, ${from.top - to.top}px)`
+      : `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
+        `scale(${from.width / to.width}, ${from.height / to.height})`;
     let raf2 = null;
     const raf1 = window.requestAnimationFrame(() => {
       raf2 = window.requestAnimationFrame(() => {
@@ -306,6 +317,7 @@ function HomePage() {
         if (cancelled) return;
         setExitBgSrc(targetBg);
         setExiting(true);
+        setExitTarget(target);
         setTransitionPayload(target, {
           searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
         });
@@ -495,7 +507,11 @@ function HomePage() {
             </p>
           </div>
           <div ref={searchBarWrapRef} style={introFromBelowStyle}>
-            <SearchBar light />
+            <SearchBar
+              light
+              retracted={exiting && exitTarget === 'product'}
+              retractDuration={HERO_EXIT_DURATION}
+            />
           </div>
           <div className="text-center" style={introFromBelowStyle}>
             <p

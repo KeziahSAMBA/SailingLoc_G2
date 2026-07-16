@@ -178,11 +178,19 @@ function ProductPage() {
         if (cancelled) return;
         if (target === 'category') setExitBgSrc(categoryBg);
         setExiting(true);
-        setTransitionPayload(target, {
-          searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
-          bg: bateauBg,
-        });
-        navTimer = setTimeout(() => navigate(to), CATEGORY_ENTER_TOTAL);
+        // Payload posé à la toute fin de la sortie, pas à son départ : le rect
+        // de la SearchBar y est mesuré une fois le déploiement terminé et le
+        // `top` du bandeau sticky reposé — mesuré trop tôt, le FLIP de la page
+        // d'arrivée partirait d'une position périmée et corrigerait en plein
+        // vol.
+        navTimer = setTimeout(() => {
+          setTransitionPayload(target, {
+            searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
+            bg: bateauBg,
+            from: 'product',
+          });
+          navigate(to);
+        }, CATEGORY_ENTER_TOTAL);
       };
     const unsubHome = onHomeTransitionRequest(beginExit('home'));
     const unsubCategory = onCategoryTransitionRequest(beginExit('category'));
@@ -194,20 +202,23 @@ function ProductPage() {
     };
   }, [navigate]);
 
-  // FLIP de la SearchBar : on part de sa position mesurée sur la page de
-  // départ (translate + scale inverses appliqués avant peinture) puis on
-  // laisse la transition la ramener à sa place naturelle.
+  // FLIP de position seule pour la SearchBar (translate sans scale : rétractée
+  // par défaut ici, sa taille ne correspond pas à celle mesurée sur la page de
+  // départ — un scale produirait un effet de zoom, pas une continuité).
+  // Depuis la catégorie uniquement : le bouton, que la rétraction là-bas a
+  // ramené contre le bord gauche de la barre (le coin du rect mesuré),
+  // poursuit sa glissade jusqu'à son emplacement ici — sans ça il sautait
+  // brutalement de la position catégorie à la position produit au moment de
+  // la navigation. Depuis l'accueil (barre centrée du hero, position sans
+  // rapport), pas de continuité à préserver : aucun FLIP.
   useLayoutEffect(() => {
     const from = transitionPayload?.searchBarRect;
     const el = searchBarWrapRef.current;
-    if (!from || !el) return undefined;
+    if (!from || !el || transitionPayload?.from !== 'category') return undefined;
     const to = el.getBoundingClientRect();
-    el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
     el.style.transition = 'none';
-    el.style.transform =
-      `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
-      `scale(${from.width / to.width}, ${from.height / to.height})`;
+    el.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
     let raf2 = null;
     const raf1 = window.requestAnimationFrame(() => {
       raf2 = window.requestAnimationFrame(() => {
@@ -218,7 +229,6 @@ function ProductPage() {
     const resetStyles = () => {
       el.style.transform = '';
       el.style.transition = '';
-      el.style.transformOrigin = '';
       el.style.willChange = '';
     };
     const cleanupTimer = setTimeout(resetStyles, CATEGORY_ENTER_TOTAL + 100);
@@ -226,8 +236,9 @@ function ProductPage() {
       window.cancelAnimationFrame(raf1);
       if (raf2) window.cancelAnimationFrame(raf2);
       clearTimeout(cleanupTimer);
-      // État neutre pour la seconde passe de StrictMode, qui doit mesurer la
-      // position naturelle et non celle déplacée par la première.
+      // Remet l'élément à l'état neutre : StrictMode rejoue cet effet en dev,
+      // et la seconde passe doit mesurer la position naturelle, pas celle
+      // déplacée par la première.
       resetStyles();
     };
   }, [transitionPayload]);
@@ -396,12 +407,16 @@ function ProductPage() {
 
   const breadcrumbItems = [
     { label: t('breadcrumb.categorie'), to: '/categorie' },
-    { label: boat?.name ?? '…', to: `/product/${id}` },
+    // Nom transmis par la page catégorie via le payload en attendant la
+    // réponse de l'API : sans lui, le passage « … » → nom élargit la
+    // breadcrumb et repousse la SearchBar en plein FLIP (effet de rebond).
+    { label: boat?.name ?? transitionPayload?.boatName ?? '…', to: `/product/${id}` },
   ];
 
-  // Header fixe (60/80px) + barre recherche/fil d'ariane sticky (~116px) :
-  // offset réel au-dessus du panneau de réservation sticky.
-  const panelStickyTop = (scrolled ? 60 : 80) + 116;
+  // Header fixe (60/80px) + barre fil d'ariane/recherche sticky, compactée au
+  // scroll (pt 32px → 8px, soit ~84px puis ~60px) : offset réel au-dessus du
+  // panneau de réservation sticky.
+  const panelStickyTop = (scrolled ? 60 : 80) + (scrolled ? 64 : 88);
 
   return (
     // overflow-x-clip (et non hidden : hidden créerait un conteneur de scroll
@@ -450,13 +465,26 @@ function ProductPage() {
               transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
             }}
           >
-            <div className="flex items-center gap-8 pt-8 pl-28">
-              <div ref={searchBarWrapRef}>
-                <SearchBar light compact={scrolled} />
+            {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
+                composants au lieu de garder l'aération du haut de page. */}
+            <div
+              className="flex items-center gap-8 pb-2 pl-28"
+              style={{
+                paddingTop: scrolled ? '8px' : '32px',
+                transition: 'padding-top 0.3s ease',
+              }}
+            >
+              <div style={slideInStyle(0)}>
+                <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
               </div>
-            </div>
-            <div className="pt-3 pb-2 pl-28" style={slideInStyle(0)}>
-              <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
+              <div ref={searchBarWrapRef}>
+                <SearchBar
+                  light
+                  compact={scrolled}
+                  retracted={!exiting}
+                  retractDuration={exiting ? CATEGORY_ENTER_TOTAL : undefined}
+                />
+              </div>
             </div>
           </section>
 
@@ -516,10 +544,21 @@ function ProductPage() {
                 {!belowFoldReady && <div style={{ height: '60vh' }} aria-hidden="true" />}
                 {belowFoldReady && (
                   <>
-                    {/* Section 3 — Spécifications techniques */}
+                    {/* Section 3 — Spécifications techniques. Montée après la
+                        cascade d'entrée mais son haut dépasse dans le viewport :
+                        fondu discret à l'apparition (un pop sec sinon), et
+                        sortie avec les autres blocs — sans quoi elle resterait
+                        figée à l'écran pendant que tout le reste s'en va. */}
                     <section
                       id="specifications"
                       className="relative w-full flex flex-col items-start py-6 scroll-mt-[130px]"
+                      style={
+                        exiting
+                          ? slideOutStyle(2, 'left')
+                          : transitionPayload && {
+                              animation: 'pageBgFadeIn 400ms ease both',
+                            }
+                      }
                     >
                       <div
                         className="w-full max-w-[919.9px] flex flex-col items-center gap-8 rounded-2xl border px-10 py-8"
@@ -591,7 +630,10 @@ function ProductPage() {
                     width: '397px',
                     minHeight: '200px',
                     ...GLASS_STYLE,
-                    ...slideInStyleLate('info', 2),
+                    // Colonne de droite : entre et sort par la marge droite,
+                    // comme les deux blocs en dessous — par la gauche, il
+                    // traverserait la galerie en plein vol.
+                    ...slideInStyleLate('info', 2, 'right'),
                   }}
                 >
                   {/* Nom + type de bateau, favoris aligné à droite */}
