@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getBookings } from '../../services/locataireService.js';
 
@@ -45,6 +46,7 @@ function isPast(value) {
 
 function BookingCard({ booking }) {
   const { t } = useTranslation();
+  const boatLink = booking.boat?.id_boat != null ? `/product/${booking.boat.id_boat}` : '/product';
   const meta = getBookingStatus(t)[booking.status] || {
     label: booking.status,
     cls: 'bg-slate-500/15 text-slate-300',
@@ -52,21 +54,23 @@ function BookingCard({ booking }) {
   const port = booking.boat?.port;
   const showReviewHint = booking.status === 'confirmed' && isPast(booking.end_date);
 
-  return (
-    <article className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70">
+  const cardContent = (
+    <article className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 transition hover:border-slate-600 hover:bg-slate-900">
       <div className="flex flex-col sm:flex-row">
-        {booking.boat?.image && (
+        {booking.boat?.image ? (
           <img
             src={booking.boat.image}
             alt={`Bateau ${booking.boat?.name}`}
             loading="lazy"
             className="h-40 w-full object-cover sm:h-auto sm:w-48"
           />
-        )}
+        ) : null}
+
         <div className="flex-1 p-5">
           <header className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 className="text-lg font-bold text-white">{booking.boat?.name}</h3>
+
               {(booking.boat?.type || port) && (
                 <p className="mt-0.5 text-sm text-slate-400">
                   {[booking.boat?.type, port && `${port.name} · ${port.city}`]
@@ -74,7 +78,12 @@ function BookingCard({ booking }) {
                     .join(' — ')}
                 </p>
               )}
+
+              <p className="mt-2 text-sm font-semibold text-[#5AB4EC] transition group-hover:text-[#ABD4FF]">
+                {t('locataireReservations.viewProduct')}
+              </p>
             </div>
+
             <span
               className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}
             >
@@ -90,12 +99,14 @@ function BookingCard({ booking }) {
                 <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
               </dd>
             </div>
+
             <div>
               <dt className="text-slate-400">{t('locataireReservations.amount')}</dt>
               <dd className="font-medium text-slate-100">
                 {EURO.format(booking.total_amount ?? 0)}
               </dd>
             </div>
+
             <div>
               <dt className="text-slate-400">{t('locataireReservations.bookedOn')}</dt>
               <dd className="font-medium text-slate-100">
@@ -109,7 +120,9 @@ function BookingCard({ booking }) {
               <span className="font-semibold">{t('locataireReservations.cancellation')}</span>{' '}
               {booking.cancellation_reason}
               {booking.cancellation_date &&
-                ` ${t('locataireReservations.cancelledOn', { date: fmtDate(booking.cancellation_date) })}`}
+                ` ${t('locataireReservations.cancelledOn', {
+                  date: fmtDate(booking.cancellation_date),
+                })}`}
             </p>
           )}
 
@@ -123,6 +136,15 @@ function BookingCard({ booking }) {
         </div>
       </div>
     </article>
+  );
+
+  return (
+    <Link
+      to={boatLink}
+      className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+    >
+      {cardContent}
+    </Link>
   );
 }
 

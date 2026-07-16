@@ -1,7 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+  memo,
+  startTransition,
+} from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bateauBg from '../assets/image/paysage/cote_azur.jpg';
+import productBg from '../assets/image/paysage/crique.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -16,6 +25,24 @@ import { useFavorites } from '../hooks/useFavorites.js';
 import { fetchBoats } from '../services/boatService.js';
 import { fetchPorts } from '../services/portService.js';
 import { trackSiteSearch } from '../utils/matomo.js';
+import {
+  readTransitionPayload,
+  clearTransitionPayload,
+  setTransitionPayload,
+  onHomeTransitionRequest,
+  onProductTransitionRequest,
+  useProductNavigate,
+  smoothScrollToTop,
+  lockScroll,
+  unlockScroll,
+  PAGE_SLIDE_CSS,
+  CATEGORY_ENTER_STAGGER,
+  CATEGORY_ENTER_TOTAL,
+  CATEGORY_ENTER_EASING,
+  CATEGORY_EXIT_EASING,
+  HERO_EXIT_DURATION,
+  INTRO_SOFT_EASING,
+} from '../hooks/useCategoryTransition.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -108,7 +135,10 @@ function scatterBoatPosition(id, portLat, portLng) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function BoatListingCard({
+// Mémoïsée : la page se re-rend plusieurs fois pendant les animations de
+// transition (données, recadrages de la carte) et re-rendre les fiches à
+// chaque fois fait saccader la cascade — leurs props sont stables.
+const BoatListingCard = memo(function BoatListingCard({
   id,
   image,
   badge,
@@ -140,6 +170,7 @@ function BoatListingCard({
           alt={name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
         {badge && (
@@ -270,7 +301,7 @@ function BoatListingCard({
       </div>
     </article>
   );
-}
+});
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -289,15 +320,130 @@ function CategoryPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
-  // Header fixe (60/80px) + barre filtre/recherche/fil d'ariane sticky (~116px) :
-  // offset réel au-dessus de la carte, pour qu'elle tienne entière dans l'écran visible.
-  const mapStickyTop = (scrolled ? 60 : 80) + 116;
+  // Arrivée depuis la transition HomePage → catégorie : les blocs de la page
+  // entrent depuis la marge gauche en cascade, et la SearchBar glisse (FLIP)
+  // depuis sa position dans le hero de l'accueil jusqu'à son emplacement ici.
+  const navigate = useNavigate();
+  const [transitionPayload] = useState(() => readTransitionPayload('category'));
+  const [enterActive, setEnterActive] = useState(Boolean(transitionPayload));
+  // Sections sous la ligne de flottaison (carrousels, avis) différées pendant
+  // l'animation d'entrée : leur montage en pleine cascade faisait saccader
+  // l'arrivée alors qu'elles sont hors écran à ce moment-là.
+  const [belowFoldReady, setBelowFoldReady] = useState(!transitionPayload);
+
+  // Fin de l'animation d'entrée : montage des sections différées et
+  // déverrouillage du défilement, au même moment.
+  useEffect(() => {
+    if (!enterActive) {
+      setBelowFoldReady(true);
+      unlockScroll();
+    }
+  }, [enterActive]);
+  // Sortie vers l'accueil ou la page produit en cours : les blocs rejouent
+  // leur entrée à rebours.
+  const [exiting, setExiting] = useState(false);
+  // Cible de la sortie en cours : seule la sortie vers la page produit
+  // rétracte la SearchBar (cf. SearchBar), en douceur, avant la navigation.
+  const [exitTarget, setExitTarget] = useState(null);
+  // Sortie vers la page produit uniquement : son fond (image différente de
+  // celui de la catégorie) recouvre le nôtre en fondu, pour un raccord
+  // invisible au moment du montage réel de la page produit — cf. exitBgSrc
+  // dans ProductPage.jsx pour le même mécanisme joué en sens inverse. Vers
+  // l'accueil, inutile : on transmet notre image via le payload de
+  // transition (bg ci-dessous), que la HomePage utilise elle-même pour son
+  // propre fondu vers la vidéo.
+  const [exitBgSrc, setExitBgSrc] = useState(null);
+  const searchBarWrapRef = useRef(null);
+  const transitioningRef = useRef(false);
+  // Horloge de la cascade d'entrée + styles figés des blocs montés en retard
+  // (cf. slideInStyleLate).
+  const enterStartRef = useRef(Date.now());
+  const lateAnimCache = useRef({});
+  // Copie stable des bateaux pour la séquence de sortie (effet monté une seule
+  // fois : sa closure ne voit pas les états ultérieurs) — sert à transmettre
+  // le nom du bateau cliqué à la page produit via le payload.
+  const boatsRef = useRef([]);
+
+  // Nettoyage différé (et non dans l'initialiseur ci-dessus, que StrictMode
+  // invoque deux fois en dev) pour ne pas rejouer l'entrée aux visites suivantes.
+  useEffect(() => {
+    clearTransitionPayload();
+  }, []);
+
+  // Séquence de transition vers l'accueil ou la page produit : remontée en
+  // haut de page, sortie des blocs (la SearchBar, elle, est mesurée pour
+  // l'animation FLIP jouée à l'arrivée), puis navigation réelle.
+  useEffect(() => {
+    let cancelled = false;
+    let navTimer = null;
+    const beginExit =
+      (target) =>
+      async ({ to }) => {
+        if (transitioningRef.current) return;
+        transitioningRef.current = true;
+        // Défilement gelé jusqu'à la fin de l'arrivée sur la page cible, qui
+        // déverrouille (les sections différées y sont alors montées).
+        lockScroll();
+        if (target === 'product') {
+          // Précharge ET décode le fond de la page produit pendant la
+          // remontée : le décodage du JPEG au moment du premier paint ferait
+          // saccader le début du crossfade.
+          const bg = new window.Image();
+          bg.src = productBg;
+          bg.decode?.().catch(() => {});
+        }
+        await smoothScrollToTop();
+        if (cancelled) return;
+        if (target === 'product') setExitBgSrc(productBg);
+        setExiting(true);
+        setExitTarget(target);
+        const productId = Number(to.match(/^\/product\/(\d+)/)?.[1]);
+        // Payload posé à la toute fin de la sortie, pas à son départ : le rect
+        // de la SearchBar y est mesuré une fois la rétraction terminée et le
+        // `top` du bandeau sticky reposé (sa transition 60→80px joue pendant
+        // la remontée) — mesuré trop tôt, le FLIP de la page d'arrivée
+        // partirait d'une position périmée et corrigerait en plein vol.
+        navTimer = setTimeout(() => {
+          setTransitionPayload(target, {
+            searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
+            bg: bateauBg,
+            from: 'category',
+            // Nom du bateau cliqué : la breadcrumb produit l'affiche dès son
+            // premier rendu — sinon elle passe de « … » au nom à la réponse
+            // de l'API, s'élargit, et repousse la SearchBar en plein FLIP
+            // (effet de rebond).
+            boatName: boatsRef.current.find((b) => b.id === productId)?.name ?? null,
+          });
+          navigate(to);
+        }, CATEGORY_ENTER_TOTAL);
+      };
+    const unsubHome = onHomeTransitionRequest(beginExit('home'));
+    const unsubProduct = onProductTransitionRequest(beginExit('product'));
+    return () => {
+      cancelled = true;
+      clearTimeout(navTimer);
+      unsubHome();
+      unsubProduct();
+    };
+  }, [navigate]);
+  // Header fixe (60/80px) + barre sticky : filtre/recherche avec le fil
+  // d'ariane sur sa propre ligne en dessous en haut de page (~117px), resserrée
+  // en une seule ligne (fil d'ariane passé à gauche, pt réduit) en mode compact
+  // au scroll (~60px) : offset réel au-dessus de la carte, pour qu'elle tienne
+  // entière dans l'écran visible.
+  const mapStickyTop = (scrolled ? 60 : 80) + (scrolled ? 64 : 116);
   const [ports, setPorts] = useState([]);
   const [boats, setBoats] = useState([]);
+  useEffect(() => {
+    boatsRef.current = boats;
+  }, [boats]);
+  // Évite le flash « aucune offre ne correspond… » pendant le chargement
+  // initial (visible en plein milieu de l'animation d'entrée).
+  const [boatsLoaded, setBoatsLoaded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(8);
   const [mapBounds, setMapBounds] = useState(null);
   const [highlightedBoatId, setHighlightedBoatId] = useState(null);
-  const [focusBoat, setFocusBoat] = useState(null);
+  const [focusBoat] = useState(null);
   const { favoriteIds, toggleFavorite } = useFavorites();
 
   const [boatTypeFilters, setBoatTypeFilters] = useState(EMPTY_BOAT_TYPE_FILTERS);
@@ -425,27 +571,164 @@ function CategoryPage() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Titres "Liste des propositions" / "N bateaux disponibles" : fondu simple
+  // (même traitement que le "Bienvenue sur" de l'intro HomePage), rejoue à
+  // chaque arrivée sur la page et s'inverse dès la sortie. Son apparition est
+  // calée sur l'atterrissage commun de la cascade des autres blocs
+  // (CATEGORY_ENTER_TOTAL) pour donner l'illusion que tout arrive ensemble —
+  // sans quoi le fondu, plus court, finissait avant eux. Sans cascade
+  // (arrivée directe, pas de transitionPayload), apparition immédiate.
+  const [titlesVisible, setTitlesVisible] = useState(false);
+  useEffect(() => {
+    const delay = transitionPayload ? Math.max(CATEGORY_ENTER_TOTAL - HERO_EXIT_DURATION, 0) : 0;
+    const timer = setTimeout(() => setTitlesVisible(true), delay);
+    return () => clearTimeout(timer);
+  }, [transitionPayload]);
+  useEffect(() => {
+    if (exiting) setTitlesVisible(false);
+  }, [exiting]);
+  const titleFadeStyle = {
+    opacity: titlesVisible ? 1 : 0,
+    transform: titlesVisible ? 'none' : 'translateY(14px)',
+    transition: `opacity ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}, transform ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}`,
+  };
+
+  // Fenêtre d'entrée : assez large pour couvrir les blocs montés en retard
+  // (la grille des fiches attend la réponse de l'API). Une fois refermée, plus
+  // aucun style d'animation — sinon un bloc remonté plus tard (ex. passage
+  // "aucun résultat" → résultats via les filtres) rejouerait sa glissade.
+  useEffect(() => {
+    if (!enterActive) return undefined;
+    // Marge après l'atterrissage commun pour couvrir une grille de fiches
+    // montée en retard (API lente) sans lui couper son animation en vol.
+    const timer = setTimeout(() => setEnterActive(false), CATEGORY_ENTER_TOTAL + 1500);
+    return () => clearTimeout(timer);
+  }, [enterActive]);
+
+  // FLIP de la SearchBar : on part de sa position mesurée dans le hero de
+  // l'accueil (translate + scale inverses appliqués avant peinture) puis on
+  // laisse la transition la ramener à sa place naturelle.
+  useLayoutEffect(() => {
+    const from = transitionPayload?.searchBarRect;
+    const el = searchBarWrapRef.current;
+    if (!from || !el) return undefined;
+    // Depuis la page produit, la SearchBar y était rétractée à la mesure du
+    // rect : un scale vers sa taille naturelle ici produirait un effet de
+    // zoom, pas une continuité. On ne garde alors que la continuité de
+    // position (translate seul) — le bord gauche de la barre, lui, est le
+    // même rétractée ou déployée.
+    const translateOnly = transitionPayload?.from === 'product';
+    const to = el.getBoundingClientRect();
+    el.style.transformOrigin = 'top left';
+    el.style.willChange = 'transform';
+    el.style.transition = 'none';
+    el.style.transform = translateOnly
+      ? `translate(${from.left - to.left}px, ${from.top - to.top}px)`
+      : `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
+        `scale(${from.width / to.width}, ${from.height / to.height})`;
+    let raf2 = null;
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        el.style.transition = `transform ${CATEGORY_ENTER_TOTAL}ms ${CATEGORY_ENTER_EASING}`;
+        el.style.transform = 'none';
+      });
+    });
+    const resetStyles = () => {
+      el.style.transform = '';
+      el.style.transition = '';
+      el.style.transformOrigin = '';
+      el.style.willChange = '';
+    };
+    const cleanupTimer = setTimeout(resetStyles, CATEGORY_ENTER_TOTAL + 100);
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      if (raf2) window.cancelAnimationFrame(raf2);
+      clearTimeout(cleanupTimer);
+      // Remet l'élément à l'état neutre : StrictMode rejoue cet effet en dev,
+      // et la seconde passe doit mesurer la position naturelle, pas celle
+      // déplacée par la première.
+      resetStyles();
+    };
+  }, [transitionPayload]);
+
+  // Sortie de page : l'entrée jouée à rebours — tous les blocs partent en
+  // même temps et disparaissent en cascade inversée (la map d'abord, la
+  // barre de filtres en dernier), chacun vers sa marge d'origine.
+  function slideOutStyle(order, from) {
+    const keyframes = from === 'left' ? 'categorySlideOutLeft' : 'categorySlideOutRight';
+    const duration = CATEGORY_ENTER_TOTAL - order * CATEGORY_ENTER_STAGGER;
+    return {
+      animation: `${keyframes} ${duration}ms ${CATEGORY_EXIT_EASING} both`,
+      // Promeut le bloc sur sa propre couche de composition avant le premier
+      // déplacement (évite la re-rasterisation en début d'animation).
+      willChange: 'transform',
+    };
+  }
+
+  // Entrée décalée des blocs depuis les marges (direction alternée par bloc),
+  // en écho à la sortie des éléments du hero. Hors fenêtre : aucun style.
+  // Chaque bloc part avec son décalage mais sa durée est allongée d'autant,
+  // pour que tous atterrissent à CATEGORY_ENTER_TOTAL pile.
+  function slideInStyle(order, from = 'left') {
+    if (exiting) return slideOutStyle(order, from);
+    if (!enterActive) return undefined;
+    const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
+    const delay = order * CATEGORY_ENTER_STAGGER;
+    return {
+      animation: `${keyframes} ${CATEGORY_ENTER_TOTAL - delay}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
+      willChange: 'transform',
+    };
+  }
+
+  // Variante pour les blocs qui montent en retard (la grille des fiches attend
+  // la réponse de l'API) : le délai est recalé sur l'horloge globale de la
+  // cascade au moment du montage — négatif si le départ est déjà passé, ce qui
+  // fait reprendre l'animation en cours de vol pour atterrir à
+  // CATEGORY_ENTER_TOTAL en même temps que les autres blocs. Le style est figé
+  // au premier calcul : le recalculer à chaque rendu redémarrerait l'animation.
+  function slideInStyleLate(key, order, from = 'left') {
+    if (exiting) return slideOutStyle(order, from);
+    if (!enterActive) return undefined;
+    const cache = lateAnimCache.current;
+    if (!cache[key]) {
+      const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
+      const intendedStart = order * CATEGORY_ENTER_STAGGER;
+      const delay = intendedStart - (Date.now() - enterStartRef.current);
+      cache[key] = {
+        animation: `${keyframes} ${CATEGORY_ENTER_TOTAL - intendedStart}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
+        willChange: 'transform',
+      };
+    }
+    return cache[key];
+  }
+
   useEffect(() => {
     setVisibleCount(8);
   }, [searchParams.toString()]);
 
+  // startTransition : les gros re-rendus de données (48 bateaux + marqueurs)
+  // passent en priorité basse pour que React puisse laisser respirer les
+  // animations d'entrée en cours.
   useEffect(() => {
     fetchPorts()
-      .then(({ data }) => setPorts(data))
+      .then(({ data }) => startTransition(() => setPorts(data)))
       .catch(() => {});
 
     fetchBoats()
       .then(({ data }) => {
         const mapped = data.map(toBoatCard);
         const coupDeCoeurIds = computeCoupDeCoeurIds(mapped);
-        setBoats(
-          mapped.map((b) => ({
-            ...b,
-            badge: coupDeCoeurIds.has(b.id) ? 'coup_de_coeur' : null,
-          }))
+        startTransition(() =>
+          setBoats(
+            mapped.map((b) => ({
+              ...b,
+              badge: coupDeCoeurIds.has(b.id) ? 'coup_de_coeur' : null,
+            }))
+          )
         );
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => startTransition(() => setBoatsLoaded(true)));
   }, []);
 
   // Clic sur un pin bateau : révèle la carte correspondante dans la liste (en
@@ -457,12 +740,15 @@ function CategoryPage() {
     setHighlightedBoatId(boat.id);
   }
 
-  // Clic sur une fiche produit : zoome la carte sur le pin bateau correspondant.
-  function handleBoatCardClick(boatId) {
-    const boatMarker = boatMapMarkers.find((b) => b.id === boatId);
-    if (!boatMarker) return;
-    setFocusBoat({ lat: boatMarker.lat, lng: boatMarker.lng });
-  }
+  // Clic sur une fiche produit : ouvre la page produit correspondante, avec
+  // la transition de sortie (cascade inversée) avant la navigation réelle.
+  const goToProduct = useProductNavigate();
+  const handleBoatCardClick = useCallback(
+    (boatId) => {
+      goToProduct(`/product/${boatId}`);
+    },
+    [goToProduct]
+  );
 
   useEffect(() => {
     if (highlightedBoatId == null) return undefined;
@@ -474,11 +760,18 @@ function CategoryPage() {
   }, [highlightedBoatId, visibleCount]);
 
   return (
-    <main className="w-full min-h-screen pt-20 bg-white">
+    // overflow-x-clip (et non hidden : hidden créerait un conteneur de scroll
+    // qui casserait les sticky) évite l'ascenseur horizontal pendant l'entrée
+    // des blocs depuis la marge droite (translateX(110vw)).
+    <main className="w-full min-h-screen pt-20 bg-white overflow-x-clip">
+      <style>{PAGE_SLIDE_CSS}</style>
       <div>
-        {/* Fond photo bateau — englobe le strip sous le header, la searchbar et les résultats */}
+        {/* Fond photo bateau — englobe le strip sous le header, la searchbar et les résultats.
+            min-h-screen : garantit une couverture plein écran même quand le
+            contenu (chargement en cours, peu de résultats) est plus court
+            que le viewport. */}
         <div
-          className="relative"
+          className="relative min-h-screen"
           style={{
             backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
             backgroundSize: 'cover',
@@ -486,6 +779,23 @@ function CategoryPage() {
             backgroundAttachment: 'fixed',
           }}
         >
+          {/* Crossfade vers le fond de la page produit pendant la sortie : se
+              pose derrière les blocs (qui glissent hors écran par-dessus) et
+              atterrit à pleine opacité pile pour le montage réel de la page
+              produit, qui utilise nativement cette même image. */}
+          {exitBgSrc && (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${exitBgSrc})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
+                animation: `pageBgFadeIn ${CATEGORY_ENTER_TOTAL}ms ease forwards`,
+              }}
+            />
+          )}
+
           {/* Section 0 — Strip sous le header uniquement */}
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
@@ -502,28 +812,75 @@ function CategoryPage() {
               transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
             }}
           >
-            <div className="flex items-center gap-8 pt-8 pl-28">
-              <FilterBar
-                light
-                compact={scrolled}
-                boatTypeFilters={boatTypeFilters}
-                onBoatTypeChange={setBoatTypeFilters}
-                licenseFilter={licenseFilter}
-                onLicenseFilterChange={setLicenseFilter}
-                skipperFilter={skipperFilter}
-                onSkipperFilterChange={setSkipperFilter}
-                sortBy={sortBy}
-                onSortByChange={setSortBy}
-                priceRange={priceRange}
-                onPriceRangeChange={setPriceRange}
-                coupDeCoeurFilter={coupDeCoeurFilter}
-                onCoupDeCoeurFilterChange={setCoupDeCoeurFilter}
-                onReset={resetFilters}
-              />
-              <SearchBar light compact={scrolled} />
+            {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
+                composants au lieu de garder l'aération du haut de page. */}
+            <div
+              className="flex items-center gap-8 pb-2 pl-28"
+              style={{
+                paddingTop: scrolled ? '8px' : '32px',
+                transition: 'padding-top 0.3s ease',
+              }}
+            >
+              {/* Double inline du fil d'ariane, replié hors compact (le fil vit
+                  alors sur sa propre ligne en dessous) : il se déploie à gauche
+                  des filtres au scroll. Le marginRight négatif annule le gap-8
+                  de la rangée pour que le slot replié n'occupe aucune place. */}
+              <div
+                className="overflow-hidden whitespace-nowrap"
+                style={{
+                  maxWidth: scrolled ? '320px' : '0px',
+                  marginRight: scrolled ? '0px' : '-32px',
+                  opacity: scrolled ? 1 : 0,
+                  visibility: scrolled ? 'visible' : 'hidden',
+                  transition:
+                    'max-width 0.3s ease, margin-right 0.3s ease, opacity 0.3s ease, visibility 0.3s',
+                }}
+              >
+                <Breadcrumb light compact />
+              </div>
+              <div style={slideInStyle(0)}>
+                <FilterBar
+                  light
+                  compact={scrolled}
+                  boatTypeFilters={boatTypeFilters}
+                  onBoatTypeChange={setBoatTypeFilters}
+                  licenseFilter={licenseFilter}
+                  onLicenseFilterChange={setLicenseFilter}
+                  skipperFilter={skipperFilter}
+                  onSkipperFilterChange={setSkipperFilter}
+                  sortBy={sortBy}
+                  onSortByChange={setSortBy}
+                  priceRange={priceRange}
+                  onPriceRangeChange={setPriceRange}
+                  coupDeCoeurFilter={coupDeCoeurFilter}
+                  onCoupDeCoeurFilterChange={setCoupDeCoeurFilter}
+                  onReset={resetFilters}
+                />
+              </div>
+              <div ref={searchBarWrapRef}>
+                <SearchBar
+                  light
+                  compact={scrolled}
+                  retracted={exiting && exitTarget === 'product'}
+                  retractDuration={CATEGORY_ENTER_TOTAL}
+                />
+              </div>
             </div>
-            <div className="pb-2 pl-28">
-              <Breadcrumb light compact={scrolled} />
+            {/* Fil d'ariane pleine ligne (état haut de page) : s'écrase en
+                douceur au scroll, le temps que son double inline prenne le
+                relais dans la rangée ci-dessus. */}
+            <div
+              className="overflow-hidden"
+              style={{
+                maxHeight: scrolled ? '0px' : '48px',
+                opacity: scrolled ? 0 : 1,
+                visibility: scrolled ? 'hidden' : 'visible',
+                transition: 'max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s',
+              }}
+            >
+              <div className="pt-1 pb-2 pl-28" style={slideInStyle(1)}>
+                <Breadcrumb light />
+              </div>
             </div>
           </section>
 
@@ -533,15 +890,7 @@ function CategoryPage() {
             <div className="w-1/2 flex flex-col gap-5 relative">
               <div className="relative z-10 flex flex-col gap-5">
                 <div className="flex items-end justify-between">
-                  <div
-                    className="flex flex-col items-start gap-3 rounded-2xl border px-4 py-2.5"
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      borderColor: 'rgba(255,255,255,0.2)',
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                    }}
-                  >
+                  <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
                     <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-sky-500">
                       {t('category.results.kicker')}
                     </p>
@@ -549,23 +898,19 @@ function CategoryPage() {
                       {t('category.results.title')}
                     </h2>
                   </div>
-                  <span
-                    className="text-sm text-white/80 font-medium rounded-full border px-3 py-1"
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      borderColor: 'rgba(255,255,255,0.2)',
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                    }}
-                  >
+                  <span className="text-sm text-white/80 font-medium" style={titleFadeStyle}>
                     {t('category.results.count', { count: filteredBoats.length })}
                   </span>
                 </div>
 
                 {filteredBoats.length === 0 ? (
-                  <p className="text-sm text-white/80 py-6">{t('category.results.empty')}</p>
+                  boatsLoaded && (
+                    <p className="text-sm text-white/80 py-6" style={slideInStyle(4)}>
+                      {t('category.results.empty')}
+                    </p>
+                  )
                 ) : (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4" style={slideInStyleLate('cards', 4)}>
                     {filteredBoats.slice(0, visibleCount).map((boat) => (
                       <BoatListingCard
                         key={boat.id}
@@ -596,9 +941,11 @@ function CategoryPage() {
               className="w-1/2 sticky flex flex-col gap-2"
               style={{ top: `${mapStickyTop}px`, transition: 'top 0.3s ease' }}
             >
+              {/* L'animation d'entrée s'applique au bloc interne et non à
+                  l'<aside> sticky, dont le style transition (top) doit rester. */}
               <div
                 className="flex flex-col rounded-2xl border overflow-hidden"
-                style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+                style={{ borderColor: 'rgba(255,255,255,0.2)', ...slideInStyle(5, 'right') }}
               >
                 <div
                   className="flex items-center justify-between px-4 py-2"
@@ -644,17 +991,22 @@ function CategoryPage() {
           </div>
         </div>
 
-        {/* Section 3 — Carrousels */}
-        <section
-          id="suggestions"
-          className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[140px]"
-        >
-          <Carrousel theme="light" />
-        </section>
+        {/* Section 3 — Carrousels : différée pendant l'entrée ; le bloc
+            fantôme conserve la hauteur (et la barre de défilement). */}
+        {belowFoldReady ? (
+          <section
+            id="suggestions"
+            className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[140px]"
+          >
+            <Carrousel theme="light" />
+          </section>
+        ) : (
+          <div style={{ height: '60vh' }} aria-hidden="true" />
+        )}
       </div>
 
       {/* Section 4 — Avis clients */}
-      <ClientReviews id="avis" className="py-10 scroll-mt-[60px]" />
+      {belowFoldReady && <ClientReviews id="avis" className="py-10 scroll-mt-[60px]" />}
     </main>
   );
 }

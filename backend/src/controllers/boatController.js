@@ -17,7 +17,7 @@ const BOAT_INCLUDE = {
       end_date: true,
       reviews: {
         where: { status: 'validated', deleted_at: null },
-        select: { rating: true },
+        select: { rating: true, comment: true },
       },
     },
   },
@@ -34,6 +34,7 @@ function enrichWithRating(boats) {
       allReviews.length > 0
         ? Math.round((allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length) * 10) / 10
         : null;
+    const comment_count = allReviews.filter((r) => r.comment?.trim()).length;
     const booking_count = b.bookings.filter((bk) => bk.status === 'confirmed').length;
     const booked_ranges = b.bookings
       .filter((bk) => BLOCKING_BOOKING_STATUSES.includes(bk.status))
@@ -43,6 +44,7 @@ function enrichWithRating(boats) {
       ...boat,
       avg_rating: avg,
       review_count: allReviews.length,
+      comment_count,
       booking_count,
       booked_ranges,
     };

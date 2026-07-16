@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FiX } from 'react-icons/fi';
 
 function toISO(date) {
   const y = date.getFullYear();
@@ -48,7 +49,7 @@ function DateField({ label, displayValue, placeholder, onClick, light }) {
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full transition-colors cursor-pointer text-left ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+      className={`flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full transition-colors cursor-pointer text-center ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
     >
       <span
         className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
@@ -64,7 +65,15 @@ function DateField({ label, displayValue, placeholder, onClick, light }) {
   );
 }
 
-function DateRangePicker({ start, end, onChangeStart, onChangeEnd, isDateAvailable, light }) {
+function DateRangePicker({
+  start,
+  end,
+  onChangeStart,
+  onChangeEnd,
+  isDateAvailable,
+  light,
+  panelPlacement = 'bottom-left',
+}) {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(() => {
@@ -133,8 +142,27 @@ function DateRangePicker({ start, end, onChangeStart, onChangeEnd, isDateAvailab
         light={light}
       />
 
+      {startDate && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            onChangeStart('');
+            onChangeEnd('');
+          }}
+          title={t('searchBar.resetDatesTitle')}
+          className={`flex items-center justify-center w-5 h-5 rounded-full transition-colors self-center mr-1.5 ${light ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-black/50 hover:text-black hover:bg-black/10'}`}
+        >
+          <FiX size={12} />
+        </button>
+      )}
+
       {open && (
-        <div className="absolute left-0 top-full mt-2 w-72 rounded-xl bg-white shadow-xl border border-gray-100 p-3 z-50 text-left">
+        <div
+          className={`absolute w-72 rounded-xl bg-white shadow-xl border border-gray-100 p-3 z-50 text-left ${
+            panelPlacement === 'top-right' ? 'right-0 bottom-full mb-2' : 'left-0 top-full mt-2'
+          }`}
+        >
           <div className="flex items-center justify-between mb-2">
             <button
               type="button"

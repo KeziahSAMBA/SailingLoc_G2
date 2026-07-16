@@ -35,8 +35,5 @@
     "*.{json,md,css,scss,html}": [
       "prettier --write"
     ]
-  },
-  "dependencies": {
-    "motion": "^12.40.0"
   }
 }

@@ -1,12 +1,28 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { fetchBoats } from '../../services/boatService';
 import { fetchPorts } from '../../services/portService';
 import { useFavorites } from '../../hooks/useFavorites.js';
+import { useCategoryNavigate, useProductNavigate } from '../../hooks/useCategoryTransition.js';
 import FavoriteButton from './FavoriteButton.jsx';
+
+// Clic "navigation simple" : laisse le navigateur gérer les ouvertures en
+// nouvel onglet (ctrl/cmd/shift/clic molette) sans intercepter le lien.
+function isPlainLeftClick(e) {
+  return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+}
 
 // ─── Transformateurs DB → slide ───────────────────────────────────────────────
 
@@ -313,6 +329,7 @@ const CarouselSection = ({
   onSlideClick,
 }) => {
   const { t } = useTranslation();
+  const goToCategory = useCategoryNavigate();
   const titleColor = theme === 'dark' ? 'text-white' : 'text-black';
   const linkColor =
     theme === 'dark' ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-black';
@@ -327,6 +344,11 @@ const CarouselSection = ({
         </h2>
         <Link
           to={linkTo}
+          onClick={(e) => {
+            if (!isPlainLeftClick(e)) return;
+            e.preventDefault();
+            goToCategory(linkTo);
+          }}
           className={`flex items-center gap-1.5 transition-colors ml-4 ${linkColor}`}
           style={{ fontSize: '16px' }}
         >
@@ -363,6 +385,7 @@ const SlideItem = memo(function SlideItem({
   priority,
   isFavorite,
   onToggleFavorite,
+  onSlideClick,
 }) {
   const range = [
     -(index + 1) * trackItemOffset,
@@ -373,10 +396,11 @@ const SlideItem = memo(function SlideItem({
 
   return (
     <motion.div
-      className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20"
+      className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20 cursor-pointer"
       style={{ width: itemWidth, height: 220, rotateY, willChange: 'transform' }}
+      onClick={() => onSlideClick?.(slide)}
     >
-      <div className="block w-full h-full cursor-pointer">
+      <div className="block w-full h-full">
         <img
           src={slide.img}
           alt={slide.label}
@@ -428,6 +452,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
   theme = 'dark',
   favoriteIds,
   onToggleFavorite,
+  onSlideClick,
 }) {
   const { t } = useTranslation();
   const outerRef = useRef(null);
@@ -572,6 +597,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
                 priority={index === initialSlide}
                 isFavorite={favoriteIds.has(slide.id)}
                 onToggleFavorite={onToggleFavorite}
+                onSlideClick={onSlideClick}
               />
             ))}
           </motion.div>
@@ -604,26 +630,38 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-const Carrousel = ({ theme = 'dark' }) => {
+const Carrousel = ({ theme = 'dark', similarTo = null }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const goToCategory = useCategoryNavigate();
+  const goToProduct = useProductNavigate();
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
   const { favoriteIds, toggleFavorite } = useFavorites();
+
+  const handleBoatClick = useCallback(
+    (slide) => {
+      if (!slide.available) return;
+      goToProduct(`/product/${slide.id}`);
+    },
+    [goToProduct]
+  );
 
   // Un port "bientôt disponible" n'a aucun bateau : cliquer dessus n'amènerait
   // qu'une page catégorie vide, donc on ignore le clic dans ce cas.
   function handlePortClick(slide) {
     if (!slide.available) return;
-    navigate(`/categorie?destination=${encodeURIComponent(slide.label)}`);
+    goToCategory(`/categorie?destination=${encodeURIComponent(slide.label)}`);
   }
 
+  // startTransition : le rendu des sections de carrousels (useMemo lourds +
+  // beaucoup d'images) passe en priorité basse pour ne pas bloquer les
+  // animations de transition en cours.
   useEffect(() => {
     fetchBoats()
-      .then(({ data }) => setBoats(data))
+      .then(({ data }) => startTransition(() => setBoats(data)))
       .catch(console.error);
     fetchPorts()
-      .then(({ data }) => setPorts(data))
+      .then(({ data }) => startTransition(() => setPorts(data)))
       .catch(console.error);
   }, []);
 
@@ -659,6 +697,7 @@ const Carrousel = ({ theme = 'dark' }) => {
           .join(' · '),
         description: [shortDesc, ratingStr].filter(Boolean).join(' · '),
         img: boat.images?.[0]?.url ?? '',
+        available: boat.is_published !== false,
       };
     };
 
@@ -743,9 +782,41 @@ const Carrousel = ({ theme = 'dark' }) => {
     [boats, ports, t]
   );
 
+  // Mode « embarcations similaires » (page produit) : une seule rangée de
+  // bateaux du même type ou du même port que le bateau consulté, complétée
+  // par les plus populaires, plutôt que toutes les sections d'accueil.
+  const similarSlides = useMemo(() => {
+    if (!similarTo) return [];
+    const others = boats.filter((b) => b.id_boat !== similarTo.id);
+    const related = others.filter(
+      (b) =>
+        b.type === similarTo.type || (similarTo.portCity && b.port?.city === similarTo.portCity)
+    );
+    const fillers = others
+      .filter((b) => !related.includes(b))
+      .sort((a, b) => Number(b.booking_count) - Number(a.booking_count));
+    return [...related, ...fillers].slice(0, 6).map((boat) => boatToSlide(boat, t));
+  }, [boats, similarTo, t]);
+
   const headerTitle = theme === 'light' ? 'text-black' : 'text-white';
   const headerLink =
     theme === 'light' ? 'text-gray-600 hover:text-black' : 'text-white/70 hover:text-white';
+
+  if (similarTo) {
+    if (similarSlides.length === 0) return null;
+    return (
+      <CarouselSection
+        title={t('carrousel.sections.similar')}
+        slides={similarSlides}
+        linkLabel={t('carrousel.sections.similarLink')}
+        theme={theme}
+        variant="overlay"
+        favoriteIds={favoriteIds}
+        onToggleFavorite={toggleFavorite}
+        onSlideClick={handleBoatClick}
+      />
+    );
+  }
 
   return (
     <div className="w-full flex flex-col gap-8">
@@ -760,6 +831,11 @@ const Carrousel = ({ theme = 'dark' }) => {
           </h2>
           <Link
             to="/categorie"
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return;
+              e.preventDefault();
+              goToCategory();
+            }}
             className={`flex items-center gap-1.5 transition-colors ml-4 ${headerLink}`}
             style={{ fontSize: '16px' }}
           >
@@ -778,6 +854,7 @@ const Carrousel = ({ theme = 'dark' }) => {
                 theme={theme}
                 favoriteIds={favoriteIds}
                 onToggleFavorite={toggleFavorite}
+                onSlideClick={handleBoatClick}
               />
             ))}
         </div>
@@ -795,7 +872,7 @@ const Carrousel = ({ theme = 'dark' }) => {
             variant={variant}
             favoriteIds={favoriteIds}
             onToggleFavorite={toggleFavorite}
-            onSlideClick={variant === 'port' ? handlePortClick : undefined}
+            onSlideClick={variant === 'port' ? handlePortClick : handleBoatClick}
           />
         ))}
     </div>

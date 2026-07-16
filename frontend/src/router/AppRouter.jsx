@@ -1,6 +1,8 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
+import ProductPage from '../pages/ProductPage.jsx';
 import ContactPage from '../pages/ContactPage.jsx';
 import AboutPage from '../pages/AboutPage.jsx';
 import MentionsLegalesPage from '../pages/legal/MentionsLegalesPage.jsx';
@@ -10,21 +12,32 @@ import ConfidentialitePage from '../pages/legal/ConfidentialitePage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
 import VerifyEmailPage from '../pages/VerifyEmailPage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
-import AdminLayout from '../components/admin/AdminLayout.jsx';
-import AdminDashboard from '../components/admin/AdminDashboard.jsx';
-import AdminUsersPage from '../components/admin/AdminUsersPage.jsx';
-import AdminDocumentsPage from '../components/admin/AdminDocumentsPage.jsx';
-import AdminPublicationPage from '../components/admin/AdminPublicationPage.jsx';
-import AdminBookingsPage from '../components/admin/AdminBookingsPage.jsx';
-import AdminCommentsPage from '../components/admin/AdminCommentsPage.jsx';
-import AdminPortsPage from '../components/admin/AdminPortsPage.jsx';
-import AdminTransactionsPage from '../components/admin/AdminTransactionsPage.jsx';
-import AdminMessagesPage from '../components/admin/AdminMessagesPage.jsx';
-import AdminContactPage from '../components/admin/AdminContactPage.jsx';
-import AdminAccountPage from '../components/admin/AdminAccountPage.jsx';
-import AdminSpectateurLocatairePage from '../components/admin/AdminSpectateurLocatairePage.jsx';
-import AdminSpectateurProprietairePage from '../components/admin/AdminSpectateurProprietairePage.jsx';
-import AdminCreateUserPage from '../pages/AdminCreateUserPage.jsx';
+
+// Espace admin chargé à la demande : ses 15 pages (et recharts, utilisé par le
+// dashboard) sortent du bundle principal téléchargé par tous les visiteurs.
+const AdminLayout = lazy(() => import('../components/admin/AdminLayout.jsx'));
+const AdminDashboard = lazy(() => import('../components/admin/AdminDashboard.jsx'));
+const AdminUsersPage = lazy(() => import('../components/admin/AdminUsersPage.jsx'));
+const AdminDocumentsPage = lazy(() => import('../components/admin/AdminDocumentsPage.jsx'));
+const AdminPublicationPage = lazy(() => import('../components/admin/AdminPublicationPage.jsx'));
+const AdminBookingsPage = lazy(() => import('../components/admin/AdminBookingsPage.jsx'));
+const AdminCommentsPage = lazy(() => import('../components/admin/AdminCommentsPage.jsx'));
+const AdminPortsPage = lazy(() => import('../components/admin/AdminPortsPage.jsx'));
+const AdminTransactionsPage = lazy(() => import('../components/admin/AdminTransactionsPage.jsx'));
+const AdminMessagesPage = lazy(() => import('../components/admin/AdminMessagesPage.jsx'));
+const AdminContactPage = lazy(() => import('../components/admin/AdminContactPage.jsx'));
+const AdminAccountPage = lazy(() => import('../components/admin/AdminAccountPage.jsx'));
+const AdminSpectateurLocatairePage = lazy(
+  () => import('../components/admin/AdminSpectateurLocatairePage.jsx')
+);
+const AdminSpectateurProprietairePage = lazy(
+  () => import('../components/admin/AdminSpectateurProprietairePage.jsx')
+);
+const AdminCreateUserPage = lazy(() => import('../pages/AdminCreateUserPage.jsx'));
+
+// Chaque page admin a sa propre frontière Suspense : pendant le chargement du
+// chunk, seule la zone de contenu est vide, la mise en page reste affichée.
+const suspended = (element) => <Suspense fallback={null}>{element}</Suspense>;
 import LocataireLayout from '../components/locataire/LocataireLayout.jsx';
 import LocataireDashboard from '../components/locataire/LocataireDashboard.jsx';
 import LocataireAccount from '../components/locataire/LocataireAccount.jsx';
@@ -54,6 +67,8 @@ function AppRouter({ location }) {
       <Route path="/login" element={<HomePage />} />
       <Route path="/register" element={<HomePage />} />
       <Route path="/categorie" element={<CategoryPage />} />
+      <Route path="/product" element={<ProductPage />} />
+      <Route path="/product/:id" element={<ProductPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/a-propos" element={<AboutPage />} />
       <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
@@ -123,24 +138,27 @@ function AppRouter({ location }) {
         path="/admin"
         element={
           <RequireRole role="admin" redirectTo="/admin/login">
-            <AdminLayout />
+            {suspended(<AdminLayout />)}
           </RequireRole>
         }
       >
-        <Route index element={<AdminDashboard />} />
-        <Route path="spectateur" element={<AdminSpectateurLocatairePage />} />
-        <Route path="spectateur/proprietaire" element={<AdminSpectateurProprietairePage />} />
-        <Route path="users" element={<AdminUsersPage />} />
-        <Route path="users/new" element={<AdminCreateUserPage />} />
-        <Route path="comments" element={<AdminCommentsPage />} />
-        <Route path="publications" element={<AdminPublicationPage />} />
-        <Route path="documents" element={<AdminDocumentsPage />} />
-        <Route path="bookings" element={<AdminBookingsPage />} />
-        <Route path="ports" element={<AdminPortsPage />} />
-        <Route path="transactions" element={<AdminTransactionsPage />} />
-        <Route path="messages" element={<AdminMessagesPage />} />
-        <Route path="contact" element={<AdminContactPage />} />
-        <Route path="compte" element={<AdminAccountPage />} />
+        <Route index element={suspended(<AdminDashboard />)} />
+        <Route path="spectateur" element={suspended(<AdminSpectateurLocatairePage />)} />
+        <Route
+          path="spectateur/proprietaire"
+          element={suspended(<AdminSpectateurProprietairePage />)}
+        />
+        <Route path="users" element={suspended(<AdminUsersPage />)} />
+        <Route path="users/new" element={suspended(<AdminCreateUserPage />)} />
+        <Route path="comments" element={suspended(<AdminCommentsPage />)} />
+        <Route path="publications" element={suspended(<AdminPublicationPage />)} />
+        <Route path="documents" element={suspended(<AdminDocumentsPage />)} />
+        <Route path="bookings" element={suspended(<AdminBookingsPage />)} />
+        <Route path="ports" element={suspended(<AdminPortsPage />)} />
+        <Route path="transactions" element={suspended(<AdminTransactionsPage />)} />
+        <Route path="messages" element={suspended(<AdminMessagesPage />)} />
+        <Route path="contact" element={suspended(<AdminContactPage />)} />
+        <Route path="compte" element={suspended(<AdminAccountPage />)} />
       </Route>
       {/* Attrape-tout : toute route inconnue affiche la page 404. */}
       <Route path="*" element={<NotFoundPage />} />

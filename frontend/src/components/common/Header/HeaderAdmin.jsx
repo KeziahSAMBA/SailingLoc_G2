@@ -24,6 +24,7 @@ function HeaderAdmin() {
       showMessages
       messagesTo="/admin/messages"
       languageAsFlags={false}
+      introReveal={false}
     />
   );
 }

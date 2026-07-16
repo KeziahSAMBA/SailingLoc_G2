@@ -1,11 +1,24 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useCategoryNavigate, useHomeNavigate } from '../../hooks/useCategoryTransition.js';
 
-function Breadcrumb({ light = false, compact = false }) {
+function Breadcrumb({ light = false, compact = false, items = null }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const goHome = useHomeNavigate();
+  const goToCategory = useCategoryNavigate();
   const segments = pathname.split('/').filter(Boolean);
   const pathLabels = { categorie: t('breadcrumb.categorie') };
+
+  // Par défaut le fil se construit sur les segments de l'URL ; `items` permet
+  // aux pages dont les segments ne sont pas parlants (ex. /product/:id) de
+  // fournir leurs propres étapes [{ label, to }] après « Accueil ».
+  const crumbs =
+    items ??
+    segments.map((seg, i) => ({
+      label: pathLabels[seg] ?? seg,
+      to: '/' + segments.slice(0, i + 1).join('/'),
+    }));
 
   return (
     <nav
@@ -19,18 +32,23 @@ function Breadcrumb({ light = false, compact = false }) {
     >
       <Link
         to="/"
+        onClick={(e) => {
+          // Laisse le navigateur gérer les ouvertures en nouvel onglet
+          // (ctrl/cmd/shift/clic molette) sans intercepter le lien.
+          if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          goHome();
+        }}
         className={
           light ? 'hover:text-white/70 transition-colors' : 'hover:text-sky-600 transition-colors'
         }
       >
         {t('breadcrumb.home')}
       </Link>
-      {segments.map((seg, i) => {
-        const path = '/' + segments.slice(0, i + 1).join('/');
-        const label = pathLabels[seg] ?? seg;
-        const isLast = i === segments.length - 1;
+      {crumbs.map(({ label, to }, i) => {
+        const isLast = i === crumbs.length - 1;
         return (
-          <span key={path} className="flex items-center gap-2">
+          <span key={to ?? label} className="flex items-center gap-2">
             <span className={light ? 'text-white/60' : 'text-gray-900'}>/</span>
             {isLast ? (
               <span
@@ -40,7 +58,18 @@ function Breadcrumb({ light = false, compact = false }) {
                 {label}
               </span>
             ) : (
-              <Link to={path} className="hover:text-sky-600 transition-colors">
+              <Link
+                to={to}
+                onClick={(e) => {
+                  // Même interception que le lien Accueil : les liens vers
+                  // /categorie jouent la transition de page.
+                  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  if (!to.startsWith('/categorie')) return;
+                  e.preventDefault();
+                  goToCategory(to);
+                }}
+                className="hover:text-sky-600 transition-colors"
+              >
                 {label}
               </Link>
             )}

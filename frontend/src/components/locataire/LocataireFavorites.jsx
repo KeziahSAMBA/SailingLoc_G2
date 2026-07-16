@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../hooks/useToast.jsx';
 import { getFavorites, removeFavorite } from '../../services/locataireService.js';
@@ -17,8 +18,12 @@ const capitalize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 function FavoriteRow({ favorite, onRemove, removing }) {
   const { t } = useTranslation();
   const boat = favorite.boat;
-  return (
-    <article className="flex flex-col gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 sm:flex-row sm:items-center">
+  const boatLink = boat?.id_boat ? `/product/${boat.id_boat}` : undefined;
+
+  // Contenu partagé entre la version cliquable (Link) et la version inerte ;
+  // group-hover: n'agit que sous un parent .group, donc uniquement dans le Link.
+  const cardBody = (
+    <>
       {boat?.image ? (
         <img
           src={boat.image}
@@ -36,7 +41,7 @@ function FavoriteRow({ favorite, onRemove, removing }) {
       )}
 
       <div className="min-w-0 flex-1">
-        <h3 className="truncate font-bold text-white">{boat?.name}</h3>
+        <h3 className="truncate font-bold text-white group-hover:text-[#ABD4FF]">{boat?.name}</h3>
         <p className="mt-0.5 truncate text-sm text-slate-400">
           {[capitalize(boat?.type), boat?.port && `${boat.port.name} · ${boat.port.city}`]
             .filter(Boolean)
@@ -48,22 +53,39 @@ function FavoriteRow({ favorite, onRemove, removing }) {
           </p>
         ) : null}
       </div>
+    </>
+  );
 
-      <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
-        <p className="text-sm text-slate-300">
-          <span className="font-semibold text-[#5AB4EC]">
-            {EURO.format(boat?.daily_price ?? 0)}
-          </span>{' '}
-          {t('locataireFavorites.perDay')}
-        </p>
-        <button
-          type="button"
-          onClick={() => onRemove(boat.id_boat)}
-          disabled={removing}
-          className={`shrink-0 rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
-        >
-          {removing ? t('locataireFavorites.removing') : t('locataireFavorites.remove')}
-        </button>
+  return (
+    <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        {boatLink ? (
+          <Link
+            to={boatLink}
+            className={`group flex min-w-0 items-center gap-4 sm:flex-1 ${FOCUS_RING}`}
+          >
+            {cardBody}
+          </Link>
+        ) : (
+          <div className="flex min-w-0 items-center gap-4 sm:flex-1">{cardBody}</div>
+        )}
+
+        <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
+          <p className="text-sm text-slate-300">
+            <span className="font-semibold text-[#5AB4EC]">
+              {EURO.format(boat?.daily_price ?? 0)}
+            </span>{' '}
+            {t('locataireFavorites.perDay')}
+          </p>
+          <button
+            type="button"
+            onClick={() => onRemove(boat.id_boat)}
+            disabled={removing}
+            className={`shrink-0 rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+          >
+            {removing ? t('locataireFavorites.removing') : t('locataireFavorites.remove')}
+          </button>
+        </div>
       </div>
     </article>
   );
