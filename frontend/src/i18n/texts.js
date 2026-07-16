@@ -201,6 +201,91 @@ export const TEXTS = {
     },
   },
 
+  product: {
+    notFound: {
+      title: { fr: 'Bateau introuvable', en: 'Boat not found' },
+      text: {
+        fr: "Cette annonce n'existe pas ou n'est plus publiée.",
+        en: 'This listing does not exist or is no longer published.',
+      },
+      cta: { fr: 'Retour à la flotte', en: 'Back to the fleet' },
+    },
+    header: {
+      ratings_one: { fr: '{{count}} note', en: '{{count}} rating' },
+      ratings_other: { fr: '{{count}} notes', en: '{{count}} ratings' },
+      comments_one: { fr: '{{count}} commentaire', en: '{{count}} comment' },
+      comments_other: { fr: '{{count}} commentaires', en: '{{count}} comments' },
+      noReviews: {
+        fr: 'Aucun commentaire pour l’instant',
+        en: 'No comments yet',
+      },
+      lengthValue: { fr: '{{size}} m', en: '{{size}} m' },
+    },
+    booking: {
+      available: { fr: 'Disponible', en: 'Available' },
+      unavailable: { fr: 'Indisponible', en: 'Unavailable' },
+      selectDates: { fr: 'Sélectionner les dates', en: 'Select your dates' },
+      days_one: { fr: '{{count}} jour x {{price}}€', en: '{{count}} day x €{{price}}' },
+      days_other: { fr: '{{count}} jours x {{price}}€', en: '{{count}} days x €{{price}}' },
+      skipperService: { fr: 'Service Skipper (inclus)', en: 'Skipper service (included)' },
+      free: { fr: 'Gratuit', en: 'Free' },
+      total: { fr: 'Total (TTC)', en: 'Total (tax incl.)' },
+      taxIncluded: { fr: 'TTC', en: 'tax incl.' },
+      book: { fr: 'Réserver maintenant', en: 'Book now' },
+      noCharge: {
+        fr: 'Aucun débit immédiat ne sera effectué',
+        en: 'You will not be charged yet',
+      },
+      secure: {
+        fr: 'Paiement sécurisé & Assurance incluse',
+        en: 'Secure payment & insurance included',
+      },
+      help: {
+        title: { fr: "Besoin d'aide ?", en: 'Need help?' },
+        text: {
+          fr: 'Nos conseillers experts en navigation sont disponibles 7j/7 pour vous accompagner.',
+          en: 'Our expert sailing advisors are available 7 days a week to assist you.',
+        },
+        cta: { fr: 'Contactez-nous', en: 'Contact us' },
+      },
+    },
+    specs: {
+      kicker: { fr: 'Caractéristiques', en: 'Characteristics' },
+      title: { fr: 'Spécifications techniques', en: 'Technical specifications' },
+      subtitle: {
+        fr: 'Tous les détails pour les passionnés de navigation',
+        en: 'All the details for sailing enthusiasts',
+      },
+      type: { fr: 'Type', en: 'Type' },
+      length: { fr: 'Longueur hors tout', en: 'Overall length' },
+      engine: { fr: 'Moteur', en: 'Engine' },
+      capacity: { fr: 'Capacité', en: 'Capacity' },
+      year: { fr: 'Année', en: 'Year' },
+      license: { fr: 'Permis', en: 'License' },
+      skipper: { fr: 'Skipper', en: 'Skipper' },
+      port: { fr: "Port d'attache", en: 'Home port' },
+      equipment: { fr: 'Équipements', en: 'Equipment' },
+    },
+    location: {
+      kicker: { fr: 'Emplacement', en: 'Location' },
+      title: { fr: 'Localisation', en: 'Where the boat is moored' },
+      subtitle: {
+        fr: 'Port de départ : {{port}}',
+        en: 'Departure port: {{port}}',
+      },
+    },
+  },
+
+  share: {
+    title: { fr: 'Partager', en: 'Share' },
+    copyLink: { fr: 'Copier le lien', en: 'Copy link' },
+    copied: { fr: 'Lien copié !', en: 'Link copied!' },
+    facebook: { fr: 'Facebook', en: 'Facebook' },
+    x: { fr: 'X (Twitter)', en: 'X (Twitter)' },
+    whatsapp: { fr: 'WhatsApp', en: 'WhatsApp' },
+    email: { fr: 'Email', en: 'Email' },
+  },
+
   filterBar: {
     label: { fr: 'Filtres', en: 'Filters' },
     reset: { fr: 'Réinitialiser', en: 'Reset' },
@@ -253,7 +338,10 @@ export const TEXTS = {
     travelers: { fr: 'Voyageurs', en: 'Travelers' },
     travelersPlaceholder: { fr: 'Nombre de personnes', en: 'Number of people' },
     search: { fr: 'Rechercher', en: 'Search' },
+    expandTitle: { fr: 'Déployer la recherche', en: 'Expand search' },
+    collapseTitle: { fr: 'Replier la recherche', en: 'Collapse search' },
     resetTitle: { fr: 'Réinitialiser la recherche', en: 'Reset search' },
+    resetDatesTitle: { fr: 'Effacer les dates', en: 'Clear dates' },
     noPortMatch: {
       fr: 'Aucun port à « {{query}} ». Le plus proche :',
       en: 'No port matching "{{query}}". Nearest:',
@@ -487,6 +575,8 @@ export const TEXTS = {
       cheapestLink: { fr: 'Voir les bons plans', en: 'See the best deals' },
       current: { fr: 'Annonces du moment', en: 'Current listings' },
       currentLink: { fr: "Voir plus d'annonces", en: 'See more listings' },
+      similar: { fr: 'Embarcations similaires', en: 'Similar boats' },
+      similarLink: { fr: 'Voir toute la flotte', en: 'See the whole fleet' },
     },
     boatType: {
       voilier: { fr: 'Voilier', en: 'Sailboat' },
