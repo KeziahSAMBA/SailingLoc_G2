@@ -28,6 +28,13 @@ const FILTERS = [
   { key: 'refused', label: 'Refusées' },
 ];
 
+const PERIOD_FILTERS = [
+  { key: 'all', label: 'Toutes périodes' },
+  { key: 'upcoming', label: 'À venir' },
+  { key: 'current', label: 'En cours' },
+  { key: 'past', label: 'Passées' },
+];
+
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
 
@@ -43,6 +50,24 @@ function isPast(value) {
   return end < today;
 }
 
+function startsAfterToday(value) {
+  const start = new Date(value);
+  start.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return start > today;
+}
+
+// Position du séjour par rapport à aujourd'hui : passé (terminé), à venir
+// (pas commencé) ou en cours (aujourd'hui dans le séjour, bornes incluses).
+function matchesPeriod(booking, period) {
+  if (period === 'past') return isPast(booking.end_date);
+  if (period === 'upcoming') return startsAfterToday(booking.start_date);
+  if (period === 'current')
+    return !isPast(booking.end_date) && !startsAfterToday(booking.start_date);
+  return true;
+}
+
 function BookingCard({ booking, busy, onAction }) {
   const meta = BOOKING_STATUS[booking.status] || {
     label: booking.status,
@@ -50,7 +75,10 @@ function BookingCard({ booking, busy, onAction }) {
   };
   const port = booking.boat?.port;
   const locataire = booking.locataire;
-  const canDecide = booking.status === 'pending';
+  // Une demande n'est actionnable qu'une fois payée par le locataire
+  // (empreinte en attente) : la confirmation encaisse, le refus annule.
+  const isPaid = booking.payment_status === 'pending';
+  const canDecide = booking.status === 'pending' && isPaid;
   const canCancel = booking.status === 'confirmed' && !isPast(booking.end_date);
 
   return (
@@ -76,11 +104,20 @@ function BookingCard({ booking, busy, onAction }) {
                 </p>
               )}
             </div>
-            <span
-              className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}
-            >
-              {meta.label}
-            </span>
+            <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+              {booking.status === 'pending' && (
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    isPaid ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-slate-400'
+                  }`}
+                >
+                  {isPaid ? 'Payée — à valider' : 'En attente de paiement'}
+                </span>
+              )}
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
+                {meta.label}
+              </span>
+            </div>
           </header>
 
           <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
@@ -173,6 +210,7 @@ function ProprietaireReservations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
   const [busyId, setBusyId] = useState(null);
   // Modal de décision (refus ou annulation) : { booking, action } | null.
   const [decision, setDecision] = useState(null);
@@ -210,12 +248,17 @@ function ProprietaireReservations() {
     try {
       const res = await updateBookingStatus(booking.id_booking, action, actionReason);
       const updated = res.data.booking;
+      // Le paiement suit la décision : encaissé à la confirmation, annulé
+      // (donc plus rien en attente) au refus ou à l'annulation.
+      const payment_status = action === 'confirm' ? 'success' : null;
       setBookings((prev) =>
-        prev.map((b) => (b.id_booking === updated.id_booking ? { ...b, ...updated } : b))
+        prev.map((b) =>
+          b.id_booking === updated.id_booking ? { ...b, ...updated, payment_status } : b
+        )
       );
       const messages = {
-        confirm: 'Réservation confirmée.',
-        refuse: 'Réservation refusée.',
+        confirm: 'Réservation confirmée, paiement encaissé.',
+        refuse: 'Demande refusée, paiement annulé.',
         cancel: 'Réservation annulée.',
       };
       showToast(messages[action], 'success');
@@ -238,8 +281,11 @@ function ProprietaireReservations() {
   }
 
   const filtered = useMemo(
-    () => (filter === 'all' ? bookings : bookings.filter((b) => b.status === filter)),
-    [bookings, filter]
+    () =>
+      bookings
+        .filter((b) => filter === 'all' || b.status === filter)
+        .filter((b) => matchesPeriod(b, periodFilter)),
+    [bookings, filter, periodFilter]
   );
 
   return (
@@ -263,7 +309,7 @@ function ProprietaireReservations() {
       )}
 
       {/* Filtres par statut */}
-      <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Filtrer par statut">
+      <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Filtrer par statut">
         {FILTERS.map((f) => {
           const active = filter === f.key;
           return (
@@ -276,6 +322,28 @@ function ProprietaireReservations() {
                 active
                   ? 'bg-[#0A3172] text-white'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+              }`}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Filtres par période (passées / en cours / à venir), cumulables avec le statut */}
+      <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Filtrer par période">
+        {PERIOD_FILTERS.map((f) => {
+          const active = periodFilter === f.key;
+          return (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setPeriodFilter(f.key)}
+              aria-pressed={active}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
+                active
+                  ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
+                  : 'border-slate-700 bg-transparent text-slate-400 hover:border-slate-500 hover:text-slate-200'
               }`}
             >
               {f.label}
@@ -353,7 +421,7 @@ function ProprietaireReservations() {
               )}
               <p id="cancel-reason-hint" className="mt-2 text-xs text-slate-500">
                 {decision.action === 'refuse'
-                  ? 'Le locataire sera informé du refus par email. Aucun montant ne lui sera prélevé.'
+                  ? 'Le locataire sera informé du refus par email. Son paiement en attente sera annulé : aucun montant ne lui sera prélevé.'
                   : 'Le locataire sera informé de l’annulation par email, avec ce motif.'}
               </p>
 

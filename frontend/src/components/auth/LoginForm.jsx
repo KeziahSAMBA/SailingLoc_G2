@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import PasswordField from './PasswordField.jsx';
+import { loadReservationResume } from '../../utils/reservationResume.js';
 
 const inputClass =
   'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
@@ -53,7 +54,10 @@ function LoginForm({ onSwitchToRegister }) {
         password: form.password,
         role: form.role,
       });
-      navigate('/', { replace: true });
+      // Tunnel de réservation interrompu par une expiration de session il y a
+      // moins de 15 min : le locataire reconnecté y retourne directement.
+      const resume = form.role === 'locataire' ? loadReservationResume() : null;
+      navigate(resume ? resume.path : '/', { replace: true });
     } catch (err) {
       if (err.response?.status === 429) {
         const headerValue =

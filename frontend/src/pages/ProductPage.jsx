@@ -31,7 +31,7 @@ import {
 } from 'react-icons/md';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { fetchBoats } from '../services/boatService.js';
+import { fetchBoats, fetchBoatsFresh } from '../services/boatService.js';
 import {
   readTransitionPayload,
   clearTransitionPayload,
@@ -322,8 +322,18 @@ function ProductPage() {
     setEnd('');
   }, [boatId]);
 
+  // Rafraîchit les disponibilités au moment où le locataire ouvre le
+  // calendrier : les données de la page peuvent dater (cache 60 s + temps
+  // passé sur la page), et un créneau a pu être confirmé entre-temps.
+  const refreshAvailability = useCallback(() => {
+    fetchBoatsFresh()
+      .then(({ data }) => startTransition(() => setBoats(data)))
+      .catch(() => {});
+  }, []);
+
   // Un jour est réservable s'il tombe dans une période d'ouverture du bateau
-  // et qu'aucune réservation active (pending/confirmed) ne le couvre.
+  // et qu'aucune réservation confirmée (payée) ne le couvre — les demandes
+  // « pending » d'autres locataires ne bloquent pas le créneau.
   const isDateAvailable = useCallback(
     (day) => {
       if (!boat) return false;
@@ -342,12 +352,25 @@ function ProductPage() {
   const dayCount = countDays(start, end);
   const total = dayCount * price;
 
-  // Pas encore d'API publique de réservation : le CTA amène un visiteur à se
-  // connecter (pop-up par-dessus la page, comme pour les favoris).
+  // Entrée du tunnel de réservation : visiteur → login (pop-up par-dessus la
+  // page, comme pour les favoris) ; locataire avec dates choisies → tunnel.
+  const [bookingHint, setBookingHint] = useState('');
+  useEffect(() => setBookingHint(''), [boatId, start, end]);
+
   function handleBook() {
     if (!user) {
       navigate('/login', { state: { backgroundLocation: location } });
+      return;
     }
+    if (user.role !== 'locataire') {
+      setBookingHint(t('product.booking.locataireOnly'));
+      return;
+    }
+    if (!start || !end) {
+      setBookingHint(t('product.booking.missingDates'));
+      return;
+    }
+    navigate(`/reservation/${boatId}?start=${start}&end=${end}`);
   }
 
   const portLat = Number(boat?.port?.latitude);
@@ -784,6 +807,7 @@ function ProductPage() {
                         onChangeStart={setStart}
                         onChangeEnd={setEnd}
                         isDateAvailable={isDateAvailable}
+                        onOpen={refreshAvailability}
                         light
                         panelPlacement="top-right"
                       />
@@ -817,6 +841,11 @@ function ProductPage() {
                     >
                       {t('product.booking.book')}
                     </button>
+                    {bookingHint && (
+                      <p role="status" className="text-xs text-center font-semibold text-amber-300">
+                        {bookingHint}
+                      </p>
+                    )}
                     <p className="text-[10px] text-white/60 text-center uppercase tracking-wide">
                       {t('product.booking.noCharge')}
                     </p>

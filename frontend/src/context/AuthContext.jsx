@@ -8,6 +8,7 @@ import {
 import { setAccessToken, setOnAuthFailure } from '../services/api.js';
 import { useIdleLogout } from '../hooks/useIdleLogout.jsx';
 import { useToast } from '../hooks/useToast.jsx';
+import { clearReservationResume } from '../utils/reservationResume.js';
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -157,6 +158,9 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(
     async ({ silent = false } = {}) => {
+      // Déconnexion voulue (ou inactivité) : on ne conserve pas le tunnel de
+      // réservation — seule l'expiration de session le laisse en place.
+      clearReservationResume();
       // En mode spectateur, le user est un faux compte de démo : pas de vraie
       // session à révoquer, et appeler l'API partagerait le cookie du parent.
       if (isSpectatorMode()) {

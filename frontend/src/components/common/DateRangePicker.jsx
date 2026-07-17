@@ -71,6 +71,7 @@ function DateRangePicker({
   onChangeStart,
   onChangeEnd,
   isDateAvailable,
+  onOpen,
   light,
   panelPlacement = 'bottom-left',
 }) {
@@ -109,6 +110,7 @@ function DateRangePicker({
     if (monthAnchor && !isBeforeDay(monthAnchor, today)) {
       setMonth(new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1));
     }
+    if (!open) onOpen?.();
     setOpen(true);
   }
 

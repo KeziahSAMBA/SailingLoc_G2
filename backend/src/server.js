@@ -10,6 +10,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import { postContactRequest } from './controllers/contactRequestController.js';
+import { cancelExpiredBookings } from './services/bookingService.js';
 import { initConfig } from './config/appConfig.js';
 
 const { PORT, APP_URL } = initConfig();
@@ -114,6 +115,15 @@ process.on('unhandledRejection', (reason) => {
 process.on('uncaughtException', (err) => {
   console.error('[server] uncaughtException:', err);
 });
+
+// Les réservations « pending » non payées expirent au bout de 72 h : balayage
+// au démarrage puis toutes les heures (complété par un appel à chaque création
+// de réservation, cf. bookingService).
+cancelExpiredBookings().catch((err) => console.error('[bookings] sweep:', err));
+setInterval(
+  () => cancelExpiredBookings().catch((err) => console.error('[bookings] sweep:', err)),
+  60 * 60 * 1000
+);
 
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);

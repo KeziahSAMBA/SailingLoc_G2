@@ -232,6 +232,14 @@ export const TEXTS = {
       total: { fr: 'Total (TTC)', en: 'Total (tax incl.)' },
       taxIncluded: { fr: 'TTC', en: 'tax incl.' },
       book: { fr: 'Réserver maintenant', en: 'Book now' },
+      missingDates: {
+        fr: 'Sélectionnez d’abord vos dates de début et de fin.',
+        en: 'Please select your start and end dates first.',
+      },
+      locataireOnly: {
+        fr: 'Seul un compte locataire peut réserver un bateau.',
+        en: 'Only a renter account can book a boat.',
+      },
       noCharge: {
         fr: 'Aucun débit immédiat ne sera effectué',
         en: 'You will not be charged yet',
@@ -272,6 +280,91 @@ export const TEXTS = {
       subtitle: {
         fr: 'Port de départ : {{port}}',
         en: 'Departure port: {{port}}',
+      },
+    },
+  },
+
+  reservation: {
+    title: { fr: 'Réserver ce bateau', en: 'Book this boat' },
+    loading: { fr: 'Chargement…', en: 'Loading…' },
+    working: { fr: 'Un instant…', en: 'One moment…' },
+    invalid: {
+      fr: 'Réservation impossible : bateau introuvable ou dates manquantes.',
+      en: 'Booking unavailable: boat not found or missing dates.',
+    },
+    back: { fr: 'Retour au bateau', en: 'Back to the boat' },
+    previous: { fr: 'Étape précédente', en: 'Previous step' },
+    backToCatalog: { fr: 'Voir le catalogue', en: 'Browse the catalog' },
+    steps: {
+      recap: { fr: 'Récapitulatif', en: 'Summary' },
+      documents: { fr: 'Documents', en: 'Documents' },
+      payment: { fr: 'Paiement', en: 'Payment' },
+    },
+    recap: {
+      title: { fr: 'Votre réservation', en: 'Your booking' },
+      dates: { fr: 'Dates', en: 'Dates' },
+      detail: { fr: 'Détail', en: 'Details' },
+      days_one: { fr: '{{count}} jour × {{price}} €', en: '{{count}} day × €{{price}}' },
+      days_other: { fr: '{{count}} jours × {{price}} €', en: '{{count}} days × €{{price}}' },
+      total: { fr: 'Total (TTC)', en: 'Total (tax incl.)' },
+      confirm: { fr: 'Confirmer et continuer', en: 'Confirm and continue' },
+    },
+    documents: {
+      intro: {
+        fr: 'Pour finaliser votre réservation, vos trois documents (permis, pièce d’identité, CV nautique) doivent être déposés puis validés par l’équipe SailingLoc. Votre demande non payée est conservée 72 heures (annulée automatiquement au-delà). Après le paiement, rien n’est débité : le montant reste en attente jusqu’à la décision du propriétaire, et les dates ne sont bloquées qu’à sa confirmation.',
+        en: 'To finalise your booking, your three documents (licence, ID, sailing CV) must be uploaded and then validated by the SailingLoc team. An unpaid request is kept for 72 hours (then cancelled automatically). After payment, nothing is charged: the amount stays on hold until the owner decides, and the dates are only secured once the owner confirms.',
+      },
+      notValidated: {
+        fr: 'Vos documents ne sont pas encore tous validés par SailingLoc. Réessayez une fois la validation faite — votre réservation reste enregistrée.',
+        en: 'Your documents have not all been validated by SailingLoc yet. Try again once validated — your booking remains saved.',
+      },
+      continue: { fr: 'Vérifier et continuer', en: 'Check and continue' },
+    },
+    payment: {
+      title: { fr: 'Paiement', en: 'Payment' },
+      amount: { fr: 'Montant à régler', en: 'Amount due' },
+      demo: {
+        fr: 'Paiement de démonstration : aucune donnée bancaire n’est envoyée ni enregistrée.',
+        en: 'Demo payment: no card data is sent or stored.',
+      },
+      name: { fr: 'Titulaire de la carte', en: 'Cardholder name' },
+      number: { fr: 'Numéro de carte', en: 'Card number' },
+      expiry: { fr: 'Expiration', en: 'Expiry' },
+      cvc: { fr: 'CVC', en: 'CVC' },
+      pay: { fr: 'Payer {{total}} €', en: 'Pay €{{total}}' },
+      errors: {
+        name: { fr: 'Indiquez le titulaire de la carte.', en: 'Enter the cardholder name.' },
+        number: { fr: 'Numéro de carte invalide.', en: 'Invalid card number.' },
+        expiry: { fr: 'Date d’expiration invalide (MM/AA).', en: 'Invalid expiry date (MM/YY).' },
+        expired: { fr: 'Cette carte est expirée.', en: 'This card has expired.' },
+        expiresBeforeEnd: {
+          fr: 'La carte doit rester valide jusqu’à la fin de la réservation ({{date}}).',
+          en: 'The card must remain valid until the end of the booking ({{date}}).',
+        },
+        cvc: { fr: 'CVC invalide.', en: 'Invalid CVC.' },
+      },
+    },
+    done: {
+      title: { fr: 'Demande envoyée au propriétaire !', en: 'Request sent to the owner!' },
+      text: {
+        fr: 'Votre paiement pour {{boat}} est enregistré mais ne sera débité qu’à la confirmation du propriétaire ; il sera annulé s’il refuse. Suivez votre demande dans « Mes réservations ».',
+        en: 'Your payment for {{boat}} is recorded but will only be charged once the owner confirms; it will be cancelled if they refuse. Track your request under “My bookings”.',
+      },
+      ref: { fr: 'Référence : {{ref}}', en: 'Reference: {{ref}}' },
+      myBookings: { fr: 'Mes réservations', en: 'My bookings' },
+    },
+    errors: {
+      createFailed: {
+        fr: 'La création de la réservation a échoué. Veuillez réessayer.',
+        en: 'Creating the booking failed. Please try again.',
+      },
+      checkFailed: {
+        fr: 'Impossible de vérifier vos documents. Veuillez réessayer.',
+        en: 'Could not check your documents. Please try again.',
+      },
+      payFailed: {
+        fr: 'Le paiement a échoué. Veuillez réessayer.',
+        en: 'The payment failed. Please try again.',
       },
     },
   },
@@ -753,6 +846,13 @@ export const TEXTS = {
       cancelled: { fr: 'Annulées', en: 'Cancelled' },
       refused: { fr: 'Refusées', en: 'Refused' },
     },
+    periodFilterAria: { fr: 'Filtrer par période', en: 'Filter by period' },
+    periodFilters: {
+      all: { fr: 'Toutes périodes', en: 'Any time' },
+      upcoming: { fr: 'À venir', en: 'Upcoming' },
+      current: { fr: 'En cours', en: 'Ongoing' },
+      past: { fr: 'Passées', en: 'Past' },
+    },
     dates: { fr: 'Dates', en: 'Dates' },
     amount: { fr: 'Montant', en: 'Amount' },
     bookedOn: { fr: 'Réservée le', en: 'Booked on' },
@@ -770,6 +870,54 @@ export const TEXTS = {
     },
     emptyFiltered: { fr: 'Aucune réservation pour ce filtre.', en: 'No bookings for this filter.' },
     viewProduct: { fr: 'Voir le produit', en: 'View product' },
+    paymentBadge: {
+      paid: { fr: 'Payée — en attente du propriétaire', en: 'Paid — awaiting owner' },
+      refunded: { fr: 'Remboursée', en: 'Refunded' },
+      refundRequested: { fr: 'Remboursement demandé', en: 'Refund requested' },
+    },
+    actions: {
+      cancel: { fr: 'Annuler la réservation', en: 'Cancel booking' },
+      refund: { fr: 'Demander un remboursement', en: 'Request a refund' },
+    },
+    modal: {
+      cancelTitle: { fr: 'Annuler la réservation', en: 'Cancel the booking' },
+      refundTitle: { fr: 'Demander un remboursement', en: 'Request a refund' },
+      cancelHintPaid: {
+        fr: 'Le montant encaissé vous sera intégralement remboursé.',
+        en: 'The charged amount will be fully refunded to you.',
+      },
+      cancelHintHold: {
+        fr: 'Aucun montant n’a été débité : votre paiement en attente sera simplement annulé.',
+        en: 'Nothing has been charged: your pending payment will simply be cancelled.',
+      },
+      cancelHintNone: {
+        fr: 'Aucun montant ne vous a été débité.',
+        en: 'Nothing has been charged.',
+      },
+      cancelReasonLabel: { fr: 'Motif (optionnel)', en: 'Reason (optional)' },
+      refundReasonLabel: { fr: 'Motif de la demande', en: 'Reason for the request' },
+      refundReasonRequired: {
+        fr: 'Indiquez le motif de votre demande.',
+        en: 'Please state the reason for your request.',
+      },
+      refundHint: {
+        fr: 'Votre demande sera examinée par l’équipe SailingLoc.',
+        en: 'Your request will be reviewed by the SailingLoc team.',
+      },
+      back: { fr: 'Retour', en: 'Back' },
+      confirmCancel: { fr: 'Confirmer l’annulation', en: 'Confirm cancellation' },
+      submitRefund: { fr: 'Envoyer la demande', en: 'Send request' },
+      working: { fr: 'Envoi…', en: 'Sending…' },
+    },
+    toasts: {
+      cancelled: { fr: 'Réservation annulée.', en: 'Booking cancelled.' },
+      cancelledRefunded: {
+        fr: 'Réservation annulée — remboursement intégral effectué.',
+        en: 'Booking cancelled — fully refunded.',
+      },
+      refundRequested: { fr: 'Demande de remboursement envoyée.', en: 'Refund request sent.' },
+      error: { fr: 'Une erreur est survenue.', en: 'Something went wrong.' },
+    },
   },
 
   dashboardPage: {

@@ -624,6 +624,21 @@ const BOOKING_DECISIONS = {
   },
 };
 
+// Bloc « Remboursement » (vert) inséré quand un paiement encaissé vient d'être
+// remboursé automatiquement, avec sa déclinaison texte brut.
+function refundBlocks(refundAmount) {
+  if (!(Number(refundAmount) > 0)) return { html: '', text: '' };
+  const amountFmt = EUR.format(Number(refundAmount));
+  return {
+    html: `
+            <div style="margin:20px 0 0; padding:16px 18px; background-color:#ecfdf5; border-left:4px solid #10b981; border-radius:8px;">
+              <p style="margin:0 0 6px; color:#065f46; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Remboursement</p>
+              <p style="margin:0; color:#064e3b; font-size:14px; line-height:1.6;">Votre paiement de <strong>${amountFmt}</strong> vous est intégralement remboursé : le montant sera recrédité sur votre moyen de paiement initial sous quelques jours.</p>
+            </div>`,
+    text: `\nRemboursement : votre paiement de ${amountFmt} vous est intégralement remboursé (recrédité sur votre moyen de paiement initial sous quelques jours).\n`,
+  };
+}
+
 function buildBookingDecisionEmail({
   firstName,
   decision,
@@ -632,6 +647,7 @@ function buildBookingDecisionEmail({
   endDate,
   totalAmount,
   reason,
+  refundAmount,
 }) {
   const meta = BOOKING_DECISIONS[decision];
   const safeFirstName = escapeHtml(firstName);
@@ -639,6 +655,13 @@ function buildBookingDecisionEmail({
   const safeReason = escapeHtml(reason || '');
   const period = `du ${EMAIL_DATE.format(new Date(startDate))} au ${EMAIL_DATE.format(new Date(endDate))}`;
   const amountFmt = EUR.format(Number(totalAmount) || 0);
+  const refund = refundBlocks(refundAmount);
+  // Le bloc remboursement rend l'outro « notre équipe reviendra vers vous »
+  // obsolète pour une annulation déjà remboursée.
+  const outro =
+    decision === 'cancelled' && refund.html
+      ? 'Nous espérons vous revoir bientôt sur SailingLoc !'
+      : meta.outro;
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -665,13 +688,14 @@ function buildBookingDecisionEmail({
                 Montant : <strong>${amountFmt}</strong>
               </p>
             </div>
+            ${refund.html}
             ${
               safeReason
                 ? `<p style="margin:20px 0 8px; color:#64748b; font-size:13px;">Motif :</p>
             <p style="margin:0; padding:14px 16px; background-color:#fef3c7; border-left:3px solid #f59e0b; border-radius:6px; color:#78350f; font-size:14px; line-height:1.6;">${safeReason}</p>`
                 : ''
             }
-            <p style="margin:24px 0 0; color:#334155; font-size:14px; line-height:1.6;">${meta.outro}</p>
+            <p style="margin:24px 0 0; color:#334155; font-size:14px; line-height:1.6;">${outro}</p>
           </td></tr>
           <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
             <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
@@ -692,8 +716,8 @@ Récapitulatif :
 - Bateau : ${boatName}
 - Dates : ${period}
 - Montant : ${amountFmt}
-${reason ? `\nMotif : ${reason}\n` : ''}
-${meta.outro}
+${refund.text}${reason ? `\nMotif : ${reason}\n` : ''}
+${outro}
 
 — L'équipe SailingLoc`;
 
@@ -701,10 +725,11 @@ ${meta.outro}
 }
 
 // Informe le locataire de la décision du propriétaire sur sa réservation
-// (decision : 'confirmed' | 'refused' | 'cancelled').
+// (decision : 'confirmed' | 'refused' | 'cancelled'). `refundAmount` ajoute la
+// confirmation du remboursement automatique quand un paiement était encaissé.
 export async function sendBookingDecisionEmail(
   to,
-  { firstName, decision, boatName, startDate, endDate, totalAmount, reason }
+  { firstName, decision, boatName, startDate, endDate, totalAmount, reason, refundAmount }
 ) {
   const meta = BOOKING_DECISIONS[decision];
   if (!meta) throw new Error(`Décision de réservation inconnue : ${decision}`);
@@ -716,11 +741,141 @@ export async function sendBookingDecisionEmail(
     endDate,
     totalAmount,
     reason,
+    refundAmount,
   });
   await createTransporter().sendMail({
     from: '"SailingLoc" <noreply@sailingloc.fr>',
     to,
     subject: `Votre réservation du bateau "${boatName}" a été ${meta.verdict} — SailingLoc`,
+    html,
+    text,
+    attachments: [
+      {
+        filename: 'sailingloc-logo.webp',
+        path: LOGO_PATH,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  });
+}
+
+function buildBookingCancelledByLocataireEmail({
+  firstName,
+  audience,
+  boatName,
+  startDate,
+  endDate,
+  totalAmount,
+  reason,
+  refundAmount,
+}) {
+  const safeFirstName = escapeHtml(firstName);
+  const safeBoat = escapeHtml(boatName || '');
+  const safeReason = escapeHtml(reason || '');
+  const period = `du ${EMAIL_DATE.format(new Date(startDate))} au ${EMAIL_DATE.format(new Date(endDate))}`;
+  const amountFmt = EUR.format(Number(totalAmount) || 0);
+  const isOwner = audience === 'proprietaire';
+  const refund = isOwner ? { html: '', text: '' } : refundBlocks(refundAmount);
+
+  const introHtml = isOwner
+    ? `La réservation de votre bateau <strong style="color:#0A3172;">${safeBoat}</strong> ${period} a été <strong style="color:#f59e0b;">annulée</strong> par le locataire.`
+    : `Votre annulation de la réservation du bateau <strong style="color:#0A3172;">${safeBoat}</strong> ${period} est bien prise en compte.`;
+  const introText = isOwner
+    ? `La réservation de votre bateau "${boatName}" ${period} a été annulée par le locataire.`
+    : `Votre annulation de la réservation du bateau "${boatName}" ${period} est bien prise en compte.`;
+  const outro = isOwner
+    ? 'Les dates concernées sont à nouveau ouvertes à la réservation' +
+      (Number(refundAmount) > 0
+        ? ' ; le paiement du locataire lui a été intégralement remboursé automatiquement.'
+        : '.')
+    : Number(refundAmount) > 0
+      ? 'Nous espérons vous revoir bientôt sur SailingLoc !'
+      : 'Aucun montant ne vous a été débité. Nous espérons vous revoir bientôt sur SailingLoc !';
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Réservation annulée</title></head>
+  <body style="margin:0; padding:0; background-color:#f4f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
+          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+            <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
+            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Réservation annulée</p>
+          </td></tr>
+          <tr><td style="padding:40px 36px 24px;">
+            <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">${introHtml}</p>
+            <div style="margin:20px 0 0; padding:16px 18px; background-color:#f1f5f9; border-radius:8px;">
+              <p style="margin:0 0 6px; color:#64748b; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Récapitulatif</p>
+              <p style="margin:0; color:#334155; font-size:14px; line-height:1.8;">
+                Bateau : <strong>${safeBoat}</strong><br />
+                Dates : ${period}<br />
+                Montant : <strong>${amountFmt}</strong>
+              </p>
+            </div>
+            ${refund.html}
+            ${
+              safeReason
+                ? `<p style="margin:20px 0 8px; color:#64748b; font-size:13px;">Motif :</p>
+            <p style="margin:0; padding:14px 16px; background-color:#fef3c7; border-left:3px solid #f59e0b; border-radius:6px; color:#78350f; font-size:14px; line-height:1.6;">${safeReason}</p>`
+                : ''
+            }
+            <p style="margin:24px 0 0; color:#334155; font-size:14px; line-height:1.6;">${outro}</p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
+            <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
+              © ${new Date().getFullYear()} SailingLoc — Tous droits réservés.<br />Cet email a été envoyé automatiquement.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = `Bonjour ${firstName},
+
+${introText}
+
+Récapitulatif :
+- Bateau : ${boatName}
+- Dates : ${period}
+- Montant : ${amountFmt}
+${refund.text}${reason ? `\nMotif : ${reason}\n` : ''}
+${outro}
+
+— L'équipe SailingLoc`;
+
+  return { html, text };
+}
+
+// Annulation par le locataire : prévient le propriétaire (audience
+// 'proprietaire') que le créneau se libère, et confirme au locataire
+// (audience 'locataire') son annulation et son éventuel remboursement.
+export async function sendBookingCancelledByLocataireEmail(
+  to,
+  { audience, firstName, boatName, startDate, endDate, totalAmount, reason, refundAmount }
+) {
+  const { html, text } = buildBookingCancelledByLocataireEmail({
+    audience,
+    firstName,
+    boatName,
+    startDate,
+    endDate,
+    totalAmount,
+    reason,
+    refundAmount,
+  });
+  const subject =
+    audience === 'proprietaire'
+      ? `Réservation annulée sur votre bateau "${boatName}" — SailingLoc`
+      : `Annulation de votre réservation "${boatName}"${Number(refundAmount) > 0 ? ' et remboursement' : ''} — SailingLoc`;
+  await createTransporter().sendMail({
+    from: '"SailingLoc" <noreply@sailingloc.fr>',
+    to,
+    subject,
     html,
     text,
     attachments: [

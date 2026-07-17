@@ -164,6 +164,14 @@ export async function listBookings(id_user) {
         },
       },
       reviews: { where: { id_user }, select: { id_review: true } },
+      // Dernier paiement (empreinte, encaissé ou remboursé) et demande de
+      // remboursement en cours, pour l'affichage du dashboard.
+      payments: {
+        orderBy: { payment_date: 'desc' },
+        take: 1,
+        select: { status: true, refunded_amount: true },
+      },
+      disputes: { where: { status: 'open' }, select: { id_dispute: true }, take: 1 },
     },
   });
 
@@ -177,6 +185,14 @@ export async function listBookings(id_user) {
     cancellation_reason: b.cancellation_reason,
     cancellation_date: b.cancellation_date,
     reviewed: b.reviews.length > 0,
+    payment: b.payments[0]
+      ? {
+          status: b.payments[0].status,
+          refunded_amount:
+            b.payments[0].refunded_amount != null ? Number(b.payments[0].refunded_amount) : null,
+        }
+      : null,
+    refund_requested: b.disputes.length > 0,
     boat: {
       id_boat: b.boat?.id_boat,
       name: b.boat?.name,

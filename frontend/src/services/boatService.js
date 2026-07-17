@@ -5,6 +5,13 @@ export function fetchBoats() {
   return cachedRequest('boats', () => api.get('/boats'));
 }
 
+// Relecture forcée au serveur (disponibilités à jour), en repeuplant le cache
+// pour les autres consommateurs (SearchBar, carrousels…).
+export function fetchBoatsFresh() {
+  invalidateCachedRequest('boats');
+  return fetchBoats();
+}
+
 export function fetchBoatsByType() {
   return api.get('/boats/by-type');
 }

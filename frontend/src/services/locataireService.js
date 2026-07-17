@@ -11,6 +11,16 @@ export function getBookings() {
   return api.get('/users/me/bookings');
 }
 
+// Annule une réservation à venir (remboursement automatique si encaissée).
+export function cancelBooking(idBooking, reason) {
+  return api.post(`/users/me/bookings/${idBooking}/cancel`, { reason });
+}
+
+// Demande de remboursement (litige) sur une réservation annulée non remboursée.
+export function requestRefund(idBooking, reason) {
+  return api.post(`/users/me/bookings/${idBooking}/refund-request`, { reason });
+}
+
 // Bateaux favoris du locataire connecté.
 export function getFavorites() {
   return api.get('/users/me/favorites');

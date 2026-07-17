@@ -23,9 +23,10 @@ const BOAT_INCLUDE = {
   },
 };
 
-// Statuts qui bloquent réellement les dates dans le calendrier (une réservation
-// refusée ou annulée libère la période).
-const BLOCKING_BOOKING_STATUSES = ['pending', 'confirmed'];
+// Seules les réservations confirmées (payées) bloquent les dates du calendrier :
+// une demande « pending » en cours de tunnel ne réserve pas le créneau, le
+// premier locataire qui paie l'emporte.
+const BLOCKING_BOOKING_STATUSES = ['confirmed'];
 
 function enrichWithRating(boats) {
   return boats.map((b) => {
@@ -132,9 +133,18 @@ export async function uploadBoat(req, res) {
   }
 }
 
+// Réservation d'un bateau par un locataire (statut « pending », payée ensuite
+// via POST /api/users/me/bookings/:id_booking/pay).
 export async function createBookingController(req, res) {
-  const { boatId, startDate, endDate } = req.body;
-  const userId = req.user?.id_user;
-  const booking = await createBooking({ userId, boatId, startDate, endDate });
-  res.status(201).json(booking);
+  try {
+    const booking = await createBooking({
+      id_user: req.user.id_user,
+      id_boat: Number(req.params.id_boat),
+      start_date: req.body.start_date,
+      end_date: req.body.end_date,
+    });
+    res.status(201).json({ booking });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
 }
