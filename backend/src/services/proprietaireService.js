@@ -11,19 +11,34 @@ function removeFileQuiet(filePath) {
 
 // Les demandes encore « en attente » dont le séjour a déjà commencé ne peuvent
 // plus être confirmées : elles passent automatiquement « refusée » à la
-// consultation (pas d'email : ce n'est pas une décision du propriétaire).
+// consultation (pas d'email : ce n'est pas une décision du propriétaire), et
+// leur éventuelle empreinte de paiement est libérée — rien n'a été débité, le
+// paiement passe « refunded » sans montant remboursé.
 async function refuseExpiredPending(id_user) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  await prisma.booking.updateMany({
+  const expired = await prisma.booking.findMany({
     where: {
       deleted_at: null,
       status: 'pending',
       start_date: { lt: today },
       boat: { id_user, deleted_at: null },
     },
-    data: { status: 'refused', updated_at: new Date() },
+    select: { id_booking: true },
   });
+  if (expired.length === 0) return;
+  const ids = expired.map((b) => b.id_booking);
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.booking.updateMany({
+      where: { id_booking: { in: ids } },
+      data: { status: 'refused', updated_at: now },
+    }),
+    prisma.payment.updateMany({
+      where: { id_booking: { in: ids }, status: 'pending' },
+      data: { status: 'refunded', refunded_at: now },
+    }),
+  ]);
 }
 
 // Vue synthétique du tableau de bord propriétaire : compteurs agrégés en une seule passe.
@@ -43,12 +58,15 @@ export async function getDashboardStats(id_user) {
       prisma.boat.count({
         where: { id_user, deleted_at: null, is_published: true },
       }),
-      // Réservations à confirmer : demandes en attente sur mes bateaux.
+      // Réservations à confirmer : demandes en attente ET payées (empreinte en
+      // attente) sur mes bateaux — les demandes non payées ne sont pas encore
+      // actionnables par le propriétaire.
       prisma.booking.count({
         where: {
           deleted_at: null,
           status: 'pending',
           boat: { id_user, deleted_at: null },
+          payments: { some: { status: 'pending' } },
         },
       }),
       prisma.booking.aggregate({
@@ -126,6 +144,13 @@ export async function listBookings(id_user) {
       booking_date: true,
       cancellation_reason: true,
       cancellation_date: true,
+      // Dernier état de paiement utile : « pending » (empreinte à valider) ou
+      // « success » (capturé à la confirmation) ; sinon la demande n'est pas payée.
+      payments: {
+        where: { status: { in: ['pending', 'success'] } },
+        select: { status: true },
+        take: 1,
+      },
       user: { select: { first_name: true, last_name: true, email: true } },
       boat: {
         select: {
@@ -147,6 +172,7 @@ export async function listBookings(id_user) {
     booking_date: b.booking_date,
     cancellation_reason: b.cancellation_reason,
     cancellation_date: b.cancellation_date,
+    payment_status: b.payments[0]?.status ?? null,
     locataire: b.user
       ? {
           first_name: b.user.first_name,
@@ -844,6 +870,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
     where: { id_booking: id },
     select: {
       id_booking: true,
+      id_boat: true,
       status: true,
       deleted_at: true,
       start_date: true,
@@ -851,6 +878,13 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       total_amount: true,
       user: { select: { first_name: true, email: true } },
       boat: { select: { id_user: true, name: true } },
+      // Empreinte de paiement en attente : exigée pour décider, capturée à la
+      // confirmation, libérée en cas de refus ou d'annulation.
+      payments: {
+        where: { status: 'pending' },
+        select: { id_payment: true },
+        take: 1,
+      },
     },
   });
   // 404 aussi quand la réservation appartient à un autre propriétaire :
@@ -864,8 +898,16 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       { status: 400 }
     );
   }
-  // Une demande dont le séjour a déjà commencé ne peut plus être confirmée.
+  // Le locataire doit être allé au bout du tunnel (empreinte de paiement en
+  // attente) pour que le propriétaire puisse accepter ou refuser sa demande.
+  if ((action === 'confirm' || action === 'refuse') && booking.payments.length === 0) {
+    throw Object.assign(
+      new Error("Le locataire n'a pas encore payé cette demande : elle ne peut pas être traitée."),
+      { status: 400 }
+    );
+  }
   if (action === 'confirm') {
+    // Une demande dont le séjour a déjà commencé ne peut plus être confirmée.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (new Date(booking.start_date) < today) {
@@ -874,18 +916,74 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
         { status: 400 }
       );
     }
+    // Le créneau ne doit pas déjà être tenu par une autre réservation confirmée.
+    const overlap = await prisma.booking.findFirst({
+      where: {
+        id_boat: booking.id_boat,
+        id_booking: { not: id },
+        deleted_at: null,
+        status: 'confirmed',
+        start_date: { lte: booking.end_date },
+        end_date: { gte: booking.start_date },
+      },
+      select: { id_booking: true },
+    });
+    if (overlap) {
+      throw Object.assign(new Error('Une réservation confirmée chevauche déjà ces dates.'), {
+        status: 409,
+      });
+    }
   }
 
-  const updated = await prisma.booking.update({
-    where: { id_booking: id },
-    data: {
-      status: transition.to,
-      updated_at: new Date(),
-      ...(action === 'cancel' && {
-        cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le propriétaire.',
-        cancellation_date: new Date(),
-      }),
-    },
+  const now = new Date();
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.booking.update({
+      where: { id_booking: id },
+      data: {
+        status: transition.to,
+        updated_at: now,
+        ...(action === 'cancel' && {
+          cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le propriétaire.',
+          cancellation_date: now,
+        }),
+      },
+    });
+
+    if (action === 'confirm') {
+      // Capture de l'empreinte : le paiement devient effectif.
+      await tx.payment.update({
+        where: { id_payment: booking.payments[0].id_payment },
+        data: { status: 'success' },
+      });
+      // Les autres demandes en attente qui chevauchent le créneau confirmé
+      // n'ont plus d'objet : refusées et empreintes libérées (l'ordre compte :
+      // les paiements d'abord, tant que leurs réservations sont encore
+      // « pending »).
+      const overlapping = {
+        id_boat: booking.id_boat,
+        id_booking: { not: id },
+        deleted_at: null,
+        status: 'pending',
+        start_date: { lte: booking.end_date },
+        end_date: { gte: booking.start_date },
+      };
+      await tx.payment.updateMany({
+        where: { status: 'pending', booking: overlapping },
+        data: { status: 'refunded', refunded_at: now },
+      });
+      await tx.booking.updateMany({
+        where: overlapping,
+        data: { status: 'refused', updated_at: now },
+      });
+    } else {
+      // Refus ou annulation : l'empreinte éventuelle est libérée.
+      await tx.payment.updateMany({
+        where: { id_booking: id, status: 'pending' },
+        data: { status: 'refunded', refunded_at: now },
+      });
+    }
+
+    return result;
   });
 
   // Notification au locataire — non bloquante : la décision reste valide

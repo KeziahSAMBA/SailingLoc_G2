@@ -50,7 +50,10 @@ function BookingCard({ booking, busy, onAction }) {
   };
   const port = booking.boat?.port;
   const locataire = booking.locataire;
-  const canDecide = booking.status === 'pending';
+  // Une demande n'est actionnable qu'une fois payée par le locataire
+  // (empreinte en attente) : la confirmation encaisse, le refus annule.
+  const isPaid = booking.payment_status === 'pending';
+  const canDecide = booking.status === 'pending' && isPaid;
   const canCancel = booking.status === 'confirmed' && !isPast(booking.end_date);
 
   return (
@@ -76,11 +79,20 @@ function BookingCard({ booking, busy, onAction }) {
                 </p>
               )}
             </div>
-            <span
-              className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}
-            >
-              {meta.label}
-            </span>
+            <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+              {booking.status === 'pending' && (
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    isPaid ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-slate-400'
+                  }`}
+                >
+                  {isPaid ? 'Payée — à valider' : 'En attente de paiement'}
+                </span>
+              )}
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
+                {meta.label}
+              </span>
+            </div>
           </header>
 
           <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
@@ -210,12 +222,17 @@ function ProprietaireReservations() {
     try {
       const res = await updateBookingStatus(booking.id_booking, action, actionReason);
       const updated = res.data.booking;
+      // Le paiement suit la décision : encaissé à la confirmation, annulé
+      // (donc plus rien en attente) au refus ou à l'annulation.
+      const payment_status = action === 'confirm' ? 'success' : null;
       setBookings((prev) =>
-        prev.map((b) => (b.id_booking === updated.id_booking ? { ...b, ...updated } : b))
+        prev.map((b) =>
+          b.id_booking === updated.id_booking ? { ...b, ...updated, payment_status } : b
+        )
       );
       const messages = {
-        confirm: 'Réservation confirmée.',
-        refuse: 'Réservation refusée.',
+        confirm: 'Réservation confirmée, paiement encaissé.',
+        refuse: 'Demande refusée, paiement annulé.',
         cancel: 'Réservation annulée.',
       };
       showToast(messages[action], 'success');
@@ -353,7 +370,7 @@ function ProprietaireReservations() {
               )}
               <p id="cancel-reason-hint" className="mt-2 text-xs text-slate-500">
                 {decision.action === 'refuse'
-                  ? 'Le locataire sera informé du refus par email. Aucun montant ne lui sera prélevé.'
+                  ? 'Le locataire sera informé du refus par email. Son paiement en attente sera annulé : aucun montant ne lui sera prélevé.'
                   : 'Le locataire sera informé de l’annulation par email, avec ce motif.'}
               </p>
 

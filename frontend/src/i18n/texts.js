@@ -311,8 +311,8 @@ export const TEXTS = {
     },
     documents: {
       intro: {
-        fr: 'Pour finaliser votre réservation, vos trois documents (permis, pièce d’identité, CV nautique) doivent être déposés puis validés par l’équipe SailingLoc. Votre demande est conservée 72 heures (annulée automatiquement au-delà), mais les dates ne sont bloquées qu’au paiement : si quelqu’un d’autre paie ce créneau avant vous, votre demande sera annulée.',
-        en: 'To finalise your booking, your three documents (licence, ID, sailing CV) must be uploaded and then validated by the SailingLoc team. Your request is kept for 72 hours (then cancelled automatically), but the dates are only secured at payment: if someone else pays for this slot first, your request will be cancelled.',
+        fr: 'Pour finaliser votre réservation, vos trois documents (permis, pièce d’identité, CV nautique) doivent être déposés puis validés par l’équipe SailingLoc. Votre demande non payée est conservée 72 heures (annulée automatiquement au-delà). Après le paiement, rien n’est débité : le montant reste en attente jusqu’à la décision du propriétaire, et les dates ne sont bloquées qu’à sa confirmation.',
+        en: 'To finalise your booking, your three documents (licence, ID, sailing CV) must be uploaded and then validated by the SailingLoc team. An unpaid request is kept for 72 hours (then cancelled automatically). After payment, nothing is charged: the amount stays on hold until the owner decides, and the dates are only secured once the owner confirms.',
       },
       notValidated: {
         fr: 'Vos documents ne sont pas encore tous validés par SailingLoc. Réessayez une fois la validation faite — votre réservation reste enregistrée.',
@@ -345,10 +345,10 @@ export const TEXTS = {
       },
     },
     done: {
-      title: { fr: 'Réservation confirmée !', en: 'Booking confirmed!' },
+      title: { fr: 'Demande envoyée au propriétaire !', en: 'Request sent to the owner!' },
       text: {
-        fr: 'Votre réservation de {{boat}} est confirmée. Vous la retrouverez dans « Mes réservations ».',
-        en: 'Your booking of {{boat}} is confirmed. You will find it under “My bookings”.',
+        fr: 'Votre paiement pour {{boat}} est enregistré mais ne sera débité qu’à la confirmation du propriétaire ; il sera annulé s’il refuse. Suivez votre demande dans « Mes réservations ».',
+        en: 'Your payment for {{boat}} is recorded but will only be charged once the owner confirms; it will be cancelled if they refuse. Track your request under “My bookings”.',
       },
       ref: { fr: 'Référence : {{ref}}', en: 'Reference: {{ref}}' },
       myBookings: { fr: 'Mes réservations', en: 'My bookings' },

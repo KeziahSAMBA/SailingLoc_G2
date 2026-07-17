@@ -55,13 +55,15 @@ describe('createBooking', () => {
     mockBookingUpdateMany.mockReset().mockResolvedValue({ count: 0 });
   });
 
-  it('cancelExpiredBookings annule les demandes pending de plus de 72 h', async () => {
+  it('cancelExpiredBookings annule les demandes pending NON payées de plus de 72 h', async () => {
     await cancelExpiredBookings();
     expect(mockBookingUpdateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           status: 'pending',
           booking_date: { lt: expect.any(Date) },
+          // Les demandes payées (empreinte en attente) n'expirent pas.
+          payments: { none: { status: { in: ['pending', 'success'] } } },
         }),
         data: expect.objectContaining({ status: 'cancelled' }),
       })
@@ -160,8 +162,21 @@ describe('payBooking', () => {
       id_booking: 5,
       status: 'confirmed',
       total_amount: '300',
+      payments: [],
     });
     await expect(payBooking(1, 5)).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('renvoie 409 si la réservation est déjà payée (empreinte en attente)', async () => {
+    mockBookingFindFirst.mockResolvedValue({
+      id_booking: 5,
+      status: 'pending',
+      total_amount: '300',
+      booking_date: new Date(),
+      payments: [{ id_payment: 11 }],
+    });
+    await expect(payBooking(1, 5)).rejects.toMatchObject({ status: 409 });
+    expect(mockPaymentCreate).not.toHaveBeenCalled();
   });
 
   it('annule et renvoie 409 si la réservation pending a plus de 72 h', async () => {
@@ -170,6 +185,7 @@ describe('payBooking', () => {
       status: 'pending',
       total_amount: '300',
       booking_date: new Date(Date.now() - 73 * 3600 * 1000),
+      payments: [],
     });
 
     await expect(payBooking(1, 5)).rejects.toMatchObject({ status: 409 });
@@ -193,6 +209,7 @@ describe('payBooking', () => {
       status: 'pending',
       total_amount: '300',
       booking_date: new Date(),
+      payments: [],
     };
     mockBookingFindFirst.mockResolvedValueOnce(booking).mockResolvedValueOnce(conflict);
   }
@@ -217,7 +234,7 @@ describe('payBooking', () => {
     expect(mockPaymentCreate).not.toHaveBeenCalled();
   });
 
-  it('crée un paiement simulé réussi et confirme la réservation', async () => {
+  it('crée une empreinte de paiement en attente sans confirmer la réservation', async () => {
     mockPendingBooking();
     mockDocumentFindMany.mockResolvedValue(VALIDATED_DOCS);
     mockPaymentCreate.mockImplementation(({ data }) =>
@@ -232,14 +249,13 @@ describe('payBooking', () => {
         amount: 300,
         commission: 30,
         payment_method: 'card',
-        status: 'success',
+        // Empreinte : capturée seulement à la confirmation du propriétaire.
+        status: 'pending',
         transaction_ref: expect.stringMatching(/^SIM-/),
       }),
     });
-    expect(mockBookingUpdate).toHaveBeenCalledWith({
-      where: { id_booking: 5 },
-      data: expect.objectContaining({ status: 'confirmed' }),
-    });
+    // La réservation reste « pending » : c'est le propriétaire qui confirme.
+    expect(mockBookingUpdate).not.toHaveBeenCalled();
     expect(payment.amount).toBe(300);
     expect(payment.commission).toBe(30);
   });

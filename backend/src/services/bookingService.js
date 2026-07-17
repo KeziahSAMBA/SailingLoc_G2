@@ -19,9 +19,11 @@ function parseDay(value) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-// Annule les réservations « pending » créées il y a plus de 72 h (balayage
-// périodique lancé par server.js — nettoyage d'affichage : une demande non
-// payée ne bloque de toute façon aucun créneau).
+// Annule les réservations « pending » NON payées créées il y a plus de 72 h
+// (balayage périodique lancé par server.js — nettoyage d'affichage : une
+// demande non payée ne bloque de toute façon aucun créneau). Les demandes déjà
+// payées (empreinte en attente) n'expirent pas : elles attendent la décision
+// du propriétaire.
 export async function cancelExpiredBookings() {
   const now = new Date();
   await prisma.booking.updateMany({
@@ -29,6 +31,7 @@ export async function cancelExpiredBookings() {
       status: 'pending',
       deleted_at: null,
       booking_date: { lt: new Date(now.getTime() - PENDING_EXPIRY_MS) },
+      payments: { none: { status: { in: ['pending', 'success'] } } },
     },
     data: {
       status: 'cancelled',
@@ -55,7 +58,7 @@ function cancelBooking(id_booking, reason) {
 
 // Création d'une demande de réservation par un locataire : statut « pending »,
 // montant recalculé côté serveur. La demande ne bloque pas le créneau : seules
-// les réservations confirmées (payées via payBooking) le font.
+// les réservations confirmées par le propriétaire le font.
 export async function createBooking({ id_user, id_boat, start_date, end_date }) {
   const start = parseDay(start_date);
   const end = parseDay(end_date);
@@ -74,8 +77,8 @@ export async function createBooking({ id_user, id_boat, start_date, end_date }) 
         where: { is_available: true },
         select: { start_date: true, end_date: true },
       },
-      // Réservations confirmées (payées) qui chevauchent la période demandée —
-      // les demandes « pending » d'autres locataires ne bloquent pas.
+      // Réservations confirmées par le propriétaire qui chevauchent la période
+      // demandée — les demandes « pending » d'autres locataires ne bloquent pas.
       bookings: {
         where: {
           deleted_at: null,
@@ -121,8 +124,10 @@ export async function createBooking({ id_user, id_boat, start_date, end_date }) 
 }
 
 // Paiement simulé d'une réservation « pending » du locataire : aucune donnée
-// bancaire ne transite, on enregistre un Payment fictif réussi et la
-// réservation passe en « confirmed ».
+// bancaire ne transite (pas de Stripe pour l'instant). Le Payment est créé en
+// « pending » (empreinte, rien n'est débité) et la réservation reste
+// « pending » : c'est la confirmation du propriétaire (setBookingStatus) qui
+// capture le paiement et bloque le calendrier ; son refus libère l'empreinte.
 export async function payBooking(id_user, id_booking) {
   const booking = await prisma.booking.findFirst({
     where: { id_booking: Number(id_booking), id_user, deleted_at: null },
@@ -134,10 +139,17 @@ export async function payBooking(id_user, id_booking) {
       status: true,
       total_amount: true,
       booking_date: true,
+      payments: {
+        where: { status: { in: ['pending', 'success'] } },
+        select: { id_payment: true },
+        take: 1,
+      },
     },
   });
   if (!booking) throw bad('Réservation introuvable.', 404);
   if (booking.status !== 'pending') throw bad('Cette réservation ne peut plus être payée.', 409);
+  if (booking.payments.length > 0)
+    throw bad('Cette réservation est déjà payée : elle attend la validation du propriétaire.', 409);
 
   // Demande créée il y a plus de 72 h : on l'annule au lieu de l'encaisser.
   if (booking.booking_date.getTime() < Date.now() - PENDING_EXPIRY_MS) {
@@ -145,8 +157,8 @@ export async function payBooking(id_user, id_booking) {
     throw bad('Réservation expirée : elle n’a pas été payée dans les 72 heures.', 409);
   }
 
-  // Premier payé servi : si un autre locataire a confirmé (payé) des dates qui
-  // chevauchent depuis la création de cette demande, elle est annulée.
+  // Si le propriétaire a confirmé entre-temps une autre réservation sur des
+  // dates qui chevauchent, cette demande n'a plus d'objet : elle est annulée.
   const taken = await prisma.booking.findFirst({
     where: {
       id_boat: booking.id_boat,
@@ -182,23 +194,19 @@ export async function payBooking(id_user, id_booking) {
   const amount = Number(booking.total_amount);
   const commission = Math.round(amount * COMMISSION_RATE * 100) / 100;
 
-  const [payment] = await prisma.$transaction([
-    prisma.payment.create({
-      data: {
-        id_booking: booking.id_booking,
-        amount,
-        commission,
-        payment_date: new Date(),
-        payment_method: 'card',
-        status: 'success',
-        transaction_ref: `SIM-${Date.now()}-${booking.id_booking}`,
-      },
-    }),
-    prisma.booking.update({
-      where: { id_booking: booking.id_booking },
-      data: { status: 'confirmed', updated_at: new Date() },
-    }),
-  ]);
+  // Empreinte en attente : capturée (« success ») à la confirmation du
+  // propriétaire, libérée (« refunded ») s'il refuse ou annule.
+  const payment = await prisma.payment.create({
+    data: {
+      id_booking: booking.id_booking,
+      amount,
+      commission,
+      payment_date: new Date(),
+      payment_method: 'card',
+      status: 'pending',
+      transaction_ref: `SIM-${Date.now()}-${booking.id_booking}`,
+    },
+  });
 
   return { ...payment, amount: Number(payment.amount), commission: Number(payment.commission) };
 }
