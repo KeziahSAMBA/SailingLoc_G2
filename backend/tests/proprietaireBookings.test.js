@@ -43,7 +43,7 @@ function paidPendingBooking(overrides = {}) {
     total_amount: '300',
     user: { first_name: 'Lea', email: 'lea@example.com' },
     boat: { id_user: OWNER, name: 'Pen Duick' },
-    payments: [{ id_payment: 11 }],
+    payments: [{ id_payment: 11, status: 'pending', amount: '300' }],
     ...overrides,
   };
 }
@@ -160,5 +160,23 @@ describe('setBookingStatus (décision du propriétaire)', () => {
       })
     );
     expect(result.status).toBe('cancelled');
+  });
+
+  it('annule une confirmée encaissée : remboursement automatique intégral', async () => {
+    mockBookingFindUnique.mockResolvedValue(
+      paidPendingBooking({
+        status: 'confirmed',
+        payments: [{ id_payment: 12, status: 'success', amount: '300' }],
+      })
+    );
+
+    await setBookingStatus(OWNER, 5, 'cancel', 'Avarie moteur');
+
+    expect(tx.payment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id_payment: 12 },
+        data: expect.objectContaining({ status: 'refunded', refunded_amount: '300' }),
+      })
+    );
   });
 });

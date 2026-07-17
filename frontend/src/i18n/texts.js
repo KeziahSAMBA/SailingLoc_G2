@@ -863,6 +863,54 @@ export const TEXTS = {
     },
     emptyFiltered: { fr: 'Aucune réservation pour ce filtre.', en: 'No bookings for this filter.' },
     viewProduct: { fr: 'Voir le produit', en: 'View product' },
+    paymentBadge: {
+      paid: { fr: 'Payée — en attente du propriétaire', en: 'Paid — awaiting owner' },
+      refunded: { fr: 'Remboursée', en: 'Refunded' },
+      refundRequested: { fr: 'Remboursement demandé', en: 'Refund requested' },
+    },
+    actions: {
+      cancel: { fr: 'Annuler la réservation', en: 'Cancel booking' },
+      refund: { fr: 'Demander un remboursement', en: 'Request a refund' },
+    },
+    modal: {
+      cancelTitle: { fr: 'Annuler la réservation', en: 'Cancel the booking' },
+      refundTitle: { fr: 'Demander un remboursement', en: 'Request a refund' },
+      cancelHintPaid: {
+        fr: 'Le montant encaissé vous sera intégralement remboursé.',
+        en: 'The charged amount will be fully refunded to you.',
+      },
+      cancelHintHold: {
+        fr: 'Aucun montant n’a été débité : votre paiement en attente sera simplement annulé.',
+        en: 'Nothing has been charged: your pending payment will simply be cancelled.',
+      },
+      cancelHintNone: {
+        fr: 'Aucun montant ne vous a été débité.',
+        en: 'Nothing has been charged.',
+      },
+      cancelReasonLabel: { fr: 'Motif (optionnel)', en: 'Reason (optional)' },
+      refundReasonLabel: { fr: 'Motif de la demande', en: 'Reason for the request' },
+      refundReasonRequired: {
+        fr: 'Indiquez le motif de votre demande.',
+        en: 'Please state the reason for your request.',
+      },
+      refundHint: {
+        fr: 'Votre demande sera examinée par l’équipe SailingLoc.',
+        en: 'Your request will be reviewed by the SailingLoc team.',
+      },
+      back: { fr: 'Retour', en: 'Back' },
+      confirmCancel: { fr: 'Confirmer l’annulation', en: 'Confirm cancellation' },
+      submitRefund: { fr: 'Envoyer la demande', en: 'Send request' },
+      working: { fr: 'Envoi…', en: 'Sending…' },
+    },
+    toasts: {
+      cancelled: { fr: 'Réservation annulée.', en: 'Booking cancelled.' },
+      cancelledRefunded: {
+        fr: 'Réservation annulée — remboursement intégral effectué.',
+        en: 'Booking cancelled — fully refunded.',
+      },
+      refundRequested: { fr: 'Demande de remboursement envoyée.', en: 'Refund request sent.' },
+      error: { fr: 'Une erreur est survenue.', en: 'Something went wrong.' },
+    },
   },
 
   dashboardPage: {

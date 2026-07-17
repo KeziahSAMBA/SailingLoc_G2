@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { DOCUMENT_TYPES } from './documentService.js';
+import { sendBookingCancelledByLocataireEmail } from './emailService.js';
 
 const DAY_MS = 86400000;
 // Commission plateforme : même taux (10 %) que les paiements du seed.
@@ -209,4 +210,138 @@ export async function payBooking(id_user, id_booking) {
   });
 
   return { ...payment, amount: Number(payment.amount), commission: Number(payment.commission) };
+}
+
+// Annulation par le locataire, uniquement avant le début du séjour. Une
+// empreinte en attente est simplement libérée ; un paiement encaissé est
+// intégralement remboursé, sans validation admin : le séjour n'a pas eu lieu.
+export async function cancelOwnBooking(id_user, id_booking, reason) {
+  const booking = await prisma.booking.findFirst({
+    where: { id_booking: Number(id_booking), id_user, deleted_at: null },
+    select: {
+      id_booking: true,
+      status: true,
+      start_date: true,
+      end_date: true,
+      total_amount: true,
+      user: { select: { first_name: true, email: true } },
+      boat: { select: { name: true, owner: { select: { first_name: true, email: true } } } },
+      payments: {
+        where: { status: { in: ['pending', 'success'] } },
+        select: { id_payment: true, status: true, amount: true },
+      },
+    },
+  });
+  if (!booking) throw bad('Réservation introuvable.', 404);
+  if (booking.status !== 'pending' && booking.status !== 'confirmed')
+    throw bad('Cette réservation ne peut plus être annulée.', 409);
+
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  if (booking.start_date <= today)
+    throw bad('Le séjour a commencé (ou commence aujourd’hui) : annulation impossible.', 409);
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.booking.update({
+      where: { id_booking: booking.id_booking },
+      data: {
+        status: 'cancelled',
+        cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le locataire.',
+        cancellation_date: now,
+        updated_at: now,
+      },
+    });
+    for (const p of booking.payments) {
+      await tx.payment.update({
+        where: { id_payment: p.id_payment },
+        data: {
+          status: 'refunded',
+          refunded_at: now,
+          // Empreinte jamais débitée : libération sans montant. Paiement
+          // encaissé : remboursement automatique intégral.
+          ...(p.status === 'success' && {
+            refunded_amount: p.amount,
+            refund_reason:
+              'Remboursement automatique : annulation par le locataire avant le début du séjour.',
+          }),
+        },
+      });
+    }
+    return result;
+  });
+
+  // Notifications non bloquantes : le propriétaire apprend que le créneau se
+  // libère, le locataire reçoit la confirmation (et celle du remboursement
+  // intégral si un paiement avait été encaissé).
+  const captured = booking.payments.find((p) => p.status === 'success');
+  const emailBase = {
+    boatName: booking.boat?.name,
+    startDate: booking.start_date,
+    endDate: booking.end_date,
+    totalAmount: Number(booking.total_amount),
+    reason: updated.cancellation_reason,
+    refundAmount: captured ? Number(captured.amount) : 0,
+  };
+  const recipients = [
+    booking.boat?.owner?.email && {
+      to: booking.boat.owner.email,
+      audience: 'proprietaire',
+      firstName: booking.boat.owner.first_name,
+    },
+    booking.user?.email && {
+      to: booking.user.email,
+      audience: 'locataire',
+      firstName: booking.user.first_name,
+    },
+  ].filter(Boolean);
+  for (const r of recipients) {
+    try {
+      await sendBookingCancelledByLocataireEmail(r.to, {
+        audience: r.audience,
+        firstName: r.firstName,
+        ...emailBase,
+      });
+    } catch (emailErr) {
+      console.error('[email] annulation réservation :', emailErr.message);
+    }
+  }
+
+  return {
+    id_booking: updated.id_booking,
+    status: updated.status,
+    cancellation_reason: updated.cancellation_reason,
+    cancellation_date: updated.cancellation_date,
+  };
+}
+
+// Demande de remboursement (litige examiné par l'admin) — filet de sécurité
+// pour une réservation annulée dont le paiement encaissé n'a pas été remboursé
+// automatiquement.
+export async function requestRefund(id_user, id_booking, reason) {
+  const cleanReason = reason && String(reason).trim();
+  if (!cleanReason) throw bad('Le motif de la demande est obligatoire.');
+
+  const booking = await prisma.booking.findFirst({
+    where: { id_booking: Number(id_booking), id_user, deleted_at: null },
+    select: {
+      id_booking: true,
+      status: true,
+      payments: { where: { status: 'success' }, select: { id_payment: true }, take: 1 },
+      disputes: { where: { status: 'open' }, select: { id_dispute: true }, take: 1 },
+    },
+  });
+  if (!booking) throw bad('Réservation introuvable.', 404);
+  if (booking.status !== 'cancelled')
+    throw bad(
+      'Seule une réservation annulée peut faire l’objet d’une demande de remboursement.',
+      409
+    );
+  if (booking.payments.length === 0)
+    throw bad('Aucun paiement encaissé à rembourser sur cette réservation.', 409);
+  if (booking.disputes.length > 0)
+    throw bad('Une demande de remboursement est déjà en cours pour cette réservation.', 409);
+
+  return prisma.dispute.create({
+    data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
+  });
 }

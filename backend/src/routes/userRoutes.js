@@ -23,6 +23,8 @@ import {
   getDashboard,
   getMyBookings,
   payMyBooking,
+  cancelMyBooking,
+  requestMyRefund,
   getMyFavorites,
   postFavorite,
   deleteFavorite,
@@ -126,6 +128,13 @@ router.get(
 );
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
 router.post('/me/bookings/:id_booking/pay', protect, requireRole('locataire'), payMyBooking);
+router.post('/me/bookings/:id_booking/cancel', protect, requireRole('locataire'), cancelMyBooking);
+router.post(
+  '/me/bookings/:id_booking/refund-request',
+  protect,
+  requireRole('locataire'),
+  requestMyRefund
+);
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
 router.post('/me/favorites/:id_boat', protect, requireRole('locataire'), postFavorite);
 router.delete('/me/favorites/:id_boat', protect, requireRole('locataire'), deleteFavorite);

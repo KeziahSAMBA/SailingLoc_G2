@@ -5,7 +5,7 @@ import {
   addFavorite,
   removeFavorite,
 } from '../services/locataireService.js';
-import { payBooking } from '../services/bookingService.js';
+import { payBooking, cancelOwnBooking, requestRefund } from '../services/bookingService.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -30,6 +30,31 @@ export async function getMyBookings(req, res) {
   try {
     const bookings = await listBookings(req.user.id_user);
     res.json({ bookings });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+// Annulation par le locataire (avant le début du séjour), avec remboursement
+// automatique de tout paiement encaissé.
+export async function cancelMyBooking(req, res) {
+  try {
+    const booking = await cancelOwnBooking(
+      req.user.id_user,
+      req.params.id_booking,
+      req.body?.reason
+    );
+    res.json({ booking });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+// Demande de remboursement (litige) sur une réservation annulée non remboursée.
+export async function requestMyRefund(req, res) {
+  try {
+    const dispute = await requestRefund(req.user.id_user, req.params.id_booking, req.body?.reason);
+    res.status(201).json({ dispute });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

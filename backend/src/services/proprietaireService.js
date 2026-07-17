@@ -878,12 +878,12 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       total_amount: true,
       user: { select: { first_name: true, email: true } },
       boat: { select: { id_user: true, name: true } },
-      // Empreinte de paiement en attente : exigée pour décider, capturée à la
-      // confirmation, libérée en cas de refus ou d'annulation.
+      // Paiements actifs : l'empreinte « pending » est exigée pour décider,
+      // capturée à la confirmation, libérée au refus ; un paiement encaissé
+      // (« success ») est intégralement remboursé si le proprio annule.
       payments: {
-        where: { status: 'pending' },
-        select: { id_payment: true },
-        take: 1,
+        where: { status: { in: ['pending', 'success'] } },
+        select: { id_payment: true, status: true, amount: true },
       },
     },
   });
@@ -900,7 +900,8 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
   }
   // Le locataire doit être allé au bout du tunnel (empreinte de paiement en
   // attente) pour que le propriétaire puisse accepter ou refuser sa demande.
-  if ((action === 'confirm' || action === 'refuse') && booking.payments.length === 0) {
+  const holdPayment = booking.payments.find((p) => p.status === 'pending');
+  if ((action === 'confirm' || action === 'refuse') && !holdPayment) {
     throw Object.assign(
       new Error("Le locataire n'a pas encore payé cette demande : elle ne peut pas être traitée."),
       { status: 400 }
@@ -952,7 +953,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
     if (action === 'confirm') {
       // Capture de l'empreinte : le paiement devient effectif.
       await tx.payment.update({
-        where: { id_payment: booking.payments[0].id_payment },
+        where: { id_payment: holdPayment.id_payment },
         data: { status: 'success' },
       });
       // Les autres demandes en attente qui chevauchent le créneau confirmé
@@ -981,13 +982,35 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
         where: { id_booking: id, status: 'pending' },
         data: { status: 'refunded', refunded_at: now },
       });
+      // Annulation d'une réservation encaissée : le locataire n'a pas eu son
+      // séjour, remboursement automatique intégral (pas de validation admin).
+      if (action === 'cancel') {
+        for (const p of booking.payments.filter((pay) => pay.status === 'success')) {
+          await tx.payment.update({
+            where: { id_payment: p.id_payment },
+            data: {
+              status: 'refunded',
+              refunded_amount: p.amount,
+              refunded_at: now,
+              refund_reason: 'Remboursement automatique : annulation par le propriétaire.',
+            },
+          });
+        }
+      }
     }
 
     return result;
   });
 
   // Notification au locataire — non bloquante : la décision reste valide
-  // même si l'envoi de l'email échoue.
+  // même si l'envoi de l'email échoue. Une annulation d'un paiement encaissé
+  // inclut la confirmation du remboursement automatique.
+  const refundedAmount =
+    action === 'cancel'
+      ? booking.payments
+          .filter((p) => p.status === 'success')
+          .reduce((sum, p) => sum + Number(p.amount), 0)
+      : 0;
   if (booking.user?.email) {
     try {
       await sendBookingDecisionEmail(booking.user.email, {
@@ -998,6 +1021,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
         endDate: booking.end_date,
         totalAmount: Number(booking.total_amount),
         reason: updated.cancellation_reason,
+        refundAmount: refundedAmount,
       });
     } catch (emailErr) {
       console.error('[email] décision réservation :', emailErr.message);
