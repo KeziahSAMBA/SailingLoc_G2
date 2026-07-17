@@ -31,7 +31,7 @@ import {
 } from 'react-icons/md';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { fetchBoats } from '../services/boatService.js';
+import { fetchBoats, fetchBoatsFresh } from '../services/boatService.js';
 import {
   readTransitionPayload,
   clearTransitionPayload,
@@ -322,8 +322,18 @@ function ProductPage() {
     setEnd('');
   }, [boatId]);
 
+  // Rafraîchit les disponibilités au moment où le locataire ouvre le
+  // calendrier : les données de la page peuvent dater (cache 60 s + temps
+  // passé sur la page), et un créneau a pu être confirmé entre-temps.
+  const refreshAvailability = useCallback(() => {
+    fetchBoatsFresh()
+      .then(({ data }) => startTransition(() => setBoats(data)))
+      .catch(() => {});
+  }, []);
+
   // Un jour est réservable s'il tombe dans une période d'ouverture du bateau
-  // et qu'aucune réservation active (pending/confirmed) ne le couvre.
+  // et qu'aucune réservation confirmée (payée) ne le couvre — les demandes
+  // « pending » d'autres locataires ne bloquent pas le créneau.
   const isDateAvailable = useCallback(
     (day) => {
       if (!boat) return false;
@@ -797,6 +807,7 @@ function ProductPage() {
                         onChangeStart={setStart}
                         onChangeEnd={setEnd}
                         isDateAvailable={isDateAvailable}
+                        onOpen={refreshAvailability}
                         light
                         panelPlacement="top-right"
                       />
