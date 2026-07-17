@@ -6,6 +6,11 @@ import DocumentsManager from '../components/documents/DocumentsManager.jsx';
 import { fetchBoats } from '../services/boatService.js';
 import { createBooking, payBooking } from '../services/bookingService.js';
 import { getMyDocuments } from '../services/documentService.js';
+import {
+  saveReservationResume,
+  loadReservationResume,
+  clearReservationResume,
+} from '../utils/reservationResume.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -116,13 +121,23 @@ function ReservationPage() {
     [boats, idBoat]
   );
 
+  // Reprise d'un tunnel interrompu (session expirée) : même bateau, mêmes
+  // dates, sauvegarde de moins de 15 minutes — sinon on démarre au récap.
+  const resumePath = `/reservation/${idBoat}?start=${start}&end=${end}`;
+  const [resume] = useState(() => {
+    const saved = loadReservationResume();
+    return saved && saved.path === resumePath ? saved : null;
+  });
+
   // 0 = récap, 1 = documents, 2 = paiement, 3 = confirmation.
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(resume && resume.step < 3 ? resume.step : 0);
   // Chaque étape repart du haut de page (les étapes n'ont pas la même hauteur).
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [step]);
-  const [booking, setBooking] = useState(null);
+  const [booking, setBooking] = useState(
+    resume?.id_booking ? { id_booking: resume.id_booking } : null
+  );
   const [payment, setPayment] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -130,6 +145,21 @@ function ReservationPage() {
   const dayCount = countDays(start, end);
   const price = boat ? Number(boat.daily_price) : 0;
   const total = dayCount * price;
+
+  // Conservation 15 min : l'état du tunnel est sauvegardé à chaque progression
+  // (fenêtre glissante), puis purgé une fois la confirmation atteinte.
+  useEffect(() => {
+    if (dayCount <= 0) return;
+    if (step >= 3) {
+      clearReservationResume();
+      return;
+    }
+    saveReservationResume({
+      path: resumePath,
+      step,
+      id_booking: booking?.id_booking ?? null,
+    });
+  }, [dayCount, resumePath, step, booking]);
 
   const dateFormatter = new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-GB' : 'fr-FR', {
     day: 'numeric',
