@@ -30,6 +30,25 @@ function getFilters(t) {
   ];
 }
 
+function getPeriodFilters(t) {
+  return [
+    { key: 'all', label: t('locataireReservations.periodFilters.all') },
+    { key: 'upcoming', label: t('locataireReservations.periodFilters.upcoming') },
+    { key: 'current', label: t('locataireReservations.periodFilters.current') },
+    { key: 'past', label: t('locataireReservations.periodFilters.past') },
+  ];
+}
+
+// Position du séjour par rapport à aujourd'hui : passé (terminé), à venir
+// (pas commencé) ou en cours (aujourd'hui dans le séjour, bornes incluses).
+function matchesPeriod(booking, period) {
+  if (period === 'past') return isPast(booking.end_date);
+  if (period === 'upcoming') return startsAfterToday(booking.start_date);
+  if (period === 'current')
+    return !isPast(booking.end_date) && !startsAfterToday(booking.start_date);
+  return true;
+}
+
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
 
@@ -224,6 +243,7 @@ function LocataireReservations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
   const [busyId, setBusyId] = useState(null);
   // Modal d'annulation ou de demande de remboursement : { booking, action } | null.
   const [decision, setDecision] = useState(null);
@@ -231,6 +251,7 @@ function LocataireReservations() {
   const [reasonError, setReasonError] = useState('');
   const { showToast } = useToast();
   const filters = useMemo(() => getFilters(t), [t]);
+  const periodFilters = useMemo(() => getPeriodFilters(t), [t]);
 
   const deciding = decision ? busyId === decision.booking.id_booking : false;
 
@@ -298,8 +319,11 @@ function LocataireReservations() {
   }
 
   const filtered = useMemo(
-    () => (filter === 'all' ? bookings : bookings.filter((b) => b.status === filter)),
-    [bookings, filter]
+    () =>
+      bookings
+        .filter((b) => filter === 'all' || b.status === filter)
+        .filter((b) => matchesPeriod(b, periodFilter)),
+    [bookings, filter, periodFilter]
   );
 
   return (
@@ -322,7 +346,7 @@ function LocataireReservations() {
 
       {/* Filtres par statut */}
       <div
-        className="mb-5 flex flex-wrap gap-2"
+        className="mb-3 flex flex-wrap gap-2"
         role="group"
         aria-label={t('locataireReservations.filterAria')}
       >
@@ -338,6 +362,32 @@ function LocataireReservations() {
                 active
                   ? 'bg-[#0A3172] text-white'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+              }`}
+            >
+              {f.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Filtres par période (passées / en cours / à venir), cumulables avec le statut */}
+      <div
+        className="mb-5 flex flex-wrap gap-2"
+        role="group"
+        aria-label={t('locataireReservations.periodFilterAria')}
+      >
+        {periodFilters.map((f) => {
+          const active = periodFilter === f.key;
+          return (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setPeriodFilter(f.key)}
+              aria-pressed={active}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
+                active
+                  ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
+                  : 'border-slate-700 bg-transparent text-slate-400 hover:border-slate-500 hover:text-slate-200'
               }`}
             >
               {f.label}

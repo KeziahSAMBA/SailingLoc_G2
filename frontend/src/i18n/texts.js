@@ -846,6 +846,13 @@ export const TEXTS = {
       cancelled: { fr: 'Annulées', en: 'Cancelled' },
       refused: { fr: 'Refusées', en: 'Refused' },
     },
+    periodFilterAria: { fr: 'Filtrer par période', en: 'Filter by period' },
+    periodFilters: {
+      all: { fr: 'Toutes périodes', en: 'Any time' },
+      upcoming: { fr: 'À venir', en: 'Upcoming' },
+      current: { fr: 'En cours', en: 'Ongoing' },
+      past: { fr: 'Passées', en: 'Past' },
+    },
     dates: { fr: 'Dates', en: 'Dates' },
     amount: { fr: 'Montant', en: 'Amount' },
     bookedOn: { fr: 'Réservée le', en: 'Booked on' },
