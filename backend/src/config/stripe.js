@@ -33,11 +33,16 @@ export async function cancelIntentQuietly(ref) {
 
 // Remboursement d'un paiement capturé : intégral sans `amount`, partiel sinon
 // (`amount` en euros). Un échec doit remonter — de l'argent a été débité.
-export async function refundIntent(ref, amount) {
+// Sur un paiement partagé (Connect), la part du proprio est reprise
+// automatiquement ; `refundApplicationFee` rembourse aussi la commission.
+export async function refundIntent(ref, amount, { refundApplicationFee = false } = {}) {
   const stripe = getStripe();
   if (!stripe || !isStripeRef(ref)) return null;
+  const intent = await stripe.paymentIntents.retrieve(ref);
+  const shared = Boolean(intent.transfer_data);
   return stripe.refunds.create({
     payment_intent: ref,
     ...(amount != null && { amount: Math.round(amount * 100) }),
+    ...(shared && { reverse_transfer: true, refund_application_fee: refundApplicationFee }),
   });
 }

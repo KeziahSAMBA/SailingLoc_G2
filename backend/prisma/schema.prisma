@@ -21,6 +21,8 @@ model User {
   email_verification_token   String?    @db.VarChar(255)
   reset_token                String?    @db.VarChar(255)
   reset_token_expires_at     DateTime?
+  // Compte Stripe Connect du propriétaire (acct_…) : l'IBAN reste chez Stripe.
+  stripe_account_id          String?    @db.VarChar(255)
   created_at                 DateTime   @default(now())
   updated_at                 DateTime?
   deleted_at                 DateTime?

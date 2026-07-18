@@ -151,6 +151,7 @@ export async function payBooking(id_user, id_booking) {
         select: { id_payment: true, status: true, transaction_ref: true },
         take: 1,
       },
+      boat: { select: { owner: { select: { stripe_account_id: true } } } },
     },
   });
   if (!booking) throw bad('Réservation introuvable.', 404);
@@ -230,12 +231,29 @@ export async function payBooking(id_user, id_booking) {
   let transaction_ref = `SIM-${Date.now()}-${booking.id_booking}`;
   let client_secret = null;
   if (stripe) {
+    // Proprio onboardé sur Stripe Connect : paiement partagé automatiquement
+    // (90 % vers son compte, 10 % de commission plateforme). Sinon, tout est
+    // encaissé par SailingLoc comme avant.
+    const destination = booking.boat?.owner?.stripe_account_id || null;
+    let destinationReady = false;
+    if (destination) {
+      try {
+        const account = await stripe.accounts.retrieve(destination);
+        destinationReady = Boolean(account.charges_enabled);
+      } catch (err) {
+        console.warn('[stripe] compte connecté injoignable :', err.message);
+      }
+    }
     const intent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
       currency: 'eur',
       capture_method: 'manual',
       automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
       metadata: { id_booking: String(booking.id_booking), id_user: String(id_user) },
+      ...(destinationReady && {
+        application_fee_amount: Math.round(commission * 100),
+        transfer_data: { destination },
+      }),
     });
     transaction_ref = intent.id;
     client_secret = intent.client_secret;
@@ -293,7 +311,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
   // paiement capturé (bloquant : pas d'annulation en base si Stripe refuse).
   for (const p of booking.payments) {
     if (p.status === 'pending') await cancelIntentQuietly(p.transaction_ref);
-    else await refundIntent(p.transaction_ref);
+    else await refundIntent(p.transaction_ref, null, { refundApplicationFee: true });
   }
 
   const updated = await prisma.$transaction(async (tx) => {

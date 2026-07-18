@@ -1,6 +1,7 @@
 import fs from 'fs';
 import prisma from '../config/db.js';
 import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
+import { initConfig } from '../config/appConfig.js';
 import { sendBookingDecisionEmail } from './emailService.js';
 import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js';
 
@@ -803,6 +804,76 @@ export async function deleteBoat(id_user, id_boat) {
   ]);
 }
 
+// Statut du compte Stripe Connect du propriétaire, pour l'UI « Mes revenus ».
+export async function getStripeAccountStatus(id_user) {
+  const stripe = getStripe();
+  if (!stripe) return { enabled: false, has_account: false, onboarded: false };
+  const user = await prisma.user.findUnique({
+    where: { id_user },
+    select: { stripe_account_id: true },
+  });
+  if (!user?.stripe_account_id) return { enabled: true, has_account: false, onboarded: false };
+  const account = await stripe.accounts.retrieve(user.stripe_account_id);
+  return {
+    enabled: true,
+    has_account: true,
+    onboarded: Boolean(account.details_submitted && account.charges_enabled),
+  };
+}
+
+// Crée au besoin le compte Express du proprio puis renvoie un lien
+// d'onboarding hébergé par Stripe — l'IBAN ne transite jamais par nos serveurs.
+export async function createStripeOnboardingLink(id_user) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw Object.assign(new Error("Stripe n'est pas configuré."), { status: 503 });
+  }
+  const user = await prisma.user.findUnique({
+    where: { id_user },
+    select: { stripe_account_id: true, email: true },
+  });
+  let accountId = user?.stripe_account_id;
+  if (!accountId) {
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: 'FR',
+      email: user.email,
+      business_type: 'individual',
+      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
+    });
+    accountId = account.id;
+    await prisma.user.update({
+      where: { id_user },
+      data: { stripe_account_id: accountId, updated_at: new Date() },
+    });
+  }
+  const { APP_URL } = initConfig();
+  const link = await stripe.accountLinks.create({
+    account: accountId,
+    refresh_url: `${APP_URL}/proprietaire/revenus?stripe=refresh`,
+    return_url: `${APP_URL}/proprietaire/revenus?stripe=done`,
+    type: 'account_onboarding',
+  });
+  return { url: link.url };
+}
+
+// Lien de connexion au dashboard Express du proprio (gestion IBAN, virements).
+export async function createStripeLoginLink(id_user) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw Object.assign(new Error("Stripe n'est pas configuré."), { status: 503 });
+  }
+  const user = await prisma.user.findUnique({
+    where: { id_user },
+    select: { stripe_account_id: true },
+  });
+  if (!user?.stripe_account_id) {
+    throw Object.assign(new Error('Aucun compte Stripe configuré.'), { status: 409 });
+  }
+  const link = await stripe.accounts.createLoginLink(user.stripe_account_id);
+  return { url: link.url };
+}
+
 // Historique des paiements reçus sur les bateaux du propriétaire (plus récents
 // d'abord), avec les totaux : brut encaissé, commissions SailingLoc déduites et
 // net propriétaire — calculés sur les paiements réussis uniquement (même règle
@@ -986,7 +1057,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
     // refuse le remboursement).
     for (const p of booking.payments) {
       if (p.status === 'pending') await cancelIntentQuietly(p.transaction_ref);
-      else await refundIntent(p.transaction_ref);
+      else await refundIntent(p.transaction_ref, null, { refundApplicationFee: true });
     }
   }
 

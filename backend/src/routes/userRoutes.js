@@ -38,6 +38,9 @@ import {
   getMyPayments as getProprietairePayments,
   patchBooking as patchProprietaireBooking,
   reportBookingDispute as reportProprietaireDispute,
+  getMyStripeAccount,
+  postStripeOnboarding,
+  postStripeLoginLink,
 } from '../controllers/proprietaireController.js';
 
 // Photos de profil : servies en statique via /uploads (visibles dans le header
@@ -170,6 +173,24 @@ router.get(
   protect,
   requireRole('proprietaire'),
   getProprietairePayments
+);
+router.get(
+  '/me/proprietaire/stripe-account',
+  protect,
+  requireRole('proprietaire'),
+  getMyStripeAccount
+);
+router.post(
+  '/me/proprietaire/stripe-account/onboarding',
+  protect,
+  requireRole('proprietaire'),
+  postStripeOnboarding
+);
+router.post(
+  '/me/proprietaire/stripe-account/login-link',
+  protect,
+  requireRole('proprietaire'),
+  postStripeLoginLink
 );
 router.get('/me/proprietaire/boats', protect, requireRole('proprietaire'), getProprietaireBoats);
 router.get(

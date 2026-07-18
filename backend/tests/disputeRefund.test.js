@@ -57,7 +57,9 @@ describe('setDisputeStatus (remboursement litige via Stripe)', () => {
 
     await setDisputeStatus(3, 'resolved', 'Geste commercial', { refund_percent: 50 });
 
-    expect(mockRefundIntent).toHaveBeenCalledWith('pi_test_123', 150);
+    expect(mockRefundIntent).toHaveBeenCalledWith('pi_test_123', 150, {
+      refundApplicationFee: false,
+    });
     expect(mockPaymentUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id_payment: 12 },
@@ -74,7 +76,9 @@ describe('setDisputeStatus (remboursement litige via Stripe)', () => {
       refund_commission: true,
     });
 
-    expect(mockRefundIntent).toHaveBeenCalledWith('pi_test_123', 300);
+    expect(mockRefundIntent).toHaveBeenCalledWith('pi_test_123', 300, {
+      refundApplicationFee: true,
+    });
   });
 
   it('ne rembourse rien quand le litige est rejeté', async () => {

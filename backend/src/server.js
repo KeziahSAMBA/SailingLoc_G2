@@ -10,6 +10,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import { postContactRequest } from './controllers/contactRequestController.js';
+import { stripeWebhook } from './controllers/webhookController.js';
 import { cancelExpiredBookings } from './services/bookingService.js';
 import { initConfig } from './config/appConfig.js';
 
@@ -31,6 +32,9 @@ app.use(
     exposedHeaders: ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
   })
 );
+// Avant express.json : la vérification de signature Stripe exige le corps brut.
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
+
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));

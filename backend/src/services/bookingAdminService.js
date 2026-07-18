@@ -205,7 +205,9 @@ export async function setDisputeStatus(
       const base = refund_commission ? amount + commission : amount;
       const refundedAmount = Math.round(base * pct) / 100;
       // Remboursement réel côté Stripe, plafonné au montant effectivement débité.
-      await refundIntent(target.transaction_ref, Math.min(refundedAmount, amount));
+      await refundIntent(target.transaction_ref, Math.min(refundedAmount, amount), {
+        refundApplicationFee: Boolean(refund_commission),
+      });
       refundedPayment = await prisma.payment.update({
         where: { id_payment: target.id_payment },
         data: {
