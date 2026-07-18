@@ -21,6 +21,17 @@ export function requestRefund(idBooking, reason) {
   return api.post(`/users/me/bookings/${idBooking}/refund-request`, { reason });
 }
 
+// Signale un problème (litige) sur une réservation annulée ou terminée,
+// avec photos optionnelles (multipart).
+export function reportDispute(idBooking, reason, photos = []) {
+  const form = new FormData();
+  form.append('reason', reason);
+  photos.forEach((file) => form.append('photos', file));
+  return api.post(`/users/me/bookings/${idBooking}/dispute`, form, {
+    headers: { 'Content-Type': undefined },
+  });
+}
+
 // Bateaux favoris du locataire connecté.
 export function getFavorites() {
   return api.get('/users/me/favorites');

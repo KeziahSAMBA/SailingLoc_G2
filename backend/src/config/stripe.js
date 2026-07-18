@@ -31,10 +31,13 @@ export async function cancelIntentQuietly(ref) {
   }
 }
 
-// Remboursement intégral d'un paiement capturé — contrairement à la libération
-// d'empreinte, un échec ici doit remonter : de l'argent a réellement été débité.
-export async function refundIntent(ref) {
+// Remboursement d'un paiement capturé : intégral sans `amount`, partiel sinon
+// (`amount` en euros). Un échec doit remonter — de l'argent a été débité.
+export async function refundIntent(ref, amount) {
   const stripe = getStripe();
   if (!stripe || !isStripeRef(ref)) return null;
-  return stripe.refunds.create({ payment_intent: ref });
+  return stripe.refunds.create({
+    payment_intent: ref,
+    ...(amount != null && { amount: Math.round(amount * 100) }),
+  });
 }

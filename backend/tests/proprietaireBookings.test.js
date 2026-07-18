@@ -22,6 +22,14 @@ jest.unstable_mockModule('../src/services/emailService.js', () => ({
   sendBookingDecisionEmail: mockSendEmail,
 }));
 
+// Stripe désactivé dans les tests, même si une clé est présente dans l'env.
+jest.unstable_mockModule('../src/config/stripe.js', () => ({
+  getStripe: () => null,
+  isStripeRef: (ref) => typeof ref === 'string' && ref.startsWith('pi_'),
+  cancelIntentQuietly: jest.fn().mockResolvedValue(undefined),
+  refundIntent: jest.fn().mockResolvedValue(null),
+}));
+
 const { setBookingStatus } = await import('../src/services/proprietaireService.js');
 
 const OWNER = 10;

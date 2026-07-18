@@ -19,6 +19,17 @@ export function updateBookingStatus(idBooking, action, reason) {
   });
 }
 
+// Signale un problème (litige) sur une réservation annulée ou terminée,
+// avec photos optionnelles (multipart).
+export function reportDispute(idBooking, reason, photos = []) {
+  const form = new FormData();
+  form.append('reason', reason);
+  photos.forEach((file) => form.append('photos', file));
+  return api.post(`/users/me/proprietaire/bookings/${idBooking}/dispute`, form, {
+    headers: { 'Content-Type': undefined },
+  });
+}
+
 // Historique des paiements reçus sur les bateaux du propriétaire, avec les
 // totaux (brut, commissions déduites, net).
 export function getPayments() {

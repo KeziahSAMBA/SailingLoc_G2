@@ -9,6 +9,7 @@ const mockDocumentFindMany = jest.fn();
 const mockPaymentCreate = jest.fn();
 const mockPaymentUpdate = jest.fn();
 const mockDisputeCreate = jest.fn();
+const mockImageCreateMany = jest.fn().mockResolvedValue({ count: 0 });
 // $transaction interactif : le callback reçoit le même client mocké.
 const db = {
   boat: { findFirst: mockBoatFindFirst },
@@ -21,6 +22,7 @@ const db = {
   document: { findMany: mockDocumentFindMany },
   payment: { create: mockPaymentCreate, update: mockPaymentUpdate },
   dispute: { create: mockDisputeCreate },
+  image: { createMany: mockImageCreateMany },
 };
 db.$transaction = jest.fn((arg) => (typeof arg === 'function' ? arg(db) : Promise.all(arg)));
 jest.unstable_mockModule('../src/config/db.js', () => ({ default: db }));
@@ -30,8 +32,22 @@ jest.unstable_mockModule('../src/services/emailService.js', () => ({
   sendBookingCancelledByLocataireEmail: mockSendCancelledEmail,
 }));
 
-const { createBooking, payBooking, cancelExpiredBookings, cancelOwnBooking, requestRefund } =
-  await import('../src/services/bookingService.js');
+// Stripe désactivé dans les tests, même si une clé est présente dans l'env.
+jest.unstable_mockModule('../src/config/stripe.js', () => ({
+  getStripe: () => null,
+  isStripeRef: (ref) => typeof ref === 'string' && ref.startsWith('pi_'),
+  cancelIntentQuietly: jest.fn().mockResolvedValue(undefined),
+  refundIntent: jest.fn().mockResolvedValue(null),
+}));
+
+const {
+  createBooking,
+  payBooking,
+  cancelExpiredBookings,
+  cancelOwnBooking,
+  requestRefund,
+  reportDispute,
+} = await import('../src/services/bookingService.js');
 
 // Date « YYYY-MM-DD » à N jours d'aujourd'hui, pour des tests stables dans le temps.
 function day(offset) {
@@ -412,6 +428,70 @@ describe('requestRefund (demande de remboursement)', () => {
 
     expect(mockDisputeCreate).toHaveBeenCalledWith({
       data: { id_booking: 5, id_user: 1, reason: 'Annulée mais jamais remboursée' },
+    });
+    expect(dispute.status).toBe('open');
+  });
+});
+
+describe('reportDispute (signalement locataire ou proprio)', () => {
+  beforeEach(() => {
+    mockBookingFindFirst.mockReset();
+    mockDisputeCreate
+      .mockReset()
+      .mockImplementation(({ data }) =>
+        Promise.resolve({ id_dispute: 9, status: 'open', ...data })
+      );
+  });
+
+  function eligibleBooking(overrides = {}) {
+    return {
+      id_booking: 5,
+      status: 'cancelled',
+      end_date: new Date(day(-2)),
+      disputes: [],
+      ...overrides,
+    };
+  }
+
+  it('renvoie 400 sans motif', async () => {
+    await expect(reportDispute({ id_user: 1, id_booking: 5, reason: ' ' })).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+
+  it('cible les bateaux du proprio quand asOwner est vrai', async () => {
+    mockBookingFindFirst.mockResolvedValue(eligibleBooking());
+    await reportDispute({ id_user: 2, id_booking: 5, reason: 'Bateau endommagé', asOwner: true });
+    expect(mockBookingFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ boat: { id_user: 2, deleted_at: null } }),
+      })
+    );
+  });
+
+  it('renvoie 409 sur une réservation ni annulée ni terminée', async () => {
+    mockBookingFindFirst.mockResolvedValue(
+      eligibleBooking({ status: 'confirmed', end_date: new Date(day(5)) })
+    );
+    await expect(
+      reportDispute({ id_user: 1, id_booking: 5, reason: 'Problème' })
+    ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('renvoie 409 si un litige est déjà ouvert', async () => {
+    mockBookingFindFirst.mockResolvedValue(eligibleBooking({ disputes: [{ id_dispute: 3 }] }));
+    await expect(
+      reportDispute({ id_user: 1, id_booking: 5, reason: 'Problème' })
+    ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('crée le litige sur une réservation terminée', async () => {
+    mockBookingFindFirst.mockResolvedValue(
+      eligibleBooking({ status: 'confirmed', end_date: new Date(day(-1)) })
+    );
+    const dispute = await reportDispute({ id_user: 1, id_booking: 5, reason: 'Moteur en panne' });
+    expect(mockDisputeCreate).toHaveBeenCalledWith({
+      data: { id_booking: 5, id_user: 1, reason: 'Moteur en panne' },
     });
     expect(dispute.status).toBe('open');
   });

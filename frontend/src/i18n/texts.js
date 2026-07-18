@@ -878,11 +878,12 @@ export const TEXTS = {
     paymentBadge: {
       paid: { fr: 'Payée — en attente du propriétaire', en: 'Paid — awaiting owner' },
       refunded: { fr: 'Remboursée', en: 'Refunded' },
-      refundRequested: { fr: 'Remboursement demandé', en: 'Refund requested' },
+      disputeOpen: { fr: 'Litige en cours', en: 'Dispute in progress' },
     },
     actions: {
       cancel: { fr: 'Annuler la réservation', en: 'Cancel booking' },
       refund: { fr: 'Demander un remboursement', en: 'Request a refund' },
+      dispute: { fr: 'Signaler un problème', en: 'Report an issue' },
     },
     modal: {
       cancelTitle: { fr: 'Annuler la réservation', en: 'Cancel the booking' },
@@ -909,9 +910,19 @@ export const TEXTS = {
         fr: 'Votre demande sera examinée par l’équipe SailingLoc.',
         en: 'Your request will be reviewed by the SailingLoc team.',
       },
+      disputeTitle: { fr: 'Signaler un problème', en: 'Report an issue' },
+      disputeReasonLabel: { fr: 'Décrivez le problème', en: 'Describe the issue' },
+      disputePhotosLabel: { fr: 'Photos (optionnel, 5 max)', en: 'Photos (optional, 5 max)' },
+      disputeAddPhotos: { fr: 'Ajouter des photos', en: 'Add photos' },
+      disputeRemovePhoto: { fr: 'Retirer la photo', en: 'Remove photo' },
+      disputeHint: {
+        fr: 'Votre signalement ouvrira un litige, examiné par l’équipe SailingLoc.',
+        en: 'Your report will open a dispute, reviewed by the SailingLoc team.',
+      },
       back: { fr: 'Retour', en: 'Back' },
       confirmCancel: { fr: 'Confirmer l’annulation', en: 'Confirm cancellation' },
       submitRefund: { fr: 'Envoyer la demande', en: 'Send request' },
+      submitDispute: { fr: 'Envoyer le signalement', en: 'Send report' },
       working: { fr: 'Envoi…', en: 'Sending…' },
     },
     toasts: {
@@ -921,6 +932,7 @@ export const TEXTS = {
         en: 'Booking cancelled — fully refunded.',
       },
       refundRequested: { fr: 'Demande de remboursement envoyée.', en: 'Refund request sent.' },
+      disputeSent: { fr: 'Signalement envoyé.', en: 'Report sent.' },
       error: { fr: 'Une erreur est survenue.', en: 'Something went wrong.' },
     },
   },

@@ -161,6 +161,7 @@ export async function listBookings(id_user) {
         select: { status: true },
         take: 1,
       },
+      disputes: { where: { status: 'open' }, select: { id_dispute: true }, take: 1 },
       user: { select: { first_name: true, last_name: true, email: true } },
       boat: {
         select: {
@@ -183,6 +184,7 @@ export async function listBookings(id_user) {
     cancellation_reason: b.cancellation_reason,
     cancellation_date: b.cancellation_date,
     payment_status: b.payments[0]?.status ?? null,
+    has_open_dispute: b.disputes.length > 0,
     locataire: b.user
       ? {
           first_name: b.user.first_name,

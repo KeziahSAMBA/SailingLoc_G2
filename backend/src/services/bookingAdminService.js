@@ -1,4 +1,5 @@
 import prisma from '../config/db.js';
+import { refundIntent } from '../config/stripe.js';
 import { sendDisputeDecisionEmail } from './emailService.js';
 
 const BOOKING_STATUSES = ['pending', 'confirmed', 'refused', 'cancelled'];
@@ -105,6 +106,7 @@ export async function listDisputes({ status } = {}) {
         },
       },
       opener: { select: { id_user: true, first_name: true, last_name: true, email: true } },
+      images: { where: { deleted_at: null }, orderBy: { order: 'asc' }, select: { url: true } },
     },
     orderBy: { created_at: 'desc' },
   });
@@ -116,6 +118,7 @@ export async function listDisputes({ status } = {}) {
     resolution: d.resolution,
     created_at: d.created_at,
     resolved_at: d.resolved_at,
+    photos: d.images.map((img) => img.url),
     booking: d.booking
       ? {
           id_booking: d.booking.id_booking,
@@ -201,6 +204,8 @@ export async function setDisputeStatus(
       const commission = Number(target.commission);
       const base = refund_commission ? amount + commission : amount;
       const refundedAmount = Math.round(base * pct) / 100;
+      // Remboursement réel côté Stripe, plafonné au montant effectivement débité.
+      await refundIntent(target.transaction_ref, Math.min(refundedAmount, amount));
       refundedPayment = await prisma.payment.update({
         where: { id_payment: target.id_payment },
         data: {

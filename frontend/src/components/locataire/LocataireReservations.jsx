@@ -1,7 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getBookings, cancelBooking, requestRefund } from '../../services/locataireService.js';
+import {
+  getBookings,
+  cancelBooking,
+  requestRefund,
+  reportDispute,
+} from '../../services/locataireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -89,7 +94,7 @@ function BookingCard({ booking, busy, onAction }) {
       ? { label: t('locataireReservations.paymentBadge.paid'), cls: 'bg-sky-500/15 text-sky-300' }
       : booking.refund_requested
         ? {
-            label: t('locataireReservations.paymentBadge.refundRequested'),
+            label: t('locataireReservations.paymentBadge.disputeOpen'),
             cls: 'bg-amber-500/15 text-amber-300',
           }
         : booking.payment?.status === 'refunded' && booking.payment?.refunded_amount != null
@@ -108,9 +113,12 @@ function BookingCard({ booking, busy, onAction }) {
     booking.status === 'cancelled' &&
     booking.payment?.status === 'success' &&
     !booking.refund_requested;
+  const finished = booking.status === 'confirmed' && isPast(booking.end_date);
+  const canDispute =
+    (booking.status === 'cancelled' || finished) && !booking.refund_requested && !canRefund;
 
-  const cardContent = (
-    <article className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 transition hover:border-slate-600 hover:bg-slate-900">
+  return (
+    <article className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 transition hover:border-slate-600">
       <div className="flex flex-col sm:flex-row">
         {booking.boat?.image ? (
           <img
@@ -134,9 +142,12 @@ function BookingCard({ booking, busy, onAction }) {
                 </p>
               )}
 
-              <p className="mt-2 text-sm font-semibold text-[#5AB4EC] transition group-hover:text-[#ABD4FF]">
+              <Link
+                to={boatLink}
+                className={`mt-2 inline-block text-sm font-semibold text-[#5AB4EC] transition hover:text-[#ABD4FF] hover:underline ${FOCUS_RING}`}
+              >
                 {t('locataireReservations.viewProduct')}
-              </p>
+              </Link>
             </div>
 
             <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
@@ -195,45 +206,44 @@ function BookingCard({ booking, busy, onAction }) {
                 : t('locataireReservations.reviewHint')}
             </p>
           )}
+
+          {(canCancel || canRefund || canDispute) && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {canCancel && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onAction(booking, 'cancel')}
+                  className={`rounded-full border border-slate-600 px-4 py-1.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {t('locataireReservations.actions.cancel')}
+                </button>
+              )}
+              {canRefund && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onAction(booking, 'refund')}
+                  className={`rounded-full bg-[#0A3172] px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0d3f92] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {t('locataireReservations.actions.refund')}
+                </button>
+              )}
+              {canDispute && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onAction(booking, 'dispute')}
+                  className={`rounded-full border border-amber-500/50 px-4 py-1.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {t('locataireReservations.actions.dispute')}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </article>
-  );
-
-  return (
-    <div>
-      <Link
-        to={boatLink}
-        className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
-      >
-        {cardContent}
-      </Link>
-      {/* Actions hors du lien : pas de bouton imbriqué dans un <a>. */}
-      {(canCancel || canRefund) && (
-        <div className="mt-2 flex flex-wrap justify-end gap-2">
-          {canCancel && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onAction(booking, 'cancel')}
-              className={`rounded-full border border-slate-600 px-4 py-1.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
-            >
-              {t('locataireReservations.actions.cancel')}
-            </button>
-          )}
-          {canRefund && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onAction(booking, 'refund')}
-              className={`rounded-full bg-[#0A3172] px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0d3f92] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
-            >
-              {t('locataireReservations.actions.refund')}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -249,7 +259,37 @@ function LocataireReservations() {
   const [decision, setDecision] = useState(null);
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState('');
+  // Photos jointes au signalement : { file, url (aperçu à révoquer) }.
+  const [photos, setPhotos] = useState([]);
   const { showToast } = useToast();
+
+  function addPhotos(fileList) {
+    // Copie immédiate : la FileList est vidée dès le reset de l'input.
+    const entries = Array.from(fileList).map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+    }));
+    setPhotos((prev) => {
+      const next = [...prev, ...entries];
+      next.slice(5).forEach((p) => URL.revokeObjectURL(p.url));
+      return next.slice(0, 5);
+    });
+  }
+
+  function removePhoto(index) {
+    setPhotos((prev) => {
+      URL.revokeObjectURL(prev[index].url);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
+  function closeModal() {
+    setPhotos((prev) => {
+      prev.forEach((p) => URL.revokeObjectURL(p.url));
+      return [];
+    });
+    setDecision(null);
+  }
   const filters = useMemo(() => getFilters(t), [t]);
   const periodFilters = useMemo(() => getPeriodFilters(t), [t]);
 
@@ -275,7 +315,7 @@ function LocataireReservations() {
   useEffect(() => {
     if (!decision) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape' && !deciding) setDecision(null);
+      if (e.key === 'Escape' && !deciding) closeModal();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -290,7 +330,7 @@ function LocataireReservations() {
   async function executeDecision() {
     const { booking, action } = decision;
     const cleanReason = reason.trim();
-    if (action === 'refund' && !cleanReason) {
+    if (action !== 'cancel' && !cleanReason) {
       setReasonError(t('locataireReservations.modal.refundReasonRequired'));
       return;
     }
@@ -304,13 +344,20 @@ function LocataireReservations() {
             : t('locataireReservations.toasts.cancelled'),
           'success'
         );
-      } else {
+      } else if (action === 'refund') {
         await requestRefund(booking.id_booking, cleanReason);
         showToast(t('locataireReservations.toasts.refundRequested'), 'success');
+      } else {
+        await reportDispute(
+          booking.id_booking,
+          cleanReason,
+          photos.map((p) => p.file)
+        );
+        showToast(t('locataireReservations.toasts.disputeSent'), 'success');
       }
       // Statuts, badges et boutons dépendent du paiement : on recharge la liste.
       await loadBookings();
-      setDecision(null);
+      closeModal();
     } catch (err) {
       showToast(err.response?.data?.message || t('locataireReservations.toasts.error'), 'error');
     } finally {
@@ -418,7 +465,7 @@ function LocataireReservations() {
       {decision && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => !deciding && setDecision(null)}
+          onClick={() => !deciding && closeModal()}
         >
           <div
             role="dialog"
@@ -430,7 +477,9 @@ function LocataireReservations() {
             <h2 id="locataire-decision-title" className="text-lg font-semibold text-white">
               {decision.action === 'cancel'
                 ? t('locataireReservations.modal.cancelTitle')
-                : t('locataireReservations.modal.refundTitle')}
+                : decision.action === 'refund'
+                  ? t('locataireReservations.modal.refundTitle')
+                  : t('locataireReservations.modal.disputeTitle')}
             </h2>
             <p className="mt-1 text-sm text-slate-400">
               {decision.booking.boat?.name}, {fmtDate(decision.booking.start_date)} →{' '}
@@ -449,7 +498,9 @@ function LocataireReservations() {
               >
                 {decision.action === 'cancel'
                   ? t('locataireReservations.modal.cancelReasonLabel')
-                  : t('locataireReservations.modal.refundReasonLabel')}
+                  : decision.action === 'refund'
+                    ? t('locataireReservations.modal.refundReasonLabel')
+                    : t('locataireReservations.modal.disputeReasonLabel')}
               </label>
               <textarea
                 id="locataire-decision-reason"
@@ -469,21 +520,68 @@ function LocataireReservations() {
                   {reasonError}
                 </p>
               )}
+
+              {decision.action === 'dispute' && (
+                <div className="mt-3">
+                  <span className="mb-1 block text-xs font-medium text-slate-400">
+                    {t('locataireReservations.modal.disputePhotosLabel')}
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {photos.map((p, i) => (
+                      <div key={p.url} className="relative">
+                        <img
+                          src={p.url}
+                          alt=""
+                          className="h-14 w-14 rounded-lg border border-slate-700 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(i)}
+                          aria-label={t('locataireReservations.modal.disputeRemovePhoto')}
+                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-xs text-white hover:bg-red-500 ${FOCUS_RING}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {photos.length < 5 && (
+                      <label
+                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-600 text-xl text-slate-400 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
+                        title={t('locataireReservations.modal.disputeAddPhotos')}
+                      >
+                        +
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          multiple
+                          className="sr-only"
+                          onChange={(e) => {
+                            addPhotos(e.target.files);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              )}
               <p id="locataire-decision-hint" className="mt-2 text-xs text-slate-500">
                 {decision.action === 'refund'
                   ? t('locataireReservations.modal.refundHint')
-                  : decision.booking.payment?.status === 'success'
-                    ? t('locataireReservations.modal.cancelHintPaid')
-                    : decision.booking.payment?.status === 'pending'
-                      ? t('locataireReservations.modal.cancelHintHold')
-                      : t('locataireReservations.modal.cancelHintNone')}
+                  : decision.action === 'dispute'
+                    ? t('locataireReservations.modal.disputeHint')
+                    : decision.booking.payment?.status === 'success'
+                      ? t('locataireReservations.modal.cancelHintPaid')
+                      : decision.booking.payment?.status === 'pending'
+                        ? t('locataireReservations.modal.cancelHintHold')
+                        : t('locataireReservations.modal.cancelHintNone')}
               </p>
 
               <div className="mt-5 flex justify-end gap-3">
                 <button
                   type="button"
                   disabled={deciding}
-                  onClick={() => setDecision(null)}
+                  onClick={closeModal}
                   className={`rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.modal.back')}
@@ -501,7 +599,9 @@ function LocataireReservations() {
                     ? t('locataireReservations.modal.working')
                     : decision.action === 'cancel'
                       ? t('locataireReservations.modal.confirmCancel')
-                      : t('locataireReservations.modal.submitRefund')}
+                      : decision.action === 'refund'
+                        ? t('locataireReservations.modal.submitRefund')
+                        : t('locataireReservations.modal.submitDispute')}
                 </button>
               </div>
             </form>

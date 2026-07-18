@@ -400,3 +400,59 @@ export async function requestRefund(id_user, id_booking, reason) {
     data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
   });
 }
+
+// Signalement d'un problème (litige) par le locataire ou le propriétaire
+// (asOwner), uniquement sur une réservation annulée ou dont le séjour est fini.
+// `files` : photos multer déjà stockées dans uploads/disputes.
+export async function reportDispute({
+  id_user,
+  id_booking,
+  reason,
+  asOwner = false,
+  files = [],
+  origin = '',
+}) {
+  const cleanReason = reason && String(reason).trim();
+  if (!cleanReason) throw bad('Le motif du litige est obligatoire.');
+
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id_booking: Number(id_booking),
+      deleted_at: null,
+      ...(asOwner ? { boat: { id_user, deleted_at: null } } : { id_user }),
+    },
+    select: {
+      id_booking: true,
+      status: true,
+      end_date: true,
+      disputes: { where: { status: 'open' }, select: { id_dispute: true }, take: 1 },
+    },
+  });
+  if (!booking) throw bad('Réservation introuvable.', 404);
+
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const finished = booking.status === 'confirmed' && booking.end_date < today;
+  if (booking.status !== 'cancelled' && !finished)
+    throw bad('Un litige ne peut être ouvert que sur une réservation annulée ou terminée.', 409);
+  if (booking.disputes.length > 0)
+    throw bad('Un litige est déjà en cours pour cette réservation.', 409);
+
+  return prisma.$transaction(async (tx) => {
+    const dispute = await tx.dispute.create({
+      data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
+    });
+    if (files.length > 0) {
+      await tx.image.createMany({
+        data: files.map((f, i) => ({
+          id_dispute: dispute.id_dispute,
+          id_user,
+          url: `${origin}/uploads/disputes/${f.filename}`,
+          type: 'dispute',
+          order: i,
+        })),
+      });
+    }
+    return dispute;
+  });
+}

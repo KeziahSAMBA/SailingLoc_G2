@@ -5,7 +5,12 @@ import {
   addFavorite,
   removeFavorite,
 } from '../services/locataireService.js';
-import { payBooking, cancelOwnBooking, requestRefund } from '../services/bookingService.js';
+import {
+  payBooking,
+  cancelOwnBooking,
+  requestRefund,
+  reportDispute,
+} from '../services/bookingService.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -47,6 +52,21 @@ export async function cancelMyBooking(req, res) {
       req.body?.reason
     );
     res.json({ booking });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function reportMyDispute(req, res) {
+  try {
+    const dispute = await reportDispute({
+      id_user: req.user.id_user,
+      id_booking: req.params.id_booking,
+      reason: req.body?.reason,
+      files: req.files || [],
+      origin: `${req.protocol}://${req.get('host')}`,
+    });
+    res.status(201).json({ dispute });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
