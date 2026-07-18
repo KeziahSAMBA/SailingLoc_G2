@@ -43,6 +43,7 @@ import LocataireDashboard from '../components/locataire/LocataireDashboard.jsx';
 import LocataireAccount from '../components/locataire/LocataireAccount.jsx';
 import LocataireDocuments from '../components/locataire/LocataireDocuments.jsx';
 import LocataireReservations from '../components/locataire/LocataireReservations.jsx';
+import LocataireDepenses from '../components/locataire/LocataireDepenses.jsx';
 import LocataireFavorites from '../components/locataire/LocataireFavorites.jsx';
 import LocataireMessages from '../components/locataire/LocataireMessages.jsx';
 import ProprietaireLayout from '../components/proprietaire/ProprietaireLayout.jsx';
@@ -121,6 +122,7 @@ function AppRouter({ location }) {
         <Route path="compte" element={<LocataireAccount />} />
         <Route path="documents" element={<LocataireDocuments />} />
         <Route path="reservations" element={<LocataireReservations />} />
+        <Route path="depenses" element={<LocataireDepenses />} />
         <Route path="favoris" element={<LocataireFavorites />} />
         <Route path="messages" element={<LocataireMessages />} />
       </Route>

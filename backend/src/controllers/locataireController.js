@@ -1,6 +1,7 @@
 import {
   getDashboardStats,
   listBookings,
+  listPayments,
   listFavorites,
   addFavorite,
   removeFavorite,
@@ -37,6 +38,14 @@ export async function getMyBookings(req, res) {
   try {
     const bookings = await listBookings(req.user.id_user);
     res.json({ bookings });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyPayments(req, res) {
+  try {
+    res.json(await listPayments(req.user.id_user));
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

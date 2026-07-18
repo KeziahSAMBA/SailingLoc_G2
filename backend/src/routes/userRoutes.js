@@ -22,6 +22,7 @@ import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import {
   getDashboard,
   getMyBookings,
+  getMyPayments,
   payMyBooking,
   cancelMyBooking,
   requestMyRefund,
@@ -200,6 +201,7 @@ router.get(
   getProprietaireBoat
 );
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
+router.get('/me/payments', protect, requireRole('locataire'), getMyPayments);
 router.post('/me/bookings/:id_booking/pay', protect, requireRole('locataire'), payMyBooking);
 router.post('/me/bookings/:id_booking/cancel', protect, requireRole('locataire'), cancelMyBooking);
 router.post(

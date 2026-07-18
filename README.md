@@ -12,6 +12,7 @@ Plateforme de location de bateaux — projet fullstack avec un backend Node.js/E
 - [Technologies](#technologies)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
+- [Paiements Stripe](#paiements-stripe)
 - [Scripts disponibles](#scripts-disponibles)
 - [Structure du projet](#structure-du-projet)
 - [API](#api)
@@ -163,19 +164,23 @@ cd ../frontend && npm install
 ```bash
 # Backend
 cd backend
-cp .env.development.example .env
+cp .env.example .env
 
 # Frontend
 cd ../frontend
-cp .env.development.example .env
+cp .env.example .env
 ```
+
+> **En Docker**, c'est le `.env` **racine** qui compte (copié depuis `.env.example` racine) : Docker Compose y lit toutes les variables et elles ont priorité sur les `.env` locaux.
 
 Variables backend à renseigner dans `backend/.env` :
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/sailingloc
 JWT_SECRET=votre_secret_jwt
-STRIPE_SECRET_KEY=sk_test_...
+STRIPE_SECRET_KEY=sk_test_...        # voir section Paiements Stripe
+STRIPE_WEBHOOK_SECRET=whsec_...      # voir section Paiements Stripe
+FILE_ENCRYPTION_KEY=                 # openssl rand -hex 32
 EMAIL_HOST=localhost
 EMAIL_PORT=1025
 EMAIL_USER=
@@ -187,6 +192,7 @@ Variable frontend à renseigner dans `frontend/.env` :
 
 ```env
 VITE_API_BASE_URL=http://localhost:4000/api
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...   # voir section Paiements Stripe
 # Optionnel — mesure d'audience Matomo (nécessite Docker, voir note ci-dessous).
 # Sans cette variable, le tracking est simplement désactivé : le site fonctionne normalement.
 # VITE_MATOMO_URL=http://localhost:8081
@@ -258,6 +264,63 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 | `luc.martin@email.fr` | `Proprietaire@2025Secure` |
 
 > **Note :** Tous les mots de passe sont hachés avec bcrypt. Les données de test incluent 13 utilisateurs, 8 bateaux, 8 ports et 14 réservations pour un environnement de développement complet.
+
+---
+
+## Paiements Stripe
+
+Le tunnel de réservation utilise **Stripe en mode test** : empreinte bancaire à la réservation (capture manuelle), débit uniquement quand le propriétaire confirme, remboursements réels (annulations, litiges), reversement des revenus aux propriétaires via **Stripe Connect** (90 % proprio / 10 % commission), et webhooks de synchronisation.
+
+> **Sans clés Stripe, tout fonctionne quand même** : le paiement bascule en mode simulé (formulaire de carte factice, aucun appel Stripe). Les clés ne sont nécessaires que pour tester le paiement réel.
+
+### Prérequis
+
+1. Un **compte Stripe** gratuit ([stripe.com](https://stripe.com)) — le mode test ne demande ni SIRET ni IBAN réel
+2. **Connect activé** sur le compte (pour les virements propriétaires) : Dashboard → **Connect** → « Get started » → profil « Plateforme ou marketplace » (réponses libres en mode test)
+3. **Docker** pour le relais de webhooks (image `stripe/stripe-cli`)
+
+### Configuration des clés
+
+Dashboard Stripe (mode **Test**) → **Developers → API keys** :
+
+| Clé                         | Variable                      | Où (méthode Docker)             |
+| --------------------------- | ----------------------------- | ------------------------------- |
+| Secret key `sk_test_…`      | `STRIPE_SECRET_KEY`           | `.env` racine                   |
+| Publishable key `pk_test_…` | `VITE_STRIPE_PUBLISHABLE_KEY` | `.env` racine                   |
+| Webhook secret `whsec_…`    | `STRIPE_WEBHOOK_SECRET`       | `.env` racine (voir ci-dessous) |
+
+Après modification du `.env`, **recréer** les conteneurs (un simple restart ne recharge pas les variables) :
+
+```bash
+docker compose -f docker-compose.dev.yml up -d backend frontend
+```
+
+> Vérification : l'étape paiement du tunnel doit afficher **un seul champ carte** (iframe Stripe) au lieu de trois champs séparés (mode simulé).
+
+### Webhooks (expiration d'empreinte, remboursements externes…)
+
+Stripe ne peut pas joindre `localhost` : lancer le relais dans un terminal dédié —
+
+```bash
+docker run --rm -it --network sailingloc_g2_sailingloc_network stripe/stripe-cli \
+  listen --api-key sk_test_VOTRE_CLE --forward-to backend:4000/api/webhooks/stripe
+```
+
+Au démarrage, la commande affiche `Your webhook signing secret is whsec_…` → copier cette valeur dans `STRIPE_WEBHOOK_SECRET` du `.env` racine, puis recréer le backend. Laisser le terminal ouvert pendant les tests : chaque événement s'y affiche avec le code de réponse du backend (`200` = traité). Sans relais actif, rien ne casse — seuls les événements asynchrones (empreinte expirée à 7 jours, remboursement fait depuis le dashboard) ne sont pas synchronisés.
+
+En production : déclarer l'endpoint `https://<domaine>/api/webhooks/stripe` dans Dashboard → Developers → Webhooks, qui fournit son propre `whsec_…`.
+
+### Données de test Stripe
+
+| Usage                         | Valeur                                         |
+| ----------------------------- | ---------------------------------------------- |
+| Carte qui fonctionne          | `4242 4242 4242 4242` (date future, CVC libre) |
+| Carte refusée                 | `4000 0000 0000 0002`                          |
+| Carte 3D Secure               | `4000 0025 0000 3155`                          |
+| IBAN (onboarding Connect)     | `FR1420041010050500013M02606`                  |
+| Code SMS (onboarding Connect) | `000000`                                       |
+
+> **Aucune donnée bancaire ne touche nos serveurs** (conformité PCI-DSS, profil SAQ A) : la carte est saisie dans un iframe Stripe Elements, l'IBAN des proprios est collecté par l'onboarding hébergé Stripe — la base ne stocke que des références opaques (`pi_…`, `acct_…`).
 
 ---
 

@@ -11,6 +11,11 @@ export function getBookings() {
   return api.get('/users/me/bookings');
 }
 
+// Historique des paiements du locataire (page « Mes dépenses »).
+export function getPayments() {
+  return api.get('/users/me/payments');
+}
+
 // Annule une réservation à venir (remboursement automatique si encaissée).
 export function cancelBooking(idBooking, reason) {
   return api.post(`/users/me/bookings/${idBooking}/cancel`, { reason });

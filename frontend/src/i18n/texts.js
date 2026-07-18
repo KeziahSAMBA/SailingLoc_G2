@@ -728,6 +728,7 @@ export const TEXTS = {
       account: { fr: 'Compte', en: 'Account' },
       documents: { fr: 'Mes documents', en: 'My documents' },
       reservations: { fr: 'Mes réservations', en: 'My bookings' },
+      expenses: { fr: 'Mes dépenses', en: 'My spending' },
       favorites: { fr: 'Mes favoris', en: 'My favorites' },
       messages: { fr: 'Messagerie', en: 'Messages' },
     },
@@ -935,6 +936,52 @@ export const TEXTS = {
       disputeSent: { fr: 'Signalement envoyé.', en: 'Report sent.' },
       error: { fr: 'Une erreur est survenue.', en: 'Something went wrong.' },
     },
+  },
+
+  locataireDepenses: {
+    pageTitle: { fr: 'Mes dépenses — SailingLoc', en: 'My spending — SailingLoc' },
+    title: { fr: 'Mes dépenses', en: 'My spending' },
+    subtitle: {
+      fr: 'Historique de vos paiements et remboursements.',
+      en: 'History of your payments and refunds.',
+    },
+    loadError: { fr: 'Erreur de chargement des dépenses.', en: 'Failed to load spending.' },
+    loading: { fr: 'Chargement…', en: 'Loading…' },
+    empty: { fr: 'Aucun paiement pour le moment.', en: 'No payments yet.' },
+    emptyFiltered: { fr: 'Aucun paiement pour ce filtre.', en: 'No payments for this filter.' },
+    filterAria: { fr: 'Filtrer par statut', en: 'Filter by status' },
+    filters: {
+      all: { fr: 'Tous', en: 'All' },
+      success: { fr: 'Payés', en: 'Paid' },
+      pending: { fr: 'En attente', en: 'Pending' },
+      refunded: { fr: 'Remboursés', en: 'Refunded' },
+      failed: { fr: 'Annulés / échoués', en: 'Cancelled / failed' },
+    },
+    periodFilterAria: { fr: 'Filtrer par période', en: 'Filter by period' },
+    periodFilters: {
+      all: { fr: 'Toutes périodes', en: 'Any time' },
+      last30: { fr: '30 derniers jours', en: 'Last 30 days' },
+      last180: { fr: '6 derniers mois', en: 'Last 6 months' },
+      year: { fr: 'Cette année', en: 'This year' },
+    },
+    totals: {
+      paid: { fr: 'Total payé', en: 'Total paid' },
+      refunded: { fr: 'Total remboursé', en: 'Total refunded' },
+      net: { fr: 'Dépense nette', en: 'Net spending' },
+    },
+    status: {
+      pending: { fr: 'Empreinte en attente', en: 'Hold pending' },
+      success: { fr: 'Payé', en: 'Paid' },
+      refunded: { fr: 'Remboursé', en: 'Refunded' },
+      failed: { fr: 'Annulé / échoué', en: 'Cancelled / failed' },
+    },
+    paidOn: { fr: 'Payé le {{date}}', en: 'Paid on {{date}}' },
+    stay: { fr: 'Séjour du {{start}} au {{end}}', en: 'Stay from {{start}} to {{end}}' },
+    refundedDetail: {
+      fr: '{{amount}} remboursés le {{date}}',
+      en: '{{amount}} refunded on {{date}}',
+    },
+    reference: { fr: 'Réf. {{ref}}', en: 'Ref. {{ref}}' },
   },
 
   dashboardPage: {
