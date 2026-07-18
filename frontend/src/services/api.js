@@ -1,8 +1,13 @@
 import axios from 'axios';
 
+// Timeout global : sans lui, une perte de connexion laisse l'UI bloquée sur un
+// spinner infini. Les uploads (multipart) surchargent avec UPLOAD_TIMEOUT_MS.
+export const UPLOAD_TIMEOUT_MS = 60000;
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
   withCredentials: true,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },

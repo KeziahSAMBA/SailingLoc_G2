@@ -1,4 +1,4 @@
-import api from './api.js';
+import api, { UPLOAD_TIMEOUT_MS } from './api.js';
 import { cachedRequest, invalidateCachedRequest } from './requestCache.js';
 
 export function fetchBoats() {
@@ -22,6 +22,7 @@ export function createBoat(formData) {
   return api
     .post('/boats', formData, {
       headers: { 'Content-Type': undefined },
+      timeout: UPLOAD_TIMEOUT_MS,
     })
     .then((res) => {
       // Le catalogue vient de changer : la prochaine lecture repart au serveur.

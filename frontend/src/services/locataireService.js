@@ -1,4 +1,4 @@
-import api from './api.js';
+import api, { UPLOAD_TIMEOUT_MS } from './api.js';
 
 // Vue synthétique du tableau de bord locataire (réservations en cours, favoris,
 // messages non lus).
@@ -29,6 +29,7 @@ export function reportDispute(idBooking, reason, photos = []) {
   photos.forEach((file) => form.append('photos', file));
   return api.post(`/users/me/bookings/${idBooking}/dispute`, form, {
     headers: { 'Content-Type': undefined },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 }
 

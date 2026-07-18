@@ -1,4 +1,4 @@
-import api from './api.js';
+import api, { UPLOAD_TIMEOUT_MS } from './api.js';
 
 // Vue synthétique du tableau de bord propriétaire (bateaux publiés,
 // réservations à confirmer, revenus du mois).
@@ -27,6 +27,7 @@ export function reportDispute(idBooking, reason, photos = []) {
   photos.forEach((file) => form.append('photos', file));
   return api.post(`/users/me/proprietaire/bookings/${idBooking}/dispute`, form, {
     headers: { 'Content-Type': undefined },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 }
 
@@ -60,6 +61,7 @@ export function getBoats() {
 export function createBoat(formData) {
   return api.post('/boats', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 }
 
@@ -72,6 +74,7 @@ export function getBoat(idBoat) {
 export function updateBoat(idBoat, formData) {
   return api.put(`/boats/${idBoat}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 }
 
