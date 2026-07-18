@@ -349,6 +349,20 @@ function AdminBookingsPage() {
                       </td>
                       <td className="max-w-xs px-4 py-3 text-slate-300">
                         {d.reason}
+                        {d.photos?.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {d.photos.map((url) => (
+                              <a key={url} href={url} target="_blank" rel="noreferrer">
+                                <img
+                                  src={url}
+                                  alt="Photo jointe au litige"
+                                  loading="lazy"
+                                  className="h-10 w-10 rounded border border-slate-700 object-cover transition hover:border-[#5AB4EC]"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        )}
                         {d.resolution && (
                           <div className="mt-1 text-xs text-slate-500">
                             Résolution : {d.resolution}

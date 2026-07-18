@@ -21,6 +21,8 @@ model User {
   email_verification_token   String?    @db.VarChar(255)
   reset_token                String?    @db.VarChar(255)
   reset_token_expires_at     DateTime?
+  // Compte Stripe Connect du propriétaire (acct_…) : l'IBAN reste chez Stripe.
+  stripe_account_id          String?    @db.VarChar(255)
   created_at                 DateTime   @default(now())
   updated_at                 DateTime?
   deleted_at                 DateTime?
@@ -172,6 +174,7 @@ model Dispute {
   booking     Booking       @relation(fields: [id_booking], references: [id_booking])
   opener      User?         @relation("UserDisputes", fields: [id_user], references: [id_user])
   payments    Payment[]
+  images      Image[]
 
   @@index([id_booking])
   @@map("dispute")
@@ -273,6 +276,7 @@ model Image {
   id_image    Int      @id @default(autoincrement())
   id_boat     Int?
   id_user     Int?
+  id_dispute  Int?
   url         String   @db.VarChar(500)
   type        String   @db.VarChar(50)
   order       Int      @default(0) @map("order")
@@ -282,6 +286,7 @@ model Image {
 
   boat        Boat?    @relation(fields: [id_boat], references: [id_boat])
   user        User?    @relation(fields: [id_user], references: [id_user])
+  dispute     Dispute? @relation(fields: [id_dispute], references: [id_dispute])
 
   @@map("image")
 }

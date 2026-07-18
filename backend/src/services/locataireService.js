@@ -141,6 +141,60 @@ export async function getDashboardStats(id_user) {
 }
 
 // Liste complète des réservations du locataire (plus récentes d'abord).
+// Historique des paiements du locataire (plus récents d'abord), avec totaux :
+// payé (réellement encaissé), remboursé, dépense nette. Les empreintes en
+// attente et les tentatives échouées sont listées mais hors totaux.
+export async function listPayments(id_user) {
+  const payments = await prisma.payment.findMany({
+    where: { booking: { id_user, deleted_at: null } },
+    orderBy: { payment_date: 'desc' },
+    include: {
+      booking: {
+        select: {
+          id_booking: true,
+          start_date: true,
+          end_date: true,
+          boat: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  const rows = payments.map((p) => ({
+    id_payment: p.id_payment,
+    amount: Number(p.amount),
+    status: p.status,
+    payment_date: p.payment_date,
+    transaction_ref: p.transaction_ref,
+    refunded_amount: p.refunded_amount != null ? Number(p.refunded_amount) : null,
+    refunded_at: p.refunded_at,
+    refund_reason: p.refund_reason,
+    booking: p.booking
+      ? {
+          id_booking: p.booking.id_booking,
+          start_date: p.booking.start_date,
+          end_date: p.booking.end_date,
+          boat_name: p.booking.boat?.name ?? null,
+        }
+      : null,
+  }));
+
+  // Un « refunded » avec montant a d'abord été encaissé ; sans montant, c'est
+  // une empreinte libérée (jamais débitée) : hors totaux.
+  const paid = rows
+    .filter((p) => p.status === 'success' || (p.status === 'refunded' && p.refunded_amount != null))
+    .reduce((sum, p) => sum + p.amount, 0);
+  const refunded = rows.reduce((sum, p) => sum + (p.refunded_amount || 0), 0);
+  return {
+    payments: rows,
+    totals: {
+      paid: Math.round(paid * 100) / 100,
+      refunded: Math.round(refunded * 100) / 100,
+      net: Math.round((paid - refunded) * 100) / 100,
+    },
+  };
+}
+
 export async function listBookings(id_user) {
   const bookings = await prisma.booking.findMany({
     where: { id_user, deleted_at: null },

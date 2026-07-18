@@ -1,11 +1,17 @@
 import {
   getDashboardStats,
   listBookings,
+  listPayments,
   listFavorites,
   addFavorite,
   removeFavorite,
 } from '../services/locataireService.js';
-import { payBooking, cancelOwnBooking, requestRefund } from '../services/bookingService.js';
+import {
+  payBooking,
+  cancelOwnBooking,
+  requestRefund,
+  reportDispute,
+} from '../services/bookingService.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -16,11 +22,13 @@ export async function getDashboard(req, res) {
   }
 }
 
-// Paiement simulé d'une réservation « pending » du locataire connecté.
+// Paiement d'une réservation « pending » du locataire connecté. Avec Stripe,
+// la réponse inclut le client_secret du PaymentIntent que le front confirme
+// via Stripe Elements ; sans clé Stripe, paiement simulé (client_secret null).
 export async function payMyBooking(req, res) {
   try {
-    const payment = await payBooking(req.user.id_user, req.params.id_booking);
-    res.status(201).json({ payment });
+    const result = await payBooking(req.user.id_user, req.params.id_booking);
+    res.status(201).json(result);
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
@@ -30,6 +38,14 @@ export async function getMyBookings(req, res) {
   try {
     const bookings = await listBookings(req.user.id_user);
     res.json({ bookings });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyPayments(req, res) {
+  try {
+    res.json(await listPayments(req.user.id_user));
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
@@ -45,6 +61,21 @@ export async function cancelMyBooking(req, res) {
       req.body?.reason
     );
     res.json({ booking });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function reportMyDispute(req, res) {
+  try {
+    const dispute = await reportDispute({
+      id_user: req.user.id_user,
+      id_booking: req.params.id_booking,
+      reason: req.body?.reason,
+      files: req.files || [],
+      origin: `${req.protocol}://${req.get('host')}`,
+    });
+    res.status(201).json({ dispute });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

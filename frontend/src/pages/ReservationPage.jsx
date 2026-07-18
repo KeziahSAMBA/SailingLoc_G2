@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MdCheck, MdLockOutline, MdInfoOutline } from 'react-icons/md';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import DocumentsManager from '../components/documents/DocumentsManager.jsx';
 import { fetchBoats } from '../services/boatService.js';
 import { createBooking, payBooking } from '../services/bookingService.js';
@@ -31,6 +33,25 @@ const PRIMARY_BTN =
   'rounded-full bg-sky-500 px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50';
 const GHOST_BTN =
   'rounded-full border border-white/40 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10';
+
+// Clé publique Stripe (mode test, pk_test_…). Absente : le formulaire de carte
+// simulé historique reste utilisé, en cohérence avec le backend sans clé.
+const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
+
+// Style du champ carte Stripe (iframe) accordé au thème sombre de la page.
+const CARD_ELEMENT_OPTIONS = {
+  hidePostalCode: true,
+  style: {
+    base: {
+      color: '#ffffff',
+      fontSize: '16px',
+      '::placeholder': { color: 'rgba(255,255,255,0.4)' },
+      iconColor: '#7dd3fc',
+    },
+    invalid: { color: '#fca5a5', iconColor: '#fca5a5' },
+  },
+};
 
 // Saisie carte : groupes de 4 chiffres (affichage uniquement, rien n'est envoyé).
 function formatCardNumber(value) {
@@ -100,6 +121,94 @@ function ErrorNote({ children }) {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
+
+// Formulaire de paiement Stripe Elements : la carte est saisie dans un champ
+// hébergé par Stripe (iframe) — aucune donnée bancaire ne transite par nos
+// serveurs ni même par notre JavaScript (conformité PCI-DSS). L'empreinte est
+// posée ici ; le débit n'a lieu qu'à la confirmation du propriétaire.
+function StripeCardForm({ idBooking, total, onPaid, onBack }) {
+  const { t } = useTranslation();
+  const stripe = useStripe();
+  const elements = useElements();
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    if (!name.trim()) {
+      setError(t('reservation.payment.errors.name'));
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      // Crée (ou reprend, après une carte refusée) l'intention de paiement…
+      const { data } = await payBooking(idBooking);
+      if (!data.client_secret) {
+        // Backend sans clé Stripe : paiement simulé, rien à confirmer.
+        onPaid(data.payment);
+        return;
+      }
+      // …puis pose l'empreinte : la carte part directement chez Stripe.
+      const result = await stripe.confirmCardPayment(data.client_secret, {
+        payment_method: {
+          card: elements.getElement(CardElement),
+          billing_details: { name: name.trim() },
+        },
+      });
+      if (result.error) {
+        // Message Stripe déjà humain (carte refusée, fonds insuffisants…).
+        setError(result.error.message || t('reservation.errors.payFailed'));
+        return;
+      }
+      onPaid(data.payment);
+    } catch (err) {
+      setError(err.response?.data?.message || t('reservation.errors.payFailed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className={`${GLASS} flex flex-col gap-4 p-6`} noValidate>
+      <h2 className="text-lg font-semibold text-white">{t('reservation.payment.title')}</h2>
+      <div className="flex justify-between rounded-lg bg-white/10 px-4 py-3 text-sm">
+        <span className="text-white/70">{t('reservation.payment.amount')}</span>
+        <span className="text-lg font-bold text-sky-400">{total} €</span>
+      </div>
+      <p className="flex items-center gap-1.5 text-xs text-amber-300">
+        <MdLockOutline aria-hidden />
+        {t('reservation.payment.stripeTest')}
+      </p>
+      <label className="flex flex-col gap-1 text-sm text-white/80">
+        {t('reservation.payment.name')}
+        <input
+          className={FIELD}
+          autoComplete="cc-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </label>
+      <div className="flex flex-col gap-1 text-sm text-white/80">
+        <span>{t('reservation.payment.card')}</span>
+        <div className={`${FIELD} py-3`}>
+          <CardElement options={CARD_ELEMENT_OPTIONS} />
+        </div>
+      </div>
+      <ErrorNote>{error}</ErrorNote>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button type="button" onClick={onBack} className={GHOST_BTN}>
+          {t('reservation.previous')}
+        </button>
+        <button type="submit" disabled={busy || !stripe} className={PRIMARY_BTN}>
+          {busy ? t('reservation.working') : t('reservation.payment.pay', { total })}
+        </button>
+      </div>
+    </form>
+  );
+}
 
 function ReservationPage() {
   const { t, i18n } = useTranslation();
@@ -368,8 +477,22 @@ function ReservationPage() {
                 </div>
               )}
 
-              {/* ── Étape 3 : paiement (formulaire de démonstration) ── */}
-              {step === 2 && (
+              {/* ── Étape 3 : paiement — Stripe Elements si la clé publique est
+                  configurée, sinon formulaire de démonstration historique ── */}
+              {step === 2 && stripePromise && (
+                <Elements stripe={stripePromise}>
+                  <StripeCardForm
+                    idBooking={booking?.id_booking}
+                    total={total}
+                    onBack={() => goBack(1)}
+                    onPaid={(paid) => {
+                      setPayment(paid);
+                      setStep(3);
+                    }}
+                  />
+                </Elements>
+              )}
+              {step === 2 && !stripePromise && (
                 <form
                   onSubmit={handlePay}
                   className={`${GLASS} flex flex-col gap-4 p-6`}

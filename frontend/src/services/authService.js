@@ -1,4 +1,4 @@
-import api from './api.js';
+import api, { UPLOAD_TIMEOUT_MS } from './api.js';
 
 export async function register(data) {
   const response = await api.post('/users/register', data);
@@ -75,6 +75,7 @@ export function updateAvatar(file) {
   form.append('avatar', file);
   return api.patch('/users/me/avatar', form, {
     headers: { 'Content-Type': undefined },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 }
 

@@ -5,7 +5,11 @@ import {
   listBookings,
   listPayments,
   setBookingStatus,
+  getStripeAccountStatus,
+  createStripeOnboardingLink,
+  createStripeLoginLink,
 } from '../services/proprietaireService.js';
+import { reportDispute } from '../services/bookingService.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -57,6 +61,46 @@ export async function patchBooking(req, res) {
     const { action, reason } = req.body || {};
     const booking = await setBookingStatus(req.user.id_user, req.params.id_booking, action, reason);
     res.json({ booking });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyStripeAccount(req, res) {
+  try {
+    res.json(await getStripeAccountStatus(req.user.id_user));
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function postStripeOnboarding(req, res) {
+  try {
+    res.json(await createStripeOnboardingLink(req.user.id_user));
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function postStripeLoginLink(req, res) {
+  try {
+    res.json(await createStripeLoginLink(req.user.id_user));
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function reportBookingDispute(req, res) {
+  try {
+    const dispute = await reportDispute({
+      id_user: req.user.id_user,
+      id_booking: req.params.id_booking,
+      reason: req.body?.reason,
+      asOwner: true,
+      files: req.files || [],
+      origin: `${req.protocol}://${req.get('host')}`,
+    });
+    res.status(201).json({ dispute });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

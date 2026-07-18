@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { DOCUMENT_TYPES } from './documentService.js';
+import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
 import { sendBookingCancelledByLocataireEmail } from './emailService.js';
 
 const DAY_MS = 86400000;
@@ -124,12 +125,17 @@ export async function createBooking({ id_user, id_boat, start_date, end_date }) 
   return { ...booking, total_amount: Number(booking.total_amount) };
 }
 
-// Paiement simulé d'une réservation « pending » du locataire : aucune donnée
-// bancaire ne transite (pas de Stripe pour l'instant). Le Payment est créé en
-// « pending » (empreinte, rien n'est débité) et la réservation reste
-// « pending » : c'est la confirmation du propriétaire (setBookingStatus) qui
-// capture le paiement et bloque le calendrier ; son refus libère l'empreinte.
+// Paiement d'une réservation « pending » du locataire, en deux modes :
+//   - Stripe configuré : création d'un PaymentIntent à capture manuelle
+//     (empreinte réelle) dont le client_secret est renvoyé au front, qui fait
+//     saisir la carte dans Stripe Elements — aucune donnée bancaire ne touche
+//     nos serveurs.
+//   - Sans clé Stripe : Payment simulé, comme avant.
+// Dans les deux cas la réservation reste « pending » : c'est la confirmation
+// du propriétaire (setBookingStatus) qui capture le paiement et bloque le
+// calendrier ; son refus libère l'empreinte.
 export async function payBooking(id_user, id_booking) {
+  const stripe = getStripe();
   const booking = await prisma.booking.findFirst({
     where: { id_booking: Number(id_booking), id_user, deleted_at: null },
     select: {
@@ -142,15 +148,38 @@ export async function payBooking(id_user, id_booking) {
       booking_date: true,
       payments: {
         where: { status: { in: ['pending', 'success'] } },
-        select: { id_payment: true },
+        select: { id_payment: true, status: true, transaction_ref: true },
         take: 1,
       },
+      boat: { select: { owner: { select: { stripe_account_id: true } } } },
     },
   });
   if (!booking) throw bad('Réservation introuvable.', 404);
   if (booking.status !== 'pending') throw bad('Cette réservation ne peut plus être payée.', 409);
-  if (booking.payments.length > 0)
-    throw bad('Cette réservation est déjà payée : elle attend la validation du propriétaire.', 409);
+
+  const ALREADY_PAID =
+    'Cette réservation est déjà payée : elle attend la validation du propriétaire.';
+  const existing = booking.payments[0];
+  if (existing) {
+    // Paiement simulé, ou Stripe indisponible : impossible de vérifier plus
+    // finement, on considère la demande payée.
+    if (!stripe || !isStripeRef(existing.transaction_ref)) throw bad(ALREADY_PAID, 409);
+    const intent = await stripe.paymentIntents.retrieve(existing.transaction_ref);
+    if (intent.status === 'requires_capture' || intent.status === 'succeeded')
+      throw bad(ALREADY_PAID, 409);
+    if (intent.status === 'canceled') {
+      // Empreinte morte côté Stripe (annulée/expirée) : on solde l'ancienne
+      // tentative et on repart sur un nouveau PaymentIntent plus bas.
+      await prisma.payment.update({
+        where: { id_payment: existing.id_payment },
+        data: { status: 'failed' },
+      });
+    } else {
+      // Carte pas encore validée (refusée, 3DS abandonné…) : on reprend la
+      // même intention de paiement au lieu d'en créer une deuxième.
+      return { payment: { id_payment: existing.id_payment }, client_secret: intent.client_secret };
+    }
+  }
 
   // Demande créée il y a plus de 72 h : on l'annule au lieu de l'encaisser.
   if (booking.booking_date.getTime() < Date.now() - PENDING_EXPIRY_MS) {
@@ -196,7 +225,40 @@ export async function payBooking(id_user, id_booking) {
   const commission = Math.round(amount * COMMISSION_RATE * 100) / 100;
 
   // Empreinte en attente : capturée (« success ») à la confirmation du
-  // propriétaire, libérée (« refunded ») s'il refuse ou annule.
+  // propriétaire, libérée (« refunded ») s'il refuse ou annule. Avec Stripe,
+  // l'empreinte n'existe qu'à la validation de la carte par le locataire
+  // (confirmCardPayment côté front, jamais nos serveurs).
+  let transaction_ref = `SIM-${Date.now()}-${booking.id_booking}`;
+  let client_secret = null;
+  if (stripe) {
+    // Proprio onboardé sur Stripe Connect : paiement partagé automatiquement
+    // (90 % vers son compte, 10 % de commission plateforme). Sinon, tout est
+    // encaissé par SailingLoc comme avant.
+    const destination = booking.boat?.owner?.stripe_account_id || null;
+    let destinationReady = false;
+    if (destination) {
+      try {
+        const account = await stripe.accounts.retrieve(destination);
+        destinationReady = Boolean(account.charges_enabled);
+      } catch (err) {
+        console.warn('[stripe] compte connecté injoignable :', err.message);
+      }
+    }
+    const intent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100),
+      currency: 'eur',
+      capture_method: 'manual',
+      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+      metadata: { id_booking: String(booking.id_booking), id_user: String(id_user) },
+      ...(destinationReady && {
+        application_fee_amount: Math.round(commission * 100),
+        transfer_data: { destination },
+      }),
+    });
+    transaction_ref = intent.id;
+    client_secret = intent.client_secret;
+  }
+
   const payment = await prisma.payment.create({
     data: {
       id_booking: booking.id_booking,
@@ -205,11 +267,14 @@ export async function payBooking(id_user, id_booking) {
       payment_date: new Date(),
       payment_method: 'card',
       status: 'pending',
-      transaction_ref: `SIM-${Date.now()}-${booking.id_booking}`,
+      transaction_ref,
     },
   });
 
-  return { ...payment, amount: Number(payment.amount), commission: Number(payment.commission) };
+  return {
+    payment: { ...payment, amount: Number(payment.amount), commission: Number(payment.commission) },
+    client_secret,
+  };
 }
 
 // Annulation par le locataire, uniquement avant le début du séjour. Une
@@ -228,7 +293,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
       boat: { select: { name: true, owner: { select: { first_name: true, email: true } } } },
       payments: {
         where: { status: { in: ['pending', 'success'] } },
-        select: { id_payment: true, status: true, amount: true },
+        select: { id_payment: true, status: true, amount: true, transaction_ref: true },
       },
     },
   });
@@ -240,6 +305,14 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
   const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   if (booking.start_date <= today)
     throw bad('Le séjour a commencé (ou commence aujourd’hui) : annulation impossible.', 409);
+
+  // Côté Stripe d'abord : libération de l'empreinte non capturée (best-effort,
+  // une empreinte déjà expirée ne bloque pas) et remboursement réel d'un
+  // paiement capturé (bloquant : pas d'annulation en base si Stripe refuse).
+  for (const p of booking.payments) {
+    if (p.status === 'pending') await cancelIntentQuietly(p.transaction_ref);
+    else await refundIntent(p.transaction_ref, null, { refundApplicationFee: true });
+  }
 
   const updated = await prisma.$transaction(async (tx) => {
     const result = await tx.booking.update({
@@ -343,5 +416,61 @@ export async function requestRefund(id_user, id_booking, reason) {
 
   return prisma.dispute.create({
     data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
+  });
+}
+
+// Signalement d'un problème (litige) par le locataire ou le propriétaire
+// (asOwner), uniquement sur une réservation annulée ou dont le séjour est fini.
+// `files` : photos multer déjà stockées dans uploads/disputes.
+export async function reportDispute({
+  id_user,
+  id_booking,
+  reason,
+  asOwner = false,
+  files = [],
+  origin = '',
+}) {
+  const cleanReason = reason && String(reason).trim();
+  if (!cleanReason) throw bad('Le motif du litige est obligatoire.');
+
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id_booking: Number(id_booking),
+      deleted_at: null,
+      ...(asOwner ? { boat: { id_user, deleted_at: null } } : { id_user }),
+    },
+    select: {
+      id_booking: true,
+      status: true,
+      end_date: true,
+      disputes: { where: { status: 'open' }, select: { id_dispute: true }, take: 1 },
+    },
+  });
+  if (!booking) throw bad('Réservation introuvable.', 404);
+
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const finished = booking.status === 'confirmed' && booking.end_date < today;
+  if (booking.status !== 'cancelled' && !finished)
+    throw bad('Un litige ne peut être ouvert que sur une réservation annulée ou terminée.', 409);
+  if (booking.disputes.length > 0)
+    throw bad('Un litige est déjà en cours pour cette réservation.', 409);
+
+  return prisma.$transaction(async (tx) => {
+    const dispute = await tx.dispute.create({
+      data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
+    });
+    if (files.length > 0) {
+      await tx.image.createMany({
+        data: files.map((f, i) => ({
+          id_dispute: dispute.id_dispute,
+          id_user,
+          url: `${origin}/uploads/disputes/${f.filename}`,
+          type: 'dispute',
+          order: i,
+        })),
+      });
+    }
+    return dispute;
   });
 }

@@ -3,6 +3,8 @@ node_modules
 dist
 .env
 .env.*
+# Les gabarits sans secrets restent versionnés
+!.env.example
 .env.local
 .env.docker
 frontend/node_modules

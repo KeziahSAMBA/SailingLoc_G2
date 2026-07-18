@@ -12,6 +12,7 @@ export function initConfig() {
     PORT: process.env.PORT || 4000,
     JWT_SECRET: process.env.JWT_SECRET || 'change-me',
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
     EMAIL_HOST: process.env.EMAIL_HOST || '',
     EMAIL_PORT: Number(process.env.EMAIL_PORT) || 587,
     EMAIL_USER: process.env.EMAIL_USER || '',

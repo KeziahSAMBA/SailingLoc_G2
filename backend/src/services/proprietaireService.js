@@ -1,5 +1,7 @@
 import fs from 'fs';
 import prisma from '../config/db.js';
+import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
+import { initConfig } from '../config/appConfig.js';
 import { sendBookingDecisionEmail } from './emailService.js';
 import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js';
 
@@ -24,9 +26,18 @@ async function refuseExpiredPending(id_user) {
       start_date: { lt: today },
       boat: { id_user, deleted_at: null },
     },
-    select: { id_booking: true },
+    select: {
+      id_booking: true,
+      payments: { where: { status: 'pending' }, select: { transaction_ref: true } },
+    },
   });
   if (expired.length === 0) return;
+  // Empreintes Stripe libérées en best-effort avant la mise à jour en base.
+  for (const b of expired) {
+    for (const p of b.payments) {
+      await cancelIntentQuietly(p.transaction_ref);
+    }
+  }
   const ids = expired.map((b) => b.id_booking);
   const now = new Date();
   await prisma.$transaction([
@@ -151,6 +162,7 @@ export async function listBookings(id_user) {
         select: { status: true },
         take: 1,
       },
+      disputes: { where: { status: 'open' }, select: { id_dispute: true }, take: 1 },
       user: { select: { first_name: true, last_name: true, email: true } },
       boat: {
         select: {
@@ -173,6 +185,7 @@ export async function listBookings(id_user) {
     cancellation_reason: b.cancellation_reason,
     cancellation_date: b.cancellation_date,
     payment_status: b.payments[0]?.status ?? null,
+    has_open_dispute: b.disputes.length > 0,
     locataire: b.user
       ? {
           first_name: b.user.first_name,
@@ -791,6 +804,76 @@ export async function deleteBoat(id_user, id_boat) {
   ]);
 }
 
+// Statut du compte Stripe Connect du propriétaire, pour l'UI « Mes revenus ».
+export async function getStripeAccountStatus(id_user) {
+  const stripe = getStripe();
+  if (!stripe) return { enabled: false, has_account: false, onboarded: false };
+  const user = await prisma.user.findUnique({
+    where: { id_user },
+    select: { stripe_account_id: true },
+  });
+  if (!user?.stripe_account_id) return { enabled: true, has_account: false, onboarded: false };
+  const account = await stripe.accounts.retrieve(user.stripe_account_id);
+  return {
+    enabled: true,
+    has_account: true,
+    onboarded: Boolean(account.details_submitted && account.charges_enabled),
+  };
+}
+
+// Crée au besoin le compte Express du proprio puis renvoie un lien
+// d'onboarding hébergé par Stripe — l'IBAN ne transite jamais par nos serveurs.
+export async function createStripeOnboardingLink(id_user) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw Object.assign(new Error("Stripe n'est pas configuré."), { status: 503 });
+  }
+  const user = await prisma.user.findUnique({
+    where: { id_user },
+    select: { stripe_account_id: true, email: true },
+  });
+  let accountId = user?.stripe_account_id;
+  if (!accountId) {
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: 'FR',
+      email: user.email,
+      business_type: 'individual',
+      capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
+    });
+    accountId = account.id;
+    await prisma.user.update({
+      where: { id_user },
+      data: { stripe_account_id: accountId, updated_at: new Date() },
+    });
+  }
+  const { APP_URL } = initConfig();
+  const link = await stripe.accountLinks.create({
+    account: accountId,
+    refresh_url: `${APP_URL}/proprietaire/revenus?stripe=refresh`,
+    return_url: `${APP_URL}/proprietaire/revenus?stripe=done`,
+    type: 'account_onboarding',
+  });
+  return { url: link.url };
+}
+
+// Lien de connexion au dashboard Express du proprio (gestion IBAN, virements).
+export async function createStripeLoginLink(id_user) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw Object.assign(new Error("Stripe n'est pas configuré."), { status: 503 });
+  }
+  const user = await prisma.user.findUnique({
+    where: { id_user },
+    select: { stripe_account_id: true },
+  });
+  if (!user?.stripe_account_id) {
+    throw Object.assign(new Error('Aucun compte Stripe configuré.'), { status: 409 });
+  }
+  const link = await stripe.accounts.createLoginLink(user.stripe_account_id);
+  return { url: link.url };
+}
+
 // Historique des paiements reçus sur les bateaux du propriétaire (plus récents
 // d'abord), avec les totaux : brut encaissé, commissions SailingLoc déduites et
 // net propriétaire — calculés sur les paiements réussis uniquement (même règle
@@ -883,7 +966,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       // (« success ») est intégralement remboursé si le proprio annule.
       payments: {
         where: { status: { in: ['pending', 'success'] } },
-        select: { id_payment: true, status: true, amount: true },
+        select: { id_payment: true, status: true, amount: true, transaction_ref: true },
       },
     },
   });
@@ -907,6 +990,18 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       { status: 400 }
     );
   }
+  // Demandes en attente qui chevauchent le créneau : auto-refusées quand la
+  // confirmation tombe (empreintes libérées).
+  const overlappingWhere = {
+    id_boat: booking.id_boat,
+    id_booking: { not: id },
+    deleted_at: null,
+    status: 'pending',
+    start_date: { lte: booking.end_date },
+    end_date: { gte: booking.start_date },
+  };
+
+  const stripe = getStripe();
   if (action === 'confirm') {
     // Une demande dont le séjour a déjà commencé ne peut plus être confirmée.
     const today = new Date();
@@ -919,20 +1014,50 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
     }
     // Le créneau ne doit pas déjà être tenu par une autre réservation confirmée.
     const overlap = await prisma.booking.findFirst({
-      where: {
-        id_boat: booking.id_boat,
-        id_booking: { not: id },
-        deleted_at: null,
-        status: 'confirmed',
-        start_date: { lte: booking.end_date },
-        end_date: { gte: booking.start_date },
-      },
+      where: { ...overlappingWhere, status: 'confirmed' },
       select: { id_booking: true },
     });
     if (overlap) {
       throw Object.assign(new Error('Une réservation confirmée chevauche déjà ces dates.'), {
         status: 409,
       });
+    }
+    // Avec Stripe : l'empreinte doit être réellement posée (carte validée par
+    // le locataire) pour pouvoir capturer — une tentative de paiement dont la
+    // carte n'a jamais été acceptée n'est pas une demande payée.
+    if (stripe && isStripeRef(holdPayment.transaction_ref)) {
+      const intent = await stripe.paymentIntents.retrieve(holdPayment.transaction_ref);
+      if (intent.status !== 'requires_capture') {
+        throw Object.assign(
+          new Error(
+            "Le paiement du locataire n'est pas finalisé (carte non validée) : demande non confirmable."
+          ),
+          { status: 409 }
+        );
+      }
+      // Capture réelle du paiement. En cas d'échec Stripe, on s'arrête ici :
+      // rien n'est modifié en base.
+      await stripe.paymentIntents.capture(holdPayment.transaction_ref);
+      // Les empreintes Stripe des demandes concurrentes sont libérées
+      // (best-effort) — leurs lignes en base passeront « refunded » plus bas.
+      const rivals = await prisma.payment.findMany({
+        where: { status: 'pending', booking: overlappingWhere },
+        select: { transaction_ref: true },
+      });
+      for (const rival of rivals) {
+        await cancelIntentQuietly(rival.transaction_ref);
+      }
+    }
+  } else if (action === 'refuse') {
+    // Refus : l'empreinte Stripe est libérée (rien n'a été débité).
+    await cancelIntentQuietly(holdPayment.transaction_ref);
+  } else {
+    // Annulation : libération des empreintes et remboursement réel des
+    // paiements capturés (bloquant : pas d'annulation en base si Stripe
+    // refuse le remboursement).
+    for (const p of booking.payments) {
+      if (p.status === 'pending') await cancelIntentQuietly(p.transaction_ref);
+      else await refundIntent(p.transaction_ref, null, { refundApplicationFee: true });
     }
   }
 
@@ -960,20 +1085,12 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       // n'ont plus d'objet : refusées et empreintes libérées (l'ordre compte :
       // les paiements d'abord, tant que leurs réservations sont encore
       // « pending »).
-      const overlapping = {
-        id_boat: booking.id_boat,
-        id_booking: { not: id },
-        deleted_at: null,
-        status: 'pending',
-        start_date: { lte: booking.end_date },
-        end_date: { gte: booking.start_date },
-      };
       await tx.payment.updateMany({
-        where: { status: 'pending', booking: overlapping },
+        where: { status: 'pending', booking: overlappingWhere },
         data: { status: 'refunded', refunded_at: now },
       });
       await tx.booking.updateMany({
-        where: overlapping,
+        where: overlappingWhere,
         data: { status: 'refused', updated_at: now },
       });
     } else {

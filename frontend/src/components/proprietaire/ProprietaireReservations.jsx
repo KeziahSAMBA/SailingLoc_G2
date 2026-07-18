@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getBookings, updateBookingStatus } from '../../services/proprietaireService.js';
+import {
+  getBookings,
+  updateBookingStatus,
+  reportDispute,
+} from '../../services/proprietaireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -80,6 +84,8 @@ function BookingCard({ booking, busy, onAction }) {
   const isPaid = booking.payment_status === 'pending';
   const canDecide = booking.status === 'pending' && isPaid;
   const canCancel = booking.status === 'confirmed' && !isPast(booking.end_date);
+  const finished = booking.status === 'confirmed' && isPast(booking.end_date);
+  const canDispute = (booking.status === 'cancelled' || finished) && !booking.has_open_dispute;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70">
@@ -105,6 +111,11 @@ function BookingCard({ booking, busy, onAction }) {
               )}
             </div>
             <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+              {booking.has_open_dispute && (
+                <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+                  Litige en cours
+                </span>
+              )}
               {booking.status === 'pending' && (
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -165,7 +176,7 @@ function BookingCard({ booking, busy, onAction }) {
             </p>
           )}
 
-          {(canDecide || canCancel) && (
+          {(canDecide || canCancel || canDispute) && (
             <div className="mt-4 flex flex-wrap gap-2">
               {canDecide && (
                 <>
@@ -197,6 +208,16 @@ function BookingCard({ booking, busy, onAction }) {
                   Annuler la réservation
                 </button>
               )}
+              {canDispute && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onAction(booking, 'dispute')}
+                  className={`rounded-full border border-amber-500/50 px-4 py-1.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  Signaler un problème
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -215,7 +236,37 @@ function ProprietaireReservations() {
   // Modal de décision (refus ou annulation) : { booking, action } | null.
   const [decision, setDecision] = useState(null);
   const [reason, setReason] = useState('');
+  // Photos jointes au signalement : { file, url (aperçu à révoquer) }.
+  const [photos, setPhotos] = useState([]);
   const { showToast } = useToast();
+
+  function addPhotos(fileList) {
+    // Copie immédiate : la FileList est vidée dès le reset de l'input.
+    const entries = Array.from(fileList).map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+    }));
+    setPhotos((prev) => {
+      const next = [...prev, ...entries];
+      next.slice(5).forEach((p) => URL.revokeObjectURL(p.url));
+      return next.slice(0, 5);
+    });
+  }
+
+  function removePhoto(index) {
+    setPhotos((prev) => {
+      URL.revokeObjectURL(prev[index].url);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
+  function closeModal() {
+    setPhotos((prev) => {
+      prev.forEach((p) => URL.revokeObjectURL(p.url));
+      return [];
+    });
+    setDecision(null);
+  }
 
   const deciding = decision ? busyId === decision.booking.id_booking : false;
 
@@ -237,7 +288,7 @@ function ProprietaireReservations() {
   useEffect(() => {
     if (!decision) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape' && !deciding) setDecision(null);
+      if (e.key === 'Escape' && !deciding) closeModal();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -246,6 +297,21 @@ function ProprietaireReservations() {
   async function executeAction(booking, action, actionReason) {
     setBusyId(booking.id_booking);
     try {
+      if (action === 'dispute') {
+        await reportDispute(
+          booking.id_booking,
+          actionReason,
+          photos.map((p) => p.file)
+        );
+        setBookings((prev) =>
+          prev.map((b) =>
+            b.id_booking === booking.id_booking ? { ...b, has_open_dispute: true } : b
+          )
+        );
+        showToast('Signalement envoyé.', 'success');
+        closeModal();
+        return;
+      }
       const res = await updateBookingStatus(booking.id_booking, action, actionReason);
       const updated = res.data.booking;
       // Le paiement suit la décision : encaissé à la confirmation, annulé
@@ -374,7 +440,7 @@ function ProprietaireReservations() {
       {decision && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-          onClick={() => !deciding && setDecision(null)}
+          onClick={() => !deciding && closeModal()}
         >
           <div
             role="dialog"
@@ -384,7 +450,11 @@ function ProprietaireReservations() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="decision-title" className="text-lg font-semibold text-white">
-              {decision.action === 'refuse' ? 'Refuser la demande' : 'Annuler la réservation'}
+              {decision.action === 'refuse'
+                ? 'Refuser la demande'
+                : decision.action === 'dispute'
+                  ? 'Signaler un problème'
+                  : 'Annuler la réservation'}
             </h2>
             <p className="mt-1 text-sm text-slate-400">
               {decision.booking.boat?.name}
@@ -396,16 +466,22 @@ function ProprietaireReservations() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                if (decision.action === 'dispute' && !reason.trim()) {
+                  showToast('Décrivez le problème rencontré.', 'error');
+                  return;
+                }
                 executeAction(decision.booking, decision.action, reason.trim() || undefined);
               }}
             >
-              {decision.action === 'cancel' && (
+              {(decision.action === 'cancel' || decision.action === 'dispute') && (
                 <>
                   <label
                     htmlFor="cancel-reason"
                     className="mb-1 mt-4 block text-xs font-medium text-slate-400"
                   >
-                    Motif de l&apos;annulation (optionnel)
+                    {decision.action === 'dispute'
+                      ? 'Décrivez le problème'
+                      : "Motif de l'annulation (optionnel)"}
                   </label>
                   <textarea
                     id="cancel-reason"
@@ -413,23 +489,74 @@ function ProprietaireReservations() {
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     autoFocus
-                    placeholder="Ex. : bateau indisponible suite à une avarie…"
+                    placeholder={
+                      decision.action === 'dispute'
+                        ? 'Ex. : bateau rendu endommagé, caution à retenir…'
+                        : 'Ex. : bateau indisponible suite à une avarie…'
+                    }
                     aria-describedby="cancel-reason-hint"
                     className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#5AB4EC]"
                   />
                 </>
               )}
+              {decision.action === 'dispute' && (
+                <div className="mt-3">
+                  <span className="mb-1 block text-xs font-medium text-slate-400">
+                    Photos (optionnel, 5 max)
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {photos.map((p, i) => (
+                      <div key={p.url} className="relative">
+                        <img
+                          src={p.url}
+                          alt=""
+                          className="h-14 w-14 rounded-lg border border-slate-700 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(i)}
+                          aria-label="Retirer la photo"
+                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-xs text-white hover:bg-red-500 ${FOCUS_RING}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {photos.length < 5 && (
+                      <label
+                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-600 text-xl text-slate-400 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
+                        title="Ajouter des photos"
+                      >
+                        +
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          multiple
+                          className="sr-only"
+                          onChange={(e) => {
+                            addPhotos(e.target.files);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <p id="cancel-reason-hint" className="mt-2 text-xs text-slate-500">
                 {decision.action === 'refuse'
                   ? 'Le locataire sera informé du refus par email. Son paiement en attente sera annulé : aucun montant ne lui sera prélevé.'
-                  : 'Le locataire sera informé de l’annulation par email, avec ce motif.'}
+                  : decision.action === 'dispute'
+                    ? 'Votre signalement ouvrira un litige, examiné par l’équipe SailingLoc.'
+                    : 'Le locataire sera informé de l’annulation par email, avec ce motif.'}
               </p>
 
               <div className="mt-5 flex justify-end gap-3">
                 <button
                   type="button"
                   disabled={deciding}
-                  onClick={() => setDecision(null)}
+                  onClick={closeModal}
                   className={`rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   Retour
@@ -443,7 +570,9 @@ function ProprietaireReservations() {
                     ? 'Envoi…'
                     : decision.action === 'refuse'
                       ? 'Refuser la demande'
-                      : 'Confirmer l’annulation'}
+                      : decision.action === 'dispute'
+                        ? 'Envoyer le signalement'
+                        : 'Confirmer l’annulation'}
                 </button>
               </div>
             </form>

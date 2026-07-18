@@ -1,4 +1,4 @@
-import api from './api.js';
+import api, { UPLOAD_TIMEOUT_MS } from './api.js';
 
 // Vue synthétique du tableau de bord propriétaire (bateaux publiés,
 // réservations à confirmer, revenus du mois).
@@ -19,10 +19,37 @@ export function updateBookingStatus(idBooking, action, reason) {
   });
 }
 
+// Signale un problème (litige) sur une réservation annulée ou terminée,
+// avec photos optionnelles (multipart).
+export function reportDispute(idBooking, reason, photos = []) {
+  const form = new FormData();
+  form.append('reason', reason);
+  photos.forEach((file) => form.append('photos', file));
+  return api.post(`/users/me/proprietaire/bookings/${idBooking}/dispute`, form, {
+    headers: { 'Content-Type': undefined },
+    timeout: UPLOAD_TIMEOUT_MS,
+  });
+}
+
 // Historique des paiements reçus sur les bateaux du propriétaire, avec les
 // totaux (brut, commissions déduites, net).
 export function getPayments() {
   return api.get('/users/me/proprietaire/payments');
+}
+
+// Statut du compte Stripe Connect (virements) du propriétaire.
+export function getStripeAccount() {
+  return api.get('/users/me/proprietaire/stripe-account');
+}
+
+// Lien d'onboarding Stripe hébergé (collecte de l'IBAN chez Stripe).
+export function startStripeOnboarding() {
+  return api.post('/users/me/proprietaire/stripe-account/onboarding');
+}
+
+// Lien de connexion au dashboard Stripe Express (gestion IBAN, virements).
+export function getStripeLoginLink() {
+  return api.post('/users/me/proprietaire/stripe-account/login-link');
 }
 
 // Liste des bateaux du propriétaire avec leur statut d'annonce.
@@ -34,6 +61,7 @@ export function getBoats() {
 export function createBoat(formData) {
   return api.post('/boats', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 }
 
@@ -46,6 +74,7 @@ export function getBoat(idBoat) {
 export function updateBoat(idBoat, formData) {
   return api.put(`/boats/${idBoat}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 }
 

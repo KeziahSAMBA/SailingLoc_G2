@@ -1,4 +1,4 @@
-import api from './api.js';
+import api, { UPLOAD_TIMEOUT_MS } from './api.js';
 
 export function getMyDocuments() {
   return api.get('/documents');
@@ -12,6 +12,7 @@ export function uploadDocument(type, file) {
   // `undefined` écrase le défaut 'application/json' de l'instance api.
   return api.post('/documents', form, {
     headers: { 'Content-Type': undefined },
+    timeout: UPLOAD_TIMEOUT_MS,
   });
 }
 

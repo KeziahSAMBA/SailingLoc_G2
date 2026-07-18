@@ -8,6 +8,7 @@ function LocataireLayout() {
     { to: '/locataire/compte', label: t('locataireLayout.nav.account') },
     { to: '/locataire/documents', label: t('locataireLayout.nav.documents') },
     { to: '/locataire/reservations', label: t('locataireLayout.nav.reservations') },
+    { to: '/locataire/depenses', label: t('locataireLayout.nav.expenses') },
     { to: '/locataire/favoris', label: t('locataireLayout.nav.favorites') },
     { to: '/locataire/messages', label: t('locataireLayout.nav.messages') },
   ];

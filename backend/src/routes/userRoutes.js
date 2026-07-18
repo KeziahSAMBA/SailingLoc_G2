@@ -22,9 +22,11 @@ import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import {
   getDashboard,
   getMyBookings,
+  getMyPayments,
   payMyBooking,
   cancelMyBooking,
   requestMyRefund,
+  reportMyDispute,
   getMyFavorites,
   postFavorite,
   deleteFavorite,
@@ -36,6 +38,10 @@ import {
   getMyBookings as getProprietaireBookings,
   getMyPayments as getProprietairePayments,
   patchBooking as patchProprietaireBooking,
+  reportBookingDispute as reportProprietaireDispute,
+  getMyStripeAccount,
+  postStripeOnboarding,
+  postStripeLoginLink,
 } from '../controllers/proprietaireController.js';
 
 // Photos de profil : servies en statique via /uploads (visibles dans le header
@@ -78,6 +84,49 @@ function uploadAvatar(req, res, next) {
   });
 }
 
+// Photos jointes à un litige : statiques via /uploads, comme les photos de bateaux.
+const DISPUTES_DIR = 'uploads/disputes';
+fs.mkdirSync(DISPUTES_DIR, { recursive: true });
+
+const disputeUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, DISPUTES_DIR),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024, files: 5 },
+  fileFilter: (req, file, cb) => {
+    if (AVATAR_MIME.includes(file.mimetype)) return cb(null, true);
+    cb(
+      Object.assign(new Error('Format non supporté. Formats acceptés : JPG, PNG, WebP.'), {
+        status: 400,
+      })
+    );
+  },
+});
+
+function uploadDisputePhotos(req, res, next) {
+  disputeUpload.array('photos', 5)(req, res, (err) => {
+    if (err) {
+      const status = ['LIMIT_FILE_SIZE', 'LIMIT_FILE_COUNT', 'LIMIT_UNEXPECTED_FILE'].includes(
+        err.code
+      )
+        ? 400
+        : err.status || 500;
+      const message =
+        err.code === 'LIMIT_FILE_SIZE'
+          ? 'Photo trop volumineuse (max 5 Mo).'
+          : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
+            ? '5 photos maximum.'
+            : err.message;
+      return res.status(status).json({ message });
+    }
+    next();
+  });
+}
+
 const router = Router();
 
 router.post('/register', register);
@@ -113,11 +162,36 @@ router.patch(
   requireRole('proprietaire'),
   patchProprietaireBooking
 );
+router.post(
+  '/me/proprietaire/bookings/:id_booking/dispute',
+  protect,
+  requireRole('proprietaire'),
+  uploadDisputePhotos,
+  reportProprietaireDispute
+);
 router.get(
   '/me/proprietaire/payments',
   protect,
   requireRole('proprietaire'),
   getProprietairePayments
+);
+router.get(
+  '/me/proprietaire/stripe-account',
+  protect,
+  requireRole('proprietaire'),
+  getMyStripeAccount
+);
+router.post(
+  '/me/proprietaire/stripe-account/onboarding',
+  protect,
+  requireRole('proprietaire'),
+  postStripeOnboarding
+);
+router.post(
+  '/me/proprietaire/stripe-account/login-link',
+  protect,
+  requireRole('proprietaire'),
+  postStripeLoginLink
 );
 router.get('/me/proprietaire/boats', protect, requireRole('proprietaire'), getProprietaireBoats);
 router.get(
@@ -127,6 +201,7 @@ router.get(
   getProprietaireBoat
 );
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
+router.get('/me/payments', protect, requireRole('locataire'), getMyPayments);
 router.post('/me/bookings/:id_booking/pay', protect, requireRole('locataire'), payMyBooking);
 router.post('/me/bookings/:id_booking/cancel', protect, requireRole('locataire'), cancelMyBooking);
 router.post(
@@ -134,6 +209,13 @@ router.post(
   protect,
   requireRole('locataire'),
   requestMyRefund
+);
+router.post(
+  '/me/bookings/:id_booking/dispute',
+  protect,
+  requireRole('locataire'),
+  uploadDisputePhotos,
+  reportMyDispute
 );
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
 router.post('/me/favorites/:id_boat', protect, requireRole('locataire'), postFavorite);

@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getPayments } from '../../services/proprietaireService.js';
+import {
+  getPayments,
+  getStripeAccount,
+  startStripeOnboarding,
+  getStripeLoginLink,
+} from '../../services/proprietaireService.js';
+import { useToast } from '../../hooks/useToast.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
 const EURO_ROUND = new Intl.NumberFormat('fr-FR', {
@@ -216,6 +222,40 @@ function ProprietaireRevenus() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Compte Stripe Connect : null tant que le statut n'est pas chargé.
+  const [stripeAccount, setStripeAccount] = useState(null);
+  const [onboarding, setOnboarding] = useState(false);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    getStripeAccount()
+      .then((res) => setStripeAccount(res.data))
+      .catch(() => setStripeAccount({ enabled: false }));
+  }, []);
+
+  async function handleOnboarding() {
+    setOnboarding(true);
+    try {
+      const res = await startStripeOnboarding();
+      window.location.assign(res.data.url);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Une erreur est survenue.', 'error');
+      setOnboarding(false);
+    }
+  }
+
+  // Le lien de connexion Express expire vite : généré à la demande, à chaque clic.
+  async function handleManageAccount() {
+    setOnboarding(true);
+    try {
+      const res = await getStripeLoginLink();
+      window.open(res.data.url, '_blank', 'noopener');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Une erreur est survenue.', 'error');
+    } finally {
+      setOnboarding(false);
+    }
+  }
 
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
@@ -298,6 +338,50 @@ function ProprietaireRevenus() {
           className="mb-5 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
         >
           {error}
+        </div>
+      )}
+
+      {/* Virements Stripe Connect : l'IBAN est collecté par Stripe, jamais ici. */}
+      {stripeAccount?.enabled && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 px-5 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-white">Virements de vos revenus</h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {stripeAccount.onboarded
+                ? 'Compte Stripe configuré : vos revenus vous sont reversés automatiquement (90 % du montant, commission SailingLoc déduite).'
+                : stripeAccount.has_account
+                  ? 'Configuration Stripe incomplète : reprenez-la pour activer vos virements.'
+                  : 'Configurez vos virements chez Stripe (coordonnées bancaires collectées par Stripe, jamais par SailingLoc).'}
+            </p>
+          </div>
+          {stripeAccount.onboarded ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+                ✓ Virements activés
+              </span>
+              <button
+                type="button"
+                onClick={handleManageAccount}
+                disabled={onboarding}
+                className="rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+              >
+                {onboarding ? 'Ouverture…' : 'Gérer mon compte Stripe'}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleOnboarding}
+              disabled={onboarding}
+              className="rounded-full bg-[#0A3172] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0d3f92] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+            >
+              {onboarding
+                ? 'Redirection…'
+                : stripeAccount.has_account
+                  ? 'Reprendre la configuration'
+                  : 'Configurer mes virements'}
+            </button>
+          )}
         </div>
       )}
 
