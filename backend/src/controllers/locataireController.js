@@ -16,11 +16,13 @@ export async function getDashboard(req, res) {
   }
 }
 
-// Paiement simulé d'une réservation « pending » du locataire connecté.
+// Paiement d'une réservation « pending » du locataire connecté. Avec Stripe,
+// la réponse inclut le client_secret du PaymentIntent que le front confirme
+// via Stripe Elements ; sans clé Stripe, paiement simulé (client_secret null).
 export async function payMyBooking(req, res) {
   try {
-    const payment = await payBooking(req.user.id_user, req.params.id_booking);
-    res.status(201).json({ payment });
+    const result = await payBooking(req.user.id_user, req.params.id_booking);
+    res.status(201).json(result);
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

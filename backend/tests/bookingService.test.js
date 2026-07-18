@@ -249,8 +249,11 @@ describe('payBooking', () => {
       Promise.resolve({ id_payment: 11, ...data })
     );
 
-    const payment = await payBooking(1, 5);
+    // Sans clé Stripe configurée (cas des tests) : paiement simulé, pas de
+    // client_secret à confirmer côté front.
+    const { payment, client_secret } = await payBooking(1, 5);
 
+    expect(client_secret).toBeNull();
     expect(mockPaymentCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         id_booking: 5,

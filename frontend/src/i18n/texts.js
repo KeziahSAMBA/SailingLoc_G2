@@ -328,6 +328,11 @@ export const TEXTS = {
         en: 'Demo payment: no card data is sent or stored.',
       },
       name: { fr: 'Titulaire de la carte', en: 'Cardholder name' },
+      card: { fr: 'Carte bancaire', en: 'Card details' },
+      stripeTest: {
+        fr: 'Paiement sécurisé par Stripe (mode test) — aucun débit avant la confirmation du propriétaire. Carte de test : 4242 4242 4242 4242.',
+        en: 'Secure payment by Stripe (test mode) — no charge until the owner confirms. Test card: 4242 4242 4242 4242.',
+      },
       number: { fr: 'Numéro de carte', en: 'Card number' },
       expiry: { fr: 'Expiration', en: 'Expiry' },
       cvc: { fr: 'CVC', en: 'CVC' },
