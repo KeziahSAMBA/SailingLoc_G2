@@ -5,23 +5,20 @@ import {
   reportDispute,
 } from '../../services/proprietaireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
+import CardSkeleton from '../common/CardSkeleton.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
   currency: 'EUR',
   maximumFractionDigits: 0,
 });
-const DATE = new Intl.DateTimeFormat('fr-FR', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
+const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
 const BOOKING_STATUS = {
   pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
   confirmed: { label: 'Confirmée', cls: 'bg-emerald-500/15 text-emerald-300' },
   refused: { label: 'Refusée', cls: 'bg-red-500/15 text-red-300' },
-  cancelled: { label: 'Annulée', cls: 'bg-slate-500/15 text-slate-300' },
+  cancelled: { label: 'Annulée', cls: 'bg-slate-500/15 text-white/80' },
 };
 
 const FILTERS = [
@@ -40,7 +37,7 @@ const PERIOD_FILTERS = [
 ];
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 function fmtDate(value) {
   return value ? DATE.format(new Date(value)) : '';
@@ -72,10 +69,10 @@ function matchesPeriod(booking, period) {
   return true;
 }
 
-function BookingCard({ booking, busy, onAction }) {
+function BookingCard({ booking, busy, onAction, mirrored }) {
   const meta = BOOKING_STATUS[booking.status] || {
     label: booking.status,
-    cls: 'bg-slate-500/15 text-slate-300',
+    cls: 'bg-slate-500/15 text-white/80',
   };
   const port = booking.boat?.port;
   const locataire = booking.locataire;
@@ -88,103 +85,102 @@ function BookingCard({ booking, busy, onAction }) {
   const canDispute = (booking.status === 'cancelled' || finished) && !booking.has_open_dispute;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70">
-      <div className="flex flex-col sm:flex-row">
-        {booking.boat?.image && (
+    <article className="group h-56 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
+      {/* Colonne gauche de la grille : photo à droite ; colonne droite : photo à
+          gauche — les photos se font face vers le centre. */}
+      <div className={`flex h-full ${mirrored ? 'xl:flex-row-reverse' : ''}`}>
+        {booking.boat?.image ? (
           <img
             src={booking.boat.image}
             alt={`Bateau ${booking.boat?.name}`}
             loading="lazy"
-            className="h-40 w-full object-cover sm:h-auto sm:w-48"
+            className="hidden w-28 self-stretch object-cover transition-transform duration-500 sm:block md:w-36 motion-safe:group-hover:scale-105"
           />
-        )}
-        <div className="flex-1 p-5">
-          <header className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="text-lg font-bold text-white">{booking.boat?.name}</h3>
-              {(booking.boat?.type || port) && (
-                <p className="mt-0.5 text-sm text-slate-400">
-                  {[booking.boat?.type, port && `${port.name} · ${port.city}`]
-                    .filter(Boolean)
-                    .join(' — ')}
-                </p>
-              )}
-            </div>
-            <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+        ) : null}
+
+        <div className="flex min-w-0 flex-1 flex-col p-4">
+          <header className="min-w-0">
+            <h3 className="truncate text-base font-bold text-white">{booking.boat?.name}</h3>
+            {(booking.boat?.type || port) && (
+              <p className="mt-0.5 truncate text-xs text-white/60">
+                {[booking.boat?.type, port && `${port.name} · ${port.city}`]
+                  .filter(Boolean)
+                  .join(' — ')}
+              </p>
+            )}
+            {/* Badges toujours sous le nom, jamais à côté. */}
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
               {booking.has_open_dispute && (
-                <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
                   Litige en cours
                 </span>
               )}
               {booking.status === 'pending' && (
                 <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    isPaid ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-slate-400'
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                    isPaid ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-white/70'
                   }`}
                 >
                   {isPaid ? 'Payée — à valider' : 'En attente de paiement'}
                 </span>
               )}
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
                 {meta.label}
               </span>
             </div>
           </header>
 
-          <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
-            {locataire && (
-              <div>
-                <dt className="text-slate-400">Locataire</dt>
-                <dd className="font-medium text-slate-100">
-                  {locataire.first_name} {locataire.last_name}
-                  {locataire.email && (
-                    <a
-                      href={`mailto:${locataire.email}`}
-                      className={`ml-2 text-xs font-normal text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
-                    >
-                      {locataire.email}
-                    </a>
-                  )}
-                </dd>
-              </div>
-            )}
-            <div>
-              <dt className="text-slate-400">Dates</dt>
-              <dd className="font-medium text-slate-100">
-                <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time> →{' '}
-                <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Montant</dt>
-              <dd className="font-medium text-slate-100">
-                {EURO.format(booking.total_amount ?? 0)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Réservée le</dt>
-              <dd className="font-medium text-slate-100">
-                <time dateTime={booking.booking_date}>{fmtDate(booking.booking_date)}</time>
-              </dd>
-            </div>
-          </dl>
+          {locataire && (
+            <p className="mt-2 truncate text-xs text-white/70">
+              {locataire.first_name} {locataire.last_name}
+              {locataire.email && (
+                <a
+                  href={`mailto:${locataire.email}`}
+                  className={`ml-1.5 text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                >
+                  {locataire.email}
+                </a>
+              )}
+            </p>
+          )}
+
+          {/* Ligne méta mono-ligne tronquée : la hauteur de carte reste fixe. */}
+          <p className="mt-1.5 truncate text-sm text-white/90">
+            <span className="font-bold text-white">{EURO.format(booking.total_amount ?? 0)}</span>
+            <span aria-hidden className="text-white/30">
+              {' • '}
+            </span>
+            <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time>
+            {' → '}
+            <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
+            <span aria-hidden className="text-white/30">
+              {' • '}
+            </span>
+            <span className="text-xs text-white/60">
+              Réservée le{' '}
+              <time dateTime={booking.booking_date}>{fmtDate(booking.booking_date)}</time>
+            </span>
+          </p>
 
           {booking.status === 'cancelled' && booking.cancellation_reason && (
-            <p className="mt-3 rounded-lg bg-slate-800/60 px-3 py-2 text-xs text-slate-300">
+            <p
+              className="mt-2 truncate rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-white/70"
+              title={booking.cancellation_reason}
+            >
               <span className="font-semibold">Annulation :</span> {booking.cancellation_reason}
               {booking.cancellation_date && ` (le ${fmtDate(booking.cancellation_date)})`}
             </p>
           )}
 
           {(canDecide || canCancel || canDispute) && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
               {canDecide && (
                 <>
                   <button
                     type="button"
                     disabled={busy}
                     onClick={() => onAction(booking, 'confirm')}
-                    className={`rounded-full bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                    className={`rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                   >
                     Confirmer
                   </button>
@@ -192,7 +188,7 @@ function BookingCard({ booking, busy, onAction }) {
                     type="button"
                     disabled={busy}
                     onClick={() => onAction(booking, 'refuse')}
-                    className={`rounded-full bg-red-600/80 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                    className={`rounded-full bg-red-600/80 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                   >
                     Refuser
                   </button>
@@ -203,7 +199,7 @@ function BookingCard({ booking, busy, onAction }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'cancel')}
-                  className={`rounded-full border border-slate-600 px-4 py-1.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   Annuler la réservation
                 </button>
@@ -213,7 +209,7 @@ function BookingCard({ booking, busy, onAction }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'dispute')}
-                  className={`rounded-full border border-amber-500/50 px-4 py-1.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-amber-500/50 px-3 py-1 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   Signaler un problème
                 </button>
@@ -360,7 +356,7 @@ function ProprietaireReservations() {
         <h1 id="reservations-title" className="text-2xl font-bold text-white">
           Mes réservations
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-white/70">
           Historique des demandes sur vos bateaux : confirmez, refusez ou annulez.
         </p>
       </header>
@@ -386,8 +382,8 @@ function ProprietaireReservations() {
               aria-pressed={active}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-[#0A3172] text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                  ? 'bg-sky-500 text-white'
+                  : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
               }`}
             >
               {f.label}
@@ -409,7 +405,7 @@ function ProprietaireReservations() {
               className={`rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
                   ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
-                  : 'border-slate-700 bg-transparent text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                  : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
               }`}
             >
               {f.label}
@@ -419,18 +415,27 @@ function ProprietaireReservations() {
       </div>
 
       {loading ? (
-        <p className="text-slate-300">Chargement…</p>
+        <CardSkeleton count={4} height="h-56" />
       ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-8 text-center text-sm text-slate-400">
+        <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
           {bookings.length === 0
             ? 'Aucune réservation reçue sur vos bateaux pour le moment.'
             : 'Aucune réservation pour ce filtre.'}
         </p>
       ) : (
-        <ul className="space-y-4">
-          {filtered.map((b) => (
-            <li key={b.id_booking}>
-              <BookingCard booking={b} busy={busyId === b.id_booking} onAction={handleAction} />
+        <ul key={`${filter}-${periodFilter}`} className="grid gap-3 xl:grid-cols-2">
+          {filtered.map((b, i) => (
+            <li
+              key={b.id_booking}
+              className={`min-w-0 ${i % 2 === 0 ? 'card-enter-from-left' : 'card-enter-from-right'}`}
+              style={{ animationDelay: `${Math.min(i, 12) * 70}ms` }}
+            >
+              <BookingCard
+                booking={b}
+                busy={busyId === b.id_booking}
+                onAction={handleAction}
+                mirrored={i % 2 === 0}
+              />
             </li>
           ))}
         </ul>
@@ -446,7 +451,7 @@ function ProprietaireReservations() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="decision-title"
-            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="decision-title" className="text-lg font-semibold text-white">
@@ -456,7 +461,7 @@ function ProprietaireReservations() {
                   ? 'Signaler un problème'
                   : 'Annuler la réservation'}
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-white/70">
               {decision.booking.boat?.name}
               {decision.booking.locataire &&
                 ` — ${decision.booking.locataire.first_name} ${decision.booking.locataire.last_name}`}
@@ -477,7 +482,7 @@ function ProprietaireReservations() {
                 <>
                   <label
                     htmlFor="cancel-reason"
-                    className="mb-1 mt-4 block text-xs font-medium text-slate-400"
+                    className="mb-1 mt-4 block text-xs font-medium text-white/70"
                   >
                     {decision.action === 'dispute'
                       ? 'Décrivez le problème'
@@ -495,13 +500,13 @@ function ProprietaireReservations() {
                         : 'Ex. : bateau indisponible suite à une avarie…'
                     }
                     aria-describedby="cancel-reason-hint"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#5AB4EC]"
+                    className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
                   />
                 </>
               )}
               {decision.action === 'dispute' && (
                 <div className="mt-3">
-                  <span className="mb-1 block text-xs font-medium text-slate-400">
+                  <span className="mb-1 block text-xs font-medium text-white/70">
                     Photos (optionnel, 5 max)
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
@@ -510,13 +515,13 @@ function ProprietaireReservations() {
                         <img
                           src={p.url}
                           alt=""
-                          className="h-14 w-14 rounded-lg border border-slate-700 object-cover"
+                          className="h-14 w-14 rounded-lg border border-white/30 object-cover"
                         />
                         <button
                           type="button"
                           onClick={() => removePhoto(i)}
                           aria-label="Retirer la photo"
-                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-xs text-white hover:bg-red-500 ${FOCUS_RING}`}
+                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-xs text-white hover:bg-red-500 ${FOCUS_RING}`}
                         >
                           ×
                         </button>
@@ -524,7 +529,7 @@ function ProprietaireReservations() {
                     ))}
                     {photos.length < 5 && (
                       <label
-                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-600 text-xl text-slate-400 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
+                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/40 text-xl text-white/70 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
                         title="Ajouter des photos"
                       >
                         +
@@ -544,7 +549,7 @@ function ProprietaireReservations() {
                 </div>
               )}
 
-              <p id="cancel-reason-hint" className="mt-2 text-xs text-slate-500">
+              <p id="cancel-reason-hint" className="mt-2 text-xs text-white/60">
                 {decision.action === 'refuse'
                   ? 'Le locataire sera informé du refus par email. Son paiement en attente sera annulé : aucun montant ne lui sera prélevé.'
                   : decision.action === 'dispute'
@@ -557,7 +562,7 @@ function ProprietaireReservations() {
                   type="button"
                   disabled={deciding}
                   onClick={closeModal}
-                  className={`rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   Retour
                 </button>

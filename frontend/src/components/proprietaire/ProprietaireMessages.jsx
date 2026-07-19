@@ -17,7 +17,7 @@ function ProprietaireMessages() {
         <h1 id="messages-title" className="text-2xl font-bold text-white">
           Messagerie
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-white/70">
           Échangez avec les locataires de vos bateaux et le support SailingLoc.
         </p>
       </header>

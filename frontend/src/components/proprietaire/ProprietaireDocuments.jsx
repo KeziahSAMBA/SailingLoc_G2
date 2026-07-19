@@ -16,11 +16,11 @@ function ProprietaireDocuments() {
         <h1 id="documents-title" className="text-2xl font-bold text-white">
           Mes documents
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-white/70">
           Déposez vos documents (PDF, JPG ou PNG, 5 Mo max) : ils seront vérifiés par notre équipe.
           Les actes de francisation déposés ici sont réutilisables dans vos annonces.
         </p>
-        <p className="mt-2 text-sm font-semibold text-slate-200">
+        <p className="mt-2 text-sm font-semibold text-white/90">
           {counts.provided} / {counts.total} types fournis
         </p>
       </header>

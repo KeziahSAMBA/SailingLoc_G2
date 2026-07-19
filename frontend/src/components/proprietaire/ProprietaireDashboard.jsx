@@ -19,12 +19,12 @@ const BOOKING_STATUS = {
   pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
   confirmed: { label: 'Confirmée', cls: 'bg-emerald-500/15 text-emerald-300' },
   refused: { label: 'Refusée', cls: 'bg-red-500/15 text-red-300' },
-  cancelled: { label: 'Annulée', cls: 'bg-slate-500/15 text-slate-300' },
+  cancelled: { label: 'Annulée', cls: 'bg-slate-500/15 text-white/80' },
 };
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 function fmtDateShort(value) {
   return value ? DATE_SHORT.format(new Date(value)) : '';
@@ -37,9 +37,9 @@ function StatCard({ label, value, accent, to, loading, format = NUMBER }) {
       <Link
         to={to}
         aria-label={loading ? `${label} : chargement en cours` : `${label} : ${display}`}
-        className={`block rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:border-slate-600 hover:bg-slate-900 ${FOCUS_RING}`}
+        className={`block rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 transition-colors hover:border-[#5AB4EC]/60 ${FOCUS_RING}`}
       >
-        <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
           {label}
         </span>
         <span className={`mt-2 block text-3xl font-bold ${accent}`} aria-hidden="true">
@@ -51,7 +51,7 @@ function StatCard({ label, value, accent, to, loading, format = NUMBER }) {
 }
 
 function StatusBadge({ status }) {
-  const meta = BOOKING_STATUS[status] || { label: status, cls: 'bg-slate-500/15 text-slate-300' };
+  const meta = BOOKING_STATUS[status] || { label: status, cls: 'bg-slate-500/15 text-white/80' };
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
       {meta.label}
@@ -63,10 +63,10 @@ function RecentBookings({ bookings }) {
   return (
     <section
       aria-labelledby="recent-bookings-title"
-      className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+      className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id="recent-bookings-title" className="text-sm font-semibold text-slate-200">
+        <h2 id="recent-bookings-title" className="text-sm font-semibold text-white/90">
           Dernières réservations
         </h2>
         <Link
@@ -78,19 +78,19 @@ function RecentBookings({ bookings }) {
       </header>
 
       {bookings.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-400">
+        <p className="mt-4 text-sm text-white/70">
           Vous n&apos;avez pas encore de réservation sur vos bateaux.
         </p>
       ) : (
-        <ul className="mt-4 divide-y divide-slate-800">
+        <ul className="mt-4 divide-y divide-white/15">
           {bookings.map((b) => (
             <li
               key={b.id_booking}
               className="flex flex-wrap items-center justify-between gap-2 py-3"
             >
               <div className="min-w-0">
-                <p className="truncate font-medium text-slate-100">{b.boat?.name}</p>
-                <p className="text-xs text-slate-400">
+                <p className="truncate font-medium text-white">{b.boat?.name}</p>
+                <p className="text-xs text-white/70">
                   {[b.user?.first_name, b.user?.last_name].filter(Boolean).join(' ')} ·{' '}
                   <time dateTime={b.start_date}>{fmtDateShort(b.start_date)}</time> →{' '}
                   <time dateTime={b.end_date}>{fmtDateShort(b.end_date)}</time>
@@ -98,7 +98,7 @@ function RecentBookings({ bookings }) {
               </div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={b.status} />
-                <span className="text-sm font-medium text-slate-100">
+                <span className="text-sm font-medium text-white">
                   {EURO.format(b.total_amount ?? 0)}
                 </span>
               </div>
@@ -114,10 +114,10 @@ function BoatsPreview({ boats }) {
   return (
     <section
       aria-labelledby="boats-preview-title"
-      className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+      className="rounded-2xl border border-white/20 bg-white/10 p-5"
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id="boats-preview-title" className="text-sm font-semibold text-slate-200">
+        <h2 id="boats-preview-title" className="text-sm font-semibold text-white/90">
           Mes bateaux
         </h2>
         <Link
@@ -129,7 +129,7 @@ function BoatsPreview({ boats }) {
       </header>
 
       {boats.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-400">
+        <p className="mt-4 text-sm text-white/70">
           Aucun bateau publié pour l&apos;instant. Ajoutez votre premier bateau !
         </p>
       ) : (
@@ -138,7 +138,7 @@ function BoatsPreview({ boats }) {
             <li key={boat.id_boat}>
               <Link
                 to="/proprietaire/bateaux"
-                className={`block overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40 transition hover:border-slate-600 ${FOCUS_RING}`}
+                className={`block overflow-hidden rounded-xl border border-white/20 bg-white/10 transition-colors hover:border-white/40 ${FOCUS_RING}`}
               >
                 <figure className="m-0">
                   {boat.image ? (
@@ -146,21 +146,21 @@ function BoatsPreview({ boats }) {
                       src={boat.image}
                       alt={`Bateau ${boat.name}`}
                       loading="lazy"
-                      className="aspect-[4/3] w-full bg-slate-800 object-cover"
+                      className="aspect-[4/3] w-full bg-white/10 object-cover"
                     />
                   ) : (
                     <span
                       aria-hidden="true"
-                      className="flex aspect-[4/3] w-full items-center justify-center bg-slate-800 text-slate-600"
+                      className="flex aspect-[4/3] w-full items-center justify-center bg-white/10 text-white/40"
                     >
                       ⛵
                     </span>
                   )}
                   <figcaption className="p-3">
-                    <span className="block truncate text-sm font-medium text-slate-100">
+                    <span className="block truncate text-sm font-medium text-white">
                       {boat.name}
                     </span>
-                    <span className="block truncate text-xs text-slate-400">
+                    <span className="block truncate text-xs text-white/70">
                       {[boat.type, boat.port?.city].filter(Boolean).join(' · ')}
                     </span>
                     <span className="mt-1 block text-xs font-semibold text-[#5AB4EC]">
@@ -202,7 +202,7 @@ function ProprietaireDashboard() {
       <h1 id="dashboard-title" className="text-2xl font-bold text-white">
         Tableau de bord
       </h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-white/70">
         Bonjour {user?.first_name}, voici un aperçu de votre activité.
       </p>
 
@@ -247,7 +247,10 @@ function ProprietaireDashboard() {
       </ul>
 
       {!loading && (
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        // items-start : sans lui la grille étire la carte la plus courte, et sa
+        // grande zone de verre vide floute les falaises claires de la photo en
+        // un voile blanc (le « fond blanc » visible au survol).
+        <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
           <RecentBookings bookings={stats?.recentBookings ?? []} />
           <BoatsPreview boats={stats?.boatsPreview ?? []} />
         </div>
