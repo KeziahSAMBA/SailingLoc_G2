@@ -5,8 +5,8 @@ import PasswordField from './PasswordField.jsx';
 import { loadReservationResume } from '../../utils/reservationResume.js';
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
+  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
 
 function formatCountdown(seconds) {
   const m = Math.floor(seconds / 60);
@@ -78,8 +78,8 @@ function LoginForm({ onSwitchToRegister }) {
   return (
     <>
       <header className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-[#0A3172]">Bon retour parmi nous</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <h2 className="text-2xl font-bold text-[#5AB4EC]">Bon retour parmi nous</h2>
+        <p className="mt-2 text-sm text-white/70">
           Connectez-vous pour accéder à votre compte SailingLoc.
         </p>
       </header>
@@ -87,11 +87,11 @@ function LoginForm({ onSwitchToRegister }) {
       {serverError && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+          className="mb-4 rounded-lg border border-red-300 bg-red-500/10 px-4 py-2 text-sm text-red-300"
         >
           {serverError}
           {isBlocked && (
-            <span className="mt-1 block font-mono text-xs text-red-600">
+            <span className="mt-1 block font-mono text-xs text-red-300">
               Nouvelle tentative possible dans{' '}
               <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
             </span>
@@ -121,11 +121,12 @@ function LoginForm({ onSwitchToRegister }) {
             <label htmlFor="login-password" className={labelClass}>
               Mot de passe
             </label>
-            <Link to="/forgot-password" className="text-xs text-[#0A3172] hover:underline">
+            <Link to="/forgot-password" className="text-xs text-[#5AB4EC] hover:underline">
               Mot de passe oublié&nbsp;?
             </Link>
           </div>
           <PasswordField
+            variant="glass"
             id="login-password"
             name="password"
             value={form.password}
@@ -148,8 +149,8 @@ function LoginForm({ onSwitchToRegister }) {
                   key={value}
                   className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
                     checked
-                      ? 'border-[#0A3172] bg-[#0A3172]/10 text-[#0A3172]'
-                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                      ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
+                      : 'border-white/30 bg-white/5 text-white/80 hover:bg-white/10'
                   }`}
                 >
                   <input
@@ -170,7 +171,7 @@ function LoginForm({ onSwitchToRegister }) {
         <button
           type="submit"
           disabled={loading || isBlocked}
-          className="mt-2 w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isBlocked
             ? `Réessayez dans ${formatCountdown(retryAfter)}`
@@ -180,12 +181,12 @@ function LoginForm({ onSwitchToRegister }) {
         </button>
       </form>
 
-      <footer className="mt-6 text-center text-sm text-slate-600">
+      <footer className="mt-6 text-center text-sm text-white/70">
         Pas encore de compte&nbsp;?{' '}
         <button
           type="button"
           onClick={onSwitchToRegister}
-          className="font-semibold text-[#0A3172] hover:underline"
+          className="font-semibold text-[#5AB4EC] hover:underline"
         >
           Inscrivez-vous
         </button>

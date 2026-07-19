@@ -8,20 +8,21 @@ import {
   reportDispute,
 } from '../../services/locataireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
+import CardSkeleton from '../common/CardSkeleton.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
   currency: 'EUR',
   maximumFractionDigits: 0,
 });
-const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
 function getBookingStatus(t) {
   return {
     pending: { label: t('bookingStatus.pending'), cls: 'bg-amber-500/15 text-amber-300' },
     confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-emerald-500/15 text-emerald-300' },
     refused: { label: t('bookingStatus.refused'), cls: 'bg-red-500/15 text-red-300' },
-    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-slate-500/15 text-slate-300' },
+    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-slate-500/15 text-white/80' },
   };
 }
 
@@ -55,7 +56,7 @@ function matchesPeriod(booking, period) {
 }
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 function fmtDate(value) {
   return value ? DATE.format(new Date(value)) : '';
@@ -78,12 +79,12 @@ function startsAfterToday(value) {
   return start > today;
 }
 
-function BookingCard({ booking, busy, onAction }) {
+function BookingCard({ booking, busy, onAction, mirrored }) {
   const { t } = useTranslation();
   const boatLink = booking.boat?.id_boat != null ? `/product/${booking.boat.id_boat}` : '/product';
   const meta = getBookingStatus(t)[booking.status] || {
     label: booking.status,
-    cls: 'bg-slate-500/15 text-slate-300',
+    cls: 'bg-slate-500/15 text-white/80',
   };
   const port = booking.boat?.port;
   const showReviewHint = booking.status === 'confirmed' && isPast(booking.end_date);
@@ -118,78 +119,75 @@ function BookingCard({ booking, busy, onAction }) {
     (booking.status === 'cancelled' || finished) && !booking.refund_requested && !canRefund;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 transition hover:border-slate-600">
-      <div className="flex flex-col sm:flex-row">
+    <article className="group h-52 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
+      {/* Colonne gauche de la grille : photo à droite ; colonne droite : photo à
+          gauche — les photos se font face vers le centre. */}
+      <div className={`flex h-full ${mirrored ? 'xl:flex-row-reverse' : ''}`}>
         {booking.boat?.image ? (
           <img
             src={booking.boat.image}
             alt={`Bateau ${booking.boat?.name}`}
             loading="lazy"
-            className="h-40 w-full object-cover sm:h-auto sm:w-48"
+            className="hidden w-28 self-stretch object-cover transition-transform duration-500 sm:block md:w-36 motion-safe:group-hover:scale-105"
           />
         ) : null}
 
-        <div className="flex-1 p-5">
-          <header className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="text-lg font-bold text-white">{booking.boat?.name}</h3>
-
-              {(booking.boat?.type || port) && (
-                <p className="mt-0.5 text-sm text-slate-400">
-                  {[booking.boat?.type, port && `${port.name} · ${port.city}`]
-                    .filter(Boolean)
-                    .join(' — ')}
-                </p>
-              )}
-
+        <div className="flex min-w-0 flex-1 flex-col p-4">
+          <header className="min-w-0">
+            <h3 className="truncate text-base font-bold text-white">
               <Link
                 to={boatLink}
-                className={`mt-2 inline-block text-sm font-semibold text-[#5AB4EC] transition hover:text-[#ABD4FF] hover:underline ${FOCUS_RING}`}
+                className={`transition hover:text-[#ABD4FF] hover:underline ${FOCUS_RING}`}
+                title={t('locataireReservations.viewProduct')}
               >
-                {t('locataireReservations.viewProduct')}
+                {booking.boat?.name}
               </Link>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+            </h3>
+            {(booking.boat?.type || port) && (
+              <p className="mt-0.5 truncate text-xs text-white/60">
+                {[booking.boat?.type, port && `${port.name} · ${port.city}`]
+                  .filter(Boolean)
+                  .join(' — ')}
+              </p>
+            )}
+            {/* Badges toujours sous le nom, jamais à côté. */}
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
               {paymentBadge && (
                 <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${paymentBadge.cls}`}
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${paymentBadge.cls}`}
                 >
                   {paymentBadge.label}
                 </span>
               )}
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
                 {meta.label}
               </span>
             </div>
           </header>
 
-          <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
-            <div>
-              <dt className="text-slate-400">{t('locataireReservations.dates')}</dt>
-              <dd className="font-medium text-slate-100">
-                <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time> →{' '}
-                <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-slate-400">{t('locataireReservations.amount')}</dt>
-              <dd className="font-medium text-slate-100">
-                {EURO.format(booking.total_amount ?? 0)}
-              </dd>
-            </div>
-
-            <div>
-              <dt className="text-slate-400">{t('locataireReservations.bookedOn')}</dt>
-              <dd className="font-medium text-slate-100">
-                <time dateTime={booking.booking_date}>{fmtDate(booking.booking_date)}</time>
-              </dd>
-            </div>
-          </dl>
+          {/* Ligne méta mono-ligne tronquée : la hauteur de carte reste fixe. */}
+          <p className="mt-2.5 truncate text-sm text-white/90">
+            <span className="font-bold text-white">{EURO.format(booking.total_amount ?? 0)}</span>
+            <span aria-hidden className="text-white/30">
+              {' • '}
+            </span>
+            <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time>
+            {' → '}
+            <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
+            <span aria-hidden className="text-white/30">
+              {' • '}
+            </span>
+            <span className="text-xs text-white/60">
+              {t('locataireReservations.bookedOn')}{' '}
+              <time dateTime={booking.booking_date}>{fmtDate(booking.booking_date)}</time>
+            </span>
+          </p>
 
           {booking.status === 'cancelled' && booking.cancellation_reason && (
-            <p className="mt-3 rounded-lg bg-slate-800/60 px-3 py-2 text-xs text-slate-300">
+            <p
+              className="mt-2 truncate rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-white/70"
+              title={booking.cancellation_reason}
+            >
               <span className="font-semibold">{t('locataireReservations.cancellation')}</span>{' '}
               {booking.cancellation_reason}
               {booking.cancellation_date &&
@@ -200,7 +198,7 @@ function BookingCard({ booking, busy, onAction }) {
           )}
 
           {showReviewHint && (
-            <p className="mt-3 text-xs font-medium text-[#5AB4EC]">
+            <p className="mt-2 truncate text-xs font-medium text-[#5AB4EC]">
               {booking.reviewed
                 ? t('locataireReservations.reviewDone')
                 : t('locataireReservations.reviewHint')}
@@ -208,13 +206,13 @@ function BookingCard({ booking, busy, onAction }) {
           )}
 
           {(canCancel || canRefund || canDispute) && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
               {canCancel && (
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'cancel')}
-                  className={`rounded-full border border-slate-600 px-4 py-1.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.actions.cancel')}
                 </button>
@@ -224,7 +222,7 @@ function BookingCard({ booking, busy, onAction }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'refund')}
-                  className={`rounded-full bg-[#0A3172] px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0d3f92] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full bg-sky-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.actions.refund')}
                 </button>
@@ -234,7 +232,7 @@ function BookingCard({ booking, busy, onAction }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'dispute')}
-                  className={`rounded-full border border-amber-500/50 px-4 py-1.5 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-amber-500/50 px-3 py-1 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.actions.dispute')}
                 </button>
@@ -379,7 +377,7 @@ function LocataireReservations() {
         <h1 id="reservations-title" className="text-2xl font-bold text-white">
           {t('locataireReservations.title')}
         </h1>
-        <p className="mt-1 text-sm text-slate-400">{t('locataireReservations.subtitle')}</p>
+        <p className="mt-1 text-sm text-white/70">{t('locataireReservations.subtitle')}</p>
       </header>
 
       {error && (
@@ -407,8 +405,8 @@ function LocataireReservations() {
               aria-pressed={active}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-[#0A3172] text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                  ? 'bg-sky-500 text-white'
+                  : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
               }`}
             >
               {f.label}
@@ -434,7 +432,7 @@ function LocataireReservations() {
               className={`rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
                   ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
-                  : 'border-slate-700 bg-transparent text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                  : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
               }`}
             >
               {f.label}
@@ -444,18 +442,27 @@ function LocataireReservations() {
       </div>
 
       {loading ? (
-        <p className="text-slate-300">{t('locataireReservations.loading')}</p>
+        <CardSkeleton count={4} height="h-52" />
       ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-8 text-center text-sm text-slate-400">
+        <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
           {bookings.length === 0
             ? t('locataireReservations.emptyAll')
             : t('locataireReservations.emptyFiltered')}
         </p>
       ) : (
-        <ul className="space-y-4">
-          {filtered.map((b) => (
-            <li key={b.id_booking}>
-              <BookingCard booking={b} busy={busyId === b.id_booking} onAction={handleAction} />
+        <ul key={`${filter}-${periodFilter}`} className="grid gap-3 xl:grid-cols-2">
+          {filtered.map((b, i) => (
+            <li
+              key={b.id_booking}
+              className={`min-w-0 ${i % 2 === 0 ? 'card-enter-from-left' : 'card-enter-from-right'}`}
+              style={{ animationDelay: `${Math.min(i, 12) * 70}ms` }}
+            >
+              <BookingCard
+                booking={b}
+                busy={busyId === b.id_booking}
+                onAction={handleAction}
+                mirrored={i % 2 === 0}
+              />
             </li>
           ))}
         </ul>
@@ -471,7 +478,7 @@ function LocataireReservations() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="locataire-decision-title"
-            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="locataire-decision-title" className="text-lg font-semibold text-white">
@@ -481,7 +488,7 @@ function LocataireReservations() {
                   ? t('locataireReservations.modal.refundTitle')
                   : t('locataireReservations.modal.disputeTitle')}
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-white/70">
               {decision.booking.boat?.name}, {fmtDate(decision.booking.start_date)} →{' '}
               {fmtDate(decision.booking.end_date)}.
             </p>
@@ -494,7 +501,7 @@ function LocataireReservations() {
             >
               <label
                 htmlFor="locataire-decision-reason"
-                className="mb-1 mt-4 block text-xs font-medium text-slate-400"
+                className="mb-1 mt-4 block text-xs font-medium text-white/70"
               >
                 {decision.action === 'cancel'
                   ? t('locataireReservations.modal.cancelReasonLabel')
@@ -513,7 +520,7 @@ function LocataireReservations() {
                 autoFocus
                 aria-describedby="locataire-decision-hint"
                 aria-invalid={reasonError ? true : undefined}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#5AB4EC]"
+                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
               />
               {reasonError && (
                 <p role="alert" className="mt-1 text-xs text-red-400">
@@ -523,7 +530,7 @@ function LocataireReservations() {
 
               {decision.action === 'dispute' && (
                 <div className="mt-3">
-                  <span className="mb-1 block text-xs font-medium text-slate-400">
+                  <span className="mb-1 block text-xs font-medium text-white/70">
                     {t('locataireReservations.modal.disputePhotosLabel')}
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
@@ -532,7 +539,7 @@ function LocataireReservations() {
                         <img
                           src={p.url}
                           alt=""
-                          className="h-14 w-14 rounded-lg border border-slate-700 object-cover"
+                          className="h-14 w-14 rounded-lg border border-white/30 object-cover"
                         />
                         <button
                           type="button"
@@ -546,7 +553,7 @@ function LocataireReservations() {
                     ))}
                     {photos.length < 5 && (
                       <label
-                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-600 text-xl text-slate-400 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
+                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/40 text-xl text-white/70 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
                         title={t('locataireReservations.modal.disputeAddPhotos')}
                       >
                         +
@@ -565,7 +572,7 @@ function LocataireReservations() {
                   </div>
                 </div>
               )}
-              <p id="locataire-decision-hint" className="mt-2 text-xs text-slate-500">
+              <p id="locataire-decision-hint" className="mt-2 text-xs text-white/60">
                 {decision.action === 'refund'
                   ? t('locataireReservations.modal.refundHint')
                   : decision.action === 'dispute'
@@ -582,7 +589,7 @@ function LocataireReservations() {
                   type="button"
                   disabled={deciding}
                   onClick={closeModal}
-                  className={`rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.modal.back')}
                 </button>
@@ -592,7 +599,7 @@ function LocataireReservations() {
                   className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING} ${
                     decision.action === 'cancel'
                       ? 'bg-red-600/80 hover:bg-red-500'
-                      : 'bg-[#0A3172] hover:bg-[#0d3f92]'
+                      : 'bg-sky-500 hover:bg-sky-600'
                   }`}
                 >
                   {deciding

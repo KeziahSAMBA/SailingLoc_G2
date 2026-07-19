@@ -18,8 +18,8 @@ function LocataireDocuments() {
         <h1 id="documents-title" className="text-2xl font-bold text-white">
           {t('locataireDocuments.title')}
         </h1>
-        <p className="mt-1 text-sm text-slate-400">{t('locataireDocuments.subtitle')}</p>
-        <p className="mt-2 text-sm font-semibold text-slate-200">
+        <p className="mt-1 text-sm text-white/70">{t('locataireDocuments.subtitle')}</p>
+        <p className="mt-2 text-sm font-semibold text-white/90">
           {t('locataireDocuments.count', { provided: counts.provided, total: counts.total })}
         </p>
       </header>

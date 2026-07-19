@@ -74,3 +74,74 @@ input[type='date']::-webkit-calendar-picker-indicator {
     animation: none;
   }
 }
+
+/* Autofill navigateur : Chrome peint sinon un fond bleu opaque par-dessus le
+   style verre des champs. L'énorme délai de transition neutralise ce fond. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+select:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  transition: background-color 9999999s ease-in-out 0s;
+}
+
+/* Apparition douce des cartes au changement de filtre (dashboards). En grille
+   2 colonnes, les cartes émergent du centre : colonne gauche depuis la droite,
+   colonne droite depuis la gauche. */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardFadeInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes cardFadeInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.card-enter,
+.card-enter-from-right,
+.card-enter-from-left {
+  animation: cardFadeIn 0.5s ease-out both;
+}
+
+@media (min-width: 1280px) {
+  .card-enter-from-right {
+    animation-name: cardFadeInFromRight;
+  }
+  .card-enter-from-left {
+    animation-name: cardFadeInFromLeft;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-enter,
+  .card-enter-from-right,
+  .card-enter-from-left {
+    animation: none;
+  }
+}

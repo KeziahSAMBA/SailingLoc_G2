@@ -8,6 +8,7 @@ import {
   resolveSupport,
 } from '../../services/messageService.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import Spinner from '../common/Spinner.jsx';
 import { useToast } from '../../hooks/useToast.jsx';
 
 const ROLE_LABEL = { locataire: 'Locataire', proprietaire: 'Propriétaire', admin: 'SailingLoc' };
@@ -33,7 +34,7 @@ function ReadReceipt({ read }) {
       role="img"
       aria-label={read ? 'Lu' : 'Envoyé, non lu'}
       title={read ? 'Lu' : 'Envoyé, non lu'}
-      className={`ml-1 inline-flex ${read ? 'text-[#5AB4EC]' : 'text-slate-400'}`}
+      className={`ml-1 inline-flex ${read ? 'text-white' : 'text-white/50'}`}
     >
       <svg width="14" height="10" viewBox="0 0 18 12" fill="none" aria-hidden="true">
         <path
@@ -249,7 +250,7 @@ function Messenger({ externalUser = null }) {
         <button
           type="button"
           onClick={() => setListOpen(true)}
-          className={`flex w-fit items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800 lg:hidden ${FOCUS_RING}`}
+          className={`flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-xl px-4 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 lg:hidden ${FOCUS_RING}`}
         >
           ← Conversations
           {totalUnread > 0 && (
@@ -264,17 +265,17 @@ function Messenger({ externalUser = null }) {
           l'autre) ; sur grand écran les deux sont côte à côte. */}
       <aside
         aria-label="Conversations"
-        className={`${listOpen ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex lg:h-[70vh] lg:max-h-[720px] lg:min-h-[420px]`}
+        className={`${listOpen ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex lg:h-[70vh] lg:max-h-[720px] lg:min-h-[420px]`}
       >
-        <h2 className="border-b border-slate-800 px-4 py-3 text-sm font-semibold text-slate-200">
+        <h2 className="border-b border-white/20 px-4 py-3 text-sm font-semibold text-white/90">
           Conversations
         </h2>
         {loading ? (
-          <p className="px-4 py-6 text-sm text-slate-400">Chargement…</p>
+          <Spinner label="Chargement…" />
         ) : conversations.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-slate-400">Aucune conversation pour le moment.</p>
+          <p className="px-4 py-6 text-sm text-white/70">Aucune conversation pour le moment.</p>
         ) : (
-          <ul className="max-h-[60vh] divide-y divide-slate-800 overflow-y-auto lg:max-h-none lg:flex-1">
+          <ul className="max-h-[60vh] divide-y divide-white/15 overflow-y-auto lg:max-h-none lg:flex-1">
             {conversations.map((c) => {
               const active = selected?.id_user === c.user.id_user;
               return (
@@ -288,19 +289,19 @@ function Messenger({ externalUser = null }) {
                     }}
                     aria-current={active || undefined}
                     className={`block w-full px-4 py-3 text-left transition ${FOCUS_RING} ${
-                      active ? 'bg-[#0A3172]/40' : 'hover:bg-slate-800/60'
+                      active ? 'bg-[#5AB4EC]/20' : 'hover:bg-white/10'
                     }`}
                   >
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className="min-w-0 truncate text-sm font-semibold text-slate-100">
+                      <span className="min-w-0 truncate text-sm font-semibold text-white">
                         {displayName(c.user)}
                       </span>
-                      <span className="shrink-0 text-[10px] text-slate-500">
+                      <span className="shrink-0 text-[10px] text-white/60">
                         {fmtTime(c.last_message?.sent_at)}
                       </span>
                     </span>
                     <span className="mt-0.5 flex items-center justify-between gap-2">
-                      <span className="min-w-0 truncate text-xs text-slate-400">
+                      <span className="min-w-0 truncate text-xs text-white/70">
                         {c.last_message?.from_me ? 'Vous : ' : ''}
                         {c.last_message?.deleted ? (
                           <span className="italic">Message supprimé</span>
@@ -314,7 +315,7 @@ function Messenger({ externalUser = null }) {
                         </span>
                       )}
                     </span>
-                    <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-slate-500">
+                    <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-white/60">
                       {ROLE_LABEL[c.user.role] || c.user.role}
                     </span>
                   </button>
@@ -328,18 +329,18 @@ function Messenger({ externalUser = null }) {
       {/* Fil ouvert */}
       <section
         aria-label="Fil de discussion"
-        className={`${listOpen ? 'hidden' : 'flex'} h-[70vh] max-h-[720px] min-h-[420px] min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex`}
+        className={`${listOpen ? 'hidden' : 'flex'} h-[70vh] max-h-[720px] min-h-[420px] min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex`}
       >
         {!selected ? (
-          <p className="m-auto px-6 text-center text-sm text-slate-400">
+          <p className="m-auto px-6 text-center text-sm text-white/70">
             Sélectionnez une conversation pour afficher les messages.
           </p>
         ) : (
           <>
-            <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+            <header className="flex items-center justify-between gap-3 border-b border-white/20 px-4 py-3">
               <div>
                 <p className="text-sm font-semibold text-white">{displayName(selected)}</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-white/60">
                   {ROLE_LABEL[selected.role] || selected.role}
                 </p>
               </div>
@@ -357,9 +358,9 @@ function Messenger({ externalUser = null }) {
 
             <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
               {threadLoading ? (
-                <p className="text-sm text-slate-400">Chargement…</p>
+                <Spinner label="Chargement…" />
               ) : messages.length === 0 ? (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-white/70">
                   Aucun message pour l’instant : écrivez le premier !
                 </p>
               ) : (
@@ -381,8 +382,8 @@ function Messenger({ externalUser = null }) {
                       <div
                         className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
                           m.from_me
-                            ? 'rounded-br-sm bg-[#0A3172] text-white'
-                            : 'rounded-bl-sm bg-slate-800 text-slate-100'
+                            ? 'rounded-br-sm bg-sky-500 text-white'
+                            : 'rounded-bl-sm bg-white/10 text-white'
                         }`}
                       >
                         {editing?.id_message === m.id_message ? (
@@ -398,7 +399,7 @@ function Messenger({ externalUser = null }) {
                               onChange={(e) => setEditing({ ...editing, value: e.target.value })}
                               maxLength={2000}
                               autoFocus
-                              className="w-56 rounded-lg border border-slate-500 bg-slate-900/60 px-2 py-1 text-sm text-white outline-none focus:border-[#5AB4EC]"
+                              className="w-56 rounded-lg border border-white/40 bg-white/10 px-2 py-1 text-sm text-white outline-none focus:border-[#5AB4EC]"
                             />
                             <button
                               type="submit"
@@ -411,26 +412,26 @@ function Messenger({ externalUser = null }) {
                               type="button"
                               aria-label="Annuler la modification"
                               onClick={() => setEditing(null)}
-                              className="text-slate-300 hover:text-white"
+                              className="text-white/80 hover:text-white"
                             >
                               ✕
                             </button>
                           </form>
                         ) : m.deleted ? (
-                          <p className="italic text-slate-400">Message supprimé</p>
+                          <p className="italic text-white/70">Message supprimé</p>
                         ) : (
                           <p className="whitespace-pre-wrap break-words">{m.content}</p>
                         )}
                         <p
                           className={`mt-1 flex items-center justify-end gap-0.5 text-right text-[10px] ${
-                            m.from_me ? 'text-slate-300/70' : 'text-slate-500'
+                            m.from_me ? 'text-white/70' : 'text-white/60'
                           }`}
                         >
                           {m.edited && <span className="mr-1 italic">modifié</span>}
                           {fmtTime(m.sent_at)}
                           {m.from_me && !m.deleted && <ReadReceipt read={m.read} />}
                           {m.from_me && !m.deleted && m.id_message === lastMineId && (
-                            <span className={m.read ? 'text-[#5AB4EC]' : undefined}>
+                            <span className={m.read ? 'font-semibold text-white' : undefined}>
                               {m.read ? 'Lu' : 'Envoyé'}
                             </span>
                           )}
@@ -448,14 +449,14 @@ function Messenger({ externalUser = null }) {
                             setMenuFor(menuFor === m.id_message ? null : m.id_message);
                             setConfirmKey(null);
                           }}
-                          className={`rounded-full px-1.5 py-0.5 text-slate-500 opacity-60 transition hover:bg-slate-800 hover:text-slate-200 group-hover:opacity-100 ${FOCUS_RING}`}
+                          className={`rounded-full px-1.5 py-0.5 text-white/60 opacity-60 transition hover:bg-white/10 hover:text-white/90 group-hover:opacity-100 ${FOCUS_RING}`}
                         >
                           ⋯
                         </button>
                         {menuFor === m.id_message && (
                           <div
                             role="menu"
-                            className={`absolute z-20 mt-1 w-56 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 text-sm shadow-xl ${
+                            className={`absolute z-20 mt-1 w-56 overflow-hidden rounded-lg border border-white/30 bg-white/10 text-sm shadow-xl ${
                               m.from_me ? 'right-0' : 'left-0'
                             }`}
                           >
@@ -468,7 +469,7 @@ function Messenger({ externalUser = null }) {
                                     setEditing({ id_message: m.id_message, value: m.content });
                                     setMenuFor(null);
                                   }}
-                                  className="block w-full px-3 py-2 text-left text-slate-100 transition hover:bg-slate-700"
+                                  className="block w-full px-3 py-2 text-left text-white transition hover:bg-white/10"
                                 >
                                   Modifier
                                 </button>
@@ -476,7 +477,7 @@ function Messenger({ externalUser = null }) {
                                   type="button"
                                   role="menuitem"
                                   onClick={() => handleDelete(m.id_message, 'all')}
-                                  className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-slate-700"
+                                  className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-white/10"
                                 >
                                   {confirmKey === `${m.id_message}:all`
                                     ? 'Confirmer la suppression ?'
@@ -488,7 +489,7 @@ function Messenger({ externalUser = null }) {
                               type="button"
                               role="menuitem"
                               onClick={() => handleDelete(m.id_message, 'me')}
-                              className="block w-full px-3 py-2 text-left text-slate-300 transition hover:bg-slate-700"
+                              className="block w-full px-3 py-2 text-left text-white/80 transition hover:bg-white/10"
                             >
                               {confirmKey === `${m.id_message}:me`
                                 ? 'Confirmer la suppression ?'
@@ -504,7 +505,7 @@ function Messenger({ externalUser = null }) {
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={handleSend} className="flex gap-2 border-t border-slate-800 p-3">
+            <form onSubmit={handleSend} className="flex gap-2 border-t border-white/20 p-3">
               <label htmlFor="message-draft" className="sr-only">
                 Votre message
               </label>
@@ -515,12 +516,12 @@ function Messenger({ externalUser = null }) {
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={2000}
                 placeholder="Écrivez votre message…"
-                className="w-full rounded-full border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC]"
+                className="w-full rounded-full border border-white/30 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC]"
               />
               <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                className={`shrink-0 rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                className={`shrink-0 rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
               >
                 {sending ? 'Envoi…' : 'Envoyer'}
               </button>

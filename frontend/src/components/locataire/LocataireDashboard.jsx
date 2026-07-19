@@ -22,13 +22,13 @@ function getBookingStatus(t) {
     pending: { label: t('bookingStatus.pending'), cls: 'bg-amber-500/15 text-amber-300' },
     confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-emerald-500/15 text-emerald-300' },
     refused: { label: t('bookingStatus.refused'), cls: 'bg-red-500/15 text-red-300' },
-    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-slate-500/15 text-slate-300' },
+    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-slate-500/15 text-white/80' },
   };
 }
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 function fmtDate(value) {
   return value ? DATE.format(new Date(value)) : '';
@@ -59,9 +59,9 @@ function StatCard({ label, value, accent, to, loading }) {
             ? t('locataireDashboard.statLoading', { label })
             : t('locataireDashboard.statValue', { label, value: display })
         }
-        className={`block rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:border-slate-600 hover:bg-slate-900 ${FOCUS_RING}`}
+        className={`block rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 transition hover:border-white/40 hover:bg-white/15 ${FOCUS_RING}`}
       >
-        <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
           {label}
         </span>
         <span className={`mt-2 block text-3xl font-bold ${accent}`} aria-hidden="true">
@@ -80,7 +80,7 @@ function NextBookingCard({ booking }) {
   return (
     <Link
       to="/locataire/reservations"
-      className={`block rounded-2xl border border-[#0A3172] bg-gradient-to-br from-[#0A3172]/40 to-slate-900/70 p-5 transition hover:border-[#5AB4EC] sm:p-6 ${FOCUS_RING}`}
+      className={`block rounded-2xl border border-[#5AB4EC]/50 bg-[#5AB4EC]/10 p-5 backdrop-blur-xl transition hover:border-[#5AB4EC] sm:p-6 ${FOCUS_RING}`}
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -89,7 +89,7 @@ function NextBookingCard({ booking }) {
           </p>
           <h3 className="mt-1 text-xl font-bold text-white sm:text-2xl">{booking.boat?.name}</h3>
           {(booking.boat?.type || port) && (
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-white/80">
               {[booking.boat?.type, port && `${port.name} · ${port.city}`]
                 .filter(Boolean)
                 .join(' — ')}
@@ -105,15 +105,15 @@ function NextBookingCard({ booking }) {
 
       <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm">
         <div>
-          <dt className="text-slate-400">{t('locataireDashboard.nextBooking.dates')}</dt>
-          <dd className="font-medium text-slate-100">
+          <dt className="text-white/70">{t('locataireDashboard.nextBooking.dates')}</dt>
+          <dd className="font-medium text-white">
             <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time> →{' '}
             <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
           </dd>
         </div>
         <div>
-          <dt className="text-slate-400">{t('locataireDashboard.nextBooking.amount')}</dt>
-          <dd className="font-medium text-slate-100">{EURO.format(booking.total_amount ?? 0)}</dd>
+          <dt className="text-white/70">{t('locataireDashboard.nextBooking.amount')}</dt>
+          <dd className="font-medium text-white">{EURO.format(booking.total_amount ?? 0)}</dd>
         </div>
       </dl>
     </Link>
@@ -124,7 +124,7 @@ function StatusBadge({ status }) {
   const { t } = useTranslation();
   const meta = getBookingStatus(t)[status] || {
     label: status,
-    cls: 'bg-slate-500/15 text-slate-300',
+    cls: 'bg-slate-500/15 text-white/80',
   };
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
@@ -138,10 +138,10 @@ function RecentBookings({ bookings }) {
   return (
     <section
       aria-labelledby="recent-bookings-title"
-      className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+      className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id="recent-bookings-title" className="text-sm font-semibold text-slate-200">
+        <h2 id="recent-bookings-title" className="text-sm font-semibold text-white/90">
           {t('locataireDashboard.recentBookings.title')}
         </h2>
         <Link
@@ -153,26 +153,24 @@ function RecentBookings({ bookings }) {
       </header>
 
       {bookings.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-400">
-          {t('locataireDashboard.recentBookings.empty')}
-        </p>
+        <p className="mt-4 text-sm text-white/70">{t('locataireDashboard.recentBookings.empty')}</p>
       ) : (
-        <ul className="mt-4 divide-y divide-slate-800">
+        <ul className="mt-4 divide-y divide-white/15">
           {bookings.map((b) => (
             <li
               key={b.id_booking}
               className="flex flex-wrap items-center justify-between gap-2 py-3"
             >
               <div className="min-w-0">
-                <p className="truncate font-medium text-slate-100">{b.boat?.name}</p>
-                <p className="text-xs text-slate-400">
+                <p className="truncate font-medium text-white">{b.boat?.name}</p>
+                <p className="text-xs text-white/70">
                   <time dateTime={b.start_date}>{fmtDateShort(b.start_date)}</time> →{' '}
                   <time dateTime={b.end_date}>{fmtDateShort(b.end_date)}</time>
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={b.status} />
-                <span className="text-sm font-medium text-slate-100">
+                <span className="text-sm font-medium text-white">
                   {EURO.format(b.total_amount ?? 0)}
                 </span>
               </div>
@@ -189,10 +187,10 @@ function FavoritesPreview({ favorites }) {
   return (
     <section
       aria-labelledby="favorites-title"
-      className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+      className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id="favorites-title" className="text-sm font-semibold text-slate-200">
+        <h2 id="favorites-title" className="text-sm font-semibold text-white/90">
           {t('locataireDashboard.favoritesPreview.title')}
         </h2>
         <Link
@@ -204,7 +202,7 @@ function FavoritesPreview({ favorites }) {
       </header>
 
       {favorites.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-400">
+        <p className="mt-4 text-sm text-white/70">
           {t('locataireDashboard.favoritesPreview.empty')}
         </p>
       ) : (
@@ -213,7 +211,7 @@ function FavoritesPreview({ favorites }) {
             <li key={f.id_favorite}>
               <Link
                 to="/locataire/favoris"
-                className={`block overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40 transition hover:border-slate-600 ${FOCUS_RING}`}
+                className={`block overflow-hidden rounded-xl border border-white/20 bg-white/10 backdrop-blur-xl transition hover:border-white/40 ${FOCUS_RING}`}
               >
                 <figure className="m-0">
                   {f.boat?.image ? (
@@ -232,10 +230,10 @@ function FavoritesPreview({ favorites }) {
                     </span>
                   )}
                   <figcaption className="p-3">
-                    <span className="block truncate text-sm font-medium text-slate-100">
+                    <span className="block truncate text-sm font-medium text-white">
                       {f.boat?.name}
                     </span>
-                    <span className="block truncate text-xs text-slate-400">
+                    <span className="block truncate text-xs text-white/70">
                       {[f.boat?.type, f.boat?.port?.city].filter(Boolean).join(' · ')}
                     </span>
                     <span className="mt-1 block text-xs font-semibold text-[#5AB4EC]">
@@ -289,7 +287,7 @@ function LocataireDashboard() {
       <h1 id="dashboard-title" className="text-2xl font-bold text-white">
         {t('locataireDashboard.title')}
       </h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-white/70">
         {t('locataireDashboard.greeting', { name: user?.first_name })}
       </p>
 

@@ -18,7 +18,7 @@ function LocataireAccount() {
         <h1 id="account-title" className="text-2xl font-bold text-white">
           {t('locataireAccount.title')}
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-white/70">
           {t('locataireAccount.subtitle', { name: user?.first_name })}
         </p>
       </header>

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../../hooks/useToast.jsx';
+import CardSkeleton from '../common/CardSkeleton.jsx';
 import { getFavorites, removeFavorite } from '../../services/locataireService.js';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -11,80 +12,74 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 const capitalize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
-function FavoriteRow({ favorite, onRemove, removing }) {
+function FavoriteCard({ favorite, onRemove, removing }) {
   const { t } = useTranslation();
   const boat = favorite.boat;
   const boatLink = boat?.id_boat ? `/product/${boat.id_boat}` : undefined;
 
-  // Contenu partagé entre la version cliquable (Link) et la version inerte ;
-  // group-hover: n'agit que sous un parent .group, donc uniquement dans le Link.
-  const cardBody = (
-    <>
-      {boat?.image ? (
-        <img
-          src={boat.image}
-          alt={`Bateau ${boat?.name}`}
-          loading="lazy"
-          className="h-32 w-full shrink-0 rounded-lg bg-slate-800 object-cover sm:h-20 sm:w-28"
-        />
-      ) : (
-        <span
-          aria-hidden="true"
-          className="flex h-32 w-full shrink-0 items-center justify-center rounded-lg bg-slate-800 text-3xl text-slate-600 sm:h-20 sm:w-28"
-        >
-          ⛵
-        </span>
-      )}
-
-      <div className="min-w-0 flex-1">
-        <h3 className="truncate font-bold text-white group-hover:text-[#ABD4FF]">{boat?.name}</h3>
-        <p className="mt-0.5 truncate text-sm text-slate-400">
-          {[capitalize(boat?.type), boat?.port && `${boat.port.name} · ${boat.port.city}`]
-            .filter(Boolean)
-            .join(' — ')}
-        </p>
-        {boat?.capacity ? (
-          <p className="mt-0.5 text-xs text-slate-400">
-            {t('locataireFavorites.persons', { count: boat.capacity })}
-          </p>
-        ) : null}
-      </div>
-    </>
-  );
-
   return (
-    <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        {boatLink ? (
-          <Link
-            to={boatLink}
-            className={`group flex min-w-0 items-center gap-4 sm:flex-1 ${FOCUS_RING}`}
-          >
-            {cardBody}
-          </Link>
+    <article className="group h-36 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
+      <div className="flex h-full">
+        {boat?.image ? (
+          <img
+            src={boat.image}
+            alt={`Bateau ${boat?.name}`}
+            loading="lazy"
+            className="w-28 self-stretch object-cover transition-transform duration-500 md:w-36 motion-safe:group-hover:scale-105"
+          />
         ) : (
-          <div className="flex min-w-0 items-center gap-4 sm:flex-1">{cardBody}</div>
+          <span
+            aria-hidden="true"
+            className="flex w-28 shrink-0 items-center justify-center self-stretch bg-white/5 text-3xl md:w-36"
+          >
+            ⛵
+          </span>
         )}
 
-        <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
-          <p className="text-sm text-slate-300">
-            <span className="font-semibold text-[#5AB4EC]">
-              {EURO.format(boat?.daily_price ?? 0)}
-            </span>{' '}
-            {t('locataireFavorites.perDay')}
+        <div className="flex min-w-0 flex-1 flex-col p-4">
+          <h3 className="truncate text-base font-bold text-white">
+            {boatLink ? (
+              <Link
+                to={boatLink}
+                className={`transition hover:text-[#ABD4FF] hover:underline ${FOCUS_RING}`}
+              >
+                {boat?.name}
+              </Link>
+            ) : (
+              boat?.name
+            )}
+          </h3>
+          <p className="mt-0.5 truncate text-xs text-white/60">
+            {[capitalize(boat?.type), boat?.port && `${boat.port.name} · ${boat.port.city}`]
+              .filter(Boolean)
+              .join(' — ')}
           </p>
-          <button
-            type="button"
-            onClick={() => onRemove(boat.id_boat)}
-            disabled={removing}
-            className={`shrink-0 rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
-          >
-            {removing ? t('locataireFavorites.removing') : t('locataireFavorites.remove')}
-          </button>
+          {boat?.capacity ? (
+            <p className="mt-0.5 truncate text-xs text-white/60">
+              {t('locataireFavorites.persons', { count: boat.capacity })}
+            </p>
+          ) : null}
+
+          <div className="mt-auto flex items-center justify-between gap-3 pt-2">
+            <p className="truncate text-sm text-white/80">
+              <span className="font-bold text-[#5AB4EC]">
+                {EURO.format(boat?.daily_price ?? 0)}
+              </span>{' '}
+              {t('locataireFavorites.perDay')}
+            </p>
+            <button
+              type="button"
+              onClick={() => onRemove(boat.id_boat)}
+              disabled={removing}
+              className={`shrink-0 rounded-full border border-red-500/40 px-3 py-1 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+            >
+              {removing ? t('locataireFavorites.removing') : t('locataireFavorites.remove')}
+            </button>
+          </div>
         </div>
       </div>
     </article>
@@ -144,7 +139,7 @@ function LocataireFavorites() {
         <h1 id="favorites-title" className="text-2xl font-bold text-white">
           {t('locataireFavorites.title')}
         </h1>
-        <p className="mt-1 text-sm text-slate-400">{t('locataireFavorites.subtitle')}</p>
+        <p className="mt-1 text-sm text-white/70">{t('locataireFavorites.subtitle')}</p>
       </header>
 
       {error && (
@@ -173,8 +168,8 @@ function LocataireFavorites() {
                 aria-pressed={active}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                   active
-                    ? 'bg-[#0A3172] text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                    ? 'bg-sky-500 text-white'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
                 }`}
               >
                 {f.label}
@@ -185,18 +180,18 @@ function LocataireFavorites() {
       )}
 
       {loading ? (
-        <p className="text-slate-300">{t('locataireFavorites.loading')}</p>
+        <CardSkeleton count={4} height="h-36" />
       ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-8 text-center text-sm text-slate-400">
+        <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
           {favorites.length === 0
             ? t('locataireFavorites.emptyAll')
             : t('locataireFavorites.emptyFiltered')}
         </p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="grid gap-3 xl:grid-cols-2">
           {filtered.map((f) => (
-            <li key={f.id_favorite}>
-              <FavoriteRow
+            <li key={f.id_favorite} className="min-w-0">
+              <FavoriteCard
                 favorite={f}
                 onRemove={handleRemove}
                 removing={removingId === f.boat.id_boat}
