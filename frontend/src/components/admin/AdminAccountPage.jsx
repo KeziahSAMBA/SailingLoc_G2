@@ -16,7 +16,7 @@ function AdminAccountPage() {
         <h1 id="account-title" className="text-2xl font-bold text-white">
           Mon compte
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-white/70">
           Bonjour {user?.first_name}, gérez vos informations personnelles, votre photo et votre mot
           de passe.
         </p>

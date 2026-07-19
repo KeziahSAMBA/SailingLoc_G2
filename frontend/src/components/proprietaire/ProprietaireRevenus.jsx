@@ -497,7 +497,7 @@ function ProprietaireRevenus() {
                   id="revenus-period"
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
-                  className="rounded-lg border border-white/30 bg-slate-900/80 px-3 py-1.5 text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+                  className="select-glass rounded-lg border border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
                 >
                   {PERIOD_FILTERS.map((f) => (
                     <option key={f.key} value={f.key}>

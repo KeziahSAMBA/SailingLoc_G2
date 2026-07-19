@@ -3,6 +3,10 @@ import { useToast } from '../../hooks/useToast.jsx';
 import { listDocuments, setDocumentStatus } from '../../services/adminService.js';
 import { fetchDocumentFile } from '../../services/documentService.js';
 import { IconBtn, EyeIcon, CheckIcon, XIcon } from './AdminActions.jsx';
+import Pagination from '../common/Pagination.jsx';
+import usePagination from '../../hooks/usePagination.js';
+
+const PAGE_SIZE = 10;
 
 const TYPE_LABEL = {
   permis_conduire: 'Permis bateau',
@@ -41,7 +45,7 @@ const TYPE_OPTIONS = [
 ];
 
 const selectClass =
-  'rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-[#5AB4EC]';
+  'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
 
 function fmtDate(d) {
   return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
@@ -81,6 +85,12 @@ function AdminDocumentsPage() {
     return () => clearTimeout(t);
   }, [load]);
 
+  const {
+    page,
+    setPage,
+    pageItems: pageDocuments,
+  } = usePagination(documents, PAGE_SIZE, `${status}|${role}|${type}|${search}`);
+
   async function view(doc) {
     try {
       const res = await fetchDocumentFile(doc.id_document);
@@ -115,7 +125,7 @@ function AdminDocumentsPage() {
   return (
     <section>
       <h1 className="text-2xl font-bold text-white">Documents</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-white/70">
         Vérifiez et validez les documents des utilisateurs.
       </p>
 
@@ -127,8 +137,8 @@ function AdminDocumentsPage() {
             onClick={() => setStatus(value)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
               status === value
-                ? 'bg-[#0A3172] text-white'
-                : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+                ? 'bg-sky-500 text-white'
+                : 'border border-white/30 text-white/80 hover:bg-white/10'
             }`}
           >
             {label}
@@ -144,12 +154,20 @@ function AdminDocumentsPage() {
           placeholder="Rechercher un utilisateur (nom, email)…"
           className={`${selectClass} min-w-[220px] flex-1`}
         />
-        <select value={role} onChange={(e) => setRole(e.target.value)} className={selectClass}>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className={`select-glass ${selectClass}`}
+        >
           <option value="">Tous les rôles</option>
           <option value="locataire">Locataire</option>
           <option value="proprietaire">Propriétaire</option>
         </select>
-        <select value={type} onChange={(e) => setType(e.target.value)} className={selectClass}>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className={`select-glass ${selectClass}`}
+        >
           <option value="">Tous les types</option>
           {TYPE_OPTIONS.map((t) => (
             <option key={t} value={t}>
@@ -165,39 +183,39 @@ function AdminDocumentsPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+          <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Utilisateur</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Type</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Fichier</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Déposé le</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-300">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Utilisateur</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Type</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Fichier</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Déposé le</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
+              <th className="px-4 py-3 text-right font-semibold text-white/80">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-white/15">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-white/70">
                   Chargement…
                 </td>
               </tr>
             ) : documents.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-white/70">
                   Aucun document.
                 </td>
               </tr>
             ) : (
-              documents.map((d) => (
-                <tr key={d.id_document} className="text-slate-200">
+              pageDocuments.map((d) => (
+                <tr key={d.id_document} className="text-white/90">
                   <td className="px-4 py-3">
                     <div className="font-medium">
                       {d.user ? `${d.user.first_name} ${d.user.last_name}` : '—'}
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-white/60">
                       {d.user?.email} {d.user ? `· ${ROLE_LABEL[d.user.role] || d.user.role}` : ''}
                     </div>
                   </td>
@@ -207,11 +225,11 @@ function AdminDocumentsPage() {
                       <EyeIcon />
                     </IconBtn>
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{fmtDate(d.upload_date)}</td>
+                  <td className="px-4 py-3 text-white/70">{fmtDate(d.upload_date)}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        STATUS[d.status]?.cls || 'bg-slate-600/30 text-slate-400'
+                        STATUS[d.status]?.cls || 'bg-slate-500/15 text-white/70'
                       }`}
                     >
                       {STATUS[d.status]?.label || d.status}
@@ -244,7 +262,16 @@ function AdminDocumentsPage() {
         </table>
       </div>
 
-      <p className="mt-3 text-xs text-slate-500">{documents.length} document(s).</p>
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={documents.length}
+        onChange={setPage}
+        label="Documents"
+        className="mt-4"
+      />
+
+      <p className="mt-3 text-xs text-white/60">{documents.length} document(s).</p>
     </section>
   );
 }

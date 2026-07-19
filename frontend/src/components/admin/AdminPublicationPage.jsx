@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import Pagination from '../common/Pagination.jsx';
+import usePagination from '../../hooks/usePagination.js';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
 import { IconBtn, EyeIcon, EyeOffIcon, CheckIcon, XIcon } from './AdminActions.jsx';
@@ -18,7 +20,7 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 const REPORT_STATUS = {
   pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
   resolved: { label: 'Traité', cls: 'bg-emerald-500/15 text-emerald-300' },
-  dismissed: { label: 'Rejeté', cls: 'bg-slate-600/30 text-slate-400' },
+  dismissed: { label: 'Rejeté', cls: 'bg-slate-500/15 text-white/70' },
 };
 
 const REPORT_FILTERS = [
@@ -37,6 +39,8 @@ const PUBLISHED_FILTERS = [
 function fmtDate(d) {
   return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
 }
+
+const PAGE_SIZE = 10;
 
 function AdminPublicationPage() {
   const { showToast } = useToast();
@@ -81,6 +85,17 @@ function AdminPublicationPage() {
   useEffect(() => {
     if (tab === 'reports') loadReports();
   }, [tab, loadReports]);
+
+  const {
+    page: boatsPage,
+    setPage: setBoatsPage,
+    pageItems: pageBoats,
+  } = usePagination(boats, PAGE_SIZE, published);
+  const {
+    page: reportsPage,
+    setPage: setReportsPage,
+    pageItems: pageReports,
+  } = usePagination(reports, PAGE_SIZE, reportStatus);
 
   async function togglePublish(b) {
     setBusyId(`b${b.id_boat}`);
@@ -136,20 +151,18 @@ function AdminPublicationPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-[#0A3172] text-white'
-        : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+        ? 'bg-sky-500 text-white'
+        : 'border border-white/30 text-white/80 hover:bg-white/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
-      active
-        ? 'bg-[#0A3172] text-white'
-        : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+      active ? 'bg-sky-500 text-white' : 'border border-white/30 text-white/80 hover:bg-white/10'
     }`;
 
   return (
     <section>
       <h1 className="text-2xl font-bold text-white">Publication</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-white/70">
         Gérez la publication des bateaux et traitez les signalements.
       </p>
 
@@ -177,49 +190,49 @@ function AdminPublicationPage() {
             ))}
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Bateau</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Propriétaire</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Prix/jour</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Signalements</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-300">Action</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Bateau</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Propriétaire</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Prix/jour</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Signalements</th>
+                  <th className="px-4 py-3 text-right font-semibold text-white/80">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-white/15">
                 {boatsLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
                       Chargement…
                     </td>
                   </tr>
                 ) : boats.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
                       Aucun bateau.
                     </td>
                   </tr>
                 ) : (
-                  boats.map((b) => (
-                    <tr key={b.id_boat} className="text-slate-200">
+                  pageBoats.map((b) => (
+                    <tr key={b.id_boat} className="text-white/90">
                       <td className="px-4 py-3">
                         <Link
-                          to={`/boats/${b.id_boat}`}
+                          to={`/product/${b.id_boat}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-medium text-[#5AB4EC] hover:underline"
                         >
                           {b.name}
                         </Link>
-                        <div className="text-xs text-slate-500">{b.type}</div>
+                        <div className="text-xs text-white/60">{b.type}</div>
                       </td>
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="px-4 py-3 text-white/70">
                         {b.owner ? `${b.owner.first_name} ${b.owner.last_name}` : '—'}
                       </td>
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="px-4 py-3 text-white/70">
                         {b.daily_price != null ? EURO.format(b.daily_price) : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -227,7 +240,7 @@ function AdminPublicationPage() {
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                             b.is_published
                               ? 'bg-emerald-500/15 text-emerald-300'
-                              : 'bg-slate-600/30 text-slate-400'
+                              : 'bg-slate-500/15 text-white/70'
                           }`}
                         >
                           {b.is_published ? 'Publié' : 'Non publié'}
@@ -239,7 +252,7 @@ function AdminPublicationPage() {
                             {b.pending_reports} en attente
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-500">—</span>
+                          <span className="text-xs text-white/60">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -260,6 +273,15 @@ function AdminPublicationPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination
+            page={boatsPage}
+            pageSize={PAGE_SIZE}
+            total={boats.length}
+            onChange={setBoatsPage}
+            label="Annonces"
+            className="mt-4"
+          />
         </>
       ) : (
         <>
@@ -276,38 +298,38 @@ function AdminPublicationPage() {
             ))}
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Bateau</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Motif</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Signalé par</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Date</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-300">Actions</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Bateau</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Motif</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Signalé par</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Date</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
+                  <th className="px-4 py-3 text-right font-semibold text-white/80">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-white/15">
                 {reportsLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
                       Chargement…
                     </td>
                   </tr>
                 ) : reports.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
                       Aucun signalement.
                     </td>
                   </tr>
                 ) : (
-                  reports.map((r) => (
-                    <tr key={r.id_report} className="text-slate-200 align-top">
+                  pageReports.map((r) => (
+                    <tr key={r.id_report} className="text-white/90 align-top">
                       <td className="px-4 py-3">
                         {r.boat ? (
                           <Link
-                            to={`/boats/${r.boat.id_boat}`}
+                            to={`/product/${r.boat.id_boat}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-medium text-[#5AB4EC] hover:underline"
@@ -317,19 +339,19 @@ function AdminPublicationPage() {
                         ) : (
                           <span className="font-medium">—</span>
                         )}
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-white/60">
                           {r.boat?.is_published ? 'Publié' : 'Non publié'}
                         </div>
                       </td>
-                      <td className="max-w-xs px-4 py-3 text-slate-300">{r.reason}</td>
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="max-w-xs px-4 py-3 text-white/80">{r.reason}</td>
+                      <td className="px-4 py-3 text-white/70">
                         {r.reporter ? `${r.reporter.first_name} ${r.reporter.last_name}` : '—'}
                       </td>
-                      <td className="px-4 py-3 text-slate-400">{fmtDate(r.created_at)}</td>
+                      <td className="px-4 py-3 text-white/70">{fmtDate(r.created_at)}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            REPORT_STATUS[r.status]?.cls || 'bg-slate-600/30 text-slate-400'
+                            REPORT_STATUS[r.status]?.cls || 'bg-slate-500/15 text-white/70'
                           }`}
                         >
                           {REPORT_STATUS[r.status]?.label || r.status}
@@ -370,6 +392,15 @@ function AdminPublicationPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination
+            page={reportsPage}
+            pageSize={PAGE_SIZE}
+            total={reports.length}
+            onChange={setReportsPage}
+            label="Signalements"
+            className="mt-4"
+          />
         </>
       )}
     </section>

@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
 import { listUsers, updateUser, deleteUser } from '../../services/adminService.js';
 import { IconBtn, EditIcon, BanIcon, CheckIcon, TrashIcon } from './AdminActions.jsx';
+import Pagination from '../common/Pagination.jsx';
+import usePagination from '../../hooks/usePagination.js';
+
+const PAGE_SIZE = 10;
 
 const ROLES = [
   ['locataire', 'Locataire'],
@@ -12,10 +16,10 @@ const ROLES = [
 const ROLE_LABEL = Object.fromEntries(ROLES);
 
 const selectClass =
-  'rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-[#5AB4EC]';
+  'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
 const inputClass =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#5AB4EC]';
-const labelClass = 'mb-1 block text-xs font-medium text-slate-400';
+  'w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]';
+const labelClass = 'mb-1 block text-xs font-medium text-white/70';
 
 function fmtDate(d) {
   return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
@@ -65,7 +69,7 @@ function EditUserModal({ user, onClose, onSaved }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-white">Modifier l&apos;utilisateur</h2>
@@ -139,7 +143,7 @@ function EditUserModal({ user, onClose, onSaved }) {
               name="role"
               value={form.role}
               onChange={change}
-              className={inputClass}
+              className={`select-glass ${inputClass}`}
             >
               {ROLES.map(([v, l]) => (
                 <option key={v} value={v}>
@@ -153,14 +157,14 @@ function EditUserModal({ user, onClose, onSaved }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+              className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-full bg-[#0A3172] px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#0A3172]/90 disabled:opacity-60"
+              className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90 disabled:opacity-60"
             >
               {saving ? 'Enregistrement…' : 'Enregistrer'}
             </button>
@@ -207,6 +211,12 @@ function AdminUsersPage() {
     return () => clearTimeout(t);
   }, [load]);
 
+  const {
+    page,
+    setPage,
+    pageItems: pageUsers,
+  } = usePagination(users, PAGE_SIZE, `${role}|${active}|${search}|${sort}|${order}`);
+
   function toggleSort(field) {
     if (sort === field) setOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
     else {
@@ -245,7 +255,7 @@ function AdminUsersPage() {
   const SortTh = ({ field, children }) => (
     <th
       onClick={() => toggleSort(field)}
-      className="cursor-pointer select-none px-4 py-3 text-left font-semibold text-slate-300 hover:text-white"
+      className="cursor-pointer select-none px-4 py-3 text-left font-semibold text-white/80 hover:text-white"
     >
       {children} {sort === field ? (order === 'asc' ? '▲' : '▼') : ''}
     </th>
@@ -257,7 +267,7 @@ function AdminUsersPage() {
         <h1 className="text-2xl font-bold text-white">Utilisateurs</h1>
         <Link
           to="/admin/users/new"
-          className="rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0A3172]/90"
+          className="rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90"
         >
           Ajouter un compte
         </Link>
@@ -271,7 +281,11 @@ function AdminUsersPage() {
           placeholder="Rechercher (nom, email)…"
           className={`${selectClass} min-w-[220px] flex-1`}
         />
-        <select value={role} onChange={(e) => setRole(e.target.value)} className={selectClass}>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className={`select-glass ${selectClass}`}
+        >
           <option value="">Tous les rôles</option>
           {ROLES.map(([v, l]) => (
             <option key={v} value={v}>
@@ -279,7 +293,11 @@ function AdminUsersPage() {
             </option>
           ))}
         </select>
-        <select value={active} onChange={(e) => setActive(e.target.value)} className={selectClass}>
+        <select
+          value={active}
+          onChange={(e) => setActive(e.target.value)}
+          className={`select-glass ${selectClass}`}
+        >
           <option value="">Tous les statuts</option>
           <option value="true">Actifs</option>
           <option value="false">Inactifs</option>
@@ -292,57 +310,57 @@ function AdminUsersPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+          <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
               <SortTh field="last_name">Nom</SortTh>
               <SortTh field="email">Email</SortTh>
               <SortTh field="role">Rôle</SortTh>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Téléphone</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Téléphone</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
               <SortTh field="created_at">Inscrit le</SortTh>
-              <th className="px-4 py-3 text-right font-semibold text-slate-300">Actions</th>
+              <th className="px-4 py-3 text-right font-semibold text-white/80">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-white/15">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-white/70">
                   Chargement…
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-white/70">
                   Aucun utilisateur.
                 </td>
               </tr>
             ) : (
-              users.map((u) => (
-                <tr key={u.id_user} className="text-slate-200">
+              pageUsers.map((u) => (
+                <tr key={u.id_user} className="text-white/90">
                   <td className="px-4 py-3 font-medium">
                     {u.first_name} {u.last_name}
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{u.email}</td>
+                  <td className="px-4 py-3 text-white/70">{u.email}</td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-slate-700/40 px-2.5 py-1 text-xs font-medium text-slate-200">
+                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-white/90">
                       {ROLE_LABEL[u.role] || u.role}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{u.phone || '—'}</td>
+                  <td className="px-4 py-3 text-white/70">{u.phone || '—'}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         u.is_active
                           ? 'bg-emerald-500/15 text-emerald-300'
-                          : 'bg-slate-600/30 text-slate-400'
+                          : 'bg-slate-500/15 text-white/70'
                       }`}
                     >
                       {u.is_active ? 'Actif' : 'Inactif'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{fmtDate(u.created_at)}</td>
+                  <td className="px-4 py-3 text-white/70">{fmtDate(u.created_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <IconBtn
@@ -377,7 +395,16 @@ function AdminUsersPage() {
         </table>
       </div>
 
-      <p className="mt-3 text-xs text-slate-500">
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={users.length}
+        onChange={setPage}
+        label="Utilisateurs"
+        className="mt-4"
+      />
+
+      <p className="mt-3 text-xs text-white/60">
         {users.length} utilisateur(s) — clic sur un en-tête pour trier.
       </p>
 

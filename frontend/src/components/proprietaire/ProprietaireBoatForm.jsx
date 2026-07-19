@@ -410,7 +410,7 @@ function ProprietaireBoatForm() {
                 name="type"
                 value={form.type}
                 onChange={handleChange}
-                className={inputClass}
+                className={`select-glass ${inputClass}`}
               >
                 {BOAT_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -502,7 +502,7 @@ function ProprietaireBoatForm() {
                 name="build_year"
                 value={form.build_year}
                 onChange={handleChange}
-                className={inputClass}
+                className={`select-glass ${inputClass}`}
               >
                 <option value="">Non renseignée</option>
                 {BUILD_YEARS.map((y) => (
@@ -741,7 +741,7 @@ function ProprietaireBoatForm() {
                     id="acte-existant"
                     value={acteDocId}
                     onChange={(e) => setActeDocId(e.target.value)}
-                    className={inputClass}
+                    className={`select-glass ${inputClass}`}
                   >
                     <option value="">— Choisir —</option>
                     {myActes.map((d) => (

@@ -46,8 +46,8 @@ function fmtMonth(m) {
 
 function StatCard({ label, value, accent }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+    <div className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-white/70">{label}</p>
       <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
     </div>
   );
@@ -55,8 +55,8 @@ function StatCard({ label, value, accent }) {
 
 function ChartCard({ title, children }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-      <h2 className="mb-4 text-sm font-semibold text-slate-200">{title}</h2>
+    <div className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+      <h2 className="mb-4 text-sm font-semibold text-white/90">{title}</h2>
       <div style={{ width: '100%', height: 260 }}>{children}</div>
     </div>
   );
@@ -98,7 +98,7 @@ function AdminDashboard() {
   return (
     <section>
       <h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-white/70">
         Bonjour {user?.first_name}, voici la vue d&apos;ensemble de la plateforme.
       </p>
 

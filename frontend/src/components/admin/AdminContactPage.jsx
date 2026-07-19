@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../hooks/useToast.jsx';
 import { listContactRequests, setContactRequestStatus } from '../../services/adminService.js';
+import Pagination from '../common/Pagination.jsx';
+import usePagination from '../../hooks/usePagination.js';
+
+const PAGE_SIZE = 10;
 
 const STATUS = {
   new: { label: 'Nouvelle', cls: 'bg-amber-500/15 text-amber-300' },
@@ -54,6 +58,8 @@ function AdminContactPage() {
     load();
   }, [load]);
 
+  const { page, setPage, pageItems: pageRequests } = usePagination(requests, PAGE_SIZE, filter);
+
   async function toggleStatus(request) {
     const next = request.status === 'processed' ? 'new' : 'processed';
     setBusyId(request.id_request);
@@ -76,7 +82,7 @@ function AdminContactPage() {
         <h1 id="contact-requests-title" className="text-2xl font-bold text-white">
           Demandes contact
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-white/70">
           Messages envoyés depuis le formulaire de la page Contact.
         </p>
       </header>
@@ -93,8 +99,8 @@ function AdminContactPage() {
               aria-pressed={active}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-[#0A3172] text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                  ? 'bg-sky-500 text-white'
+                  : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
               }`}
             >
               {label}
@@ -104,27 +110,27 @@ function AdminContactPage() {
       </div>
 
       {loading ? (
-        <p className="text-slate-300">Chargement…</p>
+        <p className="text-white/80">Chargement…</p>
       ) : requests.length === 0 ? (
-        <p className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-8 text-center text-sm text-slate-400">
+        <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
           Aucune demande pour ce filtre.
         </p>
       ) : (
         <ul className="space-y-4">
-          {requests.map((r) => {
+          {pageRequests.map((r) => {
             const meta = STATUS[r.status] || {
               label: r.status,
-              cls: 'bg-slate-500/15 text-slate-300',
+              cls: 'bg-slate-500/15 text-white/80',
             };
             return (
               <li
                 key={r.id_request}
-                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+                className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="text-base font-semibold text-white">{r.subject}</h2>
-                    <p className="mt-0.5 text-sm text-slate-400">
+                    <p className="mt-0.5 text-sm text-white/70">
                       {r.name} ·{' '}
                       <a
                         href={`mailto:${r.email}`}
@@ -142,7 +148,7 @@ function AdminContactPage() {
                   </span>
                 </div>
 
-                <p className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-800/60 px-4 py-3 text-sm text-slate-200">
+                <p className="mt-3 whitespace-pre-wrap rounded-lg bg-white/10 px-4 py-3 text-sm text-white/90">
                   {r.message}
                 </p>
 
@@ -153,14 +159,14 @@ function AdminContactPage() {
                     onClick={() => toggleStatus(r)}
                     className={`rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${
                       r.status === 'processed'
-                        ? 'border border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white'
+                        ? 'border border-white/30 text-white/80 hover:bg-white/10 hover:text-white'
                         : 'bg-emerald-600 text-white hover:bg-emerald-500'
                     }`}
                   >
                     {r.status === 'processed' ? 'Rouvrir la demande' : '✔ Marquer traitée'}
                   </button>
                   {r.processed_at && (
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-white/60">
                       Traitée le {DATE.format(new Date(r.processed_at))}
                     </span>
                   )}
@@ -170,6 +176,15 @@ function AdminContactPage() {
           })}
         </ul>
       )}
+
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={requests.length}
+        onChange={setPage}
+        label="Demandes"
+        className="mt-4"
+      />
     </section>
   );
 }

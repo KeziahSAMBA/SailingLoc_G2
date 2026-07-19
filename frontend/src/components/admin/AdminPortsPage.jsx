@@ -4,6 +4,10 @@ import { listPorts, createPort, deletePort } from '../../services/adminService.j
 import { IconBtn, TrashIcon } from './AdminActions.jsx';
 import MapView from '../common/MapView.jsx';
 import { loadPortCatalog } from '../../utils/portCatalog.js';
+import Pagination from '../common/Pagination.jsx';
+import usePagination from '../../hooks/usePagination.js';
+
+const PAGE_SIZE = 10;
 
 const MAX_RESULTS = 50;
 
@@ -30,7 +34,7 @@ const REGIONS = [
 ];
 
 const inputClass =
-  'rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-[#5AB4EC]';
+  'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
 
 function fmtCoord(v) {
   return v == null ? '—' : Number(v).toFixed(4);
@@ -73,6 +77,12 @@ function AdminPortsPage() {
     const t = setTimeout(load, 250);
     return () => clearTimeout(t);
   }, [load]);
+
+  const {
+    page,
+    setPage,
+    pageItems: pagePorts,
+  } = usePagination(ports, PAGE_SIZE, `${search}|${region}`);
 
   // Chargement paresseux du catalogue (4 Mo) : seulement à l'ouverture du panneau.
   async function openImport() {
@@ -144,27 +154,27 @@ function AdminPortsPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Ports</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-white/70">
             Gérez les ports d&apos;amarrage et visualisez où se trouvent les bateaux.
           </p>
         </div>
         <button
           type="button"
           onClick={openImport}
-          className="rounded-lg bg-[#0A3172] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0A3172]/80"
+          className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/80"
         >
           + Importer un port
         </button>
       </div>
 
       {showImport && (
-        <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+        <div className="mt-5 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-slate-200">Catalogue maritime français</h2>
+            <h2 className="text-sm font-semibold text-white/90">Catalogue maritime français</h2>
             <button
               type="button"
               onClick={() => setShowImport(false)}
-              className="text-sm text-slate-400 hover:text-slate-200"
+              className="text-sm text-white/70 hover:text-white/90"
             >
               Fermer
             </button>
@@ -177,21 +187,19 @@ function AdminPortsPage() {
             className={`${inputClass} mt-3 w-full`}
           />
 
-          {catalogLoading && (
-            <p className="mt-3 text-sm text-slate-400">Chargement du catalogue…</p>
-          )}
+          {catalogLoading && <p className="mt-3 text-sm text-white/70">Chargement du catalogue…</p>}
           {catalogError && <p className="mt-3 text-sm text-red-300">{catalogError}</p>}
 
           {!catalogLoading && !catalogError && (
             <>
               {q.length < 2 ? (
-                <p className="mt-3 text-sm text-slate-500">
+                <p className="mt-3 text-sm text-white/60">
                   Saisissez au moins 2 caractères pour rechercher.
                 </p>
               ) : catalogResults.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-500">Aucun port trouvé dans le catalogue.</p>
+                <p className="mt-3 text-sm text-white/60">Aucun port trouvé dans le catalogue.</p>
               ) : (
-                <ul className="mt-3 max-h-72 divide-y divide-slate-800 overflow-y-auto rounded-lg border border-slate-800">
+                <ul className="mt-3 max-h-72 divide-y divide-white/15 overflow-y-auto rounded-lg border border-white/20">
                   {catalogResults.map((p) => {
                     const already = existingNames.has(p.name.toLowerCase());
                     return (
@@ -200,8 +208,8 @@ function AdminPortsPage() {
                         className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
                       >
                         <div className="min-w-0">
-                          <div className="truncate font-medium text-slate-200">{p.name}</div>
-                          <div className="text-xs text-slate-500">{p.city || '—'}</div>
+                          <div className="truncate font-medium text-white/90">{p.name}</div>
+                          <div className="text-xs text-white/60">{p.city || '—'}</div>
                         </div>
                         <button
                           type="button"
@@ -235,7 +243,11 @@ function AdminPortsPage() {
           placeholder="Filtrer (nom, ville)…"
           className={`${inputClass} min-w-[220px] flex-1`}
         />
-        <select value={region} onChange={(e) => setRegion(e.target.value)} className={inputClass}>
+        <select
+          value={region}
+          onChange={(e) => setRegion(e.target.value)}
+          className={`select-glass ${inputClass}`}
+        >
           <option value="">Toutes les régions</option>
           {REGIONS.map((r) => (
             <option key={r} value={r}>
@@ -251,41 +263,41 @@ function AdminPortsPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+          <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Port</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Ville</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Région</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Coordonnées</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Bateaux</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-300">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Port</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Ville</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Région</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Coordonnées</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">Bateaux</th>
+              <th className="px-4 py-3 text-right font-semibold text-white/80">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-white/15">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-white/70">
                   Chargement…
                 </td>
               </tr>
             ) : ports.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-white/70">
                   Aucun port. Importez-en depuis le catalogue.
                 </td>
               </tr>
             ) : (
-              ports.map((p) => (
-                <tr key={p.id_port} className="text-slate-200">
+              pagePorts.map((p) => (
+                <tr key={p.id_port} className="text-white/90">
                   <td className="px-4 py-3 font-medium">{p.name}</td>
                   <td className="px-4 py-3">{p.city}</td>
-                  <td className="px-4 py-3 text-slate-400">{p.region || '—'}</td>
-                  <td className="px-4 py-3 text-slate-400">
+                  <td className="px-4 py-3 text-white/70">{p.region || '—'}</td>
+                  <td className="px-4 py-3 text-white/70">
                     {fmtCoord(p.latitude)}, {fmtCoord(p.longitude)}
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{p.boats_count ?? 0}</td>
+                  <td className="px-4 py-3 text-white/70">{p.boats_count ?? 0}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end">
                       <IconBtn
@@ -309,7 +321,16 @@ function AdminPortsPage() {
         </table>
       </div>
 
-      <p className="mt-3 text-xs text-slate-500">{ports.length} port(s) en base.</p>
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={ports.length}
+        onChange={setPage}
+        label="Ports"
+        className="mt-4"
+      />
+
+      <p className="mt-3 text-xs text-white/60">{ports.length} port(s) en base.</p>
     </section>
   );
 }

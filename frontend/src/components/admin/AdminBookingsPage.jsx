@@ -6,6 +6,8 @@ import {
   listDisputes,
   setDisputeStatus,
 } from '../../services/adminService.js';
+import Pagination from '../common/Pagination.jsx';
+import usePagination from '../../hooks/usePagination.js';
 import { IconBtn, BanIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -18,7 +20,7 @@ const BOOKING_STATUS = {
   pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
   confirmed: { label: 'Confirmée', cls: 'bg-emerald-500/15 text-emerald-300' },
   refused: { label: 'Refusée', cls: 'bg-red-500/15 text-red-300' },
-  cancelled: { label: 'Annulée', cls: 'bg-slate-600/30 text-slate-400' },
+  cancelled: { label: 'Annulée', cls: 'bg-slate-500/15 text-white/70' },
 };
 const BOOKING_FILTERS = [
   ['', 'Toutes'],
@@ -31,7 +33,7 @@ const BOOKING_FILTERS = [
 const DISPUTE_STATUS = {
   open: { label: 'Ouvert', cls: 'bg-amber-500/15 text-amber-300' },
   resolved: { label: 'Résolu', cls: 'bg-emerald-500/15 text-emerald-300' },
-  rejected: { label: 'Rejeté', cls: 'bg-slate-600/30 text-slate-400' },
+  rejected: { label: 'Rejeté', cls: 'bg-slate-500/15 text-white/70' },
 };
 const DISPUTE_FILTERS = [
   ['open', 'Ouverts'],
@@ -41,11 +43,13 @@ const DISPUTE_FILTERS = [
 ];
 
 const selectClass =
-  'rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-[#5AB4EC]';
+  'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
 
 function fmtDate(d) {
   return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
 }
+
+const PAGE_SIZE = 10;
 
 function AdminBookingsPage() {
   const { showToast } = useToast();
@@ -110,6 +114,17 @@ function AdminBookingsPage() {
     if (tab === 'disputes') loadDisputes();
   }, [tab, loadDisputes]);
 
+  const {
+    page: bookingsPage,
+    setPage: setBookingsPage,
+    pageItems: pageBookings,
+  } = usePagination(bookings, PAGE_SIZE, `${status}|${search}`);
+  const {
+    page: disputesPage,
+    setPage: setDisputesPage,
+    pageItems: pageDisputes,
+  } = usePagination(disputes, PAGE_SIZE, disputeStatus);
+
   async function cancel(b) {
     const reason = window.prompt("Motif de l'annulation :", 'Annulée par un administrateur.');
     if (reason === null) return;
@@ -168,24 +183,22 @@ function AdminBookingsPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-[#0A3172] text-white'
-        : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+        ? 'bg-sky-500 text-white'
+        : 'border border-white/30 text-white/80 hover:bg-white/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
-      active
-        ? 'bg-[#0A3172] text-white'
-        : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+      active ? 'bg-sky-500 text-white' : 'border border-white/30 text-white/80 hover:bg-white/10'
     }`;
   const badge = (meta) =>
     `inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-      meta?.cls || 'bg-slate-600/30 text-slate-400'
+      meta?.cls || 'bg-slate-500/15 text-white/70'
     }`;
 
   return (
     <section>
       <h1 className="text-2xl font-bold text-white">Réservations</h1>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-white/70">
         Vue globale des réservations, annulation et gestion des litiges.
       </p>
 
@@ -220,46 +233,46 @@ function AdminBookingsPage() {
             ))}
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Locataire</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Bateau</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Dates</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Montant</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Litiges</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-300">Action</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Locataire</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Bateau</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Dates</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Montant</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Litiges</th>
+                  <th className="px-4 py-3 text-right font-semibold text-white/80">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-white/15">
                 {bookingsLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={7} className="px-4 py-8 text-center text-white/70">
                       Chargement…
                     </td>
                   </tr>
                 ) : bookings.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={7} className="px-4 py-8 text-center text-white/70">
                       Aucune réservation.
                     </td>
                   </tr>
                 ) : (
-                  bookings.map((b) => (
-                    <tr key={b.id_booking} className="text-slate-200">
+                  pageBookings.map((b) => (
+                    <tr key={b.id_booking} className="text-white/90">
                       <td className="px-4 py-3">
                         <div className="font-medium">
                           {b.user ? `${b.user.first_name} ${b.user.last_name}` : '—'}
                         </div>
-                        <div className="text-xs text-slate-500">{b.user?.email}</div>
+                        <div className="text-xs text-white/60">{b.user?.email}</div>
                       </td>
-                      <td className="px-4 py-3 text-slate-400">{b.boat?.name || '—'}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-slate-400">
+                      <td className="px-4 py-3 text-white/70">{b.boat?.name || '—'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-white/70">
                         {fmtDate(b.start_date)} → {fmtDate(b.end_date)}
                       </td>
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="px-4 py-3 text-white/70">
                         {b.total_amount != null ? EURO.format(b.total_amount) : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -273,7 +286,7 @@ function AdminBookingsPage() {
                             {b.open_disputes} ouvert(s)
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-500">—</span>
+                          <span className="text-xs text-white/60">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -289,7 +302,7 @@ function AdminBookingsPage() {
                             </IconBtn>
                           </div>
                         ) : (
-                          <span className="block text-right text-xs text-slate-500">—</span>
+                          <span className="block text-right text-xs text-white/60">—</span>
                         )}
                       </td>
                     </tr>
@@ -298,6 +311,15 @@ function AdminBookingsPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination
+            page={bookingsPage}
+            pageSize={PAGE_SIZE}
+            total={bookings.length}
+            onChange={setBookingsPage}
+            label="Réservations"
+            className="mt-4"
+          />
         </>
       ) : (
         <>
@@ -314,40 +336,40 @@ function AdminBookingsPage() {
             ))}
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Réservation</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Motif</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Ouvert par</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-300">Actions</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Réservation</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Motif</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Ouvert par</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
+                  <th className="px-4 py-3 text-right font-semibold text-white/80">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-white/15">
                 {disputesLoading ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={5} className="px-4 py-8 text-center text-white/70">
                       Chargement…
                     </td>
                   </tr>
                 ) : disputes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={5} className="px-4 py-8 text-center text-white/70">
                       Aucun litige.
                     </td>
                   </tr>
                 ) : (
-                  disputes.map((d) => (
-                    <tr key={d.id_dispute} className="align-top text-slate-200">
+                  pageDisputes.map((d) => (
+                    <tr key={d.id_dispute} className="align-top text-white/90">
                       <td className="px-4 py-3">
                         <div className="font-medium">{d.booking?.boat_name || '—'}</div>
-                        <div className="whitespace-nowrap text-xs text-slate-500">
+                        <div className="whitespace-nowrap text-xs text-white/60">
                           {fmtDate(d.booking?.start_date)} → {fmtDate(d.booking?.end_date)}
                         </div>
                       </td>
-                      <td className="max-w-xs px-4 py-3 text-slate-300">
+                      <td className="max-w-xs px-4 py-3 text-white/80">
                         {d.reason}
                         {d.photos?.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -357,19 +379,19 @@ function AdminBookingsPage() {
                                   src={url}
                                   alt="Photo jointe au litige"
                                   loading="lazy"
-                                  className="h-10 w-10 rounded border border-slate-700 object-cover transition hover:border-[#5AB4EC]"
+                                  className="h-10 w-10 rounded border border-white/30 object-cover transition hover:border-[#5AB4EC]"
                                 />
                               </a>
                             ))}
                           </div>
                         )}
                         {d.resolution && (
-                          <div className="mt-1 text-xs text-slate-500">
+                          <div className="mt-1 text-xs text-white/60">
                             Résolution : {d.resolution}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="px-4 py-3 text-white/70">
                         {d.opener ? `${d.opener.first_name} ${d.opener.last_name}` : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -403,6 +425,15 @@ function AdminBookingsPage() {
               </tbody>
             </table>
           </div>
+
+          <Pagination
+            page={disputesPage}
+            pageSize={PAGE_SIZE}
+            total={disputes.length}
+            onChange={setDisputesPage}
+            label="Litiges"
+            className="mt-4"
+          />
         </>
       )}
 
@@ -412,13 +443,13 @@ function AdminBookingsPage() {
           onClick={() => !deciding && setDecision(null)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-semibold text-white">
               {decision.status === 'resolved' ? 'Résoudre le litige' : 'Rejeter le litige'}
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-white/70">
               {decision.dispute.booking?.boat_name
                 ? `${decision.dispute.booking.boat_name} — `
                 : ''}
@@ -427,7 +458,7 @@ function AdminBookingsPage() {
 
             <label
               htmlFor="resolution"
-              className="mb-1 mt-4 block text-xs font-medium text-slate-400"
+              className="mb-1 mt-4 block text-xs font-medium text-white/70"
             >
               {decision.status === 'resolved'
                 ? 'Note de résolution (optionnel)'
@@ -439,7 +470,7 @@ function AdminBookingsPage() {
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
               placeholder="Détaillez la décision…"
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#5AB4EC]"
+              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
             />
 
             {decision.status === 'resolved' &&
@@ -447,7 +478,7 @@ function AdminBookingsPage() {
                 const payment = decision.dispute.booking?.payment;
                 if (!payment || payment.status !== 'success') {
                   return (
-                    <p className="mt-4 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
+                    <p className="mt-4 rounded-lg border border-white/30 bg-white/10 backdrop-blur-xl px-3 py-2 text-xs text-white/70">
                       Aucun paiement réussi rattaché à cette réservation : remboursement
                       indisponible.
                     </p>
@@ -458,8 +489,8 @@ function AdminBookingsPage() {
                   : payment.amount;
                 const computed = Math.round(base * Number(refundPct || 0)) / 100;
                 return (
-                  <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/60 p-3">
-                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-200">
+                  <div className="mt-4 rounded-lg border border-white/30 bg-white/10 backdrop-blur-xl p-3">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-white/90">
                       <input
                         type="checkbox"
                         checked={refundEnabled}
@@ -472,7 +503,7 @@ function AdminBookingsPage() {
                     {refundEnabled && (
                       <div className="mt-3 space-y-3">
                         <div>
-                          <p className="mb-1 text-xs font-medium text-slate-400">
+                          <p className="mb-1 text-xs font-medium text-white/70">
                             Pourcentage à rembourser
                           </p>
                           <div className="flex flex-wrap gap-2">
@@ -484,7 +515,7 @@ function AdminBookingsPage() {
                                 className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                                   Number(refundPct) === p
                                     ? 'bg-emerald-600 text-white'
-                                    : 'border border-slate-600 text-slate-300 hover:bg-slate-800'
+                                    : 'border border-white/30 text-white/80 hover:bg-white/10'
                                 }`}
                               >
                                 {p}%
@@ -497,14 +528,14 @@ function AdminBookingsPage() {
                                 max={100}
                                 value={refundPct}
                                 onChange={(e) => setRefundPct(e.target.value)}
-                                className="w-16 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 outline-none focus:border-[#5AB4EC]"
+                                className="w-16 rounded-lg border border-white/30 bg-white/10 px-2 py-1 text-xs text-white outline-none focus:border-[#5AB4EC]"
                               />
-                              <span className="text-xs text-slate-400">%</span>
+                              <span className="text-xs text-white/70">%</span>
                             </div>
                           </div>
                         </div>
 
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-300">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-white/80">
                           <input
                             type="checkbox"
                             checked={refundCommission}
@@ -515,18 +546,18 @@ function AdminBookingsPage() {
                         </label>
 
                         <div className="rounded-md bg-slate-950/60 px-3 py-2 text-xs">
-                          <div className="flex justify-between text-slate-400">
+                          <div className="flex justify-between text-white/70">
                             <span>Montant payé</span>
                             <span>{EURO.format(payment.amount)}</span>
                           </div>
-                          <div className="flex justify-between text-slate-400">
+                          <div className="flex justify-between text-white/70">
                             <span>Commission</span>
                             <span>
                               {refundCommission ? 'incluse' : 'conservée'} (
                               {EURO.format(payment.commission)})
                             </span>
                           </div>
-                          <div className="mt-1 flex justify-between border-t border-slate-700 pt-1 font-semibold text-emerald-300">
+                          <div className="mt-1 flex justify-between border-t border-white/30 pt-1 font-semibold text-emerald-300">
                             <span>Remboursement</span>
                             <span>{EURO.format(computed)}</span>
                           </div>
@@ -542,7 +573,7 @@ function AdminBookingsPage() {
                 type="button"
                 onClick={() => setDecision(null)}
                 disabled={deciding}
-                className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800 disabled:opacity-50"
+                className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50"
               >
                 Annuler
               </button>

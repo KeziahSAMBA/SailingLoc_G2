@@ -145,3 +145,31 @@ textarea:-webkit-autofill {
     animation: none;
   }
 }
+
+/* Select sur fond verre : sans appearance-none, Chrome peint le contrôle fermé
+   avec la couleur des <option>, ce qui le rendait bleu foncé au milieu des
+   champs translucides. La flèche native disparaît, on la redessine. */
+.select-glass {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23ffffff' stroke-opacity='0.7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 1.1rem;
+  padding-right: 2.2rem;
+}
+
+/* Le menu déroulant reste rendu par l'OS : il lui faut un fond opaque.
+   Bleu marine repris de la teinte de l'accent #5AB4EC, et accent lui-même
+   sur le choix sélectionné, pour rester dans la palette du site. */
+.select-glass option {
+  background-color: #16324a;
+  color: #fff;
+}
+
+/* Accent assombri : #5AB4EC ne donne que 3,2:1 avec du blanc, sous le seuil AA. */
+.select-glass option:checked,
+.select-glass option:hover {
+  background-color: #2470ac;
+  color: #fff;
+}
