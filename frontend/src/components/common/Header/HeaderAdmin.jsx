@@ -8,6 +8,15 @@ const CENTER_NAV = [
 
 const ADMIN_MENU_ITEMS = [
   { label: 'Dashboard', to: '/admin' },
+  { label: 'Utilisateurs', to: '/admin/users' },
+  { label: 'Commentaires', to: '/admin/comments' },
+  { label: 'Publication', to: '/admin/publications' },
+  { label: 'Documents', to: '/admin/documents' },
+  { label: 'Réservations', to: '/admin/bookings' },
+  { label: 'Ports', to: '/admin/ports' },
+  { label: 'Transaction', to: '/admin/transactions' },
+  { label: 'Messagerie', to: '/admin/messages' },
+  { label: 'Compte', to: '/admin/compte' },
   { label: 'Déconnexion', action: 'logout', danger: true },
 ];
 

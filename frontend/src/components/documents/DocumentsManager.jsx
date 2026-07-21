@@ -183,16 +183,24 @@ function DocumentRow({ config, docs, onChanged }) {
       })}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={(e) => {
-            setFile(e.target.files?.[0] || null);
-            setError('');
-          }}
-          className="block w-full max-w-xs text-sm text-white/70 file:mr-3 file:rounded-full file:border-0 file:bg-[#5AB4EC]/15 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#5AB4EC] hover:file:bg-[#5AB4EC]/25"
-        />
+        <label className="flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-white/70">
+          <span className="shrink-0 cursor-pointer rounded-full border-0 bg-[#5AB4EC]/15 px-4 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/25">
+            {t('documentsManager.chooseFile')}
+          </span>
+          <span className="min-w-0 truncate">
+            {file ? file.name : t('documentsManager.noFile')}
+          </span>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => {
+              setFile(e.target.files?.[0] || null);
+              setError('');
+            }}
+            className="sr-only"
+          />
+        </label>
         <button
           type="button"
           onClick={handleUpload}

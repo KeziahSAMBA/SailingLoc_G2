@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   getBookings,
   updateBookingStatus,
@@ -6,41 +7,30 @@ import {
 } from '../../services/proprietaireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
+import { formatDate } from '../../utils/formatDate.js';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
   currency: 'EUR',
   maximumFractionDigits: 0,
 });
-const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
 
-const BOOKING_STATUS = {
-  pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
-  confirmed: { label: 'Confirmée', cls: 'bg-emerald-500/15 text-emerald-300' },
-  refused: { label: 'Refusée', cls: 'bg-red-500/15 text-red-300' },
-  cancelled: { label: 'Annulée', cls: 'bg-slate-500/15 text-white/80' },
+const BOOKING_STATUS_CLS = {
+  pending: 'bg-amber-500/15 text-amber-300',
+  confirmed: 'bg-emerald-500/15 text-emerald-300',
+  refused: 'bg-red-500/15 text-red-300',
+  cancelled: 'bg-slate-500/15 text-white/80',
 };
 
-const FILTERS = [
-  { key: 'all', label: 'Toutes' },
-  { key: 'pending', label: 'En attente' },
-  { key: 'confirmed', label: 'Confirmées' },
-  { key: 'cancelled', label: 'Annulées' },
-  { key: 'refused', label: 'Refusées' },
-];
-
-const PERIOD_FILTERS = [
-  { key: 'all', label: 'Toutes périodes' },
-  { key: 'upcoming', label: 'À venir' },
-  { key: 'current', label: 'En cours' },
-  { key: 'past', label: 'Passées' },
-];
+const FILTER_KEYS = ['all', 'pending', 'confirmed', 'cancelled', 'refused'];
+const PERIOD_KEYS = ['all', 'upcoming', 'current', 'past'];
 
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 function fmtDate(value) {
-  return value ? DATE.format(new Date(value)) : '';
+  return formatDate(value, DATE_OPTS);
 }
 
 function isPast(value) {
@@ -70,10 +60,8 @@ function matchesPeriod(booking, period) {
 }
 
 function BookingCard({ booking, busy, onAction, mirrored }) {
-  const meta = BOOKING_STATUS[booking.status] || {
-    label: booking.status,
-    cls: 'bg-slate-500/15 text-white/80',
-  };
+  const { t } = useTranslation();
+  const statusCls = BOOKING_STATUS_CLS[booking.status] || 'bg-slate-500/15 text-white/80';
   const port = booking.boat?.port;
   const locataire = booking.locataire;
   // Une demande n'est actionnable qu'une fois payée par le locataire
@@ -112,7 +100,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {booking.has_open_dispute && (
                 <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
-                  Litige en cours
+                  {t('proprietaireReservations.openDispute')}
                 </span>
               )}
               {booking.status === 'pending' && (
@@ -121,11 +109,13 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                     isPaid ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-white/70'
                   }`}
                 >
-                  {isPaid ? 'Payée — à valider' : 'En attente de paiement'}
+                  {isPaid
+                    ? t('proprietaireReservations.paidToValidate')
+                    : t('proprietaireReservations.awaitingPayment')}
                 </span>
               )}
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
-                {meta.label}
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusCls}`}>
+                {t(`bookingStatus.${booking.status}`, { defaultValue: booking.status })}
               </span>
             </div>
           </header>
@@ -157,7 +147,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
               {' • '}
             </span>
             <span className="text-xs text-white/60">
-              Réservée le{' '}
+              {t('proprietaireReservations.bookedOn')}{' '}
               <time dateTime={booking.booking_date}>{fmtDate(booking.booking_date)}</time>
             </span>
           </p>
@@ -167,8 +157,14 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
               className="mt-2 truncate rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-white/70"
               title={booking.cancellation_reason}
             >
-              <span className="font-semibold">Annulation :</span> {booking.cancellation_reason}
-              {booking.cancellation_date && ` (le ${fmtDate(booking.cancellation_date)})`}
+              <span className="font-semibold">
+                {t('proprietaireReservations.cancellationLabel')}
+              </span>{' '}
+              {booking.cancellation_reason}
+              {booking.cancellation_date &&
+                t('proprietaireReservations.cancellationDate', {
+                  date: fmtDate(booking.cancellation_date),
+                })}
             </p>
           )}
 
@@ -182,7 +178,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                     onClick={() => onAction(booking, 'confirm')}
                     className={`rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                   >
-                    Confirmer
+                    {t('proprietaireReservations.confirm')}
                   </button>
                   <button
                     type="button"
@@ -190,7 +186,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                     onClick={() => onAction(booking, 'refuse')}
                     className={`rounded-full bg-red-600/80 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                   >
-                    Refuser
+                    {t('proprietaireReservations.refuse')}
                   </button>
                 </>
               )}
@@ -201,7 +197,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   onClick={() => onAction(booking, 'cancel')}
                   className={`rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
-                  Annuler la réservation
+                  {t('proprietaireReservations.cancelBooking')}
                 </button>
               )}
               {canDispute && (
@@ -211,7 +207,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   onClick={() => onAction(booking, 'dispute')}
                   className={`rounded-full border border-amber-500/50 px-3 py-1 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
-                  Signaler un problème
+                  {t('proprietaireReservations.reportProblem')}
                 </button>
               )}
             </div>
@@ -223,6 +219,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
 }
 
 function ProprietaireReservations() {
+  const { t } = useTranslation();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -268,14 +265,14 @@ function ProprietaireReservations() {
 
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
-    document.title = 'Mes réservations — SailingLoc';
-  }, []);
+    document.title = t('proprietaireReservations.pageTitle');
+  }, [t]);
 
   useEffect(() => {
     getBookings()
       .then((res) => setBookings(res.data.bookings || []))
       .catch((err) =>
-        setError(err.response?.data?.message || 'Erreur de chargement des réservations.')
+        setError(err.response?.data?.message || t('proprietaireReservations.loadError'))
       )
       .finally(() => setLoading(false));
   }, []);
@@ -304,7 +301,7 @@ function ProprietaireReservations() {
             b.id_booking === booking.id_booking ? { ...b, has_open_dispute: true } : b
           )
         );
-        showToast('Signalement envoyé.', 'success');
+        showToast(t('proprietaireReservations.reportSent'), 'success');
         closeModal();
         return;
       }
@@ -319,14 +316,14 @@ function ProprietaireReservations() {
         )
       );
       const messages = {
-        confirm: 'Réservation confirmée, paiement encaissé.',
-        refuse: 'Demande refusée, paiement annulé.',
-        cancel: 'Réservation annulée.',
+        confirm: t('proprietaireReservations.confirmed'),
+        refuse: t('proprietaireReservations.refused'),
+        cancel: t('proprietaireReservations.cancelled'),
       };
       showToast(messages[action], 'success');
       setDecision(null);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Une erreur est survenue.', 'error');
+      showToast(err.response?.data?.message || t('proprietaireReservations.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -354,11 +351,9 @@ function ProprietaireReservations() {
     <section aria-labelledby="reservations-title">
       <header className="mb-6">
         <h1 id="reservations-title" className="text-2xl font-bold text-white">
-          Mes réservations
+          {t('proprietaireReservations.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">
-          Historique des demandes sur vos bateaux : confirmez, refusez ou annulez.
-        </p>
+        <p className="mt-1 text-sm text-white/70">{t('proprietaireReservations.subtitle')}</p>
       </header>
 
       {error && (
@@ -371,14 +366,18 @@ function ProprietaireReservations() {
       )}
 
       {/* Filtres par statut */}
-      <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Filtrer par statut">
-        {FILTERS.map((f) => {
-          const active = filter === f.key;
+      <div
+        className="mb-3 flex flex-wrap gap-2"
+        role="group"
+        aria-label={t('proprietaireReservations.statusFilterAria')}
+      >
+        {FILTER_KEYS.map((key) => {
+          const active = filter === key;
           return (
             <button
-              key={f.key}
+              key={key}
               type="button"
-              onClick={() => setFilter(f.key)}
+              onClick={() => setFilter(key)}
               aria-pressed={active}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
@@ -386,21 +385,25 @@ function ProprietaireReservations() {
                   : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
               }`}
             >
-              {f.label}
+              {t(`proprietaireReservations.filters.${key}`)}
             </button>
           );
         })}
       </div>
 
       {/* Filtres par période (passées / en cours / à venir), cumulables avec le statut */}
-      <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Filtrer par période">
-        {PERIOD_FILTERS.map((f) => {
-          const active = periodFilter === f.key;
+      <div
+        className="mb-5 flex flex-wrap gap-2"
+        role="group"
+        aria-label={t('proprietaireReservations.periodFilterAria')}
+      >
+        {PERIOD_KEYS.map((key) => {
+          const active = periodFilter === key;
           return (
             <button
-              key={f.key}
+              key={key}
               type="button"
-              onClick={() => setPeriodFilter(f.key)}
+              onClick={() => setPeriodFilter(key)}
               aria-pressed={active}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
@@ -408,7 +411,7 @@ function ProprietaireReservations() {
                   : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
               }`}
             >
-              {f.label}
+              {t(`proprietaireReservations.periods.${key}`)}
             </button>
           );
         })}
@@ -419,8 +422,8 @@ function ProprietaireReservations() {
       ) : filtered.length === 0 ? (
         <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
           {bookings.length === 0
-            ? 'Aucune réservation reçue sur vos bateaux pour le moment.'
-            : 'Aucune réservation pour ce filtre.'}
+            ? t('proprietaireReservations.emptyAll')
+            : t('proprietaireReservations.emptyFilter')}
         </p>
       ) : (
         <ul key={`${filter}-${periodFilter}`} className="grid gap-3 xl:grid-cols-2">
@@ -456,23 +459,26 @@ function ProprietaireReservations() {
           >
             <h2 id="decision-title" className="text-lg font-semibold text-white">
               {decision.action === 'refuse'
-                ? 'Refuser la demande'
+                ? t('proprietaireReservations.modal.refuseTitle')
                 : decision.action === 'dispute'
-                  ? 'Signaler un problème'
-                  : 'Annuler la réservation'}
+                  ? t('proprietaireReservations.modal.disputeTitle')
+                  : t('proprietaireReservations.modal.cancelTitle')}
             </h2>
             <p className="mt-1 text-sm text-white/70">
               {decision.booking.boat?.name}
               {decision.booking.locataire &&
                 ` — ${decision.booking.locataire.first_name} ${decision.booking.locataire.last_name}`}
-              , du {fmtDate(decision.booking.start_date)} au {fmtDate(decision.booking.end_date)}.
+              {t('proprietaireReservations.modal.range', {
+                start: fmtDate(decision.booking.start_date),
+                end: fmtDate(decision.booking.end_date),
+              })}
             </p>
 
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 if (decision.action === 'dispute' && !reason.trim()) {
-                  showToast('Décrivez le problème rencontré.', 'error');
+                  showToast(t('proprietaireReservations.describeProblemError'), 'error');
                   return;
                 }
                 executeAction(decision.booking, decision.action, reason.trim() || undefined);
@@ -485,8 +491,8 @@ function ProprietaireReservations() {
                     className="mb-1 mt-4 block text-xs font-medium text-white/70"
                   >
                     {decision.action === 'dispute'
-                      ? 'Décrivez le problème'
-                      : "Motif de l'annulation (optionnel)"}
+                      ? t('proprietaireReservations.modal.describeProblem')
+                      : t('proprietaireReservations.modal.cancelReasonLabel')}
                   </label>
                   <textarea
                     id="cancel-reason"
@@ -496,8 +502,8 @@ function ProprietaireReservations() {
                     autoFocus
                     placeholder={
                       decision.action === 'dispute'
-                        ? 'Ex. : bateau rendu endommagé, caution à retenir…'
-                        : 'Ex. : bateau indisponible suite à une avarie…'
+                        ? t('proprietaireReservations.modal.disputePlaceholder')
+                        : t('proprietaireReservations.modal.cancelPlaceholder')
                     }
                     aria-describedby="cancel-reason-hint"
                     className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
@@ -507,7 +513,7 @@ function ProprietaireReservations() {
               {decision.action === 'dispute' && (
                 <div className="mt-3">
                   <span className="mb-1 block text-xs font-medium text-white/70">
-                    Photos (optionnel, 5 max)
+                    {t('proprietaireReservations.modal.photosLabel')}
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
                     {photos.map((p, i) => (
@@ -520,7 +526,7 @@ function ProprietaireReservations() {
                         <button
                           type="button"
                           onClick={() => removePhoto(i)}
-                          aria-label="Retirer la photo"
+                          aria-label={t('proprietaireReservations.modal.removePhoto')}
                           className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-xs text-white hover:bg-red-500 ${FOCUS_RING}`}
                         >
                           ×
@@ -530,7 +536,7 @@ function ProprietaireReservations() {
                     {photos.length < 5 && (
                       <label
                         className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/40 text-xl text-white/70 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
-                        title="Ajouter des photos"
+                        title={t('proprietaireReservations.modal.addPhotos')}
                       >
                         +
                         <input
@@ -551,10 +557,10 @@ function ProprietaireReservations() {
 
               <p id="cancel-reason-hint" className="mt-2 text-xs text-white/60">
                 {decision.action === 'refuse'
-                  ? 'Le locataire sera informé du refus par email. Son paiement en attente sera annulé : aucun montant ne lui sera prélevé.'
+                  ? t('proprietaireReservations.modal.refuseNotice')
                   : decision.action === 'dispute'
-                    ? 'Votre signalement ouvrira un litige, examiné par l’équipe SailingLoc.'
-                    : 'Le locataire sera informé de l’annulation par email, avec ce motif.'}
+                    ? t('proprietaireReservations.modal.disputeNotice')
+                    : t('proprietaireReservations.modal.cancelNotice')}
               </p>
 
               <div className="mt-5 flex justify-end gap-3">
@@ -564,7 +570,7 @@ function ProprietaireReservations() {
                   onClick={closeModal}
                   className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
-                  Retour
+                  {t('proprietaireReservations.modal.back')}
                 </button>
                 <button
                   type="submit"
@@ -572,12 +578,12 @@ function ProprietaireReservations() {
                   className={`rounded-full bg-red-600/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                 >
                   {deciding
-                    ? 'Envoi…'
+                    ? t('proprietaireReservations.modal.sending')
                     : decision.action === 'refuse'
-                      ? 'Refuser la demande'
+                      ? t('proprietaireReservations.modal.refuseTitle')
                       : decision.action === 'dispute'
-                        ? 'Envoyer le signalement'
-                        : 'Confirmer l’annulation'}
+                        ? t('proprietaireReservations.modal.sendReport')
+                        : t('proprietaireReservations.modal.confirmCancel')}
                 </button>
               </div>
             </form>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { createBoat, getBoat, updateBoat } from '../../services/proprietaireService.js';
 import { fetchPorts } from '../../services/portService.js';
@@ -6,21 +7,15 @@ import { getMyDocuments } from '../../services/documentService.js';
 import { loadPortCatalog } from '../../utils/portCatalog.js';
 import { useToast } from '../../hooks/useToast.jsx';
 
-const DOC_STATUS_LABEL = {
-  pending: 'en attente de vérification',
-  validated: 'validé',
-  refused: 'refusé',
-};
-
 const BOAT_TYPES = [
-  { value: 'voilier', label: 'Voilier' },
-  { value: 'catamaran', label: 'Catamaran' },
-  { value: 'moteur', label: 'Bateau à moteur' },
-  { value: 'peniche', label: 'Péniche' },
-  { value: 'trimaran', label: 'Trimaran' },
-  { value: 'hors_bord', label: 'Hors-bord' },
-  { value: 'jet_ski', label: 'Jet-ski' },
-  { value: 'gulet', label: 'Gulet' },
+  'voilier',
+  'catamaran',
+  'moteur',
+  'peniche',
+  'trimaran',
+  'hors_bord',
+  'jet_ski',
+  'gulet',
 ];
 
 const MAX_PHOTOS = 5;
@@ -69,6 +64,7 @@ const cardClass = 'rounded-2xl border border-white/20 bg-white/10 backdrop-blur-
 const EMPTY_AVAILABILITY = { start_date: '', end_date: '', price_override: '', notes: '' };
 
 function ProprietaireBoatForm() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
   // Mode édition : /proprietaire/bateaux/:id/modifier.
@@ -113,7 +109,9 @@ function ProprietaireBoatForm() {
 
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
-    document.title = editId ? 'Modifier mon bateau — SailingLoc' : 'Publier un bateau — SailingLoc';
+    document.title = editId
+      ? t('proprietaireBoatForm.pageTitleEdit')
+      : t('proprietaireBoatForm.pageTitleCreate');
   }, [editId]);
 
   useEffect(() => {
@@ -181,7 +179,7 @@ function ProprietaireBoatForm() {
         );
       })
       .catch((err) => {
-        showToast(err.response?.data?.message || 'Brouillon introuvable.', 'error');
+        showToast(err.response?.data?.message || t('proprietaireBoatForm.draftNotFound'), 'error');
         navigate('/proprietaire/bateaux');
       });
   }, [editId]);
@@ -286,7 +284,7 @@ function ProprietaireBoatForm() {
     // Pas de création libre : le port doit venir de la base ou du catalogue.
     // Un brouillon peut en revanche être enregistré sans port.
     if (!resolvedPort && !draft) {
-      setServerError("Sélectionnez un port d'attache dans la liste.");
+      setServerError(t('proprietaireBoatForm.portRequired'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -330,17 +328,17 @@ function ProprietaireBoatForm() {
       const finalStatus = res.data.boat?.status;
       showToast(
         draft
-          ? 'Brouillon enregistré.'
+          ? t('proprietaireBoatForm.draftSaved')
           : finalStatus === 'published'
-            ? 'Annonce mise à jour.'
+            ? t('proprietaireBoatForm.listingUpdated')
             : editStatus === 'published'
-              ? 'Annonce envoyée en revalidation : elle sera de nouveau visible après vérification.'
-              : 'Annonce soumise ! Elle sera visible après validation par notre équipe.',
+              ? t('proprietaireBoatForm.listingResubmitted')
+              : t('proprietaireBoatForm.listingSubmitted'),
         'success'
       );
       navigate('/proprietaire/bateaux');
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Une erreur est survenue.');
+      setServerError(err.response?.data?.message || t('proprietaireBoatForm.genericError'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSubmitting(false);
@@ -352,19 +350,19 @@ function ProprietaireBoatForm() {
       <header className="mb-6">
         <h1 id="boat-form-title" className="text-2xl font-bold text-white">
           {!editId
-            ? 'Publier un bateau'
+            ? t('proprietaireBoatForm.titleCreate')
             : editStatus === 'draft'
-              ? 'Modifier mon brouillon'
-              : 'Modifier mon annonce'}
+              ? t('proprietaireBoatForm.titleEditDraft')
+              : t('proprietaireBoatForm.titleEdit')}
         </h1>
         <p className="mt-1 text-sm text-white/70">
           {!editId
-            ? 'Décrivez votre bateau : l’annonce sera vérifiée par notre équipe avant publication.'
+            ? t('proprietaireBoatForm.subtitleCreate')
             : editStatus === 'draft'
-              ? 'Complétez votre brouillon, puis soumettez-le pour validation quand il est prêt.'
+              ? t('proprietaireBoatForm.subtitleDraft')
               : editStatus === 'published'
-                ? 'Prix, port et disponibilités s’appliquent immédiatement. Toute autre modification enverra l’annonce en revalidation par notre équipe.'
-                : 'Après modification, l’annonce sera (re)soumise à la validation de notre équipe.'}
+                ? t('proprietaireBoatForm.subtitlePublished')
+                : t('proprietaireBoatForm.subtitleEdit')}
         </p>
       </header>
 
@@ -382,12 +380,14 @@ function ProprietaireBoatForm() {
       <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-5">
         {/* Caractéristiques */}
         <section className={cardClass}>
-          <h2 className="mb-4 text-sm font-semibold text-white/90">Caractéristiques</h2>
+          <h2 className="mb-4 text-sm font-semibold text-white/90">
+            {t('proprietaireBoatForm.featuresTitle')}
+          </h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label htmlFor="name" className={labelClass}>
-                Nom du bateau *
+                {t('proprietaireBoatForm.nameLabel')}
               </label>
               <input
                 id="name"
@@ -396,14 +396,14 @@ function ProprietaireBoatForm() {
                 required
                 value={form.name}
                 onChange={handleChange}
-                placeholder="Ex. : Le Mistral"
+                placeholder={t('proprietaireBoatForm.namePlaceholder')}
                 className={inputClass}
               />
             </div>
 
             <div>
               <label htmlFor="type" className={labelClass}>
-                Type *
+                {t('proprietaireBoatForm.typeLabel')}
               </label>
               <select
                 id="type"
@@ -412,9 +412,9 @@ function ProprietaireBoatForm() {
                 onChange={handleChange}
                 className={`select-glass ${inputClass}`}
               >
-                {BOAT_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                {BOAT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {t(`proprietaireBoatForm.types.${type}`)}
                   </option>
                 ))}
               </select>
@@ -422,7 +422,7 @@ function ProprietaireBoatForm() {
 
             <div>
               <label htmlFor="registration" className={labelClass}>
-                Immatriculation *
+                {t('proprietaireBoatForm.registrationLabel')}
               </label>
               <input
                 id="registration"
@@ -432,19 +432,19 @@ function ProprietaireBoatForm() {
                 value={form.registration}
                 onChange={handleRegistration}
                 pattern="[A-Z]{2}-[A-Z]{3}-[0-9]{3}"
-                title="Format : 2 lettres (pays), 3 lettres (port), 3 chiffres — ex. FR-MRS-042"
-                placeholder="Ex. : FR-MRS-042"
+                title={t('proprietaireBoatForm.registrationTitle')}
+                placeholder={t('proprietaireBoatForm.registrationPlaceholder')}
                 aria-describedby="registration-hint"
                 className={inputClass}
               />
               <small id="registration-hint" className="mt-1 block text-xs text-white/60">
-                Format : XX-XXX-000 (pays, port, numéro).
+                {t('proprietaireBoatForm.registrationHint')}
               </small>
             </div>
 
             <div>
               <label htmlFor="size" className={labelClass}>
-                Taille (mètres) *
+                {t('proprietaireBoatForm.lengthLabel')}
               </label>
               <input
                 id="size"
@@ -461,7 +461,7 @@ function ProprietaireBoatForm() {
 
             <div>
               <label htmlFor="capacity" className={labelClass}>
-                Capacité (personnes) *
+                {t('proprietaireBoatForm.capacityLabel')}
               </label>
               <input
                 id="capacity"
@@ -478,7 +478,7 @@ function ProprietaireBoatForm() {
 
             <div>
               <label htmlFor="daily_price" className={labelClass}>
-                Prix par jour (€) *
+                {t('proprietaireBoatForm.priceLabel')}
               </label>
               <input
                 id="daily_price"
@@ -495,7 +495,7 @@ function ProprietaireBoatForm() {
 
             <div>
               <label htmlFor="build_year" className={labelClass}>
-                Année de construction
+                {t('proprietaireBoatForm.buildYearLabel')}
               </label>
               <select
                 id="build_year"
@@ -504,7 +504,7 @@ function ProprietaireBoatForm() {
                 onChange={handleChange}
                 className={`select-glass ${inputClass}`}
               >
-                <option value="">Non renseignée</option>
+                <option value="">{t('proprietaireBoatForm.notSpecified')}</option>
                 {BUILD_YEARS.map((y) => (
                   <option key={y} value={y}>
                     {y}
@@ -515,7 +515,7 @@ function ProprietaireBoatForm() {
 
             <div className="sm:col-span-2">
               <label htmlFor="engine" className={labelClass}>
-                Motorisation
+                {t('proprietaireBoatForm.engineLabel')}
               </label>
               <input
                 id="engine"
@@ -523,14 +523,14 @@ function ProprietaireBoatForm() {
                 type="text"
                 value={form.engine}
                 onChange={handleChange}
-                placeholder="Ex. : Diesel 30cv"
+                placeholder={t('proprietaireBoatForm.enginePlaceholder')}
                 className={inputClass}
               />
             </div>
 
             <div className="sm:col-span-2">
               <label htmlFor="description" className={labelClass}>
-                Description
+                {t('proprietaireBoatForm.descriptionLabel')}
               </label>
               <textarea
                 id="description"
@@ -538,7 +538,7 @@ function ProprietaireBoatForm() {
                 rows={4}
                 value={form.description}
                 onChange={handleChange}
-                placeholder="Présentez votre bateau aux locataires…"
+                placeholder={t('proprietaireBoatForm.descriptionPlaceholder')}
                 className={inputClass}
               />
             </div>
@@ -552,8 +552,10 @@ function ProprietaireBoatForm() {
                 className="h-4 w-4 accent-[#5AB4EC]"
               />
               <span>
-                Skipper proposé{' '}
-                <span className="text-xs text-white/60">(CV marin requis dans Mes documents)</span>
+                {t('proprietaireBoatForm.skipperOffered')}{' '}
+                <span className="text-xs text-white/60">
+                  {t('proprietaireBoatForm.skipperHint')}
+                </span>
               </span>
             </label>
 
@@ -565,18 +567,20 @@ function ProprietaireBoatForm() {
                 onChange={handleChange}
                 className="h-4 w-4 accent-[#5AB4EC]"
               />
-              Permis bateau requis
+              {t('proprietaireBoatForm.licenseRequired')}
             </label>
           </div>
         </section>
 
         {/* Port d'attache */}
         <section className={cardClass}>
-          <h2 className="mb-4 text-sm font-semibold text-white/90">Port d&apos;attache</h2>
+          <h2 className="mb-4 text-sm font-semibold text-white/90">
+            {t('proprietaireBoatForm.homePortTitle')}
+          </h2>
 
           <div ref={portBoxRef} className="relative">
             <label htmlFor="port" className={labelClass}>
-              Port *
+              {t('proprietaireBoatForm.portLabel')}
             </label>
             <input
               id="port"
@@ -596,7 +600,7 @@ function ProprietaireBoatForm() {
                 setSuggestionsOpen(true);
                 ensureCatalog();
               }}
-              placeholder="Ex. : Port de Marseille"
+              placeholder={t('proprietaireBoatForm.portPlaceholder')}
               className={inputClass}
             />
 
@@ -626,21 +630,27 @@ function ProprietaireBoatForm() {
 
           {resolvedPort && (
             <p className="mt-2 text-xs text-emerald-300">
-              ✓ Port sélectionné : {resolvedPort.name} ({resolvedPort.city})
+              {t('proprietaireBoatForm.portSelected', {
+                name: resolvedPort.name,
+                city: resolvedPort.city,
+              })}
             </p>
           )}
 
           {!resolvedPort && portQuery.trim().length > 0 && (
-            <p className="mt-2 text-xs text-amber-300">Sélectionnez un port dans la liste.</p>
+            <p className="mt-2 text-xs text-amber-300">
+              {t('proprietaireBoatForm.portSelectHint')}
+            </p>
           )}
         </section>
 
         {/* Photos */}
         <section className={cardClass}>
-          <h2 className="mb-1 text-sm font-semibold text-white/90">Photos</h2>
+          <h2 className="mb-1 text-sm font-semibold text-white/90">
+            {t('proprietaireBoatForm.photosTitle')}
+          </h2>
           <p className="mb-4 text-xs text-white/60">
-            Jusqu&apos;à {MAX_PHOTOS} photos (JPG, PNG ou WebP, 5 Mo max chacune). La première sera
-            la photo principale de l&apos;annonce.
+            {t('proprietaireBoatForm.photosHint', { max: MAX_PHOTOS })}
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -653,13 +663,13 @@ function ProprietaireBoatForm() {
                 />
                 {i === 0 && (
                   <span className="absolute bottom-1 left-1 rounded bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                    Principale
+                    {t('proprietaireBoatForm.mainPhoto')}
                   </span>
                 )}
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
-                  aria-label={`Supprimer la photo ${i + 1}`}
+                  aria-label={t('proprietaireBoatForm.removePhoto', { n: i + 1 })}
                   className={`absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white shadow transition hover:bg-red-500 ${FOCUS_RING}`}
                 >
                   ×
@@ -671,7 +681,7 @@ function ProprietaireBoatForm() {
               <label
                 className={`flex h-24 w-32 cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/40 text-sm text-white/70 transition hover:border-[#5AB4EC] hover:text-white/90 ${FOCUS_RING}`}
               >
-                + Ajouter
+                {t('proprietaireBoatForm.addPhoto')}
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -686,11 +696,10 @@ function ProprietaireBoatForm() {
 
         {/* Documents du bateau */}
         <section className={cardClass}>
-          <h2 className="mb-1 text-sm font-semibold text-white/90">Documents du bateau</h2>
-          <p className="mb-4 text-xs text-white/60">
-            Acte de francisation (carte d&apos;enregistrement du bateau) — PDF, JPG ou PNG, 5 Mo
-            max. Il sera vérifié par notre équipe et n&apos;est jamais visible des locataires.
-          </p>
+          <h2 className="mb-1 text-sm font-semibold text-white/90">
+            {t('proprietaireBoatForm.documentsTitle')}
+          </h2>
+          <p className="mb-4 text-xs text-white/60">{t('proprietaireBoatForm.documentsHint')}</p>
 
           {/* Acte de francisation actuellement rattaché au bateau (édition). */}
           {existingActe && !acteFile && !acteDocId && (
@@ -706,10 +715,10 @@ function ProprietaireBoatForm() {
                 }`}
               >
                 {existingActe.status === 'validated'
-                  ? 'Validé'
+                  ? t('proprietaireBoatForm.docValidated')
                   : existingActe.status === 'refused'
-                    ? 'Refusé'
-                    : 'En attente de vérification'}
+                    ? t('proprietaireBoatForm.docRefused')
+                    : t('proprietaireBoatForm.docPending')}
               </span>
             </div>
           )}
@@ -719,14 +728,16 @@ function ProprietaireBoatForm() {
             <div className="flex flex-wrap items-center gap-3">
               <span className="min-w-0 truncate rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white/90">
                 {acteFile.name}{' '}
-                <span className="text-xs text-amber-300">(sera vérifié par notre équipe)</span>
+                <span className="text-xs text-amber-300">
+                  {t('proprietaireBoatForm.willBeReviewedInline')}
+                </span>
               </span>
               <button
                 type="button"
                 onClick={() => setActeFile(null)}
                 className={`rounded-full border border-white/40 px-4 py-1.5 text-sm text-white/80 transition hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
               >
-                Retirer
+                {t('proprietaireBoatForm.removeDoc')}
               </button>
             </div>
           ) : (
@@ -735,7 +746,7 @@ function ProprietaireBoatForm() {
               {myActes.length > 0 && (
                 <div className="min-w-0">
                   <label htmlFor="acte-existant" className={labelClass}>
-                    Utiliser un acte de francisation déjà déposé
+                    {t('proprietaireBoatForm.useExistingDoc')}
                   </label>
                   <select
                     id="acte-existant"
@@ -743,10 +754,14 @@ function ProprietaireBoatForm() {
                     onChange={(e) => setActeDocId(e.target.value)}
                     className={`select-glass ${inputClass}`}
                   >
-                    <option value="">— Choisir —</option>
+                    <option value="">{t('proprietaireBoatForm.chooseOption')}</option>
                     {myActes.map((d) => (
                       <option key={d.id_document} value={d.id_document}>
-                        {d.file_name} ({DOC_STATUS_LABEL[d.status] || d.status})
+                        {d.file_name} (
+                        {t(`proprietaireBoatForm.docStatusInline.${d.status}`, {
+                          defaultValue: d.status,
+                        })}
+                        )
                       </option>
                     ))}
                   </select>
@@ -759,10 +774,10 @@ function ProprietaireBoatForm() {
                   className={`inline-flex cursor-pointer items-center gap-2 self-end rounded-full border border-dashed border-white/40 px-4 py-2 text-sm text-white/70 transition hover:border-[#5AB4EC] hover:text-white/90 ${FOCUS_RING}`}
                 >
                   {myActes.length > 0
-                    ? 'ou en déposer un nouveau (sera vérifié)'
+                    ? t('proprietaireBoatForm.uploadNewInline')
                     : existingActe
-                      ? 'Remplacer l’acte de francisation (sera vérifié)'
-                      : '+ Ajouter l’acte de francisation (sera vérifié)'}
+                      ? t('proprietaireBoatForm.replaceDoc')
+                      : t('proprietaireBoatForm.addDoc')}
                   <input
                     type="file"
                     accept="application/pdf,image/jpeg,image/png"
@@ -784,25 +799,24 @@ function ProprietaireBoatForm() {
           {/* Découvrabilité de l'option « acte existant » quand il n'y en a aucun. */}
           {myActes.length === 0 && !acteFile && !existingActe && (
             <p className="mt-3 text-xs text-white/60">
-              Astuce : les actes de francisation déposés dans{' '}
+              {t('proprietaireBoatForm.docTip')}{' '}
               <Link
                 to="/proprietaire/documents"
                 className={`text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
               >
-                Mes documents
+                {t('proprietaireBoatForm.myDocuments')}
               </Link>{' '}
-              sont réutilisables ici — chacun ne peut être rattaché qu&apos;à une seule annonce.
+              {t('proprietaireBoatForm.docTipEnd')}
             </p>
           )}
         </section>
 
         {/* Disponibilités */}
         <section className={cardClass}>
-          <h2 className="mb-1 text-sm font-semibold text-white/90">Disponibilités</h2>
-          <p className="mb-4 text-xs text-white/60">
-            Périodes pendant lesquelles le bateau peut être loué. Le prix spécifique remplace le
-            prix par jour sur la période (haute saison, promotion…).
-          </p>
+          <h2 className="mb-1 text-sm font-semibold text-white/90">
+            {t('proprietaireBoatForm.availabilityTitle')}
+          </h2>
+          <p className="mb-4 text-xs text-white/60">{t('proprietaireBoatForm.availabilityHint')}</p>
 
           <ul className="space-y-3">
             {availabilities.map((a, i) => (
@@ -812,7 +826,7 @@ function ProprietaireBoatForm() {
               >
                 <div>
                   <label htmlFor={`avail-start-${i}`} className={labelClass}>
-                    Du
+                    {t('proprietaireBoatForm.from')}
                   </label>
                   <input
                     id={`avail-start-${i}`}
@@ -824,7 +838,7 @@ function ProprietaireBoatForm() {
                 </div>
                 <div>
                   <label htmlFor={`avail-end-${i}`} className={labelClass}>
-                    Au
+                    {t('proprietaireBoatForm.to')}
                   </label>
                   <input
                     id={`avail-end-${i}`}
@@ -837,7 +851,7 @@ function ProprietaireBoatForm() {
                 </div>
                 <div>
                   <label htmlFor={`avail-price-${i}`} className={labelClass}>
-                    Prix spécifique (€)
+                    {t('proprietaireBoatForm.specificPrice')}
                   </label>
                   <input
                     id={`avail-price-${i}`}
@@ -851,7 +865,7 @@ function ProprietaireBoatForm() {
                 </div>
                 <div>
                   <label htmlFor={`avail-notes-${i}`} className={labelClass}>
-                    Note
+                    {t('proprietaireBoatForm.note')}
                   </label>
                   <input
                     id={`avail-notes-${i}`}
@@ -866,7 +880,7 @@ function ProprietaireBoatForm() {
                   type="button"
                   onClick={() => setAvailabilities((prev) => prev.filter((_, j) => j !== i))}
                   disabled={availabilities.length === 1}
-                  aria-label={`Supprimer la période ${i + 1}`}
+                  aria-label={t('proprietaireBoatForm.removePeriod', { n: i + 1 })}
                   className={`h-9 rounded-lg border border-white/30 px-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
                 >
                   ×
@@ -880,7 +894,7 @@ function ProprietaireBoatForm() {
             onClick={() => setAvailabilities((prev) => [...prev, { ...EMPTY_AVAILABILITY }])}
             className={`mt-3 rounded-full border border-white/40 px-4 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
           >
-            + Ajouter une période
+            {t('proprietaireBoatForm.addPeriod')}
           </button>
         </section>
 
@@ -892,7 +906,7 @@ function ProprietaireBoatForm() {
             onClick={() => navigate('/proprietaire/bateaux')}
             className={`rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${FOCUS_RING}`}
           >
-            Annuler
+            {t('proprietaireBoatForm.cancel')}
           </button>
           {/* « Enregistrer en brouillon » : uniquement en création ou sur un brouillon. */}
           {(!editId || editStatus === 'draft') && (
@@ -902,7 +916,7 @@ function ProprietaireBoatForm() {
               onClick={(e) => handleSubmit(e, true)}
               className={`rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${FOCUS_RING}`}
             >
-              Enregistrer en brouillon
+              {t('proprietaireBoatForm.saveDraft')}
             </button>
           )}
           <button
@@ -911,12 +925,12 @@ function ProprietaireBoatForm() {
             className={`rounded-full bg-sky-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
             {submitting
-              ? 'Envoi…'
+              ? t('proprietaireBoatForm.sending')
               : !editId || editStatus === 'draft'
-                ? 'Soumettre pour validation'
+                ? t('proprietaireBoatForm.submitForReview')
                 : editStatus === 'published'
-                  ? 'Enregistrer les modifications'
-                  : 'Soumettre à nouveau'}
+                  ? t('proprietaireBoatForm.saveChanges')
+                  : t('proprietaireBoatForm.resubmit')}
           </button>
         </div>
       </form>

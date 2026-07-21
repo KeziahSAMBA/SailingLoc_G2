@@ -9,13 +9,14 @@ import {
 } from '../../services/locataireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
+import { formatDate } from '../../utils/formatDate.js';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
   currency: 'EUR',
   maximumFractionDigits: 0,
 });
-const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
 
 function getBookingStatus(t) {
   return {
@@ -59,7 +60,7 @@ const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 function fmtDate(value) {
-  return value ? DATE.format(new Date(value)) : '';
+  return formatDate(value, DATE_OPTS);
 }
 
 function isPast(value) {

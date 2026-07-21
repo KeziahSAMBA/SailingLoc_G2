@@ -21,7 +21,9 @@ function LocataireLayout() {
       className="min-h-screen bg-cover bg-fixed bg-center text-white"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="min-h-screen w-full bg-slate-950/60">
+      {/* Voile dégradé accroché au viewport comme la photo : renforcé en haut,
+          où le ciel clair rendait laiteuses les cartes en verre au scroll. */}
+      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
           {/* Menu : pleine largeur sur mobile (barre horizontale défilable),
             colonne latérale à partir de lg. */}

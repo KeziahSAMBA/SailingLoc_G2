@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MdCreditCard, MdHourglassEmpty, MdReplay, MdClose } from 'react-icons/md';
 import { getPayments } from '../../services/locataireService.js';
 import CardSkeleton from '../common/CardSkeleton.jsx';
+import { formatDate } from '../../utils/formatDate.js';
 
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
@@ -24,7 +25,7 @@ const EURO = new Intl.NumberFormat('fr-FR', {
   currency: 'EUR',
   maximumFractionDigits: 2,
 });
-const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+const DATE_OPTS = { day: 'numeric', month: 'long', year: 'numeric' };
 
 const STATUS_CLS = {
   pending: 'bg-sky-500/15 text-sky-300',
@@ -41,7 +42,7 @@ const STATUS_ICON = {
 };
 
 function fmtDate(value) {
-  return value ? DATE.format(new Date(value)) : '';
+  return formatDate(value, DATE_OPTS);
 }
 
 function StatTile({ label, value, accent }) {

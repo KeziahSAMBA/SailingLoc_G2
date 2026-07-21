@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { getDashboard } from '../../services/locataireService.js';
+import { formatDate } from '../../utils/formatDate.js';
 
 const NUMBER = new Intl.NumberFormat('fr-FR');
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -10,12 +11,12 @@ const EURO = new Intl.NumberFormat('fr-FR', {
   currency: 'EUR',
   maximumFractionDigits: 0,
 });
-const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-const DATE_SHORT = new Intl.DateTimeFormat('fr-FR', {
+const DATE_OPTS = { day: 'numeric', month: 'long', year: 'numeric' };
+const DATE_SHORT_OPTS = {
   day: '2-digit',
   month: '2-digit',
   year: '2-digit',
-});
+};
 
 function getBookingStatus(t) {
   return {
@@ -31,11 +32,11 @@ const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 function fmtDate(value) {
-  return value ? DATE.format(new Date(value)) : '';
+  return formatDate(value, DATE_OPTS);
 }
 
 function fmtDateShort(value) {
-  return value ? DATE_SHORT.format(new Date(value)) : '';
+  return formatDate(value, DATE_SHORT_OPTS);
 }
 
 // Nombre de jours avant une date (>= 0).

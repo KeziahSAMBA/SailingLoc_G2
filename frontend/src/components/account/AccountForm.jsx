@@ -50,9 +50,9 @@ function AccountForm() {
     try {
       const res = await updateAvatar(file);
       updateUser(res.data.user);
-      showToast('Photo de profil mise à jour.', 'success');
+      showToast(t('accountForm.avatar.updateSuccess'), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de l’envoi de la photo.', 'error');
+      showToast(err.response?.data?.message || t('accountForm.avatar.updateError'), 'error');
     } finally {
       setAvatarBusy(false);
     }
@@ -63,9 +63,9 @@ function AccountForm() {
     try {
       const res = await deleteAvatar();
       updateUser(res.data.user);
-      showToast('Photo de profil supprimée.', 'success');
+      showToast(t('accountForm.avatar.removeSuccess'), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de la suppression.', 'error');
+      showToast(err.response?.data?.message || t('accountForm.avatar.removeError'), 'error');
     } finally {
       setAvatarBusy(false);
     }
@@ -208,14 +208,14 @@ function AccountForm() {
         <div className="mb-6 flex flex-wrap items-center gap-4">
           <img
             src={user?.avatar || nameToAvatarUrl(displayName || 'SailingLoc')}
-            alt="Votre photo de profil"
+            alt={t('accountForm.avatar.alt')}
             className="h-20 w-20 rounded-full border-2 border-white/30 object-cover"
           />
           <div className="flex flex-wrap gap-3">
             <label
               className={`cursor-pointer rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
             >
-              {avatarBusy ? 'Envoi…' : 'Changer la photo'}
+              {avatarBusy ? t('accountForm.avatar.sending') : t('accountForm.avatar.change')}
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -231,13 +231,11 @@ function AccountForm() {
                 disabled={avatarBusy}
                 className="rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50"
               >
-                Supprimer la photo
+                {t('accountForm.avatar.remove')}
               </button>
             )}
           </div>
-          <p className="w-full text-xs text-white/60">
-            JPG, PNG ou WebP — 3 Mo max. Sans photo, un avatar est généré automatiquement.
-          </p>
+          <p className="w-full text-xs text-white/60">{t('accountForm.avatar.hint')}</p>
         </div>
 
         {serverError && (

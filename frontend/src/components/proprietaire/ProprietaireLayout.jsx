@@ -1,17 +1,19 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import bgImage from '../../assets/image/paysage/crique.jpg';
 
-const NAV = [
-  { to: '/proprietaire', label: 'Dashboard', end: true },
-  { to: '/proprietaire/compte', label: 'Compte' },
-  { to: '/proprietaire/documents', label: 'Mes documents' },
-  { to: '/proprietaire/reservations', label: 'Mes réservations' },
-  { to: '/proprietaire/revenus', label: 'Mes revenus' },
-  { to: '/proprietaire/bateaux', label: 'Mes bateaux' },
-  { to: '/proprietaire/messages', label: 'Messagerie' },
-];
-
 function ProprietaireLayout() {
+  const { t } = useTranslation();
+  const nav = [
+    { to: '/proprietaire', label: t('proprietaireLayout.nav.dashboard'), end: true },
+    { to: '/proprietaire/compte', label: t('proprietaireLayout.nav.account') },
+    { to: '/proprietaire/documents', label: t('proprietaireLayout.nav.documents') },
+    { to: '/proprietaire/reservations', label: t('proprietaireLayout.nav.reservations') },
+    { to: '/proprietaire/revenus', label: t('proprietaireLayout.nav.revenues') },
+    { to: '/proprietaire/bateaux', label: t('proprietaireLayout.nav.boats') },
+    { to: '/proprietaire/messages', label: t('proprietaireLayout.nav.messages') },
+  ];
+
   return (
     // Même univers visuel que l'accueil et la page produit : photo plein écran
     // sous un voile sombre (contraste des textes) et panneaux en verre dépoli.
@@ -27,14 +29,14 @@ function ProprietaireLayout() {
               colonne latérale à partir de lg. */}
           <aside className="w-full lg:w-60 lg:shrink-0">
             <nav
-              aria-label="Navigation espace propriétaire"
+              aria-label={t('proprietaireLayout.navAria')}
               className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[96px]"
             >
               <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-white/60">
-                Mon espace
+                {t('proprietaireLayout.mySpace')}
               </p>
               <div className="flex gap-1 overflow-x-auto lg:flex-col">
-                {NAV.map((item) => (
+                {nav.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
