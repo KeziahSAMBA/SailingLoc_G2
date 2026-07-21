@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Raccourcis vers les pages publiques utiles à inspecter en mode spectateur.
 const QUICK_LINKS = [
-  { label: 'Accueil', path: '/' },
-  { label: 'Connexion', path: '/login' },
-  { label: 'Inscription', path: '/register' },
+  { labelKey: 'spectatorFrame.linkHome', path: '/' },
+  { labelKey: 'spectatorFrame.linkLogin', path: '/login' },
+  { labelKey: 'spectatorFrame.linkRegister', path: '/register' },
 ];
 
 function normalizePath(value) {
@@ -35,6 +36,7 @@ function withSpectator(p, mode) {
  * de bannière, et peut diverger librement au-delà de ce socle commun.
  */
 function SpectatorFrame({ mode, title, description, banner }) {
+  const { t } = useTranslation();
   // `path` = ce qui est dans la barre d'adresse (édité par l'admin).
   // `src` = ce qui est réellement chargé dans l'iframe (validé par submit).
   const [path, setPath] = useState('/');
@@ -81,7 +83,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
       <button
         type="button"
         onClick={refresh}
-        title="Recharger l'aperçu"
+        title={t('spectatorFrame.reload')}
         className="rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 transition hover:bg-white/10"
       >
         ⟳
@@ -100,10 +102,10 @@ function SpectatorFrame({ mode, title, description, banner }) {
         type="submit"
         className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/90"
       >
-        Aller
+        {t('spectatorFrame.go')}
       </button>
       <div className="flex flex-wrap items-center gap-1.5">
-        {QUICK_LINKS.map(({ label, path: p }) => (
+        {QUICK_LINKS.map(({ labelKey, path: p }) => (
           <button
             key={p}
             type="button"
@@ -114,7 +116,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
                 : 'border border-white/30 text-white/80 hover:bg-white/10'
             }`}
           >
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -126,13 +128,15 @@ function SpectatorFrame({ mode, title, description, banner }) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col bg-slate-950 p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-bold text-white">{title} — plein écran</h1>
+          <h1 className="text-lg font-bold text-white">
+            {title} — {t('spectatorFrame.fullscreenSuffix')}
+          </h1>
           <button
             type="button"
             onClick={() => setFullscreen(false)}
             className="rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
           >
-            ✕ Quitter (Esc)
+            {t('spectatorFrame.exit')}
           </button>
         </div>
         <div className="mb-3">{urlBar}</div>
@@ -142,12 +146,12 @@ function SpectatorFrame({ mode, title, description, banner }) {
               ref={iframeRef}
               key={iframeSrc}
               src={iframeSrc}
-              title="Aperçu site public"
+              title={t('spectatorFrame.iframeTitle')}
               className="block h-full w-full"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-white/60">
-              Rechargement…
+              {t('spectatorFrame.reloading')}
             </div>
           )}
         </div>
@@ -167,7 +171,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
           onClick={() => setFullscreen(true)}
           className="rounded-full bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-sky-500/90"
         >
-          ⛶ Plein écran
+          {t('spectatorFrame.fullscreen')}
         </button>
       </div>
 
@@ -185,7 +189,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
             ref={iframeRef}
             key={iframeSrc}
             src={iframeSrc}
-            title="Aperçu site public"
+            title={t('spectatorFrame.iframeTitle')}
             className="block w-full"
             style={{ height: 'calc(100vh - 320px)', minHeight: '600px' }}
           />

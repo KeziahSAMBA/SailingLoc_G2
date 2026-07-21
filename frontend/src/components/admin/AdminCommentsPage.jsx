@@ -1,23 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../hooks/useToast.jsx';
 import { listReviews, updateReview, deleteReview } from '../../services/adminService.js';
+import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, CheckIcon, XIcon, EditIcon, TrashIcon } from './AdminActions.jsx';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
 
 const PAGE_SIZE = 10;
 
-const STATUS = {
-  pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
-  validated: { label: 'Validé', cls: 'bg-emerald-500/15 text-emerald-300' },
-  refused: { label: 'Refusé', cls: 'bg-red-500/15 text-red-300' },
+const STATUS_CLS = {
+  pending: 'bg-amber-500/15 text-amber-300',
+  validated: 'bg-emerald-500/15 text-emerald-300',
+  refused: 'bg-red-500/15 text-red-300',
 };
 const FILTERS = [
-  ['', 'Tous'],
-  ['pending', 'En attente'],
-  ['validated', 'Validés'],
-  ['refused', 'Refusés'],
+  { value: '', labelKey: 'all' },
+  { value: 'pending', labelKey: 'pending' },
+  { value: 'validated', labelKey: 'validated' },
+  { value: 'refused', labelKey: 'refused' },
 ];
+const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 const selectClass =
   'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
@@ -25,7 +28,7 @@ const inputClass =
   'w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]';
 
 function fmtDate(d) {
-  return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
+  return d ? formatDate(d, DATE_OPTS) : '—';
 }
 
 function Stars({ rating }) {
@@ -38,6 +41,7 @@ function Stars({ rating }) {
 }
 
 function EditReviewModal({ review, onClose, onSaved }) {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [comment, setComment] = useState(review.comment || '');
   const [rating, setRating] = useState(review.rating);
@@ -50,10 +54,10 @@ function EditReviewModal({ review, onClose, onSaved }) {
     setSaving(true);
     try {
       const res = await updateReview(review.id_review, { comment, rating: Number(rating) });
-      showToast('Avis modifié.', 'success');
+      showToast(t('adminComments.editSuccess'), 'success');
       onSaved(res.data.review);
     } catch (err) {
-      setError(err.response?.data?.message || 'Échec de la modification.');
+      setError(err.response?.data?.message || t('adminComments.editError'));
     } finally {
       setSaving(false);
     }
@@ -68,7 +72,7 @@ function EditReviewModal({ review, onClose, onSaved }) {
         className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-white">Modifier l&apos;avis</h2>
+        <h2 className="text-lg font-semibold text-white">{t('adminComments.editTitle')}</h2>
         {error && (
           <div className="mt-3 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
             {error}
@@ -77,7 +81,7 @@ function EditReviewModal({ review, onClose, onSaved }) {
         <form onSubmit={submit} noValidate className="mt-4 space-y-3">
           <div>
             <label htmlFor="rating" className="mb-1 block text-xs font-medium text-white/70">
-              Note
+              {t('adminComments.ratingLabel')}
             </label>
             <select
               id="rating"
@@ -94,7 +98,7 @@ function EditReviewModal({ review, onClose, onSaved }) {
           </div>
           <div>
             <label htmlFor="comment" className="mb-1 block text-xs font-medium text-white/70">
-              Commentaire
+              {t('adminComments.commentLabel')}
             </label>
             <textarea
               id="comment"
@@ -111,14 +115,14 @@ function EditReviewModal({ review, onClose, onSaved }) {
               disabled={saving}
               className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50"
             >
-              Annuler
+              {t('adminComments.cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90 disabled:opacity-60"
             >
-              {saving ? 'Enregistrement…' : 'Enregistrer'}
+              {saving ? t('adminComments.saving') : t('adminComments.save')}
             </button>
           </div>
         </form>
@@ -128,6 +132,7 @@ function EditReviewModal({ review, onClose, onSaved }) {
 }
 
 function AdminCommentsPage() {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,11 +150,11 @@ function AdminCommentsPage() {
       const res = await listReviews(params);
       setReviews(res.data.reviews);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Erreur de chargement.', 'error');
+      showToast(err.response?.data?.message || t('adminComments.loadError'), 'error');
     } finally {
       setLoading(false);
     }
-  }, [status, search, showToast]);
+  }, [status, search, showToast, t]);
 
   useEffect(() => {
     const t = setTimeout(load, 250);
@@ -174,23 +179,28 @@ function AdminCommentsPage() {
           prev.map((x) => (x.id_review === r.id_review ? { ...x, ...res.data.review } : x))
         );
       }
-      showToast(newStatus === 'validated' ? 'Avis validé.' : 'Avis refusé.', 'success');
+      showToast(
+        newStatus === 'validated'
+          ? t('adminComments.validatedToast')
+          : t('adminComments.refusedToast'),
+        'success'
+      );
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec.', 'error');
+      showToast(err.response?.data?.message || t('adminComments.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
   }
 
   async function remove(r) {
-    if (!window.confirm('Supprimer cet avis ?')) return;
+    if (!window.confirm(t('adminComments.confirmDelete'))) return;
     setBusyId(r.id_review);
     try {
       await deleteReview(r.id_review);
       setReviews((prev) => prev.filter((x) => x.id_review !== r.id_review));
-      showToast('Avis supprimé.', 'success');
+      showToast(t('adminComments.deleteSuccess'), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec.', 'error');
+      showToast(err.response?.data?.message || t('adminComments.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -203,22 +213,25 @@ function AdminCommentsPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">Commentaires</h1>
-      <p className="mt-1 text-sm text-white/70">
-        Modération des avis : valider, modifier, supprimer.
-      </p>
+      <h1 className="text-2xl font-bold text-white">{t('adminComments.title')}</h1>
+      <p className="mt-1 text-sm text-white/70">{t('adminComments.subtitle')}</p>
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher (auteur, commentaire)…"
+          placeholder={t('adminComments.searchPlaceholder')}
           className={`${selectClass} min-w-[220px] flex-1`}
         />
-        {FILTERS.map(([v, l]) => (
-          <button key={l} type="button" onClick={() => setStatus(v)} className={pill(status === v)}>
-            {l}
+        {FILTERS.map(({ value, labelKey }) => (
+          <button
+            key={labelKey}
+            type="button"
+            onClick={() => setStatus(value)}
+            className={pill(status === value)}
+          >
+            {t(`adminComments.filters.${labelKey}`)}
           </button>
         ))}
       </div>
@@ -227,25 +240,37 @@ function AdminCommentsPage() {
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Auteur</th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Bateau</th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Note</th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Commentaire</th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
-              <th className="px-4 py-3 text-right font-semibold text-white/80">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminComments.colAuthor')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminComments.colBoat')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminComments.colRating')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminComments.colComment')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminComments.colStatus')}
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-white/80">
+                {t('adminComments.colActions')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/15">
             {loading ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-white/70">
-                  Chargement…
+                  {t('adminComments.loading')}
                 </td>
               </tr>
             ) : reviews.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-white/70">
-                  Aucun avis.
+                  {t('adminComments.empty')}
                 </td>
               </tr>
             ) : (
@@ -263,16 +288,16 @@ function AdminCommentsPage() {
                   <td className="px-4 py-3">
                     <span
                       className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        STATUS[r.status]?.cls || 'bg-slate-500/15 text-white/70'
+                        STATUS_CLS[r.status] || 'bg-slate-500/15 text-white/70'
                       }`}
                     >
-                      {STATUS[r.status]?.label || r.status}
+                      {t(`adminComments.status.${r.status}`, { defaultValue: r.status })}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap justify-end gap-2">
                       <IconBtn
-                        title="Valider"
+                        title={t('adminComments.actionValidate')}
                         variant="success"
                         disabled={busyId === r.id_review || r.status === 'validated'}
                         onClick={() => setReviewStatus(r, 'validated')}
@@ -280,7 +305,7 @@ function AdminCommentsPage() {
                         <CheckIcon />
                       </IconBtn>
                       <IconBtn
-                        title="Refuser"
+                        title={t('adminComments.actionRefuse')}
                         variant="warn"
                         disabled={busyId === r.id_review || r.status === 'refused'}
                         onClick={() => setReviewStatus(r, 'refused')}
@@ -288,14 +313,14 @@ function AdminCommentsPage() {
                         <XIcon />
                       </IconBtn>
                       <IconBtn
-                        title="Modifier"
+                        title={t('adminComments.actionEdit')}
                         disabled={busyId === r.id_review}
                         onClick={() => setEditing(r)}
                       >
                         <EditIcon />
                       </IconBtn>
                       <IconBtn
-                        title="Supprimer"
+                        title={t('adminComments.actionDelete')}
                         variant="danger"
                         disabled={busyId === r.id_review}
                         onClick={() => remove(r)}
@@ -316,11 +341,13 @@ function AdminCommentsPage() {
         pageSize={PAGE_SIZE}
         total={reviews.length}
         onChange={setPage}
-        label="Avis"
+        label={t('adminComments.paginationLabel')}
         className="mt-4"
       />
 
-      <p className="mt-3 text-xs text-white/60">{reviews.length} avis.</p>
+      <p className="mt-3 text-xs text-white/60">
+        {t('adminComments.count', { count: reviews.length })}
+      </p>
 
       {editing && (
         <EditReviewModal

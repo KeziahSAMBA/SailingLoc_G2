@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../hooks/useToast.jsx';
 import { listPayments, getPaymentStats } from '../../services/adminService.js';
+import { formatDate } from '../../utils/formatDate.js';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
 
@@ -12,38 +14,29 @@ const EURO = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 2,
 });
 
-const STATUS = {
-  pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
-  success: { label: 'Réussi', cls: 'bg-emerald-500/15 text-emerald-300' },
-  failed: { label: 'Échoué', cls: 'bg-red-500/15 text-red-300' },
-  refunded: { label: 'Remboursé', cls: 'bg-sky-500/15 text-sky-300' },
+const STATUS_CLS = {
+  pending: 'bg-amber-500/15 text-amber-300',
+  success: 'bg-emerald-500/15 text-emerald-300',
+  failed: 'bg-red-500/15 text-red-300',
+  refunded: 'bg-sky-500/15 text-sky-300',
 };
 const STATUS_FILTERS = [
-  ['', 'Tous'],
-  ['success', 'Réussis'],
-  ['pending', 'En attente'],
-  ['failed', 'Échoués'],
-  ['refunded', 'Remboursés'],
+  { value: '', labelKey: 'all' },
+  { value: 'success', labelKey: 'success' },
+  { value: 'pending', labelKey: 'pending' },
+  { value: 'failed', labelKey: 'failed' },
+  { value: 'refunded', labelKey: 'refunded' },
+];
+const METHOD_FILTERS = [
+  { value: '', labelKey: 'all' },
+  { value: 'card', labelKey: 'card' },
+  { value: 'bank_transfer', labelKey: 'bank_transfer' },
 ];
 
-const METHOD = {
-  card: 'Carte',
-  bank_transfer: 'Virement',
-  paypal: 'PayPal',
-  cash: 'Espèces',
-};
-const METHOD_FILTERS = [
-  ['', 'Toutes'],
-  ['card', 'Carte'],
-  ['bank_transfer', 'Virement'],
-];
+const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 const selectClass =
   'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
-
-function fmtDate(d) {
-  return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
-}
 
 function StatCard({ label, value, sublabel, accent = 'text-white' }) {
   return (
@@ -56,7 +49,9 @@ function StatCard({ label, value, sublabel, accent = 'text-white' }) {
 }
 
 function AdminTransactionsPage() {
+  const { t } = useTranslation();
   const { showToast } = useToast();
+  const fmtDate = (d) => (d ? formatDate(d, DATE_OPTS) : '—');
 
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -66,6 +61,11 @@ function AdminTransactionsPage() {
   const [status, setStatus] = useState('');
   const [method, setMethod] = useState('');
   const [search, setSearch] = useState('');
+  // Filtre par plage de dates + tri : appliqués côté client sur la liste chargée.
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sortBy, setSortBy] = useState('date'); // 'date' | 'amount' | 'commission'
+  const [sortDir, setSortDir] = useState('desc'); // 'asc' | 'desc'
 
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
@@ -73,11 +73,11 @@ function AdminTransactionsPage() {
       const res = await getPaymentStats();
       setStats(res.data.stats);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Erreur de chargement des statistiques.', 'error');
+      showToast(err.response?.data?.message || t('adminTransactions.statsError'), 'error');
     } finally {
       setStatsLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   const loadPayments = useCallback(async () => {
     setLoading(true);
@@ -89,11 +89,11 @@ function AdminTransactionsPage() {
       const res = await listPayments(params);
       setPayments(res.data.payments);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Erreur de chargement.', 'error');
+      showToast(err.response?.data?.message || t('adminTransactions.loadError'), 'error');
     } finally {
       setLoading(false);
     }
-  }, [status, method, search, showToast]);
+  }, [status, method, search, showToast, t]);
 
   useEffect(() => {
     loadStats();
@@ -101,59 +101,91 @@ function AdminTransactionsPage() {
 
   useEffect(() => {
     // Debounce léger pour ne pas requêter à chaque frappe.
-    const t = setTimeout(loadPayments, 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(loadPayments, 250);
+    return () => clearTimeout(timer);
   }, [loadPayments]);
+
+  // Filtre par dates (sur payment_date) puis tri, avant pagination.
+  const visiblePayments = useMemo(() => {
+    const rows = payments.filter((p) => {
+      const day = p.payment_date ? p.payment_date.slice(0, 10) : '';
+      if (dateFrom && (!day || day < dateFrom)) return false;
+      if (dateTo && (!day || day > dateTo)) return false;
+      return true;
+    });
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const val = (p) => {
+      if (sortBy === 'amount') return p.amount ?? 0;
+      if (sortBy === 'commission') return p.commission ?? 0;
+      return p.payment_date ? new Date(p.payment_date).getTime() : 0;
+    };
+    return [...rows].sort((a, b) => (val(a) - val(b)) * dir);
+  }, [payments, dateFrom, dateTo, sortBy, sortDir]);
 
   const {
     page,
     setPage,
     pageItems: pagePayments,
-  } = usePagination(payments, PAGE_SIZE, `${status}|${method}|${search}`);
+  } = usePagination(
+    visiblePayments,
+    PAGE_SIZE,
+    `${status}|${method}|${search}|${dateFrom}|${dateTo}|${sortBy}|${sortDir}`
+  );
+
+  function toggleSort(field) {
+    if (sortBy === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortBy(field);
+      setSortDir('desc');
+    }
+  }
+
+  const sortArrow = (field) => (sortBy !== field ? '' : sortDir === 'asc' ? ' ▲' : ' ▼');
 
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       active ? 'bg-sky-500 text-white' : 'border border-white/30 text-white/80 hover:bg-white/10'
     }`;
-  const badge = (meta) =>
+  const badge = (cls) =>
     `inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-      meta?.cls || 'bg-slate-500/15 text-white/70'
+      cls || 'bg-slate-500/15 text-white/70'
     }`;
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">Transactions &amp; commissions</h1>
-      <p className="mt-1 text-sm text-white/70">
-        Suivi des paiements encaissés via la plateforme et des commissions perçues.
-      </p>
+      <h1 className="text-2xl font-bold text-white">{t('adminTransactions.title')}</h1>
+      <p className="mt-1 text-sm text-white/70">{t('adminTransactions.subtitle')}</p>
 
       {/* Stats cards */}
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Volume encaissé"
+          label={t('adminTransactions.volume')}
           value={statsLoading ? '…' : stats ? EURO.format(stats.total_volume) : EURO.format(0)}
-          sublabel="Paiements réussis"
+          sublabel={t('adminTransactions.volumeSub')}
           accent="text-white"
         />
         <StatCard
-          label="Commissions perçues"
+          label={t('adminTransactions.commission')}
           value={statsLoading ? '…' : stats ? EURO.format(stats.total_commission) : EURO.format(0)}
-          sublabel="Cumul SailingLoc"
+          sublabel={t('adminTransactions.commissionSub')}
           accent="text-emerald-300"
         />
         <StatCard
-          label="Transactions réussies"
+          label={t('adminTransactions.successCount')}
           value={statsLoading ? '…' : (stats?.success_count ?? 0).toLocaleString('fr-FR')}
           sublabel={
             stats
-              ? `${stats.counts.pending} en attente · ${stats.counts.failed} échouées`
+              ? t('adminTransactions.successSub', {
+                  pending: stats.counts.pending,
+                  failed: stats.counts.failed,
+                })
               : undefined
           }
         />
         <StatCard
-          label="Remboursements"
+          label={t('adminTransactions.refunds')}
           value={statsLoading ? '…' : (stats?.counts.refunded ?? 0).toLocaleString('fr-FR')}
-          sublabel="Paiements remboursés"
+          sublabel={t('adminTransactions.refundsSub')}
           accent="text-sky-300"
         />
       </div>
@@ -164,32 +196,68 @@ function AdminTransactionsPage() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher (référence, bateau, email)…"
+          placeholder={t('adminTransactions.searchPlaceholder')}
           className={`${selectClass} min-w-[240px] flex-1`}
         />
-        {STATUS_FILTERS.map(([v, l]) => (
+        {STATUS_FILTERS.map(({ value, labelKey }) => (
           <button
-            key={`s-${l}`}
+            key={`s-${labelKey}`}
             type="button"
-            onClick={() => setStatus(v)}
-            className={pill(status === v)}
+            onClick={() => setStatus(value)}
+            className={pill(status === value)}
           >
-            {l}
+            {t(`adminTransactions.statusFilters.${labelKey}`)}
           </button>
         ))}
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">Méthode</span>
-        {METHOD_FILTERS.map(([v, l]) => (
+        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+          {t('adminTransactions.methodLabel')}
+        </span>
+        {METHOD_FILTERS.map(({ value, labelKey }) => (
           <button
-            key={`m-${l}`}
+            key={`m-${labelKey}`}
             type="button"
-            onClick={() => setMethod(v)}
-            className={pill(method === v)}
+            onClick={() => setMethod(value)}
+            className={pill(method === value)}
           >
-            {l}
+            {t(`adminTransactions.methodFilters.${labelKey}`)}
           </button>
         ))}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-1.5 text-xs text-white/70">
+          {t('adminTransactions.dateFrom')}
+          <input
+            type="date"
+            value={dateFrom}
+            max={dateTo || undefined}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className={selectClass}
+          />
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-white/70">
+          {t('adminTransactions.dateTo')}
+          <input
+            type="date"
+            value={dateTo}
+            min={dateFrom || undefined}
+            onChange={(e) => setDateTo(e.target.value)}
+            className={selectClass}
+          />
+        </label>
+        {(dateFrom || dateTo) && (
+          <button
+            type="button"
+            onClick={() => {
+              setDateFrom('');
+              setDateTo('');
+            }}
+            className="rounded-full border border-white/30 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10"
+          >
+            {t('adminTransactions.reset')}
+          </button>
+        )}
       </div>
 
       {/* Tableau */}
@@ -197,27 +265,68 @@ function AdminTransactionsPage() {
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">Référence</th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">Date</th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">Locataire</th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">Bateau</th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">Méthode</th>
-              <th className="px-3 py-3 text-right font-semibold text-white/80">Montant</th>
-              <th className="px-3 py-3 text-right font-semibold text-white/80">Commission</th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">Statut</th>
+              <th className="px-3 py-3 text-left font-semibold text-white/80">
+                {t('adminTransactions.colRef')}
+              </th>
+              <th
+                onClick={() => toggleSort('date')}
+                aria-sort={
+                  sortBy === 'date' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
+                }
+                className="cursor-pointer select-none px-3 py-3 text-left font-semibold text-white/80 hover:text-white"
+              >
+                {t('adminTransactions.colDate')}
+                {sortArrow('date')}
+              </th>
+              <th className="px-3 py-3 text-left font-semibold text-white/80">
+                {t('adminTransactions.colRenter')}
+              </th>
+              <th className="px-3 py-3 text-left font-semibold text-white/80">
+                {t('adminTransactions.colBoat')}
+              </th>
+              <th className="px-3 py-3 text-left font-semibold text-white/80">
+                {t('adminTransactions.colMethod')}
+              </th>
+              <th
+                onClick={() => toggleSort('amount')}
+                aria-sort={
+                  sortBy === 'amount' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
+                }
+                className="cursor-pointer select-none px-3 py-3 text-right font-semibold text-white/80 hover:text-white"
+              >
+                {t('adminTransactions.colAmount')}
+                {sortArrow('amount')}
+              </th>
+              <th
+                onClick={() => toggleSort('commission')}
+                aria-sort={
+                  sortBy === 'commission'
+                    ? sortDir === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                }
+                className="cursor-pointer select-none px-3 py-3 text-right font-semibold text-white/80 hover:text-white"
+              >
+                {t('adminTransactions.colCommission')}
+                {sortArrow('commission')}
+              </th>
+              <th className="px-3 py-3 text-left font-semibold text-white/80">
+                {t('adminTransactions.colStatus')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/15">
             {loading ? (
               <tr>
                 <td colSpan={8} className="px-3 py-8 text-center text-white/70">
-                  Chargement…
+                  {t('adminTransactions.loading')}
                 </td>
               </tr>
-            ) : payments.length === 0 ? (
+            ) : visiblePayments.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-3 py-8 text-center text-white/70">
-                  Aucune transaction.
+                  {t('adminTransactions.empty')}
                 </td>
               </tr>
             ) : (
@@ -239,13 +348,17 @@ function AdminTransactionsPage() {
                   </td>
                   <td className="px-3 py-3 text-white/70">{p.booking?.boat_name || '—'}</td>
                   <td className="px-3 py-3 text-white/70">
-                    {METHOD[p.payment_method] || p.payment_method}
+                    {t(`adminTransactions.methods.${p.payment_method}`, {
+                      defaultValue: p.payment_method,
+                    })}
                   </td>
                   <td className="px-3 py-3 text-right font-medium text-white">
                     {EURO.format(p.amount)}
                     {p.status === 'refunded' && p.refunded_amount != null && (
                       <div className="text-xs font-normal text-sky-300">
-                        −{EURO.format(p.refunded_amount)} remboursés
+                        {t('adminTransactions.refundedAmount', {
+                          amount: EURO.format(p.refunded_amount),
+                        })}
                       </div>
                     )}
                   </td>
@@ -253,11 +366,13 @@ function AdminTransactionsPage() {
                     {EURO.format(p.commission)}
                   </td>
                   <td className="px-3 py-3">
-                    <span className={badge(STATUS[p.status])}>
-                      {STATUS[p.status]?.label || p.status}
+                    <span className={badge(STATUS_CLS[p.status])}>
+                      {t(`adminTransactions.status.${p.status}`, { defaultValue: p.status })}
                     </span>
                     {p.id_dispute && (
-                      <div className="mt-1 text-xs text-white/60">Litige #{p.id_dispute}</div>
+                      <div className="mt-1 text-xs text-white/60">
+                        {t('adminTransactions.dispute', { id: p.id_dispute })}
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -270,9 +385,9 @@ function AdminTransactionsPage() {
       <Pagination
         page={page}
         pageSize={PAGE_SIZE}
-        total={payments.length}
+        total={visiblePayments.length}
         onChange={setPage}
-        label="Transactions"
+        label={t('adminTransactions.paginationLabel')}
         className="mt-4"
       />
     </section>

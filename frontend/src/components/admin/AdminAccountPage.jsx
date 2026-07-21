@@ -1,24 +1,25 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import AccountForm from '../account/AccountForm.jsx';
 
 function AdminAccountPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
-    document.title = 'Mon compte — Admin SailingLoc';
-  }, []);
+    document.title = t('adminAccount.pageTitle');
+  }, [t]);
 
   return (
     <section aria-labelledby="account-title" className="mx-auto w-full max-w-2xl">
       <header className="mb-6">
         <h1 id="account-title" className="text-2xl font-bold text-white">
-          Mon compte
+          {t('adminAccount.title')}
         </h1>
         <p className="mt-1 text-sm text-white/70">
-          Bonjour {user?.first_name}, gérez vos informations personnelles, votre photo et votre mot
-          de passe.
+          {t('adminAccount.greeting', { name: user?.first_name ?? '' })}
         </p>
       </header>
 

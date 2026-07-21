@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
+import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EyeIcon, EyeOffIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 import {
   listBoats,
@@ -17,33 +19,33 @@ const EURO = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 0,
 });
 
-const REPORT_STATUS = {
-  pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
-  resolved: { label: 'Traité', cls: 'bg-emerald-500/15 text-emerald-300' },
-  dismissed: { label: 'Rejeté', cls: 'bg-slate-500/15 text-white/70' },
+const REPORT_STATUS_CLS = {
+  pending: 'bg-amber-500/15 text-amber-300',
+  resolved: 'bg-emerald-500/15 text-emerald-300',
+  dismissed: 'bg-slate-500/15 text-white/70',
 };
 
 const REPORT_FILTERS = [
-  ['pending', 'En attente'],
-  ['', 'Tous'],
-  ['resolved', 'Traités'],
-  ['dismissed', 'Rejetés'],
+  { value: 'pending', labelKey: 'pending' },
+  { value: '', labelKey: 'all' },
+  { value: 'resolved', labelKey: 'resolved' },
+  { value: 'dismissed', labelKey: 'dismissed' },
 ];
 
 const PUBLISHED_FILTERS = [
-  ['', 'Tous'],
-  ['true', 'Publiés'],
-  ['false', 'Non publiés'],
+  { value: '', labelKey: 'all' },
+  { value: 'true', labelKey: 'published' },
+  { value: 'false', labelKey: 'unpublished' },
 ];
 
-function fmtDate(d) {
-  return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
-}
+const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 const PAGE_SIZE = 10;
 
 function AdminPublicationPage() {
+  const { t } = useTranslation();
   const { showToast } = useToast();
+  const fmtDate = (d) => (d ? formatDate(d, DATE_OPTS) : '—');
   const [tab, setTab] = useState('boats');
   const [busyId, setBusyId] = useState(null);
 
@@ -61,11 +63,11 @@ function AdminPublicationPage() {
       const res = await listBoats(published ? { published } : {});
       setBoats(res.data.boats);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Erreur de chargement.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.loadError'), 'error');
     } finally {
       setBoatsLoading(false);
     }
-  }, [published, showToast]);
+  }, [published, showToast, t]);
 
   const loadReports = useCallback(async () => {
     setReportsLoading(true);
@@ -73,11 +75,11 @@ function AdminPublicationPage() {
       const res = await listReports(reportStatus);
       setReports(res.data.reports);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Erreur de chargement.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.loadError'), 'error');
     } finally {
       setReportsLoading(false);
     }
-  }, [reportStatus, showToast]);
+  }, [reportStatus, showToast, t]);
 
   useEffect(() => {
     if (tab === 'boats') loadBoats();
@@ -106,12 +108,12 @@ function AdminPublicationPage() {
       );
       showToast(
         b.is_published
-          ? 'Bateau dépublié — propriétaire notifié par email.'
-          : 'Bateau publié — propriétaire notifié par email.',
+          ? t('adminPublication.unpublishedToast')
+          : t('adminPublication.publishedToast'),
         'success'
       );
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -126,9 +128,14 @@ function AdminPublicationPage() {
       } else {
         setReports((prev) => prev.map((x) => (x.id_report === r.id_report ? { ...x, status } : x)));
       }
-      showToast(status === 'resolved' ? 'Signalement traité.' : 'Signalement rejeté.', 'success');
+      showToast(
+        status === 'resolved'
+          ? t('adminPublication.reportResolvedToast')
+          : t('adminPublication.reportDismissedToast'),
+        'success'
+      );
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -139,10 +146,10 @@ function AdminPublicationPage() {
     try {
       await setBoatPublished(r.boat.id_boat, false);
       // La dépublication clôt les signalements en attente du bateau côté serveur → on rafraîchit.
-      showToast('Bateau dépublié — propriétaire notifié, signalement clôturé.', 'success');
+      showToast(t('adminPublication.unpublishFromReportToast'), 'success');
       await loadReports();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -161,31 +168,29 @@ function AdminPublicationPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">Publication</h1>
-      <p className="mt-1 text-sm text-white/70">
-        Gérez la publication des bateaux et traitez les signalements.
-      </p>
+      <h1 className="text-2xl font-bold text-white">{t('adminPublication.title')}</h1>
+      <p className="mt-1 text-sm text-white/70">{t('adminPublication.subtitle')}</p>
 
       <div className="mt-5 flex gap-2">
         <button type="button" onClick={() => setTab('boats')} className={tabBtn('boats')}>
-          Bateaux
+          {t('adminPublication.tabBoats')}
         </button>
         <button type="button" onClick={() => setTab('reports')} className={tabBtn('reports')}>
-          Signalements
+          {t('adminPublication.tabReports')}
         </button>
       </div>
 
       {tab === 'boats' ? (
         <>
           <div className="mt-4 flex flex-wrap gap-2">
-            {PUBLISHED_FILTERS.map(([v, l]) => (
+            {PUBLISHED_FILTERS.map(({ value, labelKey }) => (
               <button
-                key={l}
+                key={labelKey}
                 type="button"
-                onClick={() => setPublished(v)}
-                className={pill(published === v)}
+                onClick={() => setPublished(value)}
+                className={pill(published === value)}
               >
-                {l}
+                {t(`adminPublication.publishedFilters.${labelKey}`)}
               </button>
             ))}
           </div>
@@ -194,25 +199,37 @@ function AdminPublicationPage() {
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Bateau</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Propriétaire</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Prix/jour</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Signalements</th>
-                  <th className="px-4 py-3 text-right font-semibold text-white/80">Action</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colBoat')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colOwner')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colPrice')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colStatus')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colReports')}
+                  </th>
+                  <th className="px-4 py-3 text-right font-semibold text-white/80">
+                    {t('adminPublication.colAction')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/15">
                 {boatsLoading ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-white/70">
-                      Chargement…
+                      {t('adminPublication.loading')}
                     </td>
                   </tr>
                 ) : boats.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-white/70">
-                      Aucun bateau.
+                      {t('adminPublication.emptyBoats')}
                     </td>
                   </tr>
                 ) : (
@@ -243,13 +260,15 @@ function AdminPublicationPage() {
                               : 'bg-slate-500/15 text-white/70'
                           }`}
                         >
-                          {b.is_published ? 'Publié' : 'Non publié'}
+                          {b.is_published
+                            ? t('adminPublication.published')
+                            : t('adminPublication.unpublished')}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         {b.pending_reports > 0 ? (
                           <span className="inline-block whitespace-nowrap rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
-                            {b.pending_reports} en attente
+                            {t('adminPublication.pendingReports', { count: b.pending_reports })}
                           </span>
                         ) : (
                           <span className="text-xs text-white/60">—</span>
@@ -258,7 +277,11 @@ function AdminPublicationPage() {
                       <td className="px-4 py-3">
                         <div className="flex justify-end">
                           <IconBtn
-                            title={b.is_published ? 'Dépublier' : 'Publier'}
+                            title={
+                              b.is_published
+                                ? t('adminPublication.unpublish')
+                                : t('adminPublication.publish')
+                            }
                             variant={b.is_published ? 'default' : 'success'}
                             disabled={busyId === `b${b.id_boat}`}
                             onClick={() => togglePublish(b)}
@@ -279,21 +302,21 @@ function AdminPublicationPage() {
             pageSize={PAGE_SIZE}
             total={boats.length}
             onChange={setBoatsPage}
-            label="Annonces"
+            label={t('adminPublication.paginationBoats')}
             className="mt-4"
           />
         </>
       ) : (
         <>
           <div className="mt-4 flex flex-wrap gap-2">
-            {REPORT_FILTERS.map(([v, l]) => (
+            {REPORT_FILTERS.map(({ value, labelKey }) => (
               <button
-                key={l}
+                key={labelKey}
                 type="button"
-                onClick={() => setReportStatus2(v)}
-                className={pill(reportStatus === v)}
+                onClick={() => setReportStatus2(value)}
+                className={pill(reportStatus === value)}
               >
-                {l}
+                {t(`adminPublication.reportFilters.${labelKey}`)}
               </button>
             ))}
           </div>
@@ -302,25 +325,37 @@ function AdminPublicationPage() {
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Bateau</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Motif</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Signalé par</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Date</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">Statut</th>
-                  <th className="px-4 py-3 text-right font-semibold text-white/80">Actions</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colBoat')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colReason')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colReportedBy')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colDate')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colStatus')}
+                  </th>
+                  <th className="px-4 py-3 text-right font-semibold text-white/80">
+                    {t('adminPublication.colActions')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/15">
                 {reportsLoading ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-white/70">
-                      Chargement…
+                      {t('adminPublication.loading')}
                     </td>
                   </tr>
                 ) : reports.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-white/70">
-                      Aucun signalement.
+                      {t('adminPublication.emptyReports')}
                     </td>
                   </tr>
                 ) : (
@@ -340,7 +375,9 @@ function AdminPublicationPage() {
                           <span className="font-medium">—</span>
                         )}
                         <div className="text-xs text-white/60">
-                          {r.boat?.is_published ? 'Publié' : 'Non publié'}
+                          {r.boat?.is_published
+                            ? t('adminPublication.published')
+                            : t('adminPublication.unpublished')}
                         </div>
                       </td>
                       <td className="max-w-xs px-4 py-3 text-white/80">{r.reason}</td>
@@ -351,17 +388,19 @@ function AdminPublicationPage() {
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            REPORT_STATUS[r.status]?.cls || 'bg-slate-500/15 text-white/70'
+                            REPORT_STATUS_CLS[r.status] || 'bg-slate-500/15 text-white/70'
                           }`}
                         >
-                          {REPORT_STATUS[r.status]?.label || r.status}
+                          {t(`adminPublication.reportStatus.${r.status}`, {
+                            defaultValue: r.status,
+                          })}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap justify-end gap-2">
                           {r.boat?.is_published && (
                             <IconBtn
-                              title="Dépublier le bateau"
+                              title={t('adminPublication.unpublishBoat')}
                               disabled={busyId === `r${r.id_report}`}
                               onClick={() => unpublishFromReport(r)}
                             >
@@ -369,7 +408,7 @@ function AdminPublicationPage() {
                             </IconBtn>
                           )}
                           <IconBtn
-                            title="Traiter"
+                            title={t('adminPublication.handle')}
                             variant="success"
                             disabled={busyId === `r${r.id_report}` || r.status === 'resolved'}
                             onClick={() => decideReport(r, 'resolved')}
@@ -377,7 +416,7 @@ function AdminPublicationPage() {
                             <CheckIcon />
                           </IconBtn>
                           <IconBtn
-                            title="Rejeter"
+                            title={t('adminPublication.dismiss')}
                             variant="danger"
                             disabled={busyId === `r${r.id_report}` || r.status === 'dismissed'}
                             onClick={() => decideReport(r, 'dismissed')}
@@ -398,7 +437,7 @@ function AdminPublicationPage() {
             pageSize={PAGE_SIZE}
             total={reports.length}
             onChange={setReportsPage}
-            label="Signalements"
+            label={t('adminPublication.paginationReports')}
             className="mt-4"
           />
         </>

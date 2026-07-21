@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next';
+
 function AdminPlaceholder({ title, description, action }) {
+  const { t } = useTranslation();
   return (
     <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -10,10 +13,8 @@ function AdminPlaceholder({ title, description, action }) {
       </div>
 
       <div className="mt-6 flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/30 bg-white/5 p-10 text-center">
-        <p className="text-white/80">Cette section est en cours de construction.</p>
-        <p className="mt-2 text-sm text-white/60">
-          L&apos;interface et les fonctionnalités seront bientôt disponibles.
-        </p>
+        <p className="text-white/80">{t('adminPlaceholder.building')}</p>
+        <p className="mt-2 text-sm text-white/60">{t('adminPlaceholder.soon')}</p>
       </div>
     </section>
   );

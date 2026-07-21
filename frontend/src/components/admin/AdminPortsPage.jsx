@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../hooks/useToast.jsx';
 import { listPorts, createPort, deletePort } from '../../services/adminService.js';
 import { IconBtn, TrashIcon } from './AdminActions.jsx';
@@ -41,6 +42,7 @@ function fmtCoord(v) {
 }
 
 function AdminPortsPage() {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [ports, setPorts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,15 +69,15 @@ function AdminPortsPage() {
       setPorts(res.data.ports);
       setError('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur de chargement.');
+      setError(err.response?.data?.message || t('adminPorts.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [search, region]);
+  }, [search, region, t]);
 
   useEffect(() => {
-    const t = setTimeout(load, 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(load, 250);
+    return () => clearTimeout(timer);
   }, [load]);
 
   const {
@@ -93,7 +95,7 @@ function AdminPortsPage() {
     try {
       setCatalog(await loadPortCatalog());
     } catch {
-      setCatalogError('Impossible de charger le catalogue des ports.');
+      setCatalogError(t('adminPorts.catalogError'));
     } finally {
       setCatalogLoading(false);
     }
@@ -108,23 +110,23 @@ function AdminPortsPage() {
           a.name.localeCompare(b.name, 'fr')
         )
       );
-      showToast(`« ${entry.name} » importé en base.`, 'success');
+      showToast(t('adminPorts.imported', { name: entry.name }), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || "Échec de l'import.", 'error');
+      showToast(err.response?.data?.message || t('adminPorts.importError'), 'error');
     } finally {
       setImportingName(null);
     }
   }
 
   async function remove(port) {
-    if (!window.confirm(`Retirer le port « ${port.name} » de la base ?`)) return;
+    if (!window.confirm(t('adminPorts.confirmRemove', { name: port.name }))) return;
     setBusyId(port.id_port);
     try {
       await deletePort(port.id_port);
       setPorts((prev) => prev.filter((p) => p.id_port !== port.id_port));
-      showToast('Port supprimé.', 'success');
+      showToast(t('adminPorts.removeSuccess'), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de la suppression.', 'error');
+      showToast(err.response?.data?.message || t('adminPorts.removeError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -153,51 +155,49 @@ function AdminPortsPage() {
     <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Ports</h1>
-          <p className="mt-1 text-sm text-white/70">
-            Gérez les ports d&apos;amarrage et visualisez où se trouvent les bateaux.
-          </p>
+          <h1 className="text-2xl font-bold text-white">{t('adminPorts.title')}</h1>
+          <p className="mt-1 text-sm text-white/70">{t('adminPorts.subtitle')}</p>
         </div>
         <button
           type="button"
           onClick={openImport}
           className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/80"
         >
-          + Importer un port
+          {t('adminPorts.importButton')}
         </button>
       </div>
 
       {showImport && (
         <div className="mt-5 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-white/90">Catalogue maritime français</h2>
+            <h2 className="text-sm font-semibold text-white/90">{t('adminPorts.catalogTitle')}</h2>
             <button
               type="button"
               onClick={() => setShowImport(false)}
               className="text-sm text-white/70 hover:text-white/90"
             >
-              Fermer
+              {t('adminPorts.close')}
             </button>
           </div>
           <input
             type="search"
             value={catalogSearch}
             onChange={(e) => setCatalogSearch(e.target.value)}
-            placeholder="Rechercher un port à importer (nom, commune)…"
+            placeholder={t('adminPorts.catalogSearchPlaceholder')}
             className={`${inputClass} mt-3 w-full`}
           />
 
-          {catalogLoading && <p className="mt-3 text-sm text-white/70">Chargement du catalogue…</p>}
+          {catalogLoading && (
+            <p className="mt-3 text-sm text-white/70">{t('adminPorts.catalogLoading')}</p>
+          )}
           {catalogError && <p className="mt-3 text-sm text-red-300">{catalogError}</p>}
 
           {!catalogLoading && !catalogError && (
             <>
               {q.length < 2 ? (
-                <p className="mt-3 text-sm text-white/60">
-                  Saisissez au moins 2 caractères pour rechercher.
-                </p>
+                <p className="mt-3 text-sm text-white/60">{t('adminPorts.typeToSearch')}</p>
               ) : catalogResults.length === 0 ? (
-                <p className="mt-3 text-sm text-white/60">Aucun port trouvé dans le catalogue.</p>
+                <p className="mt-3 text-sm text-white/60">{t('adminPorts.catalogEmpty')}</p>
               ) : (
                 <ul className="mt-3 max-h-72 divide-y divide-white/15 overflow-y-auto rounded-lg border border-white/20">
                   {catalogResults.map((p) => {
@@ -217,7 +217,11 @@ function AdminPortsPage() {
                           onClick={() => importPort(p)}
                           className="shrink-0 rounded-lg border border-[#5AB4EC]/40 px-3 py-1.5 text-xs font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/10 disabled:opacity-40"
                         >
-                          {already ? 'En base' : importingName === p.name ? '…' : 'Importer'}
+                          {already
+                            ? t('adminPorts.inBase')
+                            : importingName === p.name
+                              ? '…'
+                              : t('adminPorts.import')}
                         </button>
                       </li>
                     );
@@ -232,7 +236,7 @@ function AdminPortsPage() {
       <MapView
         className="mt-5 h-[360px]"
         markers={mapMarkers}
-        emptyLabel="Aucun port géolocalisé."
+        emptyLabel={t('adminPorts.mapEmpty')}
       />
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -240,7 +244,7 @@ function AdminPortsPage() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filtrer (nom, ville)…"
+          placeholder={t('adminPorts.filterPlaceholder')}
           className={`${inputClass} min-w-[220px] flex-1`}
         />
         <select
@@ -248,7 +252,7 @@ function AdminPortsPage() {
           onChange={(e) => setRegion(e.target.value)}
           className={`select-glass ${inputClass}`}
         >
-          <option value="">Toutes les régions</option>
+          <option value="">{t('adminPorts.allRegions')}</option>
           {REGIONS.map((r) => (
             <option key={r} value={r}>
               {r}
@@ -267,25 +271,37 @@ function AdminPortsPage() {
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Port</th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Ville</th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Région</th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Coordonnées</th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">Bateaux</th>
-              <th className="px-4 py-3 text-right font-semibold text-white/80">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminPorts.colPort')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminPorts.colCity')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminPorts.colRegion')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminPorts.colCoords')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminPorts.colBoats')}
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-white/80">
+                {t('adminPorts.colActions')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/15">
             {loading ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-white/70">
-                  Chargement…
+                  {t('adminPorts.loading')}
                 </td>
               </tr>
             ) : ports.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-white/70">
-                  Aucun port. Importez-en depuis le catalogue.
+                  {t('adminPorts.empty')}
                 </td>
               </tr>
             ) : (
@@ -303,8 +319,8 @@ function AdminPortsPage() {
                       <IconBtn
                         title={
                           p.boats_count > 0
-                            ? 'Suppression impossible : des bateaux y sont rattachés'
-                            : 'Supprimer'
+                            ? t('adminPorts.removeDisabled')
+                            : t('adminPorts.remove')
                         }
                         variant="danger"
                         disabled={busyId === p.id_port || p.boats_count > 0}
@@ -326,11 +342,11 @@ function AdminPortsPage() {
         pageSize={PAGE_SIZE}
         total={ports.length}
         onChange={setPage}
-        label="Ports"
+        label={t('adminPorts.paginationLabel')}
         className="mt-4"
       />
 
-      <p className="mt-3 text-xs text-white/60">{ports.length} port(s) en base.</p>
+      <p className="mt-3 text-xs text-white/60">{t('adminPorts.count', { count: ports.length })}</p>
     </section>
   );
 }

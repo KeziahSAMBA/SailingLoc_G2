@@ -1,23 +1,24 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import bgImage from '../../assets/image/paysage/crique.jpg';
 
-const NAV = [
-  { to: '/admin', label: 'Dashboard', end: true },
-  { to: '/admin/spectateur', label: 'Vue locataire', end: true },
-  { to: '/admin/spectateur/proprietaire', label: 'Vue propriétaire' },
-  { to: '/admin/users', label: 'Utilisateurs' },
-  { to: '/admin/comments', label: 'Commentaires' },
-  { to: '/admin/publications', label: 'Publication' },
-  { to: '/admin/documents', label: 'Documents' },
-  { to: '/admin/bookings', label: 'Réservations' },
-  { to: '/admin/ports', label: 'Ports' },
-  { to: '/admin/transactions', label: 'Transaction' },
-  { to: '/admin/messages', label: 'Messagerie' },
-  { to: '/admin/contact', label: 'Demandes contact' },
-  { to: '/admin/compte', label: 'Compte' },
-];
-
 function AdminLayout() {
+  const { t } = useTranslation();
+  const nav = [
+    { to: '/admin', label: t('adminLayout.nav.dashboard'), end: true },
+    { to: '/admin/spectateur', label: t('adminLayout.nav.viewRenter'), end: true },
+    { to: '/admin/spectateur/proprietaire', label: t('adminLayout.nav.viewOwner') },
+    { to: '/admin/users', label: t('adminLayout.nav.users') },
+    { to: '/admin/comments', label: t('adminLayout.nav.comments') },
+    { to: '/admin/publications', label: t('adminLayout.nav.publication') },
+    { to: '/admin/documents', label: t('adminLayout.nav.documents') },
+    { to: '/admin/bookings', label: t('adminLayout.nav.bookings') },
+    { to: '/admin/ports', label: t('adminLayout.nav.ports') },
+    { to: '/admin/transactions', label: t('adminLayout.nav.transaction') },
+    { to: '/admin/messages', label: t('adminLayout.nav.messages') },
+    { to: '/admin/contact', label: t('adminLayout.nav.contact') },
+    { to: '/admin/compte', label: t('adminLayout.nav.account') },
+  ];
   return (
     // Même univers visuel que les espaces propriétaire et locataire : photo
     // plein écran sous un voile sombre et panneaux en verre dépoli.
@@ -30,14 +31,14 @@ function AdminLayout() {
           {/* Menu : barre horizontale défilable sur mobile, colonne à partir de lg. */}
           <aside className="w-full lg:w-60 lg:shrink-0">
             <nav
-              aria-label="Navigation administration"
+              aria-label={t('adminLayout.navAria')}
               className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[96px]"
             >
               <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-white/60">
-                Administration
+                {t('adminLayout.title')}
               </p>
               <div className="flex gap-1 overflow-x-auto lg:flex-col">
-                {NAV.map((item) => (
+                {nav.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
