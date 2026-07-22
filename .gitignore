@@ -25,3 +25,6 @@ docker volumes (handled by docker-compose)
 # JetBrains IDE
 .idea/
 
+# Profils temporaires utilisés pour les diagnostics navigateur locaux
+.chrome-*/
+
