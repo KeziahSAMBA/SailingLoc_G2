@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useToast } from '../../hooks/useToast.jsx';
+import Spinner from '../common/Spinner.jsx';
 import {
   getMyDocuments,
   uploadDocument,
@@ -126,7 +127,7 @@ function DocumentRow({ config, docs, onChanged }) {
     ? hasDocs
       ? {
           label: t('documentsManager.filesCount', { count: docs.length }),
-          cls: 'bg-slate-500/15 text-slate-300',
+          cls: 'bg-slate-500/15 text-white/80',
         }
       : null
     : hasDocs
@@ -134,15 +135,15 @@ function DocumentRow({ config, docs, onChanged }) {
       : null;
 
   return (
-    <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+    <article className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-white">{config.label}</h2>
-          <p className="mt-1 text-sm text-slate-400">{config.desc}</p>
+          <p className="mt-1 text-sm text-white/70">{config.desc}</p>
         </div>
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-            headerBadge ? headerBadge.cls : 'bg-slate-800 text-slate-400'
+            headerBadge ? headerBadge.cls : 'bg-white/10 text-white/70'
           }`}
         >
           {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
@@ -154,9 +155,9 @@ function DocumentRow({ config, docs, onChanged }) {
         return (
           <div
             key={doc.id_document}
-            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-slate-800/60 px-4 py-3"
+            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-white/10 px-4 py-3"
           >
-            <span className="truncate text-sm font-medium text-slate-200">{doc.file_name}</span>
+            <span className="truncate text-sm font-medium text-white/90">{doc.file_name}</span>
             {st && (
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>
                 {st.label}
@@ -182,21 +183,29 @@ function DocumentRow({ config, docs, onChanged }) {
       })}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={(e) => {
-            setFile(e.target.files?.[0] || null);
-            setError('');
-          }}
-          className="block w-full max-w-xs text-sm text-slate-400 file:mr-3 file:rounded-full file:border-0 file:bg-[#5AB4EC]/15 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#5AB4EC] hover:file:bg-[#5AB4EC]/25"
-        />
+        <label className="flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-white/70">
+          <span className="shrink-0 cursor-pointer rounded-full border-0 bg-[#5AB4EC]/15 px-4 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/25">
+            {t('documentsManager.chooseFile')}
+          </span>
+          <span className="min-w-0 truncate">
+            {file ? file.name : t('documentsManager.noFile')}
+          </span>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => {
+              setFile(e.target.files?.[0] || null);
+              setError('');
+            }}
+            className="sr-only"
+          />
+        </label>
         <button
           type="button"
           onClick={handleUpload}
           disabled={busy || !file}
-          className="rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy
             ? t('documentsManager.sending')
@@ -208,7 +217,7 @@ function DocumentRow({ config, docs, onChanged }) {
         </button>
       </div>
 
-      <p className="mt-2 text-xs text-slate-400">{t('documentsManager.acceptedFormats')}</p>
+      <p className="mt-2 text-xs text-white/70">{t('documentsManager.acceptedFormats')}</p>
 
       {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
     </article>
@@ -250,7 +259,7 @@ function DocumentsManager({ onCounts }) {
     if (onCounts) onCounts({ provided: providedCount, total: requiredTypes.length });
   }, [onCounts, providedCount, requiredTypes.length]);
 
-  if (loading) return <p className="text-slate-200">{t('documentsManager.loading')}</p>;
+  if (loading) return <Spinner label={t('documentsManager.loading')} />;
 
   return (
     <div className="space-y-5">

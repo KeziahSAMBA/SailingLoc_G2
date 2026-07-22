@@ -12,8 +12,10 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { getAdminStats } from '../../services/adminService.js';
+import { formatDate } from '../../utils/formatDate.js';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -22,12 +24,14 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 const NUMBER = new Intl.NumberFormat('fr-FR');
 
-const STATUS_META = {
-  confirmed: { label: 'Confirmées', color: '#34d399' },
-  pending: { label: 'En attente', color: '#fbbf24' },
-  refused: { label: 'Refusées', color: '#f87171' },
-  cancelled: { label: 'Annulées', color: '#94a3b8' },
+const STATUS_COLOR = {
+  confirmed: '#34d399',
+  pending: '#fbbf24',
+  refused: '#f87171',
+  cancelled: '#94a3b8',
 };
+
+const MONTH_OPTS = { month: 'short', year: '2-digit' };
 
 const TOOLTIP_STYLE = {
   background: '#0f172a',
@@ -38,16 +42,13 @@ const TOOLTIP_STYLE = {
 
 function fmtMonth(m) {
   const [y, mo] = String(m).split('-');
-  return new Date(Number(y), Number(mo) - 1, 1).toLocaleDateString('fr-FR', {
-    month: 'short',
-    year: '2-digit',
-  });
+  return formatDate(new Date(Number(y), Number(mo) - 1, 1), MONTH_OPTS);
 }
 
 function StatCard({ label, value, accent }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+    <div className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-white/70">{label}</p>
       <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
     </div>
   );
@@ -55,14 +56,15 @@ function StatCard({ label, value, accent }) {
 
 function ChartCard({ title, children }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-      <h2 className="mb-4 text-sm font-semibold text-slate-200">{title}</h2>
+    <div className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+      <h2 className="mb-4 text-sm font-semibold text-white/90">{title}</h2>
       <div style={{ width: '100%', height: 260 }}>{children}</div>
     </div>
   );
 }
 
 function AdminDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,16 +73,14 @@ function AdminDashboard() {
   useEffect(() => {
     getAdminStats()
       .then((res) => setStats(res.data.stats))
-      .catch((err) =>
-        setError(err.response?.data?.message || 'Erreur de chargement des statistiques.')
-      )
+      .catch((err) => setError(err.response?.data?.message || t('adminDashboard.loadError')))
       .finally(() => setLoading(false));
   }, []);
 
   const pieData = (stats?.bookingsByStatus ?? []).map((b) => ({
-    name: STATUS_META[b.status]?.label || b.status,
+    name: t(`adminDashboard.status.${b.status}`, { defaultValue: b.status }),
     value: b.count,
-    color: STATUS_META[b.status]?.color || '#64748b',
+    color: STATUS_COLOR[b.status] || '#64748b',
   }));
   const revenueData = (stats?.revenueByMonth ?? []).map((r) => ({
     month: fmtMonth(r.month),
@@ -97,9 +97,9 @@ function AdminDashboard() {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
-      <p className="mt-1 text-sm text-slate-400">
-        Bonjour {user?.first_name}, voici la vue d&apos;ensemble de la plateforme.
+      <h1 className="text-2xl font-bold text-white">{t('adminDashboard.title')}</h1>
+      <p className="mt-1 text-sm text-white/70">
+        {t('adminDashboard.greeting', { name: user?.first_name ?? '' })}
       </p>
 
       {error && (
@@ -110,22 +110,22 @@ function AdminDashboard() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Utilisateurs"
+          label={t('adminDashboard.users')}
           accent="text-white"
           value={loading ? '…' : NUMBER.format(stats?.users ?? 0)}
         />
         <StatCard
-          label="Réservations"
+          label={t('adminDashboard.bookings')}
           accent="text-white"
           value={loading ? '…' : NUMBER.format(stats?.bookings ?? 0)}
         />
         <StatCard
-          label="Revenus"
+          label={t('adminDashboard.revenue')}
           accent="text-emerald-400"
           value={loading ? '…' : EURO.format(stats?.revenue ?? 0)}
         />
         <StatCard
-          label="Commissions"
+          label={t('adminDashboard.commission')}
           accent="text-[#5AB4EC]"
           value={loading ? '…' : EURO.format(stats?.commission ?? 0)}
         />
@@ -133,7 +133,7 @@ function AdminDashboard() {
 
       {!loading && !error && (
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <ChartCard title="Réservations par statut">
+          <ChartCard title={t('adminDashboard.bookingsByStatus')}>
             <ResponsiveContainer>
               <PieChart>
                 <Pie
@@ -156,7 +156,7 @@ function AdminDashboard() {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Revenus par mois">
+          <ChartCard title={t('adminDashboard.revenueByMonth')}>
             <ResponsiveContainer>
               <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -164,26 +164,29 @@ function AdminDashboard() {
                 <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
-                  formatter={(v) => [EURO.format(v), 'Revenus']}
+                  formatter={(v) => [EURO.format(v), t('adminDashboard.revenue')]}
                 />
                 <Bar dataKey="revenue" fill="#34d399" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Réservations par mois">
+          <ChartCard title={t('adminDashboard.bookingsByMonth')}>
             <ResponsiveContainer>
               <BarChart data={bookingsData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <YAxis allowDecimals={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [v, 'Réservations']} />
+                <Tooltip
+                  contentStyle={TOOLTIP_STYLE}
+                  formatter={(v) => [v, t('adminDashboard.bookings')]}
+                />
                 <Bar dataKey="count" fill="#5AB4EC" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Commissions par mois">
+          <ChartCard title={t('adminDashboard.commissionByMonth')}>
             <ResponsiveContainer>
               <BarChart data={commissionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -191,7 +194,7 @@ function AdminDashboard() {
                 <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
-                  formatter={(v) => [EURO.format(v), 'Commissions']}
+                  formatter={(v) => [EURO.format(v), t('adminDashboard.commission')]}
                 />
                 <Bar dataKey="commission" fill="#a78bfa" radius={[4, 4, 0, 0]} />
               </BarChart>

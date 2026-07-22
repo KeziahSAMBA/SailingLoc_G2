@@ -16,10 +16,10 @@ const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 
 const inputClass =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
+  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
 const readonlyClass =
-  'w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-slate-500 cursor-not-allowed';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-300';
+  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white/60 cursor-not-allowed';
+const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
 const errorClass = 'mt-1 block text-xs text-red-400';
 
 const EMPTY_PASSWORD_FORM = {
@@ -50,9 +50,9 @@ function AccountForm() {
     try {
       const res = await updateAvatar(file);
       updateUser(res.data.user);
-      showToast('Photo de profil mise à jour.', 'success');
+      showToast(t('accountForm.avatar.updateSuccess'), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de l’envoi de la photo.', 'error');
+      showToast(err.response?.data?.message || t('accountForm.avatar.updateError'), 'error');
     } finally {
       setAvatarBusy(false);
     }
@@ -63,9 +63,9 @@ function AccountForm() {
     try {
       const res = await deleteAvatar();
       updateUser(res.data.user);
-      showToast('Photo de profil supprimée.', 'success');
+      showToast(t('accountForm.avatar.removeSuccess'), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de la suppression.', 'error');
+      showToast(err.response?.data?.message || t('accountForm.avatar.removeError'), 'error');
     } finally {
       setAvatarBusy(false);
     }
@@ -199,7 +199,7 @@ function AccountForm() {
   return (
     <>
       {/* Informations personnelles */}
-      <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 shadow-xl">
+      <article className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-xl">
         <h2 className="mb-5 text-lg font-semibold text-white">
           {t('accountForm.personalInfo.title')}
         </h2>
@@ -208,14 +208,14 @@ function AccountForm() {
         <div className="mb-6 flex flex-wrap items-center gap-4">
           <img
             src={user?.avatar || nameToAvatarUrl(displayName || 'SailingLoc')}
-            alt="Votre photo de profil"
-            className="h-20 w-20 rounded-full border-2 border-slate-700 object-cover"
+            alt={t('accountForm.avatar.alt')}
+            className="h-20 w-20 rounded-full border-2 border-white/30 object-cover"
           />
           <div className="flex flex-wrap gap-3">
             <label
-              className={`cursor-pointer rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
+              className={`cursor-pointer rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
             >
-              {avatarBusy ? 'Envoi…' : 'Changer la photo'}
+              {avatarBusy ? t('accountForm.avatar.sending') : t('accountForm.avatar.change')}
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -231,13 +231,11 @@ function AccountForm() {
                 disabled={avatarBusy}
                 className="rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50"
               >
-                Supprimer la photo
+                {t('accountForm.avatar.remove')}
               </button>
             )}
           </div>
-          <p className="w-full text-xs text-slate-500">
-            JPG, PNG ou WebP — 3 Mo max. Sans photo, un avatar est généré automatiquement.
-          </p>
+          <p className="w-full text-xs text-white/60">{t('accountForm.avatar.hint')}</p>
         </div>
 
         {serverError && (
@@ -289,7 +287,7 @@ function AccountForm() {
           <div>
             <label htmlFor="email" className={labelClass}>
               {t('accountForm.personalInfo.email')}{' '}
-              <span className="font-normal text-slate-400">
+              <span className="font-normal text-white/70">
                 {t('accountForm.personalInfo.emailReadonly')}
               </span>
             </label>
@@ -306,7 +304,7 @@ function AccountForm() {
           <div>
             <label htmlFor="phone" className={labelClass}>
               {t('accountForm.personalInfo.phone')}{' '}
-              <span className="font-normal text-slate-400">
+              <span className="font-normal text-white/70">
                 {t('accountForm.personalInfo.phoneOptional')}
               </span>
             </label>
@@ -329,14 +327,14 @@ function AccountForm() {
               type="button"
               onClick={handleCancel}
               disabled={!dirty || saving}
-              className="rounded-full border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('accountForm.personalInfo.cancel')}
             </button>
             <button
               type="submit"
               disabled={!dirty || saving}
-              className="flex-1 rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? t('accountForm.personalInfo.saving') : t('accountForm.personalInfo.save')}
             </button>
@@ -345,9 +343,9 @@ function AccountForm() {
       </article>
 
       {/* Mot de passe */}
-      <article className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-8 shadow-xl">
+      <article className="mt-6 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-xl">
         <h2 className="mb-1 text-lg font-semibold text-white">{t('accountForm.password.title')}</h2>
-        <p className="mb-5 text-sm text-slate-400">{t('accountForm.password.subtitle')}</p>
+        <p className="mb-5 text-sm text-white/70">{t('accountForm.password.subtitle')}</p>
 
         {pwdServerError && (
           <div
@@ -364,7 +362,7 @@ function AccountForm() {
               {t('accountForm.password.current')}
             </label>
             <PasswordField
-              variant="dark"
+              variant="glass"
               id="currentPassword"
               name="currentPassword"
               value={pwdForm.currentPassword}
@@ -382,7 +380,7 @@ function AccountForm() {
               {t('accountForm.password.new')}
             </label>
             <PasswordField
-              variant="dark"
+              variant="glass"
               id="newPassword"
               name="newPassword"
               value={pwdForm.newPassword}
@@ -391,7 +389,7 @@ function AccountForm() {
               ariaInvalid={Boolean(pwdErrors.newPassword)}
               ariaDescribedBy="newPassword-hint"
             />
-            <small id="newPassword-hint" className="mt-1 block text-xs text-slate-500">
+            <small id="newPassword-hint" className="mt-1 block text-xs text-white/60">
               {t('accountForm.password.hint')}
             </small>
             {pwdErrors.newPassword && <span className={errorClass}>{pwdErrors.newPassword}</span>}
@@ -402,7 +400,7 @@ function AccountForm() {
               {t('accountForm.password.confirm')}
             </label>
             <PasswordField
-              variant="dark"
+              variant="glass"
               id="confirmPassword"
               name="confirmPassword"
               value={pwdForm.confirmPassword}
@@ -419,7 +417,7 @@ function AccountForm() {
             <button
               type="submit"
               disabled={pwdSaving}
-              className="w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pwdSaving ? t('accountForm.password.updating') : t('accountForm.password.submit')}
             </button>

@@ -8,11 +8,11 @@ const INITIAL_RESEND_COOLDOWN = 30;
 const POST_CLICK_COOLDOWN = 60;
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
-const errorClass = 'mt-1 block text-xs text-red-600';
+  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
+const errorClass = 'mt-1 block text-xs text-red-300';
 const requiredMark = (
-  <span aria-hidden="true" className="ml-0.5 text-[#0A3172]">
+  <span aria-hidden="true" className="ml-0.5 text-[#5AB4EC]">
     *
   </span>
 );
@@ -158,20 +158,20 @@ function RegisterForm({ onSwitchToLogin }) {
   if (success) {
     return (
       <div role="status" aria-live="polite" className="text-center">
-        <h2 className="text-2xl font-bold text-[#0A3172]">Inscription réussie !</h2>
-        <p className="mt-3 text-slate-700">
+        <h2 className="text-2xl font-bold text-[#5AB4EC]">Inscription réussie !</h2>
+        <p className="mt-3 text-white/80">
           Un email de confirmation a été envoyé à{' '}
-          <span className="font-semibold text-[#0A3172]">{form.email}</span>. Vérifiez votre boîte
+          <span className="font-semibold text-[#5AB4EC]">{form.email}</span>. Vérifiez votre boîte
           mail pour activer votre compte.
         </p>
 
-        <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
-          <p className="text-slate-600">Vous n&apos;avez pas reçu l&apos;email ?</p>
+        <div className="mt-6 rounded-lg border border-white/20 bg-white/10 p-4 text-sm">
+          <p className="text-white/70">Vous n&apos;avez pas reçu l&apos;email ?</p>
           <button
             type="button"
             onClick={handleResend}
             disabled={!canResend}
-            className="mt-3 w-full rounded-full border border-[#0A3172] bg-transparent px-5 py-2 text-sm font-semibold text-[#0A3172] transition hover:bg-[#0A3172]/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-3 w-full rounded-full border border-[#5AB4EC] bg-transparent px-5 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {resendLoading
               ? 'Envoi en cours…'
@@ -180,18 +180,18 @@ function RegisterForm({ onSwitchToLogin }) {
                 : "Renvoyer l'email"}
           </button>
           {resendNotice && (
-            <p className="mt-3 text-xs text-slate-700" role="status">
+            <p className="mt-3 text-xs text-white/80" role="status">
               {resendNotice}
             </p>
           )}
         </div>
 
-        <p className="mt-6 text-sm text-slate-600">
+        <p className="mt-6 text-sm text-white/70">
           Déjà confirmé ?{' '}
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="font-semibold text-[#0A3172] hover:underline"
+            className="font-semibold text-[#5AB4EC] hover:underline"
           >
             Connectez-vous
           </button>
@@ -203,23 +203,23 @@ function RegisterForm({ onSwitchToLogin }) {
   return (
     <>
       <header className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-[#0A3172]">Créer un compte</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <h2 className="text-2xl font-bold text-[#5AB4EC]">Créer un compte</h2>
+        <p className="mt-2 text-sm text-white/70">
           Rejoignez SailingLoc pour réserver ou proposer un bateau.
         </p>
-        <p className="mt-1 text-xs text-slate-500">
-          Les champs marqués d&apos;un <span className="text-[#0A3172]">*</span> sont obligatoires.
+        <p className="mt-1 text-xs text-white/60">
+          Les champs marqués d&apos;un <span className="text-[#5AB4EC]">*</span> sont obligatoires.
         </p>
       </header>
 
       {serverError && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+          className="mb-4 rounded-lg border border-red-300 bg-red-500/10 px-4 py-2 text-sm text-red-300"
         >
           {serverError}
           {isBlocked && (
-            <span className="mt-1 block font-mono text-xs text-red-600">
+            <span className="mt-1 block font-mono text-xs text-red-300">
               Nouvelle tentative possible dans{' '}
               <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
             </span>
@@ -304,7 +304,7 @@ function RegisterForm({ onSwitchToLogin }) {
 
         <div>
           <label htmlFor="phone" className={labelClass}>
-            Téléphone <span className="font-normal text-slate-400">(facultatif)</span>
+            Téléphone <span className="font-normal text-white/50">(facultatif)</span>
           </label>
           <input
             id="phone"
@@ -338,8 +338,8 @@ function RegisterForm({ onSwitchToLogin }) {
                   key={value}
                   className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
                     checked
-                      ? 'border-[#0A3172] bg-[#0A3172]/10 text-[#0A3172]'
-                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                      ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
+                      : 'border-white/30 bg-white/5 text-white/80 hover:bg-white/10'
                   }`}
                 >
                   <input
@@ -362,6 +362,7 @@ function RegisterForm({ onSwitchToLogin }) {
             Mot de passe{requiredMark}
           </label>
           <PasswordField
+            variant="glass"
             id="password"
             name="password"
             value={form.password}
@@ -371,7 +372,7 @@ function RegisterForm({ onSwitchToLogin }) {
             ariaInvalid={Boolean(errors.password)}
             ariaDescribedBy="password-hint password-error"
           />
-          <small id="password-hint" className="mt-1 block text-xs text-slate-500">
+          <small id="password-hint" className="mt-1 block text-xs text-white/60">
             12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
           </small>
           {errors.password && (
@@ -386,6 +387,7 @@ function RegisterForm({ onSwitchToLogin }) {
             Confirmer le mot de passe{requiredMark}
           </label>
           <PasswordField
+            variant="glass"
             id="confirmPassword"
             name="confirmPassword"
             value={form.confirmPassword}
@@ -405,7 +407,7 @@ function RegisterForm({ onSwitchToLogin }) {
         <button
           type="submit"
           disabled={loading || isBlocked}
-          className="mt-2 w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isBlocked
             ? `Réessayez dans ${formatCountdown(retryAfter)}`

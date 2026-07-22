@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { listUsers } from '../../services/adminService.js';
 import Messenger from '../messages/Messenger.jsx';
-
-const ROLE_LABEL = { locataire: 'Locataire', proprietaire: 'Propriétaire', admin: 'Admin' };
 
 // Messagerie admin : comme les autres rôles, avec en plus un annuaire pour
 // écrire à n'importe quel utilisateur de la plateforme.
 function AdminMessagesPage() {
+  const { t } = useTranslation();
+  const roleLabel = (role) =>
+    role === 'admin'
+      ? t('adminMessages.roleAdmin')
+      : t(`messenger.roles.${role}`, { defaultValue: role });
   const [search, setSearch] = useState('');
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
@@ -15,8 +19,8 @@ function AdminMessagesPage() {
 
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
-    document.title = 'Messagerie — Admin SailingLoc';
-  }, []);
+    document.title = t('adminMessages.pageTitle');
+  }, [t]);
 
   // Recherche d'utilisateurs, avec un léger debounce.
   useEffect(() => {
@@ -45,17 +49,15 @@ function AdminMessagesPage() {
     <section aria-labelledby="admin-messages-title">
       <header className="mb-6">
         <h1 id="admin-messages-title" className="text-2xl font-bold text-white">
-          Messagerie
+          {t('adminMessages.title')}
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Écrivez à n’importe quel utilisateur de la plateforme.
-        </p>
+        <p className="mt-1 text-sm text-white/70">{t('adminMessages.subtitle')}</p>
       </header>
 
       {/* Annuaire : réservé à l'admin */}
       <div ref={boxRef} className="relative mb-5 max-w-md">
-        <label htmlFor="user-search" className="mb-1 block text-xs font-medium text-slate-400">
-          Nouveau message à…
+        <label htmlFor="user-search" className="mb-1 block text-xs font-medium text-white/70">
+          {t('adminMessages.newMessageTo')}
         </label>
         <input
           id="user-search"
@@ -70,11 +72,11 @@ function AdminMessagesPage() {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Nom, prénom ou email…"
-          className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#5AB4EC]"
+          placeholder={t('adminMessages.searchPlaceholder')}
+          className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
         />
         {open && results.length > 0 && (
-          <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl">
+          <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-white/30 bg-white/10 shadow-xl">
             {results.map((u) => (
               <li key={u.id_user}>
                 <button
@@ -89,14 +91,14 @@ function AdminMessagesPage() {
                     setSearch('');
                     setOpen(false);
                   }}
-                  className="flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left text-sm text-slate-100 transition hover:bg-slate-700"
+                  className="flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left text-sm text-white transition hover:bg-white/20"
                 >
                   <span className="min-w-0 truncate">
                     {u.first_name} {u.last_name}
-                    {u.email && <span className="text-slate-400"> — {u.email}</span>}
+                    {u.email && <span className="text-white/70"> — {u.email}</span>}
                   </span>
-                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-slate-400">
-                    {ROLE_LABEL[u.role] || u.role}
+                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-white/70">
+                    {roleLabel(u.role)}
                   </span>
                 </button>
               </li>

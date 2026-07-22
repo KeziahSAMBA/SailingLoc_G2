@@ -1,16 +1,17 @@
+import { useTranslation } from 'react-i18next';
 import SpectatorFrame from './SpectatorFrame.jsx';
 
 function AdminSpectateurLocatairePage() {
+  const { t } = useTranslation();
   return (
     <SpectatorFrame
       mode="locataire"
-      title="Vue locataire"
-      description="Aperçu live du site vu par un locataire, dans l'espace admin."
+      title={t('adminSpectator.renterTitle')}
+      description={t('adminSpectator.renterDesc')}
       banner={
         <>
-          👁️ Vue <strong>locataire (faux compte de démo)</strong> — l'affichage se base sur ce rôle
-          mais aucune vraie donnée n'est chargée. La connexion réelle depuis l'iframe est
-          désactivée.
+          👁️ {t('adminSpectator.bannerLead')} <strong>{t('adminSpectator.renterRole')}</strong>{' '}
+          {t('adminSpectator.bannerRest')}
         </>
       }
     />

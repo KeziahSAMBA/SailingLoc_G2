@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Raccourcis vers les pages publiques utiles à inspecter en mode spectateur.
 const QUICK_LINKS = [
-  { label: 'Accueil', path: '/' },
-  { label: 'Connexion', path: '/login' },
-  { label: 'Inscription', path: '/register' },
+  { labelKey: 'spectatorFrame.linkHome', path: '/' },
+  { labelKey: 'spectatorFrame.linkLogin', path: '/login' },
+  { labelKey: 'spectatorFrame.linkRegister', path: '/register' },
 ];
 
 function normalizePath(value) {
@@ -35,6 +36,7 @@ function withSpectator(p, mode) {
  * de bannière, et peut diverger librement au-delà de ce socle commun.
  */
 function SpectatorFrame({ mode, title, description, banner }) {
+  const { t } = useTranslation();
   // `path` = ce qui est dans la barre d'adresse (édité par l'admin).
   // `src` = ce qui est réellement chargé dans l'iframe (validé par submit).
   const [path, setPath] = useState('/');
@@ -81,12 +83,12 @@ function SpectatorFrame({ mode, title, description, banner }) {
       <button
         type="button"
         onClick={refresh}
-        title="Recharger l'aperçu"
-        className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-800"
+        title={t('spectatorFrame.reload')}
+        className="rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 transition hover:bg-white/10"
       >
         ⟳
       </button>
-      <span className="rounded-l-lg border border-r-0 border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-500">
+      <span className="rounded-l-lg border border-r-0 border-white/30 bg-white/10 px-3 py-2 text-xs text-white/60">
         {window.location.origin}
       </span>
       <input
@@ -94,27 +96,27 @@ function SpectatorFrame({ mode, title, description, banner }) {
         value={path}
         onChange={(e) => setPath(e.target.value)}
         placeholder="/"
-        className="-ml-2 min-w-[160px] flex-1 rounded-r-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#5AB4EC]"
+        className="-ml-2 min-w-[160px] flex-1 rounded-r-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#5AB4EC]"
       />
       <button
         type="submit"
-        className="rounded-lg bg-[#0A3172] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0A3172]/90"
+        className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/90"
       >
-        Aller
+        {t('spectatorFrame.go')}
       </button>
       <div className="flex flex-wrap items-center gap-1.5">
-        {QUICK_LINKS.map(({ label, path: p }) => (
+        {QUICK_LINKS.map(({ labelKey, path: p }) => (
           <button
             key={p}
             type="button"
             onClick={() => go(p)}
             className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
               src === p
-                ? 'bg-[#0A3172] text-white'
-                : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+                ? 'bg-sky-500 text-white'
+                : 'border border-white/30 text-white/80 hover:bg-white/10'
             }`}
           >
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -126,28 +128,30 @@ function SpectatorFrame({ mode, title, description, banner }) {
     return (
       <div className="fixed inset-0 z-[60] flex flex-col bg-slate-950 p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-bold text-white">{title} — plein écran</h1>
+          <h1 className="text-lg font-bold text-white">
+            {title} — {t('spectatorFrame.fullscreenSuffix')}
+          </h1>
           <button
             type="button"
             onClick={() => setFullscreen(false)}
-            className="rounded-full bg-slate-700 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-600"
+            className="rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
           >
-            ✕ Quitter (Esc)
+            {t('spectatorFrame.exit')}
           </button>
         </div>
         <div className="mb-3">{urlBar}</div>
-        <div className="flex-1 overflow-hidden rounded-2xl border border-slate-800 bg-white">
+        <div className="flex-1 overflow-hidden rounded-2xl border border-white/20 bg-white">
           {src ? (
             <iframe
               ref={iframeRef}
               key={iframeSrc}
               src={iframeSrc}
-              title="Aperçu site public"
+              title={t('spectatorFrame.iframeTitle')}
               className="block h-full w-full"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-slate-500">
-              Rechargement…
+            <div className="flex h-full items-center justify-center text-sm text-white/60">
+              {t('spectatorFrame.reloading')}
             </div>
           )}
         </div>
@@ -160,14 +164,14 @@ function SpectatorFrame({ mode, title, description, banner }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">{title}</h1>
-          <p className="mt-1 text-sm text-slate-400">{description}</p>
+          <p className="mt-1 text-sm text-white/70">{description}</p>
         </div>
         <button
           type="button"
           onClick={() => setFullscreen(true)}
-          className="rounded-full bg-[#0A3172] px-4 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-[#0A3172]/90"
+          className="rounded-full bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-sky-500/90"
         >
-          ⛶ Plein écran
+          {t('spectatorFrame.fullscreen')}
         </button>
       </div>
 
@@ -179,19 +183,19 @@ function SpectatorFrame({ mode, title, description, banner }) {
 
       {/* Cadre de l'iframe — hauteur calculée pour utiliser tout l'espace dispo
           sous la chrome (header fixe 100px, padding layout, chrome de la page). */}
-      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-800 bg-white">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-white/20 bg-white">
         {src ? (
           <iframe
             ref={iframeRef}
             key={iframeSrc}
             src={iframeSrc}
-            title="Aperçu site public"
+            title={t('spectatorFrame.iframeTitle')}
             className="block w-full"
             style={{ height: 'calc(100vh - 320px)', minHeight: '600px' }}
           />
         ) : (
           <div
-            className="flex w-full items-center justify-center text-sm text-slate-500"
+            className="flex w-full items-center justify-center text-sm text-white/60"
             style={{ height: 'calc(100vh - 320px)', minHeight: '600px' }}
           >
             Rechargement…

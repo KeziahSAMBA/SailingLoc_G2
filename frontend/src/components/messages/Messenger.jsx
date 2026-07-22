@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   getConversations,
   getThread,
@@ -8,32 +9,35 @@ import {
   resolveSupport,
 } from '../../services/messageService.js';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import Spinner from '../common/Spinner.jsx';
 import { useToast } from '../../hooks/useToast.jsx';
+import { formatDate } from '../../utils/formatDate.js';
 
-const ROLE_LABEL = { locataire: 'Locataire', proprietaire: 'Propriétaire', admin: 'SailingLoc' };
-const TIME = new Intl.DateTimeFormat('fr-FR', {
+const TIME_OPTS = {
   day: '2-digit',
   month: '2-digit',
   hour: '2-digit',
   minute: '2-digit',
-});
+};
 
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
 
 function fmtTime(value) {
-  return value ? TIME.format(new Date(value)) : '';
+  return formatDate(value, TIME_OPTS);
 }
 
 // Accusé de lecture sur mes messages : une coche = envoyé (non lu),
 // deux coches bleues = lu par le destinataire.
 function ReadReceipt({ read }) {
+  const { t } = useTranslation();
+  const label = read ? t('messenger.read') : t('messenger.sentUnread');
   return (
     <span
       role="img"
-      aria-label={read ? 'Lu' : 'Envoyé, non lu'}
-      title={read ? 'Lu' : 'Envoyé, non lu'}
-      className={`ml-1 inline-flex ${read ? 'text-[#5AB4EC]' : 'text-slate-400'}`}
+      aria-label={label}
+      title={label}
+      className={`ml-1 inline-flex ${read ? 'text-white' : 'text-white/50'}`}
     >
       <svg width="14" height="10" viewBox="0 0 18 12" fill="none" aria-hidden="true">
         <path
@@ -69,6 +73,9 @@ function displayName(user) {
 function Messenger({ externalUser = null }) {
   const { user: me } = useAuth();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+  const roleLabel = (role) =>
+    role === 'admin' ? 'SailingLoc' : t(`messenger.roles.${role}`, { defaultValue: role });
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null); // interlocuteur { id_user, ... }
@@ -125,7 +132,7 @@ function Messenger({ externalUser = null }) {
         })
         .catch((err) => {
           if (!silent)
-            showToast(err.response?.data?.message || 'Erreur de chargement du fil.', 'error');
+            showToast(err.response?.data?.message || t('messenger.errors.loadThread'), 'error');
         })
         .finally(() => {
           if (!silent) setThreadLoading(false);
@@ -135,7 +142,7 @@ function Messenger({ externalUser = null }) {
     refresh(false);
     const interval = setInterval(() => refresh(true), 4000);
     return () => clearInterval(interval);
-  }, [selected, showToast]);
+  }, [selected, showToast, t]);
 
   // Défilement en bas du fil seulement quand un message s'ajoute (pas à
   // chaque rafraîchissement silencieux, pour ne pas gêner la lecture).
@@ -177,7 +184,7 @@ function Messenger({ externalUser = null }) {
       setDraft('');
       loadConversations();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de l’envoi.', 'error');
+      showToast(err.response?.data?.message || t('messenger.errors.send'), 'error');
     } finally {
       setSending(false);
     }
@@ -195,7 +202,7 @@ function Messenger({ externalUser = null }) {
       setEditing(null);
       loadConversations();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de la modification.', 'error');
+      showToast(err.response?.data?.message || t('messenger.errors.edit'), 'error');
     }
   }
 
@@ -207,10 +214,10 @@ function Messenger({ externalUser = null }) {
     try {
       const res = await resolveSupport(selected.id_user);
       setMessages((prev) => [...prev, res.data.message]);
-      showToast('Demande marquée comme traitée.', 'success');
+      showToast(t('messenger.resolveSuccess'), 'success');
       loadConversations();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de l’opération.', 'error');
+      showToast(err.response?.data?.message || t('messenger.errors.resolve'), 'error');
     } finally {
       setResolving(false);
     }
@@ -236,7 +243,7 @@ function Messenger({ externalUser = null }) {
       setConfirmKey(null);
       loadConversations();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de la suppression.', 'error');
+      showToast(err.response?.data?.message || t('messenger.errors.delete'), 'error');
     }
   }
 
@@ -249,9 +256,9 @@ function Messenger({ externalUser = null }) {
         <button
           type="button"
           onClick={() => setListOpen(true)}
-          className={`flex w-fit items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800 lg:hidden ${FOCUS_RING}`}
+          className={`flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-xl px-4 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 lg:hidden ${FOCUS_RING}`}
         >
-          ← Conversations
+          ← {t('messenger.conversations')}
           {totalUnread > 0 && (
             <span className="rounded-full bg-[#5AB4EC] px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
               {totalUnread}
@@ -263,18 +270,18 @@ function Messenger({ externalUser = null }) {
       {/* Conversations : sur mobile la liste occupe la place du fil (l'un OU
           l'autre) ; sur grand écran les deux sont côte à côte. */}
       <aside
-        aria-label="Conversations"
-        className={`${listOpen ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex lg:h-[70vh] lg:max-h-[720px] lg:min-h-[420px]`}
+        aria-label={t('messenger.conversations')}
+        className={`${listOpen ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex lg:h-[70vh] lg:max-h-[720px] lg:min-h-[420px]`}
       >
-        <h2 className="border-b border-slate-800 px-4 py-3 text-sm font-semibold text-slate-200">
-          Conversations
+        <h2 className="border-b border-white/20 px-4 py-3 text-sm font-semibold text-white/90">
+          {t('messenger.conversations')}
         </h2>
         {loading ? (
-          <p className="px-4 py-6 text-sm text-slate-400">Chargement…</p>
+          <Spinner label={t('messenger.loading')} />
         ) : conversations.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-slate-400">Aucune conversation pour le moment.</p>
+          <p className="px-4 py-6 text-sm text-white/70">{t('messenger.noConversations')}</p>
         ) : (
-          <ul className="max-h-[60vh] divide-y divide-slate-800 overflow-y-auto lg:max-h-none lg:flex-1">
+          <ul className="max-h-[60vh] divide-y divide-white/15 overflow-y-auto lg:max-h-none lg:flex-1">
             {conversations.map((c) => {
               const active = selected?.id_user === c.user.id_user;
               return (
@@ -288,22 +295,22 @@ function Messenger({ externalUser = null }) {
                     }}
                     aria-current={active || undefined}
                     className={`block w-full px-4 py-3 text-left transition ${FOCUS_RING} ${
-                      active ? 'bg-[#0A3172]/40' : 'hover:bg-slate-800/60'
+                      active ? 'bg-[#5AB4EC]/20' : 'hover:bg-white/10'
                     }`}
                   >
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className="min-w-0 truncate text-sm font-semibold text-slate-100">
+                      <span className="min-w-0 truncate text-sm font-semibold text-white">
                         {displayName(c.user)}
                       </span>
-                      <span className="shrink-0 text-[10px] text-slate-500">
+                      <span className="shrink-0 text-[10px] text-white/60">
                         {fmtTime(c.last_message?.sent_at)}
                       </span>
                     </span>
                     <span className="mt-0.5 flex items-center justify-between gap-2">
-                      <span className="min-w-0 truncate text-xs text-slate-400">
-                        {c.last_message?.from_me ? 'Vous : ' : ''}
+                      <span className="min-w-0 truncate text-xs text-white/70">
+                        {c.last_message?.from_me ? t('messenger.you') : ''}
                         {c.last_message?.deleted ? (
-                          <span className="italic">Message supprimé</span>
+                          <span className="italic">{t('messenger.deletedMessage')}</span>
                         ) : (
                           c.last_message?.content
                         )}
@@ -314,8 +321,8 @@ function Messenger({ externalUser = null }) {
                         </span>
                       )}
                     </span>
-                    <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-slate-500">
-                      {ROLE_LABEL[c.user.role] || c.user.role}
+                    <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-white/60">
+                      {roleLabel(c.user.role)}
                     </span>
                   </button>
                 </li>
@@ -327,21 +334,19 @@ function Messenger({ externalUser = null }) {
 
       {/* Fil ouvert */}
       <section
-        aria-label="Fil de discussion"
-        className={`${listOpen ? 'hidden' : 'flex'} h-[70vh] max-h-[720px] min-h-[420px] min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/70 lg:flex`}
+        aria-label={t('messenger.threadAria')}
+        className={`${listOpen ? 'hidden' : 'flex'} h-[70vh] max-h-[720px] min-h-[420px] min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex`}
       >
         {!selected ? (
-          <p className="m-auto px-6 text-center text-sm text-slate-400">
-            Sélectionnez une conversation pour afficher les messages.
+          <p className="m-auto px-6 text-center text-sm text-white/70">
+            {t('messenger.selectConversation')}
           </p>
         ) : (
           <>
-            <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+            <header className="flex items-center justify-between gap-3 border-b border-white/20 px-4 py-3">
               <div>
                 <p className="text-sm font-semibold text-white">{displayName(selected)}</p>
-                <p className="text-xs text-slate-500">
-                  {ROLE_LABEL[selected.role] || selected.role}
-                </p>
+                <p className="text-xs text-white/60">{roleLabel(selected.role)}</p>
               </div>
               {me?.role === 'admin' && selected.role !== 'admin' && (
                 <button
@@ -350,25 +355,23 @@ function Messenger({ externalUser = null }) {
                   disabled={resolving}
                   className={`shrink-0 rounded-full border border-emerald-500/40 px-4 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
-                  {resolving ? 'Clôture…' : '✔ Marquer comme traité'}
+                  {resolving ? t('messenger.resolving') : t('messenger.markResolved')}
                 </button>
               )}
             </header>
 
             <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
               {threadLoading ? (
-                <p className="text-sm text-slate-400">Chargement…</p>
+                <Spinner label={t('messenger.loading')} />
               ) : messages.length === 0 ? (
-                <p className="text-sm text-slate-400">
-                  Aucun message pour l’instant : écrivez le premier !
-                </p>
+                <p className="text-sm text-white/70">{t('messenger.noMessages')}</p>
               ) : (
                 messages.map((m) =>
                   m.type === 'support_resolved' ? (
                     /* Marqueur système : la demande a été clôturée. */
                     <div key={m.id_message} className="flex justify-center py-1">
                       <p className="rounded-full bg-emerald-500/10 px-4 py-1 text-center text-xs italic text-emerald-300">
-                        ✔ Demande marquée comme traitée · {fmtTime(m.sent_at)}
+                        {t('messenger.resolvedMarker', { time: fmtTime(m.sent_at) })}
                       </p>
                     </div>
                   ) : (
@@ -381,15 +384,15 @@ function Messenger({ externalUser = null }) {
                       <div
                         className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
                           m.from_me
-                            ? 'rounded-br-sm bg-[#0A3172] text-white'
-                            : 'rounded-bl-sm bg-slate-800 text-slate-100'
+                            ? 'rounded-br-sm bg-sky-500 text-white'
+                            : 'rounded-bl-sm bg-white/10 text-white'
                         }`}
                       >
                         {editing?.id_message === m.id_message ? (
                           /* Édition inline du message */
                           <form onSubmit={submitEdit} className="flex items-center gap-2">
                             <label htmlFor={`edit-${m.id_message}`} className="sr-only">
-                              Modifier le message
+                              {t('messenger.editMessageLabel')}
                             </label>
                             <input
                               id={`edit-${m.id_message}`}
@@ -398,40 +401,40 @@ function Messenger({ externalUser = null }) {
                               onChange={(e) => setEditing({ ...editing, value: e.target.value })}
                               maxLength={2000}
                               autoFocus
-                              className="w-56 rounded-lg border border-slate-500 bg-slate-900/60 px-2 py-1 text-sm text-white outline-none focus:border-[#5AB4EC]"
+                              className="w-56 rounded-lg border border-white/40 bg-white/10 px-2 py-1 text-sm text-white outline-none focus:border-[#5AB4EC]"
                             />
                             <button
                               type="submit"
-                              aria-label="Enregistrer la modification"
+                              aria-label={t('messenger.saveEdit')}
                               className="text-[#5AB4EC] hover:text-white"
                             >
                               ✓
                             </button>
                             <button
                               type="button"
-                              aria-label="Annuler la modification"
+                              aria-label={t('messenger.cancelEdit')}
                               onClick={() => setEditing(null)}
-                              className="text-slate-300 hover:text-white"
+                              className="text-white/80 hover:text-white"
                             >
                               ✕
                             </button>
                           </form>
                         ) : m.deleted ? (
-                          <p className="italic text-slate-400">Message supprimé</p>
+                          <p className="italic text-white/70">{t('messenger.deletedMessage')}</p>
                         ) : (
                           <p className="whitespace-pre-wrap break-words">{m.content}</p>
                         )}
                         <p
                           className={`mt-1 flex items-center justify-end gap-0.5 text-right text-[10px] ${
-                            m.from_me ? 'text-slate-300/70' : 'text-slate-500'
+                            m.from_me ? 'text-white/70' : 'text-white/60'
                           }`}
                         >
-                          {m.edited && <span className="mr-1 italic">modifié</span>}
+                          {m.edited && <span className="mr-1 italic">{t('messenger.edited')}</span>}
                           {fmtTime(m.sent_at)}
                           {m.from_me && !m.deleted && <ReadReceipt read={m.read} />}
                           {m.from_me && !m.deleted && m.id_message === lastMineId && (
-                            <span className={m.read ? 'text-[#5AB4EC]' : undefined}>
-                              {m.read ? 'Lu' : 'Envoyé'}
+                            <span className={m.read ? 'font-semibold text-white' : undefined}>
+                              {m.read ? t('messenger.read') : t('messenger.sent')}
                             </span>
                           )}
                         </p>
@@ -442,20 +445,20 @@ function Messenger({ externalUser = null }) {
                       <div className="relative" onMouseDown={(e) => e.stopPropagation()}>
                         <button
                           type="button"
-                          aria-label="Actions sur le message"
+                          aria-label={t('messenger.messageActions')}
                           aria-expanded={menuFor === m.id_message}
                           onClick={() => {
                             setMenuFor(menuFor === m.id_message ? null : m.id_message);
                             setConfirmKey(null);
                           }}
-                          className={`rounded-full px-1.5 py-0.5 text-slate-500 opacity-60 transition hover:bg-slate-800 hover:text-slate-200 group-hover:opacity-100 ${FOCUS_RING}`}
+                          className={`rounded-full px-1.5 py-0.5 text-white/60 opacity-60 transition hover:bg-white/10 hover:text-white/90 group-hover:opacity-100 ${FOCUS_RING}`}
                         >
                           ⋯
                         </button>
                         {menuFor === m.id_message && (
                           <div
                             role="menu"
-                            className={`absolute z-20 mt-1 w-56 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 text-sm shadow-xl ${
+                            className={`absolute z-20 mt-1 w-56 overflow-hidden rounded-lg border border-white/30 bg-white/10 text-sm shadow-xl ${
                               m.from_me ? 'right-0' : 'left-0'
                             }`}
                           >
@@ -468,19 +471,19 @@ function Messenger({ externalUser = null }) {
                                     setEditing({ id_message: m.id_message, value: m.content });
                                     setMenuFor(null);
                                   }}
-                                  className="block w-full px-3 py-2 text-left text-slate-100 transition hover:bg-slate-700"
+                                  className="block w-full px-3 py-2 text-left text-white transition hover:bg-white/10"
                                 >
-                                  Modifier
+                                  {t('messenger.edit')}
                                 </button>
                                 <button
                                   type="button"
                                   role="menuitem"
                                   onClick={() => handleDelete(m.id_message, 'all')}
-                                  className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-slate-700"
+                                  className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-white/10"
                                 >
                                   {confirmKey === `${m.id_message}:all`
-                                    ? 'Confirmer la suppression ?'
-                                    : 'Supprimer pour tout le monde'}
+                                    ? t('messenger.confirmDelete')
+                                    : t('messenger.deleteForAll')}
                                 </button>
                               </>
                             )}
@@ -488,11 +491,11 @@ function Messenger({ externalUser = null }) {
                               type="button"
                               role="menuitem"
                               onClick={() => handleDelete(m.id_message, 'me')}
-                              className="block w-full px-3 py-2 text-left text-slate-300 transition hover:bg-slate-700"
+                              className="block w-full px-3 py-2 text-left text-white/80 transition hover:bg-white/10"
                             >
                               {confirmKey === `${m.id_message}:me`
-                                ? 'Confirmer la suppression ?'
-                                : 'Supprimer pour moi'}
+                                ? t('messenger.confirmDelete')
+                                : t('messenger.deleteForMe')}
                             </button>
                           </div>
                         )}
@@ -504,9 +507,9 @@ function Messenger({ externalUser = null }) {
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={handleSend} className="flex gap-2 border-t border-slate-800 p-3">
+            <form onSubmit={handleSend} className="flex gap-2 border-t border-white/20 p-3">
               <label htmlFor="message-draft" className="sr-only">
-                Votre message
+                {t('messenger.yourMessage')}
               </label>
               <input
                 id="message-draft"
@@ -514,15 +517,15 @@ function Messenger({ externalUser = null }) {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={2000}
-                placeholder="Écrivez votre message…"
-                className="w-full rounded-full border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC]"
+                placeholder={t('messenger.placeholder')}
+                className="w-full rounded-full border border-white/30 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC]"
               />
               <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                className={`shrink-0 rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0d3d8c] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                className={`shrink-0 rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
               >
-                {sending ? 'Envoi…' : 'Envoyer'}
+                {sending ? t('messenger.sending') : t('messenger.send')}
               </button>
             </form>
           </>
