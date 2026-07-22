@@ -267,7 +267,7 @@ function AdminPortsPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -336,6 +336,52 @@ function AdminPortsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile : une carte par port (le tableau ci-dessus est masqué). */}
+      <ul className="mt-5 space-y-3 md:hidden">
+        {loading || ports.length === 0 ? (
+          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+            {loading ? t('adminPorts.loading') : t('adminPorts.empty')}
+          </li>
+        ) : (
+          pagePorts.map((p) => (
+            <li
+              key={p.id_port}
+              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-white">{p.name}</p>
+                  <p className="text-sm text-white/70">
+                    {p.city}
+                    {p.region ? ` · ${p.region}` : ''}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/90">
+                  {t('adminPorts.colBoats')} : {p.boats_count ?? 0}
+                </span>
+              </div>
+
+              <p className="mt-2 font-mono text-xs text-white/60">
+                {fmtCoord(p.latitude)}, {fmtCoord(p.longitude)}
+              </p>
+
+              <div className="mt-3 flex justify-end border-t border-white/15 pt-3">
+                <IconBtn
+                  title={
+                    p.boats_count > 0 ? t('adminPorts.removeDisabled') : t('adminPorts.remove')
+                  }
+                  variant="danger"
+                  disabled={busyId === p.id_port || p.boats_count > 0}
+                  onClick={() => remove(p)}
+                >
+                  <TrashIcon />
+                </IconBtn>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
 
       <Pagination
         page={page}

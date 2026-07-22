@@ -178,7 +178,7 @@ function AdminDocumentsPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -272,6 +272,64 @@ function AdminDocumentsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile : une carte par document (le tableau ci-dessus est masqué). */}
+      <ul className="mt-5 space-y-3 md:hidden">
+        {loading || documents.length === 0 ? (
+          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+            {loading ? t('adminDocuments.loading') : t('adminDocuments.empty')}
+          </li>
+        ) : (
+          pageDocuments.map((d) => (
+            <li
+              key={d.id_document}
+              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 font-medium text-white">
+                  {d.user ? `${d.user.first_name} ${d.user.last_name}` : '—'}
+                </p>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    STATUS_CLS[d.status] || 'bg-slate-500/15 text-white/70'
+                  }`}
+                >
+                  {t(`adminDocuments.status.${d.status}`, { defaultValue: d.status })}
+                </span>
+              </div>
+
+              <p className="mt-1 break-all text-xs text-white/60">
+                {d.user?.email} {d.user ? `· ${roleLabel(d.user.role)}` : ''}
+              </p>
+
+              <p className="mt-2 text-sm text-white/90">{typeLabel(d.type)}</p>
+              <p className="text-xs text-white/60">{fmtDate(d.upload_date)}</p>
+
+              <div className="mt-3 flex justify-end gap-2 border-t border-white/15 pt-3">
+                <IconBtn title={t('adminDocuments.view')} variant="info" onClick={() => view(d)}>
+                  <EyeIcon />
+                </IconBtn>
+                <IconBtn
+                  title={t('adminDocuments.actionValidate')}
+                  variant="success"
+                  disabled={busyId === d.id_document || d.status === 'validated'}
+                  onClick={() => decide(d, 'validated')}
+                >
+                  <CheckIcon />
+                </IconBtn>
+                <IconBtn
+                  title={t('adminDocuments.actionRefuse')}
+                  variant="danger"
+                  disabled={busyId === d.id_document || d.status === 'refused'}
+                  onClick={() => decide(d, 'refused')}
+                >
+                  <XIcon />
+                </IconBtn>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
 
       <Pagination
         page={page}

@@ -65,11 +65,12 @@ function EditReviewModal({ review, onClose, onSaved }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center"
       onClick={() => !saving && onClose()}
     >
+      {/* max-h + scroll interne : sinon le clavier virtuel rogne les boutons sur mobile. */}
       <div
-        className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+        className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-white">{t('adminComments.editTitle')}</h2>
@@ -236,7 +237,7 @@ function AdminCommentsPage() {
         ))}
       </div>
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -335,6 +336,80 @@ function AdminCommentsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile : une carte par avis (le tableau ci-dessus est masqué). */}
+      <ul className="mt-5 space-y-3 md:hidden">
+        {loading || reviews.length === 0 ? (
+          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+            {loading ? t('adminComments.loading') : t('adminComments.empty')}
+          </li>
+        ) : (
+          pageReviews.map((r) => (
+            <li
+              key={r.id_review}
+              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 font-medium text-white">
+                  {r.author ? `${r.author.first_name} ${r.author.last_name}` : '—'}
+                </p>
+                <span
+                  className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    STATUS_CLS[r.status] || 'bg-slate-500/15 text-white/70'
+                  }`}
+                >
+                  {t(`adminComments.status.${r.status}`, { defaultValue: r.status })}
+                </span>
+              </div>
+
+              <p className="mt-0.5 text-xs text-white/60">{fmtDate(r.created_at)}</p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Stars rating={r.rating} />
+                <span className="text-sm text-white/70">{r.boat_name || '—'}</span>
+              </div>
+
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm text-white/80">
+                {r.comment || '—'}
+              </p>
+
+              <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-white/15 pt-3">
+                <IconBtn
+                  title={t('adminComments.actionValidate')}
+                  variant="success"
+                  disabled={busyId === r.id_review || r.status === 'validated'}
+                  onClick={() => setReviewStatus(r, 'validated')}
+                >
+                  <CheckIcon />
+                </IconBtn>
+                <IconBtn
+                  title={t('adminComments.actionRefuse')}
+                  variant="warn"
+                  disabled={busyId === r.id_review || r.status === 'refused'}
+                  onClick={() => setReviewStatus(r, 'refused')}
+                >
+                  <XIcon />
+                </IconBtn>
+                <IconBtn
+                  title={t('adminComments.actionEdit')}
+                  disabled={busyId === r.id_review}
+                  onClick={() => setEditing(r)}
+                >
+                  <EditIcon />
+                </IconBtn>
+                <IconBtn
+                  title={t('adminComments.actionDelete')}
+                  variant="danger"
+                  disabled={busyId === r.id_review}
+                  onClick={() => remove(r)}
+                >
+                  <TrashIcon />
+                </IconBtn>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
 
       <Pagination
         page={page}

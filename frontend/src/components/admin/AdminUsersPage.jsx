@@ -61,11 +61,11 @@ function EditUserModal({ user, onClose, onSaved }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+        className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-white">{t('adminUsers.editTitle')}</h2>
@@ -313,7 +313,34 @@ function AdminUsersPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+      {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
+      <div className="mt-5 flex flex-wrap items-center gap-2 md:hidden">
+        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+          {t('adminUsers.sortLabel')}
+        </span>
+        {[
+          { field: 'last_name', label: t('adminUsers.colName') },
+          { field: 'email', label: t('adminUsers.colEmail') },
+          { field: 'role', label: t('adminUsers.colRole') },
+          { field: 'created_at', label: t('adminUsers.colRegistered') },
+        ].map(({ field, label }) => (
+          <button
+            key={field}
+            type="button"
+            onClick={() => toggleSort(field)}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              sort === field
+                ? 'bg-sky-500 text-white'
+                : 'border border-white/30 text-white/80 hover:bg-white/10'
+            }`}
+          >
+            {label}
+            {sort === field ? (order === 'asc' ? ' ▲' : ' ▼') : ''}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -403,6 +430,73 @@ function AdminUsersPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile : une carte par utilisateur (le tableau ci-dessus est masqué). */}
+      <ul className="mt-5 space-y-3 md:hidden">
+        {loading || users.length === 0 ? (
+          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+            {loading ? t('adminUsers.loading') : t('adminUsers.empty')}
+          </li>
+        ) : (
+          pageUsers.map((u) => (
+            <li
+              key={u.id_user}
+              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 font-medium text-white">
+                  {u.first_name} {u.last_name}
+                </p>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    u.is_active
+                      ? 'bg-emerald-500/15 text-emerald-300'
+                      : 'bg-slate-500/15 text-white/70'
+                  }`}
+                >
+                  {u.is_active ? t('adminUsers.statusActive') : t('adminUsers.statusInactive')}
+                </span>
+              </div>
+
+              <p className="mt-1 break-all text-sm text-white/70">{u.email}</p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/70">
+                <span className="rounded-full bg-white/10 px-2.5 py-1 font-medium text-white/90">
+                  {roleLabel(u.role)}
+                </span>
+                <span>{u.phone || '—'}</span>
+                <span className="text-white/60">{fmtDate(u.created_at)}</span>
+              </div>
+
+              <div className="mt-3 flex justify-end gap-2 border-t border-white/15 pt-3">
+                <IconBtn
+                  title={t('adminUsers.edit')}
+                  disabled={busyId === u.id_user}
+                  onClick={() => setEditing(u)}
+                >
+                  <EditIcon />
+                </IconBtn>
+                <IconBtn
+                  title={u.is_active ? t('adminUsers.deactivate') : t('adminUsers.activate')}
+                  variant={u.is_active ? 'warn' : 'success'}
+                  disabled={busyId === u.id_user}
+                  onClick={() => toggleActive(u)}
+                >
+                  {u.is_active ? <BanIcon /> : <CheckIcon />}
+                </IconBtn>
+                <IconBtn
+                  title={t('adminUsers.delete')}
+                  variant="danger"
+                  disabled={busyId === u.id_user}
+                  onClick={() => remove(u)}
+                >
+                  <TrashIcon />
+                </IconBtn>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
 
       <Pagination
         page={page}

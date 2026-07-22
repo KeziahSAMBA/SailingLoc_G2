@@ -240,7 +240,7 @@ function AdminBookingsPage() {
             ))}
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -333,6 +333,64 @@ function AdminBookingsPage() {
             </table>
           </div>
 
+          {/* Mobile : une carte par réservation (le tableau ci-dessus est masqué). */}
+          <ul className="mt-4 space-y-3 md:hidden">
+            {bookingsLoading || bookings.length === 0 ? (
+              <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+                {bookingsLoading ? t('adminBookings.loading') : t('adminBookings.emptyBookings')}
+              </li>
+            ) : (
+              pageBookings.map((b) => (
+                <li
+                  key={b.id_booking}
+                  className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 font-medium text-white">
+                      {b.user ? `${b.user.first_name} ${b.user.last_name}` : '—'}
+                    </p>
+                    <span className={`shrink-0 ${badge(BOOKING_STATUS_CLS[b.status])}`}>
+                      {t(`bookingStatus.${b.status}`, { defaultValue: b.status })}
+                    </span>
+                  </div>
+
+                  {b.user?.email && (
+                    <p className="break-all text-xs text-white/60">{b.user.email}</p>
+                  )}
+
+                  <p className="mt-2 text-sm text-white/80">{b.boat?.name || '—'}</p>
+                  <p className="text-xs text-white/70">
+                    {fmtDate(b.start_date)} → {fmtDate(b.end_date)}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-white">
+                    {b.total_amount != null ? EURO.format(b.total_amount) : '—'}
+                  </p>
+
+                  {b.open_disputes > 0 && (
+                    <p className="mt-2">
+                      <span className="inline-block whitespace-nowrap rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
+                        {t('adminBookings.openDisputes', { count: b.open_disputes })}
+                      </span>
+                    </p>
+                  )}
+
+                  {(b.status === 'pending' || b.status === 'confirmed') && (
+                    <div className="mt-3 flex justify-end border-t border-white/15 pt-3">
+                      <IconBtn
+                        title={t('adminBookings.cancelBooking')}
+                        variant="danger"
+                        disabled={busyId === `b${b.id_booking}`}
+                        onClick={() => cancel(b)}
+                      >
+                        <BanIcon />
+                      </IconBtn>
+                    </div>
+                  )}
+                </li>
+              ))
+            )}
+          </ul>
+
           <Pagination
             page={bookingsPage}
             pageSize={PAGE_SIZE}
@@ -357,7 +415,7 @@ function AdminBookingsPage() {
             ))}
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -457,6 +515,83 @@ function AdminBookingsPage() {
             </table>
           </div>
 
+          {/* Mobile : une carte par litige (le tableau ci-dessus est masqué). */}
+          <ul className="mt-4 space-y-3 md:hidden">
+            {disputesLoading || disputes.length === 0 ? (
+              <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+                {disputesLoading ? t('adminBookings.loading') : t('adminBookings.emptyDisputes')}
+              </li>
+            ) : (
+              pageDisputes.map((d) => (
+                <li
+                  key={d.id_dispute}
+                  className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium text-white">{d.booking?.boat_name || '—'}</p>
+                      <p className="text-xs text-white/60">
+                        {fmtDate(d.booking?.start_date)} → {fmtDate(d.booking?.end_date)}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 ${badge(DISPUTE_STATUS_CLS[d.status])}`}>
+                      {t(`adminBookings.disputeStatus.${d.status}`, { defaultValue: d.status })}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-white/80">
+                    {d.reason}
+                  </p>
+
+                  {d.photos?.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {d.photos.map((url) => (
+                        <a key={url} href={url} target="_blank" rel="noreferrer">
+                          <img
+                            src={url}
+                            alt={t('adminBookings.photoAlt')}
+                            loading="lazy"
+                            className="h-12 w-12 rounded border border-white/30 object-cover transition hover:border-[#5AB4EC]"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {d.resolution && (
+                    <p className="mt-2 text-xs text-white/60">
+                      {t('adminBookings.resolutionPrefix', { text: d.resolution })}
+                    </p>
+                  )}
+
+                  <p className="mt-2 text-xs text-white/60">
+                    {t('adminBookings.colOpenedBy')} :{' '}
+                    {d.opener ? `${d.opener.first_name} ${d.opener.last_name}` : '—'}
+                  </p>
+
+                  <div className="mt-3 flex justify-end gap-2 border-t border-white/15 pt-3">
+                    <IconBtn
+                      title={t('adminBookings.disputeResolve')}
+                      variant="success"
+                      disabled={d.status === 'resolved'}
+                      onClick={() => openDecision(d, 'resolved')}
+                    >
+                      <CheckIcon />
+                    </IconBtn>
+                    <IconBtn
+                      title={t('adminBookings.disputeReject')}
+                      variant="danger"
+                      disabled={d.status === 'rejected'}
+                      onClick={() => openDecision(d, 'rejected')}
+                    >
+                      <XIcon />
+                    </IconBtn>
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+
           <Pagination
             page={disputesPage}
             pageSize={PAGE_SIZE}
@@ -470,11 +605,11 @@ function AdminBookingsPage() {
 
       {decision && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center"
           onClick={() => !deciding && setDecision(null)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+            className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-semibold text-white">

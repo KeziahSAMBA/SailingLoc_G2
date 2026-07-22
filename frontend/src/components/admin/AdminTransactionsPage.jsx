@@ -260,8 +260,28 @@ function AdminTransactionsPage() {
         )}
       </div>
 
-      {/* Tableau */}
-      <div className="mt-4 overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+      {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 md:hidden">
+        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+          {t('adminTransactions.sortLabel')}
+        </span>
+        {['date', 'amount', 'commission'].map((field) => (
+          <button
+            key={field}
+            type="button"
+            onClick={() => toggleSort(field)}
+            className={pill(sortBy === field)}
+          >
+            {t(
+              `adminTransactions.col${field === 'date' ? 'Date' : field === 'amount' ? 'Amount' : 'Commission'}`
+            )}
+            {sortArrow(field)}
+          </button>
+        ))}
+      </div>
+
+      {/* Tableau (desktop) */}
+      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -381,6 +401,74 @@ function AdminTransactionsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile : une carte par transaction (le tableau ci-dessus est masqué). */}
+      <ul className="mt-4 space-y-3 md:hidden">
+        {loading || visiblePayments.length === 0 ? (
+          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+            {loading ? t('adminTransactions.loading') : t('adminTransactions.empty')}
+          </li>
+        ) : (
+          pagePayments.map((p) => (
+            <li
+              key={p.id_payment}
+              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="min-w-0 break-all font-mono text-xs text-white/80">
+                  {p.transaction_ref || '—'}
+                </span>
+                <span className={`shrink-0 ${badge(STATUS_CLS[p.status])}`}>
+                  {t(`adminTransactions.status.${p.status}`, { defaultValue: p.status })}
+                </span>
+              </div>
+
+              <p className="mt-2 text-xs text-white/60">{fmtDate(p.payment_date)}</p>
+
+              <p className="mt-2 text-sm font-medium text-white">
+                {p.booking?.guest_first_name || p.booking?.guest_last_name
+                  ? `${p.booking.guest_first_name || ''} ${p.booking.guest_last_name || ''}`.trim()
+                  : '—'}
+              </p>
+              {p.booking?.guest_email && (
+                <p className="break-all text-xs text-white/60">{p.booking.guest_email}</p>
+              )}
+              <p className="mt-1 text-xs text-white/70">
+                {p.booking?.boat_name || '—'} ·{' '}
+                {t(`adminTransactions.methods.${p.payment_method}`, {
+                  defaultValue: p.payment_method,
+                })}
+              </p>
+
+              <dl className="mt-3 space-y-1 border-t border-white/15 pt-3 text-sm">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-white/70">{t('adminTransactions.colAmount')}</dt>
+                  <dd className="font-medium text-white">{EURO.format(p.amount)}</dd>
+                </div>
+                {p.status === 'refunded' && p.refunded_amount != null && (
+                  <div className="flex justify-end">
+                    <span className="text-xs text-sky-300">
+                      {t('adminTransactions.refundedAmount', {
+                        amount: EURO.format(p.refunded_amount),
+                      })}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between gap-3">
+                  <dt className="text-white/70">{t('adminTransactions.colCommission')}</dt>
+                  <dd className="font-medium text-emerald-300">{EURO.format(p.commission)}</dd>
+                </div>
+              </dl>
+
+              {p.id_dispute && (
+                <p className="mt-2 text-xs text-white/60">
+                  {t('adminTransactions.dispute', { id: p.id_dispute })}
+                </p>
+              )}
+            </li>
+          ))
+        )}
+      </ul>
 
       <Pagination
         page={page}
