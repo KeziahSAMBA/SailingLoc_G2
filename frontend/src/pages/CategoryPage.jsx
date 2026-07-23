@@ -800,32 +800,18 @@ function CategoryPage() {
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
           {/* Section 1 — Searchbar sticky */}
-          <section
-            className="relative z-40 xl:sticky"
-            style={{
-              top: scrolled ? '60px' : '80px',
-              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
-              backdropFilter: scrolled ? 'blur(5px)' : 'none',
-              WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
-              borderBottom: scrolled ? '1px solid rgba(255,255,255,0.3)' : '1px solid transparent',
-              transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
-            }}
-          >
+          <section className="relative z-20 w-full">
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
-              className="flex w-full flex-col items-stretch gap-3 px-4 pb-3 sm:px-8 lg:px-16 xl:flex-row xl:items-center xl:gap-8 xl:pl-28 xl:pr-20"
-              style={{
-                paddingTop: scrolled ? '8px' : '32px',
-                transition: 'padding-top 0.3s ease',
-              }}
+              className="flex w-full flex-col items-stretch gap-3 px-4 pb-3 pt-4 sm:px-8 sm:pt-6 lg:px-16 xl:px-28 xl:pt-8"
             >
               {/* Double inline du fil d'ariane, replié hors compact (le fil vit
                   alors sur sa propre ligne en dessous) : il se déploie à gauche
                   des filtres au scroll. Le marginRight négatif annule le gap-8
                   de la rangée pour que le slot replié n'occupe aucune place. */}
               <div
-                className="hidden overflow-hidden whitespace-nowrap xl:block"
+                className="hidden"
                 style={{
                   maxWidth: scrolled ? '320px' : '0px',
                   marginRight: scrolled ? '0px' : '-32px',
@@ -837,7 +823,7 @@ function CategoryPage() {
               >
                 <Breadcrumb light compact />
               </div>
-              <div className="w-full min-w-0 xl:w-auto" style={slideInStyle(0)}>
+              <div className="w-full min-w-0" style={slideInStyle(0)}>
                 <FilterBar
                   light
                   compact={scrolled}
@@ -856,7 +842,7 @@ function CategoryPage() {
                   onReset={resetFilters}
                 />
               </div>
-              <div ref={searchBarWrapRef} className="w-full min-w-0 xl:w-auto">
+              <div ref={searchBarWrapRef} className="w-full min-w-0">
                 <SearchBar
                   light
                   compact={scrolled}
@@ -868,7 +854,7 @@ function CategoryPage() {
             {/* Fil d'ariane pleine ligne (état haut de page) : s'écrase en
                 douceur au scroll, le temps que son double inline prenne le
                 relais dans la rangée ci-dessus. */}
-            <div className="overflow-hidden xl:hidden">
+            <div className="overflow-hidden">
               <div
                 className="px-4 pb-3 pt-1 sm:px-8 lg:px-16 xl:pl-28 xl:pr-20"
                 style={slideInStyle(1)}
@@ -876,13 +862,6 @@ function CategoryPage() {
                 <Breadcrumb light />
               </div>
             </div>
-            {!scrolled && (
-              <div className="hidden overflow-hidden xl:block">
-                <div className="pb-2 pl-28 pt-1" style={slideInStyle(1)}>
-                  <Breadcrumb light />
-                </div>
-              </div>
-            )}
           </section>
 
           {/* Section 2 — Listings + Carte 50/50 */}

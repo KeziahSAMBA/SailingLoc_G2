@@ -170,7 +170,7 @@ function FilterBar({
   ];
 
   return (
-    <div className="relative block w-full xl:inline-block xl:w-auto" ref={containerRef}>
+    <div className="relative block w-full" ref={containerRef}>
       {/* Header — always visible */}
       <div
         className={`flex w-full cursor-pointer select-none flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 transition-colors sm:gap-3 sm:rounded-full sm:px-4 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
@@ -238,7 +238,7 @@ function FilterBar({
       {/* Expanded filter panel */}
       {filterOpen && (
         <div
-          className="fixed inset-x-4 top-24 z-50 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl p-4 sm:absolute sm:inset-x-auto sm:left-0 sm:top-full sm:mt-2 sm:w-[min(900px,calc(100vw-4rem))] sm:p-6"
+          className="relative z-10 mb-6 mt-2 w-full overflow-visible rounded-xl p-4 sm:p-6"
           style={{
             backgroundColor: 'rgba(255,255,255,0.98)',
             boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
