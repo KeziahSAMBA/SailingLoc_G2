@@ -268,7 +268,11 @@ function SearchBar({
           ci-dessus, qui a besoin de mesurer/figer le style avant de l'activer. */}
       <div
         ref={fieldsRef}
-        className="flex w-full flex-col items-stretch overflow-visible sm:w-auto sm:flex-row sm:overflow-hidden"
+        className={`flex w-full flex-col items-stretch sm:w-auto sm:flex-row sm:overflow-hidden ${
+          retracted
+            ? 'max-h-0 overflow-hidden sm:max-h-none'
+            : 'max-h-[32rem] overflow-visible sm:max-h-none'
+        }`}
         aria-hidden={retracted}
         style={{
           maxWidth: retracted ? '0px' : 'none',

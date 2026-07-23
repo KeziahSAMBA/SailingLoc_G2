@@ -477,9 +477,8 @@ function ProductPage() {
 
           {/* Section 1 — Searchbar + fil d'ariane sticky */}
           <section
-            className="z-40"
+            className="relative z-40 lg:sticky"
             style={{
-              position: 'sticky',
               top: scrolled ? '60px' : '80px',
               backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
               backdropFilter: scrolled ? 'blur(5px)' : 'none',
@@ -500,7 +499,10 @@ function ProductPage() {
               <div className="min-w-0 overflow-hidden" style={slideInStyle(0)}>
                 <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
               </div>
-              <div ref={searchBarWrapRef} className="w-full min-w-0 lg:w-auto">
+              <div
+                ref={searchBarWrapRef}
+                className="mx-auto w-full min-w-0 max-w-sm sm:max-w-2xl lg:mx-0 lg:w-auto lg:max-w-none"
+              >
                 <SearchBar
                   light
                   compact={scrolled}
@@ -531,16 +533,14 @@ function ProductPage() {
               <div className="contents xl:flex xl:min-w-0 xl:flex-1 xl:flex-col xl:gap-5">
                 {/* Galerie : image principale + vues secondaires (jusqu'à 4) */}
                 <div
-                  className={`order-1 grid grid-cols-2 grid-rows-4 gap-2 sm:gap-4 md:h-[440px] md:grid-cols-4 md:grid-rows-2 xl:order-none ${
-                    thumbs.length > 0 ? 'h-[620px] sm:h-[720px]' : 'h-[340px] sm:h-[440px]'
-                  }`}
+                  className="order-1 grid h-[340px] grid-cols-1 grid-rows-1 gap-2 sm:h-[440px] sm:gap-4 xl:order-none xl:grid-cols-4 xl:grid-rows-2"
                   style={slideInStyleLate('gallery', 1)}
                 >
                   <div
                     className={`relative overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] group sm:rounded-3xl ${
                       thumbs.length > 0
-                        ? 'col-span-2 row-span-2'
-                        : 'col-span-2 row-span-4 md:col-span-4 md:row-span-2'
+                        ? 'col-span-1 row-span-1 xl:col-span-2 xl:row-span-2'
+                        : 'col-span-1 row-span-1 xl:col-span-4 xl:row-span-2'
                     }`}
                   >
                     <img
@@ -552,7 +552,7 @@ function ProductPage() {
                   {thumbs.map((img) => (
                     <div
                       key={img.url}
-                      className="relative overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)] sm:rounded-3xl"
+                      className="relative hidden overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)] sm:rounded-3xl xl:block"
                     >
                       <img
                         src={img.url}
