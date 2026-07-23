@@ -146,14 +146,27 @@ function Header() {
     }
   }
 
+  function handleNavClick(href) {
+    setMenuOpen(false);
+    if (href === '/categorie') {
+      if (location.pathname === '/categorie') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        goToCategory();
+      }
+      return;
+    }
+    navigate(href);
+  }
+
   const iconSize = scrolled ? '14px' : '16px';
   const onCategoriePage = location.pathname === '/categorie';
 
   return (
     <header
-      className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
+      className="fixed top-0 left-0 z-50 flex w-full items-center px-4 sm:px-6 lg:px-12"
       style={{
-        height: scrolled ? '60px' : '80px',
+        height: scrolled ? '60px' : 'clamp(64px, 6vw, 80px)',
         transform: introHidden ? 'translateY(-110%)' : 'none',
         transition: `height 0.3s ease, transform ${CATEGORY_ENTER_TOTAL}ms ${INTRO_SOFT_EASING}`,
       }}
@@ -175,7 +188,7 @@ function Header() {
       />
 
       {/* Gauche — Burger + Logo (33%) */}
-      <div className="w-1/3 flex items-center gap-4 pl-4">
+      <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {/* Burger */}
         <div className="relative" ref={menuRef}>
           <button
@@ -190,22 +203,38 @@ function Header() {
             side="left"
             open={menuOpen}
             scrolled={scrolled}
-            width="260px"
+            width="min(320px, 86vw)"
             darkerOverlay={onCategoriePage}
           >
-            <div className="flex flex-col" style={{ height: onCategoriePage ? '41%' : '69%' }}>
-              {(onCategoriePage ? getCategoryBurgerItems(t) : getBurgerItems(t)).map(
-                ({ label, anchor }) => (
+            <div className="flex h-full flex-col overflow-y-auto">
+              <div className="flex flex-col border-b border-white/15 py-2 lg:hidden">
+                {getNavLinks(t).map(([label, href]) => (
                   <PanelLink
-                    key={label}
+                    key={href}
                     scrolled={scrolled}
-                    stretch
-                    onClick={() => scrollToAnchor(anchor, onCategoriePage ? '/categorie' : '/')}
+                    onClick={() => handleNavClick(href)}
                   >
                     {label}
                   </PanelLink>
-                )
-              )}
+                ))}
+              </div>
+              <div
+                className="flex min-h-0 flex-1 flex-col"
+                style={{ maxHeight: onCategoriePage ? '41%' : '69%' }}
+              >
+                {(onCategoriePage ? getCategoryBurgerItems(t) : getBurgerItems(t)).map(
+                  ({ label, anchor }) => (
+                    <PanelLink
+                      key={label}
+                      scrolled={scrolled}
+                      stretch
+                      onClick={() => scrollToAnchor(anchor, onCategoriePage ? '/categorie' : '/')}
+                    >
+                      {label}
+                    </PanelLink>
+                  )
+                )}
+              </div>
             </div>
           </SidePanel>
         </div>
@@ -215,7 +244,7 @@ function Header() {
       </div>
 
       {/* Centre — Navigation (33%) */}
-      <nav className="w-1/3 flex justify-center">
+      <nav className="hidden w-1/3 justify-center lg:flex">
         <ul className="flex gap-10 list-none m-0 p-0">
           {getNavLinks(t).map(([label, href]) => (
             <li key={href}>
@@ -266,8 +295,8 @@ function Header() {
       </nav>
 
       {/* Droite — Langue + Connexion (33%) */}
-      <div className="w-1/3 flex items-center justify-end gap-4 pr-4">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4 lg:w-1/3 lg:flex-none lg:pr-4">
+        <div className="hidden items-center gap-2.5 sm:flex">
           {LANGUAGES.map(({ code, Flag, label }) => (
             <button
               key={code}
@@ -290,7 +319,7 @@ function Header() {
         </div>
 
         {authLoading ? (
-          <div style={{ height: scrolled ? '24px' : '2px', width: '120px' }} aria-hidden="true" />
+          <div className="h-6 w-9 sm:w-[120px]" aria-hidden="true" />
         ) : user ? (
           <div className="relative" ref={userMenuRef}>
             <button
@@ -300,8 +329,10 @@ function Header() {
               {...authBtnHover}
             >
               <UserIcon size={iconSize} />
-              {user.first_name}
-              <ChevronDown open={userMenuOpen} />
+              <span className="hidden sm:inline">{user.first_name}</span>
+              <span className="hidden sm:inline">
+                <ChevronDown open={userMenuOpen} />
+              </span>
             </button>
 
             {userMenuOpen && (
@@ -425,7 +456,7 @@ function Header() {
             {...authBtnHover}
           >
             <UserIcon size={iconSize} />
-            {t('header.auth.login')}
+            <span className="hidden sm:inline">{t('header.auth.login')}</span>
           </button>
         )}
       </div>

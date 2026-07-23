@@ -125,11 +125,22 @@ function DashboardHeader({
     }
   }
 
+  function handleCenterNavClick({ to, anchor }) {
+    setNavOpen(false);
+    if (anchor) {
+      scrollToAnchor(anchor, location.pathname);
+    } else if (to === location.pathname) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      categoryNavigate(to);
+    }
+  }
+
   return (
     <header
-      className="fixed top-0 left-0 w-full z-50 flex items-center px-12"
+      className="fixed top-0 left-0 z-50 flex w-full items-center px-4 sm:px-6 lg:px-12"
       style={{
-        height: scrolled ? '60px' : '80px',
+        height: scrolled ? '60px' : 'clamp(64px, 6vw, 80px)',
         transform: introHidden ? 'translateY(-110%)' : 'none',
         transition: `height 0.3s ease, transform ${CATEGORY_ENTER_TOTAL}ms ${INTRO_SOFT_EASING}`,
       }}
@@ -151,7 +162,7 @@ function DashboardHeader({
       />
 
       {/* Gauche — Burger nav + Logo (33%) */}
-      <div className="w-1/3 flex items-center gap-4 pl-4">
+      <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {leftGroups && (
           <div className="relative" ref={navRef}>
             <button
@@ -166,10 +177,21 @@ function DashboardHeader({
               side="left"
               open={navOpen}
               scrolled={scrolled}
-              width="260px"
+              width="min(320px, 86vw)"
               darkerOverlay={onCategoriePage}
             >
-              <div style={{ height: '100%' }}>
+              <div className="h-full overflow-y-auto">
+                <div className="flex flex-col border-b border-white/15 py-2 lg:hidden">
+                  {centerNav.map((item) => (
+                    <PanelLink
+                      key={item.label}
+                      scrolled={scrolled}
+                      onClick={() => handleCenterNavClick(item)}
+                    >
+                      {item.label}
+                    </PanelLink>
+                  ))}
+                </div>
                 {leftGroups.map((group, groupIdx) => (
                   <Fragment key={groupIdx}>
                     <div className="flex flex-col" style={{ height: group.heightPercent }}>
@@ -211,7 +233,7 @@ function DashboardHeader({
       </div>
 
       {/* Centre — Navigation (33%) */}
-      <nav className="w-1/3 flex justify-center">
+      <nav className="hidden w-1/3 justify-center lg:flex">
         <ul className={`flex ${centerGapClass} list-none m-0 p-0`} style={{ whiteSpace: 'nowrap' }}>
           {centerNav.map(({ label, to, anchor }) => (
             <li key={label} style={{ whiteSpace: 'nowrap' }}>
@@ -256,8 +278,8 @@ function DashboardHeader({
       </nav>
 
       {/* Droite — Langue + Icône utilisateur + Burger menu (33%) */}
-      <div className="w-1/3 flex items-center justify-end gap-3 pr-4">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-3 lg:w-1/3 lg:flex-none lg:pr-4">
+        <div className="hidden items-center gap-2.5 md:flex">
           {languageAsFlags
             ? LANGUAGES.map(({ code, Flag, label }) => (
                 <button
@@ -313,10 +335,11 @@ function DashboardHeader({
             e.preventDefault();
             navigate(profileHref);
           }}
-          className="flex items-center gap-3"
+          className="flex items-center gap-2 sm:gap-3"
           style={{ textDecoration: 'none' }}
         >
           <span
+            className="hidden xl:inline"
             style={{
               color: '#fff',
               fontSize: scrolled ? '0.75rem' : '0.85rem',
@@ -343,8 +366,8 @@ function DashboardHeader({
           <div
             className="rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
             style={{
-              width: scrolled ? '32px' : '40px',
-              height: scrolled ? '32px' : '40px',
+              width: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
+              height: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
               border: '1.5px solid rgba(255, 255, 255, 0.7)',
               backgroundColor: 'rgba(255, 255, 255, 0.1)',
               transition: 'width 0.3s ease, height 0.3s ease, background-color 0.2s ease',
@@ -365,8 +388,8 @@ function DashboardHeader({
             onClick={() => navigate(messagesTo)}
             className="relative rounded-full flex items-center justify-center flex-shrink-0"
             style={{
-              width: scrolled ? '32px' : '40px',
-              height: scrolled ? '32px' : '40px',
+              width: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
+              height: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
               transition: 'width 0.3s ease, height 0.3s ease, opacity 0.2s ease',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
@@ -398,7 +421,7 @@ function DashboardHeader({
             side="right"
             open={rightMenuOpen}
             scrolled={scrolled}
-            width={rightPanelWidth}
+            width={`min(${rightPanelWidth}, 86vw)`}
             darkerOverlay={onCategoriePage}
           >
             <div

@@ -1,5 +1,5 @@
 function SidePanel({ side, open, scrolled, width, children, darkerOverlay = false }) {
-  const panelTop = scrolled ? '60px' : '80px';
+  const panelTop = scrolled ? '60px' : 'clamp(64px, 6vw, 80px)';
   const isLeft = side === 'left';
 
   return (
