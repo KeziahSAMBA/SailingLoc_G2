@@ -544,7 +544,9 @@ function ProductPage() {
                   {thumbs.map((img) => (
                     <div
                       key={img.url}
-                      className="relative hidden overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)] sm:rounded-3xl xl:block"
+                      className={`relative hidden overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)] sm:rounded-3xl xl:block ${
+                        thumbs.length === 1 ? 'xl:col-span-2 xl:row-span-2' : ''
+                      }`}
                     >
                       <img
                         src={img.url}
