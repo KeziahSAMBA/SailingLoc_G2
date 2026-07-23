@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import Pagination from '../common/Pagination.jsx';
+import usePagination from '../../hooks/usePagination.js';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
+import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EyeIcon, EyeOffIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 import {
   listBoats,
@@ -15,31 +19,33 @@ const EURO = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 0,
 });
 
-const REPORT_STATUS = {
-  pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
-  resolved: { label: 'Traité', cls: 'bg-emerald-500/15 text-emerald-300' },
-  dismissed: { label: 'Rejeté', cls: 'bg-slate-600/30 text-slate-400' },
+const REPORT_STATUS_CLS = {
+  pending: 'bg-amber-500/15 text-amber-300',
+  resolved: 'bg-emerald-500/15 text-emerald-300',
+  dismissed: 'bg-slate-500/15 text-white/70',
 };
 
 const REPORT_FILTERS = [
-  ['pending', 'En attente'],
-  ['', 'Tous'],
-  ['resolved', 'Traités'],
-  ['dismissed', 'Rejetés'],
+  { value: 'pending', labelKey: 'pending' },
+  { value: '', labelKey: 'all' },
+  { value: 'resolved', labelKey: 'resolved' },
+  { value: 'dismissed', labelKey: 'dismissed' },
 ];
 
 const PUBLISHED_FILTERS = [
-  ['', 'Tous'],
-  ['true', 'Publiés'],
-  ['false', 'Non publiés'],
+  { value: '', labelKey: 'all' },
+  { value: 'true', labelKey: 'published' },
+  { value: 'false', labelKey: 'unpublished' },
 ];
 
-function fmtDate(d) {
-  return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
-}
+const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
+
+const PAGE_SIZE = 10;
 
 function AdminPublicationPage() {
+  const { t } = useTranslation();
   const { showToast } = useToast();
+  const fmtDate = (d) => (d ? formatDate(d, DATE_OPTS) : '—');
   const [tab, setTab] = useState('boats');
   const [busyId, setBusyId] = useState(null);
 
@@ -57,11 +63,11 @@ function AdminPublicationPage() {
       const res = await listBoats(published ? { published } : {});
       setBoats(res.data.boats);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Erreur de chargement.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.loadError'), 'error');
     } finally {
       setBoatsLoading(false);
     }
-  }, [published, showToast]);
+  }, [published, showToast, t]);
 
   const loadReports = useCallback(async () => {
     setReportsLoading(true);
@@ -69,11 +75,11 @@ function AdminPublicationPage() {
       const res = await listReports(reportStatus);
       setReports(res.data.reports);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Erreur de chargement.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.loadError'), 'error');
     } finally {
       setReportsLoading(false);
     }
-  }, [reportStatus, showToast]);
+  }, [reportStatus, showToast, t]);
 
   useEffect(() => {
     if (tab === 'boats') loadBoats();
@@ -81,6 +87,17 @@ function AdminPublicationPage() {
   useEffect(() => {
     if (tab === 'reports') loadReports();
   }, [tab, loadReports]);
+
+  const {
+    page: boatsPage,
+    setPage: setBoatsPage,
+    pageItems: pageBoats,
+  } = usePagination(boats, PAGE_SIZE, published);
+  const {
+    page: reportsPage,
+    setPage: setReportsPage,
+    pageItems: pageReports,
+  } = usePagination(reports, PAGE_SIZE, reportStatus);
 
   async function togglePublish(b) {
     setBusyId(`b${b.id_boat}`);
@@ -91,12 +108,12 @@ function AdminPublicationPage() {
       );
       showToast(
         b.is_published
-          ? 'Bateau dépublié — propriétaire notifié par email.'
-          : 'Bateau publié — propriétaire notifié par email.',
+          ? t('adminPublication.unpublishedToast')
+          : t('adminPublication.publishedToast'),
         'success'
       );
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -111,9 +128,14 @@ function AdminPublicationPage() {
       } else {
         setReports((prev) => prev.map((x) => (x.id_report === r.id_report ? { ...x, status } : x)));
       }
-      showToast(status === 'resolved' ? 'Signalement traité.' : 'Signalement rejeté.', 'success');
+      showToast(
+        status === 'resolved'
+          ? t('adminPublication.reportResolvedToast')
+          : t('adminPublication.reportDismissedToast'),
+        'success'
+      );
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -124,10 +146,10 @@ function AdminPublicationPage() {
     try {
       await setBoatPublished(r.boat.id_boat, false);
       // La dépublication clôt les signalements en attente du bateau côté serveur → on rafraîchit.
-      showToast('Bateau dépublié — propriétaire notifié, signalement clôturé.', 'success');
+      showToast(t('adminPublication.unpublishFromReportToast'), 'success');
       await loadReports();
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec.', 'error');
+      showToast(err.response?.data?.message || t('adminPublication.genericError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -136,90 +158,98 @@ function AdminPublicationPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-[#0A3172] text-white'
-        : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+        ? 'bg-sky-500 text-white'
+        : 'border border-white/30 text-white/80 hover:bg-white/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
-      active
-        ? 'bg-[#0A3172] text-white'
-        : 'border border-slate-700 text-slate-300 hover:bg-slate-800'
+      active ? 'bg-sky-500 text-white' : 'border border-white/30 text-white/80 hover:bg-white/10'
     }`;
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">Publication</h1>
-      <p className="mt-1 text-sm text-slate-400">
-        Gérez la publication des bateaux et traitez les signalements.
-      </p>
+      <h1 className="text-2xl font-bold text-white">{t('adminPublication.title')}</h1>
+      <p className="mt-1 text-sm text-white/70">{t('adminPublication.subtitle')}</p>
 
       <div className="mt-5 flex gap-2">
         <button type="button" onClick={() => setTab('boats')} className={tabBtn('boats')}>
-          Bateaux
+          {t('adminPublication.tabBoats')}
         </button>
         <button type="button" onClick={() => setTab('reports')} className={tabBtn('reports')}>
-          Signalements
+          {t('adminPublication.tabReports')}
         </button>
       </div>
 
       {tab === 'boats' ? (
         <>
           <div className="mt-4 flex flex-wrap gap-2">
-            {PUBLISHED_FILTERS.map(([v, l]) => (
+            {PUBLISHED_FILTERS.map(({ value, labelKey }) => (
               <button
-                key={l}
+                key={labelKey}
                 type="button"
-                onClick={() => setPublished(v)}
-                className={pill(published === v)}
+                onClick={() => setPublished(value)}
+                className={pill(published === value)}
               >
-                {l}
+                {t(`adminPublication.publishedFilters.${labelKey}`)}
               </button>
             ))}
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Bateau</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Propriétaire</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Prix/jour</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Signalements</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-300">Action</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colBoat')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colOwner')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colPrice')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colStatus')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colReports')}
+                  </th>
+                  <th className="px-4 py-3 text-right font-semibold text-white/80">
+                    {t('adminPublication.colAction')}
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-white/15">
                 {boatsLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                      Chargement…
+                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
+                      {t('adminPublication.loading')}
                     </td>
                   </tr>
                 ) : boats.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                      Aucun bateau.
+                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
+                      {t('adminPublication.emptyBoats')}
                     </td>
                   </tr>
                 ) : (
-                  boats.map((b) => (
-                    <tr key={b.id_boat} className="text-slate-200">
+                  pageBoats.map((b) => (
+                    <tr key={b.id_boat} className="text-white/90">
                       <td className="px-4 py-3">
                         <Link
-                          to={`/boats/${b.id_boat}`}
+                          to={`/product/${b.id_boat}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-medium text-[#5AB4EC] hover:underline"
                         >
                           {b.name}
                         </Link>
-                        <div className="text-xs text-slate-500">{b.type}</div>
+                        <div className="text-xs text-white/60">{b.type}</div>
                       </td>
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="px-4 py-3 text-white/70">
                         {b.owner ? `${b.owner.first_name} ${b.owner.last_name}` : '—'}
                       </td>
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="px-4 py-3 text-white/70">
                         {b.daily_price != null ? EURO.format(b.daily_price) : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -227,25 +257,31 @@ function AdminPublicationPage() {
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                             b.is_published
                               ? 'bg-emerald-500/15 text-emerald-300'
-                              : 'bg-slate-600/30 text-slate-400'
+                              : 'bg-slate-500/15 text-white/70'
                           }`}
                         >
-                          {b.is_published ? 'Publié' : 'Non publié'}
+                          {b.is_published
+                            ? t('adminPublication.published')
+                            : t('adminPublication.unpublished')}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         {b.pending_reports > 0 ? (
                           <span className="inline-block whitespace-nowrap rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
-                            {b.pending_reports} en attente
+                            {t('adminPublication.pendingReports', { count: b.pending_reports })}
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-500">—</span>
+                          <span className="text-xs text-white/60">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end">
                           <IconBtn
-                            title={b.is_published ? 'Dépublier' : 'Publier'}
+                            title={
+                              b.is_published
+                                ? t('adminPublication.unpublish')
+                                : t('adminPublication.publish')
+                            }
                             variant={b.is_published ? 'default' : 'success'}
                             disabled={busyId === `b${b.id_boat}`}
                             onClick={() => togglePublish(b)}
@@ -260,54 +296,144 @@ function AdminPublicationPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile : une carte par bateau (le tableau ci-dessus est masqué). */}
+          <ul className="mt-4 space-y-3 md:hidden">
+            {boatsLoading || boats.length === 0 ? (
+              <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+                {boatsLoading ? t('adminPublication.loading') : t('adminPublication.emptyBoats')}
+              </li>
+            ) : (
+              pageBoats.map((b) => (
+                <li
+                  key={b.id_boat}
+                  className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link
+                        to={`/product/${b.id_boat}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-[#5AB4EC] hover:underline"
+                      >
+                        {b.name}
+                      </Link>
+                      <p className="text-xs text-white/60">{b.type}</p>
+                    </div>
+                    <span
+                      className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        b.is_published
+                          ? 'bg-emerald-500/15 text-emerald-300'
+                          : 'bg-slate-500/15 text-white/70'
+                      }`}
+                    >
+                      {b.is_published
+                        ? t('adminPublication.published')
+                        : t('adminPublication.unpublished')}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-sm text-white/70">
+                    {b.owner ? `${b.owner.first_name} ${b.owner.last_name}` : '—'}
+                    {b.daily_price != null ? ` · ${EURO.format(b.daily_price)}` : ''}
+                  </p>
+
+                  {b.pending_reports > 0 && (
+                    <p className="mt-2">
+                      <span className="inline-block whitespace-nowrap rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
+                        {t('adminPublication.pendingReports', { count: b.pending_reports })}
+                      </span>
+                    </p>
+                  )}
+
+                  <div className="mt-3 flex justify-end border-t border-white/15 pt-3">
+                    <IconBtn
+                      title={
+                        b.is_published
+                          ? t('adminPublication.unpublish')
+                          : t('adminPublication.publish')
+                      }
+                      variant={b.is_published ? 'default' : 'success'}
+                      disabled={busyId === `b${b.id_boat}`}
+                      onClick={() => togglePublish(b)}
+                    >
+                      {b.is_published ? <EyeOffIcon /> : <EyeIcon />}
+                    </IconBtn>
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+
+          <Pagination
+            page={boatsPage}
+            pageSize={PAGE_SIZE}
+            total={boats.length}
+            onChange={setBoatsPage}
+            label={t('adminPublication.paginationBoats')}
+            className="mt-4"
+          />
         </>
       ) : (
         <>
           <div className="mt-4 flex flex-wrap gap-2">
-            {REPORT_FILTERS.map(([v, l]) => (
+            {REPORT_FILTERS.map(({ value, labelKey }) => (
               <button
-                key={l}
+                key={labelKey}
                 type="button"
-                onClick={() => setReportStatus2(v)}
-                className={pill(reportStatus === v)}
+                onClick={() => setReportStatus2(value)}
+                className={pill(reportStatus === value)}
               >
-                {l}
+                {t(`adminPublication.reportFilters.${labelKey}`)}
               </button>
             ))}
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Bateau</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Motif</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Signalé par</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Date</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-300">Actions</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colBoat')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colReason')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colReportedBy')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colDate')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                    {t('adminPublication.colStatus')}
+                  </th>
+                  <th className="px-4 py-3 text-right font-semibold text-white/80">
+                    {t('adminPublication.colActions')}
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-white/15">
                 {reportsLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                      Chargement…
+                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
+                      {t('adminPublication.loading')}
                     </td>
                   </tr>
                 ) : reports.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                      Aucun signalement.
+                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
+                      {t('adminPublication.emptyReports')}
                     </td>
                   </tr>
                 ) : (
-                  reports.map((r) => (
-                    <tr key={r.id_report} className="text-slate-200 align-top">
+                  pageReports.map((r) => (
+                    <tr key={r.id_report} className="text-white/90 align-top">
                       <td className="px-4 py-3">
                         {r.boat ? (
                           <Link
-                            to={`/boats/${r.boat.id_boat}`}
+                            to={`/product/${r.boat.id_boat}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-medium text-[#5AB4EC] hover:underline"
@@ -317,29 +443,33 @@ function AdminPublicationPage() {
                         ) : (
                           <span className="font-medium">—</span>
                         )}
-                        <div className="text-xs text-slate-500">
-                          {r.boat?.is_published ? 'Publié' : 'Non publié'}
+                        <div className="text-xs text-white/60">
+                          {r.boat?.is_published
+                            ? t('adminPublication.published')
+                            : t('adminPublication.unpublished')}
                         </div>
                       </td>
-                      <td className="max-w-xs px-4 py-3 text-slate-300">{r.reason}</td>
-                      <td className="px-4 py-3 text-slate-400">
+                      <td className="max-w-xs px-4 py-3 text-white/80">{r.reason}</td>
+                      <td className="px-4 py-3 text-white/70">
                         {r.reporter ? `${r.reporter.first_name} ${r.reporter.last_name}` : '—'}
                       </td>
-                      <td className="px-4 py-3 text-slate-400">{fmtDate(r.created_at)}</td>
+                      <td className="px-4 py-3 text-white/70">{fmtDate(r.created_at)}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            REPORT_STATUS[r.status]?.cls || 'bg-slate-600/30 text-slate-400'
+                            REPORT_STATUS_CLS[r.status] || 'bg-slate-500/15 text-white/70'
                           }`}
                         >
-                          {REPORT_STATUS[r.status]?.label || r.status}
+                          {t(`adminPublication.reportStatus.${r.status}`, {
+                            defaultValue: r.status,
+                          })}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap justify-end gap-2">
                           {r.boat?.is_published && (
                             <IconBtn
-                              title="Dépublier le bateau"
+                              title={t('adminPublication.unpublishBoat')}
                               disabled={busyId === `r${r.id_report}`}
                               onClick={() => unpublishFromReport(r)}
                             >
@@ -347,7 +477,7 @@ function AdminPublicationPage() {
                             </IconBtn>
                           )}
                           <IconBtn
-                            title="Traiter"
+                            title={t('adminPublication.handle')}
                             variant="success"
                             disabled={busyId === `r${r.id_report}` || r.status === 'resolved'}
                             onClick={() => decideReport(r, 'resolved')}
@@ -355,7 +485,7 @@ function AdminPublicationPage() {
                             <CheckIcon />
                           </IconBtn>
                           <IconBtn
-                            title="Rejeter"
+                            title={t('adminPublication.dismiss')}
                             variant="danger"
                             disabled={busyId === `r${r.id_report}` || r.status === 'dismissed'}
                             onClick={() => decideReport(r, 'dismissed')}
@@ -370,6 +500,99 @@ function AdminPublicationPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile : une carte par signalement (le tableau ci-dessus est masqué). */}
+          <ul className="mt-4 space-y-3 md:hidden">
+            {reportsLoading || reports.length === 0 ? (
+              <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+                {reportsLoading
+                  ? t('adminPublication.loading')
+                  : t('adminPublication.emptyReports')}
+              </li>
+            ) : (
+              pageReports.map((r) => (
+                <li
+                  key={r.id_report}
+                  className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      {r.boat ? (
+                        <Link
+                          to={`/product/${r.boat.id_boat}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-[#5AB4EC] hover:underline"
+                        >
+                          {r.boat.name}
+                        </Link>
+                      ) : (
+                        <span className="font-medium text-white">—</span>
+                      )}
+                      <p className="text-xs text-white/60">
+                        {r.boat?.is_published
+                          ? t('adminPublication.published')
+                          : t('adminPublication.unpublished')}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        REPORT_STATUS_CLS[r.status] || 'bg-slate-500/15 text-white/70'
+                      }`}
+                    >
+                      {t(`adminPublication.reportStatus.${r.status}`, { defaultValue: r.status })}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-white/80">
+                    {r.reason}
+                  </p>
+
+                  <p className="mt-2 text-xs text-white/60">
+                    {r.reporter ? `${r.reporter.first_name} ${r.reporter.last_name}` : '—'} ·{' '}
+                    {fmtDate(r.created_at)}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-white/15 pt-3">
+                    {r.boat?.is_published && (
+                      <IconBtn
+                        title={t('adminPublication.unpublishBoat')}
+                        disabled={busyId === `r${r.id_report}`}
+                        onClick={() => unpublishFromReport(r)}
+                      >
+                        <EyeOffIcon />
+                      </IconBtn>
+                    )}
+                    <IconBtn
+                      title={t('adminPublication.handle')}
+                      variant="success"
+                      disabled={busyId === `r${r.id_report}` || r.status === 'resolved'}
+                      onClick={() => decideReport(r, 'resolved')}
+                    >
+                      <CheckIcon />
+                    </IconBtn>
+                    <IconBtn
+                      title={t('adminPublication.dismiss')}
+                      variant="danger"
+                      disabled={busyId === `r${r.id_report}` || r.status === 'dismissed'}
+                      onClick={() => decideReport(r, 'dismissed')}
+                    >
+                      <XIcon />
+                    </IconBtn>
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+
+          <Pagination
+            page={reportsPage}
+            pageSize={PAGE_SIZE}
+            total={reports.length}
+            onChange={setReportsPage}
+            label={t('adminPublication.paginationReports')}
+            className="mt-4"
+          />
         </>
       )}
     </section>

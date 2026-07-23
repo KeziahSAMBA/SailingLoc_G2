@@ -11,8 +11,8 @@ const ROLES = [
 ];
 
 const inputClass =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-300';
+  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
 const errorClass = 'mt-1 block text-xs text-red-400';
 const requiredMark = (
   <span aria-hidden="true" className="ml-0.5 text-[#5AB4EC]">
@@ -83,16 +83,16 @@ function AdminCreateUserPage() {
     <section className="mx-auto w-full max-w-2xl">
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-white">Ajouter un compte</h1>
-        <p className="mt-2 text-slate-300">
+        <p className="mt-2 text-white/80">
           Créez un compte utilisateur. L'utilisateur recevra un email pour définir lui-même son mot
           de passe.
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-white/60">
           Les champs marqués d&apos;un <span className="text-[#5AB4EC]">*</span> sont obligatoires.
         </p>
       </header>
 
-      <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 shadow-xl">
+      <article className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-xl">
         {success && (
           <div
             role="status"
@@ -189,7 +189,7 @@ function AdminCreateUserPage() {
 
           <div>
             <label htmlFor="phone" className={labelClass}>
-              Téléphone <span className="font-normal text-slate-400">(facultatif)</span>
+              Téléphone <span className="font-normal text-white/70">(facultatif)</span>
             </label>
             <input
               id="phone"
@@ -220,7 +220,7 @@ function AdminCreateUserPage() {
               value={form.role}
               onChange={handleChange}
               required
-              className={inputClass}
+              className={`select-glass ${inputClass}`}
             >
               {ROLES.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -234,14 +234,14 @@ function AdminCreateUserPage() {
             <button
               type="button"
               onClick={() => navigate('/admin/users')}
-              className="rounded-full border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
             >
               Retour
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? 'Création en cours…' : 'Créer le compte'}
             </button>

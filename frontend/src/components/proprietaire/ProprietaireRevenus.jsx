@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   getPayments,
   getStripeAccount,
@@ -6,6 +7,8 @@ import {
   getStripeLoginLink,
 } from '../../services/proprietaireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
+import Spinner from '../common/Spinner.jsx';
+import { formatDate } from '../../utils/formatDate.js';
 
 const EURO = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
 const EURO_ROUND = new Intl.NumberFormat('fr-FR', {
@@ -13,33 +16,46 @@ const EURO_ROUND = new Intl.NumberFormat('fr-FR', {
   currency: 'EUR',
   maximumFractionDigits: 0,
 });
-const DATE = new Intl.DateTimeFormat('fr-FR', {
+const DATE_OPTS = {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
-});
-const MONTH_SHORT = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
-const MONTH_FULL = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+};
+const MONTH_SHORT_OPTS = { month: 'short' };
+const MONTH_FULL_OPTS = { month: 'long', year: 'numeric' };
 
 // Bleu des graphiques : pas plus foncé que l'accent #5AB4EC du site, validé
 // (luminosité + contraste ≥ 3:1) sur la surface sombre du dashboard.
 const CHART_BLUE = '#3E97D6';
 const CHART_BLUE_HOVER = '#5AB4EC';
 
-const PAYMENT_STATUS = {
-  pending: { label: 'En attente', cls: 'bg-amber-500/15 text-amber-300' },
-  success: { label: 'Encaissé', cls: 'bg-emerald-500/15 text-emerald-300' },
-  failed: { label: 'Échoué', cls: 'bg-red-500/15 text-red-300' },
-  refunded: { label: 'Remboursé', cls: 'bg-slate-500/15 text-slate-300' },
+const PAYMENT_STATUS_CLS = {
+  pending: 'bg-amber-500/15 text-amber-300',
+  success: 'bg-emerald-500/15 text-emerald-300',
+  failed: 'bg-red-500/15 text-red-300',
+  refunded: 'bg-slate-500/15 text-white/80',
 };
 
-const PAYMENT_METHOD = {
-  card: 'Carte bancaire',
-  bank_transfer: 'Virement',
-};
+const STATUS_KEYS = ['all', 'success', 'pending', 'refunded', 'failed'];
+const PERIOD_KEYS = ['all', '12m', 'year', '30d'];
+
+const PAGE_SIZE = 7;
+
+// Borne basse (incluse) de la période ; null = pas de borne.
+function periodStart(key) {
+  const now = new Date();
+  if (key === 'year') return new Date(now.getFullYear(), 0, 1);
+  if (key === '12m') return new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  if (key === '30d') {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 30);
+    return d;
+  }
+  return null;
+}
 
 function fmtDate(value) {
-  return value ? DATE.format(new Date(value)) : '';
+  return formatDate(value, DATE_OPTS);
 }
 
 // Arrondit le plafond de l'axe Y à une valeur « propre » (1/2/2,5/5 × 10^n).
@@ -61,6 +77,7 @@ function roundedTopRect(x, y, w, h) {
 // légende, le titre de la carte nomme la donnée). Tooltip au survol et au
 // focus clavier ; les valeurs restent lisibles sans survol via le tableau.
 function MonthlyChart({ months }) {
+  const { t } = useTranslation();
   const [hover, setHover] = useState(null); // index de la colonne survolée
 
   const W = 560;
@@ -83,9 +100,9 @@ function MonthlyChart({ months }) {
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
         role="img"
-        aria-label={`Revenus nets par mois : ${months
-          .map((m) => `${m.fullLabel} ${EURO_ROUND.format(m.net)}`)
-          .join(', ')}`}
+        aria-label={t('proprietaireRevenus.chartAria', {
+          series: months.map((m) => `${m.fullLabel} ${EURO_ROUND.format(m.net)}`).join(', '),
+        })}
       >
         {/* Grille : traits fins et discrets, valeurs arrondies */}
         {ticks.map((t) => (
@@ -95,14 +112,14 @@ function MonthlyChart({ months }) {
               x2={W - PAD.right}
               y1={y(t)}
               y2={y(t)}
-              stroke="#1e293b"
+              stroke="rgba(255,255,255,0.15)"
               strokeWidth="1"
             />
             <text
               x={PAD.left - 8}
               y={y(t) + 3}
               textAnchor="end"
-              className="fill-slate-500 text-[10px]"
+              className="fill-white/50 text-[10px]"
             >
               {EURO_ROUND.format(t)}
             </text>
@@ -128,13 +145,13 @@ function MonthlyChart({ months }) {
                   x={cx}
                   y={top - 6}
                   textAnchor="middle"
-                  className="fill-slate-200 text-[11px] font-medium"
+                  className="fill-white/90 text-[11px] font-medium"
                 >
                   {EURO_ROUND.format(m.net)}
                 </text>
               )}
               {i % labelEvery === 0 && (
-                <text x={cx} y={H - 8} textAnchor="middle" className="fill-slate-400 text-[10px]">
+                <text x={cx} y={H - 8} textAnchor="middle" className="fill-white/60 text-[10px]">
                   {m.label}
                 </text>
               )}
@@ -146,7 +163,10 @@ function MonthlyChart({ months }) {
                 height={plotH}
                 fill="transparent"
                 tabIndex={0}
-                aria-label={`${m.fullLabel} : ${EURO_ROUND.format(m.net)} nets`}
+                aria-label={t('proprietaireRevenus.barAria', {
+                  month: m.fullLabel,
+                  value: EURO_ROUND.format(m.net),
+                })}
                 onPointerEnter={() => setHover(i)}
                 onPointerLeave={() => setHover(null)}
                 onFocus={() => setHover(i)}
@@ -160,16 +180,16 @@ function MonthlyChart({ months }) {
       {/* Tooltip : la valeur d'abord, le libellé ensuite */}
       {hover != null && (
         <div
-          className="pointer-events-none absolute -top-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 shadow-lg"
+          className="pointer-events-none absolute -top-1 rounded-lg border border-white/20 bg-slate-950/90 px-3 py-1.5 shadow-lg backdrop-blur-xl"
           style={{
             left: `${((PAD.left + band * hover + band / 2) / W) * 100}%`,
             transform: 'translateX(-50%)',
           }}
         >
-          <p className="whitespace-nowrap text-sm font-semibold text-slate-100">
+          <p className="whitespace-nowrap text-sm font-semibold text-white">
             {EURO_ROUND.format(months[hover].net)}
           </p>
-          <p className="whitespace-nowrap text-xs text-slate-400">{months[hover].fullLabel}</p>
+          <p className="whitespace-nowrap text-xs text-white/70">{months[hover].fullLabel}</p>
         </div>
       )}
     </div>
@@ -185,12 +205,12 @@ function BoatChart({ boats }) {
       {boats.map((b) => (
         <li key={b.name}>
           <div className="mb-1 flex items-baseline justify-between gap-3">
-            <span className="truncate text-sm text-slate-300">{b.name}</span>
-            <span className="shrink-0 text-sm font-medium text-slate-100">
+            <span className="truncate text-sm text-white/80">{b.name}</span>
+            <span className="shrink-0 text-sm font-medium text-white">
               {EURO_ROUND.format(b.net)}
             </span>
           </div>
-          <div className="h-3 rounded-r bg-slate-800/60">
+          <div className="h-3 rounded-r bg-white/10">
             <div
               className="h-3 rounded-r"
               style={{
@@ -207,21 +227,24 @@ function BoatChart({ boats }) {
 
 function TotalCard({ label, value, accent = 'text-white', hint }) {
   return (
-    <li className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-      <span className="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+    <li className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+      <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
         {label}
       </span>
       <span className={`mt-2 block text-3xl font-bold ${accent}`}>{EURO.format(value ?? 0)}</span>
-      {hint && <span className="mt-1 block text-xs text-slate-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-white/60">{hint}</span>}
     </li>
   );
 }
 
 function ProprietaireRevenus() {
-  const [totals, setTotals] = useState(null);
+  const { t, i18n } = useTranslation();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('all');
+  const [period, setPeriod] = useState('all');
+  const [page, setPage] = useState(1);
   // Compte Stripe Connect : null tant que le statut n'est pas chargé.
   const [stripeAccount, setStripeAccount] = useState(null);
   const [onboarding, setOnboarding] = useState(false);
@@ -239,7 +262,7 @@ function ProprietaireRevenus() {
       const res = await startStripeOnboarding();
       window.location.assign(res.data.url);
     } catch (err) {
-      showToast(err.response?.data?.message || 'Une erreur est survenue.', 'error');
+      showToast(err.response?.data?.message || t('proprietaireRevenus.genericError'), 'error');
       setOnboarding(false);
     }
   }
@@ -251,7 +274,7 @@ function ProprietaireRevenus() {
       const res = await getStripeLoginLink();
       window.open(res.data.url, '_blank', 'noopener');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Une erreur est survenue.', 'error');
+      showToast(err.response?.data?.message || t('proprietaireRevenus.genericError'), 'error');
     } finally {
       setOnboarding(false);
     }
@@ -259,23 +282,64 @@ function ProprietaireRevenus() {
 
   // SEO / onglet navigateur : titre de page dédié (page privée, derrière auth).
   useEffect(() => {
-    document.title = 'Mes revenus — SailingLoc';
-  }, []);
+    document.title = t('proprietaireRevenus.pageTitle');
+  }, [t]);
 
   useEffect(() => {
     getPayments()
-      .then((res) => {
-        setTotals(res.data.totals);
-        setPayments(res.data.payments || []);
-      })
-      .catch((err) => setError(err.response?.data?.message || 'Erreur de chargement des revenus.'))
+      .then((res) => setPayments(res.data.payments || []))
+      .catch((err) => setError(err.response?.data?.message || t('proprietaireRevenus.loadError')))
       .finally(() => setLoading(false));
   }, []);
+
+  const inPeriod = useMemo(() => {
+    const from = periodStart(period);
+    if (!from) return payments;
+    return payments.filter((p) => new Date(p.payment_date) >= from);
+  }, [payments, period]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: inPeriod.length };
+    for (const p of inPeriod) counts[p.status] = (counts[p.status] || 0) + 1;
+    return counts;
+  }, [inPeriod]);
+
+  const filtered = useMemo(
+    () => (status === 'all' ? inPeriod : inPeriod.filter((p) => p.status === status)),
+    [inPeriod, status]
+  );
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Un changement de filtre peut rendre la page courante inexistante.
+  const safePage = Math.min(page, pageCount);
+  const pageRows = useMemo(
+    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filtered, safePage]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [status, period]);
+
+  // Totaux recalculés sur la sélection : ils somment exactement les lignes affichées.
+  const totals = useMemo(
+    () =>
+      filtered.reduce(
+        (acc, p) => ({
+          gross: acc.gross + (p.amount || 0),
+          commission: acc.commission + (p.commission || 0),
+          net: acc.net + (p.net || 0),
+          count: acc.count + 1,
+        }),
+        { gross: 0, commission: 0, net: 0, count: 0 }
+      ),
+    [filtered]
+  );
 
   // Revenus nets par mois (paiements encaissés), mois sans revenu compris —
   // un axe temporel honnête ne saute pas les mois vides.
   const months = useMemo(() => {
-    const success = payments.filter((p) => p.status === 'success');
+    const success = filtered.filter((p) => p.status === 'success');
     if (success.length === 0) return [];
     const byKey = new Map();
     let first = Infinity;
@@ -295,41 +359,40 @@ function ProprietaireRevenus() {
         key,
         net: byKey.get(key) || 0,
         label: spansYears
-          ? `${MONTH_SHORT.format(d)} ${String(d.getFullYear()).slice(2)}`
-          : MONTH_SHORT.format(d),
-        fullLabel: MONTH_FULL.format(d),
+          ? `${formatDate(d, MONTH_SHORT_OPTS)} ${String(d.getFullYear()).slice(2)}`
+          : formatDate(d, MONTH_SHORT_OPTS),
+        fullLabel: formatDate(d, MONTH_FULL_OPTS),
       });
     }
     return out;
-  }, [payments]);
+  }, [filtered, i18n.language]);
 
   // Revenus nets par bateau (paiements encaissés), du plus rentable au moins
   // rentable ; au-delà de 7 bateaux, la queue est repliée dans « Autres ».
   const boats = useMemo(() => {
     const byName = new Map();
-    for (const p of payments) {
+    for (const p of filtered) {
       if (p.status !== 'success') continue;
-      const name = p.booking?.boat_name || 'Autre';
+      const name = p.booking?.boat_name || t('proprietaireRevenus.otherBoat');
       byName.set(name, (byName.get(name) || 0) + p.net);
     }
     const sorted = [...byName.entries()]
       .map(([name, net]) => ({ name, net }))
       .sort((a, b) => b.net - a.net);
+    if (sorted.length === 0) return [];
     if (sorted.length <= 7) return sorted;
     const head = sorted.slice(0, 6);
     const tail = sorted.slice(6).reduce((sum, b) => sum + b.net, 0);
-    return [...head, { name: 'Autres', net: tail }];
-  }, [payments]);
+    return [...head, { name: t('proprietaireRevenus.otherBoats'), net: tail }];
+  }, [filtered]);
 
   return (
     <section aria-labelledby="revenus-title">
       <header className="mb-6">
         <h1 id="revenus-title" className="text-2xl font-bold text-white">
-          Mes revenus
+          {t('proprietaireRevenus.title')}
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Historique des transactions sur vos bateaux, commissions SailingLoc déduites.
-        </p>
+        <p className="mt-1 text-sm text-white/70">{t('proprietaireRevenus.subtitle')}</p>
       </header>
 
       {error && (
@@ -343,29 +406,33 @@ function ProprietaireRevenus() {
 
       {/* Virements Stripe Connect : l'IBAN est collecté par Stripe, jamais ici. */}
       {stripeAccount?.enabled && (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 px-5 py-4">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-5 py-4">
           <div>
-            <h2 className="text-sm font-semibold text-white">Virements de vos revenus</h2>
-            <p className="mt-0.5 text-xs text-slate-400">
+            <h2 className="text-sm font-semibold text-white">
+              {t('proprietaireRevenus.stripe.title')}
+            </h2>
+            <p className="mt-0.5 text-xs text-white/70">
               {stripeAccount.onboarded
-                ? 'Compte Stripe configuré : vos revenus vous sont reversés automatiquement (90 % du montant, commission SailingLoc déduite).'
+                ? t('proprietaireRevenus.stripe.onboarded')
                 : stripeAccount.has_account
-                  ? 'Configuration Stripe incomplète : reprenez-la pour activer vos virements.'
-                  : 'Configurez vos virements chez Stripe (coordonnées bancaires collectées par Stripe, jamais par SailingLoc).'}
+                  ? t('proprietaireRevenus.stripe.incomplete')
+                  : t('proprietaireRevenus.stripe.notStarted')}
             </p>
           </div>
           {stripeAccount.onboarded ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">
-                ✓ Virements activés
+                {t('proprietaireRevenus.stripe.enabled')}
               </span>
               <button
                 type="button"
                 onClick={handleManageAccount}
                 disabled={onboarding}
-                className="rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+                className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
               >
-                {onboarding ? 'Ouverture…' : 'Gérer mon compte Stripe'}
+                {onboarding
+                  ? t('proprietaireRevenus.stripe.opening')
+                  : t('proprietaireRevenus.stripe.manage')}
               </button>
             </div>
           ) : (
@@ -373,36 +440,93 @@ function ProprietaireRevenus() {
               type="button"
               onClick={handleOnboarding}
               disabled={onboarding}
-              className="rounded-full bg-[#0A3172] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0d3f92] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+              className="rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
             >
               {onboarding
-                ? 'Redirection…'
+                ? t('proprietaireRevenus.stripe.redirecting')
                 : stripeAccount.has_account
-                  ? 'Reprendre la configuration'
-                  : 'Configurer mes virements'}
+                  ? t('proprietaireRevenus.stripe.resume')
+                  : t('proprietaireRevenus.stripe.setup')}
             </button>
           )}
         </div>
       )}
 
       {loading ? (
-        <p className="text-slate-300">Chargement…</p>
+        <Spinner label={t('common.loading', { defaultValue: 'Chargement…' })} />
       ) : (
         <>
-          {/* Totaux (paiements encaissés uniquement) */}
-          <ul className="grid gap-4 sm:grid-cols-3" aria-label="Totaux des revenus">
+          {payments.length > 0 && (
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label={t('proprietaireRevenus.filterAria')}
+              >
+                {STATUS_KEYS.map((key) => {
+                  const active = status === key;
+                  const count = statusCounts[key] || 0;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setStatus(key)}
+                      aria-pressed={active}
+                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                        active
+                          ? 'bg-sky-500 text-white'
+                          : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
+                      }`}
+                    >
+                      {t(`proprietaireRevenus.filters.${key}`)}
+                      {key !== 'all' && count > 0 && ` (${count})`}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="revenus-period" className="text-sm text-white/70">
+                  {t('proprietaireRevenus.periodLabel')}
+                </label>
+                <select
+                  id="revenus-period"
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value)}
+                  className="select-glass rounded-lg border border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+                >
+                  {PERIOD_KEYS.map((key) => (
+                    <option key={key} value={key}>
+                      {t(`proprietaireRevenus.periods.${key}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Totaux : somme des transactions correspondant aux filtres actifs */}
+          <ul
+            className="grid gap-4 sm:grid-cols-3"
+            aria-label={t('proprietaireRevenus.totalsAria')}
+          >
             <TotalCard
-              label="Revenus nets"
-              value={totals?.net}
+              label={t('proprietaireRevenus.netEarnings')}
+              value={totals.net}
               accent="text-emerald-300"
-              hint={`${totals?.success_count ?? 0} transaction${(totals?.success_count ?? 0) > 1 ? 's' : ''} encaissée${(totals?.success_count ?? 0) > 1 ? 's' : ''}`}
+              hint={
+                t('proprietaireRevenus.transactionCount', { count: totals.count }) +
+                (status === 'all'
+                  ? ''
+                  : ` · ${t(`proprietaireRevenus.filters.${status}`).toLowerCase()}`)
+              }
             />
-            <TotalCard label="Montant brut" value={totals?.gross} />
+            <TotalCard label={t('proprietaireRevenus.grossAmount')} value={totals.gross} />
             <TotalCard
-              label="Commissions déduites"
-              value={totals?.commission}
+              label={t('proprietaireRevenus.commissions')}
+              value={totals.commission}
               accent="text-amber-300"
-              hint="Commission SailingLoc prélevée sur chaque location"
+              hint={t('proprietaireRevenus.commissionHint')}
             />
           </ul>
 
@@ -411,26 +535,26 @@ function ProprietaireRevenus() {
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
               <section
                 aria-labelledby="chart-months-title"
-                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+                className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
               >
-                <h2 id="chart-months-title" className="text-sm font-semibold text-slate-200">
-                  Revenus nets par mois
+                <h2 id="chart-months-title" className="text-sm font-semibold text-white/90">
+                  {t('proprietaireRevenus.chartMonths')}
                 </h2>
-                <p className="mb-4 mt-0.5 text-xs text-slate-500">
-                  Paiements encaissés, commissions déduites
+                <p className="mb-4 mt-0.5 text-xs text-white/60">
+                  {t('proprietaireRevenus.chartMonthsHint')}
                 </p>
                 <MonthlyChart months={months} />
               </section>
 
               <section
                 aria-labelledby="chart-boats-title"
-                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+                className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
               >
-                <h2 id="chart-boats-title" className="text-sm font-semibold text-slate-200">
-                  Revenus nets par bateau
+                <h2 id="chart-boats-title" className="text-sm font-semibold text-white/90">
+                  {t('proprietaireRevenus.chartBoats')}
                 </h2>
-                <p className="mb-4 mt-0.5 text-xs text-slate-500">
-                  Du plus rentable au moins rentable
+                <p className="mb-4 mt-0.5 text-xs text-white/60">
+                  {t('proprietaireRevenus.chartBoatsHint')}
                 </p>
                 <BoatChart boats={boats} />
               </section>
@@ -438,57 +562,65 @@ function ProprietaireRevenus() {
           )}
 
           {/* Historique des transactions */}
-          <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70">
-            <h2 className="border-b border-slate-800 px-5 py-4 text-sm font-semibold text-slate-200">
-              Historique des transactions
+          <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
+            <h2 className="border-b border-white/20 px-5 py-4 text-sm font-semibold text-white/90">
+              {t('proprietaireRevenus.history')}
+              {filtered.length !== payments.length && (
+                <span className="ml-2 font-normal text-white/60">
+                  {t('proprietaireRevenus.historyCount', {
+                    shown: filtered.length,
+                    total: payments.length,
+                  })}
+                </span>
+              )}
             </h2>
 
-            {payments.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-slate-400">
-                Aucune transaction sur vos bateaux pour le moment.
+            {filtered.length === 0 ? (
+              <p className="px-5 py-8 text-center text-sm text-white/70">
+                {payments.length === 0
+                  ? t('proprietaireRevenus.emptyAll')
+                  : t('proprietaireRevenus.emptyFilter')}
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-slate-800 text-xs uppercase tracking-wide text-slate-400">
+                    <tr className="border-b border-white/20 text-xs uppercase tracking-wide text-white/60">
                       <th scope="col" className="px-5 py-3 font-semibold">
-                        Date
+                        {t('proprietaireRevenus.table.date')}
                       </th>
                       <th scope="col" className="px-5 py-3 font-semibold">
-                        Location
+                        {t('proprietaireRevenus.table.rental')}
                       </th>
                       <th scope="col" className="px-5 py-3 font-semibold">
-                        Moyen
+                        {t('proprietaireRevenus.table.method')}
                       </th>
                       <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        Brut
+                        {t('proprietaireRevenus.table.gross')}
                       </th>
                       <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        Commission
+                        {t('proprietaireRevenus.table.commission')}
                       </th>
                       <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        Net
+                        {t('proprietaireRevenus.table.net')}
                       </th>
                       <th scope="col" className="px-5 py-3 font-semibold">
-                        Statut
+                        {t('proprietaireRevenus.table.status')}
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {payments.map((p) => {
-                      const meta = PAYMENT_STATUS[p.status] || {
-                        label: p.status,
-                        cls: 'bg-slate-500/15 text-slate-300',
-                      };
+                  <tbody className="divide-y divide-white/15">
+                    {pageRows.map((p) => {
+                      const statusCls =
+                        PAYMENT_STATUS_CLS[p.status] || 'bg-slate-500/15 text-white/80';
                       return (
                         <tr key={p.id_payment}>
-                          <td className="whitespace-nowrap px-5 py-3 text-slate-300">
+                          <td className="whitespace-nowrap px-5 py-3 text-white/80">
                             <time dateTime={p.payment_date}>{fmtDate(p.payment_date)}</time>
                           </td>
                           <td className="px-5 py-3">
-                            <p className="font-medium text-slate-100">{p.booking?.boat_name}</p>
-                            <p className="text-xs text-slate-400">
+                            <p className="font-medium text-white">{p.booking?.boat_name}</p>
+                            <p className="text-xs text-white/70">
                               {p.booking?.locataire}
                               {p.booking && (
                                 <>
@@ -504,16 +636,20 @@ function ProprietaireRevenus() {
                               )}
                             </p>
                             {p.status === 'refunded' && p.refunded_amount != null && (
-                              <p className="mt-1 text-xs text-slate-400">
-                                Remboursé : {EURO.format(p.refunded_amount)}
+                              <p className="mt-1 text-xs text-white/70">
+                                {t('proprietaireRevenus.refundedAmount', {
+                                  amount: EURO.format(p.refunded_amount),
+                                })}
                                 {p.refund_reason && ` — ${p.refund_reason}`}
                               </p>
                             )}
                           </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-slate-300">
-                            {PAYMENT_METHOD[p.payment_method] || p.payment_method}
+                          <td className="whitespace-nowrap px-5 py-3 text-white/80">
+                            {t(`proprietaireRevenus.method.${p.payment_method}`, {
+                              defaultValue: p.payment_method,
+                            })}
                           </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-right text-slate-100">
+                          <td className="whitespace-nowrap px-5 py-3 text-right text-white">
                             {EURO.format(p.amount)}
                           </td>
                           <td className="whitespace-nowrap px-5 py-3 text-right text-amber-300">
@@ -524,9 +660,11 @@ function ProprietaireRevenus() {
                           </td>
                           <td className="whitespace-nowrap px-5 py-3">
                             <span
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}
                             >
-                              {meta.label}
+                              {t(`proprietaireRevenus.status.${p.status}`, {
+                                defaultValue: p.status,
+                              })}
                             </span>
                           </td>
                         </tr>
@@ -535,6 +673,55 @@ function ProprietaireRevenus() {
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {pageCount > 1 && (
+              <nav
+                aria-label="Pagination de l'historique"
+                className="flex flex-wrap items-center justify-between gap-3 border-t border-white/20 px-5 py-3"
+              >
+                <p className="text-xs text-white/60" aria-live="polite">
+                  {t('proprietaireRevenus.paginationRange', {
+                    first: (safePage - 1) * PAGE_SIZE + 1,
+                    last: Math.min(safePage * PAGE_SIZE, filtered.length),
+                    total: filtered.length,
+                  })}
+                </p>
+                <div className="flex flex-wrap items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPage(safePage - 1)}
+                    disabled={safePage === 1}
+                    className="rounded-full px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+                  >
+                    {t('pagination.previous')}
+                  </button>
+                  {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setPage(n)}
+                      aria-current={n === safePage ? 'page' : undefined}
+                      aria-label={t('pagination.page', { n })}
+                      className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                        n === safePage
+                          ? 'bg-sky-500 text-white'
+                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setPage(safePage + 1)}
+                    disabled={safePage === pageCount}
+                    className="rounded-full px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+                  >
+                    {t('pagination.next')}
+                  </button>
+                </div>
+              </nav>
             )}
           </div>
         </>

@@ -1,27 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
 import { listUsers, updateUser, deleteUser } from '../../services/adminService.js';
+import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EditIcon, BanIcon, CheckIcon, TrashIcon } from './AdminActions.jsx';
+import Pagination from '../common/Pagination.jsx';
+import usePagination from '../../hooks/usePagination.js';
 
-const ROLES = [
-  ['locataire', 'Locataire'],
-  ['proprietaire', 'Propriétaire'],
-  ['admin', 'Admin'],
-];
-const ROLE_LABEL = Object.fromEntries(ROLES);
+const PAGE_SIZE = 10;
+
+const ROLE_VALUES = ['locataire', 'proprietaire', 'admin'];
+
+const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 const selectClass =
-  'rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-[#5AB4EC]';
+  'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
 const inputClass =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-[#5AB4EC]';
-const labelClass = 'mb-1 block text-xs font-medium text-slate-400';
-
-function fmtDate(d) {
-  return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
-}
+  'w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]';
+const labelClass = 'mb-1 block text-xs font-medium text-white/70';
 
 function EditUserModal({ user, onClose, onSaved }) {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [form, setForm] = useState({
     first_name: user.first_name || '',
@@ -50,10 +50,10 @@ function EditUserModal({ user, onClose, onSaved }) {
         phone: form.phone.trim() || null,
         role: form.role,
       });
-      showToast('Utilisateur mis à jour.', 'success');
+      showToast(t('adminUsers.updatedToast'), 'success');
       onSaved(res.data.user);
     } catch (err) {
-      setError(err.response?.data?.message || 'Échec de la mise à jour.');
+      setError(err.response?.data?.message || t('adminUsers.updateError'));
     } finally {
       setSaving(false);
     }
@@ -61,14 +61,14 @@ function EditUserModal({ user, onClose, onSaved }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+        className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-white">Modifier l&apos;utilisateur</h2>
+        <h2 className="text-lg font-semibold text-white">{t('adminUsers.editTitle')}</h2>
 
         {error && (
           <div className="mt-3 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
@@ -80,7 +80,7 @@ function EditUserModal({ user, onClose, onSaved }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="e-first" className={labelClass}>
-                Prénom
+                {t('adminUsers.firstName')}
               </label>
               <input
                 id="e-first"
@@ -92,7 +92,7 @@ function EditUserModal({ user, onClose, onSaved }) {
             </div>
             <div>
               <label htmlFor="e-last" className={labelClass}>
-                Nom
+                {t('adminUsers.lastName')}
               </label>
               <input
                 id="e-last"
@@ -105,7 +105,7 @@ function EditUserModal({ user, onClose, onSaved }) {
           </div>
           <div>
             <label htmlFor="e-email" className={labelClass}>
-              Email
+              {t('adminUsers.email')}
             </label>
             <input
               id="e-email"
@@ -118,7 +118,7 @@ function EditUserModal({ user, onClose, onSaved }) {
           </div>
           <div>
             <label htmlFor="e-phone" className={labelClass}>
-              Téléphone
+              {t('adminUsers.phone')}
             </label>
             <input
               id="e-phone"
@@ -132,18 +132,18 @@ function EditUserModal({ user, onClose, onSaved }) {
           </div>
           <div>
             <label htmlFor="e-role" className={labelClass}>
-              Rôle
+              {t('adminUsers.roleLabel')}
             </label>
             <select
               id="e-role"
               name="role"
               value={form.role}
               onChange={change}
-              className={inputClass}
+              className={`select-glass ${inputClass}`}
             >
-              {ROLES.map(([v, l]) => (
+              {ROLE_VALUES.map((v) => (
                 <option key={v} value={v}>
-                  {l}
+                  {t(`adminUsers.roles.${v}`)}
                 </option>
               ))}
             </select>
@@ -153,16 +153,16 @@ function EditUserModal({ user, onClose, onSaved }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+              className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10"
             >
-              Annuler
+              {t('adminUsers.cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-full bg-[#0A3172] px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#0A3172]/90 disabled:opacity-60"
+              className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90 disabled:opacity-60"
             >
-              {saving ? 'Enregistrement…' : 'Enregistrer'}
+              {saving ? t('adminUsers.saving') : t('adminUsers.save')}
             </button>
           </div>
         </form>
@@ -172,7 +172,10 @@ function EditUserModal({ user, onClose, onSaved }) {
 }
 
 function AdminUsersPage() {
+  const { t } = useTranslation();
   const { showToast } = useToast();
+  const fmtDate = (d) => (d ? formatDate(d, DATE_OPTS) : '—');
+  const roleLabel = (r) => t(`adminUsers.roles.${r}`, { defaultValue: r });
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -196,16 +199,22 @@ function AdminUsersPage() {
       setUsers(res.data.users);
       setError('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur de chargement.');
+      setError(err.response?.data?.message || t('adminUsers.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [role, active, search, sort, order]);
+  }, [role, active, search, sort, order, t]);
 
   useEffect(() => {
-    const t = setTimeout(load, 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(load, 250);
+    return () => clearTimeout(timer);
   }, [load]);
+
+  const {
+    page,
+    setPage,
+    pageItems: pageUsers,
+  } = usePagination(users, PAGE_SIZE, `${role}|${active}|${search}|${sort}|${order}`);
 
   function toggleSort(field) {
     if (sort === field) setOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
@@ -220,23 +229,27 @@ function AdminUsersPage() {
     try {
       const res = await updateUser(u.id_user, { is_active: !u.is_active });
       setUsers((prev) => prev.map((x) => (x.id_user === u.id_user ? res.data.user : x)));
-      showToast(u.is_active ? 'Compte désactivé.' : 'Compte activé.', 'success');
+      showToast(
+        u.is_active ? t('adminUsers.deactivatedToast') : t('adminUsers.activatedToast'),
+        'success'
+      );
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de la mise à jour.', 'error');
+      showToast(err.response?.data?.message || t('adminUsers.updateError'), 'error');
     } finally {
       setBusyId(null);
     }
   }
 
   async function remove(u) {
-    if (!window.confirm(`Supprimer le compte de ${u.first_name} ${u.last_name} ?`)) return;
+    if (!window.confirm(t('adminUsers.confirmDelete', { name: `${u.first_name} ${u.last_name}` })))
+      return;
     setBusyId(u.id_user);
     try {
       await deleteUser(u.id_user);
       setUsers((prev) => prev.filter((x) => x.id_user !== u.id_user));
-      showToast('Compte supprimé.', 'success');
+      showToast(t('adminUsers.deletedToast'), 'success');
     } catch (err) {
-      showToast(err.response?.data?.message || 'Échec de la suppression.', 'error');
+      showToast(err.response?.data?.message || t('adminUsers.deleteError'), 'error');
     } finally {
       setBusyId(null);
     }
@@ -245,7 +258,7 @@ function AdminUsersPage() {
   const SortTh = ({ field, children }) => (
     <th
       onClick={() => toggleSort(field)}
-      className="cursor-pointer select-none px-4 py-3 text-left font-semibold text-slate-300 hover:text-white"
+      className="cursor-pointer select-none px-4 py-3 text-left font-semibold text-white/80 hover:text-white"
     >
       {children} {sort === field ? (order === 'asc' ? '▲' : '▼') : ''}
     </th>
@@ -254,12 +267,12 @@ function AdminUsersPage() {
   return (
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Utilisateurs</h1>
+        <h1 className="text-2xl font-bold text-white">{t('adminUsers.title')}</h1>
         <Link
           to="/admin/users/new"
-          className="rounded-full bg-[#0A3172] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#0A3172]/90"
+          className="rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90"
         >
-          Ajouter un compte
+          {t('adminUsers.addAccount')}
         </Link>
       </div>
 
@@ -268,21 +281,29 @@ function AdminUsersPage() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher (nom, email)…"
+          placeholder={t('adminUsers.searchPlaceholder')}
           className={`${selectClass} min-w-[220px] flex-1`}
         />
-        <select value={role} onChange={(e) => setRole(e.target.value)} className={selectClass}>
-          <option value="">Tous les rôles</option>
-          {ROLES.map(([v, l]) => (
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className={`select-glass ${selectClass}`}
+        >
+          <option value="">{t('adminUsers.allRoles')}</option>
+          {ROLE_VALUES.map((v) => (
             <option key={v} value={v}>
-              {l}
+              {roleLabel(v)}
             </option>
           ))}
         </select>
-        <select value={active} onChange={(e) => setActive(e.target.value)} className={selectClass}>
-          <option value="">Tous les statuts</option>
-          <option value="true">Actifs</option>
-          <option value="false">Inactifs</option>
+        <select
+          value={active}
+          onChange={(e) => setActive(e.target.value)}
+          className={`select-glass ${selectClass}`}
+        >
+          <option value="">{t('adminUsers.allStatuses')}</option>
+          <option value="true">{t('adminUsers.activeFilter')}</option>
+          <option value="false">{t('adminUsers.inactiveFilter')}</option>
         </select>
       </div>
 
@@ -292,68 +313,101 @@ function AdminUsersPage() {
         </div>
       )}
 
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70">
+      {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
+      <div className="mt-5 flex flex-wrap items-center gap-2 md:hidden">
+        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+          {t('adminUsers.sortLabel')}
+        </span>
+        {[
+          { field: 'last_name', label: t('adminUsers.colName') },
+          { field: 'email', label: t('adminUsers.colEmail') },
+          { field: 'role', label: t('adminUsers.colRole') },
+          { field: 'created_at', label: t('adminUsers.colRegistered') },
+        ].map(({ field, label }) => (
+          <button
+            key={field}
+            type="button"
+            onClick={() => toggleSort(field)}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              sort === field
+                ? 'bg-sky-500 text-white'
+                : 'border border-white/30 text-white/80 hover:bg-white/10'
+            }`}
+          >
+            {label}
+            {sort === field ? (order === 'asc' ? ' ▲' : ' ▼') : ''}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-800 text-xs uppercase tracking-wide">
+          <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
-              <SortTh field="last_name">Nom</SortTh>
-              <SortTh field="email">Email</SortTh>
-              <SortTh field="role">Rôle</SortTh>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Téléphone</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">Statut</th>
-              <SortTh field="created_at">Inscrit le</SortTh>
-              <th className="px-4 py-3 text-right font-semibold text-slate-300">Actions</th>
+              <SortTh field="last_name">{t('adminUsers.colName')}</SortTh>
+              <SortTh field="email">{t('adminUsers.colEmail')}</SortTh>
+              <SortTh field="role">{t('adminUsers.colRole')}</SortTh>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminUsers.colPhone')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-white/80">
+                {t('adminUsers.colStatus')}
+              </th>
+              <SortTh field="created_at">{t('adminUsers.colRegistered')}</SortTh>
+              <th className="px-4 py-3 text-right font-semibold text-white/80">
+                {t('adminUsers.colActions')}
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-white/15">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                  Chargement…
+                <td colSpan={7} className="px-4 py-8 text-center text-white/70">
+                  {t('adminUsers.loading')}
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                  Aucun utilisateur.
+                <td colSpan={7} className="px-4 py-8 text-center text-white/70">
+                  {t('adminUsers.empty')}
                 </td>
               </tr>
             ) : (
-              users.map((u) => (
-                <tr key={u.id_user} className="text-slate-200">
+              pageUsers.map((u) => (
+                <tr key={u.id_user} className="text-white/90">
                   <td className="px-4 py-3 font-medium">
                     {u.first_name} {u.last_name}
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{u.email}</td>
+                  <td className="px-4 py-3 text-white/70">{u.email}</td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-slate-700/40 px-2.5 py-1 text-xs font-medium text-slate-200">
-                      {ROLE_LABEL[u.role] || u.role}
+                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-white/90">
+                      {roleLabel(u.role)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{u.phone || '—'}</td>
+                  <td className="px-4 py-3 text-white/70">{u.phone || '—'}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         u.is_active
                           ? 'bg-emerald-500/15 text-emerald-300'
-                          : 'bg-slate-600/30 text-slate-400'
+                          : 'bg-slate-500/15 text-white/70'
                       }`}
                     >
-                      {u.is_active ? 'Actif' : 'Inactif'}
+                      {u.is_active ? t('adminUsers.statusActive') : t('adminUsers.statusInactive')}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{fmtDate(u.created_at)}</td>
+                  <td className="px-4 py-3 text-white/70">{fmtDate(u.created_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <IconBtn
-                        title="Modifier"
+                        title={t('adminUsers.edit')}
                         disabled={busyId === u.id_user}
                         onClick={() => setEditing(u)}
                       >
                         <EditIcon />
                       </IconBtn>
                       <IconBtn
-                        title={u.is_active ? 'Désactiver' : 'Activer'}
+                        title={u.is_active ? t('adminUsers.deactivate') : t('adminUsers.activate')}
                         variant={u.is_active ? 'warn' : 'success'}
                         disabled={busyId === u.id_user}
                         onClick={() => toggleActive(u)}
@@ -361,7 +415,7 @@ function AdminUsersPage() {
                         {u.is_active ? <BanIcon /> : <CheckIcon />}
                       </IconBtn>
                       <IconBtn
-                        title="Supprimer"
+                        title={t('adminUsers.delete')}
                         variant="danger"
                         disabled={busyId === u.id_user}
                         onClick={() => remove(u)}
@@ -377,8 +431,84 @@ function AdminUsersPage() {
         </table>
       </div>
 
-      <p className="mt-3 text-xs text-slate-500">
-        {users.length} utilisateur(s) — clic sur un en-tête pour trier.
+      {/* Mobile : une carte par utilisateur (le tableau ci-dessus est masqué). */}
+      <ul className="mt-5 space-y-3 md:hidden">
+        {loading || users.length === 0 ? (
+          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+            {loading ? t('adminUsers.loading') : t('adminUsers.empty')}
+          </li>
+        ) : (
+          pageUsers.map((u) => (
+            <li
+              key={u.id_user}
+              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 font-medium text-white">
+                  {u.first_name} {u.last_name}
+                </p>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    u.is_active
+                      ? 'bg-emerald-500/15 text-emerald-300'
+                      : 'bg-slate-500/15 text-white/70'
+                  }`}
+                >
+                  {u.is_active ? t('adminUsers.statusActive') : t('adminUsers.statusInactive')}
+                </span>
+              </div>
+
+              <p className="mt-1 break-all text-sm text-white/70">{u.email}</p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/70">
+                <span className="rounded-full bg-white/10 px-2.5 py-1 font-medium text-white/90">
+                  {roleLabel(u.role)}
+                </span>
+                <span>{u.phone || '—'}</span>
+                <span className="text-white/60">{fmtDate(u.created_at)}</span>
+              </div>
+
+              <div className="mt-3 flex justify-end gap-2 border-t border-white/15 pt-3">
+                <IconBtn
+                  title={t('adminUsers.edit')}
+                  disabled={busyId === u.id_user}
+                  onClick={() => setEditing(u)}
+                >
+                  <EditIcon />
+                </IconBtn>
+                <IconBtn
+                  title={u.is_active ? t('adminUsers.deactivate') : t('adminUsers.activate')}
+                  variant={u.is_active ? 'warn' : 'success'}
+                  disabled={busyId === u.id_user}
+                  onClick={() => toggleActive(u)}
+                >
+                  {u.is_active ? <BanIcon /> : <CheckIcon />}
+                </IconBtn>
+                <IconBtn
+                  title={t('adminUsers.delete')}
+                  variant="danger"
+                  disabled={busyId === u.id_user}
+                  onClick={() => remove(u)}
+                >
+                  <TrashIcon />
+                </IconBtn>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
+
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={users.length}
+        onChange={setPage}
+        label={t('adminUsers.paginationLabel')}
+        className="mt-4"
+      />
+
+      <p className="mt-3 text-xs text-white/60">
+        {t('adminUsers.countHint', { count: users.length })}
       </p>
 
       {editing && (

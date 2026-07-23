@@ -62,7 +62,7 @@ export const BanIcon = () => (
 );
 
 const VARIANTS = {
-  default: 'border-slate-600 text-slate-200 hover:bg-slate-800',
+  default: 'border-white/30 text-white/90 hover:bg-white/10',
   success: 'border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10',
   danger: 'border-red-500/40 text-red-300 hover:bg-red-500/10',
   warn: 'border-amber-500/40 text-amber-300 hover:bg-amber-500/10',
