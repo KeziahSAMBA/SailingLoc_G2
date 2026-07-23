@@ -77,7 +77,7 @@ const ReviewCard = memo(function ReviewCard({
   const roleLabels = getRoleLabels(t);
   return (
     <div
-      className={`flex flex-col gap-2 py-3 px-5 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
+      className={`flex min-w-0 flex-col gap-2 px-4 py-4 sm:px-5 sm:py-3 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
     >
       <div className="flex items-center gap-2">
         <img
@@ -179,12 +179,12 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
 
   const body = (
     <>
-      <div className="text-center mb-2">
+      <div className="mb-2 px-1 text-center">
         <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-4 underline underline-offset-4">
           {t('reviews.kicker')}
         </p>
         <h2
-          className={`text-3xl md:text-4xl font-semibold ${light ? 'text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-gray-900'}`}
+          className={`text-2xl font-semibold sm:text-3xl md:text-4xl ${light ? 'text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-gray-900'}`}
         >
           {t('reviews.title')}
         </h2>
@@ -212,7 +212,7 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
         <select
           value={sort}
           onChange={(e) => handleSort(e.target.value)}
-          className={`text-sm border rounded-full px-3 py-1 cursor-pointer focus:outline-none ${
+          className={`w-full cursor-pointer rounded-full border px-3 py-2 text-sm focus:outline-none sm:w-auto sm:py-1 ${
             light
               ? 'border-white/30 text-white bg-white/10 focus:border-sky-400 focus:text-sky-300'
               : 'border-gray-200 text-gray-600 bg-white focus:border-sky-400 focus:text-sky-500'
@@ -277,13 +277,13 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
       id={id}
       className={
         light
-          ? `w-full flex flex-col items-start pl-28 pr-24 gap-5 ${className}`
+          ? `flex w-full flex-col items-start gap-5 px-4 sm:px-8 lg:px-16 xl:pl-28 xl:pr-24 ${className}`
           : `w-full bg-white flex flex-col items-center gap-5 px-4 sm:px-8 lg:px-16 xl:px-28 ${className}`
       }
     >
       {light ? (
         <div
-          className="flex w-full max-w-[919.9px] flex-col items-center gap-5 rounded-2xl border px-4 py-6 sm:px-8 lg:px-10 lg:py-8"
+          className="flex w-full max-w-[919.9px] flex-col items-center gap-5 rounded-2xl border px-3 py-6 sm:px-8 lg:px-10 lg:py-8"
           style={GLASS_STYLE}
         >
           {body}
