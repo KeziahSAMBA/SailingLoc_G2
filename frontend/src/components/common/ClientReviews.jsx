@@ -190,8 +190,8 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
         </h2>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex gap-2">
+      <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex flex-wrap justify-center gap-2">
           {roleFilters.map((opt) => (
             <button
               key={opt.value}
@@ -227,7 +227,7 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
       </div>
 
       {/* Grille 2×2 */}
-      <div className="w-full md:w-3/4 grid grid-cols-3 gap-6">
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:w-3/4 lg:grid-cols-3">
         {visible.map((review) => (
           <ReviewCard
             key={review.id ?? `${review.name}_${review.created_at}`}
@@ -278,12 +278,12 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
       className={
         light
           ? `w-full flex flex-col items-start pl-28 pr-24 gap-5 ${className}`
-          : `w-full bg-white flex flex-col items-center gap-5 px-28 ${className}`
+          : `w-full bg-white flex flex-col items-center gap-5 px-4 sm:px-8 lg:px-16 xl:px-28 ${className}`
       }
     >
       {light ? (
         <div
-          className="w-full max-w-[919.9px] flex flex-col items-center gap-5 rounded-2xl border px-10 py-8"
+          className="flex w-full max-w-[919.9px] flex-col items-center gap-5 rounded-2xl border px-4 py-6 sm:px-8 lg:px-10 lg:py-8"
           style={GLASS_STYLE}
         >
           {body}

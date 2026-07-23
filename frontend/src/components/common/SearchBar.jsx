@@ -245,7 +245,7 @@ function SearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-stretch border rounded-full shadow-xl max-w-4xl mx-auto p-0.5 gap-0"
+      className="mx-auto flex w-full max-w-4xl flex-col items-stretch gap-1 rounded-2xl border p-1 shadow-xl sm:flex-row sm:gap-0 sm:rounded-full sm:p-0.5"
       style={{
         backgroundColor: compact
           ? 'rgba(0,0,0,0.45)'
@@ -268,7 +268,7 @@ function SearchBar({
           ci-dessus, qui a besoin de mesurer/figer le style avant de l'activer. */}
       <div
         ref={fieldsRef}
-        className="flex items-stretch overflow-hidden"
+        className="flex w-full flex-col items-stretch overflow-visible sm:w-auto sm:flex-row sm:overflow-hidden"
         aria-hidden={retracted}
         style={{
           maxWidth: retracted ? '0px' : 'none',
@@ -276,7 +276,7 @@ function SearchBar({
         }}
       >
         <div
-          className={`relative flex-1 flex flex-col justify-center text-center px-6 py-0.5 mx-0.5 rounded-full transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+          className={`relative mx-0.5 flex flex-1 flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-6 sm:py-0.5 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         >
           <span
             className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
@@ -328,7 +328,7 @@ function SearchBar({
           )}
         </div>
 
-        <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
+        <div className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`} />
         <DateRangePicker
           start={start}
           end={end}
@@ -337,10 +337,10 @@ function SearchBar({
           isDateAvailable={isDateAvailable}
           light={light}
         />
-        <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
+        <div className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`} />
 
         <div
-          className={`flex flex-col justify-center text-center px-5 py-0.5 mx-0.5 rounded-full transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+          className={`mx-0.5 flex flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-5 sm:py-0.5 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         >
           <span
             className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
@@ -354,7 +354,7 @@ function SearchBar({
             onChange={(e) => setTravelers(e.target.value)}
             placeholder={t('searchBar.travelersPlaceholder')}
             tabIndex={retracted ? -1 : undefined}
-            className={`w-29 bg-transparent outline-none text-xs text-center ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
+            className={`w-full bg-transparent text-center text-xs outline-none sm:w-29 ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
           />
         </div>
 
@@ -393,7 +393,7 @@ function SearchBar({
 
       <button
         type="submit"
-        className="flex items-center gap-2 bg-sky-700/50 hover:bg-sky-900 text-white px-5 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap"
+        className="flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-sky-700/50 px-5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-900 sm:min-h-0 sm:w-auto sm:rounded-full"
       >
         <FiSearch size={14} />
         {t('searchBar.search')}

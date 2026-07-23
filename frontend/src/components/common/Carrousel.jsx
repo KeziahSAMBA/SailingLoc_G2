@@ -822,7 +822,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null }) => {
     <div className="w-full flex flex-col gap-8">
       {/* Annonces du moment — carrousels 3D animés */}
       <div className="relative w-full">
-        <div className="flex items-baseline gap-3 mb-3">
+        <div className="mb-3 flex flex-wrap items-baseline gap-2 sm:gap-3">
           <h2
             className={`font-semibold ${headerTitle}`}
             style={{ fontSize: '20px', lineHeight: '22px' }}
@@ -836,13 +836,13 @@ const Carrousel = ({ theme = 'dark', similarTo = null }) => {
               e.preventDefault();
               goToCategory();
             }}
-            className={`flex items-center gap-1.5 transition-colors ml-4 ${headerLink}`}
+            className={`flex items-center gap-1.5 transition-colors sm:ml-4 ${headerLink}`}
             style={{ fontSize: '16px' }}
           >
             {t('carrousel.sections.currentLink')} <FaArrowRight size={10} />
           </Link>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row">
           {boatTypeSections
             .filter((s) => s.slides.length > 0)
             .map(({ slides, title, initialSlide, interval }) => (
