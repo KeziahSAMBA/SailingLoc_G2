@@ -11,6 +11,7 @@ import laRochelleImg from '../assets/image/ports/La_Rochelle.webp';
 import brestImg from '../assets/image/ports/Brest.webp';
 import bordeauxImg from '../assets/image/ports/Bordeaux.webp';
 import barceloneImg from '../assets/image/ports/Barcelone.webp';
+import { unlockScroll } from '../hooks/useCategoryTransition.js';
 
 // Focus clavier visible sur fond clair — même convention que ContactPage.
 const FOCUS_LIGHT =
@@ -33,6 +34,13 @@ const DESTINATIONS = [
 
 function AboutPage() {
   const { t } = useTranslation();
+
+  // Une navigation interrompant l'intro ou une transition de catalogue peut
+  // laisser les écouteurs globaux de molette/tactile actifs. Cette page n'a
+  // aucune animation nécessitant ce verrou : elle le libère dès son montage.
+  useEffect(() => {
+    unlockScroll();
+  }, []);
 
   const STATS = [
     { value: '50+', label: t('aboutPage.stats.boats') },
