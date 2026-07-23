@@ -352,9 +352,19 @@ const CarouselSection = ({
 }) => {
   const { t } = useTranslation();
   const goToCategory = useCategoryNavigate();
-  const titleColor = theme === 'dark' ? 'text-white' : 'text-black';
+  const isResponsivePortHeader = theme === 'dark' && variant === 'port';
+  const titleColor =
+    theme === 'dark'
+      ? isResponsivePortHeader
+        ? 'text-gray-900 lg:text-white'
+        : 'text-white'
+      : 'text-black';
   const linkColor =
-    theme === 'dark' ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-black';
+    theme === 'dark'
+      ? isResponsivePortHeader
+        ? 'text-gray-600 hover:text-black lg:text-white/70 lg:hover:text-white'
+        : 'text-white/70 hover:text-white'
+      : 'text-gray-600 hover:text-black';
   return (
     <div className="relative w-full">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
