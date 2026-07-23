@@ -15,11 +15,18 @@ import { unlockScroll } from '../hooks/useCategoryTransition.js';
 
 // Focus clavier visible sur fond clair — même convention que ContactPage.
 const FOCUS_LIGHT =
-  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-offset-2';
+  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
 
 // Cartes blanches ombrées, comme les sections de la page d'accueil.
 const cardClass =
-  'rounded-2xl border border-black/15 bg-white p-6 shadow-[0_8px_48px_rgba(0,0,0,0.10)]';
+  'rounded-2xl border border-white/20 bg-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl';
+
+const PHOTO_BG_STYLE = {
+  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${heroBg})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundAttachment: 'fixed',
+};
 
 // Destinations : seuls les ports français ont des bateaux dans le catalogue
 // (voir le filtre équivalent dans Carrousel.jsx) ; les autres sont « bientôt ».
@@ -73,44 +80,38 @@ function AboutPage() {
   }, [t]);
 
   return (
-    <main className="w-full bg-white">
+    <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
       {/* Hero photo + voile sombre, comme l'accueil et la page contact */}
       <section className="relative flex min-h-[45vh] w-full flex-col items-center justify-center overflow-hidden px-4 pt-[96px]">
-        <img
-          src={heroBg}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/10" />
         <div className="relative text-center">
           <h1 className="text-4xl font-semibold text-white md:text-5xl">
             {t('aboutPage.hero.title')}
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-gray-300">
+          <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">
             {t('aboutPage.hero.tagline')}
           </p>
         </div>
       </section>
 
       {/* Présentation */}
-      <section aria-labelledby="story-title" className="w-full bg-white px-4 py-14">
-        <div className="mx-auto grid w-full max-w-5xl items-center gap-10 md:grid-cols-2">
+      <section aria-labelledby="story-title" className="w-full px-4 py-14">
+        <div className="mx-auto grid w-full max-w-5xl items-center gap-10 rounded-2xl border border-white/20 bg-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:grid-cols-2 md:p-8">
           <div>
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-700 underline underline-offset-4">
+            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
               {t('aboutPage.story.kicker')}
             </p>
-            <h2 id="story-title" className="text-3xl font-semibold text-gray-900 md:text-4xl">
+            <h2 id="story-title" className="text-3xl font-semibold text-white md:text-4xl">
               {t('aboutPage.story.title')}
             </h2>
-            <p className="mt-6 leading-relaxed text-gray-600">{t('aboutPage.story.p1')}</p>
-            <p className="mt-4 leading-relaxed text-gray-600">{t('aboutPage.story.p2')}</p>
+            <p className="mt-6 leading-relaxed text-white/70">{t('aboutPage.story.p1')}</p>
+            <p className="mt-4 leading-relaxed text-white/70">{t('aboutPage.story.p2')}</p>
           </div>
           <img
             src={boatImg}
             alt={t('aboutPage.story.imageAlt')}
             loading="lazy"
-            className="h-72 w-full rounded-2xl border border-black/15 object-cover shadow-[0_8px_48px_rgba(0,0,0,0.18)] md:h-96"
+            className="h-72 w-full rounded-2xl border border-white/30 object-cover shadow-[0_8px_32px_rgba(0,0,0,0.24)] md:h-96"
           />
         </div>
 
@@ -118,23 +119,23 @@ function AboutPage() {
         <ul className="mx-auto mt-14 grid w-full max-w-5xl grid-cols-2 gap-6 md:grid-cols-4">
           {STATS.map(({ value, label }) => (
             <li key={label} className={`${cardClass} text-center`}>
-              <p className="text-3xl font-bold text-[#0A3172]">{value}</p>
-              <p className="mt-1 text-sm text-gray-500">{label}</p>
+              <p className="text-3xl font-bold text-sky-300">{value}</p>
+              <p className="mt-1 text-sm text-white/65">{label}</p>
             </li>
           ))}
         </ul>
       </section>
 
-      <div className="mx-auto max-w-4xl border-t border-gray-200" />
+      <div className="mx-auto max-w-4xl border-t border-white/15" />
 
       {/* Valeurs */}
-      <section aria-labelledby="values-title" className="w-full bg-white px-4 py-14">
+      <section aria-labelledby="values-title" className="w-full px-4 py-14">
         <div className="mx-auto w-full max-w-5xl">
           <div className="mb-10 text-center">
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-700 underline underline-offset-4">
+            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
               {t('aboutPage.values.kicker')}
             </p>
-            <h2 id="values-title" className="text-3xl font-semibold text-gray-900 md:text-4xl">
+            <h2 id="values-title" className="text-3xl font-semibold text-white md:text-4xl">
               {t('aboutPage.values.title')}
             </h2>
           </div>
@@ -143,26 +144,26 @@ function AboutPage() {
             {VALUES.map(({ icon, title, text }) => (
               <li key={title} className={`${cardClass} text-center`}>
                 <span className="mx-auto inline-block">{icon}</span>
-                <h3 className="mt-4 font-semibold text-gray-900">{title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-gray-500">{text}</p>
+                <h3 className="mt-4 font-semibold text-white">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-white/65">{text}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <div className="mx-auto max-w-4xl border-t border-gray-200" />
+      <div className="mx-auto max-w-4xl border-t border-white/15" />
 
       {/* Destinations */}
-      <section aria-labelledby="destinations-title" className="w-full bg-white px-4 py-14">
+      <section aria-labelledby="destinations-title" className="w-full px-4 py-14">
         <div className="mx-auto w-full max-w-5xl">
           <div className="mb-10 text-center">
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-700 underline underline-offset-4">
+            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
               {t('aboutPage.destinations.kicker')}
             </p>
             <h2
               id="destinations-title"
-              className="text-3xl font-semibold text-gray-900 md:text-4xl"
+              className="text-3xl font-semibold text-white md:text-4xl"
             >
               {t('aboutPage.destinations.title')}
             </h2>
@@ -171,7 +172,7 @@ function AboutPage() {
           <ul className="grid grid-cols-2 gap-6 md:grid-cols-3">
             {DESTINATIONS.map(({ city, image, available }) => {
               const card = (
-                <figure className="group relative h-44 overflow-hidden rounded-2xl border border-black/15 shadow-[0_8px_32px_rgba(0,0,0,0.15)] md:h-52">
+                <figure className="group relative h-44 overflow-hidden rounded-2xl border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.24)] md:h-52">
                   <img
                     src={image}
                     alt=""
@@ -214,22 +215,22 @@ function AboutPage() {
       </section>
 
       {/* CTA final */}
-      <section aria-labelledby="cta-title" className="w-full bg-white px-4 pb-16 pt-2">
-        <div className="mx-auto w-full max-w-3xl rounded-2xl border border-black/15 bg-white px-6 py-10 text-center shadow-[0_8px_48px_rgba(0,0,0,0.10)]">
-          <h2 id="cta-title" className="text-2xl font-semibold text-gray-900 md:text-3xl">
+      <section aria-labelledby="cta-title" className="w-full px-4 pb-16 pt-2">
+        <div className="mx-auto w-full max-w-3xl rounded-2xl border border-white/20 bg-white/10 px-6 py-10 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+          <h2 id="cta-title" className="text-2xl font-semibold text-white md:text-3xl">
             {t('aboutPage.cta.title')}
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm text-gray-600">{t('aboutPage.cta.text')}</p>
+          <p className="mx-auto mt-3 max-w-md text-sm text-white/70">{t('aboutPage.cta.text')}</p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               to="/categorie"
-              className={`rounded-full bg-[#0A3172] px-8 py-3 text-sm font-semibold text-white shadow transition hover:bg-[#0d3d8c] ${FOCUS_LIGHT}`}
+              className={`rounded-full border border-white/40 bg-[rgba(14,165,233,0.55)] px-8 py-3 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition hover:border-white/20 hover:bg-[rgba(10,49,114,0.95)] ${FOCUS_LIGHT}`}
             >
               {t('aboutPage.cta.browse')}
             </Link>
             <Link
               to="/contact"
-              className={`rounded-full border border-[#0A3172] px-8 py-3 text-sm font-semibold text-[#0A3172] transition hover:bg-[#0A3172]/5 ${FOCUS_LIGHT}`}
+              className={`rounded-full border border-white/40 bg-white/10 px-8 py-3 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20 ${FOCUS_LIGHT}`}
             >
               {t('aboutPage.cta.contact')}
             </Link>
