@@ -70,22 +70,44 @@ const PortCarousel = memo(
     onSlideClick,
   }) => {
     const { t } = useTranslation();
-    const maxIndex = slides.length - visibleCount;
+    const carouselRef = useRef(null);
+    const [responsiveVisibleCount, setResponsiveVisibleCount] = useState(visibleCount);
     const [index, setIndex] = useState(0);
+    const effectiveVisibleCount = Math.min(responsiveVisibleCount, slides.length || 1);
+    const maxIndex = Math.max(0, slides.length - effectiveVisibleCount);
     const slideWidthPct = 100 / slides.length;
-    const trackWidthPct = (slides.length / visibleCount) * 100;
+    const trackWidthPct = (slides.length / effectiveVisibleCount) * 100;
     const aspectRatio = imageSize === 'small' ? '4 / 3' : '1 / 1';
 
     const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
     const next = useCallback(() => setIndex((i) => Math.min(maxIndex, i + 1)), [maxIndex]);
 
+    useLayoutEffect(() => {
+      const element = carouselRef.current;
+      if (!element) return undefined;
+      const updateVisibleCount = () => {
+        const width = element.clientWidth;
+        const nextCount =
+          width < 340 ? 1 : width < 560 ? 2 : width < 820 ? 3 : width < 1120 ? 4 : visibleCount;
+        setResponsiveVisibleCount(Math.min(nextCount, visibleCount));
+      };
+      updateVisibleCount();
+      const observer = new window.ResizeObserver(updateVisibleCount);
+      observer.observe(element);
+      return () => observer.disconnect();
+    }, [visibleCount]);
+
+    useEffect(() => {
+      setIndex((current) => Math.min(current, maxIndex));
+    }, [maxIndex]);
+
     return (
-      <div className="relative p-4">
+      <div ref={carouselRef} className="relative p-2 sm:p-4">
         {index > 0 && (
           <button
             onClick={prev}
-            className="absolute left-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
-            style={{ transform: 'translate(-50%, 0)', top: '40%' }}
+            className="absolute left-1 z-20 rounded-full bg-white/80 p-2 shadow-lg transition-colors hover:bg-gray-200 sm:left-0 sm:-translate-x-1/2"
+            style={{ top: '40%' }}
             aria-label={t('carrousel.prev')}
           >
             <FaChevronLeft size={12} className="text-gray-700" />
@@ -303,8 +325,8 @@ const PortCarousel = memo(
         {index < maxIndex && (
           <button
             onClick={next}
-            className="absolute right-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
-            style={{ transform: 'translate(50%, 0)', top: '40%' }}
+            className="absolute right-1 z-20 rounded-full bg-white/80 p-2 shadow-lg transition-colors hover:bg-gray-200 sm:right-0 sm:translate-x-1/2"
+            style={{ top: '40%' }}
             aria-label={t('carrousel.next')}
           >
             <FaChevronRight size={12} className="text-gray-700" />
@@ -335,7 +357,7 @@ const CarouselSection = ({
     theme === 'dark' ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-black';
   return (
     <div className="relative w-full">
-      <div className="flex items-baseline gap-3">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2
           className={`font-semibold ${titleColor}`}
           style={{ fontSize: '20px', lineHeight: '22px' }}
@@ -349,8 +371,8 @@ const CarouselSection = ({
             e.preventDefault();
             goToCategory(linkTo);
           }}
-          className={`flex items-center gap-1.5 transition-colors ml-4 ${linkColor}`}
-          style={{ fontSize: '16px' }}
+          className={`flex items-center gap-1.5 transition-colors sm:ml-4 ${linkColor}`}
+          style={{ fontSize: 'clamp(13px, 2.5vw, 16px)' }}
         >
           {linkLabel ?? t('carrousel.seeMore')} <FaArrowRight size={10} />
         </Link>
