@@ -106,30 +106,29 @@ const Footer = () => {
   return (
     <footer
       id="contact"
-      className="text-gray-300 px-16 flex flex-col justify-between"
+      className="flex flex-col justify-between overflow-x-hidden px-4 text-gray-300 sm:px-8 lg:px-12 xl:px-16"
       style={{
         backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${bgImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
         borderTop: '1px solid rgba(90, 180, 236, 0.2)',
       }}
     >
-      <div className="grid grid-cols-[1fr_1fr_auto] gap-x-10 gap-y-4 w-full pt-8">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-x-10 gap-y-4 pt-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         {/* Ligne A */}
-        <div>
-          <img src={logoLong} alt="SailingLoc logo" className="w-36" />
+        <div className="order-1 lg:order-none">
+          <img src={logoLong} alt="SailingLoc logo" className="w-32 sm:w-36" />
         </div>
-        <div />
-        <div className="flex items-center gap-4">
-          <div className="flex gap-2">
+        <div className="hidden lg:block" />
+        <div className="order-2 flex min-w-0 flex-col items-start gap-4 border-b border-white/20 pb-6 sm:flex-row sm:items-center lg:order-none lg:flex-row lg:border-0 lg:pb-0">
+          <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto">
             {APP_LINKS.map(({ icon, label, href }) => (
               <a
                 key={label}
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 rounded-full text-xs whitespace-nowrap px-2.5 py-1"
+                className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs"
                 style={appBtnStyle}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
@@ -147,7 +146,7 @@ const Footer = () => {
               </a>
             ))}
           </div>
-          <div className="flex gap-3 text-xl">
+          <div className="flex gap-4 text-xl">
             {SOCIAL_LINKS.map(({ icon, label, href, hoverClass }) => (
               <a
                 key={label}
@@ -164,30 +163,39 @@ const Footer = () => {
         </div>
 
         {/* Ligne B — titres */}
-        <h3 className="text-white font-semibold text-lg">{t('footer.contact')}</h3>
-        <h3 className="text-white font-semibold text-lg">{t('footer.help')}</h3>
-        <h3 className="text-white font-semibold text-lg">{t('footer.info')}</h3>
+        <h3 className="order-3 mt-3 text-lg font-semibold text-white lg:order-none lg:mt-0">
+          {t('footer.contact')}
+        </h3>
+        <h3 className="order-5 mt-4 border-t border-white/15 pt-6 text-lg font-semibold text-white lg:order-none lg:mt-0 lg:border-0 lg:pt-0">
+          {t('footer.help')}
+        </h3>
+        <h3 className="order-7 mt-4 border-t border-white/15 pt-6 text-lg font-semibold text-white lg:order-none lg:mt-0 lg:border-0 lg:pt-0">
+          {t('footer.info')}
+        </h3>
 
         {/* Ligne C — contenu */}
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-center gap-2">
-            <FaPhone className="text-blue-400" />
-            <span>+33 (0)2 00 66 77 89</span>
+        <ul className="order-4 min-w-0 space-y-3 text-sm lg:order-none">
+          <li className="flex items-start gap-2">
+            <FaPhone className="mt-0.5 shrink-0 text-blue-400" />
+            <span className="break-words">+33 (0)2 00 66 77 89</span>
           </li>
-          <li className="flex items-center gap-2">
-            <FaEnvelope className="text-blue-400" />
-            <a href="mailto:contact@sailingloc.fr" className="hover:text-white transition-colors">
+          <li className="flex min-w-0 items-start gap-2">
+            <FaEnvelope className="mt-0.5 shrink-0 text-blue-400" />
+            <a
+              href="mailto:contact@sailingloc.fr"
+              className="min-w-0 break-all transition-colors hover:text-white"
+            >
               contact@sailingloc.fr
             </a>
           </li>
-          <li className="flex items-center gap-2">
-            <FaComments className="text-blue-400" />
+          <li className="flex items-start gap-2">
+            <FaComments className="mt-0.5 shrink-0 text-blue-400" />
             {user ? (
               <button
                 type="button"
                 onClick={openSupportChat}
                 disabled={chatBusy}
-                className="hover:text-white transition-colors disabled:opacity-60"
+                className="text-left transition-colors hover:text-white disabled:opacity-60"
               >
                 {chatBusy ? 'Ouverture…' : t('footer.chat')}
               </button>
@@ -199,31 +207,31 @@ const Footer = () => {
           </li>
         </ul>
 
-        <ul className="space-y-2 text-sm">
+        <ul className="order-6 min-w-0 space-y-2 text-sm lg:order-none">
           {helpLinks.map((text) => (
             <li key={text}>
-              <a href="#" className="hover:text-white transition-colors">
+              <a href="#" className="break-words transition-colors hover:text-white">
                 {text}
               </a>
             </li>
           ))}
-          <li className="pt-1 border-t border-white/20">
-            <a href="#" className="flex items-center gap-2 hover:text-white transition-colors">
-              <FaCircleInfo className="text-blue-400 flex-shrink-0" />
-              <span>{t('footer.moreInfo')}</span>
+          <li className="border-t border-white/20 pt-3">
+            <a href="#" className="flex items-start gap-2 transition-colors hover:text-white">
+              <FaCircleInfo className="mt-0.5 shrink-0 text-blue-400" />
+              <span className="break-words">{t('footer.moreInfo')}</span>
             </a>
           </li>
         </ul>
 
-        <ul className="space-y-2 text-sm">
+        <ul className="order-8 min-w-0 space-y-2 pb-2 text-sm lg:order-none lg:pb-0">
           <li>{t('footer.founded')}</li>
-          <li className="flex items-center gap-1.5">
-            <FaLocationDot className="text-blue-400 flex-shrink-0" />
-            <span>{t('footer.address')}</span>
+          <li className="flex items-start gap-2">
+            <FaLocationDot className="mt-0.5 shrink-0 text-blue-400" />
+            <span className="break-words">{t('footer.address')}</span>
           </li>
           {infoLinks.map(({ label, href }) => (
             <li key={label}>
-              <Link to={href} className="hover:text-white transition-colors">
+              <Link to={href} className="break-words transition-colors hover:text-white">
                 {label}
               </Link>
             </li>
@@ -243,10 +251,11 @@ const Footer = () => {
       </div>
 
       {/* Copyright */}
-      <div className="w-full mt-8 pb-6 pt-4 border-t border-white/20">
-        <p className="text-white/60 text-xs flex items-center gap-1 whitespace-nowrap">
-          {t('footer.copyright')} <FaTriangleExclamation className="text-yellow-400/70 shrink-0" />
-          <span className="text-white/40">{t('footer.disclaimer')}</span>
+      <div className="mt-6 w-full border-t border-white/20 pb-6 pt-4 lg:mt-8">
+        <p className="flex flex-wrap items-start gap-x-1 gap-y-1 text-xs leading-relaxed text-white/60">
+          <span>{t('footer.copyright')}</span>
+          <FaTriangleExclamation className="mt-0.5 shrink-0 text-yellow-400/70" />
+          <span className="min-w-0 break-words text-white/40">{t('footer.disclaimer')}</span>
         </p>
       </div>
     </footer>
