@@ -224,13 +224,13 @@ const BoatListingCard = memo(function BoatListingCard({
         </div>
 
         {/* Lieu + dates */}
-        <div className="flex items-center justify-between gap-1 mb-2 pb-2 border-b border-white/40">
+        <div className="mb-2 flex flex-col items-start gap-2 border-b border-white/40 pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-1">
           <span className="text-xs text-white/80 flex items-center gap-1 min-w-0">
             <MdLocationOn className="text-sky-500 flex-shrink-0" style={{ fontSize: '13px' }} />
             <span className="truncate">{location}</span>
           </span>
           {availability?.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap justify-end flex-shrink-0">
+            <div className="flex flex-wrap items-center justify-start gap-1 sm:justify-end">
               <MdCalendarToday
                 className="text-sky-500 flex-shrink-0"
                 style={{ fontSize: '12px' }}
@@ -253,7 +253,7 @@ const BoatListingCard = memo(function BoatListingCard({
         </div>
 
         {/* Personnes + badges skipper/permis */}
-        <div className="flex items-center justify-between gap-1 mb-2">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <span className="flex items-center gap-1 text-xs text-white/70 flex-shrink-0">
             <MdPeople className="text-sky-500" style={{ fontSize: '14px' }} />
             {t('category.card.persons', { count: capacity })}
@@ -801,9 +801,8 @@ function CategoryPage() {
 
           {/* Section 1 — Searchbar sticky */}
           <section
-            className="z-40"
+            className="relative z-40 xl:sticky"
             style={{
-              position: 'sticky',
               top: scrolled ? '60px' : '80px',
               backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
               backdropFilter: scrolled ? 'blur(5px)' : 'none',
@@ -815,7 +814,7 @@ function CategoryPage() {
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
-              className="flex items-center gap-8 pb-2 pl-28"
+              className="flex w-full flex-col items-stretch gap-3 px-4 pb-3 sm:px-8 lg:px-16 xl:flex-row xl:items-center xl:gap-8 xl:pl-28 xl:pr-20"
               style={{
                 paddingTop: scrolled ? '8px' : '32px',
                 transition: 'padding-top 0.3s ease',
@@ -826,7 +825,7 @@ function CategoryPage() {
                   des filtres au scroll. Le marginRight négatif annule le gap-8
                   de la rangée pour que le slot replié n'occupe aucune place. */}
               <div
-                className="overflow-hidden whitespace-nowrap"
+                className="hidden overflow-hidden whitespace-nowrap xl:block"
                 style={{
                   maxWidth: scrolled ? '320px' : '0px',
                   marginRight: scrolled ? '0px' : '-32px',
@@ -838,7 +837,7 @@ function CategoryPage() {
               >
                 <Breadcrumb light compact />
               </div>
-              <div style={slideInStyle(0)}>
+              <div className="w-full min-w-0 xl:w-auto" style={slideInStyle(0)}>
                 <FilterBar
                   light
                   compact={scrolled}
@@ -857,7 +856,7 @@ function CategoryPage() {
                   onReset={resetFilters}
                 />
               </div>
-              <div ref={searchBarWrapRef}>
+              <div ref={searchBarWrapRef} className="w-full min-w-0 xl:w-auto">
                 <SearchBar
                   light
                   compact={scrolled}
@@ -869,27 +868,32 @@ function CategoryPage() {
             {/* Fil d'ariane pleine ligne (état haut de page) : s'écrase en
                 douceur au scroll, le temps que son double inline prenne le
                 relais dans la rangée ci-dessus. */}
-            <div
-              className="overflow-hidden"
-              style={{
-                maxHeight: scrolled ? '0px' : '48px',
-                opacity: scrolled ? 0 : 1,
-                visibility: scrolled ? 'hidden' : 'visible',
-                transition: 'max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s',
-              }}
-            >
-              <div className="pt-1 pb-2 pl-28" style={slideInStyle(1)}>
+            <div className="overflow-hidden xl:hidden">
+              <div
+                className="px-4 pb-3 pt-1 sm:px-8 lg:px-16 xl:pl-28 xl:pr-20"
+                style={slideInStyle(1)}
+              >
                 <Breadcrumb light />
               </div>
             </div>
+            {!scrolled && (
+              <div className="hidden overflow-hidden xl:block">
+                <div className="pb-2 pl-28 pt-1" style={slideInStyle(1)}>
+                  <Breadcrumb light />
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Section 2 — Listings + Carte 50/50 */}
-          <div id="resultats" className="flex items-start gap-6 px-28 py-5 scroll-mt-[120px]">
+          <div
+            id="resultats"
+            className="flex flex-col items-stretch gap-8 px-4 py-5 scroll-mt-[120px] sm:px-8 lg:px-16 xl:flex-row xl:items-start xl:gap-6 xl:px-28"
+          >
             {/* Listings — 50% */}
-            <div className="w-1/2 flex flex-col gap-5 relative">
+            <div className="relative flex w-full flex-col gap-5 xl:w-1/2">
               <div className="relative z-10 flex flex-col gap-5">
-                <div className="flex items-end justify-between">
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
                     <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-sky-500">
                       {t('category.results.kicker')}
@@ -910,7 +914,10 @@ function CategoryPage() {
                     </p>
                   )
                 ) : (
-                  <div className="grid grid-cols-2 gap-4" style={slideInStyleLate('cards', 4)}>
+                  <div
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                    style={slideInStyleLate('cards', 4)}
+                  >
                     {filteredBoats.slice(0, visibleCount).map((boat) => (
                       <BoatListingCard
                         key={boat.id}
@@ -938,7 +945,7 @@ function CategoryPage() {
             {/* Offset sticky = hauteur du header fixe + hauteur de la barre filtre/recherche/fil
                 d'ariane (toutes deux sticky au-dessus) + un petit espace de respiration. */}
             <aside
-              className="w-1/2 sticky flex flex-col gap-2"
+              className="flex w-full flex-col gap-2 xl:sticky xl:w-1/2"
               style={{ top: `${mapStickyTop}px`, transition: 'top 0.3s ease' }}
             >
               {/* L'animation d'entrée s'applique au bloc interne et non à
@@ -966,7 +973,7 @@ function CategoryPage() {
                     {t('category.map.live')}
                   </span>
                 </div>
-                <div style={{ height: `calc(100vh - ${mapStickyTop}px - 56px)` }}>
+                <div className="h-[320px] sm:h-[420px] xl:h-[calc(100vh-220px)]">
                   <MapView
                     markers={mapMarkers}
                     boatMarkers={boatMapMarkers}
@@ -996,7 +1003,7 @@ function CategoryPage() {
         {belowFoldReady ? (
           <section
             id="suggestions"
-            className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[140px]"
+            className="relative flex w-full flex-col gap-8 px-4 py-8 scroll-mt-[140px] sm:px-8 lg:px-16 lg:py-10 xl:px-28"
           >
             <Carrousel theme="light" />
           </section>
