@@ -491,16 +491,16 @@ function ProductPage() {
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
-              className="flex items-center gap-8 pb-2 pl-28"
+              className="flex flex-col items-stretch gap-3 px-4 pb-3 sm:px-8 lg:flex-row lg:items-center lg:gap-8 lg:pb-2 lg:pl-16 lg:pr-8 xl:pl-28"
               style={{
                 paddingTop: scrolled ? '8px' : '32px',
                 transition: 'padding-top 0.3s ease',
               }}
             >
-              <div style={slideInStyle(0)}>
+              <div className="min-w-0 overflow-hidden" style={slideInStyle(0)}>
                 <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
               </div>
-              <div ref={searchBarWrapRef}>
+              <div ref={searchBarWrapRef} className="w-full min-w-0 lg:w-auto">
                 <SearchBar
                   light
                   compact={scrolled}
@@ -515,7 +515,7 @@ function ProductPage() {
           {!boatsLoaded && <div style={{ height: '70vh' }} aria-hidden="true" />}
           {boatsLoaded && !boat && (
             <div
-              className="flex flex-col items-center gap-4 pl-28 pr-20 py-24 text-center"
+              className="flex flex-col items-center gap-4 px-4 py-24 text-center sm:px-8 lg:px-20"
               style={slideInStyleLate('notFound', 1)}
             >
               <h1 className="text-2xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
@@ -526,17 +526,21 @@ function ProductPage() {
             </div>
           )}
           {boat && (
-            <div className="flex items-start gap-6 pl-28 pr-20 py-5 pb-12">
+            <div className="flex flex-col items-stretch gap-6 px-4 py-5 pb-12 sm:px-8 lg:px-16 xl:flex-row xl:items-start xl:pl-28 xl:pr-20">
               {/* Colonne principale */}
-              <div className="flex-1 min-w-0 flex flex-col gap-5">
+              <div className="contents xl:flex xl:min-w-0 xl:flex-1 xl:flex-col xl:gap-5">
                 {/* Galerie : image principale + vues secondaires (jusqu'à 4) */}
                 <div
-                  className="grid grid-cols-4 grid-rows-2 gap-4"
-                  style={{ height: '440px', ...slideInStyleLate('gallery', 1) }}
+                  className={`order-1 grid grid-cols-2 grid-rows-4 gap-2 sm:gap-4 md:h-[440px] md:grid-cols-4 md:grid-rows-2 xl:order-none ${
+                    thumbs.length > 0 ? 'h-[620px] sm:h-[720px]' : 'h-[340px] sm:h-[440px]'
+                  }`}
+                  style={slideInStyleLate('gallery', 1)}
                 >
                   <div
-                    className={`relative rounded-3xl overflow-hidden border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] group ${
-                      thumbs.length > 0 ? 'col-span-2 row-span-2' : 'col-span-4 row-span-2'
+                    className={`relative overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] group sm:rounded-3xl ${
+                      thumbs.length > 0
+                        ? 'col-span-2 row-span-2'
+                        : 'col-span-2 row-span-4 md:col-span-4 md:row-span-2'
                     }`}
                   >
                     <img
@@ -548,7 +552,7 @@ function ProductPage() {
                   {thumbs.map((img) => (
                     <div
                       key={img.url}
-                      className="relative rounded-3xl overflow-hidden border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)]"
+                      className="relative overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)] sm:rounded-3xl"
                     >
                       <img
                         src={img.url}
@@ -564,7 +568,9 @@ function ProductPage() {
                 {/* Spécifications : juste sous la galerie, dans la même
                     colonne que les photos plutôt qu'après toute la ligne
                     (aside compris) — montées après l'animation d'entrée. */}
-                {!belowFoldReady && <div style={{ height: '60vh' }} aria-hidden="true" />}
+                {!belowFoldReady && (
+                  <div className="order-3 xl:order-none" style={{ height: '60vh' }} aria-hidden="true" />
+                )}
                 {belowFoldReady && (
                   <>
                     {/* Section 3 — Spécifications techniques. Montée après la
@@ -574,7 +580,7 @@ function ProductPage() {
                         figée à l'écran pendant que tout le reste s'en va. */}
                     <section
                       id="specifications"
-                      className="relative w-full flex flex-col items-start py-6 scroll-mt-[130px]"
+                      className="relative order-3 flex w-full flex-col items-start py-3 scroll-mt-[130px] sm:py-6 xl:order-none"
                       style={
                         exiting
                           ? slideOutStyle(2, 'left')
@@ -584,25 +590,25 @@ function ProductPage() {
                       }
                     >
                       <div
-                        className="w-full max-w-[919.9px] flex flex-col items-center gap-8 rounded-2xl border px-10 py-8"
+                        className="flex w-full max-w-[919.9px] flex-col items-center gap-6 rounded-2xl border px-4 py-6 sm:gap-8 sm:px-8 sm:py-8 lg:px-10"
                         style={GLASS_STYLE}
                       >
                         <div className="text-center">
                           <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
                             {t('product.specs.kicker')}
                           </p>
-                          <h2 className="text-3xl md:text-4xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                          <h2 className="text-2xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
                             {t('product.specs.title')}
                           </h2>
                           <p className="text-sm text-white/70 mt-4">
                             {t('product.specs.subtitle')}
                           </p>
                         </div>
-                        <div className="w-full grid grid-cols-2 gap-x-16">
+                        <div className="grid w-full grid-cols-1 gap-x-8 md:grid-cols-2 lg:gap-x-16">
                           {specRows.map(([label, value]) => (
                             <div
                               key={label}
-                              className="flex items-baseline justify-between gap-4 py-3 border-b border-white/15"
+                              className="flex items-start justify-between gap-4 border-b border-white/15 py-3 sm:items-baseline"
                             >
                               <span className="text-xs font-semibold tracking-widest uppercase text-white/60">
                                 {label}
@@ -643,14 +649,13 @@ function ProductPage() {
 
               {/* Panneau info + réservation — largeur fixe, sticky sous les barres fixes */}
               <aside
-                className="shrink-0 sticky flex flex-col gap-3"
-                style={{ width: '384px', top: `${panelStickyTop}px`, transition: 'top 0.3s ease' }}
+                className="order-2 flex w-full shrink-0 flex-col gap-3 xl:order-none xl:sticky xl:w-[397px]"
+                style={{ top: `${panelStickyTop}px`, transition: 'top 0.3s ease' }}
               >
                 {/* Nom, pastilles d'info et description */}
                 <div
-                  className="rounded-2xl border px-5 py-2 flex flex-col gap-3"
+                  className="flex w-full flex-col gap-3 rounded-2xl border px-4 py-3 sm:px-5"
                   style={{
-                    width: '397px',
                     minHeight: '200px',
                     ...GLASS_STYLE,
                     // Colonne de droite : entre et sort par la marge droite,
@@ -755,16 +760,15 @@ function ProductPage() {
                 {/* L'animation s'applique aux blocs internes et non à l'<aside>
                     sticky, dont le style transition (top) doit rester. */}
                 <div
-                  className="relative z-20 flex flex-col rounded-2xl border"
+                  className="relative z-20 flex w-full flex-col rounded-2xl border"
                   style={{
-                    width: '397px',
                     minHeight: '195px',
                     borderColor: 'rgba(255,255,255,0.2)',
                     ...slideInStyleLate('panel', 3, 'right'),
                   }}
                 >
                   <div
-                    className="flex items-center justify-between px-4 py-3 rounded-t-2xl"
+                    className="flex flex-col items-start gap-2 rounded-t-2xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                     style={GLASS_STYLE}
                   >
                     <div className="flex items-baseline gap-1.5">
@@ -774,7 +778,7 @@ function ProductPage() {
                       </span>
                     </div>
                     <span
-                      className="text-[10px] font-semibold flex items-center gap-1.5"
+                      className="flex items-center gap-1.5 text-[10px] font-semibold"
                       style={{ color: isAvailable ? '#16a34a' : '#f59e0b' }}
                     >
                       <span
@@ -795,7 +799,7 @@ function ProductPage() {
                       {t('product.booking.selectDates')}
                     </p>
                     <div
-                      className="self-center flex justify-center rounded-full border"
+                      className="flex max-w-full self-center justify-center rounded-full border"
                       style={{
                         backgroundColor: 'rgba(255,255,255,0.1)',
                         borderColor: 'rgba(255,255,255,0.3)',
@@ -887,9 +891,9 @@ function ProductPage() {
           {belowFoldReady && boat && (
             <section
               id="localisation"
-              className="relative w-full flex flex-col items-start pl-28 pr-24 py-10 scroll-mt-[130px]"
+              className="relative flex w-full flex-col items-start px-4 py-8 scroll-mt-[130px] sm:px-8 lg:px-16 lg:py-10 xl:pl-28 xl:pr-24"
             >
-              <div className="w-full max-w-[919.9px]" style={{ height: '420px' }}>
+              <div className="h-[300px] w-full max-w-[919.9px] sm:h-[360px] lg:h-[420px]">
                 <MapView
                   markers={portMarkers}
                   className="h-full"
@@ -911,10 +915,10 @@ function ProductPage() {
             fond photo (non demandé par la maquette glassmorphism). */}
         {belowFoldReady && boat && (
           <>
-            <div className="border-t border-gray-200 mx-[168px]" />
+            <div className="mx-4 border-t border-gray-200 sm:mx-8 lg:mx-16 xl:mx-[168px]" />
             <section
               id="suggestions"
-              className="relative w-full flex flex-col gap-8 pl-28 pr-24 py-10 scroll-mt-[140px] bg-white"
+              className="relative flex w-full flex-col gap-8 bg-white px-4 py-8 scroll-mt-[140px] sm:px-8 lg:px-16 lg:py-10 xl:pl-28 xl:pr-24"
             >
               <Carrousel theme="light" similarTo={similarTo} />
             </section>
