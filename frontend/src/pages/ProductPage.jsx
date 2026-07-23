@@ -214,7 +214,15 @@ function ProductPage() {
   useLayoutEffect(() => {
     const from = transitionPayload?.searchBarRect;
     const el = searchBarWrapRef.current;
-    if (!from || !el || transitionPayload?.from !== 'category') return undefined;
+    const supportsDesktopSearchTransition = window.matchMedia('(min-width: 1280px)').matches;
+    if (
+      !from ||
+      !el ||
+      transitionPayload?.from !== 'category' ||
+      !supportsDesktopSearchTransition
+    ) {
+      return undefined;
+    }
     const to = el.getBoundingClientRect();
     el.style.willChange = 'transform';
     el.style.transition = 'none';
@@ -476,32 +484,16 @@ function ProductPage() {
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
           {/* Section 1 — Searchbar + fil d'ariane sticky */}
-          <section
-            className="relative z-40 lg:sticky"
-            style={{
-              top: scrolled ? '60px' : '80px',
-              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
-              backdropFilter: scrolled ? 'blur(5px)' : 'none',
-              WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
-              borderBottom: scrolled ? '1px solid rgba(255,255,255,0.3)' : '1px solid transparent',
-              transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
-            }}
-          >
+          <section className="relative z-40 w-full">
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
-            <div
-              className="flex flex-col items-stretch gap-3 px-4 pb-3 sm:px-8 lg:flex-row lg:items-center lg:gap-8 lg:pb-2 lg:pl-16 lg:pr-8 xl:pl-28"
-              style={{
-                paddingTop: scrolled ? '8px' : '32px',
-                transition: 'padding-top 0.3s ease',
-              }}
-            >
+            <div className="flex w-full flex-col items-stretch gap-3 px-4 pb-4 pt-4 sm:px-8 sm:pt-6 xl:flex-row xl:items-center xl:gap-8 xl:px-20 xl:pb-3 xl:pt-8 2xl:pl-28">
               <div className="min-w-0 overflow-hidden" style={slideInStyle(0)}>
                 <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
               </div>
               <div
                 ref={searchBarWrapRef}
-                className="mx-auto w-full min-w-0 max-w-sm sm:max-w-2xl lg:mx-0 lg:w-auto lg:max-w-none"
+                className="mx-auto w-full min-w-0 max-w-sm sm:max-w-2xl xl:mx-0 xl:w-auto xl:max-w-none"
               >
                 <SearchBar
                   light
