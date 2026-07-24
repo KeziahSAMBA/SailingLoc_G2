@@ -28,10 +28,13 @@ import {
   MdPeople,
   MdPerson,
   MdBadge,
+  MdChatBubbleOutline,
 } from 'react-icons/md';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { useToast } from '../hooks/useToast.jsx';
 import { fetchBoats, fetchBoatsFresh } from '../services/boatService.js';
+import { contactBoatOwner } from '../services/messageService.js';
 import {
   readTransitionPayload,
   clearTransitionPayload,
@@ -99,6 +102,7 @@ function ProductPage() {
   const location = useLocation();
   const goToCategory = useCategoryNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const [scrolled, setScrolled] = useState(false);
 
@@ -371,6 +375,35 @@ function ProductPage() {
       return;
     }
     navigate(`/reservation/${boatId}?start=${start}&end=${end}`);
+  }
+
+  const [contactBusy, setContactBusy] = useState(false);
+  const [contactHint, setContactHint] = useState('');
+
+  async function handleContactOwner() {
+    if (!user) {
+      navigate('/login', { state: { backgroundLocation: location } });
+      return;
+    }
+    if (user.role !== 'locataire') {
+      setContactHint(t('product.ownerContact.locataireOnly'));
+      return;
+    }
+
+    setContactBusy(true);
+    setContactHint('');
+    try {
+      const { data } = await contactBoatOwner(boatId);
+      navigate('/locataire/messages', {
+        state: { openUser: data.owner, boatName: data.boat_name },
+      });
+    } catch (err) {
+      const message = err.response?.data?.message || t('product.ownerContact.error');
+      setContactHint(message);
+      showToast(message, 'error');
+    } finally {
+      setContactBusy(false);
+    }
   }
 
   const portLat = Number(boat?.port?.latitude);
@@ -853,6 +886,25 @@ function ProductPage() {
                       <MdVerified className="text-sky-400" style={{ fontSize: '14px' }} />
                       {t('product.booking.secure')}
                     </p>
+                    <div className="border-t border-white/20 pt-3 text-center">
+                      <p className="mb-2 text-xs text-white/70">{t('product.ownerContact.text')}</p>
+                      <button
+                        type="button"
+                        onClick={handleContactOwner}
+                        disabled={contactBusy}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 bg-white/10 px-5 py-2 text-sm font-semibold text-white transition hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-wait disabled:opacity-60"
+                      >
+                        <MdChatBubbleOutline aria-hidden="true" className="text-lg text-sky-300" />
+                        {contactBusy
+                          ? t('product.ownerContact.opening')
+                          : t('product.ownerContact.cta')}
+                      </button>
+                      {contactHint && (
+                        <p role="status" className="mt-2 text-xs font-semibold text-amber-300">
+                          {contactHint}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
