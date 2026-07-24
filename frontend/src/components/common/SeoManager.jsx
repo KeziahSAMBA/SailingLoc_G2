@@ -63,6 +63,53 @@ function updateHomeStructuredData(pathname, siteOrigin) {
   });
 }
 
+const BREADCRUMB_LABELS = {
+  '/categorie': 'Catalogue',
+  '/contact': 'Contact et aide',
+  '/a-propos': 'À propos',
+  '/mentions-legales': 'Mentions légales',
+  '/cgu': "Conditions générales d'utilisation",
+  '/cgv': 'Conditions générales de vente',
+  '/politique-de-confidentialite': 'Politique de confidentialité',
+};
+
+function updateBreadcrumbStructuredData(pathname, siteOrigin) {
+  const scriptId = 'sailingloc-page-breadcrumb-structured-data';
+  const label = BREADCRUMB_LABELS[pathname];
+  let element = document.getElementById(scriptId);
+
+  if (!label) {
+    element?.remove();
+    return;
+  }
+
+  if (!element) {
+    element = document.createElement('script');
+    element.id = scriptId;
+    element.type = 'application/ld+json';
+    document.head.appendChild(element);
+  }
+
+  element.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Accueil',
+        item: `${siteOrigin}/`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: label,
+        item: `${siteOrigin}${pathname}`,
+      },
+    ],
+  });
+}
+
 function getSiteOrigin() {
   const configuredOrigin = import.meta.env.VITE_SITE_URL?.trim();
 
@@ -118,6 +165,7 @@ function SeoManager({ location }) {
     });
     upsertCanonical(canonicalUrl);
     updateHomeStructuredData(location.pathname, siteOrigin);
+    updateBreadcrumbStructuredData(location.pathname, siteOrigin);
   }, [location.pathname]);
 
   return null;

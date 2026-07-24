@@ -636,7 +636,7 @@ function HomePage() {
               ))}
             </div>
 
-            <GhostButton onClick={() => navigate('/a-propos')}>{t('home.values.cta')}</GhostButton>
+            <GhostButton to="/a-propos">{t('home.values.cta')}</GhostButton>
           </section>
 
           <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-[60px]" />
@@ -645,7 +645,22 @@ function HomePage() {
           <ClientReviews className="py-8">
             <div className="flex flex-col items-center gap-4 mt-10">
               <p className="text-gray-700 font-semibold text-lg">{t('home.reviews.tagline')}</p>
-              <GhostButton className="font-semibold text-lg" onClick={() => goToCategory()}>
+              <GhostButton
+                to="/categorie"
+                className="font-semibold text-lg"
+                onClick={(event) => {
+                  if (
+                    event.button !== 0 ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey
+                  )
+                    return;
+                  event.preventDefault();
+                  goToCategory();
+                }}
+              >
                 {t('home.reviews.cta')} <MdAnchor className="text-base" />
               </GhostButton>
             </div>

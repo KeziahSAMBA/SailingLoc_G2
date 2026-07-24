@@ -557,7 +557,23 @@ function ProductPage() {
                 {t('product.notFound.title')}
               </h1>
               <p className="text-sm text-white/80">{t('product.notFound.text')}</p>
-              <GhostButton onClick={() => goToCategory()}>{t('product.notFound.cta')}</GhostButton>
+              <GhostButton
+                to="/categorie"
+                onClick={(event) => {
+                  if (
+                    event.button !== 0 ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey
+                  )
+                    return;
+                  event.preventDefault();
+                  goToCategory();
+                }}
+              >
+                {t('product.notFound.cta')}
+              </GhostButton>
             </div>
           )}
           {boat && (
