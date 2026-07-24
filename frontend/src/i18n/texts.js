@@ -187,6 +187,10 @@ export const TEXTS = {
       },
     },
     card: {
+      imageAlt: {
+        fr: '{{name}}, {{type}} disponible à la location à {{location}}',
+        en: '{{name}}, {{type}} available to rent in {{location}}',
+      },
       persons: { fr: '{{count}} Pers.', en: '{{count}} people' },
       new: { fr: 'Nouveau', en: 'New' },
       skipperIncluded: { fr: 'Skipper inclus', en: 'Skipper included' },

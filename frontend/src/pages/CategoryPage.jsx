@@ -167,7 +167,7 @@ const BoatListingCard = memo(function BoatListingCard({
       <div className="relative overflow-hidden" style={{ aspectRatio: '7/5' }}>
         <img
           src={image}
-          alt={name}
+          alt={t('category.card.imageAlt', { name, type, location })}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
           decoding="async"
@@ -205,7 +205,18 @@ const BoatListingCard = memo(function BoatListingCard({
         {/* Nom + type */}
         <div className="flex items-center justify-between gap-1 mb-2">
           <div className="flex items-baseline gap-1 min-w-0">
-            <h3 className="text-[15px] font-bold text-white leading-tight truncate">{name}</h3>
+            <h3 className="text-[15px] font-bold text-white leading-tight truncate">
+              <a
+                href={`/product/${id}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onSelect?.(id);
+                }}
+              >
+                {name}
+              </a>
+            </h3>
             <span className="text-white/50 flex-shrink-0">-</span>
             <span className="text-[10px] font-bold tracking-widest text-sky-500 uppercase flex-shrink-0">
               {type}
@@ -436,6 +447,33 @@ function CategoryPage() {
   const [boats, setBoats] = useState([]);
   useEffect(() => {
     boatsRef.current = boats;
+  }, [boats]);
+  useEffect(() => {
+    const scriptId = 'sailingloc-category-structured-data';
+    document.getElementById(scriptId)?.remove();
+
+    if (boats.length === 0) return undefined;
+
+    const configuredOrigin = import.meta.env.VITE_SITE_URL?.trim().replace(/\/+$/, '');
+    const siteOrigin = configuredOrigin || window.location.origin;
+    const element = document.createElement('script');
+    element.id = scriptId;
+    element.type = 'application/ld+json';
+    element.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'Bateaux disponibles à la location',
+      numberOfItems: boats.length,
+      itemListElement: boats.map((boat, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: boat.name,
+        url: `${siteOrigin}/product/${boat.id}`,
+      })),
+    });
+    document.head.appendChild(element);
+
+    return () => element.remove();
   }, [boats]);
   // Évite le flash « aucune offre ne correspond… » pendant le chargement
   // initial (visible en plein milieu de l'animation d'entrée).
@@ -894,9 +932,9 @@ function CategoryPage() {
                     <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-sky-500">
                       {t('category.results.kicker')}
                     </p>
-                    <h2 className="text-2xl font-bold text-white uppercase tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                    <h1 className="text-2xl font-bold text-white uppercase tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                       {t('category.results.title')}
-                    </h2>
+                    </h1>
                   </div>
                   <span className="text-sm text-white/80 font-medium" style={titleFadeStyle}>
                     {t('category.results.count', { count: filteredBoats.length })}
