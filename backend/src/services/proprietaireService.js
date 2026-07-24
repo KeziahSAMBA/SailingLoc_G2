@@ -1,14 +1,20 @@
 import fs from 'fs';
+import path from 'path';
 import prisma from '../config/db.js';
 import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
 import { initConfig } from '../config/appConfig.js';
 import { sendBookingDecisionEmail } from './emailService.js';
 import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js';
+import { resolvePathInside } from '../utils/uploadSecurity.js';
 
 // Suppression best-effort d'un fichier remplacé (l'échec ne bloque pas la requête).
 function removeFileQuiet(filePath) {
-  if (!filePath) return;
-  fs.unlink(filePath, () => {});
+  const safePath = resolvePathInside(
+    path.resolve(process.env.DOCUMENTS_DIR || 'storage/documents'),
+    filePath
+  );
+  if (!safePath) return;
+  fs.unlink(safePath, () => {});
 }
 
 // Les demandes encore « en attente » dont le séjour a déjà commencé ne peuvent

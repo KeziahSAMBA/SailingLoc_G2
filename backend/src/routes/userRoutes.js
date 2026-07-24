@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
 import fs from 'fs';
 import {
   register,
@@ -20,6 +19,10 @@ import {
 } from '../controllers/userController.js';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { registerPositiveIdParams } from '../middlewares/validateParamMiddleware.js';
+import {
+  extensionForMime,
+  validateUploadedFileContents,
+} from '../utils/uploadSecurity.js';
 import {
   getDashboard,
   getMyBookings,
@@ -53,7 +56,7 @@ fs.mkdirSync(AVATARS_DIR, { recursive: true });
 const avatarStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, AVATARS_DIR),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = extensionForMime(file.mimetype);
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
   },
 });
@@ -93,7 +96,7 @@ const disputeUpload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => cb(null, DISPUTES_DIR),
     filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
+      const ext = extensionForMime(file.mimetype);
       cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
     },
   }),
@@ -143,7 +146,7 @@ router.get('/verify-email/:token', confirmEmail);
 router.get('/me', protect, me);
 router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
-router.patch('/me/avatar', protect, uploadAvatar, patchMyAvatar);
+router.patch('/me/avatar', protect, uploadAvatar, validateUploadedFileContents, patchMyAvatar);
 router.delete('/me/avatar', protect, deleteMyAvatar);
 router.get('/me/dashboard', protect, requireRole('locataire'), getDashboard);
 router.get(
@@ -169,6 +172,7 @@ router.post(
   protect,
   requireRole('proprietaire'),
   uploadDisputePhotos,
+  validateUploadedFileContents,
   reportProprietaireDispute
 );
 router.get(
@@ -217,6 +221,7 @@ router.post(
   protect,
   requireRole('locataire'),
   uploadDisputePhotos,
+  validateUploadedFileContents,
   reportMyDispute
 );
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);

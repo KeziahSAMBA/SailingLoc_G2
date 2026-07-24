@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
 import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { registerPositiveIdParams } from '../middlewares/validateParamMiddleware.js';
+import {
+  extensionForMime,
+  validateUploadedFileContents,
+} from '../utils/uploadSecurity.js';
 import {
   uploadBoat,
   putBoat,
@@ -26,7 +29,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) =>
     cb(null, file.fieldname === 'acte_francisation' ? DOCUMENTS_DIR : IMAGES_DIR),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = extensionForMime(file.mimetype);
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
   },
 });
@@ -73,9 +76,23 @@ registerPositiveIdParams(router, ['id_boat']);
 
 router.get('/by-type', getBoatsByType);
 router.get('/', getBoats);
-router.post('/', protect, requireRole('proprietaire', 'admin'), uploadFiles, uploadBoat);
+router.post(
+  '/',
+  protect,
+  requireRole('proprietaire', 'admin'),
+  uploadFiles,
+  validateUploadedFileContents,
+  uploadBoat
+);
 router.post('/:id_boat/bookings', protect, requireRole('locataire'), createBookingController);
-router.put('/:id_boat', protect, requireRole('proprietaire'), uploadFiles, putBoat);
+router.put(
+  '/:id_boat',
+  protect,
+  requireRole('proprietaire'),
+  uploadFiles,
+  validateUploadedFileContents,
+  putBoat
+);
 router.delete('/:id_boat', protect, requireRole('proprietaire'), removeBoat);
 
 export default router;

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { resolvePathInside } from '../utils/uploadSecurity.js';
 import {
   createDocument,
   findDocumentsByUser,
@@ -22,6 +23,11 @@ export const DOCUMENT_TYPES = {
 // Types pour lesquels l'utilisateur peut déposer PLUSIEURS fichiers (pas de
 // remplacement) : un par bateau.
 const MULTI_TYPES = ['acte_francisation'];
+const DOCUMENTS_ROOT = path.resolve(process.env.DOCUMENTS_DIR || 'storage/documents');
+
+export function resolveDocumentPath(diskPath) {
+  return resolvePathInside(DOCUMENTS_ROOT, diskPath);
+}
 
 // On n'expose jamais le chemin disque (file_url) : l'accès au fichier passe
 // par la route protégée /api/documents/:id/file.
@@ -39,8 +45,9 @@ function publicDocument(doc) {
 
 // file_url contient le chemin disque (ex. "storage/documents/xxx.pdf").
 function removeFileQuiet(diskPath) {
-  if (!diskPath) return;
-  fs.promises.unlink(diskPath).catch(() => {});
+  const safePath = resolveDocumentPath(diskPath);
+  if (!safePath) return;
+  fs.promises.unlink(safePath).catch(() => {});
 }
 
 export async function getMyDocuments(id_user) {
@@ -89,7 +96,10 @@ export async function getDocumentFile(requester, id_document) {
     throw Object.assign(new Error('Document introuvable.'), { status: 404 });
   }
 
-  const absPath = path.resolve(doc.file_url);
+  const absPath = resolveDocumentPath(doc.file_url);
+  if (!absPath) {
+    throw Object.assign(new Error('Chemin de document invalide.'), { status: 400 });
+  }
   if (!fs.existsSync(absPath)) {
     throw Object.assign(new Error('Fichier introuvable.'), { status: 404 });
   }

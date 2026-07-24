@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
 import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { registerPositiveIdParams } from '../middlewares/validateParamMiddleware.js';
+import {
+  extensionForMime,
+  validateUploadedFileContents,
+} from '../utils/uploadSecurity.js';
 import {
   listMyDocuments,
   uploadMyDocument,
@@ -19,7 +22,7 @@ fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = extensionForMime(file.mimetype);
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
   },
 });
@@ -55,7 +58,14 @@ const router = Router();
 registerPositiveIdParams(router, ['id']);
 
 router.get('/', protect, requireRole('locataire', 'proprietaire'), listMyDocuments);
-router.post('/', protect, requireRole('locataire', 'proprietaire'), uploadSingle, uploadMyDocument);
+router.post(
+  '/',
+  protect,
+  requireRole('locataire', 'proprietaire'),
+  uploadSingle,
+  validateUploadedFileContents,
+  uploadMyDocument
+);
 router.delete(
   '/:id',
   protect,
