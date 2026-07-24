@@ -19,6 +19,15 @@ export async function findDocumentById(id_document) {
   return prisma.document.findUnique({ where: { id_document } });
 }
 
+export async function findDocumentAccessibleBy(id_document, requester) {
+  return prisma.document.findFirst({
+    where: {
+      id_document,
+      ...(requester.role === 'admin' ? {} : { id_user: requester.id_user }),
+    },
+  });
+}
+
 export async function findAllDocuments(where) {
   return prisma.document.findMany({
     where: where || {},

@@ -40,7 +40,10 @@ function enrichWithRating(boats) {
     const booked_ranges = b.bookings
       .filter((bk) => BLOCKING_BOOKING_STATUSES.includes(bk.status))
       .map((bk) => ({ start_date: bk.start_date, end_date: bk.end_date }));
+    // L'identifiant interne du propriétaire n'est pas une donnée publique.
+    // Le contact depuis une fiche bateau est résolu côté serveur.
     const { bookings, ...boat } = b;
+    delete boat.id_user;
     return {
       ...boat,
       avg_rating: avg,

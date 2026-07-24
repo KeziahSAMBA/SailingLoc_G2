@@ -18,4 +18,25 @@ describe('Boat routes', () => {
     const response = await request(app).get('/api/boats');
     expect(response.status).toBe(200);
   });
+
+  it("n'expose pas l'identifiant interne du propriétaire", async () => {
+    mockFindMany.mockResolvedValueOnce([
+      {
+        id_boat: 1,
+        id_user: 77,
+        name: 'Bateau test',
+        bookings: [],
+        images: [],
+        equipment: [],
+        availabilities: [],
+        port: null,
+      },
+    ]);
+
+    const response = await request(app).get('/api/boats');
+
+    expect(response.status).toBe(200);
+    expect(response.body[0]).not.toHaveProperty('id_user');
+    expect(response.body[0]).toMatchObject({ id_boat: 1, name: 'Bateau test' });
+  });
 });

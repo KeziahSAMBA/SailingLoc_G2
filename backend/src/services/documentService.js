@@ -5,6 +5,7 @@ import {
   findDocumentsByUser,
   findDocumentsByUserAndType,
   findDocumentById,
+  findDocumentAccessibleBy,
   findAllDocuments,
   updateDocument,
   deleteDocument as deleteDocumentRepo,
@@ -81,14 +82,11 @@ export async function uploadDocument(requester, type, file) {
 // Renvoie le chemin absolu du fichier si le demandeur a le droit de le lire
 // (propriétaire du document, ou admin). Sert la route de téléchargement protégée.
 export async function getDocumentFile(requester, id_document) {
-  const doc = await findDocumentById(Number(id_document));
+  // L'autorisation fait partie de la requête : une ressource étrangère et une
+  // ressource inexistante produisent ainsi exactement la même réponse.
+  const doc = await findDocumentAccessibleBy(Number(id_document), requester);
   if (!doc) {
     throw Object.assign(new Error('Document introuvable.'), { status: 404 });
-  }
-  const isOwner = doc.id_user === requester.id_user;
-  const isAdmin = requester.role === 'admin';
-  if (!isOwner && !isAdmin) {
-    throw Object.assign(new Error('Accès refusé.'), { status: 403 });
   }
 
   const absPath = path.resolve(doc.file_url);
