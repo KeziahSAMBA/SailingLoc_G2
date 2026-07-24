@@ -29,5 +29,8 @@ test('public secondary pages publish breadcrumb structured data', async () => {
 
   assert.match(source, /const BREADCRUMB_LABELS/);
   assert.match(source, /'@type': 'BreadcrumbList'/);
-  assert.match(source, /updateBreadcrumbStructuredData\(location\.pathname, siteOrigin\)/);
+  assert.match(
+    source,
+    /updateBreadcrumbStructuredData\(location\.pathname, siteOrigin, seo\.language\)/
+  );
 });

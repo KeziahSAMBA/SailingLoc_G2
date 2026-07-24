@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { resolveSeo } from '../../utils/seoConfig.js';
 
 function upsertMeta(selector, attributes) {
@@ -26,7 +27,7 @@ function upsertCanonical(href) {
   element.setAttribute('href', href);
 }
 
-function updateHomeStructuredData(pathname, siteOrigin) {
+function updateHomeStructuredData(pathname, siteOrigin, language) {
   const scriptId = 'sailingloc-home-structured-data';
   let element = document.getElementById(scriptId);
 
@@ -50,7 +51,7 @@ function updateHomeStructuredData(pathname, siteOrigin) {
         '@id': `${siteOrigin}/#website`,
         url: `${siteOrigin}/`,
         name: 'SailingLoc',
-        inLanguage: 'fr-FR',
+        inLanguage: language === 'en' ? 'en-GB' : 'fr-FR',
       },
       {
         '@type': 'Organization',
@@ -64,18 +65,19 @@ function updateHomeStructuredData(pathname, siteOrigin) {
 }
 
 const BREADCRUMB_LABELS = {
-  '/categorie': 'Catalogue',
-  '/contact': 'Contact et aide',
-  '/a-propos': 'À propos',
-  '/mentions-legales': 'Mentions légales',
-  '/cgu': "Conditions générales d'utilisation",
-  '/cgv': 'Conditions générales de vente',
-  '/politique-de-confidentialite': 'Politique de confidentialité',
+  '/categorie': { fr: 'Catalogue', en: 'Catalogue' },
+  '/contact': { fr: 'Contact et aide' },
+  '/a-propos': { fr: 'À propos', en: 'About' },
+  '/mentions-legales': { fr: 'Mentions légales' },
+  '/cgu': { fr: "Conditions générales d'utilisation" },
+  '/cgv': { fr: 'Conditions générales de vente' },
+  '/politique-de-confidentialite': { fr: 'Politique de confidentialité' },
 };
 
-function updateBreadcrumbStructuredData(pathname, siteOrigin) {
+function updateBreadcrumbStructuredData(pathname, siteOrigin, language) {
   const scriptId = 'sailingloc-page-breadcrumb-structured-data';
-  const label = BREADCRUMB_LABELS[pathname];
+  const labels = BREADCRUMB_LABELS[pathname];
+  const label = labels?.[language] ?? labels?.fr;
   let element = document.getElementById(scriptId);
 
   if (!label) {
@@ -97,7 +99,7 @@ function updateBreadcrumbStructuredData(pathname, siteOrigin) {
       {
         '@type': 'ListItem',
         position: 1,
-        name: 'Accueil',
+        name: language === 'en' ? 'Home' : 'Accueil',
         item: `${siteOrigin}/`,
       },
       {
@@ -121,11 +123,15 @@ function getSiteOrigin() {
 }
 
 function SeoManager({ location }) {
+  const { i18n } = useTranslation();
+  const requestedLanguage = i18n.resolvedLanguage === 'en' ? 'en' : 'fr';
+
   useEffect(() => {
-    const seo = resolveSeo(location.pathname);
+    const seo = resolveSeo(location.pathname, requestedLanguage);
     const siteOrigin = getSiteOrigin();
     const canonicalUrl = new URL(seo.canonicalPath, `${siteOrigin}/`).toString();
 
+    document.documentElement.lang = seo.language;
     document.title = seo.title;
     upsertMeta('meta[name="description"]', {
       name: 'description',
@@ -151,6 +157,10 @@ function SeoManager({ location }) {
       property: 'og:url',
       content: canonicalUrl,
     });
+    upsertMeta('meta[property="og:locale"]', {
+      property: 'og:locale',
+      content: seo.language === 'en' ? 'en_GB' : 'fr_FR',
+    });
     upsertMeta('meta[name="twitter:card"]', {
       name: 'twitter:card',
       content: 'summary',
@@ -164,9 +174,9 @@ function SeoManager({ location }) {
       content: seo.description,
     });
     upsertCanonical(canonicalUrl);
-    updateHomeStructuredData(location.pathname, siteOrigin);
-    updateBreadcrumbStructuredData(location.pathname, siteOrigin);
-  }, [location.pathname]);
+    updateHomeStructuredData(location.pathname, siteOrigin, seo.language);
+    updateBreadcrumbStructuredData(location.pathname, siteOrigin, seo.language);
+  }, [location.pathname, requestedLanguage]);
 
   return null;
 }
