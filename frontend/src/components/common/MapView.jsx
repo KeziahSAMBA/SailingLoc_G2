@@ -28,7 +28,10 @@ function escapeHtml(str) {
 // sur le point GPS via son coin bas-centre.
 function createPortIcon({ available, badge, city }) {
   const color = available ? PIN_COLOR_AVAILABLE : PIN_COLOR_UNAVAILABLE;
-  const showBadge = available && Number(badge) > 0;
+  const parsedBadge = Number(badge);
+  const safeBadge =
+    Number.isFinite(parsedBadge) && parsedBadge > 0 ? Math.trunc(parsedBadge) : 0;
+  const showBadge = available && safeBadge > 0;
   return L.divIcon({
     className: '',
     html: `
@@ -40,7 +43,7 @@ function createPortIcon({ available, badge, city }) {
           <span style="font-size:10px;font-weight:700;color:${color};">${escapeHtml(city ?? '')}</span>
           ${
             showBadge
-              ? `<span style="position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;padding:0 3px;border-radius:9999px;background:#ef4444;color:#fff;font-size:8px;font-weight:700;line-height:15px;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(2,44,74,0.35);">${badge}</span>`
+              ? `<span style="position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;padding:0 3px;border-radius:9999px;background:#ef4444;color:#fff;font-size:8px;font-weight:700;line-height:15px;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(2,44,74,0.35);">${safeBadge}</span>`
               : ''
           }
         </div>
@@ -56,12 +59,16 @@ function createPortIcon({ available, badge, city }) {
 // zoom. iconSize [0,0] + transform CSS : la pastille s'auto-dimensionne au texte
 // (le prix a une largeur variable) tout en restant centrée/ancrée sur le point GPS.
 function createPriceIcon(price) {
+  const parsedPrice = Number(price);
+  const safePrice = Number.isFinite(parsedPrice)
+    ? parsedPrice.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+    : '—';
   return L.divIcon({
     className: '',
     html: `
       <div style="position:relative;">
         <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);padding:4px 9px;border-radius:9999px;background:#fff;border:1.5px solid #0A3172;color:#0A3172;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(2,44,74,0.35);">
-          ${price}€
+          ${safePrice}€
         </div>
       </div>
     `,

@@ -22,13 +22,17 @@ function createTransporter() {
   });
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+export function safeMailSubject(value) {
+  return String(value).replace(/[\r\n\u2028\u2029]+/g, ' ').trim().slice(0, 200);
 }
 
 function buildVerificationEmail({ link, firstName, email }) {
@@ -431,7 +435,9 @@ export async function sendBoatRepublishedEmail(to, { firstName, boatName }) {
   await createTransporter().sendMail({
     from: '"SailingLoc" <noreply@sailingloc.fr>',
     to,
-    subject: `Votre annonce "${boatName}" est de nouveau en ligne — SailingLoc`,
+    subject: safeMailSubject(
+      `Votre annonce "${boatName}" est de nouveau en ligne — SailingLoc`
+    ),
     html,
     text,
     attachments: [
@@ -450,7 +456,7 @@ export async function sendBoatUnpublishedEmail(to, { firstName, boatName }) {
   await createTransporter().sendMail({
     from: '"SailingLoc" <noreply@sailingloc.fr>',
     to,
-    subject: `Votre annonce "${boatName}" a été retirée — SailingLoc`,
+    subject: safeMailSubject(`Votre annonce "${boatName}" a été retirée — SailingLoc`),
     html,
     text,
     attachments: [
@@ -746,7 +752,9 @@ export async function sendBookingDecisionEmail(
   await createTransporter().sendMail({
     from: '"SailingLoc" <noreply@sailingloc.fr>',
     to,
-    subject: `Votre réservation du bateau "${boatName}" a été ${meta.verdict} — SailingLoc`,
+    subject: safeMailSubject(
+      `Votre réservation du bateau "${boatName}" a été ${meta.verdict} — SailingLoc`
+    ),
     html,
     text,
     attachments: [
@@ -875,7 +883,7 @@ export async function sendBookingCancelledByLocataireEmail(
   await createTransporter().sendMail({
     from: '"SailingLoc" <noreply@sailingloc.fr>',
     to,
-    subject,
+    subject: safeMailSubject(subject),
     html,
     text,
     attachments: [

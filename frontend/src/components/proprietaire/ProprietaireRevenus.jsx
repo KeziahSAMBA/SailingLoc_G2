@@ -6,6 +6,7 @@ import {
   startStripeOnboarding,
   getStripeLoginLink,
 } from '../../services/proprietaireService.js';
+import { requireStripeUrl } from '../../utils/safeUrl.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import Spinner from '../common/Spinner.jsx';
 import { formatDate } from '../../utils/formatDate.js';
@@ -260,7 +261,7 @@ function ProprietaireRevenus() {
     setOnboarding(true);
     try {
       const res = await startStripeOnboarding();
-      window.location.assign(res.data.url);
+      window.location.assign(requireStripeUrl(res.data.url));
     } catch (err) {
       showToast(err.response?.data?.message || t('proprietaireRevenus.genericError'), 'error');
       setOnboarding(false);
@@ -272,7 +273,7 @@ function ProprietaireRevenus() {
     setOnboarding(true);
     try {
       const res = await getStripeLoginLink();
-      window.open(res.data.url, '_blank', 'noopener');
+      window.open(requireStripeUrl(res.data.url), '_blank', 'noopener');
     } catch (err) {
       showToast(err.response?.data?.message || t('proprietaireRevenus.genericError'), 'error');
     } finally {
