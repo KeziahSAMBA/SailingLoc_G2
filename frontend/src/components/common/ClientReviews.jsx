@@ -30,24 +30,30 @@ function getRoleFilters(t) {
 
 // Données statiques côté API : un seul fetch pour toute la session,
 // partagé entre tous les montages du composant sur les différentes pages.
-let reviewsCache = null;
-let reviewsPromise = null;
+const reviewsCache = new Map();
+const reviewsPromises = new Map();
 
-function fetchReviews() {
-  if (reviewsCache) return Promise.resolve(reviewsCache);
-  if (!reviewsPromise) {
-    reviewsPromise = api
-      .get('/reviews/public')
+function fetchReviews(boatId) {
+  const cacheKey = boatId == null ? 'all' : `boat-${boatId}`;
+  if (reviewsCache.has(cacheKey)) return Promise.resolve(reviewsCache.get(cacheKey));
+  if (!reviewsPromises.has(cacheKey)) {
+    const promise = api
+      .get('/reviews/public', { params: boatId == null ? undefined : { id_boat: boatId } })
       .then(({ data }) => {
-        reviewsCache = data.map((r) => ({ ...r, avatar: r.avatar ?? nameToAvatarUrl(r.name) }));
-        return reviewsCache;
+        const formatted = data.map((r) => ({
+          ...r,
+          avatar: r.avatar ?? nameToAvatarUrl(r.name),
+        }));
+        reviewsCache.set(cacheKey, formatted);
+        return formatted;
       })
       .catch((err) => {
-        reviewsPromise = null;
+        reviewsPromises.delete(cacheKey);
         throw err;
       });
+    reviewsPromises.set(cacheKey, promise);
   }
-  return reviewsPromise;
+  return reviewsPromises.get(cacheKey);
 }
 
 const StarRating = memo(function StarRating({ rating }) {
@@ -132,7 +138,14 @@ const GLASS_STYLE = {
   WebkitBackdropFilter: 'blur(20px)',
 };
 
-export default function ClientReviews({ id, className = 'py-8', light = false, children }) {
+export default function ClientReviews({
+  id,
+  className = 'py-8',
+  light = false,
+  boatId = null,
+  commentsOnly = false,
+  children,
+}) {
   const { t } = useTranslation();
   const sortOptions = getSortOptions(t);
   const roleFilters = getRoleFilters(t);
@@ -143,9 +156,13 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
 
   useEffect(() => {
     let cancelled = false;
-    fetchReviews()
+    fetchReviews(boatId)
       .then((data) => {
-        if (!cancelled) setReviews(data);
+        if (!cancelled) {
+          setReviews(
+            commentsOnly ? data.filter((review) => review.text?.trim()) : data
+          );
+        }
       })
       .catch((err) => {
         if (!cancelled) console.error(err);
@@ -153,7 +170,7 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [boatId, commentsOnly]);
 
   const filtered = useMemo(
     () => (roleFilter === 'all' ? reviews : reviews.filter((r) => r.role === roleFilter)),

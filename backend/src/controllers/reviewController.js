@@ -2,8 +2,16 @@ import prisma from '../config/db.js';
 
 export async function getPublicReviews(req, res) {
   try {
+    const idBoat = req.query.id_boat === undefined ? null : Number(req.query.id_boat);
+    if (idBoat !== null && (!Number.isInteger(idBoat) || idBoat <= 0)) {
+      return res.status(400).json({ message: 'Identifiant de bateau invalide.' });
+    }
     const reviews = await prisma.review.findMany({
-      where: { status: 'validated', deleted_at: null },
+      where: {
+        status: 'validated',
+        deleted_at: null,
+        ...(idBoat !== null ? { booking: { id_boat: idBoat } } : {}),
+      },
       orderBy: { created_at: 'desc' },
       select: {
         id_review: true,

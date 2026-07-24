@@ -813,9 +813,12 @@ function ProductPage() {
                         <span className="text-white/70">
                           {' '}
                           ({t('product.header.ratings', { count: boat.review_count })}) ·{' '}
-                          <span className="underline">
+                          <a
+                            href="#avis"
+                            className="rounded underline underline-offset-2 transition hover:text-sky-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                          >
                             {t('product.header.comments', { count: boat.comment_count })}
-                          </span>
+                          </a>
                         </span>
                       </>
                     ) : (
@@ -1053,7 +1056,13 @@ function ProductPage() {
         {/* Section 5 — Avis clients, également habillée du fond photo + verre. */}
         {belowFoldReady && (
           <div className="relative" style={PHOTO_BG_STYLE}>
-            <ClientReviews light id="avis" className="py-10 scroll-mt-[60px]" />
+            <ClientReviews
+              light
+              id="avis"
+              boatId={boat?.id_boat}
+              commentsOnly
+              className="py-10 scroll-mt-[60px]"
+            />
           </div>
         )}
 
