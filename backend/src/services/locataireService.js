@@ -317,6 +317,7 @@ export async function createBookingReview(id_user, id_booking, { rating, comment
       rating: parsedRating,
       comment: cleanComment,
       status: 'pending',
+      created_at: new Date(),
     },
     select: {
       id_review: true,

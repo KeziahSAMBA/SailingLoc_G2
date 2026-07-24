@@ -30,30 +30,15 @@ function getRoleFilters(t) {
 
 // Données statiques côté API : un seul fetch pour toute la session,
 // partagé entre tous les montages du composant sur les différentes pages.
-const reviewsCache = new Map();
-const reviewsPromises = new Map();
-
 function fetchReviews(boatId) {
-  const cacheKey = boatId == null ? 'all' : `boat-${boatId}`;
-  if (reviewsCache.has(cacheKey)) return Promise.resolve(reviewsCache.get(cacheKey));
-  if (!reviewsPromises.has(cacheKey)) {
-    const promise = api
-      .get('/reviews/public', { params: boatId == null ? undefined : { id_boat: boatId } })
-      .then(({ data }) => {
-        const formatted = data.map((r) => ({
-          ...r,
-          avatar: r.avatar ?? nameToAvatarUrl(r.name),
-        }));
-        reviewsCache.set(cacheKey, formatted);
-        return formatted;
-      })
-      .catch((err) => {
-        reviewsPromises.delete(cacheKey);
-        throw err;
-      });
-    reviewsPromises.set(cacheKey, promise);
-  }
-  return reviewsPromises.get(cacheKey);
+  return api
+    .get('/reviews/public', { params: boatId == null ? undefined : { id_boat: boatId } })
+    .then(({ data }) =>
+      data.map((review) => ({
+        ...review,
+        avatar: review.avatar ?? nameToAvatarUrl(review.name),
+      }))
+    );
 }
 
 const StarRating = memo(function StarRating({ rating }) {
@@ -77,10 +62,18 @@ const ReviewCard = memo(function ReviewCard({
   date,
   text,
   avatar,
+  created_at,
   light = false,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const roleLabels = getRoleLabels(t);
+  const displayedDate = created_at
+    ? new Date(created_at).toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : date;
   return (
     <div
       className={`flex min-w-0 flex-col gap-2 px-4 py-4 sm:px-5 sm:py-3 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
@@ -108,7 +101,9 @@ const ReviewCard = memo(function ReviewCard({
       </div>
       <div className="flex items-center gap-2">
         <StarRating rating={rating} />
-        <span className={`text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>{date}</span>
+        <span className={`text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>
+          {displayedDate}
+        </span>
       </div>
       <p className={`text-sm leading-relaxed ${light ? 'text-white/80' : 'text-gray-600'}`}>
         {text}
@@ -156,19 +151,22 @@ export default function ClientReviews({
 
   useEffect(() => {
     let cancelled = false;
-    fetchReviews(boatId)
-      .then((data) => {
-        if (!cancelled) {
-          setReviews(
-            commentsOnly ? data.filter((review) => review.text?.trim()) : data
-          );
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) console.error(err);
-      });
+    const loadReviews = () => {
+      fetchReviews(boatId)
+        .then((data) => {
+          if (!cancelled) {
+            setReviews(commentsOnly ? data.filter((review) => review.text?.trim()) : data);
+          }
+        })
+        .catch((err) => {
+          if (!cancelled) console.error(err);
+        });
+    };
+    loadReviews();
+    window.addEventListener('focus', loadReviews);
     return () => {
       cancelled = true;
+      window.removeEventListener('focus', loadReviews);
     };
   }, [boatId, commentsOnly]);
 
