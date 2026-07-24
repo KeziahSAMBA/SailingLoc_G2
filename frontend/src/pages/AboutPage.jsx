@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MdAnchor, MdVerified } from 'react-icons/md';
@@ -11,6 +10,7 @@ import laRochelleImg from '../assets/image/ports/La_Rochelle.webp';
 import brestImg from '../assets/image/ports/Brest.webp';
 import bordeauxImg from '../assets/image/ports/Bordeaux.webp';
 import barceloneImg from '../assets/image/ports/Barcelone.webp';
+import StaticPageStructuredData from '../components/common/StaticPageStructuredData.jsx';
 
 // Focus clavier visible sur fond clair — même convention que ContactPage.
 const FOCUS_LIGHT =
@@ -30,6 +30,27 @@ const DESTINATIONS = [
   { city: 'Bordeaux', image: bordeauxImg, available: true },
   { city: 'Barcelone', image: barceloneImg, available: false },
 ];
+
+const buildAboutStructuredData = (siteOrigin) => ({
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  '@id': `${siteOrigin}/a-propos#webpage`,
+  url: `${siteOrigin}/a-propos`,
+  name: 'À propos de SailingLoc',
+  inLanguage: 'fr-FR',
+  mainEntity: {
+    '@type': 'Organization',
+    '@id': `${siteOrigin}/#organization`,
+    name: 'SailingLoc',
+    url: `${siteOrigin}/`,
+    foundingDate: '2023',
+    email: 'contact@sailingloc.fr',
+    areaServed: {
+      '@type': 'Country',
+      name: 'France',
+    },
+  },
+});
 
 function AboutPage() {
   const { t } = useTranslation();
@@ -59,13 +80,9 @@ function AboutPage() {
     },
   ];
 
-  // SEO / onglet navigateur : titre de page dédié.
-  useEffect(() => {
-    document.title = t('aboutPage.pageTitle');
-  }, [t]);
-
   return (
     <main className="w-full bg-white">
+      <StaticPageStructuredData id="about" buildData={buildAboutStructuredData} />
       {/* Hero photo + voile sombre, comme l'accueil et la page contact */}
       <section className="relative flex min-h-[45vh] w-full flex-col items-center justify-center overflow-hidden px-4 pt-[96px]">
         <img
@@ -102,6 +119,7 @@ function AboutPage() {
             src={boatImg}
             alt={t('aboutPage.story.imageAlt')}
             loading="lazy"
+            decoding="async"
             className="h-72 w-full rounded-2xl border border-black/15 object-cover shadow-[0_8px_48px_rgba(0,0,0,0.18)] md:h-96"
           />
         </div>

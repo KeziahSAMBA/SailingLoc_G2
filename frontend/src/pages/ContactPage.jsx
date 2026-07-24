@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth.jsx';
 import { sendContactRequest } from '../services/contactService.js';
 import { contactSupport } from '../services/messageService.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
+import StaticPageStructuredData from '../components/common/StaticPageStructuredData.jsx';
 
 // Rubriques d'aide : mêmes questions que le footer, avec leurs réponses.
 const FAQ = [
@@ -41,6 +42,46 @@ const FAQ = [
     a: 'Votre sécurité d’abord : contactez le CROSS (196 ou VHF canal 16) en cas d’urgence. Ensuite, prévenez le propriétaire via la messagerie et signalez l’incident à notre équipe, qui ouvrira un litige si nécessaire.',
   },
 ];
+
+const buildContactStructuredData = (siteOrigin) => ({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'ContactPage',
+      '@id': `${siteOrigin}/contact#webpage`,
+      url: `${siteOrigin}/contact`,
+      name: 'Contact et aide - SailingLoc',
+      inLanguage: 'fr-FR',
+      mainEntity: {
+        '@type': 'Organization',
+        '@id': `${siteOrigin}/#organization`,
+        name: 'SailingLoc',
+        url: `${siteOrigin}/`,
+        email: 'contact@sailingloc.fr',
+        contactPoint: {
+          '@type': 'ContactPoint',
+          telephone: '+33-2-00-66-77-89',
+          email: 'contact@sailingloc.fr',
+          contactType: 'customer support',
+          areaServed: 'FR',
+          availableLanguage: ['fr'],
+        },
+      },
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': `${siteOrigin}/contact#faq`,
+      mainEntity: FAQ.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.a,
+        },
+      })),
+    },
+  ],
+});
 
 // Focus clavier visible sur fond clair (liens et accordéons).
 const FOCUS_LIGHT =
@@ -115,13 +156,9 @@ function ContactPage() {
     }
   }
 
-  // SEO / onglet navigateur : titre de page dédié.
-  useEffect(() => {
-    document.title = 'Contact & aide — SailingLoc';
-  }, []);
-
   return (
     <main className="w-full bg-white">
+      <StaticPageStructuredData id="contact" buildData={buildContactStructuredData} />
       {/* Hero photo + voile sombre, comme l'accueil */}
       <section className="relative flex min-h-[45vh] w-full flex-col items-center justify-center overflow-hidden px-4 pt-[96px]">
         <img
