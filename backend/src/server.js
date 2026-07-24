@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import rateLimit from 'express-rate-limit';
 import boatRoutes from './routes/boatRoutes.js';
 import portRoutes from './routes/portRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -14,6 +13,19 @@ import { stripeWebhook } from './controllers/webhookController.js';
 import { cancelExpiredBookings } from './services/bookingService.js';
 import { initConfig } from './config/appConfig.js';
 import { createCsrfProtection } from './middlewares/csrfMiddleware.js';
+import {
+  apiLimiter,
+  mutationLimiter,
+  registerLimiter,
+  resendLimiter,
+  loginLimiter,
+  adminLoginLimiter,
+  loginAccountLimiter,
+  refreshLimiter,
+  forgotPasswordLimiter,
+  resetPasswordLimiter,
+  contactLimiter,
+} from './middlewares/abuseProtectionMiddleware.js';
 
 const { PORT, APP_URL } = initConfig();
 
@@ -30,7 +42,7 @@ app.use(
     origin: APP_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    exposedHeaders: ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
+    exposedHeaders: ['Retry-After', 'RateLimit'],
   })
 );
 // Avant express.json : la vérification de signature Stripe exige le corps brut.
@@ -40,69 +52,17 @@ app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 app.use(createCsrfProtection([APP_URL]));
 app.use('/uploads', express.static('uploads'));
+app.use('/api', apiLimiter, mutationLimiter);
 
-const registerLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
-});
 app.use('/api/users/register', registerLimiter);
-
-const resendLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  limit: 3,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de renvois. Réessayez dans quelques minutes.' },
-});
 app.use('/api/users/resend-verification', resendLimiter);
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de tentatives de connexion. Réessayez dans quelques minutes.' },
-});
-app.use('/api/users/login', loginLimiter);
-
-const adminLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
-});
-app.use('/api/admin/login', adminLoginLimiter);
-
-const forgotPasswordLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 3,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de demandes. Réessayez dans quelques minutes.' },
-});
+app.use('/api/users/login', loginLimiter, loginAccountLimiter);
+app.use('/api/admin/login', adminLoginLimiter, loginAccountLimiter);
+app.use('/api/users/refresh', refreshLimiter);
 app.use('/api/users/forgot-password', forgotPasswordLimiter);
-
-const resetPasswordLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
-});
 app.use('/api/users/reset-password', resetPasswordLimiter);
 
 // Formulaire public de contact : limité pour éviter le spam.
-const contactLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de messages envoyés. Réessayez dans une heure.' },
-});
 app.post('/api/contact', contactLimiter, postContactRequest);
 
 app.use('/api/boats', boatRoutes);
