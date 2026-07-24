@@ -45,12 +45,15 @@ function signAccessToken(user) {
   return jwt.sign(
     {
       id_user: user.id_user,
-      email: user.email,
-      role: user.role,
-      first_name: user.first_name,
+      ver: user.auth_version,
     },
     JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_TTL }
+    {
+      algorithm: 'HS256',
+      expiresIn: ACCESS_TOKEN_TTL,
+      issuer: 'sailingloc-api',
+      audience: 'sailingloc-web',
+    }
   );
 }
 
@@ -412,7 +415,11 @@ export async function changePassword(id_user, { currentPassword, newPassword, co
   }
 
   const hashed = await bcrypt.hash(newPassword, 12);
-  await updateUser(id_user, { password: hashed, updated_at: new Date() });
+  await updateUser(id_user, {
+    password: hashed,
+    auth_version: { increment: 1 },
+    updated_at: new Date(),
+  });
 
   // Sécurité : invalide TOUTES les sessions actives (tous les appareils, y compris
   // celui-ci). L'utilisateur devra se reconnecter avec son nouveau mot de passe.
@@ -480,6 +487,7 @@ export async function resetPassword({ token, password, confirmPassword }) {
   const hashed = await bcrypt.hash(password, 12);
   await updateUser(user.id_user, {
     password: hashed,
+    auth_version: { increment: 1 },
     reset_token: null,
     reset_token_expires_at: null,
   });

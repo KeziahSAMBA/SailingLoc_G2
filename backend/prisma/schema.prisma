@@ -17,6 +17,7 @@ model User {
   role                       UserRole   @default(locataire)
   phone                      String?    @db.VarChar(20)
   is_active                  Boolean    @default(true)
+  auth_version               Int        @default(0)
   email_verified             Boolean    @default(false)
   email_verification_token   String?    @db.VarChar(255)
   reset_token                String?    @db.VarChar(255)

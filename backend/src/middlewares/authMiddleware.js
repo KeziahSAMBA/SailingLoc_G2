@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { initConfig } from '../config/appConfig.js';
+import prisma from '../config/db.js';
 
 const { JWT_SECRET } = initConfig();
 
-export function protect(req, res, next) {
+export async function protect(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Unauthorized' });
@@ -11,11 +12,40 @@ export function protect(req, res, next) {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      algorithms: ['HS256'],
+      issuer: 'sailingloc-api',
+      audience: 'sailingloc-web',
+    });
+    if (!Number.isInteger(decoded.id_user) || !Number.isInteger(decoded.ver)) {
+      return res.status(401).json({ message: 'Session invalide.' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id_user: decoded.id_user },
+      select: {
+        id_user: true,
+        role: true,
+        is_active: true,
+        email_verified: true,
+        auth_version: true,
+        deleted_at: true,
+      },
+    });
+    if (
+      !user ||
+      !user.is_active ||
+      !user.email_verified ||
+      user.deleted_at ||
+      user.auth_version !== decoded.ver
+    ) {
+      return res.status(401).json({ message: 'Session expirée. Reconnectez-vous.' });
+    }
+
+    req.user = { id_user: user.id_user, role: user.role };
+    return next();
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
+    return res.status(401).json({ message: 'Session invalide.' });
   }
 }
 

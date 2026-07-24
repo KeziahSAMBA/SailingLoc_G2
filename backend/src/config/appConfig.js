@@ -8,9 +8,17 @@ dotenv.config({ path: envPath });
 dotenv.config({ path: envModePath, override: true });
 
 export function initConfig() {
+  const jwtSecret = process.env.JWT_SECRET || 'change-me';
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (jwtSecret === 'change-me' || jwtSecret.length < 32)
+  ) {
+    throw new Error('JWT_SECRET doit contenir au moins 32 caractères aléatoires en production.');
+  }
+
   return {
     PORT: process.env.PORT || 4000,
-    JWT_SECRET: process.env.JWT_SECRET || 'change-me',
+    JWT_SECRET: jwtSecret,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
     EMAIL_HOST: process.env.EMAIL_HOST || '',

@@ -122,6 +122,12 @@ export async function updateUserByAdmin(id_user, requesterId, payload = {}) {
     throw Object.assign(new Error('Aucune modification à appliquer.'), { status: 400 });
   }
 
+  const securitySensitiveChange =
+    targetEmail !== user.email ||
+    targetRole !== user.role ||
+    (is_active !== undefined && Boolean(is_active) !== user.is_active);
+  if (securitySensitiveChange) data.auth_version = { increment: 1 };
+
   data.updated_at = new Date();
   const updated = await prisma.user.update({ where: { id_user: id }, data });
   return publicUser(updated);
@@ -141,6 +147,6 @@ export async function deleteUserByAdmin(id_user, requesterId) {
   // Soft delete : préserve l'intégrité (réservations, paiements, avis…).
   await prisma.user.update({
     where: { id_user: id },
-    data: { is_active: false, deleted_at: new Date() },
+    data: { is_active: false, auth_version: { increment: 1 }, deleted_at: new Date() },
   });
 }
