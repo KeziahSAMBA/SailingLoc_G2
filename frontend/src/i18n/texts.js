@@ -2000,9 +2000,36 @@ export const TEXTS = {
       disputeOpen: { fr: 'Litige en cours', en: 'Dispute in progress' },
     },
     actions: {
+      review: { fr: 'Laisser un avis', en: 'Leave a review' },
       cancel: { fr: 'Annuler la réservation', en: 'Cancel booking' },
       refund: { fr: 'Demander un remboursement', en: 'Request a refund' },
       dispute: { fr: 'Signaler un problème', en: 'Report an issue' },
+    },
+    reviewModal: {
+      title: { fr: 'Laisser un avis', en: 'Leave a review' },
+      ratingLabel: { fr: 'Votre note', en: 'Your rating' },
+      starLabel_one: { fr: '{{count}} étoile', en: '{{count}} star' },
+      starLabel_other: { fr: '{{count}} étoiles', en: '{{count}} stars' },
+      ratingRequired: {
+        fr: 'Sélectionnez une note entre 1 et 5 étoiles.',
+        en: 'Select a rating between 1 and 5 stars.',
+      },
+      commentLabel: { fr: 'Votre commentaire', en: 'Your comment' },
+      commentPlaceholder: {
+        fr: 'Décrivez votre expérience avec ce bateau…',
+        en: 'Describe your experience with this boat…',
+      },
+      commentTooShort: {
+        fr: 'Votre commentaire doit contenir au moins 10 caractères.',
+        en: 'Your comment must contain at least 10 characters.',
+      },
+      moderationHint: {
+        fr: 'Votre avis apparaîtra publiquement après validation.',
+        en: 'Your review will appear publicly after approval.',
+      },
+      cancel: { fr: 'Annuler', en: 'Cancel' },
+      submit: { fr: 'Envoyer mon avis', en: 'Submit my review' },
+      submitting: { fr: 'Envoi…', en: 'Submitting…' },
     },
     modal: {
       cancelTitle: { fr: 'Annuler la réservation', en: 'Cancel the booking' },
@@ -2045,6 +2072,11 @@ export const TEXTS = {
       working: { fr: 'Envoi…', en: 'Sending…' },
     },
     toasts: {
+      reviewSubmitted: {
+        fr: 'Avis envoyé. Il sera publié après validation.',
+        en: 'Review submitted. It will be published after approval.',
+      },
+      reviewError: { fr: 'Impossible d’envoyer cet avis.', en: 'Unable to submit this review.' },
       cancelled: { fr: 'Réservation annulée.', en: 'Booking cancelled.' },
       cancelledRefunded: {
         fr: 'Réservation annulée — remboursement intégral effectué.',

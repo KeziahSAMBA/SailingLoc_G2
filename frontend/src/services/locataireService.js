@@ -11,6 +11,11 @@ export function getBookings() {
   return api.get('/users/me/bookings');
 }
 
+// Dépose un avis sur une réservation confirmée et terminée.
+export function createBookingReview(idBooking, rating, comment) {
+  return api.post(`/users/me/bookings/${idBooking}/review`, { rating, comment });
+}
+
 // Historique des paiements du locataire (page « Mes dépenses »).
 export function getPayments() {
   return api.get('/users/me/payments');

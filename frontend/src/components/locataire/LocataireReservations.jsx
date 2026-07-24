@@ -6,6 +6,7 @@ import {
   cancelBooking,
   requestRefund,
   reportDispute,
+  createBookingReview,
 } from '../../services/locataireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
@@ -118,12 +119,13 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
   const finished = booking.status === 'confirmed' && isPast(booking.end_date);
   const canDispute =
     (booking.status === 'cancelled' || finished) && !booking.refund_requested && !canRefund;
+  const canReview = finished && !booking.reviewed;
 
   return (
-    <article className="group h-52 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
+    <article className="group min-h-52 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
       {/* Colonne gauche de la grille : photo à droite ; colonne droite : photo à
           gauche — les photos se font face vers le centre. */}
-      <div className={`flex h-full ${mirrored ? 'xl:flex-row-reverse' : ''}`}>
+      <div className={`flex min-h-52 ${mirrored ? 'xl:flex-row-reverse' : ''}`}>
         {booking.boat?.image ? (
           <img
             src={booking.boat.image}
@@ -206,8 +208,18 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
             </p>
           )}
 
-          {(canCancel || canRefund || canDispute) && (
+          {(canCancel || canRefund || canDispute || canReview) && (
             <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+              {canReview && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onAction(booking, 'review')}
+                  className={`rounded-full bg-[#5AB4EC] px-3 py-1 text-xs font-semibold text-slate-950 transition hover:bg-[#ABD4FF] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {t('locataireReservations.actions.review')}
+                </button>
+              )}
               {canCancel && (
                 <button
                   type="button"
@@ -260,6 +272,10 @@ function LocataireReservations() {
   const [reasonError, setReasonError] = useState('');
   // Photos jointes au signalement : { file, url (aperçu à révoquer) }.
   const [photos, setPhotos] = useState([]);
+  const [reviewBooking, setReviewBooking] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewError, setReviewError] = useState('');
   const { showToast } = useToast();
 
   function addPhotos(fileList) {
@@ -320,10 +336,63 @@ function LocataireReservations() {
     return () => document.removeEventListener('keydown', onKey);
   }, [decision, deciding]);
 
+  useEffect(() => {
+    if (!reviewBooking) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape' && busyId !== reviewBooking.id_booking) closeReviewModal();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [reviewBooking, busyId]);
+
   function handleAction(booking, action) {
+    if (action === 'review') {
+      setReviewBooking(booking);
+      setReviewRating(0);
+      setReviewComment('');
+      setReviewError('');
+      return;
+    }
     setDecision({ booking, action });
     setReason('');
     setReasonError('');
+  }
+
+  function closeReviewModal() {
+    if (reviewBooking && busyId === reviewBooking.id_booking) return;
+    setReviewBooking(null);
+    setReviewRating(0);
+    setReviewComment('');
+    setReviewError('');
+  }
+
+  async function submitReview() {
+    const cleanComment = reviewComment.trim();
+    if (reviewRating < 1 || reviewRating > 5) {
+      setReviewError(t('locataireReservations.reviewModal.ratingRequired'));
+      return;
+    }
+    if (cleanComment.length < 10) {
+      setReviewError(t('locataireReservations.reviewModal.commentTooShort'));
+      return;
+    }
+
+    setBusyId(reviewBooking.id_booking);
+    setReviewError('');
+    try {
+      await createBookingReview(reviewBooking.id_booking, reviewRating, cleanComment);
+      await loadBookings();
+      showToast(t('locataireReservations.toasts.reviewSubmitted'), 'success');
+      setReviewBooking(null);
+      setReviewRating(0);
+      setReviewComment('');
+    } catch (err) {
+      setReviewError(
+        err.response?.data?.message || t('locataireReservations.toasts.reviewError')
+      );
+    } finally {
+      setBusyId(null);
+    }
   }
 
   async function executeDecision() {
@@ -467,6 +536,117 @@ function LocataireReservations() {
             </li>
           ))}
         </ul>
+      )}
+
+      {reviewBooking && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          onClick={closeReviewModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="locataire-review-title"
+            className="w-full max-w-md rounded-2xl border border-white/20 bg-slate-900/90 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="locataire-review-title" className="text-lg font-semibold text-white">
+              {t('locataireReservations.reviewModal.title')}
+            </h2>
+            <p className="mt-1 text-sm text-white/70">
+              {reviewBooking.boat?.name}, {fmtDate(reviewBooking.start_date)} →{' '}
+              {fmtDate(reviewBooking.end_date)}.
+            </p>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitReview();
+              }}
+            >
+              <fieldset className="mt-5">
+                <legend className="mb-2 text-xs font-medium text-white/70">
+                  {t('locataireReservations.reviewModal.ratingLabel')}
+                </legend>
+                <div className="flex gap-2" role="radiogroup">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={reviewRating === value}
+                      aria-label={t('locataireReservations.reviewModal.starLabel', {
+                        count: value,
+                      })}
+                      onClick={() => {
+                        setReviewRating(value);
+                        setReviewError('');
+                      }}
+                      className={`text-3xl leading-none transition hover:scale-110 ${
+                        value <= reviewRating ? 'text-amber-300' : 'text-white/25'
+                      } ${FOCUS_RING}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <label
+                htmlFor="locataire-review-comment"
+                className="mb-1 mt-5 block text-xs font-medium text-white/70"
+              >
+                {t('locataireReservations.reviewModal.commentLabel')}
+              </label>
+              <textarea
+                id="locataire-review-comment"
+                rows={5}
+                maxLength={1000}
+                value={reviewComment}
+                onChange={(e) => {
+                  setReviewComment(e.target.value);
+                  setReviewError('');
+                }}
+                placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
+                className="w-full resize-y rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+              />
+              <div className="mt-1 flex items-start justify-between gap-3">
+                <p className="text-xs text-white/50">
+                  {t('locataireReservations.reviewModal.moderationHint')}
+                </p>
+                <span className="shrink-0 text-xs text-white/50">
+                  {reviewComment.length}/1000
+                </span>
+              </div>
+
+              {reviewError && (
+                <p role="alert" className="mt-2 text-xs font-medium text-red-300">
+                  {reviewError}
+                </p>
+              )}
+
+              <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  disabled={busyId === reviewBooking.id_booking}
+                  onClick={closeReviewModal}
+                  className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {t('locataireReservations.reviewModal.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={busyId === reviewBooking.id_booking}
+                  className={`rounded-full bg-[#5AB4EC] px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#ABD4FF] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                >
+                  {busyId === reviewBooking.id_booking
+                    ? t('locataireReservations.reviewModal.submitting')
+                    : t('locataireReservations.reviewModal.submit')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Modal d'annulation / demande de remboursement */}
