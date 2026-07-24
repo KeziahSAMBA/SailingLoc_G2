@@ -13,6 +13,7 @@ import { postContactRequest } from './controllers/contactRequestController.js';
 import { stripeWebhook } from './controllers/webhookController.js';
 import { cancelExpiredBookings } from './services/bookingService.js';
 import { initConfig } from './config/appConfig.js';
+import { createCsrfProtection } from './middlewares/csrfMiddleware.js';
 
 const { PORT, APP_URL } = initConfig();
 
@@ -37,6 +38,7 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stri
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
+app.use(createCsrfProtection([APP_URL]));
 app.use('/uploads', express.static('uploads'));
 
 const registerLimiter = rateLimit({
