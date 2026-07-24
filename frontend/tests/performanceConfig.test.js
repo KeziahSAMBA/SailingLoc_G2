@@ -36,3 +36,13 @@ test('vite separates stable third-party libraries', async () => {
     assert.ok(config.includes(`'${chunk}'`), chunk);
   }
 });
+
+test('nginx distinguishes valid SPA routes from real 404 responses', async () => {
+  const config = await readFile(nginxUrl, 'utf8');
+
+  assert.match(config, /map \$uri \$sailingloc_spa_route/);
+  assert.match(config, /try_files \$uri \$uri\/ @sailingloc_spa/);
+  assert.match(config, /error_page 404 \/index\.html/);
+  assert.match(config, /~\^\/product\/\[0-9\]\+\/\?\$/);
+  assert.match(config, /~\^\/reservation\/\[0-9\]\+\/\?\$/);
+});
