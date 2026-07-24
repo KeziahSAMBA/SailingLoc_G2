@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { registerPositiveIdParams } from '../middlewares/validateParamMiddleware.js';
 import {
   listMyDocuments,
   uploadMyDocument,
@@ -51,6 +52,7 @@ function uploadSingle(req, res, next) {
 }
 
 const router = Router();
+registerPositiveIdParams(router, ['id']);
 
 router.get('/', protect, requireRole('locataire', 'proprietaire'), listMyDocuments);
 router.post('/', protect, requireRole('locataire', 'proprietaire'), uploadSingle, uploadMyDocument);

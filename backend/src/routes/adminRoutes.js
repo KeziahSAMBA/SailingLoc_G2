@@ -31,6 +31,7 @@ import {
 } from '../controllers/portAdminController.js';
 import { adminListPayments, adminPaymentStats } from '../controllers/paymentAdminController.js';
 import { protect, requireAdmin } from '../middlewares/authMiddleware.js';
+import { registerPositiveIdParams } from '../middlewares/validateParamMiddleware.js';
 
 import {
   adminListContactRequests,
@@ -38,6 +39,7 @@ import {
 } from '../controllers/contactRequestController.js';
 
 const router = Router();
+registerPositiveIdParams(router, ['id', 'id_request']);
 
 // Espace d'administration, monté sous /api/admin.
 router.post('/login', adminLogin);

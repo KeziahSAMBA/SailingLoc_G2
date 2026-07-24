@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { registerPositiveIdParams } from '../middlewares/validateParamMiddleware.js';
 import {
   getConversations,
   getThreadWith,
@@ -13,6 +14,7 @@ import {
 } from '../controllers/messageController.js';
 
 const router = Router();
+registerPositiveIdParams(router, ['id_user', 'id_boat', 'id_message']);
 
 // Messagerie interne : accessible aux trois rôles connectés. Les règles
 // d'envoi (qui peut écrire à qui) sont dans le service.

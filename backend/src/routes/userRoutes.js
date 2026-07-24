@@ -19,6 +19,7 @@ import {
   deleteMyAvatar,
 } from '../controllers/userController.js';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { registerPositiveIdParams } from '../middlewares/validateParamMiddleware.js';
 import {
   getDashboard,
   getMyBookings,
@@ -128,6 +129,7 @@ function uploadDisputePhotos(req, res, next) {
 }
 
 const router = Router();
+registerPositiveIdParams(router, ['id_booking', 'id_boat']);
 
 router.post('/register', register);
 router.post('/login', login);

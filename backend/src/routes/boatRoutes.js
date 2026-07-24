@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { registerPositiveIdParams } from '../middlewares/validateParamMiddleware.js';
 import {
   uploadBoat,
   putBoat,
@@ -68,6 +69,7 @@ function uploadFiles(req, res, next) {
 }
 
 const router = Router();
+registerPositiveIdParams(router, ['id_boat']);
 
 router.get('/by-type', getBoatsByType);
 router.get('/', getBoats);
