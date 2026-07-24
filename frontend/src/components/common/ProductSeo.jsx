@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { buildProductSeo } from '../../utils/productSeo.js';
 
 function setMeta(selector, attributes) {
@@ -13,14 +14,22 @@ function setMeta(selector, attributes) {
 }
 
 function ProductSeo({ boat, boatsLoaded, typeLabel }) {
+  const { i18n } = useTranslation();
+  const language = i18n.resolvedLanguage === 'en' ? 'en' : 'fr';
+
   useEffect(() => {
     if (!boatsLoaded) return undefined;
 
     if (!boat) {
-      document.title = 'Bateau introuvable | SailingLoc';
+      document.documentElement.lang = language;
+      document.title =
+        language === 'en' ? 'Boat not found | SailingLoc' : 'Bateau introuvable | SailingLoc';
       setMeta('meta[name="description"]', {
         name: 'description',
-        content: "Cette annonce n'existe pas ou n'est plus disponible sur SailingLoc.",
+        content:
+          language === 'en'
+            ? 'This listing does not exist or is no longer available on SailingLoc.'
+            : "Cette annonce n'existe pas ou n'est plus disponible sur SailingLoc.",
       });
       setMeta('meta[name="robots"]', {
         name: 'robots',
@@ -31,8 +40,9 @@ function ProductSeo({ boat, boatsLoaded, typeLabel }) {
 
     const configuredOrigin = import.meta.env.VITE_SITE_URL?.trim().replace(/\/+$/, '');
     const siteOrigin = configuredOrigin || window.location.origin;
-    const seo = buildProductSeo(boat, typeLabel, siteOrigin);
+    const seo = buildProductSeo(boat, typeLabel, siteOrigin, language);
 
+    document.documentElement.lang = language;
     document.title = seo.title;
     setMeta('meta[name="description"]', {
       name: 'description',
@@ -57,6 +67,10 @@ function ProductSeo({ boat, boatsLoaded, typeLabel }) {
     setMeta('meta[property="og:url"]', {
       property: 'og:url',
       content: seo.canonicalUrl,
+    });
+    setMeta('meta[property="og:locale"]', {
+      property: 'og:locale',
+      content: language === 'en' ? 'en_GB' : 'fr_FR',
     });
     setMeta('meta[name="twitter:title"]', {
       name: 'twitter:title',
@@ -97,7 +111,7 @@ function ProductSeo({ boat, boatsLoaded, typeLabel }) {
       document.head.querySelector('meta[property="og:image"]')?.remove();
       document.head.querySelector('meta[name="twitter:image"]')?.remove();
     };
-  }, [boat, boatsLoaded, typeLabel]);
+  }, [boat, boatsLoaded, language, typeLabel]);
 
   return null;
 }

@@ -31,13 +31,13 @@ const DESTINATIONS = [
   { city: 'Barcelone', image: barceloneImg, available: false },
 ];
 
-const buildAboutStructuredData = (siteOrigin) => ({
+const buildAboutStructuredData = (siteOrigin, language) => ({
   '@context': 'https://schema.org',
   '@type': 'AboutPage',
   '@id': `${siteOrigin}/a-propos#webpage`,
   url: `${siteOrigin}/a-propos`,
-  name: 'À propos de SailingLoc',
-  inLanguage: 'fr-FR',
+  name: language === 'en' ? 'About SailingLoc' : 'À propos de SailingLoc',
+  inLanguage: language === 'en' ? 'en-GB' : 'fr-FR',
   mainEntity: {
     '@type': 'Organization',
     '@id': `${siteOrigin}/#organization`,

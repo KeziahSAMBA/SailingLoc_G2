@@ -14,19 +14,30 @@ function absoluteUrl(value, siteOrigin) {
   }
 }
 
-export function buildProductSeo(boat, typeLabel, siteOrigin) {
+export function buildProductSeo(boat, typeLabel, siteOrigin, requestedLanguage = 'fr') {
+  const language = requestedLanguage === 'en' ? 'en' : 'fr';
   const name = cleanText(boat.name);
   const type = cleanText(typeLabel || boat.type);
   const city = cleanText(boat.port?.city);
   const price = Number(boat.daily_price);
   const canonicalUrl = `${siteOrigin}/product/${boat.id_boat}`;
-  const locationLabel = city ? ` à ${city}` : '';
-  const priceLabel = Number.isFinite(price) ? ` dès ${price} €/jour` : '';
-  const title = `${name} - Location de ${type}${locationLabel}${priceLabel} | SailingLoc`;
+  const locationLabel = city ? (language === 'en' ? ` in ${city}` : ` à ${city}`) : '';
+  const priceLabel = Number.isFinite(price)
+    ? language === 'en'
+      ? ` from €${price}/day`
+      : ` dès ${price} €/jour`
+    : '';
+  const title =
+    language === 'en'
+      ? `${name} - ${type} rental${locationLabel}${priceLabel} | SailingLoc`
+      : `${name} - Location de ${type}${locationLabel}${priceLabel} | SailingLoc`;
   const fallbackDescription =
-    `Louez ${name}, ${type}${locationLabel}${priceLabel} sur SailingLoc. ` +
-    `Consultez ses équipements, disponibilités et avis.`;
-  const description = cleanText(boat.description || fallbackDescription).slice(0, 160);
+    language === 'en'
+      ? `Rent ${name}, a ${type}${locationLabel}${priceLabel} on SailingLoc. View its equipment, availability and reviews.`
+      : `Louez ${name}, ${type}${locationLabel}${priceLabel} sur SailingLoc. Consultez ses équipements, disponibilités et avis.`;
+  const sourceDescription =
+    language === 'fr' && boat.description ? boat.description : fallbackDescription;
+  const description = cleanText(sourceDescription).slice(0, 160);
   const images = (boat.images ?? [])
     .map((image) => absoluteUrl(image.url, siteOrigin))
     .filter(Boolean);
@@ -74,7 +85,7 @@ export function buildProductSeo(boat, typeLabel, siteOrigin) {
     {
       '@type': 'ListItem',
       position: 1,
-      name: 'Accueil',
+      name: language === 'en' ? 'Home' : 'Accueil',
       item: `${siteOrigin}/`,
     },
     {

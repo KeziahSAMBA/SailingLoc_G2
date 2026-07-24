@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 
@@ -51,11 +50,6 @@ function CapsizedBoat() {
 // Plein écran photo + voile sombre, comme le héro de la page d'accueil
 // (indispensable aussi pour que le header, écrit en blanc, reste lisible).
 function NotFoundPage() {
-  // SEO / onglet navigateur : titre de page dédié.
-  useEffect(() => {
-    document.title = 'Page introuvable — SailingLoc';
-  }, []);
-
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 text-center">
       <img

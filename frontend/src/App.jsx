@@ -75,10 +75,10 @@ function AppContent() {
   return (
     <>
       {renderHeader()}
+      <SeoManager location={routesLocation} />
       <div className="bg-slate-50 text-slate-900">
         <AppRouter location={routesLocation} />
       </div>
-      <SeoManager location={routesLocation} />
       {showAuthModal && <AuthModal activeTab={activeAuthTab} onClose={closeAuthModal} />}
       <Footer />
       <CookieConsentBanner />
