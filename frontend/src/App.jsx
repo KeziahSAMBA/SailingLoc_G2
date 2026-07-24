@@ -11,6 +11,7 @@ import AuthModal from './components/auth/AuthModal.jsx';
 import Footer from './components/common/Footer.jsx';
 import CookieConsentBanner from './components/common/CookieConsentBanner.jsx';
 import MatomoTracker from './components/common/MatomoTracker.jsx';
+import SeoManager from './components/common/SeoManager.jsx';
 import { CookieConsentProvider } from './context/CookieConsentContext.jsx';
 
 function AppContent() {
@@ -77,6 +78,7 @@ function AppContent() {
       <div className="bg-slate-50 text-slate-900">
         <AppRouter location={routesLocation} />
       </div>
+      <SeoManager location={routesLocation} />
       {showAuthModal && <AuthModal activeTab={activeAuthTab} onClose={closeAuthModal} />}
       <Footer />
       <CookieConsentBanner />
