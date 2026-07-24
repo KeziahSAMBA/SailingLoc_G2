@@ -26,10 +26,15 @@ import {
   resetPasswordLimiter,
   contactLimiter,
 } from './middlewares/abuseProtectionMiddleware.js';
+import {
+  safeErrorResponses,
+  secureErrorHandler,
+} from './middlewares/errorSecurityMiddleware.js';
 
 const { PORT, APP_URL } = initConfig();
 
 const app = express();
+app.disable('x-powered-by');
 
 // Derrière un proxy en production (Railway, etc.) : permet à Express de reconnaître
 // HTTPS (X-Forwarded-Proto) et la vraie IP cliente (cookies Secure, rate-limit).
@@ -48,6 +53,7 @@ app.use(
 // Avant express.json : la vérification de signature Stripe exige le corps brut.
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
 
+app.use(safeErrorResponses);
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 app.use(createCsrfProtection([APP_URL]));
@@ -74,6 +80,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.use(secureErrorHandler);
 
 process.on('unhandledRejection', (reason) => {
   console.error('[server] unhandledRejection:', reason);

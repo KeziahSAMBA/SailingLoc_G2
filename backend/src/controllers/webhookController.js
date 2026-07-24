@@ -19,7 +19,7 @@ export async function stripeWebhook(req, res) {
       STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    return res.status(400).json({ message: `Signature invalide : ${err.message}` });
+    return res.status(400).json({ message: 'Signature Stripe invalide.' });
   }
 
   try {
