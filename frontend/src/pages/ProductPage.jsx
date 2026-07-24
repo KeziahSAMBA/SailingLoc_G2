@@ -20,6 +20,7 @@ import GhostButton from '../components/common/GhostButton.jsx';
 import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import ShareButton from '../components/common/ShareButton.jsx';
 import DateRangePicker from '../components/common/DateRangePicker.jsx';
+import ProductSeo from '../components/common/ProductSeo.jsx';
 import {
   MdLocationOn,
   MdVerified,
@@ -479,6 +480,7 @@ function ProductPage() {
     // qui casserait les sticky) évite l'ascenseur horizontal pendant l'entrée
     // des blocs depuis la marge droite (translateX(110vw)).
     <main className="w-full min-h-screen pt-20 bg-white overflow-x-clip">
+      <ProductSeo boat={boat} boatsLoaded={boatsLoaded} typeLabel={typeLabel} />
       <style>{PAGE_SLIDE_CSS}</style>
       <div>
         {/* Fond photo bateau — image propre à la page produit ; le raccord
@@ -574,18 +576,20 @@ function ProductPage() {
                   >
                     <img
                       src={images[0]?.url ?? ''}
-                      alt={boat.name}
+                      alt={`${boat.name}, ${typeLabel}${boat.port?.city ? ` à ${boat.port.city}` : ''}`}
+                      decoding="async"
+                      fetchPriority="high"
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  {thumbs.map((img) => (
+                  {thumbs.map((img, index) => (
                     <div
                       key={img.url}
                       className="relative rounded-3xl overflow-hidden border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)]"
                     >
                       <img
                         src={img.url}
-                        alt={boat.name}
+                        alt={`${boat.name}, vue ${index + 2}`}
                         className="absolute inset-0 w-full h-full object-cover"
                         loading="lazy"
                         decoding="async"
@@ -695,9 +699,9 @@ function ProductPage() {
                   {/* Nom + type de bateau, favoris aligné à droite */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-baseline gap-1.5 flex-wrap">
-                      <h2 className="text-lg font-bold text-white tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                      <h1 className="text-lg font-bold text-white tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                         {boat.name}
-                      </h2>
+                      </h1>
                       <span className="text-white/50">-</span>
                       <span className="text-xs font-bold tracking-widest text-sky-500 uppercase">
                         {typeLabel}
