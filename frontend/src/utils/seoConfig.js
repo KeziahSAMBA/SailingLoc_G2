@@ -16,6 +16,7 @@ const PUBLIC_ROUTES = {
     title: 'Bateau disponible à la location | SailingLoc',
     description:
       'Consultez les caractéristiques, équipements, disponibilités et avis de ce bateau proposé à la location sur SailingLoc.',
+    robots: 'noindex, follow',
   },
   '/contact': {
     title: 'Contact et aide | SailingLoc',
@@ -86,7 +87,7 @@ export function resolveSeo(pathname) {
     return {
       ...publicRoute,
       canonicalPath: normalizedPath,
-      robots: 'index, follow',
+      robots: publicRoute.robots ?? 'index, follow',
     };
   }
 

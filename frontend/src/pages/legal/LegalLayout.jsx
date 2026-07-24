@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import heroBg from '../../assets/image/paysage/cote_azur.jpg';
 
@@ -19,13 +19,42 @@ const TABS = [
 
 // Enveloppe commune des pages légales : hero, onglets, avertissement projet
 // fictif, colonne de lecture. Le contenu (sections) est fourni par chaque page.
-function LegalLayout({ title, pageTitle, updated, children }) {
+function LegalLayout({ title, updated, updatedIso, children }) {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
 
-  // SEO / onglet navigateur : titre de page dédié.
   useEffect(() => {
-    document.title = pageTitle;
-  }, [pageTitle]);
+    const configuredOrigin = import.meta.env.VITE_SITE_URL?.trim().replace(/\/+$/, '');
+    const siteOrigin = configuredOrigin || window.location.origin;
+    const script = document.createElement('script');
+
+    script.id = 'sailingloc-legal-structured-data';
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': `${siteOrigin}${pathname}#webpage`,
+      url: `${siteOrigin}${pathname}`,
+      name: title,
+      inLanguage: 'fr-FR',
+      dateModified: updatedIso,
+      isPartOf: {
+        '@type': 'WebSite',
+        '@id': `${siteOrigin}/#website`,
+        name: 'SailingLoc',
+        url: `${siteOrigin}/`,
+      },
+      publisher: {
+        '@type': 'Organization',
+        '@id': `${siteOrigin}/#organization`,
+        name: 'SailingLoc',
+      },
+    });
+    document.getElementById(script.id)?.remove();
+    document.head.appendChild(script);
+
+    return () => script.remove();
+  }, [pathname, title, updatedIso]);
 
   return (
     <main className="w-full bg-white">
@@ -35,6 +64,7 @@ function LegalLayout({ title, pageTitle, updated, children }) {
           src={heroBg}
           alt=""
           aria-hidden="true"
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/55" />

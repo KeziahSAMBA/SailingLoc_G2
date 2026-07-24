@@ -7,8 +7,8 @@ function CgvPage() {
   return (
     <LegalLayout
       title="Conditions générales de vente"
-      pageTitle="CGV — SailingLoc"
       updated="9 juillet 2026"
+      updatedIso="2026-07-09"
     >
       <LegalSection title="1. Champ d'application">
         <p>

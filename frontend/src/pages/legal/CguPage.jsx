@@ -6,8 +6,8 @@ function CguPage() {
   return (
     <LegalLayout
       title="Conditions générales d'utilisation"
-      pageTitle="CGU — SailingLoc"
       updated="9 juillet 2026"
+      updatedIso="2026-07-09"
     >
       <LegalSection title="1. Objet">
         <p>

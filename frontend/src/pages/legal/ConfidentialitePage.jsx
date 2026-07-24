@@ -10,8 +10,8 @@ function ConfidentialitePage() {
   return (
     <LegalLayout
       title="Politique de confidentialité"
-      pageTitle="Politique de confidentialité — SailingLoc"
       updated="9 juillet 2026"
+      updatedIso="2026-07-09"
     >
       <LegalSection title="1. Responsable du traitement">
         <p>

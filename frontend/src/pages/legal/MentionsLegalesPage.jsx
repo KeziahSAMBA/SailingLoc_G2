@@ -4,11 +4,7 @@ import LegalLayout, { LegalSection } from './LegalLayout.jsx';
 // Entité fictive — projet pédagogique (voir l'avertissement du layout).
 function MentionsLegalesPage() {
   return (
-    <LegalLayout
-      title="Mentions légales"
-      pageTitle="Mentions légales — SailingLoc"
-      updated="9 juillet 2026"
-    >
+    <LegalLayout title="Mentions légales" updated="9 juillet 2026" updatedIso="2026-07-09">
       <LegalSection title="1. Éditeur du site">
         <p>
           Le site <strong>sailingloc.fr</strong> est édité par <strong>SailingLoc SAS</strong>,
