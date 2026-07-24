@@ -6,6 +6,7 @@ import {
   updateMessage,
   deleteMessage,
   contactSupport,
+  contactBoatOwner,
   resolveSupport,
 } from '../services/messageService.js';
 
@@ -68,6 +69,15 @@ export async function removeMessage(req, res) {
 export async function postSupport(req, res) {
   try {
     const result = await contactSupport(req.user);
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function postBoatContact(req, res) {
+  try {
+    const result = await contactBoatOwner(req.user, req.params.id_boat);
     res.json(result);
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

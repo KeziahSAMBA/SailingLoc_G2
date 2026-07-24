@@ -257,6 +257,22 @@ export const TEXTS = {
         cta: { fr: 'Contactez-nous', en: 'Contact us' },
       },
     },
+    ownerContact: {
+      text: {
+        fr: 'Une question sur ce bateau ? Échangez directement avec son propriétaire.',
+        en: 'A question about this boat? Chat directly with its owner.',
+      },
+      cta: { fr: 'Contacter le propriétaire', en: 'Contact the owner' },
+      opening: { fr: 'Ouverture…', en: 'Opening…' },
+      locataireOnly: {
+        fr: 'Connectez-vous avec un compte locataire pour contacter le propriétaire.',
+        en: 'Sign in with a renter account to contact the owner.',
+      },
+      error: {
+        fr: 'Impossible d’ouvrir la conversation pour le moment.',
+        en: 'Unable to open the conversation right now.',
+      },
+    },
     specs: {
       kicker: { fr: 'Caractéristiques', en: 'Characteristics' },
       title: { fr: 'Spécifications techniques', en: 'Technical specifications' },

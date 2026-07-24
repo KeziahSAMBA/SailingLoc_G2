@@ -36,6 +36,10 @@ export function contactSupport() {
   return api.post('/messages/support');
 }
 
+export function contactBoatOwner(idBoat) {
+  return api.post(`/messages/boat/${idBoat}/contact`);
+}
+
 // L'admin marque la demande support d'un utilisateur comme traitée.
 export function resolveSupport(idUser) {
   return api.post(`/messages/support/${idUser}/resolve`);
