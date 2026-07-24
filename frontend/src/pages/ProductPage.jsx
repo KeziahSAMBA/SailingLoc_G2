@@ -31,7 +31,12 @@ import {
 } from 'react-icons/md';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { useToast } from '../hooks/useToast.jsx';
 import { fetchBoats, fetchBoatsFresh } from '../services/boatService.js';
+import {
+  getBookings as getLocataireBookings,
+  createBookingReview,
+} from '../services/locataireService.js';
 import {
   readTransitionPayload,
   clearTransitionPayload,
@@ -99,6 +104,7 @@ function ProductPage() {
   const location = useLocation();
   const goToCategory = useCategoryNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const [scrolled, setScrolled] = useState(false);
 
@@ -321,6 +327,73 @@ function ProductPage() {
   const thumbs = images.slice(1, 5);
   const typeLabel = boat ? t(`carrousel.boatType.${boat.type}`, { defaultValue: boat.type }) : '';
   const isAvailable = (boat?.availabilities?.length ?? 0) > 0;
+  const [reviewBooking, setReviewBooking] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+
+  useEffect(() => {
+    if (!boat || user?.role !== 'locataire') {
+      setReviewBooking(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const requestedBookingId = Number(location.state?.reviewBookingId);
+    getLocataireBookings()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const eligible = (data.bookings || []).find((booking) => {
+          const endDate = new Date(booking.end_date);
+          endDate.setHours(0, 0, 0, 0);
+          return (
+            booking.boat?.id_boat === boat.id_boat &&
+            booking.status === 'confirmed' &&
+            endDate < today &&
+            !booking.reviewed &&
+            (!Number.isInteger(requestedBookingId) ||
+              booking.id_booking === requestedBookingId)
+          );
+        });
+        setReviewBooking(eligible || null);
+      })
+      .catch(() => {
+        if (!cancelled) setReviewBooking(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [boat, user?.role, location.state?.reviewBookingId]);
+
+  async function handleProductReviewSubmit(e) {
+    e.preventDefault();
+    const cleanComment = reviewComment.trim();
+    if (reviewRating < 1 || reviewRating > 5) {
+      setReviewError(t('locataireReservations.reviewModal.ratingRequired'));
+      return;
+    }
+    if (cleanComment.length < 10) {
+      setReviewError(t('locataireReservations.reviewModal.commentTooShort'));
+      return;
+    }
+    setReviewSaving(true);
+    setReviewError('');
+    try {
+      await createBookingReview(reviewBooking.id_booking, reviewRating, cleanComment);
+      setReviewBooking(null);
+      setReviewRating(0);
+      setReviewComment('');
+      showToast(t('locataireReservations.toasts.reviewSubmitted'), 'success');
+    } catch (err) {
+      setReviewError(
+        err.response?.data?.message || t('locataireReservations.toasts.reviewError')
+      );
+    } finally {
+      setReviewSaving(false);
+    }
+  }
 
   // Sélection de dates du panneau de réservation.
   const [start, setStart] = useState('');
@@ -753,6 +826,85 @@ function ProductPage() {
 
                 {/* L'animation s'applique aux blocs internes et non à l'<aside>
                     sticky, dont le style transition (top) doit rester. */}
+                {reviewBooking && (
+                  <form
+                    onSubmit={handleProductReviewSubmit}
+                    className="flex w-full flex-col gap-3 rounded-2xl border p-4"
+                    style={GLASS_STYLE}
+                  >
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-sky-400">
+                        {t('locataireReservations.reviewModal.title')}
+                      </p>
+                      <p className="mt-1 text-xs text-white/70">
+                        {t('locataireReservations.reviewModal.moderationHint')}
+                      </p>
+                    </div>
+                    <fieldset>
+                      <legend className="mb-1 text-xs font-medium text-white/70">
+                        {t('locataireReservations.reviewModal.ratingLabel')}
+                      </legend>
+                      <div className="flex gap-1.5" role="radiogroup">
+                        {[1, 2, 3, 4, 5].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            role="radio"
+                            aria-checked={reviewRating === value}
+                            aria-label={t('locataireReservations.reviewModal.starLabel', {
+                              count: value,
+                            })}
+                            onClick={() => {
+                              setReviewRating(value);
+                              setReviewError('');
+                            }}
+                            className={`text-2xl leading-none transition hover:scale-110 ${
+                              value <= reviewRating ? 'text-amber-300' : 'text-white/30'
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <label
+                      htmlFor="product-review-comment"
+                      className="text-xs font-medium text-white/70"
+                    >
+                      {t('locataireReservations.reviewModal.commentLabel')}
+                    </label>
+                    <textarea
+                      id="product-review-comment"
+                      rows={4}
+                      maxLength={1000}
+                      value={reviewComment}
+                      onChange={(e) => {
+                        setReviewComment(e.target.value);
+                        setReviewError('');
+                      }}
+                      placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
+                      className="w-full resize-y rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-sky-400"
+                    />
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs text-white/50">{reviewComment.length}/1000</span>
+                      <button
+                        type="submit"
+                        disabled={reviewSaving}
+                        className="rounded-full bg-sky-400 px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {reviewSaving
+                          ? t('locataireReservations.reviewModal.submitting')
+                          : t('locataireReservations.reviewModal.submit')}
+                      </button>
+                    </div>
+                    {reviewError && (
+                      <p role="alert" className="text-xs font-medium text-red-300">
+                        {reviewError}
+                      </p>
+                    )}
+                  </form>
+                )}
+
                 <div
                   className="relative z-20 flex w-full flex-col rounded-2xl border"
                   style={{

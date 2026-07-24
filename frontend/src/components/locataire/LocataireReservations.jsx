@@ -140,6 +140,11 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
             <h3 className="truncate text-base font-bold text-white">
               <Link
                 to={boatLink}
+                state={
+                  showReviewHint && !booking.reviewed
+                    ? { reviewBookingId: booking.id_booking }
+                    : undefined
+                }
                 className={`transition hover:text-[#ABD4FF] hover:underline ${FOCUS_RING}`}
                 title={t('locataireReservations.viewProduct')}
               >
