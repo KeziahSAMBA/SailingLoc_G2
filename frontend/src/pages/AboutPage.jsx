@@ -93,6 +93,8 @@ function AboutPage() {
         </div>
       </section>
 
+      <div className="mx-auto max-w-4xl border-t border-white/15" />
+
       {/* Présentation */}
       <section aria-labelledby="story-title" className="w-full px-4 py-14">
         <div className="mx-auto grid w-full max-w-5xl items-center gap-10 rounded-2xl border border-white/20 bg-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:grid-cols-2 md:p-8">
