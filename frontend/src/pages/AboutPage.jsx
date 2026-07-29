@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MdAnchor, MdVerified } from 'react-icons/md';
 import { FaHandshake } from 'react-icons/fa';
-import heroBg from '../assets/image/paysage/cote_azur.jpg';
+import aboutBg from '../assets/image/paysage/about_bg.jpg';
 import boatImg from '../assets/image/image_bateau/bateau_searchbar.webp';
 import Carrousel from '../components/common/Carrousel.jsx';
 import { unlockScroll } from '../hooks/useCategoryTransition.js';
@@ -17,7 +17,7 @@ const cardClass =
   'rounded-2xl border border-white/20 bg-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl';
 
 const PHOTO_BG_STYLE = {
-  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${heroBg})`,
+  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${aboutBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',
