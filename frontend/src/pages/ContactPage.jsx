@@ -130,9 +130,8 @@ function ContactPage() {
 
   return (
     <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
-      {/* Hero photo + voile sombre, comme l'accueil */}
+      {/* Hero de la page Contact */}
       <section className="relative flex min-h-[45vh] w-full flex-col items-center justify-center overflow-hidden px-4 pt-[96px]">
-        <div className="absolute inset-0 bg-black/10" />
         <div className="relative text-center">
           <h1 className="text-4xl font-semibold text-white md:text-5xl">Contact &amp; aide</h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">
