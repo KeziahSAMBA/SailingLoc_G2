@@ -506,11 +506,16 @@ function HomePage() {
               {t('home.hero.tagline')}
             </p>
           </div>
-          <div ref={searchBarWrapRef} className="w-full max-w-4xl" style={introFromBelowStyle}>
+          <div
+            ref={searchBarWrapRef}
+            className="w-full max-w-4xl lg:w-fit lg:max-w-full"
+            style={introFromBelowStyle}
+          >
             <SearchBar
               light
               retracted={exiting && exitTarget === 'product'}
               retractDuration={HERO_EXIT_DURATION}
+              fitContentOnDesktop
             />
           </div>
           <div className="text-center" style={introFromBelowStyle}>
@@ -554,7 +559,10 @@ function HomePage() {
             </div>
           </section>
 
-          <div id="tutoriel" className="mx-4 border-t border-gray-200 scroll-mt-[115px] sm:mx-8 lg:mx-[168px]" />
+          <div
+            id="tutoriel"
+            className="mx-4 border-t border-gray-200 scroll-mt-[115px] sm:mx-8 lg:mx-[168px]"
+          />
 
           {/* Section 3 — Tuto */}
           <section className="flex w-full flex-col items-center gap-0 bg-white px-4 py-8 sm:px-8 lg:px-16 xl:px-28">
@@ -568,7 +576,10 @@ function HomePage() {
                 </h2>
               </div>
 
-              <div ref={stepsRef} className="mb-10 flex w-full flex-col items-stretch gap-8 md:flex-row md:items-start md:gap-0">
+              <div
+                ref={stepsRef}
+                className="mb-10 flex w-full flex-col items-stretch gap-8 md:flex-row md:items-start md:gap-0"
+              >
                 {STEPS.map(({ num, icon, title, text }, i) => (
                   <Fragment key={num}>
                     <div className="flex flex-1 flex-col items-center px-2 text-center sm:px-4">
@@ -639,12 +650,17 @@ function HomePage() {
             <GhostButton onClick={() => navigate('/a-propos')}>{t('home.values.cta')}</GhostButton>
           </section>
 
-          <div id="avis" className="mx-4 border-t border-gray-200 scroll-mt-[60px] sm:mx-8 lg:mx-[168px]" />
+          <div
+            id="avis"
+            className="mx-4 border-t border-gray-200 scroll-mt-[60px] sm:mx-8 lg:mx-[168px]"
+          />
 
           {/* Section 5 — Avis clients */}
           <ClientReviews className="py-8">
             <div className="flex flex-col items-center gap-4 mt-10">
-              <p className="px-4 text-center text-base font-semibold text-gray-700 sm:text-lg">{t('home.reviews.tagline')}</p>
+              <p className="px-4 text-center text-base font-semibold text-gray-700 sm:text-lg">
+                {t('home.reviews.tagline')}
+              </p>
               <GhostButton className="font-semibold text-lg" onClick={() => goToCategory()}>
                 {t('home.reviews.cta')} <MdAnchor className="text-base" />
               </GhostButton>
