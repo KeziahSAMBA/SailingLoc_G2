@@ -170,10 +170,10 @@ function FilterBar({
   ];
 
   return (
-    <div className="relative block w-full" ref={containerRef}>
+    <div className="relative block w-full lg:static" ref={containerRef}>
       {/* Header — always visible */}
       <div
-        className={`flex w-full cursor-pointer select-none flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 transition-colors sm:gap-3 sm:rounded-full sm:px-4 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className={`flex w-full cursor-pointer select-none flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 transition-colors sm:gap-3 sm:rounded-full sm:px-4 lg:py-3 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         style={{
           backgroundColor: compact
             ? 'rgba(0,0,0,0.45)'
@@ -238,7 +238,7 @@ function FilterBar({
       {/* Expanded filter panel */}
       {filterOpen && (
         <div
-          className="relative z-10 mb-6 mt-2 w-full overflow-visible rounded-xl p-4 sm:p-6"
+          className="relative z-30 mb-6 mt-2 w-full overflow-visible rounded-xl p-4 sm:p-6 lg:absolute lg:left-16 lg:right-16 lg:top-full lg:mb-0 lg:w-auto xl:left-28 xl:right-28"
           style={{
             backgroundColor: 'rgba(255,255,255,0.98)',
             boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
