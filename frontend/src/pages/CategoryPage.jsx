@@ -44,6 +44,15 @@ import {
   INTRO_SOFT_EASING,
 } from '../hooks/useCategoryTransition.js';
 
+// Fond photo bateau partagé par toutes les sections de la page (résultats,
+// carrousels, avis), qui reprennent toutes ce même habillage (image + assombrissement).
+const PHOTO_BG_STYLE = {
+  backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundAttachment: 'fixed',
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -426,12 +435,11 @@ function CategoryPage() {
       unsubProduct();
     };
   }, [navigate]);
-  // Header fixe (60/80px) + barre sticky : filtre/recherche avec le fil
-  // d'ariane sur sa propre ligne en dessous en haut de page (~117px), resserrée
-  // en une seule ligne (fil d'ariane passé à gauche, pt réduit) en mode compact
-  // au scroll (~60px) : offset réel au-dessus de la carte, pour qu'elle tienne
-  // entière dans l'écran visible.
-  const mapStickyTop = (scrolled ? 60 : 80) + (scrolled ? 64 : 116);
+  // Header fixe (60/80px) + barre sticky (fil d'ariane, filtre, recherche sur
+  // une seule ligne, pt réduit en mode compact au scroll ~60px, ~88px en haut
+  // de page) : offset réel au-dessus de la carte, pour qu'elle tienne entière
+  // dans l'écran visible.
+  const mapStickyTop = (scrolled ? 60 : 80) + (scrolled ? 64 : 76);
   const [ports, setPorts] = useState([]);
   const [boats, setBoats] = useState([]);
   useEffect(() => {
@@ -770,15 +778,7 @@ function CategoryPage() {
             min-h-screen : garantit une couverture plein écran même quand le
             contenu (chargement en cours, peu de résultats) est plus court
             que le viewport. */}
-        <div
-          className="relative min-h-screen"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-          }}
-        >
+        <div className="relative min-h-screen" style={PHOTO_BG_STYLE}>
           {/* Crossfade vers le fond de la page produit pendant la sortie : se
               pose derrière les blocs (qui glissent hors écran par-dessus) et
               atterrit à pleine opacité pile pour le montage réel de la page
@@ -815,28 +815,14 @@ function CategoryPage() {
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
-              className="flex items-center gap-8 pb-2 pl-28"
+              className="flex items-center gap-4 pb-2 pl-28"
               style={{
-                paddingTop: scrolled ? '8px' : '32px',
+                paddingTop: scrolled ? '8px' : '20px',
                 transition: 'padding-top 0.3s ease',
               }}
             >
-              {/* Double inline du fil d'ariane, replié hors compact (le fil vit
-                  alors sur sa propre ligne en dessous) : il se déploie à gauche
-                  des filtres au scroll. Le marginRight négatif annule le gap-8
-                  de la rangée pour que le slot replié n'occupe aucune place. */}
-              <div
-                className="overflow-hidden whitespace-nowrap"
-                style={{
-                  maxWidth: scrolled ? '320px' : '0px',
-                  marginRight: scrolled ? '0px' : '-32px',
-                  opacity: scrolled ? 1 : 0,
-                  visibility: scrolled ? 'visible' : 'hidden',
-                  transition:
-                    'max-width 0.3s ease, margin-right 0.3s ease, opacity 0.3s ease, visibility 0.3s',
-                }}
-              >
-                <Breadcrumb light compact />
+              <div style={slideInStyle(1)}>
+                <Breadcrumb light compact={scrolled} />
               </div>
               <div style={slideInStyle(0)}>
                 <FilterBar
@@ -866,28 +852,13 @@ function CategoryPage() {
                 />
               </div>
             </div>
-            {/* Fil d'ariane pleine ligne (état haut de page) : s'écrase en
-                douceur au scroll, le temps que son double inline prenne le
-                relais dans la rangée ci-dessus. */}
-            <div
-              className="overflow-hidden"
-              style={{
-                maxHeight: scrolled ? '0px' : '48px',
-                opacity: scrolled ? 0 : 1,
-                visibility: scrolled ? 'hidden' : 'visible',
-                transition: 'max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s',
-              }}
-            >
-              <div className="pt-1 pb-2 pl-28" style={slideInStyle(1)}>
-                <Breadcrumb light />
-              </div>
-            </div>
           </section>
 
-          {/* Section 2 — Listings + Carte 50/50 */}
+          {/* Section 2 — Listings + Carte 55/45 : fiches agrandies (largeur donc
+              hauteur, via l'aspect-ratio de l'image) au détriment de la carte. */}
           <div id="resultats" className="flex items-start gap-6 px-28 py-5 scroll-mt-[120px]">
-            {/* Listings — 50% */}
-            <div className="w-1/2 flex flex-col gap-5 relative">
+            {/* Listings — 55% */}
+            <div className="w-[55%] flex flex-col gap-5 relative">
               <div className="relative z-10 flex flex-col gap-5">
                 <div className="flex items-end justify-between">
                   <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
@@ -934,11 +905,11 @@ function CategoryPage() {
               </div>
             </div>
 
-            {/* Carte — 50% */}
+            {/* Carte — 45% */}
             {/* Offset sticky = hauteur du header fixe + hauteur de la barre filtre/recherche/fil
                 d'ariane (toutes deux sticky au-dessus) + un petit espace de respiration. */}
             <aside
-              className="w-1/2 sticky flex flex-col gap-2"
+              className="w-[45%] sticky flex flex-col gap-2"
               style={{ top: `${mapStickyTop}px`, transition: 'top 0.3s ease' }}
             >
               {/* L'animation d'entrée s'applique au bloc interne et non à
@@ -991,22 +962,30 @@ function CategoryPage() {
           </div>
         </div>
 
-        {/* Section 3 — Carrousels : différée pendant l'entrée ; le bloc
-            fantôme conserve la hauteur (et la barre de défilement). */}
-        {belowFoldReady ? (
-          <section
-            id="suggestions"
-            className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[140px]"
-          >
-            <Carrousel theme="light" />
-          </section>
-        ) : (
-          <div style={{ height: '60vh' }} aria-hidden="true" />
-        )}
-      </div>
+        {/* Section 3+4 — Carrousels et avis clients : même fond photo que la
+            section bateaux ci-dessus (deux containers séparés mais même image
+            en background-attachment: fixed, donc raccord invisible), en thème
+            glassmorphism (verre) pour rester lisibles dessus — carrousel
+            inspiré du thème sombre de la HomePage, avis du thème `light` de
+            la ProductPage. Différée pendant l'entrée ; le bloc fantôme
+            conserve la hauteur (et la barre de défilement). */}
+        <div className="relative" style={PHOTO_BG_STYLE}>
+          {belowFoldReady ? (
+            <section
+              id="suggestions"
+              className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[140px]"
+            >
+              <Carrousel glass />
+            </section>
+          ) : (
+            <div style={{ height: '60vh' }} aria-hidden="true" />
+          )}
 
-      {/* Section 4 — Avis clients */}
-      {belowFoldReady && <ClientReviews id="avis" className="py-10 scroll-mt-[60px]" />}
+          {belowFoldReady && (
+            <ClientReviews light wide id="avis" className="py-10 scroll-mt-[60px]" />
+          )}
+        </div>
+      </div>
     </main>
   );
 }

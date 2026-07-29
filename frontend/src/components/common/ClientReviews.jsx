@@ -78,6 +78,9 @@ const ReviewCard = memo(function ReviewCard({
   return (
     <div
       className={`flex flex-col gap-2 py-3 px-5 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
+      style={
+        light ? { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } : undefined
+      }
     >
       <div className="flex items-center gap-2">
         <img
@@ -132,7 +135,13 @@ const GLASS_STYLE = {
   WebkitBackdropFilter: 'blur(20px)',
 };
 
-export default function ClientReviews({ id, className = 'py-8', light = false, children }) {
+export default function ClientReviews({
+  id,
+  className = 'py-8',
+  light = false,
+  wide = false,
+  children,
+}) {
   const { t } = useTranslation();
   const sortOptions = getSortOptions(t);
   const roleFilters = getRoleFilters(t);
@@ -200,9 +209,14 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
                 roleFilter === opt.value
                   ? 'bg-sky-500 text-white border-sky-500 shadow-sm'
                   : light
-                    ? 'bg-white/10 text-white border-white/30 hover:border-sky-400 hover:text-sky-300'
+                    ? 'bg-white/5 text-white border-white/30 hover:border-sky-400 hover:text-sky-300'
                     : 'bg-white text-gray-600 border-gray-200 hover:border-sky-400 hover:text-sky-500'
               }`}
+              style={
+                light && roleFilter !== opt.value
+                  ? { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }
+                  : undefined
+              }
             >
               {opt.label}
             </button>
@@ -276,12 +290,12 @@ export default function ClientReviews({ id, className = 'py-8', light = false, c
     <section
       id={id}
       className={
-        light
+        light && !wide
           ? `w-full flex flex-col items-start pl-28 pr-24 gap-5 ${className}`
-          : `w-full bg-white flex flex-col items-center gap-5 px-28 ${className}`
+          : `w-full flex flex-col items-center gap-5 px-28 ${!light ? 'bg-white' : ''} ${className}`
       }
     >
-      {light ? (
+      {light && !wide ? (
         <div
           className="w-full max-w-[919.9px] flex flex-col items-center gap-5 rounded-2xl border px-10 py-8"
           style={GLASS_STYLE}
