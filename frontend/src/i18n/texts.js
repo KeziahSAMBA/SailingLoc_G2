@@ -1625,6 +1625,33 @@ export const TEXTS = {
     refuse: { fr: 'Refuser', en: 'Refuse' },
     cancelBooking: { fr: 'Annuler la réservation', en: 'Cancel booking' },
     reportProblem: { fr: 'Signaler un problème', en: 'Report a problem' },
+    viewLocataire: {
+      fr: 'Voir le profil et les documents du locataire',
+      en: "View the guest's profile and documents",
+    },
+    locataire: {
+      title: { fr: 'Profil du locataire', en: 'Guest profile' },
+      loading: { fr: 'Chargement…', en: 'Loading…' },
+      phone: { fr: 'Téléphone', en: 'Phone' },
+      noPhone: { fr: 'Non renseigné', en: 'Not provided' },
+      memberSince: { fr: 'Membre depuis', en: 'Member since' },
+      sendMessage: { fr: 'Envoyer un message', en: 'Send a message' },
+      documents: { fr: 'Documents', en: 'Documents' },
+      noDocuments: {
+        fr: 'Aucun document déposé par le locataire.',
+        en: 'The guest has not uploaded any document.',
+      },
+      view: { fr: 'Voir', en: 'View' },
+      loadError: {
+        fr: 'Impossible de charger le profil du locataire.',
+        en: 'Could not load the guest profile.',
+      },
+      fileError: {
+        fr: 'Impossible d’ouvrir le document.',
+        en: 'Could not open the document.',
+      },
+      close: { fr: 'Fermer', en: 'Close' },
+    },
     emptyAll: {
       fr: 'Aucune réservation reçue sur vos bateaux pour le moment.',
       en: 'No booking received on your boats yet.',

@@ -1,5 +1,6 @@
 import {
   getBoat,
+  getBookingLocataire,
   getDashboardStats,
   listBoats,
   listBookings,
@@ -24,6 +25,15 @@ export async function getMyBookings(req, res) {
   try {
     const bookings = await listBookings(req.user.id_user);
     res.json({ bookings });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getBookingLocataireProfile(req, res) {
+  try {
+    const data = await getBookingLocataire(req.user.id_user, req.params.id_booking);
+    res.json(data);
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

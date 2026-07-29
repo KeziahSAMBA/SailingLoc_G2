@@ -36,6 +36,7 @@ import {
   getMyBoat as getProprietaireBoat,
   getMyBoats as getProprietaireBoats,
   getMyBookings as getProprietaireBookings,
+  getBookingLocataireProfile as getProprietaireBookingLocataire,
   getMyPayments as getProprietairePayments,
   patchBooking as patchProprietaireBooking,
   reportBookingDispute as reportProprietaireDispute,
@@ -155,6 +156,12 @@ router.get(
   protect,
   requireRole('proprietaire'),
   getProprietaireBookings
+);
+router.get(
+  '/me/proprietaire/bookings/:id_booking/locataire',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireBookingLocataire
 );
 router.patch(
   '/me/proprietaire/bookings/:id_booking',

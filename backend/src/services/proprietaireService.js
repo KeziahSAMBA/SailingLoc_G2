@@ -202,6 +202,51 @@ export async function listBookings(id_user) {
   }));
 }
 
+// Types de documents attendus d'un locataire (mêmes valeurs que documentService).
+const LOCATAIRE_DOC_TYPES = ['permis_conduire', 'piece_identite', 'cv_nautique'];
+
+// Fiche locataire d'une réservation : le propriétaire ne peut la consulter que
+// si la réservation porte sur l'un de ses bateaux (sinon 404). Renvoie le profil
+// et les documents d'identité du locataire (statut de validation inclus).
+export async function getBookingLocataire(id_owner, id_booking) {
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id_booking: Number(id_booking),
+      deleted_at: null,
+      boat: { id_user: id_owner, deleted_at: null },
+    },
+    select: {
+      user: {
+        select: {
+          id_user: true,
+          first_name: true,
+          last_name: true,
+          email: true,
+          phone: true,
+          created_at: true,
+        },
+      },
+    },
+  });
+  if (!booking?.user) {
+    throw Object.assign(new Error('Réservation introuvable.'), { status: 404 });
+  }
+
+  const documents = await prisma.document.findMany({
+    where: { id_user: booking.user.id_user, type: { in: LOCATAIRE_DOC_TYPES } },
+    orderBy: { upload_date: 'desc' },
+    select: {
+      id_document: true,
+      type: true,
+      file_name: true,
+      status: true,
+      upload_date: true,
+    },
+  });
+
+  return { locataire: booking.user, documents };
+}
+
 // Liste des bateaux du propriétaire (plus récents d'abord) avec leur statut
 // d'annonce (brouillon, en attente de validation, publiée, refusée).
 export async function listBoats(id_user) {

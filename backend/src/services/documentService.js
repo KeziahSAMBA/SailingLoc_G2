@@ -8,6 +8,7 @@ import {
   findAllDocuments,
   updateDocument,
   deleteDocument as deleteDocumentRepo,
+  hasBookingBetweenOwnerAndGuest,
 } from '../repositories/documentRepository.js';
 
 const VALIDATION_STATUSES = ['pending', 'validated', 'refused'];
@@ -79,7 +80,8 @@ export async function uploadDocument(requester, type, file) {
 }
 
 // Renvoie le chemin absolu du fichier si le demandeur a le droit de le lire
-// (propriétaire du document, ou admin). Sert la route de téléchargement protégée.
+// (propriétaire du document, admin, ou propriétaire d'un bateau réservé par le
+// locataire propriétaire du document). Sert la route de téléchargement protégée.
 export async function getDocumentFile(requester, id_document) {
   const doc = await findDocumentById(Number(id_document));
   if (!doc) {
@@ -87,7 +89,13 @@ export async function getDocumentFile(requester, id_document) {
   }
   const isOwner = doc.id_user === requester.id_user;
   const isAdmin = requester.role === 'admin';
-  if (!isOwner && !isAdmin) {
+  // Le propriétaire ne voit que les documents locataire et seulement si ce
+  // locataire a une réservation sur l'un de ses bateaux.
+  const isBookingOwner =
+    requester.role === 'proprietaire' &&
+    DOCUMENT_TYPES.locataire.includes(doc.type) &&
+    (await hasBookingBetweenOwnerAndGuest(requester.id_user, doc.id_user));
+  if (!isOwner && !isAdmin && !isBookingOwner) {
     throw Object.assign(new Error('Accès refusé.'), { status: 403 });
   }
 
