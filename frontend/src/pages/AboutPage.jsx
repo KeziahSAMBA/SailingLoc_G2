@@ -5,12 +5,7 @@ import { MdAnchor, MdVerified } from 'react-icons/md';
 import { FaHandshake } from 'react-icons/fa';
 import heroBg from '../assets/image/paysage/cote_azur.jpg';
 import boatImg from '../assets/image/image_bateau/bateau_searchbar.webp';
-import marseilleImg from '../assets/image/ports/Marseille.webp';
-import niceImg from '../assets/image/ports/Nice.webp';
-import laRochelleImg from '../assets/image/ports/La_Rochelle.webp';
-import brestImg from '../assets/image/ports/Brest.webp';
-import bordeauxImg from '../assets/image/ports/Bordeaux.webp';
-import barceloneImg from '../assets/image/ports/Barcelone.webp';
+import Carrousel from '../components/common/Carrousel.jsx';
 import { unlockScroll } from '../hooks/useCategoryTransition.js';
 
 // Focus clavier visible sur fond clair — même convention que ContactPage.
@@ -27,17 +22,6 @@ const PHOTO_BG_STYLE = {
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',
 };
-
-// Destinations : seuls les ports français ont des bateaux dans le catalogue
-// (voir le filtre équivalent dans Carrousel.jsx) ; les autres sont « bientôt ».
-const DESTINATIONS = [
-  { city: 'Marseille', image: marseilleImg, available: true },
-  { city: 'Nice', image: niceImg, available: true },
-  { city: 'La Rochelle', image: laRochelleImg, available: true },
-  { city: 'Brest', image: brestImg, available: true },
-  { city: 'Bordeaux', image: bordeauxImg, available: true },
-  { city: 'Barcelone', image: barceloneImg, available: false },
-];
 
 function AboutPage() {
   const { t } = useTranslation();
@@ -167,48 +151,7 @@ function AboutPage() {
             </h2>
           </div>
 
-          <ul className="grid grid-cols-2 gap-6 md:grid-cols-3">
-            {DESTINATIONS.map(({ city, image, available }) => {
-              const card = (
-                <figure className="group relative h-44 overflow-hidden rounded-2xl border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.24)] md:h-52">
-                  <img
-                    src={image}
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    className={`h-full w-full object-cover transition-transform duration-500 ${
-                      available ? 'group-hover:scale-105' : 'opacity-70 grayscale-[35%]'
-                    }`}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <figcaption className="absolute bottom-3 left-4 font-semibold text-white">
-                    {city}
-                    {!available && (
-                      <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
-                        {t('aboutPage.destinations.soon')}
-                      </span>
-                    )}
-                  </figcaption>
-                </figure>
-              );
-
-              return (
-                <li key={city}>
-                  {available ? (
-                    <Link
-                      to={`/categorie?destination=${encodeURIComponent(city)}`}
-                      aria-label={t('aboutPage.destinations.linkAria', { city })}
-                      className={`block ${FOCUS_LIGHT}`}
-                    >
-                      {card}
-                    </Link>
-                  ) : (
-                    card
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <Carrousel theme="dark" portsOnly />
         </div>
       </section>
 

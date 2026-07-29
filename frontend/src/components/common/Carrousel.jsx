@@ -34,6 +34,15 @@ const portToSlide = (port) => ({
   available: port.country === 'France',
 });
 
+const departurePortsToSlides = (ports) =>
+  ports
+    .filter(
+      (port) =>
+        port.country !== 'France' ||
+        ['Brest', 'La Rochelle', 'Bordeaux', 'Marseille', 'Nice'].includes(port.city)
+    )
+    .map(portToSlide);
+
 const boatToSlide = (boat, t) => {
   const nextAvail = boat.availabilities?.[0];
   const fmt = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -349,10 +358,12 @@ const CarouselSection = ({
   favoriteIds,
   onToggleFavorite,
   onSlideClick,
+  darkHeaderAtAllBreakpoints = false,
 }) => {
   const { t } = useTranslation();
   const goToCategory = useCategoryNavigate();
-  const isResponsivePortHeader = theme === 'dark' && variant === 'port';
+  const isResponsivePortHeader =
+    theme === 'dark' && variant === 'port' && !darkHeaderAtAllBreakpoints;
   const titleColor =
     theme === 'dark'
       ? isResponsivePortHeader
@@ -662,13 +673,13 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-const Carrousel = ({ theme = 'dark', similarTo = null }) => {
+const Carrousel = ({ theme = 'dark', similarTo = null, portsOnly = false }) => {
   const { t } = useTranslation();
   const goToCategory = useCategoryNavigate();
   const goToProduct = useProductNavigate();
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
-  const { favoriteIds, toggleFavorite } = useFavorites();
+  const { favoriteIds, toggleFavorite } = useFavorites(!portsOnly);
 
   const handleBoatClick = useCallback(
     (slide) => {
@@ -689,13 +700,15 @@ const Carrousel = ({ theme = 'dark', similarTo = null }) => {
   // beaucoup d'images) passe en priorité basse pour ne pas bloquer les
   // animations de transition en cours.
   useEffect(() => {
-    fetchBoats()
-      .then(({ data }) => startTransition(() => setBoats(data)))
-      .catch(console.error);
+    if (!portsOnly) {
+      fetchBoats()
+        .then(({ data }) => startTransition(() => setBoats(data)))
+        .catch(console.error);
+    }
     fetchPorts()
       .then(({ data }) => startTransition(() => setPorts(data)))
       .catch(console.error);
-  }, []);
+  }, [portsOnly]);
 
   const boatTypeSections = useMemo(() => {
     const toTypeSlide = (boat) => {
@@ -770,13 +783,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null }) => {
     () => [
       {
         title: t('carrousel.sections.ports'),
-        slides: ports
-          .filter(
-            (p) =>
-              p.country !== 'France' ||
-              ['Brest', 'La Rochelle', 'Bordeaux', 'Marseille', 'Nice'].includes(p.city)
-          )
-          .map(portToSlide),
+        slides: departurePortsToSlides(ports),
         themed: true,
         variant: 'port',
       },
@@ -833,6 +840,23 @@ const Carrousel = ({ theme = 'dark', similarTo = null }) => {
   const headerTitle = theme === 'light' ? 'text-black' : 'text-white';
   const headerLink =
     theme === 'light' ? 'text-gray-600 hover:text-black' : 'text-white/70 hover:text-white';
+
+  if (portsOnly) {
+    const section = carouselSections[0];
+    if (section.slides.length === 0) return null;
+    return (
+      <CarouselSection
+        title={section.title}
+        slides={section.slides}
+        theme={theme}
+        variant={section.variant}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={toggleFavorite}
+        onSlideClick={handlePortClick}
+        darkHeaderAtAllBreakpoints={theme === 'dark'}
+      />
+    );
+  }
 
   if (similarTo) {
     if (similarSlides.length === 0) return null;
