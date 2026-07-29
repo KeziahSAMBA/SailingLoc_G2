@@ -4,7 +4,7 @@ import { FaPhone, FaEnvelope, FaComments } from 'react-icons/fa6';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { sendContactRequest } from '../services/contactService.js';
 import { contactSupport } from '../services/messageService.js';
-import bateauBg from '../assets/image/paysage/cote_azur.jpg';
+import contactBg from '../assets/image/paysage/contact_bg.jpg';
 
 // Rubriques d'aide : mêmes questions que le footer, avec leurs réponses.
 const FAQ = [
@@ -56,7 +56,7 @@ const labelLight = 'mb-1.5 block text-sm font-medium text-white/80';
 
 const PHOTO_BG_STYLE = {
   fontFamily: "'Plus Jakarta Sans', sans-serif",
-  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${bateauBg})`,
+  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${contactBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',
