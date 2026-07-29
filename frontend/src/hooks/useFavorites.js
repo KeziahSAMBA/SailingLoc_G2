@@ -6,24 +6,25 @@ import { useAuth } from './useAuth.jsx';
 // Un visiteur non connecté est renvoyé vers la popup de connexion ; seul un
 // locataire connecté peut réellement favoriser (la ligne est rattachée à son
 // id_user pour apparaître plus tard dans son dashboard "Favoris").
-export function useFavorites() {
+export function useFavorites(enabled = true) {
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (user?.role !== 'locataire') {
+    if (!enabled || user?.role !== 'locataire') {
       setFavoriteIds(new Set());
       return;
     }
     getFavorites()
       .then(({ data }) => setFavoriteIds(new Set(data.favorites.map((f) => f.boat.id_boat))))
       .catch(console.error);
-  }, [user]);
+  }, [enabled, user]);
 
   const toggleFavorite = useCallback(
     (idBoat) => {
+      if (!enabled) return;
       if (!user) {
         navigate('/login', { state: { backgroundLocation: location } });
         return;
@@ -46,7 +47,7 @@ export function useFavorites() {
         });
       });
     },
-    [user, navigate, location, favoriteIds]
+    [enabled, user, navigate, location, favoriteIds]
   );
 
   return { favoriteIds, toggleFavorite };

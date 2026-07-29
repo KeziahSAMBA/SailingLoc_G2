@@ -19,6 +19,7 @@ import BurgerIcon from './shared/BurgerIcon.jsx';
 import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
 import { LANGUAGES } from './shared/languages.js';
+import { getAboutNavigationItems } from './shared/aboutNavigation.js';
 
 /**
  * Header shared by every authenticated role (admin, propriétaire, locataire).
@@ -60,6 +61,11 @@ function DashboardHeader({
   // l'écran et descend à la révélation.
   const introHidden = useIntroHeaderReveal(introReveal);
   const onCategoriePage = location.pathname === '/categorie';
+  const onAboutPage = location.pathname === '/a-propos';
+  const resolvedLeftGroups =
+    onAboutPage && leftGroups
+      ? [{ items: getAboutNavigationItems(t), heightPercent: '69%' }]
+      : leftGroups;
   const { user, logout } = useAuth();
   // Badge de messages non lus sur l'icône messagerie : rafraîchi à chaque
   // navigation ET en direct quand un fil est lu (événement émis par la
@@ -163,7 +169,7 @@ function DashboardHeader({
 
       {/* Gauche — Burger nav + Logo (33%) */}
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
-        {leftGroups && (
+        {resolvedLeftGroups && (
           <div className="relative" ref={navRef}>
             <button
               onClick={() => setNavOpen((o) => !o)}
@@ -192,7 +198,7 @@ function DashboardHeader({
                     </PanelLink>
                   ))}
                 </div>
-                {leftGroups.map((group, groupIdx) => (
+                {resolvedLeftGroups.map((group, groupIdx) => (
                   <Fragment key={groupIdx}>
                     <div className="flex flex-col" style={{ height: group.heightPercent }}>
                       {group.items.map((item) => {
@@ -211,7 +217,7 @@ function DashboardHeader({
                         );
                       })}
                     </div>
-                    {groupIdx < leftGroups.length - 1 && (
+                    {groupIdx < resolvedLeftGroups.length - 1 && (
                       <div
                         style={{
                           margin: '6px 16px',
