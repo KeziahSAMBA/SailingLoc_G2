@@ -840,12 +840,16 @@ function CategoryPage() {
                   onReset={resetFilters}
                 />
               </div>
-              <div ref={searchBarWrapRef} className="w-full min-w-0 lg:max-w-3xl lg:flex-1">
+              <div
+                ref={searchBarWrapRef}
+                className="w-full min-w-0 lg:w-fit lg:max-w-full lg:shrink"
+              >
                 <SearchBar
                   light
                   compact={scrolled}
                   retracted={exiting && exitTarget === 'product'}
                   retractDuration={CATEGORY_ENTER_TOTAL}
+                  fitContentOnDesktop
                 />
               </div>
             </div>
