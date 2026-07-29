@@ -17,6 +17,7 @@ import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
 import { LANGUAGES } from './shared/languages.js';
 import { getAboutNavigationItems } from './shared/aboutNavigation.js';
+import { getContactNavigationItems } from './shared/contactNavigation.js';
 
 function getBurgerItems(t) {
   return [
@@ -163,11 +164,14 @@ function Header() {
   const iconSize = scrolled ? '14px' : '16px';
   const onCategoriePage = location.pathname === '/categorie';
   const onAboutPage = location.pathname === '/a-propos';
+  const onContactPage = location.pathname === '/contact';
   const burgerItems = onCategoriePage
     ? getCategoryBurgerItems(t)
     : onAboutPage
       ? getAboutNavigationItems(t)
-      : getBurgerItems(t);
+      : onContactPage
+        ? getContactNavigationItems(t)
+        : getBurgerItems(t);
 
   return (
     <header

@@ -131,7 +131,10 @@ function ContactPage() {
   return (
     <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
       {/* Hero de la page Contact */}
-      <section className="relative flex min-h-[45vh] w-full flex-col items-center justify-center overflow-hidden px-4 pt-[96px]">
+      <section
+        id="contact-hero"
+        className="relative flex min-h-[45vh] w-full scroll-mt-[80px] flex-col items-center justify-center overflow-hidden px-4 pt-[96px]"
+      >
         <div className="relative text-center">
           <h1 className="text-4xl font-semibold text-white md:text-5xl">Contact &amp; aide</h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">
@@ -143,7 +146,11 @@ function ContactPage() {
       <div className="mx-auto max-w-4xl border-t border-white/15" />
 
       {/* Coordonnées */}
-      <section aria-labelledby="coordonnees-title" className="w-full px-4 py-14">
+      <section
+        id="contact-details"
+        aria-labelledby="coordonnees-title"
+        className="w-full scroll-mt-[80px] px-4 py-14"
+      >
         <div className="mx-auto w-full max-w-5xl">
           <div className="mb-10 text-center">
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -213,10 +220,11 @@ function ContactPage() {
 
       {/* Formulaire de contact et rubriques d'aide */}
       <div className="w-full px-4 py-14">
-        <div className="mx-auto grid w-full max-w-7xl items-start gap-14 lg:grid-cols-2 lg:items-stretch lg:gap-10">
+        <div className="mx-auto grid w-full max-w-7xl items-start gap-14 md:grid-cols-2 md:items-stretch md:gap-6 lg:gap-10">
           <section
+            id="contact-form"
             aria-labelledby="form-title"
-            className="mx-auto w-full max-w-2xl lg:flex lg:h-full lg:flex-col"
+            className="mx-auto w-full max-w-2xl scroll-mt-[80px] md:flex md:h-full md:flex-col"
           >
             <div className="mb-10 text-center">
               <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -230,7 +238,7 @@ function ContactPage() {
             {formSent ? (
               <div
                 role="status"
-                className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl lg:flex lg:flex-1 lg:flex-col lg:items-center lg:justify-center"
+                className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
               >
                 <p className="text-lg font-semibold text-emerald-200">Message bien envoyé !</p>
                 <p className="mt-2 text-sm text-emerald-100/80">
@@ -247,7 +255,7 @@ function ContactPage() {
             ) : (
               <form
                 onSubmit={handleFormSubmit}
-                className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl lg:flex lg:flex-1 lg:flex-col"
+                className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col"
               >
                 {formError && (
                   <div
@@ -258,7 +266,7 @@ function ContactPage() {
                   </div>
                 )}
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:flex-1 lg:grid-rows-[auto_auto_minmax(0,1fr)]">
+                <div className="grid gap-4 sm:grid-cols-2 md:flex-1 md:grid-rows-[auto_auto_minmax(0,1fr)]">
                   <div>
                     <label htmlFor="contact-name" className={labelLight}>
                       Nom *
@@ -307,7 +315,7 @@ function ContactPage() {
                       className={inputLight}
                     />
                   </div>
-                  <div className="sm:col-span-2 lg:flex lg:min-h-0 lg:flex-col">
+                  <div className="sm:col-span-2 md:flex md:min-h-0 md:flex-col">
                     <label htmlFor="contact-message" className={labelLight}>
                       Message *
                     </label>
@@ -320,7 +328,7 @@ function ContactPage() {
                       value={form.message}
                       onChange={handleFormChange}
                       placeholder="Décrivez votre demande…"
-                      className={`${inputLight} lg:min-h-0 lg:flex-1`}
+                      className={`${inputLight} md:min-h-0 md:flex-1`}
                     />
                   </div>
                 </div>
@@ -336,7 +344,11 @@ function ContactPage() {
             )}
           </section>
 
-          <section aria-labelledby="faq-title" className="mx-auto w-full max-w-3xl">
+          <section
+            id="contact-faq"
+            aria-labelledby="faq-title"
+            className="mx-auto w-full max-w-3xl scroll-mt-[80px]"
+          >
             <div className="mb-10 text-center">
               <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
                 FAQ

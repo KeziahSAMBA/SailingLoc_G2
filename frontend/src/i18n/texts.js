@@ -16,6 +16,12 @@ export const TEXTS = {
       suggestions: { fr: 'Nos suggestions', en: 'Our suggestions' },
       reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
     },
+    burgerContact: {
+      hero: { fr: 'Contact & aide', en: 'Contact & help' },
+      details: { fr: 'Nous joindre', en: 'Contact us' },
+      form: { fr: 'Écrivez-nous', en: 'Write to us' },
+      faq: { fr: 'FAQ', en: 'FAQ' },
+    },
     nav: {
       discover: { fr: 'Découvrir', en: 'Discover' },
       contact: { fr: 'Contact', en: 'Contact' },
