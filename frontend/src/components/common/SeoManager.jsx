@@ -26,6 +26,43 @@ function upsertCanonical(href) {
   element.setAttribute('href', href);
 }
 
+function updateHomeStructuredData(pathname, siteOrigin) {
+  const scriptId = 'sailingloc-home-structured-data';
+  let element = document.getElementById(scriptId);
+
+  if (pathname !== '/') {
+    element?.remove();
+    return;
+  }
+
+  if (!element) {
+    element = document.createElement('script');
+    element.id = scriptId;
+    element.type = 'application/ld+json';
+    document.head.appendChild(element);
+  }
+
+  element.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${siteOrigin}/#website`,
+        url: `${siteOrigin}/`,
+        name: 'SailingLoc',
+        inLanguage: 'fr-FR',
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${siteOrigin}/#organization`,
+        name: 'SailingLoc',
+        url: `${siteOrigin}/`,
+        logo: `${siteOrigin}/favicon.webp`,
+      },
+    ],
+  });
+}
+
 function getSiteOrigin() {
   const configuredOrigin = import.meta.env.VITE_SITE_URL?.trim();
 
@@ -39,7 +76,8 @@ function getSiteOrigin() {
 function SeoManager({ location }) {
   useEffect(() => {
     const seo = resolveSeo(location.pathname);
-    const canonicalUrl = new URL(seo.canonicalPath, `${getSiteOrigin()}/`).toString();
+    const siteOrigin = getSiteOrigin();
+    const canonicalUrl = new URL(seo.canonicalPath, `${siteOrigin}/`).toString();
 
     document.title = seo.title;
     upsertMeta('meta[name="description"]', {
@@ -79,6 +117,7 @@ function SeoManager({ location }) {
       content: seo.description,
     });
     upsertCanonical(canonicalUrl);
+    updateHomeStructuredData(location.pathname, siteOrigin);
   }, [location.pathname]);
 
   return null;

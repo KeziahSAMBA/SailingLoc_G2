@@ -435,6 +435,8 @@ function HomePage() {
           muted
           playsInline
           preload="none"
+          aria-hidden="true"
+          tabIndex="-1"
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/50" />
@@ -495,16 +497,18 @@ function HomePage() {
             <img
               ref={heroLogoRef}
               src={logoLong}
-              alt="SailingLoc"
+              alt="SailingLoc, location de bateaux entre particuliers"
+              decoding="async"
+              fetchPriority="high"
               className="h-20 mx-auto mb-4"
               style={heroSlideStyle('right')}
             />
-            <p
+            <h1
               className="text-gray-300 text-xl"
               style={{ ...heroSlideStyle('left'), ...introTaglineStyle }}
             >
               {t('home.hero.tagline')}
-            </p>
+            </h1>
           </div>
           <div ref={searchBarWrapRef} style={introFromBelowStyle}>
             <SearchBar
@@ -526,7 +530,7 @@ function HomePage() {
                   key={label}
                   href={href}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-xs font-medium border border-white/40 hover:bg-white/15 hover:border-white transition-colors"
                 >
                   <span className="text-sm">{icon}</span>
