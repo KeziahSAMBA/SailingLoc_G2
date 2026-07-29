@@ -66,7 +66,10 @@ function AboutPage() {
   return (
     <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
       {/* Hero de la page À propos */}
-      <section className="relative flex min-h-[45vh] w-full flex-col items-center justify-center overflow-hidden px-4 pt-[96px]">
+      <section
+        id="about-hero"
+        className="relative flex min-h-[45vh] w-full scroll-mt-[80px] flex-col items-center justify-center overflow-hidden px-4 pt-[96px]"
+      >
         <div className="relative text-center">
           <h1 className="text-4xl font-semibold text-white md:text-5xl">
             {t('aboutPage.hero.title')}
@@ -80,7 +83,11 @@ function AboutPage() {
       <div className="mx-auto max-w-4xl border-t border-white/15" />
 
       {/* Présentation */}
-      <section aria-labelledby="story-title" className="w-full px-4 py-14">
+      <section
+        id="about-story"
+        aria-labelledby="story-title"
+        className="w-full scroll-mt-[80px] px-4 py-14"
+      >
         <div className="mx-auto grid w-full max-w-5xl items-center gap-10 rounded-2xl border border-white/20 bg-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:grid-cols-2 md:p-8">
           <div>
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -114,7 +121,11 @@ function AboutPage() {
       <div className="mx-auto max-w-4xl border-t border-white/15" />
 
       {/* Valeurs */}
-      <section aria-labelledby="values-title" className="w-full px-4 py-14">
+      <section
+        id="about-values"
+        aria-labelledby="values-title"
+        className="w-full scroll-mt-[80px] px-4 py-14"
+      >
         <div className="mx-auto w-full max-w-5xl">
           <div className="mb-10 text-center">
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -140,7 +151,11 @@ function AboutPage() {
       <div className="mx-auto max-w-4xl border-t border-white/15" />
 
       {/* Destinations */}
-      <section aria-labelledby="destinations-title" className="w-full px-4 py-14">
+      <section
+        id="about-destinations"
+        aria-labelledby="destinations-title"
+        className="w-full scroll-mt-[80px] px-4 py-14"
+      >
         <div className="mx-auto w-full max-w-5xl">
           <div className="mb-10 text-center">
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -156,7 +171,11 @@ function AboutPage() {
       </section>
 
       {/* CTA final */}
-      <section aria-labelledby="cta-title" className="w-full px-4 pb-16 pt-2">
+      <section
+        id="about-cta"
+        aria-labelledby="cta-title"
+        className="w-full scroll-mt-[80px] px-4 pb-16 pt-2"
+      >
         <div className="mx-auto w-full max-w-3xl rounded-2xl border border-white/20 bg-white/10 px-6 py-10 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl">
           <h2 id="cta-title" className="text-2xl font-semibold text-white md:text-3xl">
             {t('aboutPage.cta.title')}
