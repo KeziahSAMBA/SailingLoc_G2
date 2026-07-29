@@ -140,6 +140,8 @@ function ContactPage() {
         </div>
       </section>
 
+      <div className="mx-auto max-w-4xl border-t border-white/15" />
+
       {/* Coordonnées */}
       <section aria-labelledby="coordonnees-title" className="w-full px-4 py-14">
         <div className="mx-auto w-full max-w-5xl">
