@@ -506,11 +506,16 @@ function HomePage() {
               {t('home.hero.tagline')}
             </p>
           </div>
-          <div ref={searchBarWrapRef} className="w-full max-w-4xl" style={introFromBelowStyle}>
+          <div
+            ref={searchBarWrapRef}
+            className="w-full max-w-4xl md:w-fit md:max-w-full"
+            style={introFromBelowStyle}
+          >
             <SearchBar
               light
               retracted={exiting && exitTarget === 'product'}
               retractDuration={HERO_EXIT_DURATION}
+              fitContentOnTablet
             />
           </div>
           <div className="text-center" style={introFromBelowStyle}>

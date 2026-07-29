@@ -24,7 +24,7 @@ import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { fetchBoats } from '../services/boatService.js';
 import { fetchPorts } from '../services/portService.js';
-import { trackSiteSearch } from '../utils/matomo.js';
+import { trackSiteSearch } from '../utils/analyticsClient.js';
 import {
   readTransitionPayload,
   clearTransitionPayload,
@@ -803,7 +803,7 @@ function CategoryPage() {
           <section className="relative z-20 w-full">
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
-            <div className="flex w-full flex-col items-stretch gap-3 px-4 pb-3 pt-4 sm:px-8 sm:pt-6 lg:px-16 xl:px-28 xl:pt-8">
+            <div className="relative flex w-full flex-col items-stretch gap-3 px-4 pb-3 pt-4 sm:px-8 sm:pt-6 lg:flex-row lg:items-start lg:gap-4 lg:px-16 xl:gap-8 xl:px-28 xl:pt-8">
               {/* Double inline du fil d'ariane, replié hors compact (le fil vit
                   alors sur sa propre ligne en dessous) : il se déploie à gauche
                   des filtres au scroll. Le marginRight négatif annule le gap-8
@@ -821,7 +821,7 @@ function CategoryPage() {
               >
                 <Breadcrumb light compact />
               </div>
-              <div className="w-full min-w-0" style={slideInStyle(0)}>
+              <div className="w-full min-w-0 lg:w-52 lg:flex-none xl:w-60" style={slideInStyle(0)}>
                 <FilterBar
                   light
                   compact={scrolled}
@@ -840,12 +840,16 @@ function CategoryPage() {
                   onReset={resetFilters}
                 />
               </div>
-              <div ref={searchBarWrapRef} className="w-full min-w-0">
+              <div
+                ref={searchBarWrapRef}
+                className="w-full min-w-0 md:w-fit md:max-w-full md:self-center md:shrink lg:self-auto"
+              >
                 <SearchBar
                   light
                   compact={scrolled}
                   retracted={exiting && exitTarget === 'product'}
                   retractDuration={CATEGORY_ENTER_TOTAL}
+                  fitContentOnTablet
                 />
               </div>
             </div>

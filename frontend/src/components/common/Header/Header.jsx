@@ -16,6 +16,8 @@ import BurgerIcon from './shared/BurgerIcon.jsx';
 import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
 import { LANGUAGES } from './shared/languages.js';
+import { getAboutNavigationItems } from './shared/aboutNavigation.js';
+import { getContactNavigationItems } from './shared/contactNavigation.js';
 
 function getBurgerItems(t) {
   return [
@@ -161,6 +163,15 @@ function Header() {
 
   const iconSize = scrolled ? '14px' : '16px';
   const onCategoriePage = location.pathname === '/categorie';
+  const onAboutPage = location.pathname === '/a-propos';
+  const onContactPage = location.pathname === '/contact';
+  const burgerItems = onCategoriePage
+    ? getCategoryBurgerItems(t)
+    : onAboutPage
+      ? getAboutNavigationItems(t)
+      : onContactPage
+        ? getContactNavigationItems(t)
+        : getBurgerItems(t);
 
   return (
     <header
@@ -218,18 +229,18 @@ function Header() {
                 className="flex min-h-0 flex-1 flex-col"
                 style={{ maxHeight: onCategoriePage ? '41%' : '69%' }}
               >
-                {(onCategoriePage ? getCategoryBurgerItems(t) : getBurgerItems(t)).map(
-                  ({ label, anchor }) => (
-                    <PanelLink
-                      key={label}
-                      scrolled={scrolled}
-                      stretch
-                      onClick={() => scrollToAnchor(anchor, onCategoriePage ? '/categorie' : '/')}
-                    >
-                      {label}
-                    </PanelLink>
-                  )
-                )}
+                {burgerItems.map(({ label, anchor, path }) => (
+                  <PanelLink
+                    key={anchor}
+                    scrolled={scrolled}
+                    stretch
+                    onClick={() =>
+                      scrollToAnchor(anchor, path ?? (onCategoriePage ? '/categorie' : '/'))
+                    }
+                  >
+                    {label}
+                  </PanelLink>
+                ))}
               </div>
             </div>
           </SidePanel>
