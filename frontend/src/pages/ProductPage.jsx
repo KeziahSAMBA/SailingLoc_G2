@@ -32,6 +32,7 @@ import {
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { fetchBoats, fetchBoatsFresh } from '../services/boatService.js';
+import { correctPortPosition, scatterBoatPosition } from '../utils/mapPosition.js';
 import {
   readTransitionPayload,
   clearTransitionPayload,
@@ -122,6 +123,11 @@ function ProductPage() {
   // quoi la sortie détournerait par l'image de la catégorie.
   const [exitBgSrc, setExitBgSrc] = useState(null);
   const searchBarWrapRef = useRef(null);
+  // Conteneur des champs de la SearchBar (destination/dates/voyageurs),
+  // exposé par le composant : la sortie et l'arrivée y jouent directement
+  // leur propre animation de largeur, cf. beginExit et le useLayoutEffect
+  // de FLIP plus bas.
+  const searchBarFieldsRef = useRef(null);
   const transitioningRef = useRef(false);
   // Horloge de la cascade d'entrée + styles figés des blocs montés en retard
   // (le contenu attend la réponse de l'API, cf. slideInStyleLate).
@@ -178,11 +184,10 @@ function ProductPage() {
         if (cancelled) return;
         if (target === 'category') setExitBgSrc(categoryBg);
         setExiting(true);
-        // Payload posé à la toute fin de la sortie, pas à son départ : le rect
-        // de la SearchBar y est mesuré une fois le déploiement terminé et le
-        // `top` du bandeau sticky reposé — mesuré trop tôt, le FLIP de la page
-        // d'arrivée partirait d'une position périmée et corrigerait en plein
-        // vol.
+        // Payload posé à la toute fin de la sortie, pas à son départ : seul
+        // le `top` du bandeau sticky doit avoir fini de se reposer — mesuré
+        // trop tôt, le FLIP de la page d'arrivée partirait d'une position
+        // périmée et corrigerait en plein vol.
         navTimer = setTimeout(() => {
           setTransitionPayload(target, {
             searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
@@ -202,39 +207,87 @@ function ProductPage() {
     };
   }, [navigate]);
 
-  // FLIP de position seule pour la SearchBar (translate sans scale : rétractée
-  // par défaut ici, sa taille ne correspond pas à celle mesurée sur la page de
-  // départ — un scale produirait un effet de zoom, pas une continuité).
-  // Depuis la catégorie uniquement : le bouton, que la rétraction là-bas a
-  // ramené contre le bord gauche de la barre (le coin du rect mesuré),
-  // poursuit sa glissade jusqu'à son emplacement ici — sans ça il sautait
-  // brutalement de la position catégorie à la position produit au moment de
-  // la navigation. Depuis l'accueil (barre centrée du hero, position sans
-  // rapport), pas de continuité à préserver : aucun FLIP.
+  // FLIP de la SearchBar en deux temps, comme catégorie/accueil ← produit
+  // mais lue à l'envers — là-bas la barre arrive déjà à sa place avant de
+  // changer de taille ; ici elle se déplace d'abord (encore à sa taille de
+  // départ, translate sans scale : un scale du bloc entier déformerait le
+  // texte/les champs), puis seulement ensuite se rétracte (en parallèle
+  // direct sur le nœud des champs). Depuis la catégorie ou l'accueil
+  // uniquement (les deux ont une barre déployée, contrairement à la barre
+  // produit elle-même). Le bord gauche de la barre, lui, est le même
+  // rétractée ou déployée : mesurer `to` avant la rétraction reste donc
+  // valide pour la translation.
   useLayoutEffect(() => {
     const from = transitionPayload?.searchBarRect;
     const el = searchBarWrapRef.current;
-    if (!from || !el || transitionPayload?.from !== 'category') return undefined;
+    const hasContinuity =
+      transitionPayload?.from === 'category' || transitionPayload?.from === 'home';
+    if (!from || !el || !hasContinuity) return undefined;
     const to = el.getBoundingClientRect();
     el.style.willChange = 'transform';
     el.style.transition = 'none';
     el.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
-    let raf2 = null;
-    const raf1 = window.requestAnimationFrame(() => {
-      raf2 = window.requestAnimationFrame(() => {
-        el.style.transition = `transform ${CATEGORY_ENTER_TOTAL}ms ${CATEGORY_ENTER_EASING}`;
-        el.style.transform = 'none';
-      });
+    const fieldsEl = searchBarFieldsRef.current;
+    if (fieldsEl) {
+      // Repart de l'état déployé de la page catégorie.
+      fieldsEl.style.transition = 'none';
+      fieldsEl.style.maxWidth = 'none';
+      fieldsEl.style.opacity = '1';
+    }
+    // Force le reflow avant d'activer la transition (comme le fait le
+    // mécanisme interne de la SearchBar, cf. son propre useLayoutEffect) : un
+    // seul rAF suffit alors, pas deux — sinon la translation démarrait un
+    // cran plus tard que la cascade des autres blocs (une simple animation
+    // CSS, active dès le tout premier rendu) et atterrissait après elle au
+    // lieu d'en même temps.
+    void el.offsetWidth;
+    // Durée totale partagée entre les deux étapes (et non ajoutée bout à
+    // bout) : la séquence complète doit tout de même atterrir à
+    // CATEGORY_ENTER_TOTAL, en même temps que le reste de la cascade d'entrée.
+    // Part plus généreuse pour la rétractation (60/40) : sur un partage égal,
+    // elle se rétrécissait un peu trop vite pour rester fluide.
+    const moveDuration = Math.round(CATEGORY_ENTER_TOTAL * 0.4);
+    const retractDuration = CATEGORY_ENTER_TOTAL - moveDuration;
+    let phaseTimer = null;
+    const raf = window.requestAnimationFrame(() => {
+      el.style.transition = `transform ${moveDuration}ms ${CATEGORY_ENTER_EASING}`;
+      el.style.transform = 'none';
+      phaseTimer = setTimeout(() => {
+        if (fieldsEl) {
+          // max-width ne peut pas s'interpoler depuis 'none' (mot-clé, pas
+          // une longueur) : on le fige d'abord en pixels (valeur identique,
+          // aucun changement visuel) avant d'amorcer la vraie transition
+          // vers 0 — sans ce détour, la rétractation sauterait d'un coup au
+          // lieu de se rétrécir progressivement.
+          const natural = fieldsEl.scrollWidth;
+          fieldsEl.style.transition = 'none';
+          fieldsEl.style.maxWidth = `${natural}px`;
+          void fieldsEl.offsetWidth;
+          fieldsEl.style.transition = `max-width ${retractDuration}ms ${CATEGORY_ENTER_EASING}, opacity ${retractDuration}ms ${CATEGORY_ENTER_EASING}`;
+          fieldsEl.style.maxWidth = '0px';
+          fieldsEl.style.opacity = '0';
+        }
+      }, moveDuration);
     });
     const resetStyles = () => {
       el.style.transform = '';
       el.style.transition = '';
       el.style.willChange = '';
+      if (fieldsEl) {
+        // Cible réellement rétractée (pas une chaîne vide) : effacer le
+        // style figerait la largeur naturelle du contenu (SearchBar rend
+        // toujours retracted=true ici, mais son style ne serait alors plus
+        // écrasé par rien) — StrictMode, qui rejoue ce nettoyage avant même
+        // le premier rAF, verrait alors une SearchBar grande ouverte.
+        fieldsEl.style.maxWidth = '0px';
+        fieldsEl.style.opacity = '0';
+        fieldsEl.style.transition = '';
+      }
     };
     const cleanupTimer = setTimeout(resetStyles, CATEGORY_ENTER_TOTAL + 100);
     return () => {
-      window.cancelAnimationFrame(raf1);
-      if (raf2) window.cancelAnimationFrame(raf2);
+      window.cancelAnimationFrame(raf);
+      clearTimeout(phaseTimer);
       clearTimeout(cleanupTimer);
       // Remet l'élément à l'état neutre : StrictMode rejoue cet effet en dev,
       // et la seconde passe doit mesurer la position naturelle, pas celle
@@ -375,19 +428,35 @@ function ProductPage() {
 
   const portLat = Number(boat?.port?.latitude);
   const portLng = Number(boat?.port?.longitude);
-  const portMarkers =
-    boat?.port && Number.isFinite(portLat) && Number.isFinite(portLng)
-      ? [
-          {
-            id: boat.port.id_port,
-            lat: portLat,
-            lng: portLng,
-            title: boat.port.city,
-            subtitle: boat.port.name ?? boat.port.country,
-            available: true,
-          },
-        ]
-      : [];
+  const hasPortCoords = boat?.port && Number.isFinite(portLat) && Number.isFinite(portLng);
+  const portMarkers = hasPortCoords
+    ? [
+        {
+          id: boat.port.id_port,
+          lat: portLat,
+          lng: portLng,
+          title: boat.port.city,
+          subtitle: boat.port.name ?? boat.port.country,
+          available: true,
+        },
+      ]
+    : [];
+
+  // Position individuelle du bateau (dispersée autour du port, cf. mapPosition.js) :
+  // la carte de localisation se centre/zoome dessus plutôt que sur le port en
+  // général, pour désigner précisément le bateau consulté.
+  const boatMapMarker = hasPortCoords
+    ? (() => {
+        const { lat, lng } = correctPortPosition(boat.port.city, portLat, portLng);
+        return {
+          id: boat.id_boat,
+          ...scatterBoatPosition(boat.id_boat, lat, lng),
+          price: Number(boat.daily_price),
+          name: boat.name,
+          city: boat.port.city,
+        };
+      })()
+    : null;
 
   const portLabel = boat?.port
     ? [boat.port.name, boat.port.city, boat.port.country].filter(Boolean).join(', ')
@@ -437,9 +506,22 @@ function ProductPage() {
   ];
 
   // Header fixe (60/80px) + barre fil d'ariane/recherche sticky, compactée au
-  // scroll (pt 32px → 8px, soit ~84px puis ~60px) : offset réel au-dessus du
+  // scroll (pt 20px → 8px, soit ~72px puis ~60px) : offset réel au-dessus du
   // panneau de réservation sticky.
-  const panelStickyTop = (scrolled ? 60 : 80) + (scrolled ? 64 : 88);
+  const panelStickyTop = (scrolled ? 60 : 80) + (scrolled ? 64 : 76);
+
+  // Ancrage manuel des entrées du menu burger : espace (px) laissé au-dessus
+  // de chaque section quand on y saute depuis le menu. Un seul endroit à
+  // modifier par section pour caler l'atterrissage pile sur son titre —
+  // augmenter la valeur atterrit plus haut dans la section, la baisser
+  // atterrit plus bas. "Location" n'y figure pas : elle remonte simplement
+  // en haut de page (anchor: 'top' dans Header.jsx / HeaderLocataire.jsx).
+  const ANCHOR_OFFSETS = {
+    specifications: 100, // menu burger : "Caractéristiques"
+    avis: 230, // menu burger : "Avis & commentaires"
+    localisation: 60, // menu burger : "Emplacement"
+    suggestions: 285, // menu burger : "Suggestions"
+  };
 
   return (
     // overflow-x-clip (et non hidden : hidden créerait un conteneur de scroll
@@ -491,9 +573,9 @@ function ProductPage() {
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
-              className="flex items-center gap-8 pb-2 pl-28"
+              className="flex items-center gap-4 pb-2 pl-28"
               style={{
-                paddingTop: scrolled ? '8px' : '32px',
+                paddingTop: scrolled ? '8px' : '20px',
                 transition: 'padding-top 0.3s ease',
               }}
             >
@@ -501,12 +583,7 @@ function ProductPage() {
                 <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
               </div>
               <div ref={searchBarWrapRef}>
-                <SearchBar
-                  light
-                  compact={scrolled}
-                  retracted={!exiting}
-                  retractDuration={exiting ? CATEGORY_ENTER_TOTAL : undefined}
-                />
+                <SearchBar light compact={scrolled} retracted fieldsElRef={searchBarFieldsRef} />
               </div>
             </div>
           </section>
@@ -574,14 +651,15 @@ function ProductPage() {
                         figée à l'écran pendant que tout le reste s'en va. */}
                     <section
                       id="specifications"
-                      className="relative w-full flex flex-col items-start py-6 scroll-mt-[130px]"
-                      style={
-                        exiting
+                      className="relative w-full flex flex-col items-start py-6"
+                      style={{
+                        scrollMarginTop: ANCHOR_OFFSETS.specifications,
+                        ...(exiting
                           ? slideOutStyle(2, 'left')
                           : transitionPayload && {
                               animation: 'pageBgFadeIn 400ms ease both',
-                            }
-                      }
+                            }),
+                      }}
                     >
                       <div
                         className="w-full max-w-[919.9px] flex flex-col items-center gap-8 rounded-2xl border px-10 py-8"
@@ -644,7 +722,11 @@ function ProductPage() {
               {/* Panneau info + réservation — largeur fixe, sticky sous les barres fixes */}
               <aside
                 className="shrink-0 sticky flex flex-col gap-3"
-                style={{ width: '384px', top: `${panelStickyTop}px`, transition: 'top 0.3s ease' }}
+                style={{
+                  width: '384px',
+                  top: `${panelStickyTop}px`,
+                  transition: 'top 0.3s ease',
+                }}
               >
                 {/* Nom, pastilles d'info et description */}
                 <div
@@ -880,46 +962,75 @@ function ProductPage() {
               </aside>
             </div>
           )}
+        </div>
 
-          {/* Section 4 — Localisation : juste le composant MapView, focalisé
-              sur le port du bateau consulté (son seul marqueur), sans habillage
-              annexe (kicker/titre/légende). */}
+        {/* Section 4+5+6 — Avis clients, puis localisation, puis embarcations
+            similaires : même fond photo (trois containers séparés mais même
+            image en background-attachment: fixed, donc raccord invisible),
+            en thème glassmorphism (verre) pour rester lisibles dessus — même
+            traitement que le carrousel/avis de la CategoryPage. */}
+        <div className="relative" style={PHOTO_BG_STYLE}>
+          {belowFoldReady && (
+            <ClientReviews
+              light
+              wide
+              boatId={boatId}
+              id="avis"
+              className="py-10"
+              style={{ scrollMarginTop: ANCHOR_OFFSETS.avis }}
+            />
+          )}
+
+          {/* Localisation : MapView focalisé sur le bateau consulté (pin
+              prix à sa position dispersée), centré dans la page, avec un
+              titre discret au-dessus (même gabarit que le titre "avis" et
+              l'en-tête "Embarcations similaires" du Carrousel) plutôt qu'un
+              gros kicker/h2. focusZoom : niveau de zoom appliqué en arrivant
+              sur la carte — à ajuster ici si besoin (18 = très rapproché ;
+              MapView.jsx retombe sur BOAT_FOCUS_ZOOM, 18 aussi, si cette prop
+              est omise). */}
           {belowFoldReady && boat && (
             <section
               id="localisation"
-              className="relative w-full flex flex-col items-start pl-28 pr-24 py-10 scroll-mt-[130px]"
+              className="relative w-full flex flex-col items-center gap-3 py-10"
+              style={{ scrollMarginTop: ANCHOR_OFFSETS.localisation }}
             >
+              <div className="w-full max-w-[919.9px] flex items-baseline gap-3">
+                <h2
+                  className="font-semibold text-white"
+                  style={{ fontSize: '20px', lineHeight: '22px' }}
+                >
+                  {t('product.location.title')}
+                </h2>
+                {portLabel && (
+                  <span className="text-white/70 ml-4" style={{ fontSize: '16px' }}>
+                    {portLabel}
+                  </span>
+                )}
+              </div>
               <div className="w-full max-w-[919.9px]" style={{ height: '420px' }}>
                 <MapView
                   markers={portMarkers}
+                  boatMarkers={boatMapMarker ? [boatMapMarker] : []}
+                  focusBoat={boatMapMarker}
+                  focusZoom={12}
                   className="h-full"
                   emptyLabel={t('category.map.empty')}
                 />
               </div>
             </section>
           )}
-        </div>
 
-        {/* Section 5 — Avis clients, également habillée du fond photo + verre. */}
-        {belowFoldReady && (
-          <div className="relative" style={PHOTO_BG_STYLE}>
-            <ClientReviews light id="avis" className="py-10 scroll-mt-[60px]" />
-          </div>
-        )}
-
-        {/* Section 6 — Embarcations similaires : reste sur fond blanc, hors du
-            fond photo (non demandé par la maquette glassmorphism). */}
-        {belowFoldReady && boat && (
-          <>
-            <div className="border-t border-gray-200 mx-[168px]" />
+          {belowFoldReady && boat && (
             <section
               id="suggestions"
-              className="relative w-full flex flex-col gap-8 pl-28 pr-24 py-10 scroll-mt-[140px] bg-white"
+              className="relative w-full flex flex-col gap-8 px-28 py-10"
+              style={{ scrollMarginTop: ANCHOR_OFFSETS.suggestions }}
             >
-              <Carrousel theme="light" similarTo={similarTo} />
+              <Carrousel similarTo={similarTo} />
             </section>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </main>
   );

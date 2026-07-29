@@ -50,14 +50,21 @@ const DEPLOY_EASING = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
 // leur sortie et s'achève au même instant.
 const DEFAULT_RETRACT_DURATION = 300;
 // Repli tant que la largeur naturelle des champs n'a jamais été mesurée
-// (rétractée dès le montage, jamais encore déployée).
-const FALLBACK_FIELDS_WIDTH = 500;
+// (rétractée dès le montage, jamais encore déployée) — exporté : les pages à
+// transition (CategoryPage/ProductPage) s'en servent comme cible de secours
+// pour leur propre pré-déploiement imperatif (cf. fieldsElRef ci-dessous).
+export const FALLBACK_FIELDS_WIDTH = 500;
 
 function SearchBar({
   light = false,
   compact = false,
   retracted: baseRetracted = false,
   retractDuration = DEFAULT_RETRACT_DURATION,
+  // Ref optionnelle vers le conteneur des champs (fieldsRef ci-dessous),
+  // exposée aux pages à transition : elles y jouent leur propre animation de
+  // largeur (démarrée avant la navigation, terminée après) directement sur ce
+  // nœud, sans passer par le mécanisme retracted/retractDuration habituel.
+  fieldsElRef,
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -267,7 +274,10 @@ function SearchBar({
           statique) : l'animation elle-même est pilotée par le layout effect
           ci-dessus, qui a besoin de mesurer/figer le style avant de l'activer. */}
       <div
-        ref={fieldsRef}
+        ref={(node) => {
+          fieldsRef.current = node;
+          if (fieldsElRef) fieldsElRef.current = node;
+        }}
         className="flex items-stretch overflow-hidden"
         aria-hidden={retracted}
         style={{
