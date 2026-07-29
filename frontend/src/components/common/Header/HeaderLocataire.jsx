@@ -6,6 +6,8 @@ function HeaderLocataire() {
   const { t } = useTranslation();
   const location = useLocation();
   const onCategoriePage = location.pathname === '/categorie';
+  const onProductPage =
+    location.pathname === '/product' || location.pathname.startsWith('/product/');
 
   const navLocataire = [
     { label: t('headerLocataire.nav.search'), anchor: 'hero' },
@@ -16,13 +18,37 @@ function HeaderLocataire() {
   ];
 
   const navLocataireCategory = [
-    { label: t('headerLocataire.navCategory.boats'), anchor: 'resultats', path: '/categorie' },
+    { label: t('headerLocataire.navCategory.boats'), anchor: 'top', path: '/categorie' },
     {
       label: t('headerLocataire.navCategory.suggestions'),
       anchor: 'suggestions',
       path: '/categorie',
     },
     { label: t('headerLocataire.navCategory.reviews'), anchor: 'avis', path: '/categorie' },
+  ];
+
+  const navLocataireProduct = [
+    {
+      label: t('headerLocataire.navProduct.booking'),
+      anchor: 'top',
+      path: location.pathname,
+    },
+    {
+      label: t('headerLocataire.navProduct.specs'),
+      anchor: 'specifications',
+      path: location.pathname,
+    },
+    { label: t('headerLocataire.navProduct.reviews'), anchor: 'avis', path: location.pathname },
+    {
+      label: t('headerLocataire.navProduct.location'),
+      anchor: 'localisation',
+      path: location.pathname,
+    },
+    {
+      label: t('headerLocataire.navProduct.suggestions'),
+      anchor: 'suggestions',
+      path: location.pathname,
+    },
   ];
 
   const centerNav = [
@@ -40,7 +66,11 @@ function HeaderLocataire() {
     { label: t('headerLocataire.menu.logout'), action: 'logout', danger: true },
   ];
 
-  const navItems = onCategoriePage ? navLocataireCategory : navLocataire;
+  const navItems = onProductPage
+    ? navLocataireProduct
+    : onCategoriePage
+      ? navLocataireCategory
+      : navLocataire;
 
   return (
     <DashboardHeader

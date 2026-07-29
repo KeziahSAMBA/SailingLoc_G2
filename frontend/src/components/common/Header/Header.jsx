@@ -29,9 +29,19 @@ function getBurgerItems(t) {
 
 function getCategoryBurgerItems(t) {
   return [
-    { label: t('header.burgerCategory.boats'), anchor: 'resultats' },
+    { label: t('header.burgerCategory.boats'), anchor: 'top' },
     { label: t('header.burgerCategory.suggestions'), anchor: 'suggestions' },
     { label: t('header.burgerCategory.reviews'), anchor: 'avis' },
+  ];
+}
+
+function getProductBurgerItems(t) {
+  return [
+    { label: t('header.burgerProduct.booking'), anchor: 'top' },
+    { label: t('header.burgerProduct.specs'), anchor: 'specifications' },
+    { label: t('header.burgerProduct.reviews'), anchor: 'avis' },
+    { label: t('header.burgerProduct.location'), anchor: 'localisation' },
+    { label: t('header.burgerProduct.suggestions'), anchor: 'suggestions' },
   ];
 }
 
@@ -120,6 +130,10 @@ function Header() {
   function scrollToAnchor(anchor, targetPath = '/') {
     setMenuOpen(false);
     const scroll = () => {
+      if (anchor === 'top') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       const el = document.getElementById(anchor);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
@@ -148,6 +162,8 @@ function Header() {
 
   const iconSize = scrolled ? '14px' : '16px';
   const onCategoriePage = location.pathname === '/categorie';
+  const onProductPage =
+    location.pathname === '/product' || location.pathname.startsWith('/product/');
 
   return (
     <header
@@ -191,21 +207,29 @@ function Header() {
             open={menuOpen}
             scrolled={scrolled}
             width="260px"
-            darkerOverlay={onCategoriePage}
+            darkerOverlay={onCategoriePage || onProductPage}
           >
             <div className="flex flex-col" style={{ height: onCategoriePage ? '41%' : '69%' }}>
-              {(onCategoriePage ? getCategoryBurgerItems(t) : getBurgerItems(t)).map(
-                ({ label, anchor }) => (
-                  <PanelLink
-                    key={label}
-                    scrolled={scrolled}
-                    stretch
-                    onClick={() => scrollToAnchor(anchor, onCategoriePage ? '/categorie' : '/')}
-                  >
-                    {label}
-                  </PanelLink>
-                )
-              )}
+              {(onProductPage
+                ? getProductBurgerItems(t)
+                : onCategoriePage
+                  ? getCategoryBurgerItems(t)
+                  : getBurgerItems(t)
+              ).map(({ label, anchor }) => (
+                <PanelLink
+                  key={label}
+                  scrolled={scrolled}
+                  stretch
+                  onClick={() =>
+                    scrollToAnchor(
+                      anchor,
+                      onProductPage ? location.pathname : onCategoriePage ? '/categorie' : '/'
+                    )
+                  }
+                >
+                  {label}
+                </PanelLink>
+              ))}
             </div>
           </SidePanel>
         </div>

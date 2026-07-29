@@ -797,14 +797,14 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
   );
 
   // Mode « embarcations similaires » (page produit) : une seule rangée de
-  // bateaux du même type ou du même port que le bateau consulté, complétée
-  // par les plus populaires, plutôt que toutes les sections d'accueil.
+  // bateaux du même type ET du même port que le bateau consulté, complétée
+  // par les plus populaires (si pas assez de correspondances strictes),
+  // plutôt que toutes les sections d'accueil.
   const similarSlides = useMemo(() => {
     if (!similarTo) return [];
     const others = boats.filter((b) => b.id_boat !== similarTo.id);
     const related = others.filter(
-      (b) =>
-        b.type === similarTo.type || (similarTo.portCity && b.port?.city === similarTo.portCity)
+      (b) => b.type === similarTo.type && similarTo.portCity && b.port?.city === similarTo.portCity
     );
     const fillers = others
       .filter((b) => !related.includes(b))

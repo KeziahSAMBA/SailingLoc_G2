@@ -16,6 +16,13 @@ export const TEXTS = {
       suggestions: { fr: 'Nos suggestions', en: 'Our suggestions' },
       reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
     },
+    burgerProduct: {
+      booking: { fr: 'Location', en: 'Booking' },
+      specs: { fr: 'Caractéristiques', en: 'Features' },
+      reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
+      location: { fr: 'Emplacement', en: 'Location' },
+      suggestions: { fr: 'Suggestions', en: 'Suggestions' },
+    },
     nav: {
       discover: { fr: 'Découvrir', en: 'Discover' },
       contact: { fr: 'Contact', en: 'Contact' },
@@ -48,6 +55,13 @@ export const TEXTS = {
       boats: { fr: 'Nos bateaux', en: 'Our boats' },
       suggestions: { fr: 'Nos suggestions', en: 'Our suggestions' },
       reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
+    },
+    navProduct: {
+      booking: { fr: 'Location', en: 'Booking' },
+      specs: { fr: 'Caractéristiques', en: 'Features' },
+      reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
+      location: { fr: 'Emplacement', en: 'Location' },
+      suggestions: { fr: 'Suggestions', en: 'Suggestions' },
     },
     center: {
       discover: { fr: 'Découvrir', en: 'Discover' },
@@ -276,7 +290,7 @@ export const TEXTS = {
     },
     location: {
       kicker: { fr: 'Emplacement', en: 'Location' },
-      title: { fr: 'Localisation', en: 'Where the boat is moored' },
+      title: { fr: 'Où se situe votre bateau', en: 'Where your boat is located' },
       subtitle: {
         fr: 'Port de départ : {{port}}',
         en: 'Departure port: {{port}}',
@@ -695,6 +709,14 @@ export const TEXTS = {
     title: {
       fr: 'Ce que nos navigateurs disent de nous',
       en: 'What our sailors say about us',
+    },
+    productTitle: {
+      fr: "Ce qu'en pensent les derniers locataires",
+      en: 'What recent renters think',
+    },
+    empty: {
+      fr: 'Aucun commentaire pour le moment',
+      en: 'No comments yet',
     },
     roleFilters: {
       all: { fr: 'Tous', en: 'All' },

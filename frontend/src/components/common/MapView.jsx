@@ -123,12 +123,12 @@ function ZoomWatcher({ onZoomChange }) {
 // Zoome/centre sur un bateau donné (ex : clic sur une fiche produit dans la liste).
 const BOAT_FOCUS_ZOOM = 18;
 
-function FlyToBoat({ boat }) {
+function FlyToBoat({ boat, zoom = BOAT_FOCUS_ZOOM }) {
   const map = useMap();
   useEffect(() => {
     if (!boat) return;
-    map.flyTo([boat.lat, boat.lng], BOAT_FOCUS_ZOOM, { duration: FLY_DURATION });
-  }, [boat, map]);
+    map.flyTo([boat.lat, boat.lng], zoom, { duration: FLY_DURATION });
+  }, [boat, zoom, map]);
   return null;
 }
 
@@ -204,6 +204,7 @@ function MapView({
   boatMarkers = [],
   focusMarkers,
   focusBoat,
+  focusZoom,
   className = '',
   emptyLabel = 'Aucun point à afficher.',
   onBoundsChange,
@@ -260,7 +261,7 @@ function MapView({
         <FitBounds points={fitPoints} />
         {onBoundsChange && <BoundsWatcher onBoundsChange={onBoundsChange} />}
         <ZoomWatcher onZoomChange={setZoom} />
-        <FlyToBoat boat={focusBoat} />
+        <FlyToBoat boat={focusBoat} zoom={focusZoom} />
         {showBoats
           ? boatPoints.map((b) => <BoatMarker key={b.id} boat={b} onSelect={onBoatSelect} />)
           : points.map((m) => <ZoomableMarker key={m.id} marker={m} />)}
