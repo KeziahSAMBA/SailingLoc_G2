@@ -81,9 +81,8 @@ function AboutPage() {
 
   return (
     <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
-      {/* Hero photo + voile sombre, comme l'accueil et la page contact */}
+      {/* Hero de la page À propos */}
       <section className="relative flex min-h-[45vh] w-full flex-col items-center justify-center overflow-hidden px-4 pt-[96px]">
-        <div className="absolute inset-0 bg-black/10" />
         <div className="relative text-center">
           <h1 className="text-4xl font-semibold text-white md:text-5xl">
             {t('aboutPage.hero.title')}
@@ -161,10 +160,7 @@ function AboutPage() {
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
               {t('aboutPage.destinations.kicker')}
             </p>
-            <h2
-              id="destinations-title"
-              className="text-3xl font-semibold text-white md:text-4xl"
-            >
+            <h2 id="destinations-title" className="text-3xl font-semibold text-white md:text-4xl">
               {t('aboutPage.destinations.title')}
             </h2>
           </div>
