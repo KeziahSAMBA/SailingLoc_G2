@@ -297,7 +297,6 @@ export const TEXTS = {
     backToCatalog: { fr: 'Voir le catalogue', en: 'Browse the catalog' },
     steps: {
       recap: { fr: 'Récapitulatif', en: 'Summary' },
-      documents: { fr: 'Documents', en: 'Documents' },
       payment: { fr: 'Paiement', en: 'Payment' },
     },
     recap: {
@@ -310,15 +309,11 @@ export const TEXTS = {
       confirm: { fr: 'Confirmer et continuer', en: 'Confirm and continue' },
     },
     documents: {
-      intro: {
-        fr: 'Pour finaliser votre réservation, vos trois documents (permis, pièce d’identité, CV nautique) doivent être déposés puis validés par l’équipe SailingLoc. Votre demande non payée est conservée 72 heures (annulée automatiquement au-delà). Après le paiement, rien n’est débité : le montant reste en attente jusqu’à la décision du propriétaire, et les dates ne sont bloquées qu’à sa confirmation.',
-        en: 'To finalise your booking, your three documents (licence, ID, sailing CV) must be uploaded and then validated by the SailingLoc team. An unpaid request is kept for 72 hours (then cancelled automatically). After payment, nothing is charged: the amount stays on hold until the owner decides, and the dates are only secured once the owner confirms.',
-      },
       notValidated: {
         fr: 'Vos documents ne sont pas encore tous validés par SailingLoc. Réessayez une fois la validation faite — votre réservation reste enregistrée.',
         en: 'Your documents have not all been validated by SailingLoc yet. Try again once validated — your booking remains saved.',
       },
-      continue: { fr: 'Vérifier et continuer', en: 'Check and continue' },
+      manageLink: { fr: 'Gérer mes documents', en: 'Manage my documents' },
     },
     payment: {
       title: { fr: 'Paiement', en: 'Payment' },
