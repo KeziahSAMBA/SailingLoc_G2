@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MdCheck, MdLockOutline, MdInfoOutline } from 'react-icons/md';
+import { MdCheck, MdLockOutline } from 'react-icons/md';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import DocumentsManager from '../components/documents/DocumentsManager.jsx';
 import { fetchBoats } from '../services/boatService.js';
 import { createBooking, payBooking } from '../services/bookingService.js';
 import { getMyDocuments } from '../services/documentService.js';
@@ -70,11 +69,7 @@ function formatExpiry(value) {
 
 function Stepper({ step }) {
   const { t } = useTranslation();
-  const steps = [
-    t('reservation.steps.recap'),
-    t('reservation.steps.documents'),
-    t('reservation.steps.payment'),
-  ];
+  const steps = [t('reservation.steps.recap'), t('reservation.steps.payment')];
   return (
     <ol className="mb-8 flex items-center justify-center gap-2 sm:gap-4">
       {steps.map((label, i) => {
@@ -238,8 +233,8 @@ function ReservationPage() {
     return saved && saved.path === resumePath ? saved : null;
   });
 
-  // 0 = récap, 1 = documents, 2 = paiement, 3 = confirmation.
-  const [step, setStep] = useState(resume && resume.step < 3 ? resume.step : 0);
+  // 0 = récap, 1 = paiement, 2 = confirmation.
+  const [step, setStep] = useState(resume && resume.step < 2 ? resume.step : 0);
   // Chaque étape repart du haut de page (les étapes n'ont pas la même hauteur).
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -250,6 +245,8 @@ function ReservationPage() {
   const [payment, setPayment] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Documents non validés : affiche un lien vers leur gestion sous le récap.
+  const [docsBlocked, setDocsBlocked] = useState(false);
 
   const dayCount = countDays(start, end);
   const price = boat ? Number(boat.daily_price) : 0;
@@ -259,7 +256,7 @@ function ReservationPage() {
   // (fenêtre glissante), puis purgé une fois la confirmation atteinte.
   useEffect(() => {
     if (dayCount <= 0) return;
-    if (step >= 3) {
+    if (step >= 2) {
       clearReservationResume();
       return;
     }
@@ -284,19 +281,35 @@ function ReservationPage() {
     setStep(target);
   }
 
-  // Étape 1 → crée la réservation « pending » côté serveur. Au retour depuis
-  // l'étape documents, la demande existe déjà : on avance sans la recréer.
+  // Récap → vérifie d'abord que les 3 documents locataire sont validés par
+  // l'admin, puis crée la réservation « pending ». Documents non validés : on
+  // bloque sans créer de demande. Au retour du paiement, la demande existe déjà.
   async function handleConfirmRecap() {
-    if (booking) {
-      setError('');
-      setStep(1);
-      return;
-    }
     setBusy(true);
     setError('');
+    setDocsBlocked(false);
     try {
-      const { data } = await createBooking(boat.id_boat, start, end);
-      setBooking(data.booking);
+      const { data } = await getMyDocuments();
+      const docs = data.documents || [];
+      const allValidated = REQUIRED_DOC_TYPES.every((type) =>
+        docs.some((d) => d.type === type && d.status === 'validated')
+      );
+      if (!allValidated) {
+        setDocsBlocked(true);
+        setError(t('reservation.documents.notValidated'));
+        setBusy(false);
+        return;
+      }
+    } catch {
+      setError(t('reservation.errors.checkFailed'));
+      setBusy(false);
+      return;
+    }
+    try {
+      if (!booking) {
+        const { data } = await createBooking(boat.id_boat, start, end);
+        setBooking(data.booking);
+      }
       setStep(1);
     } catch (err) {
       setError(err.response?.data?.message || t('reservation.errors.createFailed'));
@@ -305,26 +318,7 @@ function ReservationPage() {
     }
   }
 
-  // Étape 2 → vérifie que les 3 documents locataire sont validés par l'admin.
-  async function handleDocumentsContinue() {
-    setBusy(true);
-    setError('');
-    try {
-      const { data } = await getMyDocuments();
-      const docs = data.documents || [];
-      const allValidated = REQUIRED_DOC_TYPES.every((type) =>
-        docs.some((d) => d.type === type && d.status === 'validated')
-      );
-      if (allValidated) setStep(2);
-      else setError(t('reservation.documents.notValidated'));
-    } catch {
-      setError(t('reservation.errors.checkFailed'));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // Étape 3 → formulaire de carte purement visuel : seules l'identité de la
+  // Paiement → formulaire de carte purement visuel : seules l'identité de la
   // réservation part au serveur, jamais les champs de carte.
   const [card, setCard] = useState({ name: '', number: '', expiry: '', cvc: '' });
   const [cardError, setCardError] = useState('');
@@ -350,7 +344,7 @@ function ReservationPage() {
     try {
       const { data } = await payBooking(booking.id_booking);
       setPayment(data.payment);
-      setStep(3);
+      setStep(2);
     } catch (err) {
       setError(err.response?.data?.message || t('reservation.errors.payFailed'));
     } finally {
@@ -398,7 +392,7 @@ function ReservationPage() {
 
           {boatsLoaded && !invalid && (
             <>
-              {step < 3 && <Stepper step={step} />}
+              {step < 2 && <Stepper step={step} />}
 
               {/* ── Étape 1 : récapitulatif ── */}
               {step === 0 && (
@@ -432,6 +426,14 @@ function ReservationPage() {
                     </div>
                   </dl>
                   <ErrorNote>{error}</ErrorNote>
+                  {docsBlocked && (
+                    <Link
+                      to="/locataire/documents"
+                      className="self-start text-sm font-semibold text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
+                    >
+                      {t('reservation.documents.manageLink')}
+                    </Link>
+                  )}
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <Link to={`/product/${idBoat}`} className={GHOST_BTN}>
                       {t('reservation.back')}
@@ -448,51 +450,22 @@ function ReservationPage() {
                 </div>
               )}
 
-              {/* ── Étape 2 : documents ── */}
-              {step === 1 && (
-                <div className="flex flex-col gap-4">
-                  <div className={`${GLASS} flex items-start gap-3 p-4`}>
-                    <MdInfoOutline className="mt-0.5 shrink-0 text-lg text-sky-400" aria-hidden />
-                    <p className="text-sm leading-relaxed text-slate-200">
-                      {t('reservation.documents.intro')}
-                    </p>
-                  </div>
-                  <div className={`${GLASS} p-6`}>
-                    <DocumentsManager />
-                  </div>
-                  <ErrorNote>{error}</ErrorNote>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <button type="button" onClick={() => goBack(0)} className={GHOST_BTN}>
-                      {t('reservation.previous')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDocumentsContinue}
-                      disabled={busy}
-                      className={PRIMARY_BTN}
-                    >
-                      {busy ? t('reservation.working') : t('reservation.documents.continue')}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Étape 3 : paiement — Stripe Elements si la clé publique est
+              {/* ── Étape 2 : paiement — Stripe Elements si la clé publique est
                   configurée, sinon formulaire de démonstration historique ── */}
-              {step === 2 && stripePromise && (
+              {step === 1 && stripePromise && (
                 <Elements stripe={stripePromise}>
                   <StripeCardForm
                     idBooking={booking?.id_booking}
                     total={total}
-                    onBack={() => goBack(1)}
+                    onBack={() => goBack(0)}
                     onPaid={(paid) => {
                       setPayment(paid);
-                      setStep(3);
+                      setStep(2);
                     }}
                   />
                 </Elements>
               )}
-              {step === 2 && !stripePromise && (
+              {step === 1 && !stripePromise && (
                 <form
                   onSubmit={handlePay}
                   className={`${GLASS} flex flex-col gap-4 p-6`}
@@ -560,7 +533,7 @@ function ReservationPage() {
                   </div>
                   <ErrorNote>{cardError || error}</ErrorNote>
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <button type="button" onClick={() => goBack(1)} className={GHOST_BTN}>
+                    <button type="button" onClick={() => goBack(0)} className={GHOST_BTN}>
                       {t('reservation.previous')}
                     </button>
                     <button type="submit" disabled={busy} className={PRIMARY_BTN}>
@@ -571,7 +544,7 @@ function ReservationPage() {
               )}
 
               {/* ── Confirmation ── */}
-              {step === 3 && (
+              {step === 2 && (
                 <div className={`${GLASS} flex flex-col items-center gap-4 p-8 text-center`}>
                   <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500">
                     <MdCheck className="text-3xl text-white" aria-hidden />

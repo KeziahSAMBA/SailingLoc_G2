@@ -21,6 +21,12 @@ export const TEXTS = {
       details: { fr: 'Nous joindre', en: 'Contact us' },
       form: { fr: 'Écrivez-nous', en: 'Write to us' },
       faq: { fr: 'FAQ', en: 'FAQ' },
+    burgerProduct: {
+      booking: { fr: 'Location', en: 'Booking' },
+      specs: { fr: 'Caractéristiques', en: 'Features' },
+      reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
+      location: { fr: 'Emplacement', en: 'Location' },
+      suggestions: { fr: 'Suggestions', en: 'Suggestions' },
     },
     nav: {
       discover: { fr: 'Découvrir', en: 'Discover' },
@@ -54,6 +60,13 @@ export const TEXTS = {
       boats: { fr: 'Nos bateaux', en: 'Our boats' },
       suggestions: { fr: 'Nos suggestions', en: 'Our suggestions' },
       reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
+    },
+    navProduct: {
+      booking: { fr: 'Location', en: 'Booking' },
+      specs: { fr: 'Caractéristiques', en: 'Features' },
+      reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
+      location: { fr: 'Emplacement', en: 'Location' },
+      suggestions: { fr: 'Suggestions', en: 'Suggestions' },
     },
     center: {
       discover: { fr: 'Découvrir', en: 'Discover' },
@@ -298,7 +311,7 @@ export const TEXTS = {
     },
     location: {
       kicker: { fr: 'Emplacement', en: 'Location' },
-      title: { fr: 'Localisation', en: 'Where the boat is moored' },
+      title: { fr: 'Où se situe votre bateau', en: 'Where your boat is located' },
       subtitle: {
         fr: 'Port de départ : {{port}}',
         en: 'Departure port: {{port}}',
@@ -319,7 +332,6 @@ export const TEXTS = {
     backToCatalog: { fr: 'Voir le catalogue', en: 'Browse the catalog' },
     steps: {
       recap: { fr: 'Récapitulatif', en: 'Summary' },
-      documents: { fr: 'Documents', en: 'Documents' },
       payment: { fr: 'Paiement', en: 'Payment' },
     },
     recap: {
@@ -332,15 +344,11 @@ export const TEXTS = {
       confirm: { fr: 'Confirmer et continuer', en: 'Confirm and continue' },
     },
     documents: {
-      intro: {
-        fr: 'Pour finaliser votre réservation, vos trois documents (permis, pièce d’identité, CV nautique) doivent être déposés puis validés par l’équipe SailingLoc. Votre demande non payée est conservée 72 heures (annulée automatiquement au-delà). Après le paiement, rien n’est débité : le montant reste en attente jusqu’à la décision du propriétaire, et les dates ne sont bloquées qu’à sa confirmation.',
-        en: 'To finalise your booking, your three documents (licence, ID, sailing CV) must be uploaded and then validated by the SailingLoc team. An unpaid request is kept for 72 hours (then cancelled automatically). After payment, nothing is charged: the amount stays on hold until the owner decides, and the dates are only secured once the owner confirms.',
-      },
       notValidated: {
         fr: 'Vos documents ne sont pas encore tous validés par SailingLoc. Réessayez une fois la validation faite — votre réservation reste enregistrée.',
         en: 'Your documents have not all been validated by SailingLoc yet. Try again once validated — your booking remains saved.',
       },
-      continue: { fr: 'Vérifier et continuer', en: 'Check and continue' },
+      manageLink: { fr: 'Gérer mes documents', en: 'Manage my documents' },
     },
     payment: {
       title: { fr: 'Paiement', en: 'Payment' },
@@ -717,6 +725,14 @@ export const TEXTS = {
     title: {
       fr: 'Ce que nos navigateurs disent de nous',
       en: 'What our sailors say about us',
+    },
+    productTitle: {
+      fr: "Ce qu'en pensent les derniers locataires",
+      en: 'What recent renters think',
+    },
+    empty: {
+      fr: 'Aucun commentaire pour le moment',
+      en: 'No comments yet',
     },
     roleFilters: {
       all: { fr: 'Tous', en: 'All' },
@@ -1652,6 +1668,33 @@ export const TEXTS = {
     refuse: { fr: 'Refuser', en: 'Refuse' },
     cancelBooking: { fr: 'Annuler la réservation', en: 'Cancel booking' },
     reportProblem: { fr: 'Signaler un problème', en: 'Report a problem' },
+    viewLocataire: {
+      fr: 'Voir le profil et les documents du locataire',
+      en: "View the guest's profile and documents",
+    },
+    locataire: {
+      title: { fr: 'Profil du locataire', en: 'Guest profile' },
+      loading: { fr: 'Chargement…', en: 'Loading…' },
+      phone: { fr: 'Téléphone', en: 'Phone' },
+      noPhone: { fr: 'Non renseigné', en: 'Not provided' },
+      memberSince: { fr: 'Membre depuis', en: 'Member since' },
+      sendMessage: { fr: 'Envoyer un message', en: 'Send a message' },
+      documents: { fr: 'Documents', en: 'Documents' },
+      noDocuments: {
+        fr: 'Aucun document déposé par le locataire.',
+        en: 'The guest has not uploaded any document.',
+      },
+      view: { fr: 'Voir', en: 'View' },
+      loadError: {
+        fr: 'Impossible de charger le profil du locataire.',
+        en: 'Could not load the guest profile.',
+      },
+      fileError: {
+        fr: 'Impossible d’ouvrir le document.',
+        en: 'Could not open the document.',
+      },
+      close: { fr: 'Fermer', en: 'Close' },
+    },
     emptyAll: {
       fr: 'Aucune réservation reçue sur vos bateaux pour le moment.',
       en: 'No booking received on your boats yet.',

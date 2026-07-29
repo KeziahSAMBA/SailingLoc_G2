@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { seedBoatReviews } from './reviewSeedData.js';
 
 const prisma = new PrismaClient();
 
@@ -1208,69 +1209,22 @@ async function main() {
     ON CONFLICT DO NOTHING
   `);
 
-  // ── Avis pour les bateaux encore sans note ────────────────────────────────────
-  // Boats 13-16 (voiliers/catamarans d'origine jamais réservés) et 19-49 (nouveaux
-  // types) n'ont aucun avis validé : avg_rating y est donc null et le frontend
-  // affiche "★ Nouveau" à leur place. On veut réserver ce libellé aux bateaux
-  // qu'un utilisateur ajoute réellement lui-même, donc chaque bateau de seed doit
-  // avoir au moins un avis validé.
-  // Boat 8 (Camargue Spirit) est délibérément exclu : il reste non publié en
-  // permanence (cas de test pour la modération/les signalements), donc il n'est
-  // jamais visible dans les carrousels et n'a pas besoin de note.
-  // On utilise Prisma Client (et non du SQL avec des IDs codés en dur) pour que
-  // les id_booking/id_review générés soient toujours corrects, contrairement aux
-  // blocs ci-dessus qui avaient dérivé au fil des éditions du fichier.
-  const MISSING_RATING_BOAT_IDS = [
-    4, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
-    38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-  ];
+  // ── Avis locataire par bateau (au moins 5 par bateau) ─────────────────────────
+  // Les avis codés en dur plus haut ne couvrent qu'une poignée de bateaux et de
+  // façon inégale. On garantit ici, pour CHAQUE bateau publié, un lot fixe de 5
+  // avis locataire frais (3 bien notés, 1 neutre, 1 critique) — en plus des avis
+  // déjà créés au-dessus, jamais à leur place, donc aucun risque de repasser
+  // sous le minimum voulu même si ces blocs venaient à changer.
+  // Boat 8 (Camargue Spirit) reste exclu naturellement : jamais publié (cas de
+  // test modération/signalements), il ne matche pas le filtre is_published.
+  // Logique partagée avec prisma/addMissingReviews.js (qui ajoute les mêmes
+  // avis à une base déjà peuplée, sans reseed complet).
   const REVIEWER_POOL = [6, 7, 8, 9, 10, 11, 12, 13];
-  const RATING_POOL = [5, 4, 5, 4, 3, 5, 4, 5, 3, 4];
-  const COMMENT_TEMPLATES = [
-    (n) => `Très belle expérience à bord de ${n}, tout était conforme à l'annonce.`,
-    (n) => `${n} correspond parfaitement à la description, je recommande cette location.`,
-    (n) => `Séjour agréable avec ${n}, propriétaire réactif et bateau bien entretenu.`,
-    (n) => `Bonne découverte avec ${n}, quelques petits détails à améliorer mais rien de grave.`,
-    (n) => `${n} était impeccable, une location sans mauvaise surprise.`,
-  ];
-
-  const missingRatingBoats = await prisma.boat.findMany({
-    where: { id_boat: { in: MISSING_RATING_BOAT_IDS } },
+  const reviewedBoats = await prisma.boat.findMany({
+    where: { is_published: true },
+    orderBy: { id_boat: 'asc' },
   });
-
-  for (const [i, boat] of missingRatingBoats.entries()) {
-    const nights = 5;
-    const startDate = new Date('2025-05-01T00:00:00Z');
-    startDate.setDate(startDate.getDate() + i * 3);
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + nights);
-    const reviewDate = new Date(endDate);
-    reviewDate.setDate(reviewDate.getDate() + 2);
-    const reviewerId = REVIEWER_POOL[i % REVIEWER_POOL.length];
-
-    const booking = await prisma.booking.create({
-      data: {
-        id_user: reviewerId,
-        id_boat: boat.id_boat,
-        start_date: startDate,
-        end_date: endDate,
-        status: 'confirmed',
-        total_amount: Number(boat.daily_price) * nights,
-        booking_date: startDate,
-      },
-    });
-
-    await prisma.review.create({
-      data: {
-        id_user: reviewerId,
-        id_booking: booking.id_booking,
-        rating: RATING_POOL[i % RATING_POOL.length],
-        comment: COMMENT_TEMPLATES[i % COMMENT_TEMPLATES.length](boat.name),
-        status: 'validated',
-        created_at: reviewDate,
-      },
-    });
-  }
+  await seedBoatReviews(prisma, reviewedBoats, REVIEWER_POOL);
 
   // Statuts d'annonce des bateaux : en ligne → publiée, dépubliée → en attente
   // de validation ; plus deux exemples brouillon / refusé pour l'espace propriétaire.

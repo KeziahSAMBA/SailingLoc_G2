@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   getBookings,
+  getBookingLocataire,
   updateBookingStatus,
   reportDispute,
 } from '../../services/proprietaireService.js';
+import { fetchDocumentFile } from '../../services/documentService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
 import { formatDate } from '../../utils/formatDate.js';
@@ -21,6 +24,12 @@ const BOOKING_STATUS_CLS = {
   confirmed: 'bg-emerald-500/15 text-emerald-300',
   refused: 'bg-red-500/15 text-red-300',
   cancelled: 'bg-slate-500/15 text-white/80',
+};
+
+const DOC_STATUS_CLS = {
+  pending: 'bg-amber-500/15 text-amber-300',
+  validated: 'bg-emerald-500/15 text-emerald-300',
+  refused: 'bg-red-500/15 text-red-300',
 };
 
 const FILTER_KEYS = ['all', 'pending', 'confirmed', 'cancelled', 'refused'];
@@ -59,7 +68,7 @@ function matchesPeriod(booking, period) {
   return true;
 }
 
-function BookingCard({ booking, busy, onAction, mirrored }) {
+function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
   const { t } = useTranslation();
   const statusCls = BOOKING_STATUS_CLS[booking.status] || 'bg-slate-500/15 text-white/80';
   const port = booking.boat?.port;
@@ -122,7 +131,14 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
 
           {locataire && (
             <p className="mt-2 truncate text-xs text-white/70">
-              {locataire.first_name} {locataire.last_name}
+              <button
+                type="button"
+                onClick={() => onViewLocataire(booking)}
+                title={t('proprietaireReservations.viewLocataire')}
+                className={`rounded font-semibold text-white hover:text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+              >
+                {locataire.first_name} {locataire.last_name}
+              </button>
               {locataire.email && (
                 <a
                   href={`mailto:${locataire.email}`}
@@ -220,6 +236,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
 
 function ProprietaireReservations() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -231,6 +248,11 @@ function ProprietaireReservations() {
   const [reason, setReason] = useState('');
   // Photos jointes au signalement : { file, url (aperçu à révoquer) }.
   const [photos, setPhotos] = useState([]);
+  // Fiche locataire : booking cliqué + données chargées à la demande.
+  const [locataireModal, setLocataireModal] = useState(null);
+  const [locataireData, setLocataireData] = useState(null);
+  const [locataireLoading, setLocataireLoading] = useState(false);
+  const [viewingDocId, setViewingDocId] = useState(null);
   const { showToast } = useToast();
 
   function addPhotos(fileList) {
@@ -287,6 +309,15 @@ function ProprietaireReservations() {
     return () => document.removeEventListener('keydown', onKey);
   }, [decision, deciding]);
 
+  useEffect(() => {
+    if (!locataireModal) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') closeLocataire();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [locataireModal]);
+
   async function executeAction(booking, action, actionReason) {
     setBusyId(booking.id_booking);
     try {
@@ -337,6 +368,52 @@ function ProprietaireReservations() {
     // Refus et annulation passent par la modal de confirmation.
     setDecision({ booking, action });
     setReason('');
+  }
+
+  async function openLocataire(booking) {
+    setLocataireModal(booking);
+    setLocataireData(null);
+    setLocataireLoading(true);
+    try {
+      const res = await getBookingLocataire(booking.id_booking);
+      setLocataireData(res.data);
+    } catch (err) {
+      showToast(
+        err.response?.data?.message || t('proprietaireReservations.locataire.loadError'),
+        'error'
+      );
+      setLocataireModal(null);
+    } finally {
+      setLocataireLoading(false);
+    }
+  }
+
+  function closeLocataire() {
+    setLocataireModal(null);
+    setLocataireData(null);
+  }
+
+  // Ouvre la messagerie avec ce locataire pré-sélectionné (fil de discussion).
+  function messageLocataire() {
+    const { id_user, first_name, last_name } = locataireData.locataire;
+    navigate('/proprietaire/messages', {
+      state: { openUser: { id_user, first_name, last_name, role: 'locataire' } },
+    });
+  }
+
+  // Ouvre le fichier dans un nouvel onglet : la route protégée renvoie un blob
+  // (le token est ajouté par l'intercepteur axios).
+  async function viewDocument(doc) {
+    setViewingDocId(doc.id_document);
+    try {
+      const res = await fetchDocumentFile(doc.id_document);
+      const url = URL.createObjectURL(res.data);
+      window.open(url, '_blank', 'noopener');
+    } catch {
+      showToast(t('proprietaireReservations.locataire.fileError'), 'error');
+    } finally {
+      setViewingDocId(null);
+    }
   }
 
   const filtered = useMemo(
@@ -437,6 +514,7 @@ function ProprietaireReservations() {
                 booking={b}
                 busy={busyId === b.id_booking}
                 onAction={handleAction}
+                onViewLocataire={openLocataire}
                 mirrored={i % 2 === 0}
               />
             </li>
@@ -587,6 +665,128 @@ function ProprietaireReservations() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal profil + documents du locataire */}
+      {locataireModal && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          onClick={closeLocataire}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="locataire-title"
+            className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <h2 id="locataire-title" className="text-lg font-semibold text-white">
+                {t('proprietaireReservations.locataire.title')}
+              </h2>
+              <button
+                type="button"
+                onClick={closeLocataire}
+                aria-label={t('proprietaireReservations.locataire.close')}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white ${FOCUS_RING}`}
+              >
+                ×
+              </button>
+            </div>
+
+            {locataireLoading || !locataireData ? (
+              <p className="mt-6 text-sm text-white/70">
+                {t('proprietaireReservations.locataire.loading')}
+              </p>
+            ) : (
+              <>
+                <div className="mt-4">
+                  <p className="text-base font-bold text-white">
+                    {locataireData.locataire.first_name} {locataireData.locataire.last_name}
+                  </p>
+                  <a
+                    href={`mailto:${locataireData.locataire.email}`}
+                    className={`text-sm text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                  >
+                    {locataireData.locataire.email}
+                  </a>
+                  <dl className="mt-3 flex flex-col gap-1.5 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-white/60">
+                        {t('proprietaireReservations.locataire.phone')}
+                      </dt>
+                      <dd className="text-white/90">
+                        {locataireData.locataire.phone || (
+                          <span className="text-white/50">
+                            {t('proprietaireReservations.locataire.noPhone')}
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-white/60">
+                        {t('proprietaireReservations.locataire.memberSince')}
+                      </dt>
+                      <dd className="text-white/90">
+                        {fmtDate(locataireData.locataire.created_at)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <button
+                    type="button"
+                    onClick={messageLocataire}
+                    className={`mt-4 w-full rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 ${FOCUS_RING}`}
+                  >
+                    {t('proprietaireReservations.locataire.sendMessage')}
+                  </button>
+                </div>
+
+                <h3 className="mt-5 mb-2 text-sm font-semibold text-white">
+                  {t('proprietaireReservations.locataire.documents')}
+                </h3>
+                {locataireData.documents.length === 0 ? (
+                  <p className="rounded-lg bg-white/5 px-3 py-3 text-sm text-white/60">
+                    {t('proprietaireReservations.locataire.noDocuments')}
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-2">
+                    {locataireData.documents.map((doc) => (
+                      <li
+                        key={doc.id_document}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-white">
+                            {t(`documentsManager.docTypes.locataire.${doc.type}.label`, {
+                              defaultValue: doc.type,
+                            })}
+                          </p>
+                          <span
+                            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                              DOC_STATUS_CLS[doc.status] || 'bg-slate-500/15 text-white/70'
+                            }`}
+                          >
+                            {t(`documentsManager.status.${doc.status}`, {
+                              defaultValue: doc.status,
+                            })}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={viewingDocId === doc.id_document}
+                          onClick={() => viewDocument(doc)}
+                          className={`shrink-0 rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                        >
+                          {t('proprietaireReservations.locataire.view')}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

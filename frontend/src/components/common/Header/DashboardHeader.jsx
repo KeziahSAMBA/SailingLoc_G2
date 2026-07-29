@@ -73,6 +73,8 @@ function DashboardHeader({
     contextualNavigationItems && leftGroups
       ? [{ items: contextualNavigationItems, heightPercent: '69%' }]
       : leftGroups;
+  const onProductPage =
+    location.pathname === '/product' || location.pathname.startsWith('/product/');
   const { user, logout } = useAuth();
   // Badge de messages non lus sur l'icône messagerie : rafraîchi à chaque
   // navigation ET en direct quand un fil est lu (événement émis par la
@@ -118,6 +120,10 @@ function DashboardHeader({
   function scrollToAnchor(anchor, targetPath = '/') {
     setNavOpen(false);
     const scroll = () => {
+      if (anchor === 'top') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       const el = document.getElementById(anchor);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
@@ -190,8 +196,8 @@ function DashboardHeader({
               side="left"
               open={navOpen}
               scrolled={scrolled}
-              width="min(320px, 86vw)"
-              darkerOverlay={onCategoriePage}
+              width="260px"
+              darkerOverlay={onCategoriePage || onProductPage}
             >
               <div className="h-full overflow-y-auto">
                 <div className="flex flex-col border-b border-white/15 py-2 lg:hidden">
@@ -434,8 +440,8 @@ function DashboardHeader({
             side="right"
             open={rightMenuOpen}
             scrolled={scrolled}
-            width={`min(${rightPanelWidth}, 86vw)`}
-            darkerOverlay={onCategoriePage}
+            width={rightPanelWidth}
+            darkerOverlay={onCategoriePage || onProductPage}
           >
             <div
               className={rightVariant === 'compact' ? 'flex flex-col pt-2' : 'flex flex-col'}

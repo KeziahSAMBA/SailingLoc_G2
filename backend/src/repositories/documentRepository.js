@@ -15,6 +15,16 @@ export async function findDocumentsByUserAndType(id_user, type) {
   return prisma.document.findMany({ where: { id_user, type } });
 }
 
+// Vrai si le locataire a (eu) une réservation sur un bateau du propriétaire :
+// borne l'accès du propriétaire aux documents de ce locataire.
+export async function hasBookingBetweenOwnerAndGuest(id_owner, id_guest) {
+  const booking = await prisma.booking.findFirst({
+    where: { deleted_at: null, id_user: id_guest, boat: { id_user: id_owner, deleted_at: null } },
+    select: { id_booking: true },
+  });
+  return Boolean(booking);
+}
+
 export async function findDocumentById(id_document) {
   return prisma.document.findUnique({ where: { id_document } });
 }
