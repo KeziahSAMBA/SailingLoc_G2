@@ -20,6 +20,9 @@ export async function getPublicReviews(req, res) {
         rating: true,
         comment: true,
         created_at: true,
+        booking: {
+          select: { id_boat: true },
+        },
         user: {
           select: {
             first_name: true,
@@ -49,6 +52,7 @@ export async function getPublicReviews(req, res) {
       }),
       text: r.comment,
       avatar: r.user.images[0]?.url ?? null,
+      boatId: r.booking.id_boat,
     }));
 
     res.json(formatted);

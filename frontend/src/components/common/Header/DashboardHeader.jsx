@@ -60,6 +60,8 @@ function DashboardHeader({
   // l'écran et descend à la révélation.
   const introHidden = useIntroHeaderReveal(introReveal);
   const onCategoriePage = location.pathname === '/categorie';
+  const onProductPage =
+    location.pathname === '/product' || location.pathname.startsWith('/product/');
   const { user, logout } = useAuth();
   // Badge de messages non lus sur l'icône messagerie : rafraîchi à chaque
   // navigation ET en direct quand un fil est lu (événement émis par la
@@ -105,6 +107,10 @@ function DashboardHeader({
   function scrollToAnchor(anchor, targetPath = '/') {
     setNavOpen(false);
     const scroll = () => {
+      if (anchor === 'top') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       const el = document.getElementById(anchor);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
@@ -167,7 +173,7 @@ function DashboardHeader({
               open={navOpen}
               scrolled={scrolled}
               width="260px"
-              darkerOverlay={onCategoriePage}
+              darkerOverlay={onCategoriePage || onProductPage}
             >
               <div style={{ height: '100%' }}>
                 {leftGroups.map((group, groupIdx) => (
@@ -399,7 +405,7 @@ function DashboardHeader({
             open={rightMenuOpen}
             scrolled={scrolled}
             width={rightPanelWidth}
-            darkerOverlay={onCategoriePage}
+            darkerOverlay={onCategoriePage || onProductPage}
           >
             <div
               className={rightVariant === 'compact' ? 'flex flex-col pt-2' : 'flex flex-col'}

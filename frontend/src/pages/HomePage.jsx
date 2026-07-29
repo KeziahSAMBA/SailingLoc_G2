@@ -162,15 +162,16 @@ function HomePage() {
   const stepsRef = useRef(null);
   const videoRef = useRef(null);
   const searchBarWrapRef = useRef(null);
+  // Conteneur des champs de la SearchBar (destination/dates/voyageurs),
+  // exposé par le composant : l'arrivée depuis la page produit y joue
+  // directement sa propre animation de largeur, cf. le FLIP plus bas.
+  const searchBarFieldsRef = useRef(null);
   const transitioningRef = useRef(false);
   const [dotsActive, setDotsActive] = useState(false);
   // Sortie vers /categorie ou /product/:id en cours : le hero s'anime hors
   // écran et le fond vidéo laisse place (crossfade) à l'image de fond de la
   // page de destination (cf. exitBgSrc, qui varie selon la cible).
   const [exiting, setExiting] = useState(false);
-  // Cible de la sortie en cours : seule la sortie vers la page produit
-  // rétracte la SearchBar (cf. SearchBar), en douceur, avant la navigation.
-  const [exitTarget, setExitTarget] = useState(null);
   const [exitBgSrc, setExitBgSrc] = useState(categoryBg);
   // Arrivée depuis /categorie ou /product/:id : les éléments du hero rentrent
   // depuis leur marge de sortie, la SearchBar revient en FLIP et l'image de
@@ -246,16 +247,15 @@ function HomePage() {
 
   // FLIP retour de la SearchBar : de sa position dans la barre sticky de
   // /categorie ou /product/:id vers son emplacement au centre du hero.
+  // Depuis la page produit uniquement : séquence en deux temps, comme
+  // catégorie ← produit — la barre se déploie d'abord (en parallèle direct
+  // sur le nœud des champs — un scale du bloc entier déformerait le texte),
+  // puis seulement ensuite se déplace. Depuis la catégorie (même échelle que
+  // le hero), translate + scale simultanés du bloc entier suffisent.
   useLayoutEffect(() => {
     const from = homeArrival?.searchBarRect;
     const el = searchBarWrapRef.current;
     if (!from || !el) return undefined;
-    // Depuis la page produit, la SearchBar y était rétractée à la mesure du
-    // rect (elle finit de se redéployer pendant la sortie) : un scale calculé
-    // sur ce rect produirait un effet de zoom. On ne garde alors que la
-    // continuité de position (translate seul) — déployée, la barre a déjà
-    // quasiment la taille naturelle du hero, et son bord gauche est le même
-    // rétractée ou déployée.
     const translateOnly = homeArrival?.from === 'product';
     const to = el.getBoundingClientRect();
     el.style.transformOrigin = 'top left';
@@ -265,23 +265,62 @@ function HomePage() {
       ? `translate(${from.left - to.left}px, ${from.top - to.top}px)`
       : `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
         `scale(${from.width / to.width}, ${from.height / to.height})`;
-    let raf2 = null;
-    const raf1 = window.requestAnimationFrame(() => {
-      raf2 = window.requestAnimationFrame(() => {
+    const fieldsEl = searchBarFieldsRef.current;
+    if (translateOnly && fieldsEl) {
+      // Repart de l'état rétracté de la page produit.
+      fieldsEl.style.transition = 'none';
+      fieldsEl.style.maxWidth = '0px';
+      fieldsEl.style.opacity = '0';
+    }
+    // Force le reflow avant d'activer la transition (comme le fait le
+    // mécanisme interne de la SearchBar, cf. son propre useLayoutEffect) : un
+    // seul rAF suffit alors, pas deux.
+    void el.offsetWidth;
+    // Durée totale partagée entre les deux étapes (et non ajoutée bout à
+    // bout) : la séquence complète doit tout de même atterrir à
+    // HERO_EXIT_DURATION, en même temps que le reste du hero.
+    const deployDuration = Math.round(HERO_EXIT_DURATION / 2);
+    const moveDuration = HERO_EXIT_DURATION - deployDuration;
+    let phaseTimer = null;
+    const raf = window.requestAnimationFrame(() => {
+      if (translateOnly && fieldsEl) {
+        const natural = fieldsEl.scrollWidth;
+        fieldsEl.style.transition = `max-width ${deployDuration}ms ${HERO_ENTER_EASING}, opacity ${deployDuration}ms ${HERO_ENTER_EASING}`;
+        fieldsEl.style.maxWidth = `${natural}px`;
+        fieldsEl.style.opacity = '1';
+        phaseTimer = setTimeout(() => {
+          // Lève le plafond figé (comme le mécanisme interne de la
+          // SearchBar une fois déployée) avant d'enchaîner sur la
+          // translation.
+          fieldsEl.style.transition = 'none';
+          fieldsEl.style.maxWidth = 'none';
+          el.style.transition = `transform ${moveDuration}ms ${HERO_ENTER_EASING}`;
+          el.style.transform = 'none';
+        }, deployDuration);
+      } else {
         el.style.transition = `transform ${HERO_EXIT_DURATION}ms ${HERO_ENTER_EASING}`;
         el.style.transform = 'none';
-      });
+      }
     });
     const resetStyles = () => {
       el.style.transform = '';
       el.style.transition = '';
       el.style.transformOrigin = '';
       el.style.willChange = '';
+      if (fieldsEl) {
+        // Cible réellement déployée (pas une chaîne vide) : effacer le
+        // style figerait la largeur à 0 — StrictMode, qui rejoue ce
+        // nettoyage avant même le premier rAF, verrait alors une SearchBar
+        // entièrement repliée.
+        fieldsEl.style.maxWidth = 'none';
+        fieldsEl.style.opacity = '1';
+        fieldsEl.style.transition = '';
+      }
     };
     const cleanupTimer = setTimeout(resetStyles, HERO_EXIT_DURATION + 100);
     return () => {
-      window.cancelAnimationFrame(raf1);
-      if (raf2) window.cancelAnimationFrame(raf2);
+      window.cancelAnimationFrame(raf);
+      clearTimeout(phaseTimer);
       clearTimeout(cleanupTimer);
       // État neutre pour la seconde passe de StrictMode, qui doit mesurer la
       // position naturelle et non celle déplacée par la première.
@@ -317,9 +356,9 @@ function HomePage() {
         if (cancelled) return;
         setExitBgSrc(targetBg);
         setExiting(true);
-        setExitTarget(target);
         setTransitionPayload(target, {
           searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
+          from: 'home',
         });
         navTimer = setTimeout(() => navigate(to), HERO_EXIT_DURATION);
       };
@@ -507,11 +546,7 @@ function HomePage() {
             </p>
           </div>
           <div ref={searchBarWrapRef} style={introFromBelowStyle}>
-            <SearchBar
-              light
-              retracted={exiting && exitTarget === 'product'}
-              retractDuration={HERO_EXIT_DURATION}
-            />
+            <SearchBar light fieldsElRef={searchBarFieldsRef} />
           </div>
           <div className="text-center" style={introFromBelowStyle}>
             <p

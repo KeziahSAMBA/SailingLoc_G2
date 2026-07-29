@@ -65,6 +65,7 @@ const PortCarousel = memo(
     visibleCount = 5,
     imageSize = 'small',
     variant = 'default',
+    theme = 'light',
     favoriteIds,
     onToggleFavorite,
     onSlideClick,
@@ -75,6 +76,14 @@ const PortCarousel = memo(
     const slideWidthPct = 100 / slides.length;
     const trackWidthPct = (slides.length / visibleCount) * 100;
     const aspectRatio = imageSize === 'small' ? '4 / 3' : '1 / 1';
+    const imgBorder = theme === 'dark' ? 'border-white/20' : 'border-black/40';
+    const arrowBtn =
+      theme === 'dark'
+        ? 'bg-white/10 hover:bg-white/25 text-white'
+        : 'bg-black/10 hover:bg-gray-300 text-gray-700';
+    const captionTitle = theme === 'dark' ? 'text-white' : 'text-black';
+    const captionMeta = theme === 'dark' ? 'text-white/70' : 'text-gray-600';
+    const captionSubtle = theme === 'dark' ? 'text-white/60' : 'text-gray-500';
 
     const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
     const next = useCallback(() => setIndex((i) => Math.min(maxIndex, i + 1)), [maxIndex]);
@@ -84,11 +93,11 @@ const PortCarousel = memo(
         {index > 0 && (
           <button
             onClick={prev}
-            className="absolute left-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
+            className={`absolute left-0 z-20 rounded-full p-1 shadow-lg transition-colors ${arrowBtn}`}
             style={{ transform: 'translate(-50%, 0)', top: '40%' }}
             aria-label={t('carrousel.prev')}
           >
-            <FaChevronLeft size={12} className="text-gray-700" />
+            <FaChevronLeft size={12} />
           </button>
         )}
 
@@ -112,7 +121,7 @@ const PortCarousel = memo(
                 {variant === 'overlay' ? (
                   <>
                     <div
-                      className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
+                      className={`relative rounded-[8px] overflow-hidden w-full border ${imgBorder}`}
                       style={{ aspectRatio }}
                     >
                       <img
@@ -150,12 +159,12 @@ const PortCarousel = memo(
                     </div>
                     <div className="mt-1 flex flex-col gap-0.5">
                       <span
-                        className="font-semibold text-black truncate"
+                        className={`font-semibold truncate ${captionTitle}`}
                         style={{ lineHeight: '15px' }}
                       >
                         <span style={{ fontSize: '14px' }}>{slide.label}</span>
                         {slide.city && (
-                          <span className="text-gray-500" style={{ fontSize: '12px' }}>
+                          <span className={captionSubtle} style={{ fontSize: '12px' }}>
                             {' '}
                             · {slide.city}
                           </span>
@@ -163,7 +172,7 @@ const PortCarousel = memo(
                       </span>
                       {(slide.dateStr || slide.capacity) && (
                         <span
-                          className="text-gray-600"
+                          className={captionMeta}
                           style={{ fontSize: '12px', lineHeight: '15px' }}
                         >
                           {[
@@ -177,7 +186,7 @@ const PortCarousel = memo(
                         </span>
                       )}
                       <span
-                        className="text-gray-600"
+                        className={captionMeta}
                         style={{ fontSize: '12px', lineHeight: '15px' }}
                       >
                         {[`${slide.price} ${t('carrousel.perDay')}`, slide.rating]
@@ -188,7 +197,7 @@ const PortCarousel = memo(
                   </>
                 ) : variant === 'port' ? (
                   <div
-                    className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
+                    className={`relative rounded-[8px] overflow-hidden w-full border ${imgBorder}`}
                     style={{ aspectRatio }}
                   >
                     <img
@@ -245,7 +254,7 @@ const PortCarousel = memo(
                 ) : (
                   <>
                     <div
-                      className="relative rounded-[8px] overflow-hidden w-full border border-black/40"
+                      className={`relative rounded-[8px] overflow-hidden w-full border ${imgBorder}`}
                       style={{ aspectRatio }}
                     >
                       <img
@@ -280,14 +289,14 @@ const PortCarousel = memo(
                       />
                     </div>
                     <span
-                      className="mt-1 text-center font-semibold text-black"
+                      className={`mt-1 text-center font-semibold ${captionTitle}`}
                       style={{ fontSize: '15px', lineHeight: '18px' }}
                     >
                       {slide.label}
                     </span>
                     {slide.description && (
                       <span
-                        className="text-center text-gray-600"
+                        className={`text-center ${captionMeta}`}
                         style={{ fontSize: '13px', lineHeight: '16px' }}
                       >
                         {slide.description}
@@ -303,11 +312,11 @@ const PortCarousel = memo(
         {index < maxIndex && (
           <button
             onClick={next}
-            className="absolute right-0 z-20 bg-black/10 hover:bg-gray-300 rounded-full p-1 shadow-lg transition-colors"
+            className={`absolute right-0 z-20 rounded-full p-1 shadow-lg transition-colors ${arrowBtn}`}
             style={{ transform: 'translate(50%, 0)', top: '40%' }}
             aria-label={t('carrousel.next')}
           >
-            <FaChevronRight size={12} className="text-gray-700" />
+            <FaChevronRight size={12} />
           </button>
         )}
       </div>
@@ -360,6 +369,7 @@ const CarouselSection = ({
         visibleCount={visibleCount}
         imageSize={imageSize}
         variant={variant}
+        theme={theme}
         favoriteIds={favoriteIds}
         onToggleFavorite={onToggleFavorite}
         onSlideClick={onSlideClick}
@@ -551,17 +561,15 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
     <div className="relative flex-1 flex flex-col items-center">
       <div
         ref={outerRef}
-        className={`relative overflow-hidden rounded-[12px] p-4 flex justify-center ${theme === 'light' ? 'border border-black/10' : 'border border-white/15'}`}
-        style={{ width: '100%' }}
+        className={`relative overflow-hidden rounded-[12px] p-4 flex justify-center ${theme === 'light' ? 'border border-black/10 bg-black/[0.03]' : 'border border-white/15 bg-white/5'}`}
+        style={{
+          width: '100%',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Fond flouté isolé des enfants animés en 3D : évite de recomposer le blur à chaque frame de la transition. */}
-        <div
-          aria-hidden="true"
-          className={`absolute inset-0 -z-10 ${theme === 'light' ? 'bg-black/[0.03]' : 'bg-white/5'}`}
-          style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
-        />
         <button
           onClick={goPrev}
           className="absolute left-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-1 shadow-lg transition-colors"
@@ -630,7 +638,13 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-const Carrousel = ({ theme = 'dark', similarTo = null }) => {
+// `glass` : sur la HomePage, seule la section "ports" (dégradé encore sombre
+// à cet endroit) respecte `theme` — les autres sections (recent, destinations,
+// popular, cheapest) restent forcées en 'light' car elles tombent sur la
+// portion blanche du dégradé. Une page entièrement sur fond photo (ex.
+// CategoryPage) a besoin que TOUTES les sections respectent `theme` : `glass`
+// lève ce forçage sans toucher au rendu de la HomePage (par défaut à false).
+const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
   const { t } = useTranslation();
   const goToCategory = useCategoryNavigate();
   const goToProduct = useProductNavigate();
@@ -783,14 +797,14 @@ const Carrousel = ({ theme = 'dark', similarTo = null }) => {
   );
 
   // Mode « embarcations similaires » (page produit) : une seule rangée de
-  // bateaux du même type ou du même port que le bateau consulté, complétée
-  // par les plus populaires, plutôt que toutes les sections d'accueil.
+  // bateaux du même type ET du même port que le bateau consulté, complétée
+  // par les plus populaires (si pas assez de correspondances strictes),
+  // plutôt que toutes les sections d'accueil.
   const similarSlides = useMemo(() => {
     if (!similarTo) return [];
     const others = boats.filter((b) => b.id_boat !== similarTo.id);
     const related = others.filter(
-      (b) =>
-        b.type === similarTo.type || (similarTo.portCity && b.port?.city === similarTo.portCity)
+      (b) => b.type === similarTo.type && similarTo.portCity && b.port?.city === similarTo.portCity
     );
     const fillers = others
       .filter((b) => !related.includes(b))
@@ -868,7 +882,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null }) => {
             title={title}
             slides={slides}
             linkLabel={linkLabel}
-            theme={themed ? theme : 'light'}
+            theme={themed || glass ? theme : 'light'}
             variant={variant}
             favoriteIds={favoriteIds}
             onToggleFavorite={toggleFavorite}
