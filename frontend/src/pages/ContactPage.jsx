@@ -209,187 +209,184 @@ function ContactPage() {
 
       <div className="mx-auto max-w-4xl border-t border-white/15" />
 
-      {/* Formulaire de contact */}
-      <section aria-labelledby="form-title" className="w-full px-4 py-14">
-        <div className="mx-auto w-full max-w-2xl">
-          <div className="mb-10 text-center">
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
-              Écrivez-nous
-            </p>
-            <h2 id="form-title" className="text-3xl font-semibold text-white md:text-4xl">
-              Envoyer un message
-            </h2>
-          </div>
-
-          {formSent ? (
-            <div
-              role="status"
-              className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl"
-            >
-              <p className="text-lg font-semibold text-emerald-200">Message bien envoyé !</p>
-              <p className="mt-2 text-sm text-emerald-100/80">
-                Notre équipe vous répondra à l&apos;adresse indiquée sous 24 h ouvrées.
+      {/* Formulaire de contact et rubriques d'aide */}
+      <div className="w-full px-4 py-14">
+        <div className="mx-auto grid w-full max-w-7xl items-start gap-14 lg:grid-cols-2 lg:gap-10">
+          <section aria-labelledby="form-title" className="mx-auto w-full max-w-2xl">
+            <div className="mb-10 text-center">
+              <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
+                Écrivez-nous
               </p>
-              <button
-                type="button"
-                onClick={() => setFormSent(false)}
-                className={`mt-4 font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
-              >
-                Envoyer un autre message
-              </button>
+              <h2 id="form-title" className="text-3xl font-semibold text-white md:text-4xl">
+                Envoyer un message
+              </h2>
             </div>
-          ) : (
-            <form
-              onSubmit={handleFormSubmit}
-              className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl"
-            >
-              {formError && (
-                <div
-                  role="alert"
-                  className="mb-4 rounded-lg border border-red-300/50 bg-red-400/15 px-4 py-2 text-sm text-red-100"
-                >
-                  {formError}
-                </div>
-              )}
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="contact-name" className={labelLight}>
-                    Nom *
-                  </label>
-                  <input
-                    id="contact-name"
-                    name="name"
-                    type="text"
-                    required
-                    maxLength={150}
-                    value={form.name}
-                    onChange={handleFormChange}
-                    autoComplete="name"
-                    className={inputLight}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="contact-email" className={labelLight}>
-                    Email *
-                  </label>
-                  <input
-                    id="contact-email"
-                    name="email"
-                    type="email"
-                    required
-                    maxLength={255}
-                    value={form.email}
-                    onChange={handleFormChange}
-                    autoComplete="email"
-                    className={inputLight}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label htmlFor="contact-subject" className={labelLight}>
-                    Objet *
-                  </label>
-                  <input
-                    id="contact-subject"
-                    name="subject"
-                    type="text"
-                    required
-                    maxLength={200}
-                    value={form.subject}
-                    onChange={handleFormChange}
-                    placeholder="Ex. : question sur une réservation"
-                    className={inputLight}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label htmlFor="contact-message" className={labelLight}>
-                    Message *
-                  </label>
-                  <textarea
-                    id="contact-message"
-                    name="message"
-                    rows={5}
-                    required
-                    maxLength={5000}
-                    value={form.message}
-                    onChange={handleFormChange}
-                    placeholder="Décrivez votre demande…"
-                    className={inputLight}
-                  />
-                </div>
+            {formSent ? (
+              <div
+                role="status"
+                className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl"
+              >
+                <p className="text-lg font-semibold text-emerald-200">Message bien envoyé !</p>
+                <p className="mt-2 text-sm text-emerald-100/80">
+                  Notre équipe vous répondra à l&apos;adresse indiquée sous 24 h ouvrées.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setFormSent(false)}
+                  className={`mt-4 font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                >
+                  Envoyer un autre message
+                </button>
               </div>
-
-              <button
-                type="submit"
-                disabled={formBusy}
-                className={`mt-6 w-full rounded-full border border-white/40 bg-[rgba(14,165,233,0.55)] px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition hover:border-white/20 hover:bg-[rgba(10,49,114,0.95)] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_LIGHT}`}
-              >
-                {formBusy ? 'Envoi…' : 'Envoyer le message'}
-              </button>
-            </form>
-          )}
-        </div>
-      </section>
-
-      <div className="mx-auto max-w-4xl border-t border-white/15" />
-
-      {/* Rubriques d'aide / FAQ */}
-      <section aria-labelledby="faq-title" className="w-full px-4 py-14">
-        <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-10 text-center">
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
-              FAQ
-            </p>
-            <h2 id="faq-title" className="text-3xl font-semibold text-white md:text-4xl">
-              Rubriques d&apos;aide
-            </h2>
-          </div>
-
-          <div className="space-y-3">
-            {FAQ.map((item) => (
-              <details
-                key={item.q}
-                className="group rounded-2xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-xl open:bg-white/15 open:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
-              >
-                <summary
-                  className={`flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 text-sm font-semibold text-white transition hover:text-sky-300 [&::-webkit-details-marker]:hidden ${FOCUS_LIGHT}`}
-                >
-                  {item.q}
-                  <span
-                    aria-hidden="true"
-                    className="shrink-0 text-sky-300 transition-transform group-open:rotate-45"
-                  >
-                    +
-                  </span>
-                </summary>
-                <p className="px-5 pb-4 text-sm leading-relaxed text-white/65">{item.a}</p>
-              </details>
-            ))}
-          </div>
-
-          <p className="mt-8 rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-center text-sm text-white/70 shadow-sm backdrop-blur-xl">
-            Une autre question ?{' '}
-            {user ? (
-              <button
-                type="button"
-                onClick={openSupportChat}
-                disabled={chatBusy}
-                className={`font-medium text-sky-300 hover:text-sky-200 hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
-              >
-                Contactez-nous en direct
-              </button>
             ) : (
-              <Link
-                to="/login"
-                className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+              <form
+                onSubmit={handleFormSubmit}
+                className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl"
               >
-                Contactez-nous en direct
-              </Link>
-            )}{' '}
-            — nous sommes là pour vous aider.
-          </p>
+                {formError && (
+                  <div
+                    role="alert"
+                    className="mb-4 rounded-lg border border-red-300/50 bg-red-400/15 px-4 py-2 text-sm text-red-100"
+                  >
+                    {formError}
+                  </div>
+                )}
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="contact-name" className={labelLight}>
+                      Nom *
+                    </label>
+                    <input
+                      id="contact-name"
+                      name="name"
+                      type="text"
+                      required
+                      maxLength={150}
+                      value={form.name}
+                      onChange={handleFormChange}
+                      autoComplete="name"
+                      className={inputLight}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-email" className={labelLight}>
+                      Email *
+                    </label>
+                    <input
+                      id="contact-email"
+                      name="email"
+                      type="email"
+                      required
+                      maxLength={255}
+                      value={form.email}
+                      onChange={handleFormChange}
+                      autoComplete="email"
+                      className={inputLight}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="contact-subject" className={labelLight}>
+                      Objet *
+                    </label>
+                    <input
+                      id="contact-subject"
+                      name="subject"
+                      type="text"
+                      required
+                      maxLength={200}
+                      value={form.subject}
+                      onChange={handleFormChange}
+                      placeholder="Ex. : question sur une réservation"
+                      className={inputLight}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="contact-message" className={labelLight}>
+                      Message *
+                    </label>
+                    <textarea
+                      id="contact-message"
+                      name="message"
+                      rows={5}
+                      required
+                      maxLength={5000}
+                      value={form.message}
+                      onChange={handleFormChange}
+                      placeholder="Décrivez votre demande…"
+                      className={inputLight}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={formBusy}
+                  className={`mt-6 w-full rounded-full border border-white/40 bg-[rgba(14,165,233,0.55)] px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition hover:border-white/20 hover:bg-[rgba(10,49,114,0.95)] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_LIGHT}`}
+                >
+                  {formBusy ? 'Envoi…' : 'Envoyer le message'}
+                </button>
+              </form>
+            )}
+          </section>
+
+          <section aria-labelledby="faq-title" className="mx-auto w-full max-w-3xl">
+            <div className="mb-10 text-center">
+              <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
+                FAQ
+              </p>
+              <h2 id="faq-title" className="text-3xl font-semibold text-white md:text-4xl">
+                Rubriques d&apos;aide
+              </h2>
+            </div>
+
+            <div className="space-y-3">
+              {FAQ.map((item) => (
+                <details
+                  key={item.q}
+                  className="group rounded-2xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-xl open:bg-white/15 open:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
+                >
+                  <summary
+                    className={`flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 text-sm font-semibold text-white transition hover:text-sky-300 [&::-webkit-details-marker]:hidden ${FOCUS_LIGHT}`}
+                  >
+                    {item.q}
+                    <span
+                      aria-hidden="true"
+                      className="shrink-0 text-sky-300 transition-transform group-open:rotate-45"
+                    >
+                      +
+                    </span>
+                  </summary>
+                  <p className="px-5 pb-4 text-sm leading-relaxed text-white/65">{item.a}</p>
+                </details>
+              ))}
+            </div>
+
+            <p className="mt-8 rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-center text-sm text-white/70 shadow-sm backdrop-blur-xl">
+              Une autre question ?{' '}
+              {user ? (
+                <button
+                  type="button"
+                  onClick={openSupportChat}
+                  disabled={chatBusy}
+                  className={`font-medium text-sky-300 hover:text-sky-200 hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
+                >
+                  Contactez-nous en direct
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                >
+                  Contactez-nous en direct
+                </Link>
+              )}{' '}
+              — nous sommes là pour vous aider.
+            </p>
+          </section>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
