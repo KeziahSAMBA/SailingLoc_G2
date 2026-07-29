@@ -842,14 +842,14 @@ function CategoryPage() {
               </div>
               <div
                 ref={searchBarWrapRef}
-                className="w-full min-w-0 lg:w-fit lg:max-w-full lg:shrink"
+                className="w-full min-w-0 md:w-fit md:max-w-full md:self-center md:shrink lg:self-auto"
               >
                 <SearchBar
                   light
                   compact={scrolled}
                   retracted={exiting && exitTarget === 'product'}
                   retractDuration={CATEGORY_ENTER_TOTAL}
-                  fitContentOnDesktop
+                  fitContentOnTablet
                 />
               </div>
             </div>

@@ -59,6 +59,7 @@ function SearchBar({
   retracted: baseRetracted = false,
   retractDuration = DEFAULT_RETRACT_DURATION,
   fitContentOnDesktop = false,
+  fitContentOnTablet = false,
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -247,7 +248,11 @@ function SearchBar({
     <form
       onSubmit={handleSubmit}
       className={`mx-auto flex w-full max-w-4xl flex-col items-stretch gap-1 rounded-2xl border p-1 shadow-xl sm:flex-row sm:gap-0 sm:rounded-full sm:p-0.5 ${
-        fitContentOnDesktop ? 'lg:mx-0 lg:w-fit lg:max-w-full' : ''
+        fitContentOnTablet
+          ? 'md:w-fit md:max-w-full'
+          : fitContentOnDesktop
+            ? 'lg:mx-0 lg:w-fit lg:max-w-full'
+            : ''
       }`}
       style={{
         backgroundColor: compact
@@ -272,7 +277,11 @@ function SearchBar({
       <div
         ref={fieldsRef}
         className={`flex w-full flex-col items-stretch sm:w-auto sm:flex-row sm:overflow-hidden ${
-          fitContentOnDesktop ? 'lg:min-w-0 lg:shrink' : ''
+          fitContentOnTablet
+            ? 'md:min-w-0 md:shrink'
+            : fitContentOnDesktop
+              ? 'lg:min-w-0 lg:shrink'
+              : ''
         } ${
           retracted
             ? 'max-h-0 overflow-hidden sm:max-h-none'
@@ -286,7 +295,7 @@ function SearchBar({
       >
         <div
           className={`relative mx-0.5 flex flex-1 flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-6 sm:py-0.5 ${
-            fitContentOnDesktop ? 'lg:min-w-0' : ''
+            fitContentOnTablet ? 'md:min-w-0' : fitContentOnDesktop ? 'lg:min-w-0' : ''
           } ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         >
           <span
