@@ -213,8 +213,11 @@ function ContactPage() {
 
       {/* Formulaire de contact et rubriques d'aide */}
       <div className="w-full px-4 py-14">
-        <div className="mx-auto grid w-full max-w-7xl items-start gap-14 lg:grid-cols-2 lg:gap-10">
-          <section aria-labelledby="form-title" className="mx-auto w-full max-w-2xl">
+        <div className="mx-auto grid w-full max-w-7xl items-start gap-14 lg:grid-cols-2 lg:items-stretch lg:gap-10">
+          <section
+            aria-labelledby="form-title"
+            className="mx-auto w-full max-w-2xl lg:flex lg:h-full lg:flex-col"
+          >
             <div className="mb-10 text-center">
               <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
                 Écrivez-nous
@@ -227,7 +230,7 @@ function ContactPage() {
             {formSent ? (
               <div
                 role="status"
-                className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl"
+                className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl lg:flex lg:flex-1 lg:flex-col lg:items-center lg:justify-center"
               >
                 <p className="text-lg font-semibold text-emerald-200">Message bien envoyé !</p>
                 <p className="mt-2 text-sm text-emerald-100/80">
@@ -244,7 +247,7 @@ function ContactPage() {
             ) : (
               <form
                 onSubmit={handleFormSubmit}
-                className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl"
+                className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl lg:flex lg:flex-1 lg:flex-col"
               >
                 {formError && (
                   <div
@@ -255,7 +258,7 @@ function ContactPage() {
                   </div>
                 )}
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2 lg:flex-1 lg:grid-rows-[auto_auto_minmax(0,1fr)]">
                   <div>
                     <label htmlFor="contact-name" className={labelLight}>
                       Nom *
@@ -304,7 +307,7 @@ function ContactPage() {
                       className={inputLight}
                     />
                   </div>
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2 lg:flex lg:min-h-0 lg:flex-col">
                     <label htmlFor="contact-message" className={labelLight}>
                       Message *
                     </label>
@@ -317,7 +320,7 @@ function ContactPage() {
                       value={form.message}
                       onChange={handleFormChange}
                       placeholder="Décrivez votre demande…"
-                      className={inputLight}
+                      className={`${inputLight} lg:min-h-0 lg:flex-1`}
                     />
                   </div>
                 </div>
