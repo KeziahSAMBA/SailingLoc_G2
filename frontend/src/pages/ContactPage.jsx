@@ -55,6 +55,7 @@ const inputLight =
 const labelLight = 'mb-1.5 block text-sm font-medium text-white/80';
 
 const PHOTO_BG_STYLE = {
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
   backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${bateauBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
