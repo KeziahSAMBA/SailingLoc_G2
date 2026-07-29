@@ -131,7 +131,10 @@ function ContactPage() {
   return (
     <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
       {/* Hero de la page Contact */}
-      <section className="relative flex min-h-[45vh] w-full flex-col items-center justify-center overflow-hidden px-4 pt-[96px]">
+      <section
+        id="contact-hero"
+        className="relative flex min-h-[45vh] w-full scroll-mt-[80px] flex-col items-center justify-center overflow-hidden px-4 pt-[96px]"
+      >
         <div className="relative text-center">
           <h1 className="text-4xl font-semibold text-white md:text-5xl">Contact &amp; aide</h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">
@@ -143,7 +146,11 @@ function ContactPage() {
       <div className="mx-auto max-w-4xl border-t border-white/15" />
 
       {/* Coordonnées */}
-      <section aria-labelledby="coordonnees-title" className="w-full px-4 py-14">
+      <section
+        id="contact-details"
+        aria-labelledby="coordonnees-title"
+        className="w-full scroll-mt-[80px] px-4 py-14"
+      >
         <div className="mx-auto w-full max-w-5xl">
           <div className="mb-10 text-center">
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -215,8 +222,9 @@ function ContactPage() {
       <div className="w-full px-4 py-14">
         <div className="mx-auto grid w-full max-w-7xl items-start gap-14 lg:grid-cols-2 lg:items-stretch lg:gap-10">
           <section
+            id="contact-form"
             aria-labelledby="form-title"
-            className="mx-auto w-full max-w-2xl lg:flex lg:h-full lg:flex-col"
+            className="mx-auto w-full max-w-2xl scroll-mt-[80px] lg:flex lg:h-full lg:flex-col"
           >
             <div className="mb-10 text-center">
               <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -336,7 +344,11 @@ function ContactPage() {
             )}
           </section>
 
-          <section aria-labelledby="faq-title" className="mx-auto w-full max-w-3xl">
+          <section
+            id="contact-faq"
+            aria-labelledby="faq-title"
+            className="mx-auto w-full max-w-3xl scroll-mt-[80px]"
+          >
             <div className="mb-10 text-center">
               <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
                 FAQ

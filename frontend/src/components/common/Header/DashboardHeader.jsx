@@ -20,6 +20,7 @@ import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
 import { LANGUAGES } from './shared/languages.js';
 import { getAboutNavigationItems } from './shared/aboutNavigation.js';
+import { getContactNavigationItems } from './shared/contactNavigation.js';
 
 /**
  * Header shared by every authenticated role (admin, propriétaire, locataire).
@@ -62,9 +63,15 @@ function DashboardHeader({
   const introHidden = useIntroHeaderReveal(introReveal);
   const onCategoriePage = location.pathname === '/categorie';
   const onAboutPage = location.pathname === '/a-propos';
+  const onContactPage = location.pathname === '/contact';
+  const contextualNavigationItems = onAboutPage
+    ? getAboutNavigationItems(t)
+    : onContactPage
+      ? getContactNavigationItems(t)
+      : null;
   const resolvedLeftGroups =
-    onAboutPage && leftGroups
-      ? [{ items: getAboutNavigationItems(t), heightPercent: '69%' }]
+    contextualNavigationItems && leftGroups
+      ? [{ items: contextualNavigationItems, heightPercent: '69%' }]
       : leftGroups;
   const { user, logout } = useAuth();
   // Badge de messages non lus sur l'icône messagerie : rafraîchi à chaque
