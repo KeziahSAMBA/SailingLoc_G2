@@ -1,4 +1,14 @@
 import prisma from '../config/db.js';
+import { listBoatReviews } from '../services/reviewService.js';
+
+export async function getBoatReviews(req, res) {
+  try {
+    const reviews = await listBoatReviews(req.params.id_boat);
+    res.json({ reviews });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
 
 export async function getPublicReviews(req, res) {
   try {

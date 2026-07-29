@@ -16,6 +16,7 @@ import Breadcrumb from '../components/common/FilAriane.jsx';
 import MapView from '../components/common/MapView.jsx';
 import Carrousel from '../components/common/Carrousel.jsx';
 import ClientReviews from '../components/common/ClientReviews.jsx';
+import BoatReviews from '../components/common/BoatReviews.jsx';
 import GhostButton from '../components/common/GhostButton.jsx';
 import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import ShareButton from '../components/common/ShareButton.jsx';
@@ -741,9 +742,9 @@ function ProductPage() {
                         <span className="text-white/70">
                           {' '}
                           ({t('product.header.ratings', { count: boat.review_count })}) ·{' '}
-                          <span className="underline">
+                          <a href="#avis-bateau" className="underline transition hover:text-white">
                             {t('product.header.comments', { count: boat.comment_count })}
-                          </span>
+                          </a>
                         </span>
                       </>
                     ) : (
@@ -900,10 +901,19 @@ function ProductPage() {
           )}
         </div>
 
-        {/* Section 5 — Avis clients, également habillée du fond photo + verre. */}
+        {/* Section 5 — Avis sur ce bateau puis avis clients globaux, tous deux
+            habillés du fond photo + verre. */}
         {belowFoldReady && (
           <div className="relative" style={PHOTO_BG_STYLE}>
-            <ClientReviews light id="avis" className="py-10 scroll-mt-[60px]" />
+            {boat && (
+              <BoatReviews
+                idBoat={boat.id_boat}
+                user={user}
+                id="avis-bateau"
+                className="py-10 scroll-mt-[60px]"
+              />
+            )}
+            <ClientReviews light id="avis" className="pb-10 scroll-mt-[60px]" />
           </div>
         )}
 
