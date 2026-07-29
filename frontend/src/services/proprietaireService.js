@@ -11,6 +11,11 @@ export function getBookings() {
   return api.get('/users/me/proprietaire/bookings');
 }
 
+// Profil et documents d'identité du locataire d'une réservation reçue.
+export function getBookingLocataire(idBooking) {
+  return api.get(`/users/me/proprietaire/bookings/${idBooking}/locataire`);
+}
+
 // Confirme, refuse ou annule une réservation (action: 'confirm' | 'refuse' | 'cancel').
 export function updateBookingStatus(idBooking, action, reason) {
   return api.patch(`/users/me/proprietaire/bookings/${idBooking}`, {
