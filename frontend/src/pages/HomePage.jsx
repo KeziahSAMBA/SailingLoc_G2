@@ -508,14 +508,14 @@ function HomePage() {
           </div>
           <div
             ref={searchBarWrapRef}
-            className="w-full max-w-4xl lg:w-fit lg:max-w-full"
+            className="w-full max-w-4xl md:w-fit md:max-w-full"
             style={introFromBelowStyle}
           >
             <SearchBar
               light
               retracted={exiting && exitTarget === 'product'}
               retractDuration={HERO_EXIT_DURATION}
-              fitContentOnDesktop
+              fitContentOnTablet
             />
           </div>
           <div className="text-center" style={introFromBelowStyle}>
