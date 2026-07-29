@@ -392,9 +392,7 @@ function LocataireReservations() {
       setReviewRating(0);
       setReviewComment('');
     } catch (err) {
-      setReviewError(
-        err.response?.data?.message || t('locataireReservations.toasts.reviewError')
-      );
+      setReviewError(err.response?.data?.message || t('locataireReservations.toasts.reviewError'));
     } finally {
       setBusyId(null);
     }
@@ -619,9 +617,7 @@ function LocataireReservations() {
                 <p className="text-xs text-white/50">
                   {t('locataireReservations.reviewModal.moderationHint')}
                 </p>
-                <span className="shrink-0 text-xs text-white/50">
-                  {reviewComment.length}/1000
-                </span>
+                <span className="shrink-0 text-xs text-white/50">{reviewComment.length}/1000</span>
               </div>
 
               {reviewError && (

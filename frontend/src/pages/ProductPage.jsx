@@ -355,8 +355,7 @@ function ProductPage() {
             booking.status === 'confirmed' &&
             endDate < today &&
             !booking.reviewed &&
-            (!Number.isInteger(requestedBookingId) ||
-              booking.id_booking === requestedBookingId)
+            (!Number.isInteger(requestedBookingId) || booking.id_booking === requestedBookingId)
           );
         });
         setReviewBooking(eligible || null);
@@ -389,9 +388,7 @@ function ProductPage() {
       setReviewComment('');
       showToast(t('locataireReservations.toasts.reviewSubmitted'), 'success');
     } catch (err) {
-      setReviewError(
-        err.response?.data?.message || t('locataireReservations.toasts.reviewError')
-      );
+      setReviewError(err.response?.data?.message || t('locataireReservations.toasts.reviewError'));
     } finally {
       setReviewSaving(false);
     }
@@ -667,7 +664,11 @@ function ProductPage() {
                     colonne que les photos plutôt qu'après toute la ligne
                     (aside compris) — montées après l'animation d'entrée. */}
                 {!belowFoldReady && (
-                  <div className="order-3 xl:order-none" style={{ height: '60vh' }} aria-hidden="true" />
+                  <div
+                    className="order-3 xl:order-none"
+                    style={{ height: '60vh' }}
+                    aria-hidden="true"
+                  />
                 )}
                 {belowFoldReady && (
                   <>
@@ -1038,9 +1039,7 @@ function ProductPage() {
                       {t('product.booking.secure')}
                     </p>
                     <div className="border-t border-white/20 pt-3 text-center">
-                      <p className="mb-2 text-xs text-white/70">
-                        {t('product.ownerContact.text')}
-                      </p>
+                      <p className="mb-2 text-xs text-white/70">{t('product.ownerContact.text')}</p>
                       <button
                         type="button"
                         onClick={handleContactOwner}

@@ -161,10 +161,7 @@ function AboutPage() {
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
               {t('aboutPage.destinations.kicker')}
             </p>
-            <h2
-              id="destinations-title"
-              className="text-3xl font-semibold text-white md:text-4xl"
-            >
+            <h2 id="destinations-title" className="text-3xl font-semibold text-white md:text-4xl">
               {t('aboutPage.destinations.title')}
             </h2>
           </div>

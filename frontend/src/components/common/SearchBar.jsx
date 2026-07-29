@@ -332,7 +332,9 @@ function SearchBar({
           )}
         </div>
 
-        <div className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`} />
+        <div
+          className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`}
+        />
         <DateRangePicker
           start={start}
           end={end}
@@ -341,7 +343,9 @@ function SearchBar({
           isDateAvailable={isDateAvailable}
           light={light}
         />
-        <div className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`} />
+        <div
+          className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`}
+        />
 
         <div
           className={`mx-0.5 flex flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-5 sm:py-0.5 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}

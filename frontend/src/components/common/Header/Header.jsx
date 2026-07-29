@@ -209,11 +209,7 @@ function Header() {
             <div className="flex h-full flex-col overflow-y-auto">
               <div className="flex flex-col border-b border-white/15 py-2 lg:hidden">
                 {getNavLinks(t).map(([label, href]) => (
-                  <PanelLink
-                    key={href}
-                    scrolled={scrolled}
-                    onClick={() => handleNavClick(href)}
-                  >
+                  <PanelLink key={href} scrolled={scrolled} onClick={() => handleNavClick(href)}>
                     {label}
                   </PanelLink>
                 ))}
