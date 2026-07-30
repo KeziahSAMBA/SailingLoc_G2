@@ -25,7 +25,6 @@ import { useFavorites } from '../hooks/useFavorites.js';
 import { fetchBoats } from '../services/boatService.js';
 import { fetchPorts } from '../services/portService.js';
 import { trackSiteSearch } from '../utils/analyticsClient.js';
-import { trackSiteSearch } from '../utils/matomo.js';
 import { correctPortPosition, scatterBoatPosition } from '../utils/mapPosition.js';
 import {
   readTransitionPayload,

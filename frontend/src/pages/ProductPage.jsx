@@ -1174,6 +1174,7 @@ function ProductPage() {
               light
               wide
               boatId={boatId}
+              commentsOnly
               id="avis"
               className="py-10"
               style={{ scrollMarginTop: ANCHOR_OFFSETS.avis }}

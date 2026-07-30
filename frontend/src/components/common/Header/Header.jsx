@@ -179,15 +179,17 @@ function Header() {
   const onCategoriePage = location.pathname === '/categorie';
   const onAboutPage = location.pathname === '/a-propos';
   const onContactPage = location.pathname === '/contact';
-  const burgerItems = onCategoriePage
-    ? getCategoryBurgerItems(t)
-    : onAboutPage
-      ? getAboutNavigationItems(t)
-      : onContactPage
-        ? getContactNavigationItems(t)
-        : getBurgerItems(t);
   const onProductPage =
     location.pathname === '/product' || location.pathname.startsWith('/product/');
+  const burgerItems = onProductPage
+    ? getProductBurgerItems(t)
+    : onCategoriePage
+      ? getCategoryBurgerItems(t)
+      : onAboutPage
+        ? getAboutNavigationItems(t)
+        : onContactPage
+          ? getContactNavigationItems(t)
+          : getBurgerItems(t);
 
   return (
     <header
@@ -230,30 +232,38 @@ function Header() {
             side="left"
             open={menuOpen}
             scrolled={scrolled}
-            width="260px"
+            width="min(320px, 86vw)"
             darkerOverlay={onCategoriePage || onProductPage}
           >
-            <div className="flex flex-col" style={{ height: onCategoriePage ? '41%' : '69%' }}>
-              {(onProductPage
-                ? getProductBurgerItems(t)
-                : onCategoriePage
-                  ? getCategoryBurgerItems(t)
-                  : getBurgerItems(t)
-              ).map(({ label, anchor }) => (
-                <PanelLink
-                  key={label}
-                  scrolled={scrolled}
-                  stretch
-                  onClick={() =>
-                    scrollToAnchor(
-                      anchor,
-                      onProductPage ? location.pathname : onCategoriePage ? '/categorie' : '/'
-                    )
-                  }
-                >
-                  {label}
-                </PanelLink>
-              ))}
+            <div className="flex h-full flex-col overflow-y-auto">
+              <div className="flex flex-col border-b border-white/15 py-2 lg:hidden">
+                {getNavLinks(t).map(([label, href]) => (
+                  <PanelLink key={href} scrolled={scrolled} onClick={() => handleNavClick(href)}>
+                    {label}
+                  </PanelLink>
+                ))}
+              </div>
+              <div
+                className="flex min-h-0 flex-1 flex-col"
+                style={{ maxHeight: onCategoriePage ? '41%' : '69%' }}
+              >
+                {burgerItems.map(({ label, anchor, path }) => (
+                  <PanelLink
+                    key={anchor}
+                    scrolled={scrolled}
+                    stretch
+                    onClick={() =>
+                      scrollToAnchor(
+                        anchor,
+                        path ??
+                          (onProductPage ? location.pathname : onCategoriePage ? '/categorie' : '/')
+                      )
+                    }
+                  >
+                    {label}
+                  </PanelLink>
+                ))}
+              </div>
             </div>
           </SidePanel>
         </div>

@@ -687,7 +687,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 // portion blanche du dégradé. Une page entièrement sur fond photo (ex.
 // CategoryPage) a besoin que TOUTES les sections respectent `theme` : `glass`
 // lève ce forçage sans toucher au rendu de la HomePage (par défaut à false).
-const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
+const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly = false }) => {
   const { t } = useTranslation();
   const goToCategory = useCategoryNavigate();
   const goToProduct = useProductNavigate();

@@ -21,6 +21,7 @@ export const TEXTS = {
       details: { fr: 'Nous joindre', en: 'Contact us' },
       form: { fr: 'Écrivez-nous', en: 'Write to us' },
       faq: { fr: 'FAQ', en: 'FAQ' },
+    },
     burgerProduct: {
       booking: { fr: 'Location', en: 'Booking' },
       specs: { fr: 'Caractéristiques', en: 'Features' },

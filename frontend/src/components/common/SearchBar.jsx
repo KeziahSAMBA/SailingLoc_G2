@@ -60,6 +60,8 @@ function SearchBar({
   compact = false,
   retracted: baseRetracted = false,
   retractDuration = DEFAULT_RETRACT_DURATION,
+  fitContentOnDesktop = false,
+  fitContentOnTablet = false,
   // Ref optionnelle vers le conteneur des champs (fieldsRef ci-dessous),
   // exposée aux pages à transition : elles y jouent leur propre animation de
   // largeur (démarrée avant la navigation, terminée après) directement sur ce

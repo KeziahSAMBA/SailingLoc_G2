@@ -143,6 +143,7 @@ export default function ClientReviews({
   light = false,
   wide = false,
   boatId = null,
+  commentsOnly = false,
   children,
 }) {
   const { t } = useTranslation();
