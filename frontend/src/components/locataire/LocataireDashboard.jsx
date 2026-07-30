@@ -52,7 +52,7 @@ function StatCard({ label, value, accent, to, loading }) {
   const { t } = useTranslation();
   const display = loading ? '…' : NUMBER.format(value ?? 0);
   return (
-    <li>
+    <li className="h-full">
       <Link
         to={to}
         aria-label={
@@ -60,7 +60,7 @@ function StatCard({ label, value, accent, to, loading }) {
             ? t('locataireDashboard.statLoading', { label })
             : t('locataireDashboard.statValue', { label, value: display })
         }
-        className={`block rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 transition hover:border-white/40 hover:bg-white/15 ${FOCUS_RING}`}
+        className={`block h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 transition hover:border-white/40 hover:bg-white/15 ${FOCUS_RING}`}
       >
         <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
           {label}
@@ -331,7 +331,7 @@ function LocataireDashboard() {
       </h2>
       <ul
         aria-labelledby="kpis-title"
-        className="mt-6 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4"
+        className="mt-6 grid auto-rows-fr list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
           label={t('locataireDashboard.stats.activeBookings')}
