@@ -70,12 +70,24 @@ function displayName(user) {
 // Messagerie interne (thème sombre) : liste des conversations + fil ouvert.
 // `externalUser` permet à la page hôte (ex. recherche admin) d'ouvrir une
 // conversation avec quelqu'un qui n'apparaît pas encore dans la liste.
-function Messenger({ externalUser = null, tabletConversationDropdown = false }) {
+function Messenger({
+  externalUser = null,
+  tabletConversationDropdown = false,
+  relativeUnits = false,
+}) {
   const { user: me } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
   const roleLabel = (role) =>
     role === 'admin' ? 'SailingLoc' : t(`messenger.roles.${role}`, { defaultValue: role });
+  const sidebarGridClass = relativeUnits ? 'lg:grid-cols-[20rem_1fr]' : 'lg:grid-cols-[320px_1fr]';
+  const microTextClass = relativeUnits ? 'text-[0.625rem]' : 'text-[10px]';
+  const desktopPanelBoundsClass = relativeUnits
+    ? 'lg:max-h-[45rem] lg:min-h-[26.25rem]'
+    : 'lg:max-h-[720px] lg:min-h-[420px]';
+  const panelBoundsClass = relativeUnits
+    ? 'max-h-[45rem] min-h-[26.25rem]'
+    : 'max-h-[720px] min-h-[420px]';
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null); // interlocuteur { id_user, ... }
@@ -254,7 +266,7 @@ function Messenger({ externalUser = null, tabletConversationDropdown = false }) 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread, 0);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+    <div className={`grid gap-4 ${sidebarGridClass}`}>
       {/* Mobile : quand le fil est affiché, bouton pour revenir à la liste. */}
       {!listOpen && (
         <button
@@ -266,7 +278,9 @@ function Messenger({ externalUser = null, tabletConversationDropdown = false }) 
         >
           ← {t('messenger.conversations')}
           {totalUnread > 0 && (
-            <span className="rounded-full bg-[#5AB4EC] px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
+            <span
+              className={`rounded-full bg-[#5AB4EC] px-1.5 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+            >
               {totalUnread}
             </span>
           )}
@@ -291,7 +305,9 @@ function Messenger({ externalUser = null, tabletConversationDropdown = false }) 
           </span>
           <span className="flex shrink-0 items-center gap-2">
             {totalUnread > 0 && (
-              <span className="rounded-full bg-[#5AB4EC] px-2 py-0.5 text-[10px] font-bold text-slate-950">
+              <span
+                className={`rounded-full bg-[#5AB4EC] px-2 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+              >
                 {totalUnread}
               </span>
             )}
@@ -322,7 +338,7 @@ function Messenger({ externalUser = null, tabletConversationDropdown = false }) 
         aria-label={t('messenger.conversations')}
         className={`${listOpen ? 'flex' : 'hidden'} ${
           tabletConversationDropdown ? (tabletListOpen ? 'md:flex' : 'md:hidden') : ''
-        } min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex lg:h-[70vh] lg:max-h-[720px] lg:min-h-[420px]`}
+        } min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex lg:h-[70vh] ${desktopPanelBoundsClass}`}
       >
         <h2
           className={`border-b border-white/20 px-4 py-3 text-sm font-semibold text-white/90 ${
@@ -362,7 +378,7 @@ function Messenger({ externalUser = null, tabletConversationDropdown = false }) 
                       <span className="min-w-0 truncate text-sm font-semibold text-white">
                         {displayName(c.user)}
                       </span>
-                      <span className="shrink-0 text-[10px] text-white/60">
+                      <span className={`shrink-0 text-white/60 ${microTextClass}`}>
                         {fmtTime(c.last_message?.sent_at)}
                       </span>
                     </span>
@@ -376,12 +392,16 @@ function Messenger({ externalUser = null, tabletConversationDropdown = false }) 
                         )}
                       </span>
                       {c.unread > 0 && (
-                        <span className="shrink-0 rounded-full bg-[#5AB4EC] px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
+                        <span
+                          className={`shrink-0 rounded-full bg-[#5AB4EC] px-1.5 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+                        >
                           {c.unread}
                         </span>
                       )}
                     </span>
-                    <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-white/60">
+                    <span
+                      className={`mt-0.5 block uppercase tracking-wide text-white/60 ${microTextClass}`}
+                    >
                       {roleLabel(c.user.role)}
                     </span>
                   </button>
@@ -397,7 +417,7 @@ function Messenger({ externalUser = null, tabletConversationDropdown = false }) 
         aria-label={t('messenger.threadAria')}
         className={`${listOpen ? 'hidden' : 'flex'} ${
           tabletConversationDropdown ? 'md:flex' : ''
-        } h-[70vh] max-h-[720px] min-h-[420px] min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex`}
+        } h-[70vh] min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex ${panelBoundsClass}`}
       >
         {!selected ? (
           <p className="m-auto px-6 text-center text-sm text-white/70">
@@ -487,7 +507,7 @@ function Messenger({ externalUser = null, tabletConversationDropdown = false }) 
                           <p className="whitespace-pre-wrap break-words">{m.content}</p>
                         )}
                         <p
-                          className={`mt-1 flex items-center justify-end gap-0.5 text-right text-[10px] ${
+                          className={`mt-1 flex items-center justify-end gap-0.5 text-right ${microTextClass} ${
                             m.from_me ? 'text-white/70' : 'text-white/60'
                           }`}
                         >
