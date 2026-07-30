@@ -149,13 +149,31 @@ export async function updateBookingReview(id_user, id_review, { rating, comment 
   });
 }
 
-// Avis reçus sur les bateaux du propriétaire (fil « Avis reçus ») : validés ET
-// en attente de modération (les refusés restent masqués). Le statut permet de
-// filtrer et de signaler les avis pas encore publics.
+// Le locataire supprime son propre avis : suppression douce, il sort des listes
+// publiques comme du fil du propriétaire.
+export async function deleteBookingReview(id_user, id_review) {
+  const review = await prisma.review.findFirst({
+    where: { id_review: Number(id_review), id_user, deleted_at: null },
+    select: { id_review: true },
+  });
+  if (!review) {
+    throw Object.assign(new Error('Avis introuvable.'), { status: 404 });
+  }
+
+  const now = new Date();
+  await prisma.review.update({
+    where: { id_review: review.id_review },
+    data: { deleted_at: now, updated_at: now },
+  });
+  return { id_review: review.id_review };
+}
+
+// Avis reçus sur les bateaux du propriétaire (fil « Avis reçus ») : uniquement
+// les avis validés, ceux en attente de modération restent masqués.
 export async function listOwnerReviews(id_owner) {
   const reviews = await prisma.review.findMany({
     where: {
-      status: { in: ['validated', 'pending'] },
+      status: 'validated',
       deleted_at: null,
       booking: { deleted_at: null, boat: { id_user: id_owner, deleted_at: null } },
     },

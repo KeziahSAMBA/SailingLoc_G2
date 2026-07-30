@@ -50,6 +50,12 @@ function fetchReviews() {
   return reviewsPromise;
 }
 
+// Après édition d'un avis : force un re-fetch au prochain montage du composant.
+export function invalidatePublicReviews() {
+  reviewsCache = null;
+  reviewsPromise = null;
+}
+
 const StarRating = memo(function StarRating({ rating }) {
   return (
     <div className="flex gap-0.5">
@@ -70,14 +76,17 @@ const ReviewCard = memo(function ReviewCard({
   rating,
   date,
   text,
+  owner_reply: ownerReply,
   avatar,
   light = false,
+  onEdit = null,
+  onDelete = null,
 }) {
   const { t } = useTranslation();
   const roleLabels = getRoleLabels(t);
   return (
     <div
-      className={`flex flex-col gap-2 py-3 px-5 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
+      className={`flex min-w-0 flex-col gap-2 py-3 px-5 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
       style={
         light ? { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } : undefined
       }
@@ -107,9 +116,47 @@ const ReviewCard = memo(function ReviewCard({
         <StarRating rating={rating} />
         <span className={`text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>{date}</span>
       </div>
-      <p className={`text-sm leading-relaxed ${light ? 'text-white/80' : 'text-gray-600'}`}>
+      <p
+        className={`break-words text-sm leading-relaxed ${light ? 'text-white/80' : 'text-gray-600'}`}
+      >
         {text}
       </p>
+      {ownerReply && (
+        <div
+          className={`rounded-lg border-l-2 px-3 py-2 ${light ? 'border-sky-400/60 bg-white/5' : 'border-sky-500/60 bg-sky-50'}`}
+        >
+          <p className={`text-xs font-semibold ${light ? 'text-sky-300' : 'text-sky-600'}`}>
+            {t('boatReviews.ownerReply')}
+          </p>
+          <p
+            className={`mt-0.5 break-words text-sm leading-relaxed ${light ? 'text-white/80' : 'text-gray-600'}`}
+          >
+            {ownerReply}
+          </p>
+        </div>
+      )}
+      {(onEdit || onDelete) && (
+        <div className="flex items-center gap-3">
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className={`text-xs font-semibold transition hover:underline ${light ? 'text-sky-300 hover:text-sky-200' : 'text-sky-600 hover:text-sky-700'}`}
+            >
+              {t('boatReviews.edit')}
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className={`text-xs font-semibold transition hover:underline ${light ? 'text-red-300 hover:text-red-200' : 'text-red-600 hover:text-red-700'}`}
+            >
+              {t('boatReviews.delete')}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 });
@@ -142,6 +189,9 @@ export default function ClientReviews({
   light = false,
   wide = false,
   boatId = null,
+  currentUserId = null,
+  onEditReview = null,
+  onDeleteReview = null,
   children,
 }) {
   const { t } = useTranslation();
@@ -287,6 +337,16 @@ export default function ClientReviews({
               <ReviewCard
                 key={review.id ?? `${review.name}_${review.created_at}`}
                 light={light}
+                onEdit={
+                  onEditReview && currentUserId === review.id_user
+                    ? () => onEditReview(review.id)
+                    : null
+                }
+                onDelete={
+                  onDeleteReview && currentUserId === review.id_user
+                    ? () => onDeleteReview(review.id)
+                    : null
+                }
                 {...review}
               />
             ))}

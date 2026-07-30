@@ -20,8 +20,6 @@ const STATUS_CLS = {
   pending: 'bg-amber-500/15 text-amber-300',
 };
 
-const FILTER_KEYS = ['all', 'validated', 'pending'];
-
 function Stars({ rating }) {
   return (
     <div className="flex gap-0.5" aria-label={`${rating}/5`}>
@@ -62,10 +60,10 @@ function ReviewCard({ review, onReplied }) {
 
   return (
     <article className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl">
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-sm font-bold text-white">{review.boat?.name}</h3>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <h3 className="min-w-0 break-words text-sm font-bold text-white">{review.boat?.name}</h3>
         <span className="text-xs text-white/50">·</span>
-        <span className="text-xs text-white/70">{review.author}</span>
+        <span className="min-w-0 break-words text-xs text-white/70">{review.author}</span>
         <span
           className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
             STATUS_CLS[review.status] || 'bg-slate-500/15 text-white/70'
@@ -80,7 +78,7 @@ function ReviewCard({ review, onReplied }) {
       </div>
 
       {review.comment && (
-        <p className="mt-2 text-sm leading-relaxed text-white/80">{review.comment}</p>
+        <p className="mt-2 break-words text-sm leading-relaxed text-white/80">{review.comment}</p>
       )}
 
       {/* Réponse existante ou éditeur de réponse. */}
@@ -101,7 +99,9 @@ function ReviewCard({ review, onReplied }) {
               {t('proprietaireReviews.edit')}
             </button>
           </div>
-          <p className="mt-0.5 text-sm leading-relaxed text-white/80">{review.owner_reply}</p>
+          <p className="mt-0.5 break-words text-sm leading-relaxed text-white/80">
+            {review.owner_reply}
+          </p>
         </div>
       ) : (
         <form onSubmit={submit} className="mt-3">
@@ -150,7 +150,6 @@ function ProprietaireReviews() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('recent');
   const [rating, setRating] = useState('all');
   const [page, setPage] = useState(0);
@@ -159,10 +158,10 @@ function ProprietaireReviews() {
     document.title = t('proprietaireReviews.pageTitle');
   }, [t]);
 
-  // Un changement de filtre/tri ramène à la première page.
+  // Un changement de tri/filtre ramène à la première page.
   useEffect(() => {
     setPage(0);
-  }, [filter, sort, rating]);
+  }, [sort, rating]);
 
   useEffect(() => {
     getProprietaireReviews()
@@ -181,16 +180,10 @@ function ProprietaireReviews() {
     );
   }
 
-  const byStatus = reviews.filter((r) => filter === 'all' || r.status === filter);
-  const filtered = filterAndSortReviews(byStatus, { sort, rating });
+  const filtered = filterAndSortReviews(reviews, { sort, rating });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages - 1);
   const pageItems = filtered.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
-  const counts = {
-    all: reviews.length,
-    validated: reviews.filter((r) => r.status === 'validated').length,
-    pending: reviews.filter((r) => r.status === 'pending').length,
-  };
 
   return (
     <section aria-labelledby="reviews-title">
@@ -211,37 +204,13 @@ function ProprietaireReviews() {
       )}
 
       {!loading && reviews.length > 0 && (
-        <div
-          className="mb-5 flex flex-wrap gap-2"
-          role="group"
-          aria-label={t('proprietaireReviews.filterAria')}
-        >
-          {FILTER_KEYS.map((key) => {
-            const active = filter === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilter(key)}
-                aria-pressed={active}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
-                  active
-                    ? 'bg-sky-500 text-white'
-                    : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
-                }`}
-              >
-                {t(`proprietaireReviews.filters.${key}`)} ({counts[key]})
-              </button>
-            );
-          })}
-          <div className="ml-auto">
-            <ReviewFilterBar
-              sort={sort}
-              onSortChange={setSort}
-              rating={rating}
-              onRatingChange={setRating}
-            />
-          </div>
+        <div className="mb-5 flex justify-end">
+          <ReviewFilterBar
+            sort={sort}
+            onSortChange={setSort}
+            rating={rating}
+            onRatingChange={setRating}
+          />
         </div>
       )}
 
@@ -257,9 +226,11 @@ function ProprietaireReviews() {
         </p>
       ) : (
         <>
-          <ul className="grid gap-3">
+          {/* min-w-0 : sans ça un mot très long dans un avis élargit la piste de
+              grille au lieu d'être coupé, et la page déborde sur mobile. */}
+          <ul className="grid w-full gap-3">
             {pageItems.map((r) => (
-              <li key={r.id_review}>
+              <li key={r.id_review} className="min-w-0">
                 <ReviewCard review={r} onReplied={handleReplied} />
               </li>
             ))}

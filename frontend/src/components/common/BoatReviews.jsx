@@ -25,6 +25,12 @@ const GLASS_STYLE = {
   WebkitBackdropFilter: 'blur(20px)',
 };
 
+// Même verre que les cartes d'avis de ClientReviews, pour un rendu homogène.
+const CARD_GLASS_STYLE = {
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+};
+
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
@@ -65,7 +71,7 @@ function StarInput({ value, onChange, label }) {
 
 // Formulaire d'avis affiché sur la publication : dépôt (locataire éligible) ou
 // édition de son propre avis (mode `review`).
-function ReviewForm({ idBooking, review, onDone, onCancel }) {
+function ReviewForm({ idBooking, review, onDone, onCancel, style, className = '' }) {
   const editing = Boolean(review);
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -103,7 +109,11 @@ function ReviewForm({ idBooking, review, onDone, onCancel }) {
   }
 
   return (
-    <form onSubmit={submit} className="rounded-xl border border-white/15 bg-white/5 p-4">
+    <form
+      onSubmit={submit}
+      className={`rounded-xl border border-white/15 bg-white/5 p-4 ${className}`}
+      style={style}
+    >
       <p className="text-sm font-semibold text-white">
         {editing ? t('boatReviews.editTitle') : t('boatReviews.formTitle')}
       </p>
@@ -165,7 +175,16 @@ function ReviewForm({ idBooking, review, onDone, onCancel }) {
 // Avis validés d'un bateau, avec la réponse éventuelle du propriétaire, et le
 // formulaire de dépôt pour le locataire éligible. La section n'apparaît que s'il
 // y a des avis ou si l'utilisateur peut en laisser un.
-export default function BoatReviews({ idBoat, user, id, className = 'py-10' }) {
+export default function BoatReviews({
+  idBoat,
+  user,
+  id,
+  className = 'py-10',
+  style,
+  formOnly = false,
+  editingReviewId = null,
+  onEditingChange,
+}) {
   const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -216,6 +235,49 @@ export default function BoatReviews({ idBoat, user, id, className = 'py-10' }) {
   }, [idBoat, user]);
 
   const canReview = eligibleBooking != null;
+
+  // Mode formulaire seul : la liste est rendue à côté par ClientReviews, d'où
+  // vient aussi la demande d'édition (id de l'avis cliqué dans sa carte).
+  const editingReview = reviews.find((r) => r.id_review === editingReviewId) ?? null;
+
+  if (formOnly) {
+    if (!loaded) return null;
+    if (!canReview && !editingReview) return null;
+    return (
+      <section
+        id={id}
+        className={`flex w-full flex-col items-start px-28 ${className}`}
+        style={style}
+      >
+        {editingReview ? (
+          // key : sans remontage, l'instance du formulaire de dépôt serait
+          // réutilisée et garderait son état vide au lieu de l'avis à éditer.
+          <ReviewForm
+            key={`edit-${editingReview.id_review}`}
+            review={editingReview}
+            onDone={() => {
+              onEditingChange?.(null, true);
+              loadReviews();
+            }}
+            onCancel={() => onEditingChange?.(null, false)}
+            style={CARD_GLASS_STYLE}
+            className="w-full"
+          />
+        ) : (
+          canReview && (
+            <ReviewForm
+              key="create"
+              idBooking={eligibleBooking}
+              onDone={loadReviews}
+              style={CARD_GLASS_STYLE}
+              className="w-full"
+            />
+          )
+        )}
+      </section>
+    );
+  }
+
   const visible = filterAndSortReviews(reviews, { sort, rating });
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages - 1);
@@ -225,7 +287,11 @@ export default function BoatReviews({ idBoat, user, id, className = 'py-10' }) {
   if (reviews.length === 0 && !canReview) return null;
 
   return (
-    <section id={id} className={`flex w-full flex-col items-start pl-28 pr-24 ${className}`}>
+    <section
+      id={id}
+      className={`flex w-full flex-col items-start pl-28 pr-24 ${className}`}
+      style={style}
+    >
       <div
         className="flex w-full max-w-[919.9px] flex-col gap-5 rounded-2xl border px-10 py-8"
         style={GLASS_STYLE}
@@ -299,7 +365,9 @@ export default function BoatReviews({ idBoat, user, id, className = 'py-10' }) {
                   </div>
 
                   {r.comment && (
-                    <p className="mt-2 text-sm leading-relaxed text-white/80">{r.comment}</p>
+                    <p className="mt-2 break-words text-sm leading-relaxed text-white/80">
+                      {r.comment}
+                    </p>
                   )}
 
                   {r.owner_reply && (
@@ -307,7 +375,7 @@ export default function BoatReviews({ idBoat, user, id, className = 'py-10' }) {
                       <p className="text-xs font-semibold text-sky-300">
                         {t('boatReviews.ownerReply')}
                       </p>
-                      <p className="mt-0.5 text-sm leading-relaxed text-white/80">
+                      <p className="mt-0.5 break-words text-sm leading-relaxed text-white/80">
                         {r.owner_reply}
                       </p>
                     </div>

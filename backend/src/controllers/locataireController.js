@@ -15,6 +15,7 @@ import {
 import {
   createBookingReview,
   updateBookingReview,
+  deleteBookingReview,
   getReviewEligibility,
 } from '../services/reviewService.js';
 
@@ -84,6 +85,15 @@ export async function patchMyReview(req, res) {
   try {
     const review = await updateBookingReview(req.user.id_user, req.params.id_review, req.body);
     res.json({ review });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function deleteMyReview(req, res) {
+  try {
+    await deleteBookingReview(req.user.id_user, req.params.id_review);
+    res.status(204).end();
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

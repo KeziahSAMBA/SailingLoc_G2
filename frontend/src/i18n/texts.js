@@ -708,6 +708,16 @@ export const TEXTS = {
       en: 'You rented this boat — leave your review',
     },
     edit: { fr: 'Modifier', en: 'Edit' },
+    delete: { fr: 'Supprimer', en: 'Delete' },
+    deleteConfirm: {
+      fr: 'Supprimer définitivement votre avis ?',
+      en: 'Permanently delete your review?',
+    },
+    deleted: { fr: 'Votre avis a été supprimé.', en: 'Your review has been deleted.' },
+    deleteError: {
+      fr: 'La suppression a échoué, réessayez.',
+      en: 'Deletion failed, please try again.',
+    },
     editTitle: { fr: 'Modifier votre avis', en: 'Edit your review' },
     saveEdit: { fr: 'Enregistrer', en: 'Save' },
     cancel: { fr: 'Annuler', en: 'Cancel' },

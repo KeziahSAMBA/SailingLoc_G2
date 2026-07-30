@@ -20,6 +20,11 @@ export function updateReview(idReview, { rating, comment }) {
   return api.patch(`/users/me/reviews/${idReview}`, { rating, comment });
 }
 
+// Le locataire supprime son propre avis.
+export function deleteMyReview(idReview) {
+  return api.delete(`/users/me/reviews/${idReview}`);
+}
+
 // Avis reçus sur les bateaux du propriétaire connecté.
 export function getProprietaireReviews() {
   return api.get('/users/me/proprietaire/reviews');

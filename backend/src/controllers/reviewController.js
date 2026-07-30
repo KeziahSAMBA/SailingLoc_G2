@@ -17,9 +17,12 @@ export async function getPublicReviews(req, res) {
       orderBy: { created_at: 'desc' },
       select: {
         id_review: true,
+        // Auteur exposé pour que celui-ci retrouve son avis et puisse l'éditer.
+        id_user: true,
         rating: true,
         comment: true,
         created_at: true,
+        owner_reply: true,
         booking: {
           select: { id_boat: true },
         },
@@ -41,6 +44,7 @@ export async function getPublicReviews(req, res) {
 
     const formatted = reviews.map((r) => ({
       id: r.id_review,
+      id_user: r.id_user,
       name: `${r.user.first_name} ${r.user.last_name.charAt(0)}.`,
       role: r.user.role,
       rating: r.rating,
@@ -51,6 +55,7 @@ export async function getPublicReviews(req, res) {
         year: 'numeric',
       }),
       text: r.comment,
+      owner_reply: r.owner_reply,
       avatar: r.user.images[0]?.url ?? null,
       boatId: r.booking.id_boat,
     }));
