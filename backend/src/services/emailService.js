@@ -2,14 +2,29 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import { initConfig } from '../config/appConfig.js';
+import { mailgunApiTransport } from '../utils/mailgunTransport.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOGO_PATH = path.resolve(__dirname, '../assets/email/logo.webp');
 const LOGO_CID = 'sailingloc-logo';
 
 function createTransporter() {
-  const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, EMAIL_SECURE, EMAIL_IGNORE_TLS } =
-    initConfig();
+  const {
+    EMAIL_HOST,
+    EMAIL_PORT,
+    EMAIL_USER,
+    EMAIL_PASS,
+    EMAIL_SECURE,
+    EMAIL_IGNORE_TLS,
+    MAILGUN_API_KEY,
+    MAILGUN_DOMAIN,
+    MAILGUN_HOST,
+  } = initConfig();
+  if (MAILGUN_API_KEY && MAILGUN_DOMAIN) {
+    return nodemailer.createTransport(
+      mailgunApiTransport({ apiKey: MAILGUN_API_KEY, domain: MAILGUN_DOMAIN, host: MAILGUN_HOST })
+    );
+  }
   const port = Number(EMAIL_PORT);
   return nodemailer.createTransport({
     host: EMAIL_HOST,

@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:generate": "prisma generate",
+    "prisma:deploy": "prisma migrate deploy",
     "seed:reviews": "node prisma/addMissingReviews.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "lint": "eslint src/**/*.{js,mjs}",
