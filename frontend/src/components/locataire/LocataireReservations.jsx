@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { FaStar, FaRegStar } from 'react-icons/fa';
 import {
   getBookings,
   cancelBooking,
@@ -8,6 +9,7 @@ import {
   reportDispute,
   createBookingReview,
 } from '../../services/locataireService.js';
+import { createBookingReview } from '../../services/reviewService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
 import { formatDate } from '../../utils/formatDate.js';
@@ -81,7 +83,7 @@ function startsAfterToday(value) {
   return start > today;
 }
 
-function BookingCard({ booking, busy, onAction, mirrored }) {
+function BookingCard({ booking, busy, onAction, onReview, mirrored }) {
   const { t } = useTranslation();
   const boatLink = booking.boat?.id_boat != null ? `/product/${booking.boat.id_boat}` : '/product';
   const meta = getBookingStatus(t)[booking.status] || {
@@ -89,7 +91,6 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
     cls: 'bg-slate-500/15 text-white/80',
   };
   const port = booking.boat?.port;
-  const showReviewHint = booking.status === 'confirmed' && isPast(booking.end_date);
 
   // Sous-état de paiement affiché à côté du statut.
   const paymentBadge =
@@ -219,9 +220,10 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => onAction(booking, 'review')}
-                  className={`rounded-full bg-[#5AB4EC] px-3 py-1 text-xs font-semibold text-slate-950 transition hover:bg-[#ABD4FF] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  onClick={() => onReview(booking)}
+                  className={`inline-flex items-center gap-1 rounded-full bg-[#5AB4EC] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#4aa3db] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
+                  <FaStar aria-hidden className="text-[11px]" />
                   {t('locataireReservations.actions.review')}
                 </button>
               )}
@@ -263,6 +265,27 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
   );
 }
 
+// Sélecteur d'étoiles accessible (radiogroup) pour la note de l'avis.
+function StarInput({ value, onChange, label }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={value === n}
+          aria-label={String(n)}
+          onClick={() => onChange(n)}
+          className="text-2xl text-[#5AB4EC] transition hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] rounded"
+        >
+          {n <= value ? <FaStar aria-hidden /> : <FaRegStar aria-hidden />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function LocataireReservations() {
   const { t } = useTranslation();
   const [bookings, setBookings] = useState([]);
@@ -277,9 +300,11 @@ function LocataireReservations() {
   const [reasonError, setReasonError] = useState('');
   // Photos jointes au signalement : { file, url (aperçu à révoquer) }.
   const [photos, setPhotos] = useState([]);
+  // Modal d'avis : booking noté + note/commentaire saisis.
   const [reviewBooking, setReviewBooking] = useState(null);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewBusy, setReviewBusy] = useState(false);
   const [reviewError, setReviewError] = useState('');
   const { showToast } = useToast();
 
@@ -344,11 +369,11 @@ function LocataireReservations() {
   useEffect(() => {
     if (!reviewBooking) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape' && busyId !== reviewBooking.id_booking) closeReviewModal();
+      if (e.key === 'Escape' && !reviewBusy) setReviewBooking(null);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [reviewBooking, busyId]);
+  }, [reviewBooking, reviewBusy]);
 
   function handleAction(booking, action) {
     if (action === 'review') {
@@ -433,6 +458,44 @@ function LocataireReservations() {
       showToast(err.response?.data?.message || t('locataireReservations.toasts.error'), 'error');
     } finally {
       setBusyId(null);
+    }
+  }
+
+  function openReview(booking) {
+    setReviewBooking(booking);
+    setReviewRating(0);
+    setReviewComment('');
+    setReviewError('');
+  }
+
+  function closeReview() {
+    if (reviewBusy) return;
+    setReviewBooking(null);
+  }
+
+  async function submitReview(e) {
+    e.preventDefault();
+    if (reviewRating < 1) {
+      setReviewError(t('locataireReservations.reviewModal.ratingRequired'));
+      return;
+    }
+    setReviewBusy(true);
+    setReviewError('');
+    try {
+      await createBookingReview(reviewBooking.id_booking, {
+        rating: reviewRating,
+        comment: reviewComment.trim() || undefined,
+      });
+      // L'avis part en modération : on marque la réservation comme notée.
+      setBookings((prev) =>
+        prev.map((b) => (b.id_booking === reviewBooking.id_booking ? { ...b, reviewed: true } : b))
+      );
+      showToast(t('locataireReservations.reviewModal.sent'), 'success');
+      setReviewBooking(null);
+    } catch (err) {
+      setReviewError(err.response?.data?.message || t('locataireReservations.reviewModal.error'));
+    } finally {
+      setReviewBusy(false);
     }
   }
 
@@ -534,6 +597,7 @@ function LocataireReservations() {
                 booking={b}
                 busy={busyId === b.id_booking}
                 onAction={handleAction}
+                onReview={openReview}
                 mirrored={i % 2 === 0}
               />
             </li>
@@ -791,6 +855,83 @@ function LocataireReservations() {
                       : decision.action === 'refund'
                         ? t('locataireReservations.modal.submitRefund')
                         : t('locataireReservations.modal.submitDispute')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de dépôt d'avis */}
+      {reviewBooking && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          onClick={closeReview}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="locataire-review-title"
+            className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="locataire-review-title" className="text-lg font-semibold text-white">
+              {t('locataireReservations.reviewModal.title')}
+            </h2>
+            <p className="mt-1 text-sm text-white/70">{reviewBooking.boat?.name}</p>
+
+            <form onSubmit={submitReview}>
+              <span className="mb-1 mt-4 block text-xs font-medium text-white/70">
+                {t('locataireReservations.reviewModal.ratingLabel')}
+              </span>
+              <StarInput
+                value={reviewRating}
+                onChange={(n) => {
+                  setReviewRating(n);
+                  setReviewError('');
+                }}
+                label={t('locataireReservations.reviewModal.ratingLabel')}
+              />
+
+              <label
+                htmlFor="locataire-review-comment"
+                className="mb-1 mt-4 block text-xs font-medium text-white/70"
+              >
+                {t('locataireReservations.reviewModal.commentLabel')}
+              </label>
+              <textarea
+                id="locataire-review-comment"
+                rows={4}
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                maxLength={1000}
+                placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
+                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+              />
+
+              {reviewError && (
+                <p role="alert" className="mt-1 text-xs text-red-400">
+                  {reviewError}
+                </p>
+              )}
+
+              <div className="mt-5 flex justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={reviewBusy}
+                  onClick={closeReview}
+                  className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {t('locataireReservations.modal.back')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={reviewBusy}
+                  className={`rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                >
+                  {reviewBusy
+                    ? t('locataireReservations.modal.working')
+                    : t('locataireReservations.reviewModal.submit')}
                 </button>
               </div>
             </form>
