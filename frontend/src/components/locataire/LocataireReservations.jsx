@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FaStar } from 'react-icons/fa';
@@ -60,6 +60,93 @@ function matchesPeriod(booking, period) {
 
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+
+function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
+  const scrollRef = useRef(null);
+  const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
+
+  const updateScrollEdges = useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+
+    const tolerance = 2;
+    const next = {
+      left: node.scrollLeft > tolerance,
+      right: node.scrollLeft + node.clientWidth < node.scrollWidth - tolerance,
+    };
+
+    setScrollEdges((current) =>
+      current.left === next.left && current.right === next.right ? current : next
+    );
+  }, []);
+
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return undefined;
+
+    const frame = window.requestAnimationFrame(updateScrollEdges);
+    const resizeObserver = window.ResizeObserver
+      ? new window.ResizeObserver(updateScrollEdges)
+      : null;
+
+    resizeObserver?.observe(node);
+    window.addEventListener('resize', updateScrollEdges);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateScrollEdges);
+    };
+  }, [contentKey, updateScrollEdges]);
+
+  return (
+    <div className={`relative ${className}`}>
+      <div
+        ref={scrollRef}
+        onScroll={updateScrollEdges}
+        className="flex max-w-full snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] sm:snap-none sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+        role="group"
+        aria-label={ariaLabel}
+      >
+        {children}
+      </div>
+
+      {scrollEdges.left && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
+            <path
+              d="m12.5 5-5 5 5 5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+
+      {scrollEdges.right && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
+            <path
+              d="m7.5 5 5 5-5 5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+    </div>
+  );
+}
 
 function fmtDate(value) {
   return formatDate(value, DATE_OPTS);
@@ -469,10 +556,10 @@ function LocataireReservations() {
       )}
 
       {/* Filtres par statut */}
-      <div
-        className="mb-3 flex max-w-full snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] sm:snap-none sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
-        role="group"
-        aria-label={t('locataireReservations.filterAria')}
+      <ScrollableFilterRow
+        className="mb-3"
+        ariaLabel={t('locataireReservations.filterAria')}
+        contentKey={filters.map((f) => `${f.key}:${f.label}`).join('|')}
       >
         {filters.map((f) => {
           const active = filter === f.key;
@@ -492,13 +579,13 @@ function LocataireReservations() {
             </button>
           );
         })}
-      </div>
+      </ScrollableFilterRow>
 
       {/* Filtres par période (passées / en cours / à venir), cumulables avec le statut */}
-      <div
-        className="mb-5 flex max-w-full snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] sm:snap-none sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
-        role="group"
-        aria-label={t('locataireReservations.periodFilterAria')}
+      <ScrollableFilterRow
+        className="mb-5"
+        ariaLabel={t('locataireReservations.periodFilterAria')}
+        contentKey={periodFilters.map((f) => `${f.key}:${f.label}`).join('|')}
       >
         {periodFilters.map((f) => {
           const active = periodFilter === f.key;
@@ -518,7 +605,7 @@ function LocataireReservations() {
             </button>
           );
         })}
-      </div>
+      </ScrollableFilterRow>
 
       {loading ? (
         <CardSkeleton count={4} height="h-52" />
