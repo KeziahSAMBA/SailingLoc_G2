@@ -37,13 +37,13 @@ function LocataireLayout() {
       {/* Voile dégradé accroché au viewport comme la photo : renforcé en haut,
           où le ciel clair rendait laiteuses les cartes en verre au scroll. */}
       <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:max-w-none lg:flex-row lg:px-16">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-[6.25rem] pb-10 lg:max-w-none lg:flex-row lg:px-16">
           {/* Menu : pleine largeur sur mobile (barre horizontale défilable),
             colonne latérale à partir de lg. */}
           <aside className="w-full lg:w-60 lg:shrink-0">
             <nav
               aria-label={t('locataireLayout.navAria')}
-              className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[96px]"
+              className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[6rem]"
             >
               <button
                 type="button"
