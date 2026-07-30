@@ -70,7 +70,7 @@ function displayName(user) {
 // Messagerie interne (thème sombre) : liste des conversations + fil ouvert.
 // `externalUser` permet à la page hôte (ex. recherche admin) d'ouvrir une
 // conversation avec quelqu'un qui n'apparaît pas encore dans la liste.
-function Messenger({ externalUser = null }) {
+function Messenger({ externalUser = null, tabletConversationDropdown = false }) {
   const { user: me } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
@@ -87,6 +87,9 @@ function Messenger({ externalUser = null }) {
   // Mobile : la liste et le fil occupent la même place — on affiche l'un OU
   // l'autre (la liste par défaut). En lg+, les deux sont côte à côte.
   const [listOpen, setListOpen] = useState(true);
+  // Variante locataire sur tablette : la liste devient un menu déroulant
+  // indépendant du basculement mobile entre la liste et le fil.
+  const [tabletListOpen, setTabletListOpen] = useState(false);
 
   const loadConversations = useCallback(() => {
     getConversations()
@@ -109,6 +112,7 @@ function Messenger({ externalUser = null }) {
     if (externalUser) {
       setSelected(externalUser);
       setListOpen(false);
+      setTabletListOpen(false);
     }
   }, [externalUser]);
 
@@ -256,7 +260,9 @@ function Messenger({ externalUser = null }) {
         <button
           type="button"
           onClick={() => setListOpen(true)}
-          className={`flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-xl px-4 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 lg:hidden ${FOCUS_RING}`}
+          className={`flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-xl px-4 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 lg:hidden ${
+            tabletConversationDropdown ? 'md:hidden' : ''
+          } ${FOCUS_RING}`}
         >
           ← {t('messenger.conversations')}
           {totalUnread > 0 && (
@@ -267,13 +273,62 @@ function Messenger({ externalUser = null }) {
         </button>
       )}
 
+      {tabletConversationDropdown && (
+        <button
+          type="button"
+          aria-expanded={tabletListOpen}
+          aria-controls="messenger-tablet-conversations"
+          onClick={() => setTabletListOpen((open) => !open)}
+          className={`hidden w-full items-center justify-between gap-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-left text-white backdrop-blur-xl transition hover:bg-white/15 md:flex lg:hidden ${FOCUS_RING}`}
+        >
+          <span className="min-w-0">
+            <span className="block text-xs font-semibold uppercase tracking-wide text-white/60">
+              {t('messenger.conversations')}
+            </span>
+            <span className="mt-0.5 block truncate text-sm font-semibold text-white">
+              {selected ? displayName(selected) : t('messenger.selectConversation')}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            {totalUnread > 0 && (
+              <span className="rounded-full bg-[#5AB4EC] px-2 py-0.5 text-[10px] font-bold text-slate-950">
+                {totalUnread}
+              </span>
+            )}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 20 20"
+              fill="none"
+              className={`h-5 w-5 text-white/70 transition-transform duration-200 ${
+                tabletListOpen ? 'rotate-180' : ''
+              }`}
+            >
+              <path
+                d="m5 7.5 5 5 5-5"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </button>
+      )}
+
       {/* Conversations : sur mobile la liste occupe la place du fil (l'un OU
           l'autre) ; sur grand écran les deux sont côte à côte. */}
       <aside
+        id={tabletConversationDropdown ? 'messenger-tablet-conversations' : undefined}
         aria-label={t('messenger.conversations')}
-        className={`${listOpen ? 'flex' : 'hidden'} min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex lg:h-[70vh] lg:max-h-[720px] lg:min-h-[420px]`}
+        className={`${listOpen ? 'flex' : 'hidden'} ${
+          tabletConversationDropdown ? (tabletListOpen ? 'md:flex' : 'md:hidden') : ''
+        } min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex lg:h-[70vh] lg:max-h-[720px] lg:min-h-[420px]`}
       >
-        <h2 className="border-b border-white/20 px-4 py-3 text-sm font-semibold text-white/90">
+        <h2
+          className={`border-b border-white/20 px-4 py-3 text-sm font-semibold text-white/90 ${
+            tabletConversationDropdown ? 'md:hidden lg:block' : ''
+          }`}
+        >
           {t('messenger.conversations')}
         </h2>
         {loading ? (
@@ -281,7 +336,11 @@ function Messenger({ externalUser = null }) {
         ) : conversations.length === 0 ? (
           <p className="px-4 py-6 text-sm text-white/70">{t('messenger.noConversations')}</p>
         ) : (
-          <ul className="max-h-[60vh] divide-y divide-white/15 overflow-y-auto lg:max-h-none lg:flex-1">
+          <ul
+            className={`max-h-[60vh] divide-y divide-white/15 overflow-y-auto ${
+              tabletConversationDropdown ? 'min-h-0 md:max-h-80' : ''
+            } lg:max-h-none lg:flex-1`}
+          >
             {conversations.map((c) => {
               const active = selected?.id_user === c.user.id_user;
               return (
@@ -292,6 +351,7 @@ function Messenger({ externalUser = null }) {
                       setSelected(c.user);
                       // Mobile : choisir une conversation referme le panneau.
                       setListOpen(false);
+                      setTabletListOpen(false);
                     }}
                     aria-current={active || undefined}
                     className={`block w-full px-4 py-3 text-left transition ${FOCUS_RING} ${
@@ -335,7 +395,9 @@ function Messenger({ externalUser = null }) {
       {/* Fil ouvert */}
       <section
         aria-label={t('messenger.threadAria')}
-        className={`${listOpen ? 'hidden' : 'flex'} h-[70vh] max-h-[720px] min-h-[420px] min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex`}
+        className={`${listOpen ? 'hidden' : 'flex'} ${
+          tabletConversationDropdown ? 'md:flex' : ''
+        } h-[70vh] max-h-[720px] min-h-[420px] min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex`}
       >
         {!selected ? (
           <p className="m-auto px-6 text-center text-sm text-white/70">

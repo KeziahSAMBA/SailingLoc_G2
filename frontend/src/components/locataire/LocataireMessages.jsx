@@ -22,7 +22,7 @@ function LocataireMessages() {
         </p>
       </header>
 
-      <Messenger externalUser={state?.openUser || null} />
+      <Messenger externalUser={state?.openUser || null} tabletConversationDropdown />
     </section>
   );
 }
