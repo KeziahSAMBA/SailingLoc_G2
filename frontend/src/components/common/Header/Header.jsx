@@ -245,7 +245,9 @@ function Header() {
               </div>
               <div
                 className="flex min-h-0 flex-1 flex-col"
-                style={{ maxHeight: onCategoriePage ? '41%' : '69%' }}
+                style={{
+                  maxHeight: onCategoriePage || onAboutPage ? '41%' : onContactPage ? '55%' : '69%',
+                }}
               >
                 {burgerItems.map(({ label, anchor, path }) => (
                   <PanelLink

@@ -626,10 +626,6 @@ export const TEXTS = {
         fr: 'Chaque annonce est vérifiée par notre équipe — documents, assurance, état du bateau — pour que chaque sortie en mer se fasse en toute confiance. De la voile légère au yacht avec skipper, il y a forcément un bateau pour votre prochaine aventure.',
         en: 'Every listing is checked by our team — documents, insurance, boat condition — so that every trip starts with peace of mind. From light sailing to skippered yachts, there is a boat for your next adventure.',
       },
-      imageAlt: {
-        fr: 'Voilier naviguant le long de la côte méditerranéenne',
-        en: 'Sailboat cruising along the Mediterranean coast',
-      },
     },
     stats: {
       boats: { fr: 'Bateaux vérifiés', en: 'Verified boats' },
