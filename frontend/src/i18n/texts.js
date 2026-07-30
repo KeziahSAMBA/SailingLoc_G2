@@ -2128,6 +2128,11 @@ export const TEXTS = {
     bookedOn: { fr: 'Réservée le', en: 'Booked on' },
     cancellation: { fr: 'Annulation :', en: 'Cancellation:' },
     cancelledOn: { fr: '(le {{date}})', en: '(on {{date}})' },
+    reviewDone: { fr: '✓ Avis déposé', en: '✓ Review submitted' },
+    reviewHint: {
+      fr: '★ Pensez à laisser un avis sur cette location',
+      en: '★ Remember to leave a review for this rental',
+    },
     loading: { fr: 'Chargement…', en: 'Loading…' },
     emptyAll: {
       fr: 'Vous n’avez aucune réservation pour le moment.',
@@ -2145,29 +2150,6 @@ export const TEXTS = {
       cancel: { fr: 'Annuler la réservation', en: 'Cancel booking' },
       refund: { fr: 'Demander un remboursement', en: 'Request a refund' },
       dispute: { fr: 'Signaler un problème', en: 'Report an issue' },
-      review: { fr: 'Laisser un avis', en: 'Leave a review' },
-    },
-    reviewModal: {
-      title: { fr: 'Votre avis sur cette location', en: 'Your review of this rental' },
-      ratingLabel: { fr: 'Votre note', en: 'Your rating' },
-      ratingRequired: {
-        fr: 'Attribuez une note (1 à 5 étoiles).',
-        en: 'Please give a rating (1 to 5 stars).',
-      },
-      commentLabel: { fr: 'Votre commentaire (optionnel)', en: 'Your comment (optional)' },
-      commentPlaceholder: {
-        fr: 'Partagez votre expérience à bord…',
-        en: 'Share your experience on board…',
-      },
-      submit: { fr: 'Publier mon avis', en: 'Submit my review' },
-      sent: {
-        fr: 'Merci ! Votre avis a été envoyé et sera publié après validation.',
-        en: 'Thank you! Your review has been sent and will be published after approval.',
-      },
-      error: {
-        fr: 'L’envoi de votre avis a échoué. Veuillez réessayer.',
-        en: 'Submitting your review failed. Please try again.',
-      },
     },
     reviewModal: {
       title: { fr: 'Laisser un avis', en: 'Leave a review' },
@@ -2194,6 +2176,14 @@ export const TEXTS = {
       cancel: { fr: 'Annuler', en: 'Cancel' },
       submit: { fr: 'Envoyer mon avis', en: 'Submit my review' },
       submitting: { fr: 'Envoi…', en: 'Submitting…' },
+      sent: {
+        fr: 'Merci ! Votre avis a été envoyé et sera publié après validation.',
+        en: 'Thank you! Your review has been sent and will be published after approval.',
+      },
+      error: {
+        fr: 'L’envoi de votre avis a échoué. Veuillez réessayer.',
+        en: 'Submitting your review failed. Please try again.',
+      },
     },
     modal: {
       cancelTitle: { fr: 'Annuler la réservation', en: 'Cancel the booking' },

@@ -31,13 +31,24 @@ function startOfToday() {
 // lui appartient, une seule fois. L'avis reste en modération (pending).
 export async function createBookingReview(id_user, id_booking, { rating, comment } = {}) {
   const parsedRating = Number(rating);
+  const cleanComment = String(comment ?? '').trim();
   if (!Number.isInteger(parsedRating) || parsedRating < RATING_MIN || parsedRating > RATING_MAX) {
     throw Object.assign(new Error('Note invalide (1 à 5).'), { status: 400 });
+  }
+  if (cleanComment.length < 10 || cleanComment.length > 1000) {
+    throw Object.assign(new Error('Le commentaire doit contenir entre 10 et 1000 caractères.'), {
+      status: 400,
+    });
   }
 
   const booking = await prisma.booking.findFirst({
     where: { id_booking: Number(id_booking), id_user, deleted_at: null },
-    select: { id_booking: true, status: true, end_date: true },
+    select: {
+      id_booking: true,
+      status: true,
+      end_date: true,
+      reviews: { where: { id_user }, select: { id_review: true }, take: 1 },
+    },
   });
   if (!booking) {
     throw Object.assign(new Error('Réservation introuvable.'), { status: 404 });
@@ -51,13 +62,18 @@ export async function createBookingReview(id_user, id_booking, { rating, comment
       status: 400,
     });
   }
+  if (booking.reviews.length > 0) {
+    throw Object.assign(new Error('Un avis a déjà été déposé pour cette location.'), {
+      status: 409,
+    });
+  }
 
   return prisma.review.create({
     data: {
       id_user,
       id_booking: booking.id_booking,
       rating: parsedRating,
-      comment: comment?.trim() || null,
+      comment: cleanComment,
       status: 'pending',
       created_at: new Date(),
     },

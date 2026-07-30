@@ -111,7 +111,6 @@ function ProductPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { favoriteIds, toggleFavorite } = useFavorites();
-  const { showToast } = useToast();
   const [scrolled, setScrolled] = useState(false);
 
   // Édition d'un avis : déclenchée depuis sa carte dans ClientReviews, rendue

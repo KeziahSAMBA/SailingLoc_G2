@@ -28,7 +28,6 @@ import {
   cancelMyBooking,
   requestMyRefund,
   reportMyDispute,
-  postMyBookingReview,
   patchMyReview,
   deleteMyReview,
   getMyBoatReviewEligibility,
@@ -248,12 +247,6 @@ router.post(
   requireRole('locataire'),
   uploadDisputePhotos,
   reportMyDispute
-);
-router.post(
-  '/me/bookings/:id_booking/review',
-  protect,
-  requireRole('locataire'),
-  postMyBookingReview
 );
 router.patch('/me/reviews/:id_review', protect, requireRole('locataire'), patchMyReview);
 router.delete('/me/reviews/:id_review', protect, requireRole('locataire'), deleteMyReview);

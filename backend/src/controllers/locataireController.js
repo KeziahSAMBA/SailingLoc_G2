@@ -5,7 +5,6 @@ import {
   listFavorites,
   addFavorite,
   removeFavorite,
-  createBookingReview,
 } from '../services/locataireService.js';
 import {
   payBooking,
@@ -50,19 +49,6 @@ export async function getMyBookings(req, res) {
   }
 }
 
-export async function postMyBookingReview(req, res) {
-  try {
-    const review = await createBookingReview(
-      req.user.id_user,
-      req.params.id_booking,
-      req.body || {}
-    );
-    res.status(201).json({ review });
-  } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
-  }
-}
-
 export async function getMyPayments(req, res) {
   try {
     res.json(await listPayments(req.user.id_user));
@@ -88,7 +74,11 @@ export async function cancelMyBooking(req, res) {
 
 export async function postMyBookingReview(req, res) {
   try {
-    const review = await createBookingReview(req.user.id_user, req.params.id_booking, req.body);
+    const review = await createBookingReview(
+      req.user.id_user,
+      req.params.id_booking,
+      req.body || {}
+    );
     res.status(201).json({ review });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

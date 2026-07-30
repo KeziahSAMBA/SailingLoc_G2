@@ -41,11 +41,10 @@ function fetchReviews(boatId) {
     );
 }
 
-// Après édition d'un avis : force un re-fetch au prochain montage du composant.
-export function invalidatePublicReviews() {
-  reviewsCache = null;
-  reviewsPromise = null;
-}
+// Après édition d'un avis : `fetchReviews` refait toujours un appel réseau (pas
+// de cache module ici, chaque page cible un `boatId` différent), le remount de
+// ClientReviews via sa clé côté page produit suffit donc à rafraîchir la liste.
+export function invalidatePublicReviews() {}
 
 const StarRating = memo(function StarRating({ rating }) {
   return (
