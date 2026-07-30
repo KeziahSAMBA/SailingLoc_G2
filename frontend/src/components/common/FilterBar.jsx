@@ -170,10 +170,10 @@ function FilterBar({
   ];
 
   return (
-    <div className="relative inline-block" ref={containerRef}>
+    <div className="relative block w-full lg:static" ref={containerRef}>
       {/* Header — always visible */}
       <div
-        className={`flex items-center gap-3 px-4 py-2 rounded-full cursor-pointer select-none border transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className={`flex w-full cursor-pointer select-none flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 transition-colors sm:gap-3 sm:rounded-full sm:px-4 lg:py-3 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         style={{
           backgroundColor: compact
             ? 'rgba(0,0,0,0.45)'
@@ -202,7 +202,7 @@ function FilterBar({
         {activeChips.length > 0 && (
           <>
             <div className={`w-px h-3 ${light ? 'bg-white/30' : 'bg-black/20'}`} />
-            <div className="flex items-center gap-1.5 flex-nowrap">
+            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
               {activeChips.slice(0, 2).map((chip) => (
                 <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
               ))}
@@ -238,15 +238,15 @@ function FilterBar({
       {/* Expanded filter panel */}
       {filterOpen && (
         <div
-          className="absolute left-0 mt-2 rounded-xl p-6 z-10 w-fit min-w-[900px]"
+          className="relative z-30 mb-6 mt-2 w-full overflow-visible rounded-xl p-4 sm:p-6 lg:absolute lg:left-16 lg:right-16 lg:top-full lg:mb-0 lg:w-auto xl:left-28 xl:right-28"
           style={{
             backgroundColor: 'rgba(255,255,255,0.98)',
             boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
           }}
         >
-          <div className="flex gap-0 divide-x divide-gray-100">
+          <div className="grid grid-cols-1 gap-6 divide-y divide-gray-100 sm:grid-cols-2 sm:divide-x-0 sm:divide-y-0 xl:flex xl:gap-0 xl:divide-x">
             {/* Type de bateau */}
-            <div className="pr-10">
+            <div className="pb-6 sm:pb-0 sm:pr-6 xl:pr-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 {t('filterBar.boatType.title')}
               </p>
@@ -265,7 +265,7 @@ function FilterBar({
             </div>
 
             {/* Permis */}
-            <div className="px-10">
+            <div className="py-6 sm:px-6 sm:py-0 xl:px-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 {t('filterBar.license.title')}
               </p>
@@ -294,18 +294,18 @@ function FilterBar({
             </div>
 
             {/* Prix par jour */}
-            <div className="px-10">
+            <div className="py-6 sm:px-6 sm:py-0 xl:px-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 {t('filterBar.price.title')}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="number"
                   min="0"
                   placeholder={t('filterBar.price.min')}
                   value={priceRange.min}
                   onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
-                  className="w-20 px-2 py-1 text-sm border border-gray-200 rounded-lg outline-none focus:border-sky-400"
+                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1 text-sm outline-none focus:border-sky-400 sm:w-20 sm:flex-none"
                 />
                 <span className="text-gray-400">–</span>
                 <input
@@ -314,13 +314,13 @@ function FilterBar({
                   placeholder={t('filterBar.price.max')}
                   value={priceRange.max}
                   onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
-                  className="w-20 px-2 py-1 text-sm border border-gray-200 rounded-lg outline-none focus:border-sky-400"
+                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1 text-sm outline-none focus:border-sky-400 sm:w-20 sm:flex-none"
                 />
               </div>
             </div>
 
             {/* Trier par */}
-            <div className="pl-10">
+            <div className="pt-6 sm:pl-6 sm:pt-0 xl:pl-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 {t('filterBar.sort.title')}
               </p>

@@ -30,31 +30,21 @@ function getRoleFilters(t) {
 
 // Données statiques côté API : un seul fetch pour toute la session,
 // partagé entre tous les montages du composant sur les différentes pages.
-let reviewsCache = null;
-let reviewsPromise = null;
-
-function fetchReviews() {
-  if (reviewsCache) return Promise.resolve(reviewsCache);
-  if (!reviewsPromise) {
-    reviewsPromise = api
-      .get('/reviews/public')
-      .then(({ data }) => {
-        reviewsCache = data.map((r) => ({ ...r, avatar: r.avatar ?? nameToAvatarUrl(r.name) }));
-        return reviewsCache;
-      })
-      .catch((err) => {
-        reviewsPromise = null;
-        throw err;
-      });
-  }
-  return reviewsPromise;
+function fetchReviews(boatId) {
+  return api
+    .get('/reviews/public', { params: boatId == null ? undefined : { id_boat: boatId } })
+    .then(({ data }) =>
+      data.map((review) => ({
+        ...review,
+        avatar: review.avatar ?? nameToAvatarUrl(review.name),
+      }))
+    );
 }
 
-// Après édition d'un avis : force un re-fetch au prochain montage du composant.
-export function invalidatePublicReviews() {
-  reviewsCache = null;
-  reviewsPromise = null;
-}
+// Après édition d'un avis : `fetchReviews` refait toujours un appel réseau (pas
+// de cache module ici, chaque page cible un `boatId` différent), le remount de
+// ClientReviews via sa clé côté page produit suffit donc à rafraîchir la liste.
+export function invalidatePublicReviews() {}
 
 const StarRating = memo(function StarRating({ rating }) {
   return (
@@ -78,12 +68,20 @@ const ReviewCard = memo(function ReviewCard({
   text,
   owner_reply: ownerReply,
   avatar,
+  created_at,
   light = false,
   onEdit = null,
   onDelete = null,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const roleLabels = getRoleLabels(t);
+  const displayedDate = created_at
+    ? new Date(created_at).toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : date;
   return (
     <div
       className={`flex min-w-0 flex-col gap-2 py-3 px-5 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
@@ -114,7 +112,9 @@ const ReviewCard = memo(function ReviewCard({
       </div>
       <div className="flex items-center gap-2">
         <StarRating rating={rating} />
-        <span className={`text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>{date}</span>
+        <span className={`text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>
+          {displayedDate}
+        </span>
       </div>
       <p
         className={`break-words text-sm leading-relaxed ${light ? 'text-white/80' : 'text-gray-600'}`}
@@ -189,6 +189,7 @@ export default function ClientReviews({
   light = false,
   wide = false,
   boatId = null,
+  commentsOnly = false,
   currentUserId = null,
   onEditReview = null,
   onDeleteReview = null,
@@ -204,17 +205,24 @@ export default function ClientReviews({
 
   useEffect(() => {
     let cancelled = false;
-    fetchReviews()
-      .then((data) => {
-        if (!cancelled) setReviews(data);
-      })
-      .catch((err) => {
-        if (!cancelled) console.error(err);
-      });
+    const loadReviews = () => {
+      fetchReviews(boatId)
+        .then((data) => {
+          if (!cancelled) {
+            setReviews(commentsOnly ? data.filter((review) => review.text?.trim()) : data);
+          }
+        })
+        .catch((err) => {
+          if (!cancelled) console.error(err);
+        });
+    };
+    loadReviews();
+    window.addEventListener('focus', loadReviews);
     return () => {
       cancelled = true;
+      window.removeEventListener('focus', loadReviews);
     };
-  }, []);
+  }, [boatId, commentsOnly]);
 
   // Page produit (boatId fourni) : uniquement les avis locataire liés à ce
   // bateau précis — les filtres de rôle habituels (Tous/Locataires/
@@ -401,7 +409,7 @@ export default function ClientReviews({
     >
       {light && !wide ? (
         <div
-          className="w-full max-w-[919.9px] flex flex-col items-center gap-5 rounded-2xl border px-10 py-8"
+          className="flex w-full max-w-[919.9px] flex-col items-center gap-5 rounded-2xl border px-3 py-6 sm:px-8 lg:px-10 lg:py-8"
           style={GLASS_STYLE}
         >
           {body}

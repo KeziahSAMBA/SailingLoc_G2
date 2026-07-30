@@ -34,6 +34,15 @@ const portToSlide = (port) => ({
   available: port.country === 'France',
 });
 
+const departurePortsToSlides = (ports) =>
+  ports
+    .filter(
+      (port) =>
+        port.country !== 'France' ||
+        ['Brest', 'La Rochelle', 'Bordeaux', 'Marseille', 'Nice'].includes(port.city)
+    )
+    .map(portToSlide);
+
 const boatToSlide = (boat, t) => {
   const nextAvail = boat.availabilities?.[0];
   const fmt = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -71,10 +80,13 @@ const PortCarousel = memo(
     onSlideClick,
   }) => {
     const { t } = useTranslation();
-    const maxIndex = slides.length - visibleCount;
+    const carouselRef = useRef(null);
+    const [responsiveVisibleCount, setResponsiveVisibleCount] = useState(visibleCount);
     const [index, setIndex] = useState(0);
+    const effectiveVisibleCount = Math.min(responsiveVisibleCount, slides.length || 1);
+    const maxIndex = Math.max(0, slides.length - effectiveVisibleCount);
     const slideWidthPct = 100 / slides.length;
-    const trackWidthPct = (slides.length / visibleCount) * 100;
+    const trackWidthPct = (slides.length / effectiveVisibleCount) * 100;
     const aspectRatio = imageSize === 'small' ? '4 / 3' : '1 / 1';
     const imgBorder = theme === 'dark' ? 'border-white/20' : 'border-black/40';
     const arrowBtn =
@@ -88,8 +100,27 @@ const PortCarousel = memo(
     const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
     const next = useCallback(() => setIndex((i) => Math.min(maxIndex, i + 1)), [maxIndex]);
 
+    useLayoutEffect(() => {
+      const element = carouselRef.current;
+      if (!element) return undefined;
+      const updateVisibleCount = () => {
+        const width = element.clientWidth;
+        const nextCount =
+          width < 340 ? 1 : width < 560 ? 2 : width < 820 ? 3 : width < 1120 ? 4 : visibleCount;
+        setResponsiveVisibleCount(Math.min(nextCount, visibleCount));
+      };
+      updateVisibleCount();
+      const observer = new window.ResizeObserver(updateVisibleCount);
+      observer.observe(element);
+      return () => observer.disconnect();
+    }, [visibleCount]);
+
+    useEffect(() => {
+      setIndex((current) => Math.min(current, maxIndex));
+    }, [maxIndex]);
+
     return (
-      <div className="relative p-4">
+      <div ref={carouselRef} className="relative p-2 sm:p-4">
         {index > 0 && (
           <button
             onClick={prev}
@@ -336,15 +367,27 @@ const CarouselSection = ({
   favoriteIds,
   onToggleFavorite,
   onSlideClick,
+  darkHeaderAtAllBreakpoints = false,
 }) => {
   const { t } = useTranslation();
   const goToCategory = useCategoryNavigate();
-  const titleColor = theme === 'dark' ? 'text-white' : 'text-black';
+  const isResponsivePortHeader =
+    theme === 'dark' && variant === 'port' && !darkHeaderAtAllBreakpoints;
+  const titleColor =
+    theme === 'dark'
+      ? isResponsivePortHeader
+        ? 'text-gray-900 lg:text-white'
+        : 'text-white'
+      : 'text-black';
   const linkColor =
-    theme === 'dark' ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-black';
+    theme === 'dark'
+      ? isResponsivePortHeader
+        ? 'text-gray-600 hover:text-black lg:text-white/70 lg:hover:text-white'
+        : 'text-white/70 hover:text-white'
+      : 'text-gray-600 hover:text-black';
   return (
     <div className="relative w-full">
-      <div className="flex items-baseline gap-3">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2
           className={`font-semibold ${titleColor}`}
           style={{ fontSize: '20px', lineHeight: '22px' }}
@@ -358,8 +401,8 @@ const CarouselSection = ({
             e.preventDefault();
             goToCategory(linkTo);
           }}
-          className={`flex items-center gap-1.5 transition-colors ml-4 ${linkColor}`}
-          style={{ fontSize: '16px' }}
+          className={`flex items-center gap-1.5 transition-colors sm:ml-4 ${linkColor}`}
+          style={{ fontSize: 'clamp(13px, 2.5vw, 16px)' }}
         >
           {linkLabel ?? t('carrousel.seeMore')} <FaArrowRight size={10} />
         </Link>
@@ -644,13 +687,13 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 // portion blanche du dégradé. Une page entièrement sur fond photo (ex.
 // CategoryPage) a besoin que TOUTES les sections respectent `theme` : `glass`
 // lève ce forçage sans toucher au rendu de la HomePage (par défaut à false).
-const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
+const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly = false }) => {
   const { t } = useTranslation();
   const goToCategory = useCategoryNavigate();
   const goToProduct = useProductNavigate();
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
-  const { favoriteIds, toggleFavorite } = useFavorites();
+  const { favoriteIds, toggleFavorite } = useFavorites(!portsOnly);
 
   const handleBoatClick = useCallback(
     (slide) => {
@@ -671,13 +714,15 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
   // beaucoup d'images) passe en priorité basse pour ne pas bloquer les
   // animations de transition en cours.
   useEffect(() => {
-    fetchBoats()
-      .then(({ data }) => startTransition(() => setBoats(data)))
-      .catch(console.error);
+    if (!portsOnly) {
+      fetchBoats()
+        .then(({ data }) => startTransition(() => setBoats(data)))
+        .catch(console.error);
+    }
     fetchPorts()
       .then(({ data }) => startTransition(() => setPorts(data)))
       .catch(console.error);
-  }, []);
+  }, [portsOnly]);
 
   const boatTypeSections = useMemo(() => {
     const toTypeSlide = (boat) => {
@@ -752,13 +797,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
     () => [
       {
         title: t('carrousel.sections.ports'),
-        slides: ports
-          .filter(
-            (p) =>
-              p.country !== 'France' ||
-              ['Brest', 'La Rochelle', 'Bordeaux', 'Marseille', 'Nice'].includes(p.city)
-          )
-          .map(portToSlide),
+        slides: departurePortsToSlides(ports),
         themed: true,
         variant: 'port',
       },
@@ -816,6 +855,23 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
   const headerLink =
     theme === 'light' ? 'text-gray-600 hover:text-black' : 'text-white/70 hover:text-white';
 
+  if (portsOnly) {
+    const section = carouselSections[0];
+    if (section.slides.length === 0) return null;
+    return (
+      <CarouselSection
+        title={section.title}
+        slides={section.slides}
+        theme={theme}
+        variant={section.variant}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={toggleFavorite}
+        onSlideClick={handlePortClick}
+        darkHeaderAtAllBreakpoints={theme === 'dark'}
+      />
+    );
+  }
+
   if (similarTo) {
     if (similarSlides.length === 0) return null;
     return (
@@ -836,7 +892,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
     <div className="w-full flex flex-col gap-8">
       {/* Annonces du moment — carrousels 3D animés */}
       <div className="relative w-full">
-        <div className="flex items-baseline gap-3 mb-3">
+        <div className="mb-3 flex flex-wrap items-baseline gap-2 sm:gap-3">
           <h2
             className={`font-semibold ${headerTitle}`}
             style={{ fontSize: '20px', lineHeight: '22px' }}
@@ -850,13 +906,13 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false }) => {
               e.preventDefault();
               goToCategory();
             }}
-            className={`flex items-center gap-1.5 transition-colors ml-4 ${headerLink}`}
+            className={`flex items-center gap-1.5 transition-colors sm:ml-4 ${headerLink}`}
             style={{ fontSize: '16px' }}
           >
             {t('carrousel.sections.currentLink')} <FaArrowRight size={10} />
           </Link>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row">
           {boatTypeSections
             .filter((s) => s.slides.length > 0)
             .map(({ slides, title, initialSlide, interval }) => (

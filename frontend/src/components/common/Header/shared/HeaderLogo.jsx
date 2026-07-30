@@ -8,7 +8,7 @@ function HeaderLogo({ scrolled, onClick }) {
         src={scrolled ? logoLong : logo}
         alt="SailingLoc"
         style={{
-          height: scrolled ? '40px' : '54px',
+          height: scrolled ? '40px' : 'clamp(42px, 5vw, 54px)',
           transition: 'height 0.3s ease',
           width: 'auto',
           objectFit: 'contain',

@@ -60,6 +60,8 @@ function SearchBar({
   compact = false,
   retracted: baseRetracted = false,
   retractDuration = DEFAULT_RETRACT_DURATION,
+  fitContentOnDesktop = false,
+  fitContentOnTablet = false,
   // Ref optionnelle vers le conteneur des champs (fieldsRef ci-dessous),
   // exposée aux pages à transition : elles y jouent leur propre animation de
   // largeur (démarrée avant la navigation, terminée après) directement sur ce
@@ -252,7 +254,13 @@ function SearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-stretch border rounded-full shadow-xl max-w-4xl mx-auto p-0.5 gap-0"
+      className={`mx-auto flex w-full max-w-4xl flex-col items-stretch gap-1 rounded-2xl border p-1 shadow-xl sm:flex-row sm:gap-0 sm:rounded-full sm:p-0.5 ${
+        fitContentOnTablet
+          ? 'md:w-fit md:max-w-full'
+          : fitContentOnDesktop
+            ? 'lg:mx-0 lg:w-fit lg:max-w-full'
+            : ''
+      }`}
       style={{
         backgroundColor: compact
           ? 'rgba(0,0,0,0.45)'
@@ -286,7 +294,9 @@ function SearchBar({
         }}
       >
         <div
-          className={`relative flex-1 flex flex-col justify-center text-center px-6 py-0.5 mx-0.5 rounded-full transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+          className={`relative mx-0.5 flex flex-1 flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-6 sm:py-0.5 ${
+            fitContentOnTablet ? 'md:min-w-0' : fitContentOnDesktop ? 'lg:min-w-0' : ''
+          } ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         >
           <span
             className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
@@ -338,7 +348,9 @@ function SearchBar({
           )}
         </div>
 
-        <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
+        <div
+          className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`}
+        />
         <DateRangePicker
           start={start}
           end={end}
@@ -347,10 +359,12 @@ function SearchBar({
           isDateAvailable={isDateAvailable}
           light={light}
         />
-        <div className={`w-px self-center h-5 ${light ? 'bg-white/20' : 'bg-black/20'}`} />
+        <div
+          className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`}
+        />
 
         <div
-          className={`flex flex-col justify-center text-center px-5 py-0.5 mx-0.5 rounded-full transition-colors ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+          className={`mx-0.5 flex flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-5 sm:py-0.5 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         >
           <span
             className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
@@ -364,7 +378,7 @@ function SearchBar({
             onChange={(e) => setTravelers(e.target.value)}
             placeholder={t('searchBar.travelersPlaceholder')}
             tabIndex={retracted ? -1 : undefined}
-            className={`w-29 bg-transparent outline-none text-xs text-center ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
+            className={`w-full bg-transparent text-center text-xs outline-none sm:w-29 ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
           />
         </div>
 
@@ -403,7 +417,7 @@ function SearchBar({
 
       <button
         type="submit"
-        className="flex items-center gap-2 bg-sky-700/50 hover:bg-sky-900 text-white px-5 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap"
+        className="flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-sky-700/50 px-5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-900 sm:min-h-0 sm:w-auto sm:rounded-full"
       >
         <FiSearch size={14} />
         {t('searchBar.search')}

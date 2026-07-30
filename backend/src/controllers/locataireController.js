@@ -74,7 +74,11 @@ export async function cancelMyBooking(req, res) {
 
 export async function postMyBookingReview(req, res) {
   try {
-    const review = await createBookingReview(req.user.id_user, req.params.id_booking, req.body);
+    const review = await createBookingReview(
+      req.user.id_user,
+      req.params.id_booking,
+      req.body || {}
+    );
     res.status(201).json({ review });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

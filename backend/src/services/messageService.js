@@ -219,6 +219,57 @@ export async function sendMessage(sender, id_receiver, content) {
   };
 }
 
+// Ouvre une conversation depuis une fiche bateau sans exposer un annuaire de
+// propriétaires. Le serveur résout lui-même le propriétaire du bateau publié
+// et crée un message de contexte lors du tout premier contact.
+export async function contactBoatOwner(me, id_boat) {
+  const boatId = Number(id_boat);
+  const notFound = () =>
+    Object.assign(new Error('Bateau introuvable ou indisponible.'), { status: 404 });
+
+  if (!Number.isInteger(boatId)) throw notFound();
+
+  const boat = await prisma.boat.findFirst({
+    where: {
+      id_boat: boatId,
+      is_published: true,
+      deleted_at: null,
+      owner: { is_active: true, deleted_at: null },
+    },
+    select: {
+      name: true,
+      owner: {
+        select: { id_user: true, first_name: true, last_name: true, role: true },
+      },
+    },
+  });
+  if (!boat || boat.owner.role !== 'proprietaire') throw notFound();
+
+  const existing = await prisma.message.count({
+    where: {
+      deleted_at: null,
+      OR: [
+        { id_sender: me.id_user, id_receiver: boat.owner.id_user },
+        { id_sender: boat.owner.id_user, id_receiver: me.id_user },
+      ],
+    },
+  });
+
+  if (existing === 0) {
+    await prisma.message.create({
+      data: {
+        id_sender: me.id_user,
+        id_receiver: boat.owner.id_user,
+        content: `Conversation ouverte au sujet du bateau « ${boat.name} ».`,
+        type: 'boat_contact',
+        sent_at: new Date(),
+      },
+    });
+  }
+
+  return { owner: publicUser(boat.owner), boat_name: boat.name };
+}
+
 // Modifie le contenu d'un de mes messages (non supprimé).
 export async function updateMessage(me, id_message, content) {
   const clean = content && String(content).trim();

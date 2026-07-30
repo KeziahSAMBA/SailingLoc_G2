@@ -29,6 +29,7 @@ import {
   MdPeople,
   MdPerson,
   MdBadge,
+  MdChatBubbleOutline,
 } from 'react-icons/md';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
@@ -36,6 +37,11 @@ import { useToast } from '../hooks/useToast.jsx';
 import { deleteMyReview } from '../services/reviewService.js';
 import { fetchBoats, fetchBoatsFresh } from '../services/boatService.js';
 import { correctPortPosition, scatterBoatPosition } from '../utils/mapPosition.js';
+import {
+  getBookings as getLocataireBookings,
+  createBookingReview,
+} from '../services/locataireService.js';
+import { contactBoatOwner } from '../services/messageService.js';
 import {
   readTransitionPayload,
   clearTransitionPayload,
@@ -103,8 +109,8 @@ function ProductPage() {
   const location = useLocation();
   const goToCategory = useCategoryNavigate();
   const { user } = useAuth();
-  const { favoriteIds, toggleFavorite } = useFavorites();
   const { showToast } = useToast();
+  const { favoriteIds, toggleFavorite } = useFavorites();
   const [scrolled, setScrolled] = useState(false);
 
   // Édition d'un avis : déclenchée depuis sa carte dans ClientReviews, rendue
@@ -401,6 +407,70 @@ function ProductPage() {
   const thumbs = images.slice(1, 5);
   const typeLabel = boat ? t(`carrousel.boatType.${boat.type}`, { defaultValue: boat.type }) : '';
   const isAvailable = (boat?.availabilities?.length ?? 0) > 0;
+  const [reviewBooking, setReviewBooking] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+
+  useEffect(() => {
+    if (!boat || user?.role !== 'locataire') {
+      setReviewBooking(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const requestedBookingId = Number(location.state?.reviewBookingId);
+    getLocataireBookings()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const eligible = (data.bookings || []).find((booking) => {
+          const endDate = new Date(booking.end_date);
+          endDate.setHours(0, 0, 0, 0);
+          return (
+            booking.boat?.id_boat === boat.id_boat &&
+            booking.status === 'confirmed' &&
+            endDate < today &&
+            !booking.reviewed &&
+            (!Number.isInteger(requestedBookingId) || booking.id_booking === requestedBookingId)
+          );
+        });
+        setReviewBooking(eligible || null);
+      })
+      .catch(() => {
+        if (!cancelled) setReviewBooking(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [boat, user?.role, location.state?.reviewBookingId]);
+
+  async function handleProductReviewSubmit(e) {
+    e.preventDefault();
+    const cleanComment = reviewComment.trim();
+    if (reviewRating < 1 || reviewRating > 5) {
+      setReviewError(t('locataireReservations.reviewModal.ratingRequired'));
+      return;
+    }
+    if (cleanComment.length < 10) {
+      setReviewError(t('locataireReservations.reviewModal.commentTooShort'));
+      return;
+    }
+    setReviewSaving(true);
+    setReviewError('');
+    try {
+      await createBookingReview(reviewBooking.id_booking, reviewRating, cleanComment);
+      setReviewBooking(null);
+      setReviewRating(0);
+      setReviewComment('');
+      showToast(t('locataireReservations.toasts.reviewSubmitted'), 'success');
+    } catch (err) {
+      setReviewError(err.response?.data?.message || t('locataireReservations.toasts.reviewError'));
+    } finally {
+      setReviewSaving(false);
+    }
+  }
 
   // Sélection de dates du panneau de réservation.
   const [start, setStart] = useState('');
@@ -459,6 +529,35 @@ function ProductPage() {
       return;
     }
     navigate(`/reservation/${boatId}?start=${start}&end=${end}`);
+  }
+
+  const [contactBusy, setContactBusy] = useState(false);
+  const [contactHint, setContactHint] = useState('');
+
+  async function handleContactOwner() {
+    if (!user) {
+      navigate('/login', { state: { backgroundLocation: location } });
+      return;
+    }
+    if (user.role !== 'locataire') {
+      setContactHint(t('product.ownerContact.locataireOnly'));
+      return;
+    }
+
+    setContactBusy(true);
+    setContactHint('');
+    try {
+      const { data } = await contactBoatOwner(boatId);
+      navigate('/locataire/messages', {
+        state: { openUser: data.owner, boatName: data.boat_name },
+      });
+    } catch (err) {
+      const message = err.response?.data?.message || t('product.ownerContact.error');
+      setContactHint(message);
+      showToast(message, 'error');
+    } finally {
+      setContactBusy(false);
+    }
   }
 
   const portLat = Number(boat?.port?.latitude);
@@ -593,18 +692,7 @@ function ProductPage() {
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
           {/* Section 1 — Searchbar + fil d'ariane sticky */}
-          <section
-            className="z-40"
-            style={{
-              position: 'sticky',
-              top: scrolled ? '60px' : '80px',
-              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
-              backdropFilter: scrolled ? 'blur(5px)' : 'none',
-              WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
-              borderBottom: scrolled ? '1px solid rgba(255,255,255,0.3)' : '1px solid transparent',
-              transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
-            }}
-          >
+          <section className="relative z-40 w-full">
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
@@ -627,7 +715,7 @@ function ProductPage() {
           {!boatsLoaded && <div style={{ height: '70vh' }} aria-hidden="true" />}
           {boatsLoaded && !boat && (
             <div
-              className="flex flex-col items-center gap-4 pl-28 pr-20 py-24 text-center"
+              className="flex flex-col items-center gap-4 px-4 py-24 text-center sm:px-8 lg:px-20"
               style={slideInStyleLate('notFound', 1)}
             >
               <h1 className="text-2xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
@@ -638,17 +726,19 @@ function ProductPage() {
             </div>
           )}
           {boat && (
-            <div className="flex items-start gap-6 pl-28 pr-20 py-5 pb-12">
+            <div className="flex flex-col items-stretch gap-6 px-4 py-5 pb-12 sm:px-8 lg:px-16 xl:flex-row xl:items-start xl:pl-28 xl:pr-20">
               {/* Colonne principale */}
-              <div className="flex-1 min-w-0 flex flex-col gap-5">
+              <div className="contents xl:flex xl:min-w-0 xl:flex-1 xl:flex-col xl:gap-5">
                 {/* Galerie : image principale + vues secondaires (jusqu'à 4) */}
                 <div
-                  className="grid grid-cols-4 grid-rows-2 gap-4"
-                  style={{ height: '440px', ...slideInStyleLate('gallery', 1) }}
+                  className="order-1 grid h-[340px] grid-cols-1 grid-rows-1 gap-2 sm:h-[440px] sm:gap-4 xl:order-none xl:grid-cols-4 xl:grid-rows-2"
+                  style={slideInStyleLate('gallery', 1)}
                 >
                   <div
-                    className={`relative rounded-3xl overflow-hidden border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] group ${
-                      thumbs.length > 0 ? 'col-span-2 row-span-2' : 'col-span-4 row-span-2'
+                    className={`relative overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] group sm:rounded-3xl ${
+                      thumbs.length > 0
+                        ? 'col-span-1 row-span-1 xl:col-span-2 xl:row-span-2'
+                        : 'col-span-1 row-span-1 xl:col-span-4 xl:row-span-2'
                     }`}
                   >
                     <img
@@ -660,7 +750,9 @@ function ProductPage() {
                   {thumbs.map((img) => (
                     <div
                       key={img.url}
-                      className="relative rounded-3xl overflow-hidden border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)]"
+                      className={`relative hidden overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)] sm:rounded-3xl xl:block ${
+                        thumbs.length === 1 ? 'xl:col-span-2 xl:row-span-2' : ''
+                      }`}
                     >
                       <img
                         src={img.url}
@@ -676,7 +768,13 @@ function ProductPage() {
                 {/* Spécifications : juste sous la galerie, dans la même
                     colonne que les photos plutôt qu'après toute la ligne
                     (aside compris) — montées après l'animation d'entrée. */}
-                {!belowFoldReady && <div style={{ height: '60vh' }} aria-hidden="true" />}
+                {!belowFoldReady && (
+                  <div
+                    className="order-3 xl:order-none"
+                    style={{ height: '60vh' }}
+                    aria-hidden="true"
+                  />
+                )}
                 {belowFoldReady && (
                   <>
                     {/* Section 3 — Spécifications techniques. Montée après la
@@ -697,25 +795,25 @@ function ProductPage() {
                       }}
                     >
                       <div
-                        className="w-full max-w-[919.9px] flex flex-col items-center gap-8 rounded-2xl border px-10 py-8"
+                        className="flex w-full max-w-[919.9px] flex-col items-center gap-6 rounded-2xl border px-4 py-6 sm:gap-8 sm:px-8 sm:py-8 lg:px-10"
                         style={GLASS_STYLE}
                       >
                         <div className="text-center">
                           <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
                             {t('product.specs.kicker')}
                           </p>
-                          <h2 className="text-3xl md:text-4xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                          <h2 className="text-2xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
                             {t('product.specs.title')}
                           </h2>
                           <p className="text-sm text-white/70 mt-4">
                             {t('product.specs.subtitle')}
                           </p>
                         </div>
-                        <div className="w-full grid grid-cols-2 gap-x-16">
+                        <div className="grid w-full grid-cols-1 gap-x-8 md:grid-cols-2 lg:gap-x-16">
                           {specRows.map(([label, value]) => (
                             <div
                               key={label}
-                              className="flex items-baseline justify-between gap-4 py-3 border-b border-white/15"
+                              className="flex items-start justify-between gap-4 border-b border-white/15 py-3 sm:items-baseline"
                             >
                               <span className="text-xs font-semibold tracking-widest uppercase text-white/60">
                                 {label}
@@ -765,9 +863,8 @@ function ProductPage() {
               >
                 {/* Nom, pastilles d'info et description */}
                 <div
-                  className="rounded-2xl border px-5 py-2 flex flex-col gap-3"
+                  className="flex w-full flex-col gap-3 rounded-2xl border px-4 py-3 sm:px-5"
                   style={{
-                    width: '397px',
                     minHeight: '200px',
                     ...GLASS_STYLE,
                     // Colonne de droite : entre et sort par la marge droite,
@@ -871,17 +968,95 @@ function ProductPage() {
 
                 {/* L'animation s'applique aux blocs internes et non à l'<aside>
                     sticky, dont le style transition (top) doit rester. */}
+                {reviewBooking && (
+                  <form
+                    onSubmit={handleProductReviewSubmit}
+                    className="flex w-full flex-col gap-3 rounded-2xl border p-4"
+                    style={GLASS_STYLE}
+                  >
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-sky-400">
+                        {t('locataireReservations.reviewModal.title')}
+                      </p>
+                      <p className="mt-1 text-xs text-white/70">
+                        {t('locataireReservations.reviewModal.moderationHint')}
+                      </p>
+                    </div>
+                    <fieldset>
+                      <legend className="mb-1 text-xs font-medium text-white/70">
+                        {t('locataireReservations.reviewModal.ratingLabel')}
+                      </legend>
+                      <div className="flex gap-1.5" role="radiogroup">
+                        {[1, 2, 3, 4, 5].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            role="radio"
+                            aria-checked={reviewRating === value}
+                            aria-label={t('locataireReservations.reviewModal.starLabel', {
+                              count: value,
+                            })}
+                            onClick={() => {
+                              setReviewRating(value);
+                              setReviewError('');
+                            }}
+                            className={`text-2xl leading-none transition hover:scale-110 ${
+                              value <= reviewRating ? 'text-amber-300' : 'text-white/30'
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <label
+                      htmlFor="product-review-comment"
+                      className="text-xs font-medium text-white/70"
+                    >
+                      {t('locataireReservations.reviewModal.commentLabel')}
+                    </label>
+                    <textarea
+                      id="product-review-comment"
+                      rows={4}
+                      maxLength={1000}
+                      value={reviewComment}
+                      onChange={(e) => {
+                        setReviewComment(e.target.value);
+                        setReviewError('');
+                      }}
+                      placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
+                      className="w-full resize-y rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-sky-400"
+                    />
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs text-white/50">{reviewComment.length}/1000</span>
+                      <button
+                        type="submit"
+                        disabled={reviewSaving}
+                        className="rounded-full bg-sky-400 px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {reviewSaving
+                          ? t('locataireReservations.reviewModal.submitting')
+                          : t('locataireReservations.reviewModal.submit')}
+                      </button>
+                    </div>
+                    {reviewError && (
+                      <p role="alert" className="text-xs font-medium text-red-300">
+                        {reviewError}
+                      </p>
+                    )}
+                  </form>
+                )}
+
                 <div
-                  className="relative z-20 flex flex-col rounded-2xl border"
+                  className="relative z-20 flex w-full flex-col rounded-2xl border"
                   style={{
-                    width: '397px',
                     minHeight: '195px',
                     borderColor: 'rgba(255,255,255,0.2)',
                     ...slideInStyleLate('panel', 3, 'right'),
                   }}
                 >
                   <div
-                    className="flex items-center justify-between px-4 py-3 rounded-t-2xl"
+                    className="flex flex-col items-start gap-2 rounded-t-2xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                     style={GLASS_STYLE}
                   >
                     <div className="flex items-baseline gap-1.5">
@@ -891,7 +1066,7 @@ function ProductPage() {
                       </span>
                     </div>
                     <span
-                      className="text-[10px] font-semibold flex items-center gap-1.5"
+                      className="flex items-center gap-1.5 text-[10px] font-semibold"
                       style={{ color: isAvailable ? '#16a34a' : '#f59e0b' }}
                     >
                       <span
@@ -912,7 +1087,7 @@ function ProductPage() {
                       {t('product.booking.selectDates')}
                     </p>
                     <div
-                      className="self-center flex justify-center rounded-full border"
+                      className="flex max-w-full self-center justify-center rounded-full border"
                       style={{
                         backgroundColor: 'rgba(255,255,255,0.1)',
                         borderColor: 'rgba(255,255,255,0.3)',
@@ -970,6 +1145,25 @@ function ProductPage() {
                       <MdVerified className="text-sky-400" style={{ fontSize: '14px' }} />
                       {t('product.booking.secure')}
                     </p>
+                    <div className="border-t border-white/20 pt-3 text-center">
+                      <p className="mb-2 text-xs text-white/70">{t('product.ownerContact.text')}</p>
+                      <button
+                        type="button"
+                        onClick={handleContactOwner}
+                        disabled={contactBusy}
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 bg-white/10 px-5 py-2 text-sm font-semibold text-white transition hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-wait disabled:opacity-60"
+                      >
+                        <MdChatBubbleOutline aria-hidden="true" className="text-lg text-sky-300" />
+                        {contactBusy
+                          ? t('product.ownerContact.opening')
+                          : t('product.ownerContact.cta')}
+                      </button>
+                      {contactHint && (
+                        <p role="status" className="mt-2 text-xs font-semibold text-amber-300">
+                          {contactHint}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1025,6 +1219,7 @@ function ProductPage() {
               light
               wide
               boatId={boatId}
+              commentsOnly
               id="avis"
               className="py-10"
               style={{ scrollMarginTop: ANCHOR_OFFSETS.avis }}

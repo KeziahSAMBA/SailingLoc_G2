@@ -8,6 +8,7 @@ import {
   patchMessage,
   removeMessage,
   postSupport,
+  postBoatContact,
   postResolveSupport,
 } from '../controllers/messageController.js';
 
@@ -31,6 +32,7 @@ router.get(
 router.post('/', protect, requireRole('locataire', 'proprietaire', 'admin'), postMessage);
 // Ouvre la conversation support (admin choisi côté serveur).
 router.post('/support', protect, requireRole('locataire', 'proprietaire'), postSupport);
+router.post('/boat/:id_boat/contact', protect, requireRole('locataire'), postBoatContact);
 // L'admin clôt la demande support d'un utilisateur.
 router.post('/support/:id_user/resolve', protect, requireRole('admin'), postResolveSupport);
 router.patch(

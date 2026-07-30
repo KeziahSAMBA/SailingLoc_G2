@@ -16,6 +16,12 @@ export const TEXTS = {
       suggestions: { fr: 'Nos suggestions', en: 'Our suggestions' },
       reviews: { fr: 'Avis & commentaires', en: 'Reviews & comments' },
     },
+    burgerContact: {
+      hero: { fr: 'Contact & aide', en: 'Contact & help' },
+      details: { fr: 'Nous joindre', en: 'Contact us' },
+      form: { fr: 'Écrivez-nous', en: 'Write to us' },
+      faq: { fr: 'FAQ', en: 'FAQ' },
+    },
     burgerProduct: {
       booking: { fr: 'Location', en: 'Booking' },
       specs: { fr: 'Caractéristiques', en: 'Features' },
@@ -269,6 +275,22 @@ export const TEXTS = {
           en: 'Our expert sailing advisors are available 7 days a week to assist you.',
         },
         cta: { fr: 'Contactez-nous', en: 'Contact us' },
+      },
+    },
+    ownerContact: {
+      text: {
+        fr: 'Une question sur ce bateau ? Échangez directement avec son propriétaire.',
+        en: 'A question about this boat? Chat directly with its owner.',
+      },
+      cta: { fr: 'Contacter le propriétaire', en: 'Contact the owner' },
+      opening: { fr: 'Ouverture…', en: 'Opening…' },
+      locataireOnly: {
+        fr: 'Connectez-vous avec un compte locataire pour contacter le propriétaire.',
+        en: 'Sign in with a renter account to contact the owner.',
+      },
+      error: {
+        fr: 'Impossible d’ouvrir la conversation pour le moment.',
+        en: 'Unable to open the conversation right now.',
       },
     },
     specs: {
@@ -2106,6 +2128,11 @@ export const TEXTS = {
     bookedOn: { fr: 'Réservée le', en: 'Booked on' },
     cancellation: { fr: 'Annulation :', en: 'Cancellation:' },
     cancelledOn: { fr: '(le {{date}})', en: '(on {{date}})' },
+    reviewDone: { fr: '✓ Avis déposé', en: '✓ Review submitted' },
+    reviewHint: {
+      fr: '★ Pensez à laisser un avis sur cette location',
+      en: '★ Remember to leave a review for this rental',
+    },
     loading: { fr: 'Chargement…', en: 'Loading…' },
     emptyAll: {
       fr: 'Vous n’avez aucune réservation pour le moment.',
@@ -2119,24 +2146,36 @@ export const TEXTS = {
       disputeOpen: { fr: 'Litige en cours', en: 'Dispute in progress' },
     },
     actions: {
+      review: { fr: 'Laisser un avis', en: 'Leave a review' },
       cancel: { fr: 'Annuler la réservation', en: 'Cancel booking' },
       refund: { fr: 'Demander un remboursement', en: 'Request a refund' },
       dispute: { fr: 'Signaler un problème', en: 'Report an issue' },
-      review: { fr: 'Laisser un avis', en: 'Leave a review' },
     },
     reviewModal: {
-      title: { fr: 'Votre avis sur cette location', en: 'Your review of this rental' },
+      title: { fr: 'Laisser un avis', en: 'Leave a review' },
       ratingLabel: { fr: 'Votre note', en: 'Your rating' },
+      starLabel_one: { fr: '{{count}} étoile', en: '{{count}} star' },
+      starLabel_other: { fr: '{{count}} étoiles', en: '{{count}} stars' },
       ratingRequired: {
-        fr: 'Attribuez une note (1 à 5 étoiles).',
-        en: 'Please give a rating (1 to 5 stars).',
+        fr: 'Sélectionnez une note entre 1 et 5 étoiles.',
+        en: 'Select a rating between 1 and 5 stars.',
       },
-      commentLabel: { fr: 'Votre commentaire (optionnel)', en: 'Your comment (optional)' },
+      commentLabel: { fr: 'Votre commentaire', en: 'Your comment' },
       commentPlaceholder: {
-        fr: 'Partagez votre expérience à bord…',
-        en: 'Share your experience on board…',
+        fr: 'Décrivez votre expérience avec ce bateau…',
+        en: 'Describe your experience with this boat…',
       },
-      submit: { fr: 'Publier mon avis', en: 'Submit my review' },
+      commentTooShort: {
+        fr: 'Votre commentaire doit contenir au moins 10 caractères.',
+        en: 'Your comment must contain at least 10 characters.',
+      },
+      moderationHint: {
+        fr: 'Votre avis apparaîtra publiquement après validation.',
+        en: 'Your review will appear publicly after approval.',
+      },
+      cancel: { fr: 'Annuler', en: 'Cancel' },
+      submit: { fr: 'Envoyer mon avis', en: 'Submit my review' },
+      submitting: { fr: 'Envoi…', en: 'Submitting…' },
       sent: {
         fr: 'Merci ! Votre avis a été envoyé et sera publié après validation.',
         en: 'Thank you! Your review has been sent and will be published after approval.',
@@ -2187,6 +2226,11 @@ export const TEXTS = {
       working: { fr: 'Envoi…', en: 'Sending…' },
     },
     toasts: {
+      reviewSubmitted: {
+        fr: 'Avis envoyé. Il sera publié après validation.',
+        en: 'Review submitted. It will be published after approval.',
+      },
+      reviewError: { fr: 'Impossible d’envoyer cet avis.', en: 'Unable to submit this review.' },
       cancelled: { fr: 'Réservation annulée.', en: 'Booking cancelled.' },
       cancelledRefunded: {
         fr: 'Réservation annulée — remboursement intégral effectué.',

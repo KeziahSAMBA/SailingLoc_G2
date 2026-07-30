@@ -24,7 +24,7 @@ import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { fetchBoats } from '../services/boatService.js';
 import { fetchPorts } from '../services/portService.js';
-import { trackSiteSearch } from '../utils/matomo.js';
+import { trackSiteSearch } from '../utils/analyticsClient.js';
 import { correctPortPosition, scatterBoatPosition } from '../utils/mapPosition.js';
 import {
   readTransitionPayload,
@@ -193,13 +193,13 @@ const BoatListingCard = memo(function BoatListingCard({
         </div>
 
         {/* Lieu + dates */}
-        <div className="flex items-center justify-between gap-1 mb-2 pb-2 border-b border-white/40">
+        <div className="mb-2 flex flex-col items-start gap-2 border-b border-white/40 pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-1">
           <span className="text-xs text-white/80 flex items-center gap-1 min-w-0">
             <MdLocationOn className="text-sky-500 flex-shrink-0" style={{ fontSize: '13px' }} />
             <span className="truncate">{location}</span>
           </span>
           {availability?.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap justify-end flex-shrink-0">
+            <div className="flex flex-wrap items-center justify-start gap-1 sm:justify-end">
               <MdCalendarToday
                 className="text-sky-500 flex-shrink-0"
                 style={{ fontSize: '12px' }}
@@ -222,7 +222,7 @@ const BoatListingCard = memo(function BoatListingCard({
         </div>
 
         {/* Personnes + badges skipper/permis */}
-        <div className="flex items-center justify-between gap-1 mb-2">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <span className="flex items-center gap-1 text-xs text-white/70 flex-shrink-0">
             <MdPeople className="text-sky-500" style={{ fontSize: '14px' }} />
             {t('category.card.persons', { count: capacity })}
@@ -819,18 +819,7 @@ function CategoryPage() {
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
           {/* Section 1 — Searchbar sticky */}
-          <section
-            className="z-40"
-            style={{
-              position: 'sticky',
-              top: scrolled ? '60px' : '80px',
-              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
-              backdropFilter: scrolled ? 'blur(5px)' : 'none',
-              WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
-              borderBottom: scrolled ? '1px solid rgba(255,255,255,0.3)' : '1px solid transparent',
-              transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
-            }}
-          >
+          <section className="relative z-20 w-full">
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
@@ -843,7 +832,7 @@ function CategoryPage() {
               <div style={slideInStyle(1)}>
                 <Breadcrumb light compact={scrolled} />
               </div>
-              <div style={slideInStyle(0)}>
+              <div className="w-full min-w-0 lg:w-52 lg:flex-none xl:w-60" style={slideInStyle(0)}>
                 <FilterBar
                   light
                   compact={scrolled}
@@ -874,7 +863,7 @@ function CategoryPage() {
             {/* Listings — 55% */}
             <div className="w-[55%] flex flex-col gap-5 relative">
               <div className="relative z-10 flex flex-col gap-5">
-                <div className="flex items-end justify-between">
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
                     <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-sky-500">
                       {t('category.results.kicker')}
@@ -895,7 +884,10 @@ function CategoryPage() {
                     </p>
                   )
                 ) : (
-                  <div className="grid grid-cols-2 gap-4" style={slideInStyleLate('cards', 4)}>
+                  <div
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                    style={slideInStyleLate('cards', 4)}
+                  >
                     {filteredBoats.slice(0, visibleCount).map((boat) => (
                       <BoatListingCard
                         key={boat.id}
@@ -951,7 +943,7 @@ function CategoryPage() {
                     {t('category.map.live')}
                   </span>
                 </div>
-                <div style={{ height: `calc(100vh - ${mapStickyTop}px - 56px)` }}>
+                <div className="h-[320px] sm:h-[420px] xl:h-[calc(100vh-220px)]">
                   <MapView
                     markers={mapMarkers}
                     boatMarkers={boatMapMarkers}

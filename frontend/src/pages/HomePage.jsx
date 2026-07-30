@@ -466,7 +466,7 @@ function HomePage() {
       {/* Section 1 — Hero */}
       <section
         id="hero"
-        className="relative w-full min-h-screen flex flex-col overflow-hidden px-4"
+        className="relative flex min-h-[100svh] w-full flex-col overflow-hidden px-4 pt-16 sm:px-6 sm:pt-20"
       >
         <video
           ref={videoRef}
@@ -512,11 +512,11 @@ function HomePage() {
           />
         )}
 
-        <div className="relative flex-1 flex flex-col items-center justify-center gap-20 text-center">
-          <div className="relative" style={introLogoBlockStyle}>
+        <div className="relative flex flex-1 flex-col items-center justify-center gap-8 py-8 text-center sm:gap-12 lg:gap-20">
+          <div className="relative w-full min-w-0" style={introLogoBlockStyle}>
             {introActive && (
               <p
-                className="absolute left-1/2 -top-16 w-max text-gray-300 text-xl"
+                className="absolute left-1/2 -top-12 w-max max-w-[90vw] text-base text-gray-300 sm:-top-16 sm:text-xl"
                 style={{
                   fontFamily: "'Montserrat Alternates', sans-serif",
                   fontWeight: 600,
@@ -535,11 +535,11 @@ function HomePage() {
               ref={heroLogoRef}
               src={logoLong}
               alt="SailingLoc"
-              className="h-20 mx-auto mb-4"
+              className="mx-auto mb-4 h-12 max-w-[82vw] object-contain sm:h-16 lg:h-20"
               style={heroSlideStyle('right')}
             />
             <p
-              className="text-gray-300 text-xl"
+              className="mx-auto max-w-3xl px-2 text-base leading-relaxed text-gray-300 sm:text-lg lg:text-xl"
               style={{ ...heroSlideStyle('left'), ...introTaglineStyle }}
             >
               {t('home.hero.tagline')}
@@ -555,7 +555,7 @@ function HomePage() {
             >
               {t('home.hero.mobileApp')}
             </p>
-            <div className="flex justify-center gap-2" style={heroSlideStyle('left')}>
+            <div className="flex flex-wrap justify-center gap-2" style={heroSlideStyle('left')}>
               {APP_LINKS.map(({ icon, label, href }) => (
                 <a
                   key={label}
@@ -582,31 +582,37 @@ function HomePage() {
           {/* Section 2 — Carrousels bateaux & ports */}
           <section
             id="suggestions"
-            className="relative w-full flex flex-col gap-8 px-28 py-10 scroll-mt-[45px] bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)]"
+            className="relative flex w-full flex-col gap-8 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)] px-4 py-8 scroll-mt-[45px] sm:px-8 lg:px-16 lg:py-10 xl:px-28"
           >
             <div className="w-full flex flex-col gap-8">
               <Carrousel />
             </div>
           </section>
 
-          <div id="tutoriel" className="border-t border-gray-200 mx-[168px] scroll-mt-[115px]" />
+          <div
+            id="tutoriel"
+            className="mx-4 border-t border-gray-200 scroll-mt-[115px] sm:mx-8 lg:mx-[168px]"
+          />
 
           {/* Section 3 — Tuto */}
-          <section className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0">
-            <div className="w-full flex flex-col items-center px-16 py-10">
+          <section className="flex w-full flex-col items-center gap-0 bg-white px-4 py-8 sm:px-8 lg:px-16 xl:px-28">
+            <div className="flex w-full max-w-7xl flex-col items-center py-8 sm:px-4 lg:px-16 lg:py-10">
               <div className="text-center mb-10">
                 <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
                   {t('home.steps.kicker')}
                 </p>
-                <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
+                <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl">
                   {t('home.steps.title')}
                 </h2>
               </div>
 
-              <div ref={stepsRef} className="flex items-start w-full mb-10">
+              <div
+                ref={stepsRef}
+                className="mb-10 flex w-full flex-col items-stretch gap-8 md:flex-row md:items-start md:gap-0"
+              >
                 {STEPS.map(({ num, icon, title, text }, i) => (
                   <Fragment key={num}>
-                    <div className="flex flex-col items-center text-center flex-1 px-4">
+                    <div className="flex flex-1 flex-col items-center px-2 text-center sm:px-4">
                       <div
                         className="w-14 h-14 rounded-full bg-white border border-sky-500 flex items-center justify-center text-sky-500 text-xl font-semibold mb-4"
                         style={{ boxShadow: '0 2px 8px rgba(14,165,233,0.3)' }}
@@ -622,7 +628,11 @@ function HomePage() {
                       </h3>
                       <p className="text-sm text-gray-500 leading-relaxed max-w-xs mt-2">{text}</p>
                     </div>
-                    {i < STEPS.length - 1 && <DataDots active={dotsActive} />}
+                    {i < STEPS.length - 1 && (
+                      <div className="hidden flex-1 md:block">
+                        <DataDots active={dotsActive} />
+                      </div>
+                    )}
                   </Fragment>
                 ))}
               </div>
@@ -638,27 +648,27 @@ function HomePage() {
             </div>
           </section>
 
-          <div className="border-t border-gray-200 mx-[168px]" />
+          <div className="mx-4 border-t border-gray-200 sm:mx-8 lg:mx-[168px]" />
 
           {/* Section 4 — Proposition de valeur */}
           <section
             id="proposition-valeur"
-            className="w-full bg-white flex flex-col items-center px-28 py-8 gap-0 scroll-mt-[130px]"
+            className="flex w-full flex-col items-center gap-0 bg-white px-4 py-8 scroll-mt-[130px] sm:px-8 lg:px-16 xl:px-28"
           >
             <div className="text-center mb-10">
               <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
                 {t('home.values.kicker')}
               </p>
-              <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
+              <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl">
                 {t('home.values.title')}
               </h2>
             </div>
 
-            <div className="grid grid-cols-4 gap-6 w-full mb-10">
+            <div className="mb-10 grid w-full max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4">
               {VALUE_CARDS.map(({ icon, title, text }) => (
                 <div
                   key={title}
-                  className="flex flex-col items-center text-center gap-3 p-8 rounded-2xl bg-white border border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] hover:-translate-y-1 transition-all duration-300"
+                  className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] sm:p-8"
                 >
                   <span>{icon}</span>
                   <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
@@ -670,12 +680,17 @@ function HomePage() {
             <GhostButton onClick={() => navigate('/a-propos')}>{t('home.values.cta')}</GhostButton>
           </section>
 
-          <div id="avis" className="border-t border-gray-200 mx-[168px] scroll-mt-[60px]" />
+          <div
+            id="avis"
+            className="mx-4 border-t border-gray-200 scroll-mt-[60px] sm:mx-8 lg:mx-[168px]"
+          />
 
           {/* Section 5 — Avis clients */}
           <ClientReviews className="py-8">
             <div className="flex flex-col items-center gap-4 mt-10">
-              <p className="text-gray-700 font-semibold text-lg">{t('home.reviews.tagline')}</p>
+              <p className="px-4 text-center text-base font-semibold text-gray-700 sm:text-lg">
+                {t('home.reviews.tagline')}
+              </p>
               <GhostButton className="font-semibold text-lg" onClick={() => goToCategory()}>
                 {t('home.reviews.cta')} <MdAnchor className="text-base" />
               </GhostButton>

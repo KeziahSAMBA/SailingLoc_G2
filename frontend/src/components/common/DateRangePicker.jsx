@@ -49,7 +49,7 @@ function DateField({ label, displayValue, placeholder, onClick, light }) {
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`flex flex-col justify-center px-5 py-0.5 mx-0.5 rounded-full transition-colors cursor-pointer text-center ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+      className={`mx-0.5 flex w-full flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors cursor-pointer sm:w-auto sm:rounded-full sm:px-5 sm:py-0.5 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
     >
       <span
         className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
@@ -135,7 +135,7 @@ function DateRangePicker({
     : '';
 
   return (
-    <div ref={containerRef} className="relative flex items-stretch">
+    <div ref={containerRef} className="relative flex w-full items-stretch sm:w-auto">
       <DateField
         label={t('searchBar.dates')}
         displayValue={displayValue}
@@ -161,7 +161,7 @@ function DateRangePicker({
 
       {open && (
         <div
-          className={`absolute w-72 rounded-xl bg-white shadow-xl border border-gray-100 p-3 z-50 text-left ${
+          className={`absolute w-[min(18rem,calc(100vw-2rem))] rounded-xl bg-white shadow-xl border border-gray-100 p-3 z-50 text-left ${
             panelPlacement === 'top-right' ? 'right-0 bottom-full mb-2' : 'left-0 top-full mt-2'
           }`}
         >

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCookieConsent } from '../../hooks/useCookieConsent.jsx';
-import { loadMatomo, trackPageView, disableMatomo } from '../../utils/matomo.js';
+import { loadMatomo, trackPageView, disableMatomo } from '../../utils/analyticsClient.js';
 
 // Pont entre le consentement cookies et Matomo (ne rend rien).
 // - Consentement « mesure d'audience » donné → charge le script et trace les
