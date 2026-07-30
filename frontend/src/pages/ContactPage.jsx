@@ -29,7 +29,7 @@ const FOCUS_LIGHT =
 // mise en page (gap, tailles de texte) reprise du modèle Section 4 (proposition
 // de valeur) de la page d'accueil.
 const detailCardClass =
-  'flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/5 p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition hover:bg-white/10 sm:p-8';
+  'flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/5 p-4 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-6';
 
 const inputLight =
   'w-full rounded-lg border border-white/25 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/45 outline-none backdrop-blur-md transition focus:border-sky-300 focus:bg-white/15 focus:ring-2 focus:ring-sky-300/20';
@@ -48,6 +48,18 @@ function ContactPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [chatBusy, setChatBusy] = useState(false);
+
+  // Rubriques FAQ ouvertes (plusieurs à la fois possible), pour l'effet de
+  // glissade animé via la technique grid-template-rows 0fr/1fr.
+  const [openFaqItems, setOpenFaqItems] = useState(() => new Set());
+  function toggleFaqItem(index) {
+    setOpenFaqItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
 
   const messagesPath =
     user?.role === 'proprietaire' ? '/proprietaire/messages' : '/locataire/messages';
@@ -145,7 +157,7 @@ function ContactPage() {
             </h2>
           </div>
 
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-8">
             <li className={detailCardClass}>
               <FaPhone aria-hidden="true" className="text-3xl text-sky-500" />
               <h3 className="text-sm font-semibold text-white">
@@ -212,11 +224,11 @@ function ContactPage() {
 
       {/* Formulaire de contact et rubriques d'aide */}
       <div className="flex min-h-[100svh] w-full flex-col justify-center px-4 py-10">
-        <div className="mx-auto grid w-full max-w-7xl items-start gap-10 md:grid-cols-2 md:items-stretch md:gap-6 lg:gap-10">
+        <div className="mx-auto grid w-full max-w-7xl items-start gap-10 md:grid-cols-2 md:items-start md:gap-2 lg:gap-4">
           <section
             id="contact-form"
             aria-labelledby="form-title"
-            className="mx-auto w-full max-w-2xl scroll-mt-[80px] md:flex md:h-full md:flex-col"
+            className="mx-auto w-full max-w-2xl scroll-mt-[130px]"
           >
             <div className="mb-6 text-center">
               <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -233,7 +245,7 @@ function ContactPage() {
             {formSent ? (
               <div
                 role="status"
-                className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
+                className="mx-auto w-3/4 rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
               >
                 <p className="text-lg font-semibold text-emerald-200">
                   {t('contactPage.form.sent.title')}
@@ -252,7 +264,7 @@ function ContactPage() {
             ) : (
               <form
                 onSubmit={handleFormSubmit}
-                className="rounded-2xl border border-white/20 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] md:flex md:flex-1 md:flex-col"
+                className="mx-auto w-3/4 rounded-2xl border border-white/20 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] md:flex md:flex-1 md:flex-col"
               >
                 {formError && (
                   <div
@@ -333,7 +345,7 @@ function ContactPage() {
                 <button
                   type="submit"
                   disabled={formBusy}
-                  className={`mt-4 w-full rounded-full border border-white/40 bg-[rgba(14,165,233,0.55)] px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition hover:border-white/20 hover:bg-[rgba(10,49,114,0.95)] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_LIGHT}`}
+                  className={`mx-auto mt-4 block w-fit rounded-full border border-white/40 bg-[rgba(14,165,233,0.55)] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition hover:border-white/20 hover:bg-[rgba(10,49,114,0.95)] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_LIGHT}`}
                 >
                   {formBusy ? t('contactPage.form.submitting') : t('contactPage.form.submit')}
                 </button>
@@ -344,7 +356,7 @@ function ContactPage() {
           <section
             id="contact-faq"
             aria-labelledby="faq-title"
-            className="mx-auto w-full max-w-3xl scroll-mt-[80px]"
+            className="mx-auto w-full max-w-3xl scroll-mt-[130px]"
           >
             <div className="mb-6 text-center">
               <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -358,29 +370,45 @@ function ContactPage() {
               </h2>
             </div>
 
-            <div className="space-y-2">
-              {FAQ.map((item) => (
-                <details
-                  key={item.q}
-                  className="group rounded-2xl border border-white/20 bg-white/5 shadow-sm backdrop-blur-[5px] open:bg-white/10 open:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
-                >
-                  <summary
-                    className={`flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white transition hover:text-sky-300 [&::-webkit-details-marker]:hidden ${FOCUS_LIGHT}`}
+            <div className="mx-auto w-3/4 space-y-2">
+              {FAQ.map((item, index) => {
+                const open = openFaqItems.has(index);
+                const answerId = `faq-answer-${index}`;
+                return (
+                  <div
+                    key={item.q}
+                    className={`rounded-2xl border border-white/20 bg-white/5 shadow-sm backdrop-blur-[5px] transition-colors duration-300 ${open ? 'bg-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.18)]' : ''}`}
                   >
-                    {item.q}
-                    <span
-                      aria-hidden="true"
-                      className="shrink-0 text-sky-300 transition-transform group-open:rotate-45"
+                    <button
+                      type="button"
+                      onClick={() => toggleFaqItem(index)}
+                      aria-expanded={open}
+                      aria-controls={answerId}
+                      className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-semibold text-white transition hover:text-sky-300 ${FOCUS_LIGHT}`}
                     >
-                      +
-                    </span>
-                  </summary>
-                  <p className="px-4 pb-3 text-sm leading-relaxed text-white/65">{item.a}</p>
-                </details>
-              ))}
+                      {item.q}
+                      <span
+                        aria-hidden="true"
+                        className={`shrink-0 text-sky-300 transition-transform duration-300 ${open ? 'rotate-45' : ''}`}
+                      >
+                        +
+                      </span>
+                    </button>
+                    <div
+                      id={answerId}
+                      className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+                      style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+                    >
+                      <div className="overflow-hidden">
+                        <p className="px-4 pb-3 text-sm leading-relaxed text-white/65">{item.a}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <p className="mt-4 rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-center text-sm text-white/70 shadow-sm backdrop-blur-[5px]">
+            <p className="mt-4 text-center text-sm text-white/70">
               {t('contactPage.faq.otherQuestion')}{' '}
               {user ? (
                 <button
