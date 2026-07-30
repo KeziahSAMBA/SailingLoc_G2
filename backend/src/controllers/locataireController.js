@@ -12,6 +12,12 @@ import {
   requestRefund,
   reportDispute,
 } from '../services/bookingService.js';
+import {
+  createBookingReview,
+  updateBookingReview,
+  deleteBookingReview,
+  getReviewEligibility,
+} from '../services/reviewService.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -61,6 +67,42 @@ export async function cancelMyBooking(req, res) {
       req.body?.reason
     );
     res.json({ booking });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function postMyBookingReview(req, res) {
+  try {
+    const review = await createBookingReview(req.user.id_user, req.params.id_booking, req.body);
+    res.status(201).json({ review });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function patchMyReview(req, res) {
+  try {
+    const review = await updateBookingReview(req.user.id_user, req.params.id_review, req.body);
+    res.json({ review });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function deleteMyReview(req, res) {
+  try {
+    await deleteBookingReview(req.user.id_user, req.params.id_review);
+    res.status(204).end();
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyBoatReviewEligibility(req, res) {
+  try {
+    const eligibility = await getReviewEligibility(req.user.id_user, req.params.id_boat);
+    res.json(eligibility);
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

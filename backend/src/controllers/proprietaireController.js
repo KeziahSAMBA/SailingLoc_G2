@@ -11,6 +11,7 @@ import {
   createStripeLoginLink,
 } from '../services/proprietaireService.js';
 import { reportDispute } from '../services/bookingService.js';
+import { listOwnerReviews, replyToReview } from '../services/reviewService.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -34,6 +35,24 @@ export async function getBookingLocataireProfile(req, res) {
   try {
     const data = await getBookingLocataire(req.user.id_user, req.params.id_booking);
     res.json(data);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyReviews(req, res) {
+  try {
+    const reviews = await listOwnerReviews(req.user.id_user);
+    res.json({ reviews });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function postReviewReply(req, res) {
+  try {
+    const review = await replyToReview(req.user.id_user, req.params.id_review, req.body?.reply);
+    res.json({ review });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

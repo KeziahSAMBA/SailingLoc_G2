@@ -15,7 +15,8 @@ import SearchBar from '../components/common/SearchBar.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
 import MapView from '../components/common/MapView.jsx';
 import Carrousel from '../components/common/Carrousel.jsx';
-import ClientReviews from '../components/common/ClientReviews.jsx';
+import ClientReviews, { invalidatePublicReviews } from '../components/common/ClientReviews.jsx';
+import BoatReviews from '../components/common/BoatReviews.jsx';
 import GhostButton from '../components/common/GhostButton.jsx';
 import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import ShareButton from '../components/common/ShareButton.jsx';
@@ -31,6 +32,8 @@ import {
 } from 'react-icons/md';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { useToast } from '../hooks/useToast.jsx';
+import { deleteMyReview } from '../services/reviewService.js';
 import { fetchBoats, fetchBoatsFresh } from '../services/boatService.js';
 import { correctPortPosition, scatterBoatPosition } from '../utils/mapPosition.js';
 import {
@@ -101,7 +104,39 @@ function ProductPage() {
   const goToCategory = useCategoryNavigate();
   const { user } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
+  const { showToast } = useToast();
   const [scrolled, setScrolled] = useState(false);
+
+  // Édition d'un avis : déclenchée depuis sa carte dans ClientReviews, rendue
+  // par BoatReviews au-dessus de la liste. `reviewsVersion` remonte la liste
+  // après enregistrement, son cache module étant partagé pour la session.
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [reviewsVersion, setReviewsVersion] = useState(0);
+  const refreshReviews = useCallback(() => {
+    invalidatePublicReviews();
+    setReviewsVersion((v) => v + 1);
+  }, []);
+  const handleEditingChange = useCallback(
+    (next, saved) => {
+      setEditingReviewId(next);
+      if (saved) refreshReviews();
+    },
+    [refreshReviews]
+  );
+  const handleDeleteReview = useCallback(
+    async (idReview) => {
+      if (!window.confirm(t('boatReviews.deleteConfirm'))) return;
+      try {
+        await deleteMyReview(idReview);
+        setEditingReviewId((current) => (current === idReview ? null : current));
+        refreshReviews();
+        showToast(t('boatReviews.deleted'), 'success');
+      } catch (err) {
+        showToast(err.response?.data?.message || t('boatReviews.deleteError'), 'error');
+      }
+    },
+    [refreshReviews, showToast, t]
+  );
 
   // Arrivée depuis la transition accueil/catégorie → produit : les blocs de la
   // page entrent depuis les marges en cascade, et la SearchBar glisse (FLIP)
@@ -823,9 +858,9 @@ function ProductPage() {
                         <span className="text-white/70">
                           {' '}
                           ({t('product.header.ratings', { count: boat.review_count })}) ·{' '}
-                          <span className="underline">
+                          <a href="#avis" className="underline transition hover:text-white">
                             {t('product.header.comments', { count: boat.comment_count })}
-                          </span>
+                          </a>
                         </span>
                       </>
                     ) : (
@@ -970,14 +1005,32 @@ function ProductPage() {
             en thème glassmorphism (verre) pour rester lisibles dessus — même
             traitement que le carrousel/avis de la CategoryPage. */}
         <div className="relative" style={PHOTO_BG_STYLE}>
+          {/* Dépôt d'avis (locataire ayant une réservation terminée sur ce
+              bateau) et édition de son propre avis, déclenchée depuis sa carte
+              dans la liste ci-dessous. */}
+          {belowFoldReady && (
+            <BoatReviews
+              idBoat={boatId}
+              user={user}
+              formOnly
+              className="pt-10"
+              editingReviewId={editingReviewId}
+              onEditingChange={handleEditingChange}
+            />
+          )}
+
           {belowFoldReady && (
             <ClientReviews
+              key={reviewsVersion}
               light
               wide
               boatId={boatId}
               id="avis"
               className="py-10"
               style={{ scrollMarginTop: ANCHOR_OFFSETS.avis }}
+              currentUserId={user?.id_user ?? null}
+              onEditReview={setEditingReviewId}
+              onDeleteReview={handleDeleteReview}
             />
           )}
 

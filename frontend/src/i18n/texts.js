@@ -699,6 +699,42 @@ export const TEXTS = {
     persons: { fr: '{{count}} pers.', en: '{{count}} people' },
   },
 
+  boatReviews: {
+    title: { fr: 'Avis sur ce bateau', en: 'Reviews for this boat' },
+    verified: { fr: 'Avis vérifié', en: 'Verified review' },
+    ownerReply: { fr: 'Réponse du propriétaire', en: 'Owner’s reply' },
+    formTitle: {
+      fr: 'Vous avez loué ce bateau — laissez votre avis',
+      en: 'You rented this boat — leave your review',
+    },
+    edit: { fr: 'Modifier', en: 'Edit' },
+    delete: { fr: 'Supprimer', en: 'Delete' },
+    deleteConfirm: {
+      fr: 'Supprimer définitivement votre avis ?',
+      en: 'Permanently delete your review?',
+    },
+    deleted: { fr: 'Votre avis a été supprimé.', en: 'Your review has been deleted.' },
+    deleteError: {
+      fr: 'La suppression a échoué, réessayez.',
+      en: 'Deletion failed, please try again.',
+    },
+    editTitle: { fr: 'Modifier votre avis', en: 'Edit your review' },
+    saveEdit: { fr: 'Enregistrer', en: 'Save' },
+    cancel: { fr: 'Annuler', en: 'Cancel' },
+    editSaved: { fr: 'Votre avis a été modifié.', en: 'Your review has been updated.' },
+  },
+
+  reviewFilters: {
+    sortLabel: { fr: 'Trier', en: 'Sort' },
+    ratingLabel: { fr: 'Note', en: 'Rating' },
+    allRatings: { fr: 'Toutes les notes', en: 'All ratings' },
+    stars_one: { fr: '{{count}} étoile', en: '{{count}} star' },
+    stars_other: { fr: '{{count}} étoiles', en: '{{count}} stars' },
+    noMatch: { fr: 'Aucun avis pour ce filtre.', en: 'No review for this filter.' },
+    prevPage: { fr: 'Page précédente', en: 'Previous page' },
+    nextPage: { fr: 'Page suivante', en: 'Next page' },
+  },
+
   reviews: {
     kicker: { fr: 'Avis clients', en: 'Customer reviews' },
     title: {
@@ -1868,6 +1904,49 @@ export const TEXTS = {
     perDay: { fr: '{{price}} / jour', en: '{{price}} / day' },
   },
 
+  proprietaireReviews: {
+    pageTitle: { fr: 'Avis reçus — SailingLoc', en: 'Reviews received — SailingLoc' },
+    title: { fr: 'Avis reçus', en: 'Reviews received' },
+    subtitle: {
+      fr: 'Les avis reçus sur vos bateaux, y compris ceux en attente de validation. Répondez-y publiquement.',
+      en: 'Reviews received on your boats, including those awaiting validation. Reply to them publicly.',
+    },
+    loadError: {
+      fr: 'Impossible de charger vos avis. Veuillez réessayer.',
+      en: 'Could not load your reviews. Please try again.',
+    },
+    empty: {
+      fr: 'Aucun avis reçu sur vos bateaux pour le moment.',
+      en: 'No review received on your boats yet.',
+    },
+    emptyFilter: { fr: 'Aucun avis pour ce filtre.', en: 'No review for this filter.' },
+    filterAria: { fr: 'Filtrer les avis par statut', en: 'Filter reviews by status' },
+    filters: {
+      all: { fr: 'Tous', en: 'All' },
+      validated: { fr: 'Validés', en: 'Validated' },
+      pending: { fr: 'En attente', en: 'Pending' },
+    },
+    status: {
+      validated: { fr: 'Validé', en: 'Validated' },
+      pending: { fr: 'En attente', en: 'Pending' },
+    },
+    replyLabel: { fr: 'Votre réponse', en: 'Your reply' },
+    replyPlaceholder: {
+      fr: 'Remerciez le locataire ou apportez une précision…',
+      en: 'Thank the guest or add a clarification…',
+    },
+    reply: { fr: 'Répondre', en: 'Reply' },
+    sending: { fr: 'Envoi…', en: 'Sending…' },
+    yourReply: { fr: 'Votre réponse', en: 'Your reply' },
+    edit: { fr: 'Modifier', en: 'Edit' },
+    cancel: { fr: 'Annuler', en: 'Cancel' },
+    replySent: { fr: 'Votre réponse a été publiée.', en: 'Your reply has been published.' },
+    replyError: {
+      fr: 'L’envoi de la réponse a échoué. Veuillez réessayer.',
+      en: 'Sending the reply failed. Please try again.',
+    },
+  },
+
   proprietaireLayout: {
     navAria: { fr: 'Navigation espace propriétaire', en: 'Owner area navigation' },
     mySpace: { fr: 'Mon espace', en: 'My space' },
@@ -1876,6 +1955,7 @@ export const TEXTS = {
       account: { fr: 'Compte', en: 'Account' },
       documents: { fr: 'Mes documents', en: 'My documents' },
       reservations: { fr: 'Mes réservations', en: 'My bookings' },
+      reviews: { fr: 'Avis reçus', en: 'Reviews received' },
       revenues: { fr: 'Mes revenus', en: 'My earnings' },
       boats: { fr: 'Mes bateaux', en: 'My boats' },
       messages: { fr: 'Messagerie', en: 'Messages' },
@@ -2026,11 +2106,6 @@ export const TEXTS = {
     bookedOn: { fr: 'Réservée le', en: 'Booked on' },
     cancellation: { fr: 'Annulation :', en: 'Cancellation:' },
     cancelledOn: { fr: '(le {{date}})', en: '(on {{date}})' },
-    reviewDone: { fr: '✓ Avis déposé', en: '✓ Review submitted' },
-    reviewHint: {
-      fr: '★ Pensez à laisser un avis sur cette location',
-      en: '★ Remember to leave a review for this rental',
-    },
     loading: { fr: 'Chargement…', en: 'Loading…' },
     emptyAll: {
       fr: 'Vous n’avez aucune réservation pour le moment.',
@@ -2047,6 +2122,29 @@ export const TEXTS = {
       cancel: { fr: 'Annuler la réservation', en: 'Cancel booking' },
       refund: { fr: 'Demander un remboursement', en: 'Request a refund' },
       dispute: { fr: 'Signaler un problème', en: 'Report an issue' },
+      review: { fr: 'Laisser un avis', en: 'Leave a review' },
+    },
+    reviewModal: {
+      title: { fr: 'Votre avis sur cette location', en: 'Your review of this rental' },
+      ratingLabel: { fr: 'Votre note', en: 'Your rating' },
+      ratingRequired: {
+        fr: 'Attribuez une note (1 à 5 étoiles).',
+        en: 'Please give a rating (1 to 5 stars).',
+      },
+      commentLabel: { fr: 'Votre commentaire (optionnel)', en: 'Your comment (optional)' },
+      commentPlaceholder: {
+        fr: 'Partagez votre expérience à bord…',
+        en: 'Share your experience on board…',
+      },
+      submit: { fr: 'Publier mon avis', en: 'Submit my review' },
+      sent: {
+        fr: 'Merci ! Votre avis a été envoyé et sera publié après validation.',
+        en: 'Thank you! Your review has been sent and will be published after approval.',
+      },
+      error: {
+        fr: 'L’envoi de votre avis a échoué. Veuillez réessayer.',
+        en: 'Submitting your review failed. Please try again.',
+      },
     },
     modal: {
       cancelTitle: { fr: 'Annuler la réservation', en: 'Cancel the booking' },

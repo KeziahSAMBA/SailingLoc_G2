@@ -255,15 +255,18 @@ model Message {
 }
 
 model Review {
-  id_review   Int          @id @default(autoincrement())
-  id_user     Int
-  id_booking  Int
-  rating      Int
-  comment     String?
-  status      ReviewStatus @default(pending)
-  created_at  DateTime     @default(now())
-  updated_at  DateTime?
-  deleted_at  DateTime?
+  id_review      Int          @id @default(autoincrement())
+  id_user        Int
+  id_booking     Int
+  rating         Int
+  comment        String?
+  status         ReviewStatus @default(pending)
+  // Réponse publique du propriétaire au commentaire (une seule, éditable).
+  owner_reply    String?
+  owner_reply_at DateTime?
+  created_at     DateTime     @default(now())
+  updated_at     DateTime?
+  deleted_at     DateTime?
 
   user        User         @relation(fields: [id_user], references: [id_user])
   booking     Booking      @relation(fields: [id_booking], references: [id_booking])

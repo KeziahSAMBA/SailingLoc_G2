@@ -9,6 +9,7 @@ function ProprietaireLayout() {
     { to: '/proprietaire/compte', label: t('proprietaireLayout.nav.account') },
     { to: '/proprietaire/documents', label: t('proprietaireLayout.nav.documents') },
     { to: '/proprietaire/reservations', label: t('proprietaireLayout.nav.reservations') },
+    { to: '/proprietaire/avis', label: t('proprietaireLayout.nav.reviews') },
     { to: '/proprietaire/revenus', label: t('proprietaireLayout.nav.revenues') },
     { to: '/proprietaire/bateaux', label: t('proprietaireLayout.nav.boats') },
     { to: '/proprietaire/messages', label: t('proprietaireLayout.nav.messages') },

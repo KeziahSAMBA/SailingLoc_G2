@@ -11,6 +11,7 @@ import {
   getBoatsByType,
   createBookingController,
 } from '../controllers/boatController.js';
+import { getBoatReviews } from '../controllers/reviewController.js';
 
 // Photos servies en statique via /uploads : on garde l'extension d'origine
 // pour que le navigateur reçoive le bon type MIME. L'acte de francisation, lui, est
@@ -71,6 +72,7 @@ const router = Router();
 
 router.get('/by-type', getBoatsByType);
 router.get('/', getBoats);
+router.get('/:id_boat/reviews', getBoatReviews);
 router.post('/', protect, requireRole('proprietaire', 'admin'), uploadFiles, uploadBoat);
 router.post('/:id_boat/bookings', protect, requireRole('locataire'), createBookingController);
 router.put('/:id_boat', protect, requireRole('proprietaire'), uploadFiles, putBoat);

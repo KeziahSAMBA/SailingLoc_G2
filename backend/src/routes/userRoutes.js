@@ -27,6 +27,10 @@ import {
   cancelMyBooking,
   requestMyRefund,
   reportMyDispute,
+  postMyBookingReview,
+  patchMyReview,
+  deleteMyReview,
+  getMyBoatReviewEligibility,
   getMyFavorites,
   postFavorite,
   deleteFavorite,
@@ -37,6 +41,8 @@ import {
   getMyBoats as getProprietaireBoats,
   getMyBookings as getProprietaireBookings,
   getBookingLocataireProfile as getProprietaireBookingLocataire,
+  getMyReviews as getProprietaireReviews,
+  postReviewReply as postProprietaireReviewReply,
   getMyPayments as getProprietairePayments,
   patchBooking as patchProprietaireBooking,
   reportBookingDispute as reportProprietaireDispute,
@@ -200,6 +206,18 @@ router.post(
   requireRole('proprietaire'),
   postStripeLoginLink
 );
+router.get(
+  '/me/proprietaire/reviews',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireReviews
+);
+router.post(
+  '/me/proprietaire/reviews/:id_review/reply',
+  protect,
+  requireRole('proprietaire'),
+  postProprietaireReviewReply
+);
 router.get('/me/proprietaire/boats', protect, requireRole('proprietaire'), getProprietaireBoats);
 router.get(
   '/me/proprietaire/boats/:id_boat',
@@ -223,6 +241,20 @@ router.post(
   requireRole('locataire'),
   uploadDisputePhotos,
   reportMyDispute
+);
+router.post(
+  '/me/bookings/:id_booking/review',
+  protect,
+  requireRole('locataire'),
+  postMyBookingReview
+);
+router.patch('/me/reviews/:id_review', protect, requireRole('locataire'), patchMyReview);
+router.delete('/me/reviews/:id_review', protect, requireRole('locataire'), deleteMyReview);
+router.get(
+  '/me/boats/:id_boat/review-eligibility',
+  protect,
+  requireRole('locataire'),
+  getMyBoatReviewEligibility
 );
 router.get('/me/favorites', protect, requireRole('locataire'), getMyFavorites);
 router.post('/me/favorites/:id_boat', protect, requireRole('locataire'), postFavorite);
