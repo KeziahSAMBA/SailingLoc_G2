@@ -470,7 +470,7 @@ function LocataireReservations() {
 
       {/* Filtres par statut */}
       <div
-        className="mb-3 flex flex-wrap gap-2"
+        className="mb-3 flex max-w-full snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] sm:snap-none sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
         role="group"
         aria-label={t('locataireReservations.filterAria')}
       >
@@ -482,7 +482,7 @@ function LocataireReservations() {
               type="button"
               onClick={() => setFilter(f.key)}
               aria-pressed={active}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
+              className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
                   ? 'bg-sky-500 text-white'
                   : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
@@ -496,7 +496,7 @@ function LocataireReservations() {
 
       {/* Filtres par période (passées / en cours / à venir), cumulables avec le statut */}
       <div
-        className="mb-5 flex flex-wrap gap-2"
+        className="mb-5 flex max-w-full snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] sm:snap-none sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
         role="group"
         aria-label={t('locataireReservations.periodFilterAria')}
       >
@@ -508,7 +508,7 @@ function LocataireReservations() {
               type="button"
               onClick={() => setPeriodFilter(f.key)}
               aria-pressed={active}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
+              className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
                   ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
                   : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
