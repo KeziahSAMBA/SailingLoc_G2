@@ -207,9 +207,9 @@ function FavoritesPreview({ favorites }) {
           {t('locataireDashboard.favoritesPreview.empty')}
         </p>
       ) : (
-        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className={`mt-4 grid gap-3 ${favorites.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
           {favorites.map((f) => (
-            <li key={f.id_favorite}>
+            <li key={f.id_favorite} className="min-w-0">
               <Link
                 to="/locataire/favoris"
                 className={`block overflow-hidden rounded-xl border border-white/20 bg-white/10 backdrop-blur-xl transition hover:border-white/40 ${FOCUS_RING}`}
