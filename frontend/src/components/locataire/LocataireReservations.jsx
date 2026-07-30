@@ -164,12 +164,14 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {paymentBadge && (
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${paymentBadge.cls}`}
+                  className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${paymentBadge.cls}`}
                 >
                   {paymentBadge.label}
                 </span>
               )}
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${meta.cls}`}>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${meta.cls}`}
+              >
                 {meta.label}
               </span>
             </div>
@@ -224,7 +226,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   onClick={() => onAction(booking, 'review')}
                   className={`inline-flex items-center gap-1 rounded-full bg-[#5AB4EC] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#4aa3db] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
-                  <FaStar aria-hidden className="text-[11px]" />
+                  <FaStar aria-hidden className="text-[0.6875rem]" />
                   {t('locataireReservations.actions.review')}
                 </button>
               )}
