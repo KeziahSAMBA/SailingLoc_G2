@@ -215,19 +215,19 @@ function LocataireDepenses() {
                           {t('locataireDepenses.paidOn', { date: fmtDate(p.payment_date) })}
                         </p>
                         {p.transaction_ref && (
-                          <p className="mt-0.5 truncate text-[11px] text-white/40">
+                          <p className="mt-0.5 truncate text-[0.6875rem] text-white/40">
                             {t('locataireDepenses.reference', { ref: p.transaction_ref })}
                           </p>
                         )}
                         <div className="mt-2 flex min-w-0 items-center gap-2">
                           <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${cls}`}
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${cls}`}
                           >
                             {t(`locataireDepenses.status.${p.status}`, { defaultValue: p.status })}
                           </span>
                           {p.refunded_amount != null && (
                             <span
-                              className="truncate text-[11px] font-medium text-amber-300"
+                              className="truncate text-[0.6875rem] font-medium text-amber-300"
                               title={p.refund_reason || undefined}
                             >
                               {t('locataireDepenses.refundedDetail', {
