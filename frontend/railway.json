@@ -2,7 +2,7 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "RAILPACK",
-    "buildCommand": "npm ci && npm run build --workspace frontend",
+    "buildCommand": "npm run build --workspace frontend",
     "watchPatterns": ["frontend/**", "package.json", "package-lock.json"]
   },
   "deploy": {
