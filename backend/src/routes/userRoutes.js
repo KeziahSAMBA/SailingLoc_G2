@@ -53,7 +53,7 @@ import {
 
 // Photos de profil : servies en statique via /uploads (visibles dans le header
 // et la messagerie), extension conservée pour le bon type MIME.
-const AVATARS_DIR = 'uploads/avatars';
+const AVATARS_DIR = path.join(process.env.UPLOADS_DIR || 'uploads', 'avatars');
 fs.mkdirSync(AVATARS_DIR, { recursive: true });
 
 const avatarStorage = multer.diskStorage({
@@ -92,7 +92,7 @@ function uploadAvatar(req, res, next) {
 }
 
 // Photos jointes à un litige : statiques via /uploads, comme les photos de bateaux.
-const DISPUTES_DIR = 'uploads/disputes';
+const DISPUTES_DIR = path.join(process.env.UPLOADS_DIR || 'uploads', 'disputes');
 fs.mkdirSync(DISPUTES_DIR, { recursive: true });
 
 const disputeUpload = multer({

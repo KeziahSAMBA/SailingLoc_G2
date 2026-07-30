@@ -37,7 +37,8 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stri
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
-app.use('/uploads', express.static('uploads'));
+// UPLOADS_DIR : chemin disque configurable (volume Railway) ; l'URL /uploads ne change pas.
+app.use('/uploads', express.static(process.env.UPLOADS_DIR || 'uploads'));
 
 const registerLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,

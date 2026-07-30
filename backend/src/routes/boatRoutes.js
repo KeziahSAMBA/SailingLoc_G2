@@ -17,7 +17,7 @@ import { getBoatReviews } from '../controllers/reviewController.js';
 // pour que le navigateur reçoive le bon type MIME. L'acte de francisation, lui, est
 // un document sensible : stockée hors du dossier statique et servie uniquement
 // par la route protégée GET /api/documents/:id/file.
-const IMAGES_DIR = 'uploads/boats';
+const IMAGES_DIR = path.join(process.env.UPLOADS_DIR || 'uploads', 'boats');
 const DOCUMENTS_DIR = process.env.DOCUMENTS_DIR || 'storage/documents';
 fs.mkdirSync(IMAGES_DIR, { recursive: true });
 fs.mkdirSync(DOCUMENTS_DIR, { recursive: true });
