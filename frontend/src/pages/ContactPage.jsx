@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaPhone, FaEnvelope, FaComments } from 'react-icons/fa6';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { sendContactRequest } from '../services/contactService.js';
@@ -7,48 +8,28 @@ import { contactSupport } from '../services/messageService.js';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
 
 // Rubriques d'aide : mêmes questions que le footer, avec leurs réponses.
-const FAQ = [
-  {
-    q: 'Comment trouver et réserver un bateau ?',
-    a: 'Parcourez les annonces depuis la page Catégories ou la recherche par port, puis envoyez une demande de réservation aux dates souhaitées. Le propriétaire confirme (ou refuse) votre demande : vous êtes prévenu par email et dans votre espace.',
-  },
-  {
-    q: 'Quels documents sont requis pour louer ?',
-    a: 'Un permis bateau (côtier ou fluvial selon le bateau), une pièce d’identité en cours de validité et un CV nautique. Déposez-les dans « Mes documents » : notre équipe les vérifie sous 48 h.',
-  },
-  {
-    q: 'Comment annuler ou modifier une réservation ?',
-    a: 'Rendez-vous dans « Mes réservations » depuis votre espace. Une demande en attente peut être annulée librement ; pour une réservation confirmée, contactez le propriétaire via la messagerie — en cas de désaccord, notre équipe peut arbitrer via un litige.',
-  },
-  {
-    q: 'Quels modes de paiement sont acceptés ?',
-    a: 'La carte bancaire et le virement. Le paiement est encaissé à la confirmation de la réservation ; SailingLoc prélève une commission de 10 % sur chaque location.',
-  },
-  {
-    q: 'Comment mettre mon bateau en location ?',
-    a: 'Créez un compte propriétaire, puis « Publier un bateau » depuis votre espace : caractéristiques, photos, port d’attache, disponibilités et acte de francisation. Votre annonce est vérifiée par notre équipe avant d’être publiée.',
-  },
-  {
-    q: 'Les bateaux sont-ils assurés pendant la location ?',
-    a: 'Oui : chaque propriétaire doit fournir une attestation d’assurance valide, vérifiée par notre équipe avant la publication de l’annonce.',
-  },
-  {
-    q: 'Comment laisser un avis après ma location ?',
-    a: 'Une fois la location terminée, ouvrez « Mes réservations » : un rappel vous invite à noter le bateau et laisser un commentaire. Les avis sont modérés avant publication.',
-  },
-  {
-    q: "Que faire en cas d'incident en mer ?",
-    a: 'Votre sécurité d’abord : contactez le CROSS (196 ou VHF canal 16) en cas d’urgence. Ensuite, prévenez le propriétaire via la messagerie et signalez l’incident à notre équipe, qui ouvrira un litige si nécessaire.',
-  },
-];
+function getFAQ(t) {
+  return [
+    { q: t('contactPage.faq.items.findBoat.q'), a: t('contactPage.faq.items.findBoat.a') },
+    { q: t('contactPage.faq.items.documents.q'), a: t('contactPage.faq.items.documents.a') },
+    { q: t('contactPage.faq.items.cancel.q'), a: t('contactPage.faq.items.cancel.a') },
+    { q: t('contactPage.faq.items.payment.q'), a: t('contactPage.faq.items.payment.a') },
+    { q: t('contactPage.faq.items.listBoat.q'), a: t('contactPage.faq.items.listBoat.a') },
+    { q: t('contactPage.faq.items.insurance.q'), a: t('contactPage.faq.items.insurance.a') },
+    { q: t('contactPage.faq.items.review.q'), a: t('contactPage.faq.items.review.a') },
+    { q: t('contactPage.faq.items.incident.q'), a: t('contactPage.faq.items.incident.a') },
+  ];
+}
 
-// Focus clavier visible sur fond clair (liens et accordéons).
+// Focus clavier visible sur fond sombre (liens et accordéons du formulaire/FAQ).
 const FOCUS_LIGHT =
   'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
 
-// Cartes blanches ombrées, comme les sections de la page d'accueil.
-const cardClass =
-  'rounded-2xl border border-white/20 bg-white/10 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl';
+// Cartes glassmorphism, comme les autres blocs de la page (formulaire, FAQ) —
+// mise en page (gap, tailles de texte) reprise du modèle Section 4 (proposition
+// de valeur) de la page d'accueil.
+const detailCardClass =
+  'flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/5 p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition hover:bg-white/10 sm:p-8';
 
 const inputLight =
   'w-full rounded-lg border border-white/25 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/45 outline-none backdrop-blur-md transition focus:border-sky-300 focus:bg-white/15 focus:ring-2 focus:ring-sky-300/20';
@@ -63,6 +44,7 @@ const PHOTO_BG_STYLE = {
 };
 
 function ContactPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [chatBusy, setChatBusy] = useState(false);
@@ -117,97 +99,107 @@ function ContactPage() {
       setFormSent(true);
       setForm((prev) => ({ ...prev, subject: '', message: '' }));
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Une erreur est survenue, réessayez.');
+      setFormError(err.response?.data?.message || t('contactPage.form.error'));
     } finally {
       setFormBusy(false);
     }
   }
 
+  const FAQ = useMemo(() => getFAQ(t), [t]);
+
   // SEO / onglet navigateur : titre de page dédié.
   useEffect(() => {
-    document.title = 'Contact & aide — SailingLoc';
-  }, []);
+    document.title = t('contactPage.pageTitle');
+  }, [t]);
 
   return (
     <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
-      {/* Hero de la page Contact */}
+      {/* Hero de la page Contact + coordonnées */}
       <section
         id="contact-hero"
-        className="relative flex min-h-[45vh] w-full scroll-mt-[80px] flex-col items-center justify-center overflow-hidden px-4 pt-[96px]"
+        className="relative flex min-h-[100svh] w-full scroll-mt-[80px] flex-col items-center justify-center px-4 pb-10 pt-[96px]"
       >
-        <div className="relative text-center">
-          <h1 className="text-4xl font-semibold text-white md:text-5xl">Contact &amp; aide</h1>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">
-            Une question, un souci ? Notre équipe vous répond du lundi au samedi, de 9 h à 18 h.
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl">
+            {t('contactPage.hero.title')}
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-white/75 sm:text-base">
+            {t('contactPage.hero.tagline')}
           </p>
         </div>
-      </section>
 
-      <div className="mx-auto max-w-4xl border-t border-white/15" />
-
-      {/* Coordonnées */}
-      <section
-        id="contact-details"
-        aria-labelledby="coordonnees-title"
-        className="w-full scroll-mt-[80px] px-4 py-14"
-      >
-        <div className="mx-auto w-full max-w-5xl">
+        <div
+          id="contact-details"
+          aria-labelledby="coordonnees-title"
+          className="mt-10 w-full max-w-5xl scroll-mt-[80px]"
+        >
           <div className="mb-10 text-center">
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
-              Nous joindre
+              {t('contactPage.details.kicker')}
             </p>
-            <h2 id="coordonnees-title" className="text-3xl font-semibold text-white md:text-4xl">
-              Trois façons de nous contacter
+            <h2
+              id="coordonnees-title"
+              className="text-xl font-semibold text-white sm:text-2xl md:text-3xl"
+            >
+              {t('contactPage.details.title')}
             </h2>
           </div>
 
-          <ul className="grid gap-6 sm:grid-cols-3">
-            <li className={`${cardClass} text-center`}>
-              <FaPhone aria-hidden="true" className="mx-auto text-3xl text-sky-500" />
-              <h3 className="mt-4 font-semibold text-white">Téléphone</h3>
-              <p className="mt-1 text-sm leading-relaxed text-white/65">
-                Du lundi au samedi, 9 h – 18 h.
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
+            <li className={detailCardClass}>
+              <FaPhone aria-hidden="true" className="text-3xl text-sky-500" />
+              <h3 className="text-sm font-semibold text-white">
+                {t('contactPage.details.phone.title')}
+              </h3>
+              <p className="text-xs leading-relaxed text-white/65">
+                {t('contactPage.details.phone.hours')}
               </p>
               <a
                 href="tel:+33200667789"
-                className={`mt-4 inline-block font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
               >
                 +33 (0)2 00 66 77 89
               </a>
             </li>
-            <li className={`${cardClass} text-center`}>
-              <FaComments aria-hidden="true" className="mx-auto text-3xl text-sky-500" />
-              <h3 className="mt-4 font-semibold text-white">Chat en ligne</h3>
-              <p className="mt-1 text-sm leading-relaxed text-white/65">
-                Échangez en direct avec le support depuis votre messagerie.
+            <li className={detailCardClass}>
+              <FaComments aria-hidden="true" className="text-3xl text-sky-500" />
+              <h3 className="text-sm font-semibold text-white">
+                {t('contactPage.details.chat.title')}
+              </h3>
+              <p className="text-xs leading-relaxed text-white/65">
+                {t('contactPage.details.chat.text')}
               </p>
               {user ? (
                 <button
                   type="button"
                   onClick={openSupportChat}
                   disabled={chatBusy}
-                  className={`mt-4 inline-block font-medium text-sky-300 hover:text-sky-200 hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
+                  className={`font-medium text-sky-300 hover:text-sky-200 hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
                 >
-                  {chatBusy ? 'Ouverture…' : 'Ouvrir la messagerie'}
+                  {chatBusy
+                    ? t('contactPage.details.chat.opening')
+                    : t('contactPage.details.chat.open')}
                 </button>
               ) : (
                 <Link
                   to="/login"
-                  className={`mt-4 inline-block font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                  className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
                 >
-                  Se connecter pour discuter
+                  {t('contactPage.details.chat.login')}
                 </Link>
               )}
             </li>
-            <li className={`${cardClass} text-center`}>
-              <FaEnvelope aria-hidden="true" className="mx-auto text-3xl text-sky-500" />
-              <h3 className="mt-4 font-semibold text-white">Email</h3>
-              <p className="mt-1 text-sm leading-relaxed text-white/65">
-                Réponse sous 24 h ouvrées.
+            <li className={detailCardClass}>
+              <FaEnvelope aria-hidden="true" className="text-3xl text-sky-500" />
+              <h3 className="text-sm font-semibold text-white">
+                {t('contactPage.details.email.title')}
+              </h3>
+              <p className="text-xs leading-relaxed text-white/65">
+                {t('contactPage.details.email.text')}
               </p>
               <a
                 href="mailto:contact@sailingloc.fr"
-                className={`mt-4 inline-block font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
               >
                 contact@sailingloc.fr
               </a>
@@ -219,19 +211,22 @@ function ContactPage() {
       <div className="mx-auto max-w-4xl border-t border-white/15" />
 
       {/* Formulaire de contact et rubriques d'aide */}
-      <div className="w-full px-4 py-14">
-        <div className="mx-auto grid w-full max-w-7xl items-start gap-14 md:grid-cols-2 md:items-stretch md:gap-6 lg:gap-10">
+      <div className="flex min-h-[100svh] w-full flex-col justify-center px-4 py-10">
+        <div className="mx-auto grid w-full max-w-7xl items-start gap-10 md:grid-cols-2 md:items-stretch md:gap-6 lg:gap-10">
           <section
             id="contact-form"
             aria-labelledby="form-title"
             className="mx-auto w-full max-w-2xl scroll-mt-[80px] md:flex md:h-full md:flex-col"
           >
-            <div className="mb-10 text-center">
-              <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
-                Écrivez-nous
+            <div className="mb-6 text-center">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
+                {t('contactPage.form.kicker')}
               </p>
-              <h2 id="form-title" className="text-3xl font-semibold text-white md:text-4xl">
-                Envoyer un message
+              <h2
+                id="form-title"
+                className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl"
+              >
+                {t('contactPage.form.title')}
               </h2>
             </div>
 
@@ -240,22 +235,24 @@ function ContactPage() {
                 role="status"
                 className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
               >
-                <p className="text-lg font-semibold text-emerald-200">Message bien envoyé !</p>
+                <p className="text-lg font-semibold text-emerald-200">
+                  {t('contactPage.form.sent.title')}
+                </p>
                 <p className="mt-2 text-sm text-emerald-100/80">
-                  Notre équipe vous répondra à l&apos;adresse indiquée sous 24 h ouvrées.
+                  {t('contactPage.form.sent.text')}
                 </p>
                 <button
                   type="button"
                   onClick={() => setFormSent(false)}
                   className={`mt-4 font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
                 >
-                  Envoyer un autre message
+                  {t('contactPage.form.sent.again')}
                 </button>
               </div>
             ) : (
               <form
                 onSubmit={handleFormSubmit}
-                className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col"
+                className="rounded-2xl border border-white/20 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] md:flex md:flex-1 md:flex-col"
               >
                 {formError && (
                   <div
@@ -266,10 +263,10 @@ function ContactPage() {
                   </div>
                 )}
 
-                <div className="grid gap-4 sm:grid-cols-2 md:flex-1 md:grid-rows-[auto_auto_minmax(0,1fr)]">
+                <div className="grid gap-3 sm:grid-cols-2 md:flex-1 md:grid-rows-[auto_auto_minmax(0,1fr)]">
                   <div>
                     <label htmlFor="contact-name" className={labelLight}>
-                      Nom *
+                      {t('contactPage.form.name')}
                     </label>
                     <input
                       id="contact-name"
@@ -285,7 +282,7 @@ function ContactPage() {
                   </div>
                   <div>
                     <label htmlFor="contact-email" className={labelLight}>
-                      Email *
+                      {t('contactPage.form.email')}
                     </label>
                     <input
                       id="contact-email"
@@ -301,7 +298,7 @@ function ContactPage() {
                   </div>
                   <div className="sm:col-span-2">
                     <label htmlFor="contact-subject" className={labelLight}>
-                      Objet *
+                      {t('contactPage.form.subject')}
                     </label>
                     <input
                       id="contact-subject"
@@ -311,23 +308,23 @@ function ContactPage() {
                       maxLength={200}
                       value={form.subject}
                       onChange={handleFormChange}
-                      placeholder="Ex. : question sur une réservation"
+                      placeholder={t('contactPage.form.subjectPlaceholder')}
                       className={inputLight}
                     />
                   </div>
                   <div className="sm:col-span-2 md:flex md:min-h-0 md:flex-col">
                     <label htmlFor="contact-message" className={labelLight}>
-                      Message *
+                      {t('contactPage.form.message')}
                     </label>
                     <textarea
                       id="contact-message"
                       name="message"
-                      rows={5}
+                      rows={3}
                       required
                       maxLength={5000}
                       value={form.message}
                       onChange={handleFormChange}
-                      placeholder="Décrivez votre demande…"
+                      placeholder={t('contactPage.form.messagePlaceholder')}
                       className={`${inputLight} md:min-h-0 md:flex-1`}
                     />
                   </div>
@@ -336,9 +333,9 @@ function ContactPage() {
                 <button
                   type="submit"
                   disabled={formBusy}
-                  className={`mt-6 w-full rounded-full border border-white/40 bg-[rgba(14,165,233,0.55)] px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition hover:border-white/20 hover:bg-[rgba(10,49,114,0.95)] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_LIGHT}`}
+                  className={`mt-4 w-full rounded-full border border-white/40 bg-[rgba(14,165,233,0.55)] px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition hover:border-white/20 hover:bg-[rgba(10,49,114,0.95)] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_LIGHT}`}
                 >
-                  {formBusy ? 'Envoi…' : 'Envoyer le message'}
+                  {formBusy ? t('contactPage.form.submitting') : t('contactPage.form.submit')}
                 </button>
               </form>
             )}
@@ -349,23 +346,26 @@ function ContactPage() {
             aria-labelledby="faq-title"
             className="mx-auto w-full max-w-3xl scroll-mt-[80px]"
           >
-            <div className="mb-10 text-center">
-              <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
-                FAQ
+            <div className="mb-6 text-center">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
+                {t('contactPage.faq.kicker')}
               </p>
-              <h2 id="faq-title" className="text-3xl font-semibold text-white md:text-4xl">
-                Rubriques d&apos;aide
+              <h2
+                id="faq-title"
+                className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl"
+              >
+                {t('contactPage.faq.title')}
               </h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {FAQ.map((item) => (
                 <details
                   key={item.q}
-                  className="group rounded-2xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-xl open:bg-white/15 open:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
+                  className="group rounded-2xl border border-white/20 bg-white/5 shadow-sm backdrop-blur-[5px] open:bg-white/10 open:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
                 >
                   <summary
-                    className={`flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 text-sm font-semibold text-white transition hover:text-sky-300 [&::-webkit-details-marker]:hidden ${FOCUS_LIGHT}`}
+                    className={`flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white transition hover:text-sky-300 [&::-webkit-details-marker]:hidden ${FOCUS_LIGHT}`}
                   >
                     {item.q}
                     <span
@@ -375,13 +375,13 @@ function ContactPage() {
                       +
                     </span>
                   </summary>
-                  <p className="px-5 pb-4 text-sm leading-relaxed text-white/65">{item.a}</p>
+                  <p className="px-4 pb-3 text-sm leading-relaxed text-white/65">{item.a}</p>
                 </details>
               ))}
             </div>
 
-            <p className="mt-8 rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-center text-sm text-white/70 shadow-sm backdrop-blur-xl">
-              Une autre question ?{' '}
+            <p className="mt-4 rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-center text-sm text-white/70 shadow-sm backdrop-blur-[5px]">
+              {t('contactPage.faq.otherQuestion')}{' '}
               {user ? (
                 <button
                   type="button"
@@ -389,17 +389,17 @@ function ContactPage() {
                   disabled={chatBusy}
                   className={`font-medium text-sky-300 hover:text-sky-200 hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
                 >
-                  Contactez-nous en direct
+                  {t('contactPage.faq.contactDirect')}
                 </button>
               ) : (
                 <Link
                   to="/login"
                   className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
                 >
-                  Contactez-nous en direct
+                  {t('contactPage.faq.contactDirect')}
                 </Link>
               )}{' '}
-              — nous sommes là pour vous aider.
+              — {t('contactPage.faq.otherSuffix')}
             </p>
           </section>
         </div>

@@ -685,6 +685,149 @@ export const TEXTS = {
     },
   },
 
+  contactPage: {
+    pageTitle: { fr: 'Contact & aide — SailingLoc', en: 'Contact & help — SailingLoc' },
+    hero: {
+      title: { fr: 'Contact & aide', en: 'Contact & help' },
+      tagline: {
+        fr: 'Une question, un souci ? Notre équipe vous répond du lundi au samedi, de 9 h à 18 h.',
+        en: 'A question, an issue? Our team replies Monday to Saturday, 9am to 6pm.',
+      },
+    },
+    details: {
+      kicker: { fr: 'Nous joindre', en: 'Contact us' },
+      title: { fr: 'Trois façons de nous contacter', en: 'Three ways to reach us' },
+      phone: {
+        title: { fr: 'Téléphone', en: 'Phone' },
+        hours: { fr: 'Du lundi au samedi, 9 h – 18 h.', en: 'Monday to Saturday, 9am – 6pm.' },
+      },
+      chat: {
+        title: { fr: 'Chat en ligne', en: 'Live chat' },
+        text: {
+          fr: 'Échangez en direct avec le support depuis votre messagerie.',
+          en: 'Chat live with our support team from your messages.',
+        },
+        open: { fr: 'Ouvrir la messagerie', en: 'Open messages' },
+        opening: { fr: 'Ouverture…', en: 'Opening…' },
+        login: { fr: 'Se connecter pour discuter', en: 'Log in to chat' },
+      },
+      email: {
+        title: { fr: 'Email', en: 'Email' },
+        text: { fr: 'Réponse sous 24 h ouvrées.', en: 'Reply within 24 business hours.' },
+      },
+    },
+    form: {
+      kicker: { fr: 'Écrivez-nous', en: 'Write to us' },
+      title: { fr: 'Envoyer un message', en: 'Send a message' },
+      name: { fr: 'Nom *', en: 'Name *' },
+      email: { fr: 'Email *', en: 'Email *' },
+      subject: { fr: 'Objet *', en: 'Subject *' },
+      subjectPlaceholder: {
+        fr: 'Ex. : question sur une réservation',
+        en: 'E.g.: question about a booking',
+      },
+      message: { fr: 'Message *', en: 'Message *' },
+      messagePlaceholder: { fr: 'Décrivez votre demande…', en: 'Describe your request…' },
+      submit: { fr: 'Envoyer le message', en: 'Send message' },
+      submitting: { fr: 'Envoi…', en: 'Sending…' },
+      error: {
+        fr: 'Une erreur est survenue, réessayez.',
+        en: 'Something went wrong, please try again.',
+      },
+      sent: {
+        title: { fr: 'Message bien envoyé !', en: 'Message sent!' },
+        text: {
+          fr: "Notre équipe vous répondra à l'adresse indiquée sous 24 h ouvrées.",
+          en: 'Our team will reply to the address you provided within 24 business hours.',
+        },
+        again: { fr: 'Envoyer un autre message', en: 'Send another message' },
+      },
+    },
+    faq: {
+      kicker: { fr: 'FAQ', en: 'FAQ' },
+      title: { fr: "Rubriques d'aide", en: 'Help topics' },
+      items: {
+        findBoat: {
+          q: { fr: 'Comment trouver et réserver un bateau ?', en: 'How to find and book a boat?' },
+          a: {
+            fr: 'Parcourez les annonces depuis la page Catégories ou la recherche par port, puis envoyez une demande de réservation aux dates souhaitées. Le propriétaire confirme (ou refuse) votre demande : vous êtes prévenu par email et dans votre espace.',
+            en: "Browse listings from the Categories page or search by port, then send a booking request for your chosen dates. The owner confirms (or declines) your request: you'll be notified by email and in your account.",
+          },
+        },
+        documents: {
+          q: {
+            fr: 'Quels documents sont requis pour louer ?',
+            en: 'What documents are required to rent?',
+          },
+          a: {
+            fr: 'Un permis bateau (côtier ou fluvial selon le bateau), une pièce d’identité en cours de validité et un CV nautique. Déposez-les dans « Mes documents » : notre équipe les vérifie sous 48 h.',
+            en: 'A boat license (coastal or river, depending on the boat), a valid ID and a sailing CV. Upload them under "My documents": our team checks them within 48 hours.',
+          },
+        },
+        cancel: {
+          q: {
+            fr: 'Comment annuler ou modifier une réservation ?',
+            en: 'How to cancel or change a booking?',
+          },
+          a: {
+            fr: 'Rendez-vous dans « Mes réservations » depuis votre espace. Une demande en attente peut être annulée librement ; pour une réservation confirmée, contactez le propriétaire via la messagerie — en cas de désaccord, notre équipe peut arbitrer via un litige.',
+            en: 'Go to "My bookings" in your account. A pending request can be cancelled freely; for a confirmed booking, contact the owner via messaging — in case of disagreement, our team can arbitrate through a dispute.',
+          },
+        },
+        payment: {
+          q: {
+            fr: 'Quels modes de paiement sont acceptés ?',
+            en: 'What payment methods are accepted?',
+          },
+          a: {
+            fr: 'La carte bancaire et le virement. Le paiement est encaissé à la confirmation de la réservation ; SailingLoc prélève une commission de 10 % sur chaque location.',
+            en: 'Credit card and bank transfer. Payment is charged when the booking is confirmed; SailingLoc takes a 10% commission on each rental.',
+          },
+        },
+        listBoat: {
+          q: { fr: 'Comment mettre mon bateau en location ?', en: 'How to list my boat for rent?' },
+          a: {
+            fr: 'Créez un compte propriétaire, puis « Publier un bateau » depuis votre espace : caractéristiques, photos, port d’attache, disponibilités et acte de francisation. Votre annonce est vérifiée par notre équipe avant d’être publiée.',
+            en: 'Create an owner account, then "List a boat" from your account: features, photos, home port, availability and proof of registration. Your listing is checked by our team before being published.',
+          },
+        },
+        insurance: {
+          q: {
+            fr: 'Les bateaux sont-ils assurés pendant la location ?',
+            en: 'Are boats insured during the rental?',
+          },
+          a: {
+            fr: 'Oui : chaque propriétaire doit fournir une attestation d’assurance valide, vérifiée par notre équipe avant la publication de l’annonce.',
+            en: 'Yes: every owner must provide a valid insurance certificate, checked by our team before the listing is published.',
+          },
+        },
+        review: {
+          q: {
+            fr: 'Comment laisser un avis après ma location ?',
+            en: 'How to leave a review after my rental?',
+          },
+          a: {
+            fr: 'Une fois la location terminée, ouvrez « Mes réservations » : un rappel vous invite à noter le bateau et laisser un commentaire. Les avis sont modérés avant publication.',
+            en: 'Once the rental is over, open "My bookings": a reminder invites you to rate the boat and leave a comment. Reviews are moderated before publication.',
+          },
+        },
+        incident: {
+          q: {
+            fr: "Que faire en cas d'incident en mer ?",
+            en: 'What to do in case of an incident at sea?',
+          },
+          a: {
+            fr: 'Votre sécurité d’abord : contactez le CROSS (196 ou VHF canal 16) en cas d’urgence. Ensuite, prévenez le propriétaire via la messagerie et signalez l’incident à notre équipe, qui ouvrira un litige si nécessaire.',
+            en: 'Safety first: contact the CROSS rescue service (196 or VHF channel 16) in an emergency. Then notify the owner via messaging and report the incident to our team, who will open a dispute if needed.',
+          },
+        },
+      },
+      otherQuestion: { fr: 'Une autre question ?', en: 'Another question?' },
+      contactDirect: { fr: 'Contactez-nous en direct', en: 'Contact us directly' },
+      otherSuffix: { fr: 'nous sommes là pour vous aider.', en: "we're here to help." },
+    },
+  },
+
   carrousel: {
     soon: { fr: 'Bientôt disponible', en: 'Coming soon' },
     prev: { fr: 'Précédent', en: 'Previous' },
