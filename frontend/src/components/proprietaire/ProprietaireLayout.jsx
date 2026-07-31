@@ -1,9 +1,12 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bgImage from '../../assets/image/paysage/crique.jpg';
 
 function ProprietaireLayout() {
   const { t } = useTranslation();
+  const location = useLocation();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const nav = [
     { to: '/proprietaire', label: t('proprietaireLayout.nav.dashboard'), end: true },
     { to: '/proprietaire/compte', label: t('proprietaireLayout.nav.account') },
@@ -14,6 +17,16 @@ function ProprietaireLayout() {
     { to: '/proprietaire/bateaux', label: t('proprietaireLayout.nav.boats') },
     { to: '/proprietaire/messages', label: t('proprietaireLayout.nav.messages') },
   ];
+  const activeItem =
+    nav.find((item) =>
+      item.end
+        ? location.pathname === item.to
+        : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)
+    ) ?? nav[0];
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   return (
     // Même univers visuel que l'accueil et la page produit : photo plein écran
@@ -26,24 +39,61 @@ function ProprietaireLayout() {
           où le ciel clair rendait laiteuses les cartes en verre au scroll. */}
       <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
-          {/* Menu : pleine largeur sur mobile (barre horizontale défilable),
+          {/* Menu : pleine largeur avec liste déroulante sur mobile/tablette,
               colonne latérale à partir de lg. */}
           <aside className="w-full lg:w-60 lg:shrink-0">
             <nav
               aria-label={t('proprietaireLayout.navAria')}
               className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[96px]"
             >
-              <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-white/60">
+              <button
+                type="button"
+                aria-expanded={mobileNavOpen}
+                aria-controls="proprietaire-dashboard-navigation"
+                aria-label={t('proprietaireLayout.navAria')}
+                onClick={() => setMobileNavOpen((open) => !open)}
+                className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:hidden"
+              >
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-white/60">
+                    {t('proprietaireLayout.mySpace')}
+                  </span>
+                  <span className="mt-0.5 block truncate text-sm font-semibold text-white">
+                    {activeItem.label}
+                  </span>
+                </span>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  className={`h-5 w-5 shrink-0 text-white/70 transition-transform duration-200 ${
+                    mobileNavOpen ? 'rotate-180' : ''
+                  }`}
+                >
+                  <path
+                    d="m5 7.5 5 5 5-5"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
+              <p className="hidden px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-white/60 lg:block">
                 {t('proprietaireLayout.mySpace')}
               </p>
-              <div className="flex gap-1 overflow-x-auto lg:flex-col">
+              <div
+                id="proprietaire-dashboard-navigation"
+                className={`${mobileNavOpen ? 'flex' : 'hidden'} mt-2 flex-col gap-1 border-t border-white/15 pt-2 lg:mt-0 lg:flex lg:border-0 lg:pt-0`}
+              >
                 {nav.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `block shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition lg:shrink ${
+                      `block w-full rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
                         isActive
                           ? 'bg-sky-500 text-white'
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
