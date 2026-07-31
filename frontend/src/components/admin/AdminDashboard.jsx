@@ -39,6 +39,7 @@ const TOOLTIP_STYLE = {
   borderRadius: 8,
   color: '#e2e8f0',
 };
+const AXIS_TICK_STYLE = { fill: '#94a3b8', fontSize: 12 };
 
 function fmtMonth(m) {
   const [y, mo] = String(m).split('-');
@@ -151,7 +152,12 @@ function AdminDashboard() {
                   ))}
                 </Pie>
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend wrapperStyle={{ fontSize: 12, color: '#cbd5e1' }} />
+                <Legend
+                  align="center"
+                  verticalAlign="bottom"
+                  iconSize={10}
+                  wrapperStyle={{ fontSize: 12, lineHeight: '1.25rem', color: '#cbd5e1' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -160,8 +166,8 @@ function AdminDashboard() {
             <ResponsiveContainer>
               <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <XAxis dataKey="month" tick={AXIS_TICK_STYLE} tickMargin={8} minTickGap={12} />
+                <YAxis tick={AXIS_TICK_STYLE} tickMargin={4} width={52} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [EURO.format(v), t('adminDashboard.revenue')]}
@@ -175,8 +181,8 @@ function AdminDashboard() {
             <ResponsiveContainer>
               <BarChart data={bookingsData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <YAxis allowDecimals={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <XAxis dataKey="month" tick={AXIS_TICK_STYLE} tickMargin={8} minTickGap={12} />
+                <YAxis allowDecimals={false} tick={AXIS_TICK_STYLE} tickMargin={4} width={52} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [v, t('adminDashboard.bookings')]}
@@ -190,8 +196,8 @@ function AdminDashboard() {
             <ResponsiveContainer>
               <BarChart data={commissionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <XAxis dataKey="month" tick={AXIS_TICK_STYLE} tickMargin={8} minTickGap={12} />
+                <YAxis tick={AXIS_TICK_STYLE} tickMargin={4} width={52} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [EURO.format(v), t('adminDashboard.commission')]}
