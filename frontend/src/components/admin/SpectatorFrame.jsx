@@ -195,14 +195,10 @@ function SpectatorFrame({ mode, title, description, banner }) {
             key={iframeSrc}
             src={iframeSrc}
             title={t('spectatorFrame.iframeTitle')}
-            className="block w-full"
-            style={{ height: 'calc(100vh - 320px)', minHeight: '600px' }}
+            className="block h-[calc(100svh-320px)] min-h-96 w-full sm:min-h-[600px]"
           />
         ) : (
-          <div
-            className="flex w-full items-center justify-center text-sm text-white/60"
-            style={{ height: 'calc(100vh - 320px)', minHeight: '600px' }}
-          >
+          <div className="flex h-[calc(100svh-320px)] min-h-96 w-full items-center justify-center text-sm text-white/60 sm:min-h-[600px]">
             Rechargement…
           </div>
         )}
