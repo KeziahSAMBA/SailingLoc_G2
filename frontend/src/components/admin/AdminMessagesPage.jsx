@@ -91,9 +91,9 @@ function AdminMessagesPage() {
                     setSearch('');
                     setOpen(false);
                   }}
-                  className="flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left text-sm text-white transition hover:bg-white/20"
+                  className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm text-white transition hover:bg-white/20"
                 >
-                  <span className="min-w-0 truncate">
+                  <span className="min-w-0 break-words">
                     {u.first_name} {u.last_name}
                     {u.email && <span className="text-white/70"> — {u.email}</span>}
                   </span>
