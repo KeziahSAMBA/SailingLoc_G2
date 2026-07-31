@@ -662,7 +662,7 @@ function ProprietaireBoatForm() {
                   className="h-24 w-32 rounded-lg object-cover"
                 />
                 {i === 0 && (
-                  <span className="absolute bottom-1 left-1 rounded bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                  <span className="absolute bottom-1 left-1 rounded bg-slate-950/80 px-1.5 py-0.5 text-[0.625rem] font-semibold text-white">
                     {t('proprietaireBoatForm.mainPhoto')}
                   </span>
                 )}
@@ -706,7 +706,7 @@ function ProprietaireBoatForm() {
             <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white/90">
               <span className="min-w-0 truncate">{existingActe.file_name}</span>
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                className={`rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
                   existingActe.status === 'validated'
                     ? 'bg-emerald-500/15 text-emerald-300'
                     : existingActe.status === 'refused'
