@@ -157,12 +157,12 @@ function AdminContactPage() {
                   {r.message}
                 </p>
 
-                <div className="mt-4 flex flex-wrap items-center gap-3">
+                <div className="mt-4 flex flex-wrap items-stretch gap-3 sm:items-center">
                   <button
                     type="button"
                     disabled={busyId === r.id_request}
                     onClick={() => toggleStatus(r)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${
+                    className={`w-full rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${FOCUS_RING} ${
                       r.status === 'processed'
                         ? 'border border-white/30 text-white/80 hover:bg-white/10 hover:text-white'
                         : 'bg-emerald-600 text-white hover:bg-emerald-500'
