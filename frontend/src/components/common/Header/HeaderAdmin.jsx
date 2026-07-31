@@ -29,7 +29,7 @@ function HeaderAdmin() {
       profileHref="/admin"
       rightMenuItems={ADMIN_MENU_ITEMS}
       rightVariant="compact"
-      rightPanelWidth="280px"
+      rightPanelWidth="17.5rem"
       showMessages
       messagesTo="/admin/messages"
       introReveal={false}
