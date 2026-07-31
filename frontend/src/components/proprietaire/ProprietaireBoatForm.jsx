@@ -346,7 +346,7 @@ function ProprietaireBoatForm() {
   }
 
   return (
-    <section aria-labelledby="boat-form-title" className="mx-auto w-full max-w-3xl">
+    <section aria-labelledby="boat-form-title" className="w-full">
       <header className="mb-6">
         <h1 id="boat-form-title" className="text-2xl font-bold text-white">
           {!editId
