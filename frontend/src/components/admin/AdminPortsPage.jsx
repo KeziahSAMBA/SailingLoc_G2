@@ -161,7 +161,7 @@ function AdminPortsPage() {
         <button
           type="button"
           onClick={openImport}
-          className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/80"
+          className="w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/80 sm:w-auto"
         >
           {t('adminPorts.importButton')}
         </button>
