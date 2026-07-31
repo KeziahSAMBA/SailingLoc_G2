@@ -10,6 +10,7 @@ import {
 import { formatDate } from '../../utils/formatDate.js';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 import { IconBtn, BanIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -229,18 +230,23 @@ function AdminBookingsPage() {
               className={`${selectClass} min-w-[220px] flex-1`}
             />
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <AdminScrollableFilterRow
+            ariaLabel={t('adminBookings.tabBookings')}
+            contentKey={`${status}|${t('adminBookings.tabBookings')}`}
+            className="mt-3"
+          >
             {BOOKING_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
+                aria-pressed={status === value}
                 onClick={() => setStatus(value)}
-                className={pill(status === value)}
+                className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
               >
                 {t(`adminBookings.bookingFilters.${labelKey}`)}
               </button>
             ))}
-          </div>
+          </AdminScrollableFilterRow>
 
           <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
             <table className="w-full text-sm">
@@ -404,18 +410,23 @@ function AdminBookingsPage() {
         </>
       ) : (
         <>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <AdminScrollableFilterRow
+            ariaLabel={t('adminBookings.tabDisputes')}
+            contentKey={`${disputeStatus}|${t('adminBookings.tabDisputes')}`}
+            className="mt-4"
+          >
             {DISPUTE_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
+                aria-pressed={disputeStatus === value}
                 onClick={() => setDisputeStatusFilter(value)}
-                className={pill(disputeStatus === value)}
+                className={`${pill(disputeStatus === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
               >
                 {t(`adminBookings.disputeFilters.${labelKey}`)}
               </button>
             ))}
-          </div>
+          </AdminScrollableFilterRow>
 
           <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
             <table className="w-full text-sm">
