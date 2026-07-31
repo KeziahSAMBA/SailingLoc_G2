@@ -153,7 +153,7 @@ function AdminDocumentsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminDocuments.searchPlaceholder')}
-          className={`${selectClass} w-full sm:min-w-[220px] sm:flex-1`}
+          className={`${selectClass} w-full sm:min-w-[13.75rem] sm:flex-1`}
         />
         <select
           value={role}
