@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
 import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EyeIcon, EyeOffIcon, CheckIcon, XIcon } from './AdminActions.jsx';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 import {
   listBoats,
   setBoatPublished,
@@ -182,18 +183,23 @@ function AdminPublicationPage() {
 
       {tab === 'boats' ? (
         <>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <AdminScrollableFilterRow
+            ariaLabel={t('adminPublication.tabBoats')}
+            contentKey={`${published}|${t('adminPublication.tabBoats')}`}
+            className="mt-4"
+          >
             {PUBLISHED_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
+                aria-pressed={published === value}
                 onClick={() => setPublished(value)}
-                className={pill(published === value)}
+                className={`${pill(published === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
               >
                 {t(`adminPublication.publishedFilters.${labelKey}`)}
               </button>
             ))}
-          </div>
+          </AdminScrollableFilterRow>
 
           <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
             <table className="w-full text-sm">
@@ -377,18 +383,23 @@ function AdminPublicationPage() {
         </>
       ) : (
         <>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <AdminScrollableFilterRow
+            ariaLabel={t('adminPublication.tabReports')}
+            contentKey={`${reportStatus}|${t('adminPublication.tabReports')}`}
+            className="mt-4"
+          >
             {REPORT_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
+                aria-pressed={reportStatus === value}
                 onClick={() => setReportStatus2(value)}
-                className={pill(reportStatus === value)}
+                className={`${pill(reportStatus === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
               >
                 {t(`adminPublication.reportFilters.${labelKey}`)}
               </button>
             ))}
-          </div>
+          </AdminScrollableFilterRow>
 
           <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
             <table className="w-full text-sm">
