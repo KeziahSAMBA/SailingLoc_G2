@@ -56,7 +56,7 @@ function StatCard({ label, value, accent }) {
 
 function ChartCard({ title, children }) {
   return (
-    <div className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+    <div className="h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
       <h2 className="mb-4 text-sm font-semibold text-white/90">{title}</h2>
       <div style={{ width: '100%', height: 260 }}>{children}</div>
     </div>
@@ -132,7 +132,7 @@ function AdminDashboard() {
       </div>
 
       {!loading && !error && (
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-2">
           <ChartCard title={t('adminDashboard.bookingsByStatus')}>
             <ResponsiveContainer>
               <PieChart>
