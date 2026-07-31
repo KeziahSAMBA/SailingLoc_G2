@@ -5,6 +5,7 @@ import { listPayments, getPaymentStats } from '../../services/adminService.js';
 import { formatDate } from '../../utils/formatDate.js';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -199,31 +200,45 @@ function AdminTransactionsPage() {
           placeholder={t('adminTransactions.searchPlaceholder')}
           className={`${selectClass} w-full sm:min-w-[240px] sm:flex-1`}
         />
-        {STATUS_FILTERS.map(({ value, labelKey }) => (
-          <button
-            key={`s-${labelKey}`}
-            type="button"
-            onClick={() => setStatus(value)}
-            className={pill(status === value)}
-          >
-            {t(`adminTransactions.statusFilters.${labelKey}`)}
-          </button>
-        ))}
+        <AdminScrollableFilterRow
+          ariaLabel={t('adminTransactions.subtitle')}
+          contentKey={`${status}|${t('adminTransactions.subtitle')}`}
+          className="w-full sm:w-auto"
+        >
+          {STATUS_FILTERS.map(({ value, labelKey }) => (
+            <button
+              key={`s-${labelKey}`}
+              type="button"
+              aria-pressed={status === value}
+              onClick={() => setStatus(value)}
+              className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+            >
+              {t(`adminTransactions.statusFilters.${labelKey}`)}
+            </button>
+          ))}
+        </AdminScrollableFilterRow>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
           {t('adminTransactions.methodLabel')}
         </span>
-        {METHOD_FILTERS.map(({ value, labelKey }) => (
-          <button
-            key={`m-${labelKey}`}
-            type="button"
-            onClick={() => setMethod(value)}
-            className={pill(method === value)}
-          >
-            {t(`adminTransactions.methodFilters.${labelKey}`)}
-          </button>
-        ))}
+        <AdminScrollableFilterRow
+          ariaLabel={t('adminTransactions.methodLabel')}
+          contentKey={`${method}|${t('adminTransactions.methodLabel')}`}
+          className="min-w-0 flex-1"
+        >
+          {METHOD_FILTERS.map(({ value, labelKey }) => (
+            <button
+              key={`m-${labelKey}`}
+              type="button"
+              aria-pressed={method === value}
+              onClick={() => setMethod(value)}
+              className={`${pill(method === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+            >
+              {t(`adminTransactions.methodFilters.${labelKey}`)}
+            </button>
+          ))}
+        </AdminScrollableFilterRow>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-1.5 text-xs text-white/70">
@@ -265,19 +280,26 @@ function AdminTransactionsPage() {
         <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
           {t('adminTransactions.sortLabel')}
         </span>
-        {['date', 'amount', 'commission'].map((field) => (
-          <button
-            key={field}
-            type="button"
-            onClick={() => toggleSort(field)}
-            className={pill(sortBy === field)}
-          >
-            {t(
-              `adminTransactions.col${field === 'date' ? 'Date' : field === 'amount' ? 'Amount' : 'Commission'}`
-            )}
-            {sortArrow(field)}
-          </button>
-        ))}
+        <AdminScrollableFilterRow
+          ariaLabel={t('adminTransactions.sortLabel')}
+          contentKey={`${sortBy}|${sortDir}|${t('adminTransactions.sortLabel')}`}
+          className="min-w-0 flex-1"
+        >
+          {['date', 'amount', 'commission'].map((field) => (
+            <button
+              key={field}
+              type="button"
+              aria-pressed={sortBy === field}
+              onClick={() => toggleSort(field)}
+              className={`${pill(sortBy === field)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+            >
+              {t(
+                `adminTransactions.col${field === 'date' ? 'Date' : field === 'amount' ? 'Amount' : 'Commission'}`
+              )}
+              {sortArrow(field)}
+            </button>
+          ))}
+        </AdminScrollableFilterRow>
       </div>
 
       {/* Tableau (desktop) */}
