@@ -197,13 +197,13 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
             {/* Badges toujours sous le nom, jamais à côté. */}
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {booking.has_open_dispute && (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6875rem] font-semibold text-amber-300">
                   {t('proprietaireReservations.openDispute')}
                 </span>
               )}
               {booking.status === 'pending' && (
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
                     isPaid ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-white/70'
                   }`}
                 >
@@ -212,7 +212,9 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
                     : t('proprietaireReservations.awaitingPayment')}
                 </span>
               )}
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusCls}`}>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${statusCls}`}
+              >
                 {t(`bookingStatus.${booking.status}`, { defaultValue: booking.status })}
               </span>
             </div>
@@ -857,7 +859,7 @@ function ProprietaireReservations() {
                             })}
                           </p>
                           <span
-                            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
                               DOC_STATUS_CLS[doc.status] || 'bg-slate-500/15 text-white/70'
                             }`}
                           >
