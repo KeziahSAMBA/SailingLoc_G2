@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -37,6 +37,93 @@ const PERIOD_KEYS = ['all', 'upcoming', 'current', 'past'];
 
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+
+function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
+  const scrollRef = useRef(null);
+  const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
+
+  const updateScrollEdges = useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+
+    const tolerance = 2;
+    const next = {
+      left: node.scrollLeft > tolerance,
+      right: node.scrollLeft + node.clientWidth < node.scrollWidth - tolerance,
+    };
+
+    setScrollEdges((current) =>
+      current.left === next.left && current.right === next.right ? current : next
+    );
+  }, []);
+
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return undefined;
+
+    const frame = window.requestAnimationFrame(updateScrollEdges);
+    const resizeObserver = window.ResizeObserver
+      ? new window.ResizeObserver(updateScrollEdges)
+      : null;
+
+    resizeObserver?.observe(node);
+    window.addEventListener('resize', updateScrollEdges);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateScrollEdges);
+    };
+  }, [contentKey, updateScrollEdges]);
+
+  return (
+    <div className={`relative ${className}`}>
+      <div
+        ref={scrollRef}
+        onScroll={updateScrollEdges}
+        className="flex max-w-full snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] sm:snap-none sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+        role="group"
+        aria-label={ariaLabel}
+      >
+        {children}
+      </div>
+
+      {scrollEdges.left && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
+            <path
+              d="m12.5 5-5 5 5 5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+
+      {scrollEdges.right && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
+            <path
+              d="m7.5 5 5 5-5 5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+    </div>
+  );
+}
 
 function fmtDate(value) {
   return formatDate(value, DATE_OPTS);
@@ -445,10 +532,12 @@ function ProprietaireReservations() {
       )}
 
       {/* Filtres par statut */}
-      <div
-        className="mb-3 flex flex-wrap gap-2"
-        role="group"
+      <ScrollableFilterRow
+        className="mb-3"
         aria-label={t('proprietaireReservations.statusFilterAria')}
+        contentKey={FILTER_KEYS.map(
+          (key) => `${key}:${t(`proprietaireReservations.filters.${key}`)}`
+        ).join('|')}
       >
         {FILTER_KEYS.map((key) => {
           const active = filter === key;
@@ -458,7 +547,7 @@ function ProprietaireReservations() {
               type="button"
               onClick={() => setFilter(key)}
               aria-pressed={active}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
+              className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
                   ? 'bg-sky-500 text-white'
                   : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
@@ -468,13 +557,15 @@ function ProprietaireReservations() {
             </button>
           );
         })}
-      </div>
+      </ScrollableFilterRow>
 
       {/* Filtres par période (passées / en cours / à venir), cumulables avec le statut */}
-      <div
-        className="mb-5 flex flex-wrap gap-2"
-        role="group"
+      <ScrollableFilterRow
+        className="mb-5"
         aria-label={t('proprietaireReservations.periodFilterAria')}
+        contentKey={PERIOD_KEYS.map(
+          (key) => `${key}:${t(`proprietaireReservations.periods.${key}`)}`
+        ).join('|')}
       >
         {PERIOD_KEYS.map((key) => {
           const active = periodFilter === key;
@@ -484,7 +575,7 @@ function ProprietaireReservations() {
               type="button"
               onClick={() => setPeriodFilter(key)}
               aria-pressed={active}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
+              className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
                   ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
                   : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
@@ -494,7 +585,7 @@ function ProprietaireReservations() {
             </button>
           );
         })}
-      </div>
+      </ScrollableFilterRow>
 
       {loading ? (
         <CardSkeleton count={4} height="h-56" />
