@@ -79,7 +79,10 @@ function SpectatorFrame({ mode, title, description, banner }) {
 
   // Barre d'URL réutilisée dans les deux modes (in-page et fullscreen).
   const urlBar = (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
+    <form
+      onSubmit={handleSubmit}
+      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-wrap"
+    >
       <button
         type="button"
         onClick={refresh}
@@ -88,29 +91,31 @@ function SpectatorFrame({ mode, title, description, banner }) {
       >
         ⟳
       </button>
-      <span className="rounded-l-lg border border-r-0 border-white/30 bg-white/10 px-3 py-2 text-xs text-white/60">
-        {window.location.origin}
-      </span>
-      <input
-        type="text"
-        value={path}
-        onChange={(e) => setPath(e.target.value)}
-        placeholder="/"
-        className="-ml-2 min-w-[160px] flex-1 rounded-r-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#5AB4EC]"
-      />
+      <div className="flex min-w-0 sm:flex-1">
+        <span className="hidden max-w-[45%] truncate rounded-l-lg border border-r-0 border-white/30 bg-white/10 px-3 py-2 text-xs text-white/60 md:block">
+          {window.location.origin}
+        </span>
+        <input
+          type="text"
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder="/"
+          className="min-w-0 flex-1 rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#5AB4EC] md:rounded-l-none"
+        />
+      </div>
       <button
         type="submit"
         className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/90"
       >
         {t('spectatorFrame.go')}
       </button>
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="col-span-3 flex max-w-full items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] sm:w-full sm:pb-0 lg:w-auto lg:overflow-visible [&::-webkit-scrollbar]:hidden">
         {QUICK_LINKS.map(({ labelKey, path: p }) => (
           <button
             key={p}
             type="button"
             onClick={() => go(p)}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition ${
               src === p
                 ? 'bg-sky-500 text-white'
                 : 'border border-white/30 text-white/80 hover:bg-white/10'
