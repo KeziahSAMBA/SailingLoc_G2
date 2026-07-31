@@ -291,8 +291,8 @@ function AdminDocumentsPage() {
               key={d.id_document}
               className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
             >
-              <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 font-medium text-white">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="min-w-0 break-words font-medium text-white">
                   {d.user ? `${d.user.first_name} ${d.user.last_name}` : '—'}
                 </p>
                 <span
@@ -308,7 +308,7 @@ function AdminDocumentsPage() {
                 {d.user?.email} {d.user ? `· ${roleLabel(d.user.role)}` : ''}
               </p>
 
-              <p className="mt-2 text-sm text-white/90">{typeLabel(d.type)}</p>
+              <p className="mt-2 break-words text-sm text-white/90">{typeLabel(d.type)}</p>
               <p className="text-xs text-white/60">{fmtDate(d.upload_date)}</p>
 
               <div className="mt-3 flex justify-end gap-2 border-t border-white/15 pt-3">
