@@ -82,16 +82,18 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
   const canDispute = (booking.status === 'cancelled' || finished) && !booking.has_open_dispute;
 
   return (
-    <article className="group h-56 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
+    <article className="group min-h-56 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
       {/* Colonne gauche de la grille : photo à droite ; colonne droite : photo à
           gauche — les photos se font face vers le centre. */}
-      <div className={`flex h-full ${mirrored ? 'xl:flex-row-reverse' : ''}`}>
+      <div
+        className={`flex min-h-56 flex-col sm:flex-row ${mirrored ? 'xl:flex-row-reverse' : ''}`}
+      >
         {booking.boat?.image ? (
           <img
             src={booking.boat.image}
             alt={`Bateau ${booking.boat?.name}`}
             loading="lazy"
-            className="hidden w-28 self-stretch object-cover transition-transform duration-500 sm:block md:w-36 motion-safe:group-hover:scale-105"
+            className="aspect-video w-full object-cover transition-transform duration-500 sm:aspect-auto sm:w-28 sm:self-stretch md:w-36 motion-safe:group-hover:scale-105"
           />
         ) : null}
 
