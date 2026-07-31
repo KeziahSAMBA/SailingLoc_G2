@@ -752,12 +752,12 @@ function AdminBookingsPage() {
                 );
               })()}
 
-            <div className="mt-4 flex justify-end gap-3">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => setDecision(null)}
                 disabled={deciding}
-                className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50"
+                className="w-full rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50 sm:w-auto"
               >
                 {t('adminBookings.cancel')}
               </button>
@@ -765,7 +765,7 @@ function AdminBookingsPage() {
                 type="button"
                 onClick={confirmDecision}
                 disabled={deciding}
-                className={`rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition disabled:opacity-60 ${
+                className={`w-full rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition disabled:opacity-60 sm:w-auto ${
                   decision.status === 'resolved'
                     ? 'bg-emerald-600 hover:bg-emerald-600/90'
                     : 'bg-red-600 hover:bg-red-600/90'
