@@ -234,7 +234,7 @@ function AdminPortsPage() {
       )}
 
       <MapView
-        className="mt-5 h-[360px]"
+        className="mt-5 h-72 sm:h-[360px]"
         markers={mapMarkers}
         emptyLabel={t('adminPorts.mapEmpty')}
       />
