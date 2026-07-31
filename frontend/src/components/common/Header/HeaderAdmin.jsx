@@ -24,7 +24,7 @@ function HeaderAdmin() {
   return (
     <DashboardHeader
       centerNav={CENTER_NAV}
-      centerGapClass="gap-20"
+      centerGapClass="gap-6 xl:gap-20"
       centerFontSize={{ scrolled: '0.85rem', base: '1rem' }}
       profileHref="/admin"
       rightMenuItems={ADMIN_MENU_ITEMS}
