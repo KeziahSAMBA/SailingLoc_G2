@@ -205,17 +205,17 @@ function AdminPortsPage() {
                     return (
                       <li
                         key={p.name}
-                        className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
+                        className="flex flex-col items-stretch justify-between gap-3 px-3 py-2 text-sm sm:flex-row sm:items-center"
                       >
                         <div className="min-w-0">
-                          <div className="truncate font-medium text-white/90">{p.name}</div>
+                          <div className="break-words font-medium text-white/90">{p.name}</div>
                           <div className="text-xs text-white/60">{p.city || '—'}</div>
                         </div>
                         <button
                           type="button"
                           disabled={already || importingName === p.name}
                           onClick={() => importPort(p)}
-                          className="shrink-0 rounded-lg border border-[#5AB4EC]/40 px-3 py-1.5 text-xs font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/10 disabled:opacity-40"
+                          className="w-full shrink-0 rounded-lg border border-[#5AB4EC]/40 px-3 py-1.5 text-xs font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/10 disabled:opacity-40 sm:w-auto"
                         >
                           {already
                             ? t('adminPorts.inBase')
