@@ -134,12 +134,12 @@ function AdminContactPage() {
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="text-base font-semibold text-white">{r.subject}</h2>
-                    <p className="mt-0.5 text-sm text-white/70">
+                    <h2 className="break-words text-base font-semibold text-white">{r.subject}</h2>
+                    <p className="mt-0.5 break-words text-sm text-white/70">
                       {r.name} ·{' '}
                       <a
                         href={`mailto:${r.email}`}
-                        className={`text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                        className={`break-all text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
                       >
                         {r.email}
                       </a>{' '}
@@ -153,7 +153,7 @@ function AdminContactPage() {
                   </span>
                 </div>
 
-                <p className="mt-3 whitespace-pre-wrap rounded-lg bg-white/10 px-4 py-3 text-sm text-white/90">
+                <p className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-white/10 px-4 py-3 text-sm text-white/90">
                   {r.message}
                 </p>
 
