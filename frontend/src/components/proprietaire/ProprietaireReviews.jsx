@@ -71,7 +71,7 @@ function ReviewCard({ review, onReplied }) {
         >
           {t(`proprietaireReviews.status.${review.status}`, { defaultValue: review.status })}
         </span>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="mt-1 flex w-full items-center justify-between gap-2 sm:ml-auto sm:mt-0 sm:w-auto sm:justify-start">
           <Stars rating={review.rating} />
           <span className="text-xs text-white/50">{formatDate(review.created_at, DATE_OPTS)}</span>
         </div>
