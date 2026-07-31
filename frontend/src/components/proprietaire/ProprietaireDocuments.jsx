@@ -27,7 +27,7 @@ function ProprietaireDocuments() {
         </p>
       </header>
 
-      <DocumentsManager onCounts={onCounts} />
+      <DocumentsManager onCounts={onCounts} stackFilePickerOnMobile />
     </section>
   );
 }
