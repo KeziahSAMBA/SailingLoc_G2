@@ -40,7 +40,7 @@ function AdminLayout() {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:max-w-none lg:flex-row lg:px-16">
           {/* Menu : barre horizontale défilable sur mobile, colonne à partir de lg. */}
           <aside className="w-full lg:w-60 lg:shrink-0">
             <nav
