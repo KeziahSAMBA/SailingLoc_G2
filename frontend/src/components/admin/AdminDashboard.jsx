@@ -58,7 +58,7 @@ function ChartCard({ title, children }) {
   return (
     <div className="h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
       <h2 className="mb-4 text-sm font-semibold text-white/90">{title}</h2>
-      <div style={{ width: '100%', height: 260 }}>{children}</div>
+      <div className="h-56 w-full sm:h-[260px]">{children}</div>
     </div>
   );
 }
