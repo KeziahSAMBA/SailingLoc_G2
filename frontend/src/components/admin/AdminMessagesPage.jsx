@@ -97,7 +97,7 @@ function AdminMessagesPage() {
                     {u.first_name} {u.last_name}
                     {u.email && <span className="text-white/70"> — {u.email}</span>}
                   </span>
-                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-white/70">
+                  <span className="shrink-0 text-[0.625rem] uppercase tracking-wide text-white/70">
                     {roleLabel(u.role)}
                   </span>
                 </button>
@@ -107,7 +107,7 @@ function AdminMessagesPage() {
         )}
       </div>
 
-      <Messenger externalUser={target} tabletConversationDropdown />
+      <Messenger externalUser={target} tabletConversationDropdown relativeUnits />
     </section>
   );
 }
