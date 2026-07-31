@@ -7,6 +7,7 @@ import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EyeIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -124,13 +125,18 @@ function AdminDocumentsPage() {
       <h1 className="text-2xl font-bold text-white">{t('adminDocuments.title')}</h1>
       <p className="mt-1 text-sm text-white/70">{t('adminDocuments.subtitle')}</p>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <AdminScrollableFilterRow
+        ariaLabel={t('adminDocuments.subtitle')}
+        contentKey={`${status}|${t('adminDocuments.subtitle')}`}
+        className="mt-5"
+      >
         {FILTERS.map(({ value, labelKey }) => (
           <button
             key={labelKey}
             type="button"
+            aria-pressed={status === value}
             onClick={() => setStatus(value)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+            className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
               status === value
                 ? 'bg-sky-500 text-white'
                 : 'border border-white/30 text-white/80 hover:bg-white/10'
@@ -139,7 +145,7 @@ function AdminDocumentsPage() {
             {t(`adminDocuments.filters.${labelKey}`)}
           </button>
         ))}
-      </div>
+      </AdminScrollableFilterRow>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <input
