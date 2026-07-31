@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   getPayments,
@@ -40,6 +40,93 @@ const STATUS_KEYS = ['all', 'success', 'pending', 'refunded', 'failed'];
 const PERIOD_KEYS = ['all', '12m', 'year', '30d'];
 
 const PAGE_SIZE = 7;
+
+function ScrollableFilterRow({ ariaLabel, children, className = '', contentKey }) {
+  const scrollRef = useRef(null);
+  const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
+
+  const updateScrollEdges = useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+
+    const tolerance = 2;
+    const next = {
+      left: node.scrollLeft > tolerance,
+      right: node.scrollLeft + node.clientWidth < node.scrollWidth - tolerance,
+    };
+
+    setScrollEdges((current) =>
+      current.left === next.left && current.right === next.right ? current : next
+    );
+  }, []);
+
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return undefined;
+
+    const frame = window.requestAnimationFrame(updateScrollEdges);
+    const resizeObserver = window.ResizeObserver
+      ? new window.ResizeObserver(updateScrollEdges)
+      : null;
+
+    resizeObserver?.observe(node);
+    window.addEventListener('resize', updateScrollEdges);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateScrollEdges);
+    };
+  }, [contentKey, updateScrollEdges]);
+
+  return (
+    <div className={`relative ${className}`}>
+      <div
+        ref={scrollRef}
+        onScroll={updateScrollEdges}
+        className="flex max-w-full snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] sm:snap-none sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+        role="group"
+        aria-label={ariaLabel}
+      >
+        {children}
+      </div>
+
+      {scrollEdges.left && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
+            <path
+              d="m12.5 5-5 5 5 5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+
+      {scrollEdges.right && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
+            <path
+              d="m7.5 5 5 5-5 5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+    </div>
+  );
+}
 
 // Borne basse (incluse) de la période ; null = pas de borne.
 function periodStart(key) {
@@ -457,11 +544,13 @@ function ProprietaireRevenus() {
       ) : (
         <>
           {payments.length > 0 && (
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <div
-                className="flex flex-wrap gap-2"
-                role="group"
-                aria-label={t('proprietaireRevenus.filterAria')}
+            <div className="mb-5 space-y-3">
+              <ScrollableFilterRow
+                ariaLabel={t('proprietaireRevenus.filterAria')}
+                contentKey={STATUS_KEYS.map(
+                  (key) =>
+                    `${key}:${t(`proprietaireRevenus.filters.${key}`)}:${statusCounts[key] || 0}`
+                ).join('|')}
               >
                 {STATUS_KEYS.map((key) => {
                   const active = status === key;
@@ -472,7 +561,7 @@ function ProprietaireRevenus() {
                       type="button"
                       onClick={() => setStatus(key)}
                       aria-pressed={active}
-                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                      className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
                         active
                           ? 'bg-sky-500 text-white'
                           : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
@@ -483,25 +572,33 @@ function ProprietaireRevenus() {
                     </button>
                   );
                 })}
-              </div>
+              </ScrollableFilterRow>
 
-              <div className="flex items-center gap-2">
-                <label htmlFor="revenus-period" className="text-sm text-white/70">
-                  {t('proprietaireRevenus.periodLabel')}
-                </label>
-                <select
-                  id="revenus-period"
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  className="select-glass rounded-lg border border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
-                >
-                  {PERIOD_KEYS.map((key) => (
-                    <option key={key} value={key}>
+              <ScrollableFilterRow
+                ariaLabel={t('proprietaireRevenus.periodLabel')}
+                contentKey={PERIOD_KEYS.map(
+                  (key) => `${key}:${t(`proprietaireRevenus.periods.${key}`)}`
+                ).join('|')}
+              >
+                {PERIOD_KEYS.map((key) => {
+                  const active = period === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setPeriod(key)}
+                      aria-pressed={active}
+                      className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                        active
+                          ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
+                          : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
+                      }`}
+                    >
                       {t(`proprietaireRevenus.periods.${key}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                    </button>
+                  );
+                })}
+              </ScrollableFilterRow>
             </div>
           )}
 
