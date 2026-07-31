@@ -161,7 +161,7 @@ function AdminPortsPage() {
         <button
           type="button"
           onClick={openImport}
-          className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/80"
+          className="w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/80 sm:w-auto"
         >
           {t('adminPorts.importButton')}
         </button>
@@ -205,17 +205,17 @@ function AdminPortsPage() {
                     return (
                       <li
                         key={p.name}
-                        className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
+                        className="flex flex-col items-stretch justify-between gap-3 px-3 py-2 text-sm sm:flex-row sm:items-center"
                       >
                         <div className="min-w-0">
-                          <div className="truncate font-medium text-white/90">{p.name}</div>
+                          <div className="break-words font-medium text-white/90">{p.name}</div>
                           <div className="text-xs text-white/60">{p.city || '—'}</div>
                         </div>
                         <button
                           type="button"
                           disabled={already || importingName === p.name}
                           onClick={() => importPort(p)}
-                          className="shrink-0 rounded-lg border border-[#5AB4EC]/40 px-3 py-1.5 text-xs font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/10 disabled:opacity-40"
+                          className="w-full shrink-0 rounded-lg border border-[#5AB4EC]/40 px-3 py-1.5 text-xs font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/10 disabled:opacity-40 sm:w-auto"
                         >
                           {already
                             ? t('adminPorts.inBase')
@@ -234,23 +234,23 @@ function AdminPortsPage() {
       )}
 
       <MapView
-        className="mt-5 h-[360px]"
+        className="mt-5 h-72 sm:h-[22.5rem]"
         markers={mapMarkers}
         emptyLabel={t('adminPorts.mapEmpty')}
       />
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminPorts.filterPlaceholder')}
-          className={`${inputClass} min-w-[220px] flex-1`}
+          className={`${inputClass} w-full sm:min-w-[13.75rem] sm:flex-1`}
         />
         <select
           value={region}
           onChange={(e) => setRegion(e.target.value)}
-          className={`select-glass ${inputClass}`}
+          className={`select-glass ${inputClass} w-full sm:w-auto`}
         >
           <option value="">{t('adminPorts.allRegions')}</option>
           {REGIONS.map((r) => (
@@ -267,7 +267,7 @@ function AdminPortsPage() {
         </div>
       )}
 
-      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -338,7 +338,7 @@ function AdminPortsPage() {
       </div>
 
       {/* Mobile : une carte par port (le tableau ci-dessus est masqué). */}
-      <ul className="mt-5 space-y-3 md:hidden">
+      <ul className="mt-5 space-y-3 lg:hidden">
         {loading || ports.length === 0 ? (
           <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
             {loading ? t('adminPorts.loading') : t('adminPorts.empty')}

@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
 import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EyeIcon, EyeOffIcon, CheckIcon, XIcon } from './AdminActions.jsx';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 import {
   listBoats,
   setBoatPublished,
@@ -182,20 +183,25 @@ function AdminPublicationPage() {
 
       {tab === 'boats' ? (
         <>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <AdminScrollableFilterRow
+            ariaLabel={t('adminPublication.tabBoats')}
+            contentKey={`${published}|${t('adminPublication.tabBoats')}`}
+            className="mt-4"
+          >
             {PUBLISHED_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
+                aria-pressed={published === value}
                 onClick={() => setPublished(value)}
-                className={pill(published === value)}
+                className={`${pill(published === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
               >
                 {t(`adminPublication.publishedFilters.${labelKey}`)}
               </button>
             ))}
-          </div>
+          </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -298,7 +304,7 @@ function AdminPublicationPage() {
           </div>
 
           {/* Mobile : une carte par bateau (le tableau ci-dessus est masqué). */}
-          <ul className="mt-4 space-y-3 md:hidden">
+          <ul className="mt-4 space-y-3 lg:hidden">
             {boatsLoading || boats.length === 0 ? (
               <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
                 {boatsLoading ? t('adminPublication.loading') : t('adminPublication.emptyBoats')}
@@ -309,13 +315,13 @@ function AdminPublicationPage() {
                   key={b.id_boat}
                   className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <Link
                         to={`/product/${b.id_boat}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-[#5AB4EC] hover:underline"
+                        className="break-words font-medium text-[#5AB4EC] hover:underline"
                       >
                         {b.name}
                       </Link>
@@ -334,7 +340,7 @@ function AdminPublicationPage() {
                     </span>
                   </div>
 
-                  <p className="mt-2 text-sm text-white/70">
+                  <p className="mt-2 break-words text-sm text-white/70">
                     {b.owner ? `${b.owner.first_name} ${b.owner.last_name}` : '—'}
                     {b.daily_price != null ? ` · ${EURO.format(b.daily_price)}` : ''}
                   </p>
@@ -377,20 +383,25 @@ function AdminPublicationPage() {
         </>
       ) : (
         <>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <AdminScrollableFilterRow
+            ariaLabel={t('adminPublication.tabReports')}
+            contentKey={`${reportStatus}|${t('adminPublication.tabReports')}`}
+            className="mt-4"
+          >
             {REPORT_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
+                aria-pressed={reportStatus === value}
                 onClick={() => setReportStatus2(value)}
-                className={pill(reportStatus === value)}
+                className={`${pill(reportStatus === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
               >
                 {t(`adminPublication.reportFilters.${labelKey}`)}
               </button>
             ))}
-          </div>
+          </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -502,7 +513,7 @@ function AdminPublicationPage() {
           </div>
 
           {/* Mobile : une carte par signalement (le tableau ci-dessus est masqué). */}
-          <ul className="mt-4 space-y-3 md:hidden">
+          <ul className="mt-4 space-y-3 lg:hidden">
             {reportsLoading || reports.length === 0 ? (
               <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
                 {reportsLoading
@@ -515,14 +526,14 @@ function AdminPublicationPage() {
                   key={r.id_report}
                   className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       {r.boat ? (
                         <Link
                           to={`/product/${r.boat.id_boat}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-[#5AB4EC] hover:underline"
+                          className="break-words font-medium text-[#5AB4EC] hover:underline"
                         >
                           {r.boat.name}
                         </Link>
@@ -548,7 +559,7 @@ function AdminPublicationPage() {
                     {r.reason}
                   </p>
 
-                  <p className="mt-2 text-xs text-white/60">
+                  <p className="mt-2 break-words text-xs text-white/60">
                     {r.reporter ? `${r.reporter.first_name} ${r.reporter.last_name}` : '—'} ·{' '}
                     {fmtDate(r.created_at)}
                   </p>

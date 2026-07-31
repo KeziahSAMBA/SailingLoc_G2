@@ -7,6 +7,7 @@ import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EyeIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -124,13 +125,18 @@ function AdminDocumentsPage() {
       <h1 className="text-2xl font-bold text-white">{t('adminDocuments.title')}</h1>
       <p className="mt-1 text-sm text-white/70">{t('adminDocuments.subtitle')}</p>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <AdminScrollableFilterRow
+        ariaLabel={t('adminDocuments.subtitle')}
+        contentKey={`${status}|${t('adminDocuments.subtitle')}`}
+        className="mt-5"
+      >
         {FILTERS.map(({ value, labelKey }) => (
           <button
             key={labelKey}
             type="button"
+            aria-pressed={status === value}
             onClick={() => setStatus(value)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+            className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
               status === value
                 ? 'bg-sky-500 text-white'
                 : 'border border-white/30 text-white/80 hover:bg-white/10'
@@ -139,20 +145,20 @@ function AdminDocumentsPage() {
             {t(`adminDocuments.filters.${labelKey}`)}
           </button>
         ))}
-      </div>
+      </AdminScrollableFilterRow>
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="mt-3 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminDocuments.searchPlaceholder')}
-          className={`${selectClass} min-w-[220px] flex-1`}
+          className={`${selectClass} w-full sm:min-w-[13.75rem] sm:flex-1`}
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className={`select-glass ${selectClass}`}
+          className={`select-glass ${selectClass} w-full sm:w-auto`}
         >
           <option value="">{t('adminDocuments.allRoles')}</option>
           <option value="locataire">{t('adminDocuments.roleRenter')}</option>
@@ -161,7 +167,7 @@ function AdminDocumentsPage() {
         <select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          className={`select-glass ${selectClass}`}
+          className={`select-glass ${selectClass} w-full sm:w-auto`}
         >
           <option value="">{t('adminDocuments.allTypes')}</option>
           {TYPE_OPTIONS.map((ty) => (
@@ -178,7 +184,7 @@ function AdminDocumentsPage() {
         </div>
       )}
 
-      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -274,7 +280,7 @@ function AdminDocumentsPage() {
       </div>
 
       {/* Mobile : une carte par document (le tableau ci-dessus est masqué). */}
-      <ul className="mt-5 space-y-3 md:hidden">
+      <ul className="mt-5 space-y-3 lg:hidden">
         {loading || documents.length === 0 ? (
           <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
             {loading ? t('adminDocuments.loading') : t('adminDocuments.empty')}
@@ -285,8 +291,8 @@ function AdminDocumentsPage() {
               key={d.id_document}
               className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
             >
-              <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 font-medium text-white">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="min-w-0 break-words font-medium text-white">
                   {d.user ? `${d.user.first_name} ${d.user.last_name}` : '—'}
                 </p>
                 <span
@@ -302,7 +308,7 @@ function AdminDocumentsPage() {
                 {d.user?.email} {d.user ? `· ${roleLabel(d.user.role)}` : ''}
               </p>
 
-              <p className="mt-2 text-sm text-white/90">{typeLabel(d.type)}</p>
+              <p className="mt-2 break-words text-sm text-white/90">{typeLabel(d.type)}</p>
               <p className="text-xs text-white/60">{fmtDate(d.upload_date)}</p>
 
               <div className="mt-3 flex justify-end gap-2 border-t border-white/15 pt-3">

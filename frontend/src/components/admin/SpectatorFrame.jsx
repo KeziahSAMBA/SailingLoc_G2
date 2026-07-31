@@ -79,7 +79,10 @@ function SpectatorFrame({ mode, title, description, banner }) {
 
   // Barre d'URL réutilisée dans les deux modes (in-page et fullscreen).
   const urlBar = (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
+    <form
+      onSubmit={handleSubmit}
+      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-wrap"
+    >
       <button
         type="button"
         onClick={refresh}
@@ -88,29 +91,31 @@ function SpectatorFrame({ mode, title, description, banner }) {
       >
         ⟳
       </button>
-      <span className="rounded-l-lg border border-r-0 border-white/30 bg-white/10 px-3 py-2 text-xs text-white/60">
-        {window.location.origin}
-      </span>
-      <input
-        type="text"
-        value={path}
-        onChange={(e) => setPath(e.target.value)}
-        placeholder="/"
-        className="-ml-2 min-w-[160px] flex-1 rounded-r-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#5AB4EC]"
-      />
+      <div className="flex min-w-0 sm:flex-1">
+        <span className="hidden max-w-[45%] truncate rounded-l-lg border border-r-0 border-white/30 bg-white/10 px-3 py-2 text-xs text-white/60 md:block">
+          {window.location.origin}
+        </span>
+        <input
+          type="text"
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder="/"
+          className="min-w-0 flex-1 rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#5AB4EC] md:rounded-l-none"
+        />
+      </div>
       <button
         type="submit"
         className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/90"
       >
         {t('spectatorFrame.go')}
       </button>
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="col-span-3 flex max-w-full items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] sm:w-full sm:pb-0 lg:w-auto lg:overflow-visible [&::-webkit-scrollbar]:hidden">
         {QUICK_LINKS.map(({ labelKey, path: p }) => (
           <button
             key={p}
             type="button"
             onClick={() => go(p)}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition ${
               src === p
                 ? 'bg-sky-500 text-white'
                 : 'border border-white/30 text-white/80 hover:bg-white/10'
@@ -126,20 +131,20 @@ function SpectatorFrame({ mode, title, description, banner }) {
   // Mode plein écran : on échappe au layout admin via un overlay fixed.
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col bg-slate-950 p-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-slate-950 p-2 sm:p-4">
+        <div className="mb-3 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
           <h1 className="text-lg font-bold text-white">
             {title} — {t('spectatorFrame.fullscreenSuffix')}
           </h1>
           <button
             type="button"
             onClick={() => setFullscreen(false)}
-            className="rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+            className="w-full rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 sm:w-auto"
           >
             {t('spectatorFrame.exit')}
           </button>
         </div>
-        <div className="mb-3">{urlBar}</div>
+        <div className="mb-3 min-w-0">{urlBar}</div>
         <div className="flex-1 overflow-hidden rounded-2xl border border-white/20 bg-white">
           {src ? (
             <iframe
@@ -182,7 +187,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
       <div className="mt-3">{urlBar}</div>
 
       {/* Cadre de l'iframe — hauteur calculée pour utiliser tout l'espace dispo
-          sous la chrome (header fixe 100px, padding layout, chrome de la page). */}
+          sous la chrome (header fixe, padding layout, chrome de la page). */}
       <div className="mt-4 overflow-hidden rounded-2xl border border-white/20 bg-white">
         {src ? (
           <iframe
@@ -190,14 +195,10 @@ function SpectatorFrame({ mode, title, description, banner }) {
             key={iframeSrc}
             src={iframeSrc}
             title={t('spectatorFrame.iframeTitle')}
-            className="block w-full"
-            style={{ height: 'calc(100vh - 320px)', minHeight: '600px' }}
+            className="block h-[calc(100svh-20rem)] min-h-96 w-full sm:min-h-[37.5rem]"
           />
         ) : (
-          <div
-            className="flex w-full items-center justify-center text-sm text-white/60"
-            style={{ height: 'calc(100vh - 320px)', minHeight: '600px' }}
-          >
+          <div className="flex h-[calc(100svh-20rem)] min-h-96 w-full items-center justify-center text-sm text-white/60 sm:min-h-[37.5rem]">
             Rechargement…
           </div>
         )}

@@ -10,6 +10,7 @@ import {
 import { formatDate } from '../../utils/formatDate.js';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 import { IconBtn, BanIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -226,21 +227,28 @@ function AdminBookingsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('adminBookings.searchPlaceholder')}
-              className={`${selectClass} min-w-[220px] flex-1`}
+              className={`${selectClass} min-w-[13.75rem] flex-1`}
             />
+          </div>
+          <AdminScrollableFilterRow
+            ariaLabel={t('adminBookings.tabBookings')}
+            contentKey={`${status}|${t('adminBookings.tabBookings')}`}
+            className="mt-3"
+          >
             {BOOKING_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
+                aria-pressed={status === value}
                 onClick={() => setStatus(value)}
-                className={pill(status === value)}
+                className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
               >
                 {t(`adminBookings.bookingFilters.${labelKey}`)}
               </button>
             ))}
-          </div>
+          </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -334,7 +342,7 @@ function AdminBookingsPage() {
           </div>
 
           {/* Mobile : une carte par réservation (le tableau ci-dessus est masqué). */}
-          <ul className="mt-4 space-y-3 md:hidden">
+          <ul className="mt-4 space-y-3 lg:hidden">
             {bookingsLoading || bookings.length === 0 ? (
               <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
                 {bookingsLoading ? t('adminBookings.loading') : t('adminBookings.emptyBookings')}
@@ -402,20 +410,25 @@ function AdminBookingsPage() {
         </>
       ) : (
         <>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <AdminScrollableFilterRow
+            ariaLabel={t('adminBookings.tabDisputes')}
+            contentKey={`${disputeStatus}|${t('adminBookings.tabDisputes')}`}
+            className="mt-4"
+          >
             {DISPUTE_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
                 type="button"
+                aria-pressed={disputeStatus === value}
                 onClick={() => setDisputeStatusFilter(value)}
-                className={pill(disputeStatus === value)}
+                className={`${pill(disputeStatus === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
               >
                 {t(`adminBookings.disputeFilters.${labelKey}`)}
               </button>
             ))}
-          </div>
+          </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -516,7 +529,7 @@ function AdminBookingsPage() {
           </div>
 
           {/* Mobile : une carte par litige (le tableau ci-dessus est masqué). */}
-          <ul className="mt-4 space-y-3 md:hidden">
+          <ul className="mt-4 space-y-3 lg:hidden">
             {disputesLoading || disputes.length === 0 ? (
               <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
                 {disputesLoading ? t('adminBookings.loading') : t('adminBookings.emptyDisputes')}
@@ -617,7 +630,7 @@ function AdminBookingsPage() {
                 ? t('adminBookings.modalResolveTitle')
                 : t('adminBookings.modalRejectTitle')}
             </h2>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 break-words text-sm text-white/70">
               {decision.dispute.booking?.boat_name
                 ? `${decision.dispute.booking.boat_name} — `
                 : ''}
@@ -715,20 +728,20 @@ function AdminBookingsPage() {
                         </label>
 
                         <div className="rounded-md bg-slate-950/60 px-3 py-2 text-xs">
-                          <div className="flex justify-between text-white/70">
+                          <div className="flex flex-wrap justify-between gap-2 text-white/70">
                             <span>{t('adminBookings.amountPaid')}</span>
                             <span>{EURO.format(payment.amount)}</span>
                           </div>
-                          <div className="flex justify-between text-white/70">
+                          <div className="flex flex-wrap justify-between gap-2 text-white/70">
                             <span>{t('adminBookings.commission')}</span>
-                            <span>
+                            <span className="break-words text-right">
                               {refundCommission
                                 ? t('adminBookings.commissionIncluded')
                                 : t('adminBookings.commissionKept')}{' '}
                               ({EURO.format(payment.commission)})
                             </span>
                           </div>
-                          <div className="mt-1 flex justify-between border-t border-white/30 pt-1 font-semibold text-emerald-300">
+                          <div className="mt-1 flex flex-wrap justify-between gap-2 border-t border-white/30 pt-1 font-semibold text-emerald-300">
                             <span>{t('adminBookings.refund')}</span>
                             <span>{EURO.format(computed)}</span>
                           </div>
@@ -739,12 +752,12 @@ function AdminBookingsPage() {
                 );
               })()}
 
-            <div className="mt-4 flex justify-end gap-3">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => setDecision(null)}
                 disabled={deciding}
-                className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50"
+                className="w-full rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50 sm:w-auto"
               >
                 {t('adminBookings.cancel')}
               </button>
@@ -752,7 +765,7 @@ function AdminBookingsPage() {
                 type="button"
                 onClick={confirmDecision}
                 disabled={deciding}
-                className={`rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition disabled:opacity-60 ${
+                className={`w-full rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition disabled:opacity-60 sm:w-auto ${
                   decision.status === 'resolved'
                     ? 'bg-emerald-600 hover:bg-emerald-600/90'
                     : 'bg-red-600 hover:bg-red-600/90'
