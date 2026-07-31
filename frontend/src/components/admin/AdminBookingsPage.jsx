@@ -228,6 +228,8 @@ function AdminBookingsPage() {
               placeholder={t('adminBookings.searchPlaceholder')}
               className={`${selectClass} min-w-[220px] flex-1`}
             />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
             {BOOKING_FILTERS.map(({ value, labelKey }) => (
               <button
                 key={labelKey}
