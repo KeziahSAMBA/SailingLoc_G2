@@ -201,7 +201,7 @@ function AdminPublicationPage() {
             ))}
           </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -304,7 +304,7 @@ function AdminPublicationPage() {
           </div>
 
           {/* Mobile : une carte par bateau (le tableau ci-dessus est masqué). */}
-          <ul className="mt-4 space-y-3 md:hidden">
+          <ul className="mt-4 space-y-3 lg:hidden">
             {boatsLoading || boats.length === 0 ? (
               <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
                 {boatsLoading ? t('adminPublication.loading') : t('adminPublication.emptyBoats')}
@@ -401,7 +401,7 @@ function AdminPublicationPage() {
             ))}
           </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -513,7 +513,7 @@ function AdminPublicationPage() {
           </div>
 
           {/* Mobile : une carte par signalement (le tableau ci-dessus est masqué). */}
-          <ul className="mt-4 space-y-3 md:hidden">
+          <ul className="mt-4 space-y-3 lg:hidden">
             {reportsLoading || reports.length === 0 ? (
               <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
                 {reportsLoading
