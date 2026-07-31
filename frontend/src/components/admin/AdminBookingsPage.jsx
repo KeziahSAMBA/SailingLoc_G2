@@ -227,7 +227,7 @@ function AdminBookingsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('adminBookings.searchPlaceholder')}
-              className={`${selectClass} min-w-[220px] flex-1`}
+              className={`${selectClass} min-w-[13.75rem] flex-1`}
             />
           </div>
           <AdminScrollableFilterRow
