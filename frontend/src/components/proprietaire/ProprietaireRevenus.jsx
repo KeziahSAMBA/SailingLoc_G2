@@ -329,6 +329,74 @@ function TotalCard({ label, value, accent = 'text-white', hint }) {
   );
 }
 
+function TransactionCard({ payment }) {
+  const { t } = useTranslation();
+  const statusCls = PAYMENT_STATUS_CLS[payment.status] || 'bg-slate-500/15 text-white/80';
+
+  return (
+    <article className="px-4 py-4">
+      <header className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <time dateTime={payment.payment_date} className="block text-xs text-white/60">
+            {fmtDate(payment.payment_date)}
+          </time>
+          <h3 className="mt-1 break-words text-sm font-semibold text-white">
+            {payment.booking?.boat_name}
+          </h3>
+        </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}>
+          {t(`proprietaireRevenus.status.${payment.status}`, {
+            defaultValue: payment.status,
+          })}
+        </span>
+      </header>
+
+      {payment.booking && (
+        <p className="mt-1 break-words text-xs leading-relaxed text-white/70">
+          {payment.booking.locataire}
+          {payment.booking.locataire && ' · '}
+          <time dateTime={payment.booking.start_date}>
+            {fmtDate(payment.booking.start_date)}
+          </time> →{' '}
+          <time dateTime={payment.booking.end_date}>{fmtDate(payment.booking.end_date)}</time>
+        </p>
+      )}
+
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        <div>
+          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.method')}</dt>
+          <dd className="mt-0.5 break-words text-white/80">
+            {t(`proprietaireRevenus.method.${payment.payment_method}`, {
+              defaultValue: payment.payment_method,
+            })}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.gross')}</dt>
+          <dd className="mt-0.5 font-medium text-white">{EURO.format(payment.amount)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.commission')}</dt>
+          <dd className="mt-0.5 font-medium text-amber-300">− {EURO.format(payment.commission)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.net')}</dt>
+          <dd className="mt-0.5 font-semibold text-emerald-300">{EURO.format(payment.net)}</dd>
+        </div>
+      </dl>
+
+      {payment.status === 'refunded' && payment.refunded_amount != null && (
+        <p className="mt-3 break-words rounded-lg bg-white/5 px-3 py-2 text-xs text-white/70">
+          {t('proprietaireRevenus.refundedAmount', {
+            amount: EURO.format(payment.refunded_amount),
+          })}
+          {payment.refund_reason && ` — ${payment.refund_reason}`}
+        </p>
+      )}
+    </article>
+  );
+}
+
 function ProprietaireRevenus() {
   const { t, i18n } = useTranslation();
   const [payments, setPayments] = useState([]);
@@ -684,97 +752,110 @@ function ProprietaireRevenus() {
                   : t('proprietaireRevenus.emptyFilter')}
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-white/20 text-xs uppercase tracking-wide text-white/60">
-                      <th scope="col" className="px-5 py-3 font-semibold">
-                        {t('proprietaireRevenus.table.date')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 font-semibold">
-                        {t('proprietaireRevenus.table.rental')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 font-semibold">
-                        {t('proprietaireRevenus.table.method')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        {t('proprietaireRevenus.table.gross')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        {t('proprietaireRevenus.table.commission')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        {t('proprietaireRevenus.table.net')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 font-semibold">
-                        {t('proprietaireRevenus.table.status')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/15">
-                    {pageRows.map((p) => {
-                      const statusCls =
-                        PAYMENT_STATUS_CLS[p.status] || 'bg-slate-500/15 text-white/80';
-                      return (
-                        <tr key={p.id_payment}>
-                          <td className="whitespace-nowrap px-5 py-3 text-white/80">
-                            <time dateTime={p.payment_date}>{fmtDate(p.payment_date)}</time>
-                          </td>
-                          <td className="px-5 py-3">
-                            <p className="font-medium text-white">{p.booking?.boat_name}</p>
-                            <p className="text-xs text-white/70">
-                              {p.booking?.locataire}
-                              {p.booking && (
-                                <>
-                                  {' · '}
-                                  <time dateTime={p.booking.start_date}>
-                                    {fmtDate(p.booking.start_date)}
-                                  </time>{' '}
-                                  →{' '}
-                                  <time dateTime={p.booking.end_date}>
-                                    {fmtDate(p.booking.end_date)}
-                                  </time>
-                                </>
-                              )}
-                            </p>
-                            {p.status === 'refunded' && p.refunded_amount != null && (
-                              <p className="mt-1 text-xs text-white/70">
-                                {t('proprietaireRevenus.refundedAmount', {
-                                  amount: EURO.format(p.refunded_amount),
-                                })}
-                                {p.refund_reason && ` — ${p.refund_reason}`}
+              <>
+                <ul
+                  className="divide-y divide-white/15 md:hidden"
+                  aria-label={t('proprietaireRevenus.history')}
+                >
+                  {pageRows.map((payment) => (
+                    <li key={payment.id_payment}>
+                      <TransactionCard payment={payment} />
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-white/20 text-xs uppercase tracking-wide text-white/60">
+                        <th scope="col" className="px-5 py-3 font-semibold">
+                          {t('proprietaireRevenus.table.date')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 font-semibold">
+                          {t('proprietaireRevenus.table.rental')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 font-semibold">
+                          {t('proprietaireRevenus.table.method')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 text-right font-semibold">
+                          {t('proprietaireRevenus.table.gross')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 text-right font-semibold">
+                          {t('proprietaireRevenus.table.commission')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 text-right font-semibold">
+                          {t('proprietaireRevenus.table.net')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 font-semibold">
+                          {t('proprietaireRevenus.table.status')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/15">
+                      {pageRows.map((p) => {
+                        const statusCls =
+                          PAYMENT_STATUS_CLS[p.status] || 'bg-slate-500/15 text-white/80';
+                        return (
+                          <tr key={p.id_payment}>
+                            <td className="whitespace-nowrap px-5 py-3 text-white/80">
+                              <time dateTime={p.payment_date}>{fmtDate(p.payment_date)}</time>
+                            </td>
+                            <td className="px-5 py-3">
+                              <p className="font-medium text-white">{p.booking?.boat_name}</p>
+                              <p className="text-xs text-white/70">
+                                {p.booking?.locataire}
+                                {p.booking && (
+                                  <>
+                                    {' · '}
+                                    <time dateTime={p.booking.start_date}>
+                                      {fmtDate(p.booking.start_date)}
+                                    </time>{' '}
+                                    →{' '}
+                                    <time dateTime={p.booking.end_date}>
+                                      {fmtDate(p.booking.end_date)}
+                                    </time>
+                                  </>
+                                )}
                               </p>
-                            )}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-white/80">
-                            {t(`proprietaireRevenus.method.${p.payment_method}`, {
-                              defaultValue: p.payment_method,
-                            })}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-right text-white">
-                            {EURO.format(p.amount)}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-right text-amber-300">
-                            − {EURO.format(p.commission)}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-emerald-300">
-                            {EURO.format(p.net)}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3">
-                            <span
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}
-                            >
-                              {t(`proprietaireRevenus.status.${p.status}`, {
-                                defaultValue: p.status,
+                              {p.status === 'refunded' && p.refunded_amount != null && (
+                                <p className="mt-1 text-xs text-white/70">
+                                  {t('proprietaireRevenus.refundedAmount', {
+                                    amount: EURO.format(p.refunded_amount),
+                                  })}
+                                  {p.refund_reason && ` — ${p.refund_reason}`}
+                                </p>
+                              )}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3 text-white/80">
+                              {t(`proprietaireRevenus.method.${p.payment_method}`, {
+                                defaultValue: p.payment_method,
                               })}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3 text-right text-white">
+                              {EURO.format(p.amount)}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3 text-right text-amber-300">
+                              − {EURO.format(p.commission)}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-emerald-300">
+                              {EURO.format(p.net)}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3">
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}
+                              >
+                                {t(`proprietaireRevenus.status.${p.status}`, {
+                                  defaultValue: p.status,
+                                })}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
 
             {pageCount > 1 && (
