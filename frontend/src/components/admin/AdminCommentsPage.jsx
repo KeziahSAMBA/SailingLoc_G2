@@ -357,8 +357,8 @@ function AdminCommentsPage() {
               key={r.id_review}
               className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
             >
-              <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 font-medium text-white">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="min-w-0 break-words font-medium text-white">
                   {r.author ? `${r.author.first_name} ${r.author.last_name}` : '—'}
                 </p>
                 <span
