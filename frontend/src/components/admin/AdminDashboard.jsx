@@ -142,8 +142,8 @@ function AdminDashboard() {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  innerRadius={55}
-                  outerRadius={90}
+                  innerRadius="42%"
+                  outerRadius="68%"
                   paddingAngle={2}
                 >
                   {pieData.map((entry) => (
