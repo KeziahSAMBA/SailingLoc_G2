@@ -234,7 +234,7 @@ function AdminPortsPage() {
       )}
 
       <MapView
-        className="mt-5 h-72 sm:h-[360px]"
+        className="mt-5 h-72 sm:h-[22.5rem]"
         markers={mapMarkers}
         emptyLabel={t('adminPorts.mapEmpty')}
       />
@@ -245,7 +245,7 @@ function AdminPortsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminPorts.filterPlaceholder')}
-          className={`${inputClass} w-full sm:min-w-[220px] sm:flex-1`}
+          className={`${inputClass} w-full sm:min-w-[13.75rem] sm:flex-1`}
         />
         <select
           value={region}
