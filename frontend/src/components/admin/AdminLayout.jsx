@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bgImage from '../../assets/image/paysage/crique.jpg';
 
 function AdminLayout() {
   const { t } = useTranslation();
+  const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const nav = [
     { to: '/admin', label: t('adminLayout.nav.dashboard'), end: true },
@@ -21,6 +22,16 @@ function AdminLayout() {
     { to: '/admin/contact', label: t('adminLayout.nav.contact') },
     { to: '/admin/compte', label: t('adminLayout.nav.account') },
   ];
+  const activeItem =
+    nav.find((item) =>
+      item.end
+        ? location.pathname === item.to
+        : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)
+    ) ?? nav[0];
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
   return (
     // Même univers visuel que les espaces propriétaire et locataire : photo
     // plein écran sous un voile sombre et panneaux en verre dépoli.
@@ -41,8 +52,13 @@ function AdminLayout() {
                 onClick={() => setMobileNavOpen((open) => !open)}
                 className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-white/10 lg:hidden"
               >
-                <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
-                  {t('adminLayout.title')}
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-white/60">
+                    {t('adminLayout.title')}
+                  </span>
+                  <span className="mt-0.5 block truncate text-sm font-semibold text-white">
+                    {activeItem.label}
+                  </span>
                 </span>
                 <svg
                   viewBox="0 0 20 20"
