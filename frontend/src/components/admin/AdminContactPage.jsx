@@ -133,7 +133,7 @@ function AdminContactPage() {
                 className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl sm:p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1 basis-60">
                     <h2 className="break-words text-base font-semibold text-white">{r.subject}</h2>
                     <p className="mt-0.5 break-words text-sm text-white/70">
                       {r.name} ·{' '}
@@ -147,7 +147,7 @@ function AdminContactPage() {
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}
+                    className={`max-w-full shrink-0 whitespace-normal rounded-full px-2.5 py-0.5 text-center text-xs font-semibold ${statusCls}`}
                   >
                     {t(`adminContact.status.${r.status}`, { defaultValue: r.status })}
                   </span>
