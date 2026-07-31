@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { MdMarkEmailRead } from 'react-icons/md';
 import { requestPasswordReset } from '../services/authService.js';
-import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
+import bgImage from '../assets/image/paysage/crique.jpg';
 
 const inputClass =
-  'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
+  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
+const FOCUS_RING =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
 
 function formatCountdown(seconds) {
   const m = Math.floor(seconds / 60);
@@ -70,45 +73,28 @@ function ForgotPasswordPage() {
 
   return (
     <main
-      className="min-h-screen w-full"
-      style={{
-        backgroundImage: `url(${bateauBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
+      className="min-h-screen w-full bg-cover bg-fixed bg-center text-white"
+      style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="min-h-screen w-full bg-black/40 px-4 pt-[120px] pb-12 flex justify-center">
+      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
         <section aria-labelledby="forgot-title" className="w-full max-w-md">
-          <article className="rounded-2xl bg-white p-8 shadow-2xl ring-1 ring-slate-200">
+          <article className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
             {submitted ? (
               <div role="status" aria-live="polite" className="text-center">
                 <div
                   aria-hidden="true"
-                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#0A3172]/10 ring-2 ring-[#0A3172]"
+                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-sky-500/20 text-sky-300 ring-2 ring-sky-400"
                 >
-                  <svg
-                    width="26"
-                    height="26"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#0A3172"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
+                  <MdMarkEmailRead size={28} />
                 </div>
-                <h1 className="text-2xl font-bold text-[#0A3172]">Vérifiez votre boîte mail</h1>
-                <p className="mt-3 text-sm text-slate-700">
+                <h1 className="text-2xl font-bold text-white">Vérifiez votre boîte mail</h1>
+                <p className="mt-3 text-sm text-white/80">
                   Si un compte correspond à cette adresse, un lien de réinitialisation vient d'être
                   envoyé. Le lien est valable <strong>1 heure</strong>.
                 </p>
                 <Link
                   to="/"
-                  className="mt-6 inline-block w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90"
+                  className={`mt-6 inline-block w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 ${FOCUS_RING}`}
                 >
                   Retour à l'accueil
                 </Link>
@@ -116,10 +102,10 @@ function ForgotPasswordPage() {
             ) : (
               <>
                 <header className="mb-6 text-center">
-                  <h1 id="forgot-title" className="text-2xl font-bold text-[#0A3172]">
+                  <h1 id="forgot-title" className="text-2xl font-bold text-white">
                     Mot de passe oublié
                   </h1>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-white/70">
                     Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot
                     de passe.
                   </p>
@@ -128,11 +114,11 @@ function ForgotPasswordPage() {
                 {serverError && (
                   <div
                     role="alert"
-                    className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700"
+                    className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
                   >
                     {serverError}
                     {isBlocked && (
-                      <span className="mt-1 block font-mono text-xs text-red-600">
+                      <span className="mt-1 block font-mono text-xs text-red-200">
                         Nouvelle tentative possible dans{' '}
                         <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
                       </span>
@@ -171,8 +157,8 @@ function ForgotPasswordPage() {
                               key={value}
                               className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
                                 checked
-                                  ? 'border-[#0A3172] bg-[#0A3172]/10 text-[#0A3172]'
-                                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                                  ? 'border-[#5AB4EC] bg-sky-500/25 text-white'
+                                  : 'border-white/30 bg-white/10 text-white/70 hover:bg-white/20'
                               }`}
                             >
                               <input
@@ -194,7 +180,7 @@ function ForgotPasswordPage() {
                   <button
                     type="submit"
                     disabled={loading || isBlocked}
-                    className="mt-2 w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={`mt-2 w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                   >
                     {isBlocked
                       ? `Réessayez dans ${formatCountdown(retryAfter)}`
@@ -204,10 +190,10 @@ function ForgotPasswordPage() {
                   </button>
                 </form>
 
-                <footer className="mt-6 text-center text-sm text-slate-600">
+                <footer className="mt-6 text-center text-sm text-white/70">
                   <Link
                     to={isAdmin ? '/admin/login' : '/login'}
-                    className="font-semibold text-[#0A3172] hover:underline"
+                    className={`rounded font-semibold text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
                   >
                     Retour à la connexion
                   </Link>
