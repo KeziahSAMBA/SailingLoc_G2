@@ -80,7 +80,7 @@ function AdminCreateUserPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-2xl">
+    <section className="w-full">
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-white">Ajouter un compte</h1>
         <p className="mt-2 text-white/80">
