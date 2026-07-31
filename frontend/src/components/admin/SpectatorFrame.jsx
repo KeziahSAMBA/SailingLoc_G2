@@ -187,7 +187,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
       <div className="mt-3">{urlBar}</div>
 
       {/* Cadre de l'iframe — hauteur calculée pour utiliser tout l'espace dispo
-          sous la chrome (header fixe 100px, padding layout, chrome de la page). */}
+          sous la chrome (header fixe, padding layout, chrome de la page). */}
       <div className="mt-4 overflow-hidden rounded-2xl border border-white/20 bg-white">
         {src ? (
           <iframe
@@ -195,10 +195,10 @@ function SpectatorFrame({ mode, title, description, banner }) {
             key={iframeSrc}
             src={iframeSrc}
             title={t('spectatorFrame.iframeTitle')}
-            className="block h-[calc(100svh-320px)] min-h-96 w-full sm:min-h-[600px]"
+            className="block h-[calc(100svh-20rem)] min-h-96 w-full sm:min-h-[37.5rem]"
           />
         ) : (
-          <div className="flex h-[calc(100svh-320px)] min-h-96 w-full items-center justify-center text-sm text-white/60 sm:min-h-[600px]">
+          <div className="flex h-[calc(100svh-20rem)] min-h-96 w-full items-center justify-center text-sm text-white/60 sm:min-h-[37.5rem]">
             Rechargement…
           </div>
         )}
