@@ -72,7 +72,7 @@ function RecentBookings({ bookings }) {
   return (
     <section
       aria-labelledby="recent-bookings-title"
-      className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
+      className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 md:h-full"
     >
       <header className="flex items-center justify-between gap-3">
         <h2 id="recent-bookings-title" className="text-sm font-semibold text-white/90">
@@ -122,7 +122,7 @@ function BoatsPreview({ boats }) {
   return (
     <section
       aria-labelledby="boats-preview-title"
-      className="rounded-2xl border border-white/20 bg-white/10 p-5"
+      className="rounded-2xl border border-white/20 bg-white/10 p-5 md:h-full"
     >
       <header className="flex items-center justify-between gap-3">
         <h2 id="boats-preview-title" className="text-sm font-semibold text-white/90">
@@ -254,10 +254,9 @@ function ProprietaireDashboard() {
       </ul>
 
       {!loading && (
-        // items-start : sans lui la grille étire la carte la plus courte, et sa
-        // grande zone de verre vide floute les falaises claires de la photo en
-        // un voile blanc (le « fond blanc » visible au survol).
-        <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
+        // Hauteurs naturelles sur téléphone, puis lignes et panneaux de même
+        // hauteur dès la tablette, sans valeur fixe.
+        <div className="mt-6 grid items-start gap-4 md:auto-rows-fr md:items-stretch lg:grid-cols-2">
           <RecentBookings bookings={stats?.recentBookings ?? []} />
           <BoatsPreview boats={stats?.boatsPreview ?? []} />
         </div>
