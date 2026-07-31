@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   getPayments,
@@ -41,6 +41,93 @@ const PERIOD_KEYS = ['all', '12m', 'year', '30d'];
 
 const PAGE_SIZE = 7;
 
+function ScrollableFilterRow({ ariaLabel, children, className = '', contentKey }) {
+  const scrollRef = useRef(null);
+  const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
+
+  const updateScrollEdges = useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+
+    const tolerance = 2;
+    const next = {
+      left: node.scrollLeft > tolerance,
+      right: node.scrollLeft + node.clientWidth < node.scrollWidth - tolerance,
+    };
+
+    setScrollEdges((current) =>
+      current.left === next.left && current.right === next.right ? current : next
+    );
+  }, []);
+
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return undefined;
+
+    const frame = window.requestAnimationFrame(updateScrollEdges);
+    const resizeObserver = window.ResizeObserver
+      ? new window.ResizeObserver(updateScrollEdges)
+      : null;
+
+    resizeObserver?.observe(node);
+    window.addEventListener('resize', updateScrollEdges);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateScrollEdges);
+    };
+  }, [contentKey, updateScrollEdges]);
+
+  return (
+    <div className={`relative ${className}`}>
+      <div
+        ref={scrollRef}
+        onScroll={updateScrollEdges}
+        className="flex max-w-full snap-x snap-proximity flex-nowrap gap-2 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] sm:snap-none sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+        role="group"
+        aria-label={ariaLabel}
+      >
+        {children}
+      </div>
+
+      {scrollEdges.left && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
+            <path
+              d="m12.5 5-5 5 5 5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+
+      {scrollEdges.right && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
+            <path
+              d="m7.5 5 5 5-5 5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+    </div>
+  );
+}
+
 // Borne basse (incluse) de la période ; null = pas de borne.
 function periodStart(key) {
   const now = new Date();
@@ -67,7 +154,7 @@ function niceMax(value) {
   return step * pow;
 }
 
-// Colonne à sommet arrondi (4px) et base carrée, ancrée sur la ligne de base.
+// Colonne à sommet arrondi (4 unités SVG) et base carrée, ancrée sur la ligne de base.
 function roundedTopRect(x, y, w, h) {
   const r = Math.min(4, h, w / 2);
   return `M ${x} ${y + h} L ${x} ${y + r} Q ${x} ${y} ${x + r} ${y} L ${x + w - r} ${y} Q ${x + w} ${y} ${x + w} ${y + r} L ${x + w} ${y + h} Z`;
@@ -119,7 +206,7 @@ function MonthlyChart({ months }) {
               x={PAD.left - 8}
               y={y(t) + 3}
               textAnchor="end"
-              className="fill-white/50 text-[10px]"
+              className="fill-white/50 text-[0.625rem]"
             >
               {EURO_ROUND.format(t)}
             </text>
@@ -145,13 +232,18 @@ function MonthlyChart({ months }) {
                   x={cx}
                   y={top - 6}
                   textAnchor="middle"
-                  className="fill-white/90 text-[11px] font-medium"
+                  className="fill-white/90 text-[0.6875rem] font-medium"
                 >
                   {EURO_ROUND.format(m.net)}
                 </text>
               )}
               {i % labelEvery === 0 && (
-                <text x={cx} y={H - 8} textAnchor="middle" className="fill-white/60 text-[10px]">
+                <text
+                  x={cx}
+                  y={H - 8}
+                  textAnchor="middle"
+                  className="fill-white/60 text-[0.625rem]"
+                >
                   {m.label}
                 </text>
               )}
@@ -234,6 +326,74 @@ function TotalCard({ label, value, accent = 'text-white', hint }) {
       <span className={`mt-2 block text-3xl font-bold ${accent}`}>{EURO.format(value ?? 0)}</span>
       {hint && <span className="mt-1 block text-xs text-white/60">{hint}</span>}
     </li>
+  );
+}
+
+function TransactionCard({ payment }) {
+  const { t } = useTranslation();
+  const statusCls = PAYMENT_STATUS_CLS[payment.status] || 'bg-slate-500/15 text-white/80';
+
+  return (
+    <article className="px-4 py-4">
+      <header className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <time dateTime={payment.payment_date} className="block text-xs text-white/60">
+            {fmtDate(payment.payment_date)}
+          </time>
+          <h3 className="mt-1 break-words text-sm font-semibold text-white">
+            {payment.booking?.boat_name}
+          </h3>
+        </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}>
+          {t(`proprietaireRevenus.status.${payment.status}`, {
+            defaultValue: payment.status,
+          })}
+        </span>
+      </header>
+
+      {payment.booking && (
+        <p className="mt-1 break-words text-xs leading-relaxed text-white/70">
+          {payment.booking.locataire}
+          {payment.booking.locataire && ' · '}
+          <time dateTime={payment.booking.start_date}>
+            {fmtDate(payment.booking.start_date)}
+          </time> →{' '}
+          <time dateTime={payment.booking.end_date}>{fmtDate(payment.booking.end_date)}</time>
+        </p>
+      )}
+
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        <div>
+          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.method')}</dt>
+          <dd className="mt-0.5 break-words text-white/80">
+            {t(`proprietaireRevenus.method.${payment.payment_method}`, {
+              defaultValue: payment.payment_method,
+            })}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.gross')}</dt>
+          <dd className="mt-0.5 font-medium text-white">{EURO.format(payment.amount)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.commission')}</dt>
+          <dd className="mt-0.5 font-medium text-amber-300">− {EURO.format(payment.commission)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.net')}</dt>
+          <dd className="mt-0.5 font-semibold text-emerald-300">{EURO.format(payment.net)}</dd>
+        </div>
+      </dl>
+
+      {payment.status === 'refunded' && payment.refunded_amount != null && (
+        <p className="mt-3 break-words rounded-lg bg-white/5 px-3 py-2 text-xs text-white/70">
+          {t('proprietaireRevenus.refundedAmount', {
+            amount: EURO.format(payment.refunded_amount),
+          })}
+          {payment.refund_reason && ` — ${payment.refund_reason}`}
+        </p>
+      )}
+    </article>
   );
 }
 
@@ -457,11 +617,13 @@ function ProprietaireRevenus() {
       ) : (
         <>
           {payments.length > 0 && (
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <div
-                className="flex flex-wrap gap-2"
-                role="group"
-                aria-label={t('proprietaireRevenus.filterAria')}
+            <div className="mb-5 space-y-3">
+              <ScrollableFilterRow
+                ariaLabel={t('proprietaireRevenus.filterAria')}
+                contentKey={STATUS_KEYS.map(
+                  (key) =>
+                    `${key}:${t(`proprietaireRevenus.filters.${key}`)}:${statusCounts[key] || 0}`
+                ).join('|')}
               >
                 {STATUS_KEYS.map((key) => {
                   const active = status === key;
@@ -472,7 +634,7 @@ function ProprietaireRevenus() {
                       type="button"
                       onClick={() => setStatus(key)}
                       aria-pressed={active}
-                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                      className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
                         active
                           ? 'bg-sky-500 text-white'
                           : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
@@ -483,25 +645,33 @@ function ProprietaireRevenus() {
                     </button>
                   );
                 })}
-              </div>
+              </ScrollableFilterRow>
 
-              <div className="flex items-center gap-2">
-                <label htmlFor="revenus-period" className="text-sm text-white/70">
-                  {t('proprietaireRevenus.periodLabel')}
-                </label>
-                <select
-                  id="revenus-period"
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  className="select-glass rounded-lg border border-white/30 bg-white/10 px-3 py-1.5 text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
-                >
-                  {PERIOD_KEYS.map((key) => (
-                    <option key={key} value={key}>
+              <ScrollableFilterRow
+                ariaLabel={t('proprietaireRevenus.periodLabel')}
+                contentKey={PERIOD_KEYS.map(
+                  (key) => `${key}:${t(`proprietaireRevenus.periods.${key}`)}`
+                ).join('|')}
+              >
+                {PERIOD_KEYS.map((key) => {
+                  const active = period === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setPeriod(key)}
+                      aria-pressed={active}
+                      className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                        active
+                          ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
+                          : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
+                      }`}
+                    >
                       {t(`proprietaireRevenus.periods.${key}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                    </button>
+                  );
+                })}
+              </ScrollableFilterRow>
             </div>
           )}
 
@@ -582,97 +752,110 @@ function ProprietaireRevenus() {
                   : t('proprietaireRevenus.emptyFilter')}
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-white/20 text-xs uppercase tracking-wide text-white/60">
-                      <th scope="col" className="px-5 py-3 font-semibold">
-                        {t('proprietaireRevenus.table.date')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 font-semibold">
-                        {t('proprietaireRevenus.table.rental')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 font-semibold">
-                        {t('proprietaireRevenus.table.method')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        {t('proprietaireRevenus.table.gross')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        {t('proprietaireRevenus.table.commission')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-right font-semibold">
-                        {t('proprietaireRevenus.table.net')}
-                      </th>
-                      <th scope="col" className="px-5 py-3 font-semibold">
-                        {t('proprietaireRevenus.table.status')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/15">
-                    {pageRows.map((p) => {
-                      const statusCls =
-                        PAYMENT_STATUS_CLS[p.status] || 'bg-slate-500/15 text-white/80';
-                      return (
-                        <tr key={p.id_payment}>
-                          <td className="whitespace-nowrap px-5 py-3 text-white/80">
-                            <time dateTime={p.payment_date}>{fmtDate(p.payment_date)}</time>
-                          </td>
-                          <td className="px-5 py-3">
-                            <p className="font-medium text-white">{p.booking?.boat_name}</p>
-                            <p className="text-xs text-white/70">
-                              {p.booking?.locataire}
-                              {p.booking && (
-                                <>
-                                  {' · '}
-                                  <time dateTime={p.booking.start_date}>
-                                    {fmtDate(p.booking.start_date)}
-                                  </time>{' '}
-                                  →{' '}
-                                  <time dateTime={p.booking.end_date}>
-                                    {fmtDate(p.booking.end_date)}
-                                  </time>
-                                </>
-                              )}
-                            </p>
-                            {p.status === 'refunded' && p.refunded_amount != null && (
-                              <p className="mt-1 text-xs text-white/70">
-                                {t('proprietaireRevenus.refundedAmount', {
-                                  amount: EURO.format(p.refunded_amount),
-                                })}
-                                {p.refund_reason && ` — ${p.refund_reason}`}
+              <>
+                <ul
+                  className="divide-y divide-white/15 md:hidden"
+                  aria-label={t('proprietaireRevenus.history')}
+                >
+                  {pageRows.map((payment) => (
+                    <li key={payment.id_payment}>
+                      <TransactionCard payment={payment} />
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-white/20 text-xs uppercase tracking-wide text-white/60">
+                        <th scope="col" className="px-5 py-3 font-semibold">
+                          {t('proprietaireRevenus.table.date')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 font-semibold">
+                          {t('proprietaireRevenus.table.rental')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 font-semibold">
+                          {t('proprietaireRevenus.table.method')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 text-right font-semibold">
+                          {t('proprietaireRevenus.table.gross')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 text-right font-semibold">
+                          {t('proprietaireRevenus.table.commission')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 text-right font-semibold">
+                          {t('proprietaireRevenus.table.net')}
+                        </th>
+                        <th scope="col" className="px-5 py-3 font-semibold">
+                          {t('proprietaireRevenus.table.status')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/15">
+                      {pageRows.map((p) => {
+                        const statusCls =
+                          PAYMENT_STATUS_CLS[p.status] || 'bg-slate-500/15 text-white/80';
+                        return (
+                          <tr key={p.id_payment}>
+                            <td className="whitespace-nowrap px-5 py-3 text-white/80">
+                              <time dateTime={p.payment_date}>{fmtDate(p.payment_date)}</time>
+                            </td>
+                            <td className="px-5 py-3">
+                              <p className="font-medium text-white">{p.booking?.boat_name}</p>
+                              <p className="text-xs text-white/70">
+                                {p.booking?.locataire}
+                                {p.booking && (
+                                  <>
+                                    {' · '}
+                                    <time dateTime={p.booking.start_date}>
+                                      {fmtDate(p.booking.start_date)}
+                                    </time>{' '}
+                                    →{' '}
+                                    <time dateTime={p.booking.end_date}>
+                                      {fmtDate(p.booking.end_date)}
+                                    </time>
+                                  </>
+                                )}
                               </p>
-                            )}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-white/80">
-                            {t(`proprietaireRevenus.method.${p.payment_method}`, {
-                              defaultValue: p.payment_method,
-                            })}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-right text-white">
-                            {EURO.format(p.amount)}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-right text-amber-300">
-                            − {EURO.format(p.commission)}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-emerald-300">
-                            {EURO.format(p.net)}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3">
-                            <span
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}
-                            >
-                              {t(`proprietaireRevenus.status.${p.status}`, {
-                                defaultValue: p.status,
+                              {p.status === 'refunded' && p.refunded_amount != null && (
+                                <p className="mt-1 text-xs text-white/70">
+                                  {t('proprietaireRevenus.refundedAmount', {
+                                    amount: EURO.format(p.refunded_amount),
+                                  })}
+                                  {p.refund_reason && ` — ${p.refund_reason}`}
+                                </p>
+                              )}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3 text-white/80">
+                              {t(`proprietaireRevenus.method.${p.payment_method}`, {
+                                defaultValue: p.payment_method,
                               })}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3 text-right text-white">
+                              {EURO.format(p.amount)}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3 text-right text-amber-300">
+                              − {EURO.format(p.commission)}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-emerald-300">
+                              {EURO.format(p.net)}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-3">
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}
+                              >
+                                {t(`proprietaireRevenus.status.${p.status}`, {
+                                  defaultValue: p.status,
+                                })}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
 
             {pageCount > 1 && (
