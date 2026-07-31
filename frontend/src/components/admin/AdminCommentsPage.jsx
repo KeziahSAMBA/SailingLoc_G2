@@ -223,7 +223,7 @@ function AdminCommentsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminComments.searchPlaceholder')}
-          className={`${selectClass} min-w-[220px] flex-1`}
+          className={`${selectClass} w-full sm:min-w-[220px] sm:flex-1`}
         />
         {FILTERS.map(({ value, labelKey }) => (
           <button
