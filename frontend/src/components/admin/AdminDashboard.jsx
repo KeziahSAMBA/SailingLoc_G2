@@ -35,11 +35,11 @@ const MONTH_OPTS = { month: 'short', year: '2-digit' };
 
 const TOOLTIP_STYLE = {
   background: '#0f172a',
-  border: '1px solid #1e293b',
-  borderRadius: 8,
+  border: '0.0625rem solid #1e293b',
+  borderRadius: '0.5rem',
   color: '#e2e8f0',
 };
-const AXIS_TICK_STYLE = { fill: '#94a3b8', fontSize: 12 };
+const AXIS_TICK_STYLE = { fill: '#94a3b8', fontSize: '0.75rem' };
 
 function fmtMonth(m) {
   const [y, mo] = String(m).split('-');
@@ -59,7 +59,7 @@ function ChartCard({ title, children }) {
   return (
     <div className="h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
       <h2 className="mb-4 text-sm font-semibold text-white/90">{title}</h2>
-      <div className="h-56 w-full sm:h-[260px]">{children}</div>
+      <div className="h-56 w-full sm:h-[16.25rem]">{children}</div>
     </div>
   );
 }
@@ -156,7 +156,7 @@ function AdminDashboard() {
                   align="center"
                   verticalAlign="bottom"
                   iconSize={10}
-                  wrapperStyle={{ fontSize: 12, lineHeight: '1.25rem', color: '#cbd5e1' }}
+                  wrapperStyle={{ fontSize: '0.75rem', lineHeight: '1.25rem', color: '#cbd5e1' }}
                 />
               </PieChart>
             </ResponsiveContainer>
