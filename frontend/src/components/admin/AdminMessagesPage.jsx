@@ -76,7 +76,7 @@ function AdminMessagesPage() {
           className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
         />
         {open && results.length > 0 && (
-          <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-white/30 bg-white/10 shadow-xl">
+          <ul className="absolute z-10 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-white/30 bg-white/10 shadow-xl">
             {results.map((u) => (
               <li key={u.id_user}>
                 <button
