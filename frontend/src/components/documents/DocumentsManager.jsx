@@ -67,7 +67,7 @@ function getStatus(t) {
   };
 }
 
-function DocumentRow({ config, docs, onChanged }) {
+function DocumentRow({ config, docs, onChanged, stackFilePickerOnMobile }) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [file, setFile] = useState(null);
@@ -182,12 +182,32 @@ function DocumentRow({ config, docs, onChanged }) {
         );
       })}
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <label className="flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-white/70">
-          <span className="shrink-0 cursor-pointer rounded-full border-0 bg-[#5AB4EC]/15 px-4 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/25">
+      <div
+        className={
+          stackFilePickerOnMobile
+            ? 'mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center'
+            : 'mt-4 flex flex-wrap items-center gap-3'
+        }
+      >
+        <label
+          className={
+            stackFilePickerOnMobile
+              ? 'flex w-full min-w-0 flex-col items-stretch gap-2 text-sm text-white/70 sm:max-w-xs sm:flex-1 sm:flex-row sm:items-center sm:gap-3'
+              : 'flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-white/70'
+          }
+        >
+          <span
+            className={`shrink-0 cursor-pointer rounded-full border-0 bg-[#5AB4EC]/15 px-4 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/25 ${
+              stackFilePickerOnMobile ? 'text-center' : ''
+            }`}
+          >
             {t('documentsManager.chooseFile')}
           </span>
-          <span className="min-w-0 truncate">
+          <span
+            className={
+              stackFilePickerOnMobile ? 'min-w-0 break-words sm:truncate' : 'min-w-0 truncate'
+            }
+          >
             {file ? file.name : t('documentsManager.noFile')}
           </span>
           <input
@@ -205,7 +225,9 @@ function DocumentRow({ config, docs, onChanged }) {
           type="button"
           onClick={handleUpload}
           disabled={busy || !file}
-          className="rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${
+            stackFilePickerOnMobile ? 'w-full sm:w-auto' : ''
+          }`}
         >
           {busy
             ? t('documentsManager.sending')
@@ -227,7 +249,7 @@ function DocumentRow({ config, docs, onChanged }) {
 // Gestion des documents obligatoires (liste + dépôt/suppression).
 // Contenu seul : l'enveloppe (fond, en-tête de page) est fournie par la page hôte.
 // `onCounts` remonte la progression (fournis / total) pour l'afficher où l'hôte veut.
-function DocumentsManager({ onCounts }) {
+function DocumentsManager({ onCounts, stackFilePickerOnMobile = false }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const docTypes = getDocTypesByRole(t)[user?.role] || [];
@@ -269,6 +291,7 @@ function DocumentsManager({ onCounts }) {
           config={config}
           docs={docsByType[config.key] || []}
           onChanged={load}
+          stackFilePickerOnMobile={stackFilePickerOnMobile}
         />
       ))}
     </div>
