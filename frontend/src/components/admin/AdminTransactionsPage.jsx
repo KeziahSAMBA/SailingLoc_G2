@@ -197,7 +197,7 @@ function AdminTransactionsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminTransactions.searchPlaceholder')}
-          className={`${selectClass} min-w-[240px] flex-1`}
+          className={`${selectClass} w-full sm:min-w-[240px] sm:flex-1`}
         />
         {STATUS_FILTERS.map(({ value, labelKey }) => (
           <button
