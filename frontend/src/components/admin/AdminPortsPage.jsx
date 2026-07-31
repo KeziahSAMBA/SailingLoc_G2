@@ -239,18 +239,18 @@ function AdminPortsPage() {
         emptyLabel={t('adminPorts.mapEmpty')}
       />
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminPorts.filterPlaceholder')}
-          className={`${inputClass} min-w-[220px] flex-1`}
+          className={`${inputClass} w-full sm:min-w-[220px] sm:flex-1`}
         />
         <select
           value={region}
           onChange={(e) => setRegion(e.target.value)}
-          className={`select-glass ${inputClass}`}
+          className={`select-glass ${inputClass} w-full sm:w-auto`}
         >
           <option value="">{t('adminPorts.allRegions')}</option>
           {REGIONS.map((r) => (
