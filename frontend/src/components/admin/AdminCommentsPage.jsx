@@ -6,6 +6,7 @@ import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, CheckIcon, XIcon, EditIcon, TrashIcon } from './AdminActions.jsx';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -225,16 +226,23 @@ function AdminCommentsPage() {
           placeholder={t('adminComments.searchPlaceholder')}
           className={`${selectClass} w-full sm:min-w-[220px] sm:flex-1`}
         />
-        {FILTERS.map(({ value, labelKey }) => (
-          <button
-            key={labelKey}
-            type="button"
-            onClick={() => setStatus(value)}
-            className={pill(status === value)}
-          >
-            {t(`adminComments.filters.${labelKey}`)}
-          </button>
-        ))}
+        <AdminScrollableFilterRow
+          ariaLabel={t('adminComments.subtitle')}
+          contentKey={`${status}|${t('adminComments.subtitle')}`}
+          className="w-full sm:w-auto"
+        >
+          {FILTERS.map(({ value, labelKey }) => (
+            <button
+              key={labelKey}
+              type="button"
+              aria-pressed={status === value}
+              onClick={() => setStatus(value)}
+              className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+            >
+              {t(`adminComments.filters.${labelKey}`)}
+            </button>
+          ))}
+        </AdminScrollableFilterRow>
       </div>
 
       <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
