@@ -881,7 +881,7 @@ function ProprietaireBoatForm() {
                   onClick={() => setAvailabilities((prev) => prev.filter((_, j) => j !== i))}
                   disabled={availabilities.length === 1}
                   aria-label={t('proprietaireBoatForm.removePeriod', { n: i + 1 })}
-                  className={`h-9 rounded-lg border border-white/30 px-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
+                  className={`flex h-9 w-9 items-center justify-center justify-self-end rounded-lg border border-white/30 text-sm text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2 lg:col-span-1 ${FOCUS_RING}`}
                 >
                   ×
                 </button>
@@ -899,12 +899,12 @@ function ProprietaireBoatForm() {
         </section>
 
         {/* Actions */}
-        <div className="flex flex-wrap justify-end gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
           <button
             type="button"
             disabled={submitting}
             onClick={() => navigate('/proprietaire/bateaux')}
-            className={`rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${FOCUS_RING}`}
+            className={`w-full rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 sm:w-auto ${FOCUS_RING}`}
           >
             {t('proprietaireBoatForm.cancel')}
           </button>
@@ -914,7 +914,7 @@ function ProprietaireBoatForm() {
               type="button"
               disabled={submitting}
               onClick={(e) => handleSubmit(e, true)}
-              className={`rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${FOCUS_RING}`}
+              className={`w-full rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 sm:w-auto ${FOCUS_RING}`}
             >
               {t('proprietaireBoatForm.saveDraft')}
             </button>
@@ -922,7 +922,7 @@ function ProprietaireBoatForm() {
           <button
             type="submit"
             disabled={submitting}
-            className={`rounded-full bg-sky-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+            className={`w-full rounded-full bg-sky-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${FOCUS_RING}`}
           >
             {submitting
               ? t('proprietaireBoatForm.sending')
