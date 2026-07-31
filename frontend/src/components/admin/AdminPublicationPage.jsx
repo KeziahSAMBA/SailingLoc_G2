@@ -315,13 +315,13 @@ function AdminPublicationPage() {
                   key={b.id_boat}
                   className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <Link
                         to={`/product/${b.id_boat}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-[#5AB4EC] hover:underline"
+                        className="break-words font-medium text-[#5AB4EC] hover:underline"
                       >
                         {b.name}
                       </Link>
@@ -340,7 +340,7 @@ function AdminPublicationPage() {
                     </span>
                   </div>
 
-                  <p className="mt-2 text-sm text-white/70">
+                  <p className="mt-2 break-words text-sm text-white/70">
                     {b.owner ? `${b.owner.first_name} ${b.owner.last_name}` : '—'}
                     {b.daily_price != null ? ` · ${EURO.format(b.daily_price)}` : ''}
                   </p>
@@ -526,14 +526,14 @@ function AdminPublicationPage() {
                   key={r.id_report}
                   className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       {r.boat ? (
                         <Link
                           to={`/product/${r.boat.id_boat}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-[#5AB4EC] hover:underline"
+                          className="break-words font-medium text-[#5AB4EC] hover:underline"
                         >
                           {r.boat.name}
                         </Link>
@@ -559,7 +559,7 @@ function AdminPublicationPage() {
                     {r.reason}
                   </p>
 
-                  <p className="mt-2 text-xs text-white/60">
+                  <p className="mt-2 break-words text-xs text-white/60">
                     {r.reporter ? `${r.reporter.first_name} ${r.reporter.last_name}` : '—'} ·{' '}
                     {fmtDate(r.created_at)}
                   </p>
