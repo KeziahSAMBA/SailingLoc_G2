@@ -58,6 +58,15 @@ export const PAGE_SLIDE_CSS = `
     to   { opacity: 1; }
   }
 `;
+
+// Voiles partagés par-dessus les images de fond en crossfade (pageBgFadeIn
+// ci-dessus) : garantit un raccord invisible entre deux pages qui n'ont pas
+// exactement le même voile — celui de la page d'ARRIVÉE, pas celle de départ,
+// pour que l'image affichée pendant le fondu soit identique au pixel près à
+// celle que la page cible affichera dès son montage.
+export const PHOTO_OVERLAY_BOAT = 'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5))';
+export const PHOTO_OVERLAY_STATIC_PAGE = 'linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72))';
+
 export const HERO_EXIT_EASING = 'cubic-bezier(0.5, 0, 0.75, 0.2)';
 export const HERO_ENTER_EASING = 'cubic-bezier(0.25, 0.8, 0.5, 1)';
 // Ease-in-out doux (départ et fin progressifs, façon dégradé) pour les fondus
@@ -123,9 +132,13 @@ function useTransitionNavigate(fromPaths, matchesTarget, eventName) {
   const location = useLocation();
   const onFromPage = fromPaths.some((base) => isOnPath(location.pathname, base));
   return useCallback(
-    (to) => {
+    // `extra` (optionnel) : détails supplémentaires fusionnés dans
+    // l'événement, ex. le nom du bateau (cf. useProductNavigate depuis
+    // Carrousel) pour que la page d'arrivée l'affiche dès son premier rendu
+    // sans attendre la réponse de l'API.
+    (to, extra) => {
       if (onFromPage && matchesTarget(to) && !prefersReducedMotion()) {
-        window.dispatchEvent(new window.CustomEvent(eventName, { detail: { to } }));
+        window.dispatchEvent(new window.CustomEvent(eventName, { detail: { to, ...extra } }));
       } else {
         navigate(to);
       }

@@ -1,9 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, useMemo, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bateauVideo from '../assets/video/video_bateau_3.mp4';
 import categoryBg from '../assets/image/paysage/cote_azur.jpg';
 import productBg from '../assets/image/paysage/crique.jpg';
+import contactBg from '../assets/image/paysage/contact_bg.jpg';
+import aboutBg from '../assets/image/paysage/about_bg.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import { SiAppstore, SiGoogleplay } from 'react-icons/si';
 import logoLong from '../assets/image/SL_logo/logo SL long.webp';
@@ -25,6 +27,9 @@ import {
   emitIntroReveal,
   lockScroll,
   unlockScroll,
+  prefersReducedMotion,
+  PHOTO_OVERLAY_BOAT,
+  PHOTO_OVERLAY_STATIC_PAGE,
   HERO_EXIT_DURATION,
   HERO_EXIT_EASING,
   HERO_ENTER_EASING,
@@ -34,6 +39,7 @@ import {
   INTRO_WELCOME_HOLD_MS,
   INTRO_REVEAL_LAG_MS,
 } from '../hooks/useCategoryTransition.js';
+import { usePageExitNavigate, onPageExitRequest } from '../hooks/usePageTransition.js';
 
 // Fondu des textes de l'intro : apparition et disparition symétriques,
 // opacité + légère dérive verticale, au même rythme que le crossfade.
@@ -158,14 +164,12 @@ const APP_LINKS = [
 function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const goToCategory = useCategoryNavigate();
+  const pageExitNavigate = usePageExitNavigate();
   const stepsRef = useRef(null);
   const videoRef = useRef(null);
   const searchBarWrapRef = useRef(null);
-  // Conteneur des champs de la SearchBar (destination/dates/voyageurs),
-  // exposé par le composant : l'arrivée depuis la page produit y joue
-  // directement sa propre animation de largeur, cf. le FLIP plus bas.
-  const searchBarFieldsRef = useRef(null);
   const transitioningRef = useRef(false);
   const [dotsActive, setDotsActive] = useState(false);
   // Sortie vers /categorie ou /product/:id en cours : le hero s'anime hors
@@ -173,13 +177,22 @@ function HomePage() {
   // page de destination (cf. exitBgSrc, qui varie selon la cible).
   const [exiting, setExiting] = useState(false);
   const [exitBgSrc, setExitBgSrc] = useState(categoryBg);
+  // Sortie générique (contact/à propos) en cours : distingue ce cas de la
+  // sortie ci-dessus pour le repli de la SearchBar plus bas (qui, elle, ne
+  // doit pas changer de comportement pour catégorie/produit).
+  const [exitIsGeneric, setExitIsGeneric] = useState(false);
   // Arrivée depuis /categorie ou /product/:id : les éléments du hero rentrent
   // depuis leur marge de sortie, la SearchBar revient en FLIP et l'image de
   // fond de la page de départ (transmise via le payload — cf. son propre
   // exitBgSrc/bg) s'efface pour révéler la vidéo.
   const [homeArrival] = useState(() => readTransitionPayload('home'));
   const arrivalBg = homeArrival?.bg ?? categoryBg;
-  const [arrivalActive, setArrivalActive] = useState(Boolean(homeArrival));
+  // Arrivée générique (ex. depuis Contact/À propos, sans payload FLIP) : même
+  // glissade du hero, mais sans le crossfade vidéo (pas d'image de départ
+  // à faire disparaître) ni le FLIP de la SearchBar (cf. plus bas).
+  const [arrivalActive, setArrivalActive] = useState(
+    () => Boolean(homeArrival) || (location.key !== 'default' && !prefersReducedMotion())
+  );
   // Intro de première visite : machine à phases 'black' → 'video' → 'welcome'
   // → 'reveal' → null (terminée ou pas d'intro).
   const [introPhase, setIntroPhase] = useState(() => (shouldPlayIntro() ? 'black' : null));
@@ -245,82 +258,37 @@ function HomePage() {
     return () => clearTimeout(timer);
   }, [arrivalActive]);
 
-  // FLIP retour de la SearchBar : de sa position dans la barre sticky de
-  // /categorie ou /product/:id vers son emplacement au centre du hero.
-  // Depuis la page produit uniquement : séquence en deux temps, comme
-  // catégorie ← produit — la barre se déploie d'abord (en parallèle direct
-  // sur le nœud des champs — un scale du bloc entier déformerait le texte),
-  // puis seulement ensuite se déplace. Depuis la catégorie (même échelle que
-  // le hero), translate + scale simultanés du bloc entier suffisent.
+  // FLIP retour de la SearchBar : translate + scale simultanés du bloc
+  // entier, de sa position dans la barre sticky de /categorie ou
+  // /product/:id (toutes deux avec une barre déployée désormais) vers son
+  // emplacement au centre du hero.
   useLayoutEffect(() => {
     const from = homeArrival?.searchBarRect;
     const el = searchBarWrapRef.current;
     if (!from || !el) return undefined;
-    const translateOnly = homeArrival?.from === 'product';
     const to = el.getBoundingClientRect();
     el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
     el.style.transition = 'none';
-    el.style.transform = translateOnly
-      ? `translate(${from.left - to.left}px, ${from.top - to.top}px)`
-      : `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
-        `scale(${from.width / to.width}, ${from.height / to.height})`;
-    const fieldsEl = searchBarFieldsRef.current;
-    if (translateOnly && fieldsEl) {
-      // Repart de l'état rétracté de la page produit.
-      fieldsEl.style.transition = 'none';
-      fieldsEl.style.maxWidth = '0px';
-      fieldsEl.style.opacity = '0';
-    }
-    // Force le reflow avant d'activer la transition (comme le fait le
-    // mécanisme interne de la SearchBar, cf. son propre useLayoutEffect) : un
-    // seul rAF suffit alors, pas deux.
+    el.style.transform =
+      `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
+      `scale(${from.width / to.width}, ${from.height / to.height})`;
+    // Force le reflow avant d'activer la transition : un seul rAF suffit
+    // alors, pas deux.
     void el.offsetWidth;
-    // Durée totale partagée entre les deux étapes (et non ajoutée bout à
-    // bout) : la séquence complète doit tout de même atterrir à
-    // HERO_EXIT_DURATION, en même temps que le reste du hero.
-    const deployDuration = Math.round(HERO_EXIT_DURATION / 2);
-    const moveDuration = HERO_EXIT_DURATION - deployDuration;
-    let phaseTimer = null;
     const raf = window.requestAnimationFrame(() => {
-      if (translateOnly && fieldsEl) {
-        const natural = fieldsEl.scrollWidth;
-        fieldsEl.style.transition = `max-width ${deployDuration}ms ${HERO_ENTER_EASING}, opacity ${deployDuration}ms ${HERO_ENTER_EASING}`;
-        fieldsEl.style.maxWidth = `${natural}px`;
-        fieldsEl.style.opacity = '1';
-        phaseTimer = setTimeout(() => {
-          // Lève le plafond figé (comme le mécanisme interne de la
-          // SearchBar une fois déployée) avant d'enchaîner sur la
-          // translation.
-          fieldsEl.style.transition = 'none';
-          fieldsEl.style.maxWidth = 'none';
-          el.style.transition = `transform ${moveDuration}ms ${HERO_ENTER_EASING}`;
-          el.style.transform = 'none';
-        }, deployDuration);
-      } else {
-        el.style.transition = `transform ${HERO_EXIT_DURATION}ms ${HERO_ENTER_EASING}`;
-        el.style.transform = 'none';
-      }
+      el.style.transition = `transform ${HERO_EXIT_DURATION}ms ${HERO_ENTER_EASING}`;
+      el.style.transform = 'none';
     });
     const resetStyles = () => {
       el.style.transform = '';
       el.style.transition = '';
       el.style.transformOrigin = '';
       el.style.willChange = '';
-      if (fieldsEl) {
-        // Cible réellement déployée (pas une chaîne vide) : effacer le
-        // style figerait la largeur à 0 — StrictMode, qui rejoue ce
-        // nettoyage avant même le premier rAF, verrait alors une SearchBar
-        // entièrement repliée.
-        fieldsEl.style.maxWidth = 'none';
-        fieldsEl.style.opacity = '1';
-        fieldsEl.style.transition = '';
-      }
     };
     const cleanupTimer = setTimeout(resetStyles, HERO_EXIT_DURATION + 100);
     return () => {
       window.cancelAnimationFrame(raf);
-      clearTimeout(phaseTimer);
       clearTimeout(cleanupTimer);
       // État neutre pour la seconde passe de StrictMode, qui doit mesurer la
       // position naturelle et non celle déplacée par la première.
@@ -340,7 +308,7 @@ function HomePage() {
     let navTimer = null;
     const beginExit =
       (target, targetBg) =>
-      async ({ to }) => {
+      async ({ to, boatName }) => {
         if (transitioningRef.current) return;
         transitioningRef.current = true;
         // Défilement gelé jusqu'à la fin de l'arrivée sur la page cible, qui
@@ -359,16 +327,41 @@ function HomePage() {
         setTransitionPayload(target, {
           searchBarRect: searchBarWrapRef.current?.getBoundingClientRect() ?? null,
           from: 'home',
+          // Nom du bateau cliqué (Carrousel) : la breadcrumb produit l'affiche
+          // dès son premier rendu — sinon elle passe de « … » au nom à la
+          // réponse de l'API, s'élargit, et repousse la SearchBar en plein
+          // FLIP (effet de rebond).
+          boatName: boatName ?? null,
         });
         navTimer = setTimeout(() => navigate(to), HERO_EXIT_DURATION);
       };
+    // Sortie vers une page statique (contact/à propos) : même crossfade,
+    // mais sans payload à transmettre — ces pages rejouent leur propre
+    // entrée sur la seule base de la navigation (cf. usePageSlideTransition).
+    const beginExitToStatic = async ({ to, options }) => {
+      if (transitioningRef.current) return;
+      transitioningRef.current = true;
+      lockScroll();
+      const targetBg = to === '/a-propos' ? aboutBg : contactBg;
+      const bg = new window.Image();
+      bg.src = targetBg;
+      bg.decode?.().catch(() => {});
+      await smoothScrollToTop();
+      if (cancelled) return;
+      setExitBgSrc(targetBg);
+      setExitIsGeneric(true);
+      setExiting(true);
+      navTimer = setTimeout(() => navigate(to, options), HERO_EXIT_DURATION);
+    };
     const unsubCategory = onCategoryTransitionRequest(beginExit('category', categoryBg));
     const unsubProduct = onProductTransitionRequest(beginExit('product', productBg));
+    const unsubStatic = onPageExitRequest(beginExitToStatic);
     return () => {
       cancelled = true;
       clearTimeout(navTimer);
       unsubCategory();
       unsubProduct();
+      unsubStatic();
     };
   }, [navigate]);
 
@@ -480,16 +473,25 @@ function HomePage() {
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-b from-transparent to-[rgb(0,78,87)]" />
 
         {/* Crossfade façon diaporama : le fond de la page cible (même image +
-            même voile sombre, en attachment fixed comme là-bas) recouvre la
-            vidéo pendant la sortie — et, à l'arrivée, c'est l'image de la
-            page de départ (arrivalBg, transmise via le payload) qui s'efface
-            pour révéler la vidéo —, pour un raccord invisible à la
-            navigation dans les deux sens. */}
-        {(exiting || arrivalActive) && (
+            même voile — sombre pour catégorie/produit, plus profond pour
+            contact/à propos, cf. PHOTO_OVERLAY_*, en attachment fixed comme
+            là-bas) recouvre la vidéo pendant la sortie — et, à l'arrivée,
+            c'est l'image de la page de départ (arrivalBg, transmise via le
+            payload par CategoryPage/ContactPage/AboutPage) qui s'efface pour
+            révéler la vidéo —, pour un raccord invisible à la navigation
+            dans les deux sens. Arrivée générique sans payload (origine non
+            équipée, ex. un dashboard) : pas d'image de départ connue, le
+            hero se contente de glisser en place au-dessus de la vidéo. */}
+        {(exiting || (arrivalActive && homeArrival)) && (
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${exiting ? exitBgSrc : arrivalBg})`,
+              backgroundImage: `${
+                (exiting ? exitBgSrc : arrivalBg) === contactBg ||
+                (exiting ? exitBgSrc : arrivalBg) === aboutBg
+                  ? PHOTO_OVERLAY_STATIC_PAGE
+                  : PHOTO_OVERLAY_BOAT
+              }, url(${exiting ? exitBgSrc : arrivalBg})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundAttachment: 'fixed',
@@ -545,8 +547,17 @@ function HomePage() {
               {t('home.hero.tagline')}
             </p>
           </div>
-          <div ref={searchBarWrapRef} style={introFromBelowStyle}>
-            <SearchBar light fieldsElRef={searchBarFieldsRef} />
+          <div
+            ref={searchBarWrapRef}
+            style={
+              introActive
+                ? introFromBelowStyle
+                : (exiting && exitIsGeneric) || (arrivalActive && !homeArrival)
+                  ? heroSlideStyle('right')
+                  : undefined
+            }
+          >
+            <SearchBar light />
           </div>
           <div className="text-center" style={introFromBelowStyle}>
             <p
@@ -677,7 +688,9 @@ function HomePage() {
               ))}
             </div>
 
-            <GhostButton onClick={() => navigate('/a-propos')}>{t('home.values.cta')}</GhostButton>
+            <GhostButton onClick={() => pageExitNavigate('/a-propos')}>
+              {t('home.values.cta')}
+            </GhostButton>
           </section>
 
           <div
@@ -703,3 +716,9 @@ function HomePage() {
 }
 
 export default HomePage;
+
+//TODO : continuer transition searchbar
+//TODO : récréer le sous-header fixe sur /categorypage et /prodctupage
+//TODO : corriger bug visuel du bloc 'caractéristique" dans /productpage
+//TODO : faire refonte CGU, mentions légales, politique de confidentialité,...
+//TODO : accelérer les temps de transitions

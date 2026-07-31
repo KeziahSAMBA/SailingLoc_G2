@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import bgImage from '../../assets/image/paysage/crique.jpg';
+import bgImage from '../../assets/image/paysage/dashboard_bg.jpg';
 
 function AdminLayout() {
   const { t } = useTranslation();
@@ -20,13 +20,13 @@ function AdminLayout() {
     { to: '/admin/compte', label: t('adminLayout.nav.account') },
   ];
   return (
-    // Même univers visuel que les espaces propriétaire et locataire : photo
-    // plein écran sous un voile sombre et panneaux en verre dépoli.
+    // Même univers visuel que les autres pages : photo plein écran sous un
+    // voile noir transparent et panneaux en verre dépoli.
     <div
       className="min-h-screen bg-cover bg-fixed bg-center text-white"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60">
+      <div className="min-h-screen w-full bg-black/40">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
           {/* Menu : barre horizontale défilable sur mobile, colonne à partir de lg. */}
           <aside className="w-full lg:w-60 lg:shrink-0">

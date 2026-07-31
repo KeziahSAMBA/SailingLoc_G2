@@ -1,11 +1,19 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MdAnchor, MdVerified } from 'react-icons/md';
 import { FaHandshake } from 'react-icons/fa';
 import aboutBg from '../assets/image/paysage/about_bg.jpg';
+import categoryBg from '../assets/image/paysage/cote_azur.jpg';
+import contactBg from '../assets/image/paysage/contact_bg.jpg';
 import Carrousel from '../components/common/Carrousel.jsx';
-import { unlockScroll } from '../hooks/useCategoryTransition.js';
+import { usePageExitNavigate, usePageSlideTransition } from '../hooks/usePageTransition.js';
+import {
+  PAGE_SLIDE_CSS,
+  PHOTO_OVERLAY_BOAT,
+  PHOTO_OVERLAY_STATIC_PAGE,
+  CATEGORY_ENTER_DURATION,
+  CATEGORY_ENTER_STAGGER,
+} from '../hooks/useCategoryTransition.js';
 
 // Focus clavier visible sur fond clair — même convention que ContactPage.
 const FOCUS_LIGHT =
@@ -27,15 +35,22 @@ const PHOTO_BG_STYLE = {
   backgroundAttachment: 'fixed',
 };
 
+// Cascade d'entrée/sortie de la page : 0 titre, 1 sous-titre, 2 histoire,
+// 3 stats, 4 valeurs, 5 destinations, 6 CTA.
+const ABOUT_ENTER_LAST_ORDER = 6;
+const ABOUT_ENTER_TOTAL = CATEGORY_ENTER_DURATION + ABOUT_ENTER_LAST_ORDER * CATEGORY_ENTER_STAGGER;
+
+// Constante de module (et non recréé à chaque rendu) : usePageSlideTransition
+// resouscrit son effet de sortie à chaque changement de référence.
+const ABOUT_STATIC_BG_TARGETS = { '/categorie': categoryBg, '/contact': contactBg };
+
 function AboutPage() {
   const { t } = useTranslation();
-
-  // Une navigation interrompant l'intro ou une transition de catalogue peut
-  // laisser les écouteurs globaux de molette/tactile actifs. Cette page n'a
-  // aucune animation nécessitant ce verrou : elle le libère dès son montage.
-  useEffect(() => {
-    unlockScroll();
-  }, []);
+  const pageExitNavigate = usePageExitNavigate();
+  const { slide, exitBgSrc } = usePageSlideTransition(ABOUT_ENTER_TOTAL, {
+    ownBg: aboutBg,
+    staticBgTargets: ABOUT_STATIC_BG_TARGETS,
+  });
 
   const STATS = [
     { value: '50+', label: t('aboutPage.stats.boats') },
@@ -68,17 +83,40 @@ function AboutPage() {
   }, [t]);
 
   return (
-    <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
+    <main className="relative w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
+      <style>{PAGE_SLIDE_CSS}</style>
+      {/* Crossfade vers le fond de la catégorie ou du contact pendant la
+          sortie : se pose derrière les blocs (qui glissent hors écran
+          par-dessus) et atterrit à pleine opacité pile pour le montage réel
+          de la page cible, qui utilise nativement cette même image. */}
+      {exitBgSrc && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `${exitBgSrc === categoryBg ? PHOTO_OVERLAY_BOAT : PHOTO_OVERLAY_STATIC_PAGE}, url(${exitBgSrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            animation: `pageBgFadeIn ${ABOUT_ENTER_TOTAL}ms ease forwards`,
+          }}
+        />
+      )}
       {/* Hero de la page À propos + présentation */}
       <section
         id="about-hero"
         className="relative flex min-h-[100svh] w-full scroll-mt-[80px] flex-col items-center justify-center overflow-hidden px-4 pb-10 pt-[96px]"
       >
         <div className="relative text-center">
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl">
+          <h1
+            className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl"
+            style={slide(0)}
+          >
             {t('aboutPage.hero.title')}
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-white/75 sm:text-base">
+          <p
+            className="mx-auto mt-3 max-w-2xl text-sm text-white/75 sm:text-base"
+            style={slide(1, 'right')}
+          >
             {t('aboutPage.hero.tagline')}
           </p>
         </div>
@@ -89,7 +127,7 @@ function AboutPage() {
           className="mt-10 w-full max-w-6xl scroll-mt-[180px]"
         >
           <div className="grid items-center gap-10 md:grid-cols-2">
-            <div>
+            <div style={slide(2)}>
               <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
                 {t('aboutPage.story.kicker')}
               </p>
@@ -103,7 +141,7 @@ function AboutPage() {
               <p className="mt-4 leading-relaxed text-white/70">{t('aboutPage.story.p2')}</p>
             </div>
 
-            <ul className="grid grid-cols-2 gap-4 sm:gap-6">
+            <ul className="grid grid-cols-2 gap-4 sm:gap-6" style={slide(3, 'right')}>
               {STATS.map(({ value, label }) => (
                 <li key={label} className={`${cardClass} text-center`}>
                   <p className="text-3xl font-bold text-sky-300">{value}</p>
@@ -122,6 +160,7 @@ function AboutPage() {
         id="about-values"
         aria-labelledby="values-title"
         className="w-full scroll-mt-[130px] px-4 py-10 sm:px-8 lg:px-16 xl:px-28"
+        style={slide(4, 'right')}
       >
         <div className="mx-auto w-full max-w-6xl">
           <div className="mb-10 text-center">
@@ -155,6 +194,7 @@ function AboutPage() {
         id="about-destinations"
         aria-labelledby="destinations-title"
         className="w-full scroll-mt-[60px] px-4 py-10 sm:px-8 lg:px-16 xl:px-28"
+        style={slide(5)}
       >
         <div className="mb-10 text-center">
           <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -176,24 +216,33 @@ function AboutPage() {
         id="about-cta"
         aria-labelledby="cta-title"
         className="w-full scroll-mt-[80px] px-4 pb-10 pt-2"
+        style={slide(6, 'right')}
       >
         <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-3 text-center">
           <h2 id="cta-title" className="text-base font-semibold text-white sm:text-lg">
             {t('aboutPage.cta.title')}
           </h2>
           <p className="text-sm text-white/70">{t('aboutPage.cta.text')}</p>
-          <Link
-            to="/categorie"
+          <a
+            href="/categorie"
+            onClick={(e) => {
+              e.preventDefault();
+              pageExitNavigate('/categorie');
+            }}
             className={`mt-1 flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur-2xl transition hover:bg-white/20 ${FOCUS_LIGHT}`}
           >
             {t('aboutPage.cta.browse')} <MdAnchor className="text-base" />
-          </Link>
-          <Link
-            to="/contact"
+          </a>
+          <a
+            href="/contact"
+            onClick={(e) => {
+              e.preventDefault();
+              pageExitNavigate('/contact');
+            }}
             className={`text-sm font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
           >
             {t('aboutPage.cta.contact')}
-          </Link>
+          </a>
         </div>
       </section>
     </main>

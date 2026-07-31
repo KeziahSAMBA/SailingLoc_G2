@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiMail } from 'react-icons/fi';
 import { useAuth } from '../../../hooks/useAuth.jsx';
@@ -10,6 +10,7 @@ import {
   CATEGORY_ENTER_TOTAL,
   INTRO_SOFT_EASING,
 } from '../../../hooks/useCategoryTransition.js';
+import { usePageExitNavigate } from '../../../hooks/usePageTransition.js';
 import { getUnreadCount } from '../../../services/messageService.js';
 import { nameToAvatarUrl } from '../../../utils/avatar.js';
 import { useScrolled } from './shared/useScrolled.js';
@@ -51,13 +52,13 @@ function DashboardHeader({
   const [rightMenuOpen, setRightMenuOpen] = useState(false);
   const navRef = useRef(null);
   const rightMenuRef = useRef(null);
-  const navigate = useNavigate();
   const location = useLocation();
   // Route les liens vers /categorie (resp. l'accueil) à travers la transition
   // animée depuis l'accueil (resp. /categorie) ; toute autre destination est
   // naviguée normalement.
   const categoryNavigate = useCategoryNavigate();
   const goHome = useHomeNavigate();
+  const pageExitNavigate = usePageExitNavigate();
   // Pendant l'intro de première visite, le header attend caché au-dessus de
   // l'écran et descend à la révélation.
   const introHidden = useIntroHeaderReveal(introReveal);
@@ -71,7 +72,12 @@ function DashboardHeader({
       : null;
   const resolvedLeftGroups =
     contextualNavigationItems && leftGroups
-      ? [{ items: contextualNavigationItems, heightPercent: '69%' }]
+      ? [
+          {
+            items: contextualNavigationItems,
+            heightPercent: onAboutPage ? '41%' : onContactPage ? '55%' : '69%',
+          },
+        ]
       : leftGroups;
   const onProductPage =
     location.pathname === '/product' || location.pathname.startsWith('/product/');
@@ -107,14 +113,14 @@ function DashboardHeader({
   function handleLogout() {
     setRightMenuOpen(false);
     logout();
-    navigate('/', { replace: true });
+    pageExitNavigate('/', { replace: true });
   }
 
   function handleMenuClick(item) {
     setRightMenuOpen(false);
     setNavOpen(false);
     if (item.action === 'logout') handleLogout();
-    else if (item.to) navigate(item.to);
+    else if (item.to) pageExitNavigate(item.to);
   }
 
   function scrollToAnchor(anchor, targetPath = '/') {
@@ -130,7 +136,7 @@ function DashboardHeader({
     if (location.pathname === targetPath) {
       scroll();
     } else {
-      navigate(targetPath);
+      pageExitNavigate(targetPath);
       setTimeout(scroll, 300);
     }
   }
@@ -139,6 +145,8 @@ function DashboardHeader({
     e.preventDefault();
     if (location.pathname === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (location.pathname === '/contact' || location.pathname === '/a-propos') {
+      pageExitNavigate('/');
     } else {
       goHome();
     }
@@ -150,6 +158,8 @@ function DashboardHeader({
       scrollToAnchor(anchor, location.pathname);
     } else if (to === location.pathname) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (location.pathname === '/contact' || location.pathname === '/a-propos') {
+      pageExitNavigate(to);
     } else {
       categoryNavigate(to);
     }
@@ -260,13 +270,7 @@ function DashboardHeader({
                 href={anchor ? `#${anchor}` : to}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (anchor) {
-                    scrollToAnchor(anchor, location.pathname);
-                  } else if (to === location.pathname) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  } else {
-                    categoryNavigate(to);
-                  }
+                  handleCenterNavClick({ to, anchor });
                 }}
                 className="font-medium"
                 style={{
@@ -352,7 +356,7 @@ function DashboardHeader({
           href={profileHref}
           onClick={(e) => {
             e.preventDefault();
-            navigate(profileHref);
+            pageExitNavigate(profileHref);
           }}
           className="flex items-center gap-2 sm:gap-3"
           style={{ textDecoration: 'none' }}
@@ -404,7 +408,7 @@ function DashboardHeader({
 
         {showMessages && (
           <button
-            onClick={() => navigate(messagesTo)}
+            onClick={() => pageExitNavigate(messagesTo)}
             className="relative rounded-full flex items-center justify-center flex-shrink-0"
             style={{
               width: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',

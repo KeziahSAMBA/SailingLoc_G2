@@ -698,7 +698,10 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
   const handleBoatClick = useCallback(
     (slide) => {
       if (!slide.available) return;
-      goToProduct(`/product/${slide.id}`);
+      // Nom transmis d'avance : sans lui, le passage « … » → nom une fois
+      // l'API répondue élargit la breadcrumb et repousse la SearchBar en
+      // plein FLIP (effet de rebond) — cf. ProductPage.jsx.
+      goToProduct(`/product/${slide.id}`, { boatName: slide.label });
     },
     [goToProduct]
   );
