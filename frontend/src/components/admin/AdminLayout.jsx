@@ -49,8 +49,11 @@ function AdminLayout() {
             >
               <button
                 type="button"
+                aria-expanded={mobileNavOpen}
+                aria-controls="admin-dashboard-navigation"
+                aria-label={t('adminLayout.navAria')}
                 onClick={() => setMobileNavOpen((open) => !open)}
-                className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-white/10 lg:hidden"
+                className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:hidden"
               >
                 <span className="min-w-0">
                   <span className="block text-xs font-semibold uppercase tracking-wide text-white/60">
@@ -61,6 +64,7 @@ function AdminLayout() {
                   </span>
                 </span>
                 <svg
+                  aria-hidden="true"
                   viewBox="0 0 20 20"
                   fill="none"
                   className={`h-5 w-5 shrink-0 text-white/70 transition-transform duration-200 ${
@@ -81,6 +85,7 @@ function AdminLayout() {
                 {t('adminLayout.title')}
               </p>
               <div
+                id="admin-dashboard-navigation"
                 className={`${mobileNavOpen ? 'flex' : 'hidden'} mt-2 flex-col gap-1 border-t border-white/15 pt-2 lg:mt-0 lg:flex lg:border-0 lg:pt-0`}
               >
                 {nav.map((item) => (
@@ -89,7 +94,7 @@ function AdminLayout() {
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `block w-full rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      `block w-full rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
                         isActive
                           ? 'bg-sky-500 text-white'
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
