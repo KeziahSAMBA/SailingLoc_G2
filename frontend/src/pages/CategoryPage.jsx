@@ -641,10 +641,19 @@ function CategoryPage() {
       el.style.transform = 'none';
     });
     const resetStyles = () => {
-      el.style.transform = '';
-      el.style.transition = '';
+      el.style.transition = 'none';
+      el.style.transform = 'none';
+      // Force le navigateur à acter l'annulation immédiatement (transition
+      // coupée à la volée) avant que quoi que ce soit d'autre ne mesure cet
+      // élément — StrictMode démonte l'effet quelques ms après le rAF,
+      // transition à peine commencée : sans ce flush, la 2de passe
+      // mesurerait une position encore quasi identique à `from`, et plus
+      // aucune animation visible ne jouerait.
+      void el.getBoundingClientRect();
       el.style.transformOrigin = '';
       el.style.willChange = '';
+      el.style.transition = '';
+      el.style.transform = '';
     };
     const cleanupTimer = setTimeout(resetStyles, CATEGORY_ENTER_TOTAL + 100);
     return () => {
