@@ -630,7 +630,7 @@ function AdminBookingsPage() {
                 ? t('adminBookings.modalResolveTitle')
                 : t('adminBookings.modalRejectTitle')}
             </h2>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 break-words text-sm text-white/70">
               {decision.dispute.booking?.boat_name
                 ? `${decision.dispute.booking.boat_name} — `
                 : ''}
@@ -728,20 +728,20 @@ function AdminBookingsPage() {
                         </label>
 
                         <div className="rounded-md bg-slate-950/60 px-3 py-2 text-xs">
-                          <div className="flex justify-between text-white/70">
+                          <div className="flex flex-wrap justify-between gap-2 text-white/70">
                             <span>{t('adminBookings.amountPaid')}</span>
                             <span>{EURO.format(payment.amount)}</span>
                           </div>
-                          <div className="flex justify-between text-white/70">
+                          <div className="flex flex-wrap justify-between gap-2 text-white/70">
                             <span>{t('adminBookings.commission')}</span>
-                            <span>
+                            <span className="break-words text-right">
                               {refundCommission
                                 ? t('adminBookings.commissionIncluded')
                                 : t('adminBookings.commissionKept')}{' '}
                               ({EURO.format(payment.commission)})
                             </span>
                           </div>
-                          <div className="mt-1 flex justify-between border-t border-white/30 pt-1 font-semibold text-emerald-300">
+                          <div className="mt-1 flex flex-wrap justify-between gap-2 border-t border-white/30 pt-1 font-semibold text-emerald-300">
                             <span>{t('adminBookings.refund')}</span>
                             <span>{EURO.format(computed)}</span>
                           </div>
