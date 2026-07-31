@@ -139,9 +139,9 @@ function BoatsPreview({ boats }) {
       {boats.length === 0 ? (
         <p className="mt-4 text-sm text-white/70">{t('proprietaireDashboard.noBoats')}</p>
       ) : (
-        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className={`mt-4 grid gap-3 ${boats.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
           {boats.map((boat) => (
-            <li key={boat.id_boat}>
+            <li key={boat.id_boat} className="min-w-0">
               <Link
                 to="/proprietaire/bateaux"
                 className={`block overflow-hidden rounded-xl border border-white/20 bg-white/10 transition-colors hover:border-white/40 ${FOCUS_RING}`}
