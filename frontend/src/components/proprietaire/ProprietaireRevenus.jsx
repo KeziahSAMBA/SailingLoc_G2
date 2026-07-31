@@ -154,7 +154,7 @@ function niceMax(value) {
   return step * pow;
 }
 
-// Colonne à sommet arrondi (4px) et base carrée, ancrée sur la ligne de base.
+// Colonne à sommet arrondi (4 unités SVG) et base carrée, ancrée sur la ligne de base.
 function roundedTopRect(x, y, w, h) {
   const r = Math.min(4, h, w / 2);
   return `M ${x} ${y + h} L ${x} ${y + r} Q ${x} ${y} ${x + r} ${y} L ${x + w - r} ${y} Q ${x + w} ${y} ${x + w} ${y + r} L ${x + w} ${y + h} Z`;
@@ -206,7 +206,7 @@ function MonthlyChart({ months }) {
               x={PAD.left - 8}
               y={y(t) + 3}
               textAnchor="end"
-              className="fill-white/50 text-[10px]"
+              className="fill-white/50 text-[0.625rem]"
             >
               {EURO_ROUND.format(t)}
             </text>
@@ -232,13 +232,18 @@ function MonthlyChart({ months }) {
                   x={cx}
                   y={top - 6}
                   textAnchor="middle"
-                  className="fill-white/90 text-[11px] font-medium"
+                  className="fill-white/90 text-[0.6875rem] font-medium"
                 >
                   {EURO_ROUND.format(m.net)}
                 </text>
               )}
               {i % labelEvery === 0 && (
-                <text x={cx} y={H - 8} textAnchor="middle" className="fill-white/60 text-[10px]">
+                <text
+                  x={cx}
+                  y={H - 8}
+                  textAnchor="middle"
+                  className="fill-white/60 text-[0.625rem]"
+                >
                   {m.label}
                 </text>
               )}
