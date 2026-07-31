@@ -130,7 +130,7 @@ function AdminContactPage() {
             return (
               <li
                 key={r.id_request}
-                className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
+                className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl sm:p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
