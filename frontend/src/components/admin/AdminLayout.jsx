@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bgImage from '../../assets/image/paysage/crique.jpg';
 
 function AdminLayout() {
   const { t } = useTranslation();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const nav = [
     { to: '/admin', label: t('adminLayout.nav.dashboard'), end: true },
     { to: '/admin/spectateur', label: t('adminLayout.nav.viewRenter'), end: true },
@@ -34,17 +36,44 @@ function AdminLayout() {
               aria-label={t('adminLayout.navAria')}
               className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[96px]"
             >
-              <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-white/60">
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen((open) => !open)}
+                className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-white/10 lg:hidden"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+                  {t('adminLayout.title')}
+                </span>
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  className={`h-5 w-5 shrink-0 text-white/70 transition-transform duration-200 ${
+                    mobileNavOpen ? 'rotate-180' : ''
+                  }`}
+                >
+                  <path
+                    d="m5 7.5 5 5 5-5"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
+              <p className="hidden px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-white/60 lg:block">
                 {t('adminLayout.title')}
               </p>
-              <div className="flex gap-1 overflow-x-auto lg:flex-col">
+              <div
+                className={`${mobileNavOpen ? 'flex' : 'hidden'} mt-2 flex-col gap-1 border-t border-white/15 pt-2 lg:mt-0 lg:flex lg:border-0 lg:pt-0`}
+              >
                 {nav.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `block shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition lg:shrink ${
+                      `block w-full rounded-lg px-3 py-2 text-sm font-medium transition ${
                         isActive
                           ? 'bg-sky-500 text-white'
                           : 'text-white/80 hover:bg-white/10 hover:text-white'
