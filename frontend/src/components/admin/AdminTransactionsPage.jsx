@@ -198,7 +198,7 @@ function AdminTransactionsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminTransactions.searchPlaceholder')}
-          className={`${selectClass} w-full sm:min-w-[240px] sm:flex-1`}
+          className={`${selectClass} w-full sm:min-w-[15rem] sm:flex-1`}
         />
         <AdminScrollableFilterRow
           ariaLabel={t('adminTransactions.subtitle')}
