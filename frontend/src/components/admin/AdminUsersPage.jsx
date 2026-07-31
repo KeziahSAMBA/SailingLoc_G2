@@ -7,6 +7,7 @@ import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EditIcon, BanIcon, CheckIcon, TrashIcon } from './AdminActions.jsx';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -314,30 +315,36 @@ function AdminUsersPage() {
       )}
 
       {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
-      <div className="mt-5 flex flex-wrap items-center gap-2 lg:hidden">
-        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+      <div className="mt-5 lg:hidden">
+        <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
           {t('adminUsers.sortLabel')}
         </span>
-        {[
-          { field: 'last_name', label: t('adminUsers.colName') },
-          { field: 'email', label: t('adminUsers.colEmail') },
-          { field: 'role', label: t('adminUsers.colRole') },
-          { field: 'created_at', label: t('adminUsers.colRegistered') },
-        ].map(({ field, label }) => (
-          <button
-            key={field}
-            type="button"
-            onClick={() => toggleSort(field)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              sort === field
-                ? 'bg-sky-500 text-white'
-                : 'border border-white/30 text-white/80 hover:bg-white/10'
-            }`}
-          >
-            {label}
-            {sort === field ? (order === 'asc' ? ' ▲' : ' ▼') : ''}
-          </button>
-        ))}
+        <AdminScrollableFilterRow
+          ariaLabel={t('adminUsers.sortLabel')}
+          contentKey={`${sort}|${order}|${t('adminUsers.sortLabel')}`}
+        >
+          {[
+            { field: 'last_name', label: t('adminUsers.colName') },
+            { field: 'email', label: t('adminUsers.colEmail') },
+            { field: 'role', label: t('adminUsers.colRole') },
+            { field: 'created_at', label: t('adminUsers.colRegistered') },
+          ].map(({ field, label }) => (
+            <button
+              key={field}
+              type="button"
+              aria-pressed={sort === field}
+              onClick={() => toggleSort(field)}
+              className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                sort === field
+                  ? 'bg-sky-500 text-white'
+                  : 'border border-white/30 text-white/80 hover:bg-white/10'
+              }`}
+            >
+              {label}
+              {sort === field ? (order === 'asc' ? ' ▲' : ' ▼') : ''}
+            </button>
+          ))}
+        </AdminScrollableFilterRow>
       </div>
 
       <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
