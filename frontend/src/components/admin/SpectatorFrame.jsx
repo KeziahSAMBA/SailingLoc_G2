@@ -131,20 +131,20 @@ function SpectatorFrame({ mode, title, description, banner }) {
   // Mode plein écran : on échappe au layout admin via un overlay fixed.
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col bg-slate-950 p-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-slate-950 p-2 sm:p-4">
+        <div className="mb-3 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
           <h1 className="text-lg font-bold text-white">
             {title} — {t('spectatorFrame.fullscreenSuffix')}
           </h1>
           <button
             type="button"
             onClick={() => setFullscreen(false)}
-            className="rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+            className="w-full rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 sm:w-auto"
           >
             {t('spectatorFrame.exit')}
           </button>
         </div>
-        <div className="mb-3">{urlBar}</div>
+        <div className="mb-3 min-w-0">{urlBar}</div>
         <div className="flex-1 overflow-hidden rounded-2xl border border-white/20 bg-white">
           {src ? (
             <iframe
