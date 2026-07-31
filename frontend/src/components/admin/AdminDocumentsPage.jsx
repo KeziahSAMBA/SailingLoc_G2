@@ -184,7 +184,7 @@ function AdminDocumentsPage() {
         </div>
       )}
 
-      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -280,7 +280,7 @@ function AdminDocumentsPage() {
       </div>
 
       {/* Mobile : une carte par document (le tableau ci-dessus est masqué). */}
-      <ul className="mt-5 space-y-3 md:hidden">
+      <ul className="mt-5 space-y-3 lg:hidden">
         {loading || documents.length === 0 ? (
           <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
             {loading ? t('adminDocuments.loading') : t('adminDocuments.empty')}
