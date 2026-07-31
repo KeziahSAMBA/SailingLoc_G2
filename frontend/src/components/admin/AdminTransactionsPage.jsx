@@ -240,25 +240,25 @@ function AdminTransactionsPage() {
           ))}
         </AdminScrollableFilterRow>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-1.5 text-xs text-white/70">
+      <div className="mt-3 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="flex flex-col items-stretch gap-1.5 text-xs text-white/70 sm:flex-row sm:items-center">
           {t('adminTransactions.dateFrom')}
           <input
             type="date"
             value={dateFrom}
             max={dateTo || undefined}
             onChange={(e) => setDateFrom(e.target.value)}
-            className={selectClass}
+            className={`${selectClass} w-full sm:w-auto`}
           />
         </label>
-        <label className="flex items-center gap-1.5 text-xs text-white/70">
+        <label className="flex flex-col items-stretch gap-1.5 text-xs text-white/70 sm:flex-row sm:items-center">
           {t('adminTransactions.dateTo')}
           <input
             type="date"
             value={dateTo}
             min={dateFrom || undefined}
             onChange={(e) => setDateTo(e.target.value)}
-            className={selectClass}
+            className={`${selectClass} w-full sm:w-auto`}
           />
         </label>
         {(dateFrom || dateTo) && (
@@ -268,7 +268,7 @@ function AdminTransactionsPage() {
               setDateFrom('');
               setDateTo('');
             }}
-            className="rounded-full border border-white/30 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10"
+            className="w-full rounded-full border border-white/30 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 sm:w-auto"
           >
             {t('adminTransactions.reset')}
           </button>
