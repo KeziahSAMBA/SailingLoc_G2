@@ -107,7 +107,7 @@ function AdminMessagesPage() {
         )}
       </div>
 
-      <Messenger externalUser={target} />
+      <Messenger externalUser={target} tabletConversationDropdown />
     </section>
   );
 }
