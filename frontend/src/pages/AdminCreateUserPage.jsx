@@ -92,7 +92,7 @@ function AdminCreateUserPage() {
         </p>
       </header>
 
-      <article className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-xl">
+      <article className="rounded-2xl border border-white/20 bg-white/10 p-4 shadow-xl backdrop-blur-xl sm:p-8">
         {success && (
           <div
             role="status"
@@ -230,18 +230,18 @@ function AdminCreateUserPage() {
             </select>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <button
               type="button"
               onClick={() => navigate('/admin/users')}
-              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+              className="w-full rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10 sm:w-auto"
             >
               Retour
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
             >
               {loading ? 'Création en cours…' : 'Créer le compte'}
             </button>
