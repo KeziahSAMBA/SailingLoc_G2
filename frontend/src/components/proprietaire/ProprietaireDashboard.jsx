@@ -36,7 +36,7 @@ function StatCard({ label, value, accent, to, loading, format = NUMBER }) {
   const { t } = useTranslation();
   const display = loading ? '…' : format.format(value ?? 0);
   return (
-    <li>
+    <li className="h-full">
       <Link
         to={to}
         aria-label={
@@ -44,7 +44,7 @@ function StatCard({ label, value, accent, to, loading, format = NUMBER }) {
             ? t('proprietaireDashboard.statLoading', { label })
             : t('proprietaireDashboard.statValue', { label, value: display })
         }
-        className={`block rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 transition-colors hover:border-[#5AB4EC]/60 ${FOCUS_RING}`}
+        className={`block h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 transition-colors hover:border-[#5AB4EC]/60 ${FOCUS_RING}`}
       >
         <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
           {label}
@@ -227,7 +227,7 @@ function ProprietaireDashboard() {
       </h2>
       <ul
         aria-labelledby="kpis-title"
-        className="mt-6 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3"
+        className="mt-6 grid auto-rows-fr list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3"
       >
         <StatCard
           label={t('proprietaireDashboard.publishedBoats')}
