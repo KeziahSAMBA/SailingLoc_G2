@@ -25,9 +25,14 @@ function Stars({ rating }) {
     <div className="flex gap-0.5" aria-label={`${rating}/5`}>
       {Array.from({ length: 5 }, (_, i) =>
         i < Math.round(rating) ? (
-          <FaStar key={i} className="text-sky-400" style={{ fontSize: '13px' }} aria-hidden />
+          <FaStar key={i} className="text-sky-400" style={{ fontSize: '0.8125rem' }} aria-hidden />
         ) : (
-          <FaRegStar key={i} className="text-sky-400" style={{ fontSize: '13px' }} aria-hidden />
+          <FaRegStar
+            key={i}
+            className="text-sky-400"
+            style={{ fontSize: '0.8125rem' }}
+            aria-hidden
+          />
         )
       )}
     </div>
@@ -65,7 +70,7 @@ function ReviewCard({ review, onReplied }) {
         <span className="text-xs text-white/50">·</span>
         <span className="min-w-0 break-words text-xs text-white/70">{review.author}</span>
         <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+          className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
             STATUS_CLS[review.status] || 'bg-slate-500/15 text-white/70'
           }`}
         >
