@@ -26,7 +26,7 @@ function getSortLabels(t) {
 function FilterChip({ label, onRemove }) {
   return (
     <span
-      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
+      className="flex flex-shrink-0 items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
       style={{ backgroundColor: 'rgba(14,165,233,0.95)' }}
     >
       {label}
@@ -35,7 +35,7 @@ function FilterChip({ label, onRemove }) {
           e.stopPropagation();
           onRemove();
         }}
-        className="flex items-center hover:opacity-70 transition-opacity"
+        className="flex flex-shrink-0 items-center hover:opacity-70 transition-opacity"
       >
         <FaXmark size={9} />
       </button>
@@ -109,6 +109,27 @@ function FilterBar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Largeur de la pastille pilotée en JS : ajouter/retirer un chip change sa
+  // largeur "naturelle", qu'un simple width:auto ne sait pas animer en CSS.
+  // ghostRef mesure cette largeur naturelle sur une copie invisible (w-max,
+  // jamais contrainte) pendant que la pastille visible transitionne vers
+  // cette valeur, chips réels inclus (pas de "trou" ni de bord manquant
+  // pendant l'anim, contrairement à une pastille vide qui se contenterait
+  // de révéler/masquer un clone).
+  const ghostRef = useRef(null);
+  const [headerWidth, setHeaderWidth] = useState(null);
+
+  useEffect(() => {
+    const el = ghostRef.current;
+    if (!el || typeof window === 'undefined' || !window.ResizeObserver) return undefined;
+    // +2px : marge de sécurité contre l'arrondi sous-pixel d'offsetWidth —
+    // sans elle, un chip pile à la limite peut se faire couper un mot et
+    // repasser à la ligne au lieu de rester sur une seule ligne.
+    const observer = new window.ResizeObserver(() => setHeaderWidth(el.offsetWidth + 2));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const activeChips = [
     ...Object.entries(boatTypeFilters)
       .filter(([, v]) => v)
@@ -169,12 +190,72 @@ function FilterBar({
       : []),
   ];
 
+  const headerContent = (
+    <>
+      <div className="flex flex-shrink-0 items-center gap-2">
+        <FaSliders className={light ? 'text-white/80' : 'text-black/70'} size={13} />
+        <span
+          className={`whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide ${light ? 'text-white' : 'text-black'}`}
+        >
+          {t('filterBar.label')}
+        </span>
+      </div>
+
+      {activeChips.length > 0 && (
+        <>
+          <div className={`h-3 w-px flex-shrink-0 ${light ? 'bg-white/30' : 'bg-black/20'}`} />
+          <div className="flex flex-shrink-0 items-center gap-1.5">
+            {activeChips.slice(0, 2).map((chip) => (
+              <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
+            ))}
+            {activeChips.length > 2 && (
+              <span
+                className={`whitespace-nowrap text-[10px] font-semibold ${light ? 'text-white/70' : 'text-black/50'}`}
+              >
+                ...
+              </span>
+            )}
+          </div>
+        </>
+      )}
+
+      <div className="flex flex-shrink-0 items-center gap-3 ml-auto">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onReset();
+          }}
+          className={`whitespace-nowrap text-[10px] font-medium transition-colors uppercase tracking-wide ${light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
+        >
+          {t('filterBar.reset')}
+        </button>
+        {filterOpen ? (
+          <FaChevronUp size={9} className={light ? 'text-white/70' : 'text-black/50'} />
+        ) : (
+          <FaChevronDown size={9} className={light ? 'text-white/70' : 'text-black/50'} />
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="relative block w-full lg:static" ref={containerRef}>
+      {/* Copie invisible, jamais contrainte (w-max), qui sert uniquement à
+          mesurer via ResizeObserver la largeur naturelle du header — la
+          pastille visible ci-dessous anime sa largeur vers cette mesure. */}
+      <div
+        ref={ghostRef}
+        aria-hidden="true"
+        className="pointer-events-none invisible absolute left-0 top-0 flex w-max flex-nowrap items-center gap-2 rounded-2xl border px-3 py-2 sm:gap-3 sm:rounded-full sm:px-4 lg:py-3"
+      >
+        {headerContent}
+      </div>
+
       {/* Header — always visible */}
       <div
-        className={`flex w-full cursor-pointer select-none flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 transition-colors sm:gap-3 sm:rounded-full sm:px-4 lg:py-3 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className={`flex cursor-pointer select-none flex-nowrap items-center gap-2 overflow-hidden rounded-2xl border px-3 py-2 sm:gap-3 sm:rounded-full sm:px-4 lg:py-3 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         style={{
+          width: headerWidth != null ? `${headerWidth}px` : undefined,
           backgroundColor: compact
             ? 'rgba(0,0,0,0.45)'
             : light
@@ -187,52 +268,12 @@ function FilterBar({
               : 'rgba(0,0,0,0.1)',
           backdropFilter: compact ? 'blur(5px)' : 'blur(40px)',
           WebkitBackdropFilter: compact ? 'blur(14px)' : 'blur(40px)',
+          transition:
+            'width 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease',
         }}
         onClick={() => setFilterOpen((v) => !v)}
       >
-        <div className="flex items-center gap-2">
-          <FaSliders className={light ? 'text-white/80' : 'text-black/70'} size={13} />
-          <span
-            className={`text-[10px] font-semibold uppercase tracking-wide ${light ? 'text-white' : 'text-black'}`}
-          >
-            {t('filterBar.label')}
-          </span>
-        </div>
-
-        {activeChips.length > 0 && (
-          <>
-            <div className={`w-px h-3 ${light ? 'bg-white/30' : 'bg-black/20'}`} />
-            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-              {activeChips.slice(0, 2).map((chip) => (
-                <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
-              ))}
-              {activeChips.length > 2 && (
-                <span
-                  className={`text-[10px] font-semibold ${light ? 'text-white/70' : 'text-black/50'}`}
-                >
-                  ...
-                </span>
-              )}
-            </div>
-          </>
-        )}
-
-        <div className="flex items-center gap-3 ml-auto">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onReset();
-            }}
-            className={`text-[10px] font-medium transition-colors uppercase tracking-wide ${light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
-          >
-            {t('filterBar.reset')}
-          </button>
-          {filterOpen ? (
-            <FaChevronUp size={9} className={light ? 'text-white/70' : 'text-black/50'} />
-          ) : (
-            <FaChevronDown size={9} className={light ? 'text-white/70' : 'text-black/50'} />
-          )}
-        </div>
+        {headerContent}
       </div>
 
       {/* Expanded filter panel */}

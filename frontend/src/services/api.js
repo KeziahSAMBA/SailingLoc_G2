@@ -41,6 +41,67 @@ const REFRESH_URL = '/users/refresh';
 // (mauvais identifiants), pas une session expirée → on ne tente pas de refresh.
 const AUTH_URLS = ['/users/login', '/admin/login'];
 
+// Suivi des requêtes en vol (comptage + horodatage de la plus ancienne
+// pending, et de la dernière panne réseau confirmée), pour la détection de
+// chargement bloqué de usePageLoadGate.js — interceptors dédiés et
+// indépendants du refresh de session ci-dessous, pour ne pas risquer d'en
+// perturber la logique.
+let pendingCount = 0;
+let oldestPendingAt = null;
+// error.response n'existe QUE pour une vraie réponse HTTP (4xx/5xx) : absent,
+// la requête n'a jamais atteint/reçu de réponse du serveur (backend éteint,
+// coupure réseau, DNS, CORS, timeout).
+let lastNetworkFailureAt = null;
+// L'app ne fait aucune annulation de requête (pas d'AbortController) : un
+// remontage forcé (retry de usePageLoadGate.js) laisse donc l'ancienne
+// requête vivre en arrière-plan, orpheline. Sans étiquette de génération,
+// son échec tardif (après que la nouvelle tentative a déjà réussi)
+// pollue lastNetworkFailureAt et rouvre l'écran à tort. bumpGeneration()
+// (appelée juste avant chaque remontage) rend obsolètes les requêtes
+// encore en vol : leur échec est compté dans pendingCount (pour ne pas
+// fausser le décompte) mais ignoré pour lastNetworkFailureAt.
+let currentGeneration = 0;
+const activityListeners = new Set();
+
+function notifyActivity() {
+  activityListeners.forEach((fn) => fn({ pendingCount, oldestPendingAt, lastNetworkFailureAt }));
+}
+
+export function onRequestActivity(fn) {
+  activityListeners.add(fn);
+  return () => activityListeners.delete(fn);
+}
+
+export function bumpGeneration() {
+  currentGeneration += 1;
+}
+
+api.interceptors.request.use((config) => {
+  config.__generation = currentGeneration;
+  pendingCount += 1;
+  if (pendingCount === 1) oldestPendingAt = Date.now();
+  notifyActivity();
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => {
+    pendingCount = Math.max(0, pendingCount - 1);
+    if (pendingCount === 0) oldestPendingAt = null;
+    notifyActivity();
+    return response;
+  },
+  (error) => {
+    pendingCount = Math.max(0, pendingCount - 1);
+    if (pendingCount === 0) oldestPendingAt = null;
+    if (!error.response && error.config?.__generation === currentGeneration) {
+      lastNetworkFailureAt = Date.now();
+    }
+    notifyActivity();
+    return Promise.reject(error);
+  }
+);
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {

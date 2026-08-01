@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../hooks/useAuth.jsx';
 import {
@@ -9,6 +9,7 @@ import {
   CATEGORY_ENTER_TOTAL,
   INTRO_SOFT_EASING,
 } from '../../../hooks/useCategoryTransition.js';
+import { usePageExitNavigate, EXIT_TRANSITION_PAGES } from '../../../hooks/usePageTransition.js';
 import { useScrolled } from './shared/useScrolled.js';
 import { useClickOutside } from './shared/useClickOutside.js';
 import HeaderLogo from './shared/HeaderLogo.jsx';
@@ -115,10 +116,10 @@ function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const userMenuRef = useRef(null);
-  const navigate = useNavigate();
   const location = useLocation();
   const goToCategory = useCategoryNavigate();
   const goHome = useHomeNavigate();
+  const pageExitNavigate = usePageExitNavigate();
   // Pendant l'intro de première visite, le header attend caché au-dessus de
   // l'écran et descend à la révélation.
   const introHidden = useIntroHeaderReveal();
@@ -142,7 +143,7 @@ function Header() {
     if (location.pathname === targetPath) {
       scroll();
     } else {
-      navigate(targetPath);
+      pageExitNavigate(targetPath);
       setTimeout(scroll, 300);
     }
   }
@@ -150,13 +151,15 @@ function Header() {
   function handleLogout() {
     setUserMenuOpen(false);
     logout();
-    navigate('/', { replace: true });
+    pageExitNavigate('/', { replace: true });
   }
 
   function handleLogoClick(e) {
     e.preventDefault();
     if (location.pathname === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (EXIT_TRANSITION_PAGES.includes(location.pathname)) {
+      pageExitNavigate('/');
     } else {
       goHome();
     }
@@ -164,15 +167,18 @@ function Header() {
 
   function handleNavClick(href) {
     setMenuOpen(false);
-    if (href === '/categorie') {
-      if (location.pathname === '/categorie') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        goToCategory();
-      }
+    if (href === '/categorie' && location.pathname === '/categorie') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    navigate(href);
+    if (
+      href === '/categorie' &&
+      (location.pathname === '/' || location.pathname.startsWith('/product'))
+    ) {
+      goToCategory();
+      return;
+    }
+    pageExitNavigate(href);
   }
 
   const iconSize = scrolled ? '14px' : '16px';
@@ -245,7 +251,9 @@ function Header() {
               </div>
               <div
                 className="flex min-h-0 flex-1 flex-col"
-                style={{ maxHeight: onCategoriePage ? '41%' : '69%' }}
+                style={{
+                  maxHeight: onCategoriePage || onAboutPage ? '41%' : onContactPage ? '55%' : '69%',
+                }}
               >
                 {burgerItems.map(({ label, anchor, path }) => (
                   <PanelLink
@@ -279,23 +287,10 @@ function Header() {
             <li key={href}>
               <a
                 href={href}
-                onClick={
-                  href === '/categorie' && location.pathname === '/categorie'
-                    ? (e) => {
-                        e.preventDefault();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }
-                    : href === '/categorie'
-                      ? (e) => {
-                          e.preventDefault();
-                          if (location.pathname === '/categorie') {
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          } else {
-                            goToCategory();
-                          }
-                        }
-                      : undefined
-                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavClick(href);
+                }}
                 className="font-medium"
                 style={{
                   color: '#fff',
@@ -370,7 +365,7 @@ function Header() {
                   type="button"
                   onClick={() => {
                     setUserMenuOpen(false);
-                    navigate(
+                    pageExitNavigate(
                       user.role === 'admin'
                         ? '/admin'
                         : user.role === 'proprietaire'
@@ -401,7 +396,7 @@ function Header() {
                   type="button"
                   onClick={() => {
                     setUserMenuOpen(false);
-                    navigate(
+                    pageExitNavigate(
                       user.role === 'admin'
                         ? '/admin'
                         : user.role === 'proprietaire'
@@ -431,7 +426,7 @@ function Header() {
                     type="button"
                     onClick={() => {
                       setUserMenuOpen(false);
-                      navigate('/documents');
+                      pageExitNavigate('/documents');
                     }}
                     className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
@@ -479,7 +474,7 @@ function Header() {
           </div>
         ) : (
           <button
-            onClick={() => navigate('/login', { state: { backgroundLocation: location } })}
+            onClick={() => pageExitNavigate('/login', { state: { backgroundLocation: location } })}
             className="flex items-center gap-2 rounded-full transition-all whitespace-nowrap"
             style={getAuthBtnStyle(scrolled)}
             {...authBtnHover}

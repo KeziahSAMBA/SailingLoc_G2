@@ -7,10 +7,13 @@ import {
   memo,
   startTransition,
 } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bateauBg from '../assets/image/paysage/cote_azur.jpg';
 import productBg from '../assets/image/paysage/crique.jpg';
+import contactBg from '../assets/image/paysage/contact_bg.jpg';
+import aboutBg from '../assets/image/paysage/about_bg.jpg';
+import legalBg from '../assets/image/portrait/cgu.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -36,14 +39,18 @@ import {
   smoothScrollToTop,
   lockScroll,
   unlockScroll,
+  prefersReducedMotion,
   PAGE_SLIDE_CSS,
-  CATEGORY_ENTER_STAGGER,
-  CATEGORY_ENTER_TOTAL,
+  PHOTO_OVERLAY_BOAT,
+  PHOTO_OVERLAY_STATIC_PAGE,
   CATEGORY_ENTER_EASING,
   CATEGORY_EXIT_EASING,
-  HERO_EXIT_DURATION,
+  NAV_ENTER_DURATION,
+  NAV_ENTER_STAGGER,
+  CATEGORY_PRODUCT_NAV_TOTAL as CATEGORY_NAV_TOTAL,
   INTRO_SOFT_EASING,
 } from '../hooks/useCategoryTransition.js';
+import { onPageExitRequest } from '../hooks/usePageTransition.js';
 
 // Fond photo bateau partagé par toutes les sections de la page (résultats,
 // carrousels, avis), qui reprennent toutes ce même habillage (image + assombrissement).
@@ -293,8 +300,14 @@ function CategoryPage() {
   // entrent depuis la marge gauche en cascade, et la SearchBar glisse (FLIP)
   // depuis sa position dans le hero de l'accueil jusqu'à son emplacement ici.
   const navigate = useNavigate();
+  const location = useLocation();
   const [transitionPayload] = useState(() => readTransitionPayload('category'));
-  const [enterActive, setEnterActive] = useState(Boolean(transitionPayload));
+  // Arrivée générique (ex. depuis Contact/About, sans payload FLIP) : même
+  // cascade que ci-dessus, mais la SearchBar glisse comme un bloc de plus
+  // (depuis la droite) plutôt que de rejouer le FLIP — cf. son style plus bas.
+  const [enterActive, setEnterActive] = useState(
+    () => Boolean(transitionPayload) || (location.key !== 'default' && !prefersReducedMotion())
+  );
   // Sections sous la ligne de flottaison (carrousels, avis) différées pendant
   // l'animation d'entrée : leur montage en pleine cascade faisait saccader
   // l'arrivée alors qu'elles sont hors écran à ce moment-là.
@@ -311,20 +324,20 @@ function CategoryPage() {
   // Sortie vers l'accueil ou la page produit en cours : les blocs rejouent
   // leur entrée à rebours.
   const [exiting, setExiting] = useState(false);
-  // Sortie vers la page produit uniquement : son fond (image différente de
-  // celui de la catégorie) recouvre le nôtre en fondu, pour un raccord
-  // invisible au moment du montage réel de la page produit — cf. exitBgSrc
-  // dans ProductPage.jsx pour le même mécanisme joué en sens inverse. Vers
-  // l'accueil, inutile : on transmet notre image via le payload de
-  // transition (bg ci-dessous), que la HomePage utilise elle-même pour son
-  // propre fondu vers la vidéo.
+  // Sortie vers la page produit ou une page statique (contact/à propos)
+  // uniquement : leur fond (image différente de celui de la catégorie)
+  // recouvre le nôtre en fondu, pour un raccord invisible au moment du
+  // montage réel de la page cible — cf. exitBgSrc dans ProductPage.jsx pour
+  // le même mécanisme joué en sens inverse, et dans usePageTransition.js
+  // pour contact/à propos. Vers l'accueil, inutile : on transmet notre image
+  // via le payload de transition (bg ci-dessous), que la HomePage utilise
+  // elle-même pour son propre fondu vers la vidéo.
   const [exitBgSrc, setExitBgSrc] = useState(null);
+  // Sortie générique (contact/à propos) en cours : distingue ce cas de la
+  // sortie vers accueil/produit pour le style de la SearchBar plus bas (qui
+  // glisse comme un bloc de plus au lieu de suivre le FLIP).
+  const [exitIsGeneric, setExitIsGeneric] = useState(false);
   const searchBarWrapRef = useRef(null);
-  // Conteneur des champs de la SearchBar (destination/dates/voyageurs),
-  // exposé par le composant : la sortie et l'arrivée y jouent directement
-  // leur propre animation de largeur, cf. beginExit et le useLayoutEffect
-  // de FLIP plus bas.
-  const searchBarFieldsRef = useRef(null);
   const transitioningRef = useRef(false);
   // Horloge de la cascade d'entrée + styles figés des blocs montés en retard
   // (cf. slideInStyleLate).
@@ -386,15 +399,34 @@ function CategoryPage() {
             boatName: boatsRef.current.find((b) => b.id === productId)?.name ?? null,
           });
           navigate(to);
-        }, CATEGORY_ENTER_TOTAL);
+        }, CATEGORY_NAV_TOTAL);
       };
+    // Sortie vers une page statique (contact/à propos) : même cascade, sans
+    // payload à transmettre — ces pages rejouent leur propre entrée sur la
+    // seule base de la navigation (cf. usePageSlideTransition), sans rien
+    // attendre de la page de départ.
+    const beginExitToStatic = async ({ to, options }) => {
+      if (transitioningRef.current) return;
+      transitioningRef.current = true;
+      lockScroll();
+      await smoothScrollToTop();
+      if (cancelled) return;
+      setExitBgSrc(to === '/a-propos' ? aboutBg : to === '/contact' ? contactBg : legalBg);
+      setExitIsGeneric(true);
+      setExiting(true);
+      navTimer = setTimeout(() => {
+        navigate(to, options);
+      }, CATEGORY_NAV_TOTAL);
+    };
     const unsubHome = onHomeTransitionRequest(beginExit('home'));
     const unsubProduct = onProductTransitionRequest(beginExit('product'));
+    const unsubStatic = onPageExitRequest(beginExitToStatic);
     return () => {
       cancelled = true;
       clearTimeout(navTimer);
       unsubHome();
       unsubProduct();
+      unsubStatic();
     };
   }, [navigate]);
   // Header fixe (60/80px) + barre sticky (fil d'ariane, filtre, recherche sur
@@ -556,12 +588,12 @@ function CategoryPage() {
   // (même traitement que le "Bienvenue sur" de l'intro HomePage), rejoue à
   // chaque arrivée sur la page et s'inverse dès la sortie. Son apparition est
   // calée sur l'atterrissage commun de la cascade des autres blocs
-  // (CATEGORY_ENTER_TOTAL) pour donner l'illusion que tout arrive ensemble —
+  // (CATEGORY_NAV_TOTAL) pour donner l'illusion que tout arrive ensemble —
   // sans quoi le fondu, plus court, finissait avant eux. Sans cascade
   // (arrivée directe, pas de transitionPayload), apparition immédiate.
   const [titlesVisible, setTitlesVisible] = useState(false);
   useEffect(() => {
-    const delay = transitionPayload ? Math.max(CATEGORY_ENTER_TOTAL - HERO_EXIT_DURATION, 0) : 0;
+    const delay = transitionPayload ? Math.max(CATEGORY_NAV_TOTAL - NAV_ENTER_DURATION, 0) : 0;
     const timer = setTimeout(() => setTitlesVisible(true), delay);
     return () => clearTimeout(timer);
   }, [transitionPayload]);
@@ -571,7 +603,7 @@ function CategoryPage() {
   const titleFadeStyle = {
     opacity: titlesVisible ? 1 : 0,
     transform: titlesVisible ? 'none' : 'translateY(14px)',
-    transition: `opacity ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}, transform ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}`,
+    transition: `opacity ${NAV_ENTER_DURATION}ms ${INTRO_SOFT_EASING}, transform ${NAV_ENTER_DURATION}ms ${INTRO_SOFT_EASING}`,
   };
 
   // Fenêtre d'entrée : assez large pour couvrir les blocs montés en retard
@@ -581,95 +613,53 @@ function CategoryPage() {
   useEffect(() => {
     if (!enterActive) return undefined;
     // Marge après l'atterrissage commun pour couvrir une grille de fiches
-    // montée en retard (API lente) sans lui couper son animation en vol.
-    const timer = setTimeout(() => setEnterActive(false), CATEGORY_ENTER_TOTAL + 1500);
+    // montée en retard (API lente) sans lui couper son animation en vol —
+    // fenêtre de tolérance réseau, pas un temps d'animation à raccourcir.
+    const timer = setTimeout(() => setEnterActive(false), CATEGORY_NAV_TOTAL + 800);
     return () => clearTimeout(timer);
   }, [enterActive]);
 
-  // FLIP de la SearchBar : on part de sa position mesurée sur la page de
-  // départ (hero de l'accueil, ou barre encore rétractée de la page produit)
-  // puis on laisse la transition la ramener à sa place naturelle.
+  // FLIP de la SearchBar : translate + scale simultanés du bloc entier,
+  // depuis sa position mesurée sur la page de départ (accueil ou produit,
+  // toutes deux avec une barre déployée désormais) jusqu'à sa place ici.
   useLayoutEffect(() => {
     const from = transitionPayload?.searchBarRect;
     const el = searchBarWrapRef.current;
     if (!from || !el) return undefined;
-    // Depuis la page produit uniquement : séquence en deux temps, comme
-    // HomePage → catégorie mais lue à l'envers — là-bas la barre arrive déjà
-    // à sa place avant de changer de taille (translate+scale d'un bloc qui a
-    // toujours sa forme finale) ; ici elle change de forme (déploiement des
-    // champs, en parallèle direct sur leur nœud — un scale du bloc entier
-    // déformerait le texte) avant de se déplacer. Depuis l'accueil (hero à
-    // une tout autre échelle), pas de mécanisme de rétraction en jeu :
-    // translate + scale simultanés du bloc entier, sur ce seul cas.
-    const translateOnly = transitionPayload?.from === 'product';
     const to = el.getBoundingClientRect();
     el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
     el.style.transition = 'none';
-    el.style.transform = translateOnly
-      ? `translate(${from.left - to.left}px, ${from.top - to.top}px)`
-      : `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
-        `scale(${from.width / to.width}, ${from.height / to.height})`;
-    const fieldsEl = searchBarFieldsRef.current;
-    if (translateOnly && fieldsEl) {
-      // Repart de l'état rétracté de la page produit.
-      fieldsEl.style.transition = 'none';
-      fieldsEl.style.maxWidth = '0px';
-      fieldsEl.style.opacity = '0';
-    }
-    // Force le reflow avant d'activer la transition (comme le fait le
-    // mécanisme interne de la SearchBar, cf. son propre useLayoutEffect) : un
-    // seul rAF suffit alors, pas deux — sinon la translation démarrait un
-    // cran plus tard que la cascade des autres blocs (une simple animation
-    // CSS, active dès le tout premier rendu) et atterrissait après elle au
-    // lieu d'en même temps.
+    el.style.transform =
+      `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
+      `scale(${from.width / to.width}, ${from.height / to.height})`;
+    // Force le reflow avant d'activer la transition : un seul rAF suffit
+    // alors, pas deux — sinon la translation démarrait un cran plus tard que
+    // la cascade des autres blocs (une simple animation CSS, active dès le
+    // tout premier rendu) et atterrissait après elle au lieu d'en même temps.
     void el.offsetWidth;
-    // Durée totale partagée entre les deux étapes (et non ajoutée bout à
-    // bout) : la séquence complète doit tout de même atterrir à
-    // CATEGORY_ENTER_TOTAL, en même temps que le reste de la cascade d'entrée.
-    const deployDuration = Math.round(CATEGORY_ENTER_TOTAL / 2);
-    const moveDuration = CATEGORY_ENTER_TOTAL - deployDuration;
-    let phaseTimer = null;
     const raf = window.requestAnimationFrame(() => {
-      if (translateOnly && fieldsEl) {
-        const natural = fieldsEl.scrollWidth;
-        fieldsEl.style.transition = `max-width ${deployDuration}ms ${CATEGORY_ENTER_EASING}, opacity ${deployDuration}ms ${CATEGORY_ENTER_EASING}`;
-        fieldsEl.style.maxWidth = `${natural}px`;
-        fieldsEl.style.opacity = '1';
-        phaseTimer = setTimeout(() => {
-          // Lève le plafond figé (comme le mécanisme interne de la
-          // SearchBar une fois déployée) avant d'enchaîner sur la
-          // translation.
-          fieldsEl.style.transition = 'none';
-          fieldsEl.style.maxWidth = 'none';
-          el.style.transition = `transform ${moveDuration}ms ${CATEGORY_ENTER_EASING}`;
-          el.style.transform = 'none';
-        }, deployDuration);
-      } else {
-        el.style.transition = `transform ${CATEGORY_ENTER_TOTAL}ms ${CATEGORY_ENTER_EASING}`;
-        el.style.transform = 'none';
-      }
+      el.style.transition = `transform ${CATEGORY_NAV_TOTAL}ms ${CATEGORY_ENTER_EASING}`;
+      el.style.transform = 'none';
     });
     const resetStyles = () => {
-      el.style.transform = '';
-      el.style.transition = '';
+      el.style.transition = 'none';
+      el.style.transform = 'none';
+      // Force le navigateur à acter l'annulation immédiatement (transition
+      // coupée à la volée) avant que quoi que ce soit d'autre ne mesure cet
+      // élément — StrictMode démonte l'effet quelques ms après le rAF,
+      // transition à peine commencée : sans ce flush, la 2de passe
+      // mesurerait une position encore quasi identique à `from`, et plus
+      // aucune animation visible ne jouerait.
+      void el.getBoundingClientRect();
       el.style.transformOrigin = '';
       el.style.willChange = '';
-      if (fieldsEl) {
-        // Cible réellement déployée (pas une chaîne vide) : effacer le style
-        // figerait la largeur à 0 (SearchBar rend toujours retracted=false
-        // ici, mais son style ne serait alors plus écrasé par rien) —
-        // StrictMode, qui rejoue ce nettoyage avant même le premier rAF,
-        // verrait alors une SearchBar entièrement repliée.
-        fieldsEl.style.maxWidth = 'none';
-        fieldsEl.style.opacity = '1';
-        fieldsEl.style.transition = '';
-      }
+      el.style.transition = '';
+      el.style.transform = '';
     };
-    const cleanupTimer = setTimeout(resetStyles, CATEGORY_ENTER_TOTAL + 100);
+    const cleanupTimer = setTimeout(resetStyles, CATEGORY_NAV_TOTAL + 100);
     return () => {
       window.cancelAnimationFrame(raf);
-      clearTimeout(phaseTimer);
       clearTimeout(cleanupTimer);
       // Remet l'élément à l'état neutre : StrictMode rejoue cet effet en dev,
       // et la seconde passe doit mesurer la position naturelle, pas celle
@@ -683,7 +673,7 @@ function CategoryPage() {
   // barre de filtres en dernier), chacun vers sa marge d'origine.
   function slideOutStyle(order, from) {
     const keyframes = from === 'left' ? 'categorySlideOutLeft' : 'categorySlideOutRight';
-    const duration = CATEGORY_ENTER_TOTAL - order * CATEGORY_ENTER_STAGGER;
+    const duration = CATEGORY_NAV_TOTAL - order * NAV_ENTER_STAGGER;
     return {
       animation: `${keyframes} ${duration}ms ${CATEGORY_EXIT_EASING} both`,
       // Promeut le bloc sur sa propre couche de composition avant le premier
@@ -695,14 +685,14 @@ function CategoryPage() {
   // Entrée décalée des blocs depuis les marges (direction alternée par bloc),
   // en écho à la sortie des éléments du hero. Hors fenêtre : aucun style.
   // Chaque bloc part avec son décalage mais sa durée est allongée d'autant,
-  // pour que tous atterrissent à CATEGORY_ENTER_TOTAL pile.
+  // pour que tous atterrissent à CATEGORY_NAV_TOTAL pile.
   function slideInStyle(order, from = 'left') {
     if (exiting) return slideOutStyle(order, from);
     if (!enterActive) return undefined;
     const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
-    const delay = order * CATEGORY_ENTER_STAGGER;
+    const delay = order * NAV_ENTER_STAGGER;
     return {
-      animation: `${keyframes} ${CATEGORY_ENTER_TOTAL - delay}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
+      animation: `${keyframes} ${CATEGORY_NAV_TOTAL - delay}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
       willChange: 'transform',
     };
   }
@@ -711,7 +701,7 @@ function CategoryPage() {
   // la réponse de l'API) : le délai est recalé sur l'horloge globale de la
   // cascade au moment du montage — négatif si le départ est déjà passé, ce qui
   // fait reprendre l'animation en cours de vol pour atterrir à
-  // CATEGORY_ENTER_TOTAL en même temps que les autres blocs. Le style est figé
+  // CATEGORY_NAV_TOTAL en même temps que les autres blocs. Le style est figé
   // au premier calcul : le recalculer à chaque rendu redémarrerait l'animation.
   function slideInStyleLate(key, order, from = 'left') {
     if (exiting) return slideOutStyle(order, from);
@@ -719,10 +709,10 @@ function CategoryPage() {
     const cache = lateAnimCache.current;
     if (!cache[key]) {
       const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
-      const intendedStart = order * CATEGORY_ENTER_STAGGER;
+      const intendedStart = order * NAV_ENTER_STAGGER;
       const delay = intendedStart - (Date.now() - enterStartRef.current);
       cache[key] = {
-        animation: `${keyframes} ${CATEGORY_ENTER_TOTAL - intendedStart}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
+        animation: `${keyframes} ${CATEGORY_NAV_TOTAL - intendedStart}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
         willChange: 'transform',
       };
     }
@@ -806,11 +796,11 @@ function CategoryPage() {
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${exitBgSrc})`,
+                backgroundImage: `${exitBgSrc === contactBg || exitBgSrc === aboutBg || exitBgSrc === legalBg ? PHOTO_OVERLAY_STATIC_PAGE : PHOTO_OVERLAY_BOAT}, url(${exitBgSrc})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundAttachment: 'fixed',
-                animation: `pageBgFadeIn ${CATEGORY_ENTER_TOTAL}ms ease forwards`,
+                animation: `pageBgFadeIn ${CATEGORY_NAV_TOTAL}ms ease forwards`,
               }}
             />
           )}
@@ -819,7 +809,16 @@ function CategoryPage() {
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
           {/* Section 1 — Searchbar sticky */}
-          <section className="relative z-20 w-full">
+          <section
+            className="sticky z-20 w-full"
+            style={{
+              top: scrolled ? '60px' : '80px',
+              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
+              backdropFilter: scrolled ? 'blur(5px)' : 'none',
+              WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
+              transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
+            }}
+          >
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
@@ -832,7 +831,10 @@ function CategoryPage() {
               <div style={slideInStyle(1)}>
                 <Breadcrumb light compact={scrolled} />
               </div>
-              <div className="w-full min-w-0 lg:w-52 lg:flex-none xl:w-60" style={slideInStyle(0)}>
+              <div
+                className="w-full min-w-0 lg:w-auto lg:min-w-[13rem] lg:flex-none xl:min-w-[15rem]"
+                style={slideInStyle(0)}
+              >
                 <FilterBar
                   light
                   compact={scrolled}
@@ -851,8 +853,24 @@ function CategoryPage() {
                   onReset={resetFilters}
                 />
               </div>
-              <div ref={searchBarWrapRef}>
-                <SearchBar light compact={scrolled} fieldsElRef={searchBarFieldsRef} />
+              {/* Vers/depuis l'accueil ou le produit : le FLIP (ci-dessus, à
+                  l'arrivée) prend le relai via une manipulation directe du
+                  style, la barre ne doit donc recevoir aucun style concurrent
+                  ici. Arrivée ou sortie générique (contact/à propos) : elle
+                  glisse comme un bloc de plus, avec le reste de la cascade. */}
+              <div
+                ref={searchBarWrapRef}
+                style={
+                  exiting
+                    ? exitIsGeneric
+                      ? slideOutStyle(2, 'right')
+                      : undefined
+                    : !transitionPayload
+                      ? slideInStyle(2, 'right')
+                      : undefined
+                }
+              >
+                <SearchBar light compact={scrolled} />
               </div>
             </div>
           </section>
@@ -913,10 +931,18 @@ function CategoryPage() {
 
             {/* Carte — 45% */}
             {/* Offset sticky = hauteur du header fixe + hauteur de la barre filtre/recherche/fil
-                d'ariane (toutes deux sticky au-dessus) + un petit espace de respiration. */}
+                d'ariane (toutes deux sticky au-dessus) + un petit espace de respiration.
+                height = espace restant sous ce point jusqu'au bas du viewport, avec le
+                contenu centré dedans (justify-center) : la carte (plus courte que cet
+                espace sur sm/lg) se retrouve centrée entre le sous-header et le bas de
+                page au lieu de rester collée en haut avec un vide en dessous. */}
             <aside
-              className="w-[45%] sticky flex flex-col gap-2"
-              style={{ top: `${mapStickyTop}px`, transition: 'top 0.3s ease' }}
+              className="w-[45%] sticky flex flex-col justify-center gap-2"
+              style={{
+                top: `${mapStickyTop}px`,
+                height: `calc(100vh - ${mapStickyTop}px)`,
+                transition: 'top 0.3s ease, height 0.3s ease',
+              }}
             >
               {/* L'animation d'entrée s'applique au bloc interne et non à
                   l'<aside> sticky, dont le style transition (top) doit rester. */}

@@ -17,16 +17,48 @@ const HOME_EVENT = 'sailingloc:home-transition';
 const PRODUCT_EVENT = 'sailingloc:product-transition';
 
 // Durées partagées entre la sortie et l'entrée, dans les deux sens.
+// Réservées à la toute première arrivée sur le site (intro vidéo de la home,
+// et révélation du header — cf. useIntroHeaderReveal — pour une home ou un
+// dashboard) : ce sont les SEULES transitions qui gardent ce rythme
+// cinématique. Toute navigation ultérieure entre pages utilise les constantes
+// NAV_* ci-dessous, bien plus courtes.
 export const HERO_EXIT_DURATION = 1400;
 export const CATEGORY_ENTER_DURATION = 1300;
 export const CATEGORY_ENTER_STAGGER = 200;
 // Dernier rang de la cascade d'entrée de /categorie (0 = FilterBar … 5 = MapView).
 export const CATEGORY_ENTER_LAST_ORDER = 5;
 // Instant d'atterrissage commun de la cascade : départs décalés, arrivée
-// unique. Sert aussi de « vitesse de transition de page » de référence pour
-// la révélation de l'intro (header, SearchBar, CTA).
+// unique. Sert aussi de « vitesse de transition » de référence pour la
+// révélation de l'intro (header, SearchBar, CTA) — pas pour la navigation
+// courante, cf. NAV_ENTER_TOTAL ci-dessous.
 export const CATEGORY_ENTER_TOTAL =
   CATEGORY_ENTER_DURATION + CATEGORY_ENTER_LAST_ORDER * CATEGORY_ENTER_STAGGER;
+
+// Rythme de toute navigation entre pages APRÈS la première arrivée (Home,
+// Contact, À propos, pages légales) : un temps commun, identique quel que
+// soit le nombre de blocs de la page (2 pour les pages légales, 7 pour
+// Contact/À propos) — chaque page espace ses blocs différemment (cf.
+// NAV_ENTER_STAGGER) mais tous atterrissent pile à NAV_ENTER_TOTAL. Sortie et
+// entrée utilisent cette même valeur des deux côtés (cf.
+// beginExitToStatic/slide() dans usePageTransition.js) : clic → page
+// réellement posée = 2 × NAV_ENTER_TOTAL, soit ~2400 ms pour 1200 ms/côté.
+export const NAV_ENTER_TOTAL = 1200;
+// Catégorie ↔ Produit sont les deux pages les plus consultées (comparaison
+// répétée de bateaux) : rythme dédié, plus court, pour ne pas peser sur un
+// aller-retour fréquent — 2 × 500 ms = ~1000 ms au total, contre 2400 ms
+// pour le reste du site.
+export const CATEGORY_PRODUCT_NAV_TOTAL = 500;
+// Espacement entre blocs d'une même cascade (departs décalés, arrivée
+// commune au total du groupe concerné) — cf. slide()/slideInStyle() dans
+// usePageTransition.js et les pages à cascade (Catégorie, Produit).
+export const NAV_ENTER_STAGGER = 30;
+// Durée de référence d'une simple transition sans cascade (ex. fondu du
+// titre de la page catégorie, calé pour finir pile à l'atterrissage commun).
+export const NAV_ENTER_DURATION = 250;
+// Pas de cascade à plusieurs blocs sur la home (hors intro) : sortie/arrivée
+// du hero et FLIP de la SearchBar utilisent directement NAV_ENTER_TOTAL (la
+// home n'est pas dans le groupe rapide Catégorie/Produit).
+export const HOME_NAV_DURATION = NAV_ENTER_TOTAL;
 
 // Paires d'easings miroir : l'entrée est la sortie jouée à rebours.
 export const CATEGORY_ENTER_EASING = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
@@ -58,6 +90,15 @@ export const PAGE_SLIDE_CSS = `
     to   { opacity: 1; }
   }
 `;
+
+// Voiles partagés par-dessus les images de fond en crossfade (pageBgFadeIn
+// ci-dessus) : garantit un raccord invisible entre deux pages qui n'ont pas
+// exactement le même voile — celui de la page d'ARRIVÉE, pas celle de départ,
+// pour que l'image affichée pendant le fondu soit identique au pixel près à
+// celle que la page cible affichera dès son montage.
+export const PHOTO_OVERLAY_BOAT = 'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5))';
+export const PHOTO_OVERLAY_STATIC_PAGE = 'linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72))';
+
 export const HERO_EXIT_EASING = 'cubic-bezier(0.5, 0, 0.75, 0.2)';
 export const HERO_ENTER_EASING = 'cubic-bezier(0.25, 0.8, 0.5, 1)';
 // Ease-in-out doux (départ et fin progressifs, façon dégradé) pour les fondus
@@ -123,9 +164,13 @@ function useTransitionNavigate(fromPaths, matchesTarget, eventName) {
   const location = useLocation();
   const onFromPage = fromPaths.some((base) => isOnPath(location.pathname, base));
   return useCallback(
-    (to) => {
+    // `extra` (optionnel) : détails supplémentaires fusionnés dans
+    // l'événement, ex. le nom du bateau (cf. useProductNavigate depuis
+    // Carrousel) pour que la page d'arrivée l'affiche dès son premier rendu
+    // sans attendre la réponse de l'API.
+    (to, extra) => {
       if (onFromPage && matchesTarget(to) && !prefersReducedMotion()) {
-        window.dispatchEvent(new window.CustomEvent(eventName, { detail: { to } }));
+        window.dispatchEvent(new window.CustomEvent(eventName, { detail: { to, ...extra } }));
       } else {
         navigate(to);
       }

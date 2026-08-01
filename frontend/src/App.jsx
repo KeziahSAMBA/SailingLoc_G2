@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import AppRouter from './router/AppRouter.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { useAuth } from './hooks/useAuth.jsx';
+import { usePageLoadGate } from './hooks/usePageLoadGate.js';
 import Header from './components/common/Header/Header.jsx';
 import HeaderAdmin from './components/common/Header/HeaderAdmin.jsx';
 import HeaderProprio from './components/common/Header/HeaderProprio.jsx';
@@ -11,6 +12,7 @@ import AuthModal from './components/auth/AuthModal.jsx';
 import Footer from './components/common/Footer.jsx';
 import CookieConsentBanner from './components/common/CookieConsentBanner.jsx';
 import MatomoTracker from './components/common/MatomoTracker.jsx';
+import PageLoadGateScreen from './components/common/PageLoadGateScreen.jsx';
 import { CookieConsentProvider } from './context/CookieConsentContext.jsx';
 
 function AppContent() {
@@ -20,6 +22,10 @@ function AppContent() {
 
   const backgroundLocation = location.state?.backgroundLocation;
   const routesLocation = backgroundLocation || location;
+
+  // Écran de chargement/no-connexion : cf. usePageLoadGate.js. routerKey force
+  // le remontage de la page en cours (rejoue son chargement) à la reconnexion.
+  const { stuck, routerKey } = usePageLoadGate(routesLocation.pathname);
 
   const activeAuthTab =
     location.pathname === '/login'
@@ -75,12 +81,13 @@ function AppContent() {
     <>
       {renderHeader()}
       <div className="bg-slate-50 text-slate-900">
-        <AppRouter location={routesLocation} />
+        <AppRouter key={routerKey} location={routesLocation} />
       </div>
       {showAuthModal && <AuthModal activeTab={activeAuthTab} onClose={closeAuthModal} />}
       <Footer />
       <CookieConsentBanner />
       <MatomoTracker />
+      {stuck && <PageLoadGateScreen pathname={routesLocation.pathname} />}
     </>
   );
 }
