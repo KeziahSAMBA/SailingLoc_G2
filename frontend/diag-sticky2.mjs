@@ -11,7 +11,10 @@ await page.waitForTimeout(1000);
 for (let i = 0; i < 6; i++) {
   const btn = page.getByText(/charger plus|load more/i);
   if (await btn.count()) {
-    await btn.first().click().catch(() => {});
+    await btn
+      .first()
+      .click()
+      .catch(() => {});
     await page.waitForTimeout(300);
   }
 }
