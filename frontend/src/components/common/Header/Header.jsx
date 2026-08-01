@@ -9,7 +9,7 @@ import {
   CATEGORY_ENTER_TOTAL,
   INTRO_SOFT_EASING,
 } from '../../../hooks/useCategoryTransition.js';
-import { usePageExitNavigate } from '../../../hooks/usePageTransition.js';
+import { usePageExitNavigate, EXIT_TRANSITION_PAGES } from '../../../hooks/usePageTransition.js';
 import { useScrolled } from './shared/useScrolled.js';
 import { useClickOutside } from './shared/useClickOutside.js';
 import HeaderLogo from './shared/HeaderLogo.jsx';
@@ -158,7 +158,7 @@ function Header() {
     e.preventDefault();
     if (location.pathname === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (location.pathname === '/contact' || location.pathname === '/a-propos') {
+    } else if (EXIT_TRANSITION_PAGES.includes(location.pathname)) {
       pageExitNavigate('/');
     } else {
       goHome();

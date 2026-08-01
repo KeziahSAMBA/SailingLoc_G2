@@ -6,6 +6,7 @@ import categoryBg from '../assets/image/paysage/cote_azur.jpg';
 import productBg from '../assets/image/paysage/crique.jpg';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
 import aboutBg from '../assets/image/paysage/about_bg.jpg';
+import legalBg from '../assets/image/portrait/cgu.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import { SiAppstore, SiGoogleplay } from 'react-icons/si';
 import logoLong from '../assets/image/SL_logo/logo SL long.webp';
@@ -31,6 +32,7 @@ import {
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
   HERO_EXIT_DURATION,
+  HOME_NAV_DURATION,
   HERO_EXIT_EASING,
   HERO_ENTER_EASING,
   INTRO_SOFT_EASING,
@@ -187,9 +189,13 @@ function HomePage() {
   // exitBgSrc/bg) s'efface pour révéler la vidéo.
   const [homeArrival] = useState(() => readTransitionPayload('home'));
   const arrivalBg = homeArrival?.bg ?? categoryBg;
-  // Arrivée générique (ex. depuis Contact/À propos, sans payload FLIP) : même
-  // glissade du hero, mais sans le crossfade vidéo (pas d'image de départ
-  // à faire disparaître) ni le FLIP de la SearchBar (cf. plus bas).
+  // Arrivée depuis une page statique (contact/à propos/légal) : même payload
+  // et même crossfade vidéo (chacune transmet son propre `bg` via `ownBg`,
+  // cf. usePageSlideTransition), mais sans `searchBarRect` — pas de FLIP
+  // possible, la SearchBar glisse alors comme un bloc de plus (cf. plus bas,
+  // `!homeArrival?.searchBarRect`). Arrivée vraiment sans payload (accès
+  // direct, actualisation, page sans intégration) : même glissade générique,
+  // juste sans crossfade (pas d'image de départ à faire disparaître).
   const [arrivalActive, setArrivalActive] = useState(
     () => Boolean(homeArrival) || (location.key !== 'default' && !prefersReducedMotion())
   );
@@ -251,10 +257,11 @@ function HomePage() {
     clearTransitionPayload();
   }, []);
 
-  // Referme la fenêtre d'arrivée une fois les animations posées.
+  // Referme la fenêtre d'arrivée une fois les animations posées. Rythme de
+  // navigation courante (pas l'intro, jamais responsable d'une arrivée ici).
   useEffect(() => {
     if (!arrivalActive) return undefined;
-    const timer = setTimeout(() => setArrivalActive(false), HERO_EXIT_DURATION + 300);
+    const timer = setTimeout(() => setArrivalActive(false), HOME_NAV_DURATION + 300);
     return () => clearTimeout(timer);
   }, [arrivalActive]);
 
@@ -277,7 +284,7 @@ function HomePage() {
     // alors, pas deux.
     void el.offsetWidth;
     const raf = window.requestAnimationFrame(() => {
-      el.style.transition = `transform ${HERO_EXIT_DURATION}ms ${HERO_ENTER_EASING}`;
+      el.style.transition = `transform ${HOME_NAV_DURATION}ms ${HERO_ENTER_EASING}`;
       el.style.transform = 'none';
     });
     const resetStyles = () => {
@@ -295,7 +302,7 @@ function HomePage() {
       el.style.transition = '';
       el.style.transform = '';
     };
-    const cleanupTimer = setTimeout(resetStyles, HERO_EXIT_DURATION + 100);
+    const cleanupTimer = setTimeout(resetStyles, HOME_NAV_DURATION + 100);
     return () => {
       window.cancelAnimationFrame(raf);
       clearTimeout(cleanupTimer);
@@ -342,7 +349,7 @@ function HomePage() {
           // FLIP (effet de rebond).
           boatName: boatName ?? null,
         });
-        navTimer = setTimeout(() => navigate(to), HERO_EXIT_DURATION);
+        navTimer = setTimeout(() => navigate(to), HOME_NAV_DURATION);
       };
     // Sortie vers une page statique (contact/à propos) : même crossfade,
     // mais sans payload à transmettre — ces pages rejouent leur propre
@@ -351,7 +358,7 @@ function HomePage() {
       if (transitioningRef.current) return;
       transitioningRef.current = true;
       lockScroll();
-      const targetBg = to === '/a-propos' ? aboutBg : contactBg;
+      const targetBg = to === '/a-propos' ? aboutBg : to === '/contact' ? contactBg : legalBg;
       const bg = new window.Image();
       bg.src = targetBg;
       bg.decode?.().catch(() => {});
@@ -360,7 +367,7 @@ function HomePage() {
       setExitBgSrc(targetBg);
       setExitIsGeneric(true);
       setExiting(true);
-      navTimer = setTimeout(() => navigate(to, options), HERO_EXIT_DURATION);
+      navTimer = setTimeout(() => navigate(to, options), HOME_NAV_DURATION);
     };
     const unsubCategory = onCategoryTransitionRequest(beginExit('category', categoryBg));
     const unsubProduct = onProductTransitionRequest(beginExit('product', productBg));
@@ -409,19 +416,21 @@ function HomePage() {
 
   // Les blocs du hero quittent l'écran chacun de leur côté (ease-in pour un
   // départ franc) et, au retour de /categorie, rentrent depuis cette même
-  // marge (ease-out) — la sortie jouée à rebours.
+  // marge (ease-out) — la sortie jouée à rebours. Jamais actif pendant
+  // l'intro (exiting/arrivalActive toujours faux à ce moment-là) : rythme de
+  // navigation courante.
   const heroSlideStyle = (side) => {
     if (exiting) {
       return {
         transform: `translateX(${side === 'right' ? '110vw' : '-110vw'})`,
-        transition: `transform ${HERO_EXIT_DURATION}ms ${HERO_EXIT_EASING}`,
+        transition: `transform ${HOME_NAV_DURATION}ms ${HERO_EXIT_EASING}`,
         willChange: 'transform',
       };
     }
     if (arrivalActive) {
       const keyframes = side === 'right' ? 'heroEnterFromRight' : 'heroEnterFromLeft';
       return {
-        animation: `${keyframes} ${HERO_EXIT_DURATION}ms ${HERO_ENTER_EASING} both`,
+        animation: `${keyframes} ${HOME_NAV_DURATION}ms ${HERO_ENTER_EASING} both`,
         willChange: 'transform',
       };
     }
@@ -497,14 +506,15 @@ function HomePage() {
             style={{
               backgroundImage: `${
                 (exiting ? exitBgSrc : arrivalBg) === contactBg ||
-                (exiting ? exitBgSrc : arrivalBg) === aboutBg
+                (exiting ? exitBgSrc : arrivalBg) === aboutBg ||
+                (exiting ? exitBgSrc : arrivalBg) === legalBg
                   ? PHOTO_OVERLAY_STATIC_PAGE
                   : PHOTO_OVERLAY_BOAT
               }, url(${exiting ? exitBgSrc : arrivalBg})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundAttachment: 'fixed',
-              animation: `${exiting ? 'categoryBgFadeIn' : 'categoryBgFadeOut'} ${HERO_EXIT_DURATION}ms ease forwards`,
+              animation: `${exiting ? 'categoryBgFadeIn' : 'categoryBgFadeOut'} ${HOME_NAV_DURATION}ms ease forwards`,
             }}
           />
         )}
@@ -561,7 +571,7 @@ function HomePage() {
             style={
               introActive
                 ? introFromBelowStyle
-                : (exiting && exitIsGeneric) || (arrivalActive && !homeArrival)
+                : (exiting && exitIsGeneric) || (arrivalActive && !homeArrival?.searchBarRect)
                   ? heroSlideStyle('right')
                   : undefined
             }
@@ -726,12 +736,8 @@ function HomePage() {
 
 export default HomePage;
 
-//TODO : continuer transition searchbar
-//TODO : corriger bug transition searchbar entre /homepage et /contact/a-propos (elle apparait de nulle part)
-//TODO : récréer le sous-header fixe sur /categorypage et /prodctupage
-//TODO : corriger bug visuel du bloc 'caractéristique" dans /productpage
-//TODO : faire refonte CGU, mentions légales, politique de confidentialité,...
 //TODO : faire les transition dans les dashboards
-//TODO : accelérer les temps de transitions
 //TODO : appliqué tout sur les profils connectés
 //TODO : faire le ticket de la page d'accueil proprio et faire les transitions dessus
+//TODO : faire la page de chargement pour les transitions
+//TODO : effet chargement image produit mode hors-connexion

@@ -13,6 +13,7 @@ import bateauBg from '../assets/image/paysage/crique.jpg';
 import categoryBg from '../assets/image/paysage/cote_azur.jpg';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
 import aboutBg from '../assets/image/paysage/about_bg.jpg';
+import legalBg from '../assets/image/portrait/cgu.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -57,10 +58,11 @@ import {
   PAGE_SLIDE_CSS,
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
-  CATEGORY_ENTER_STAGGER,
-  CATEGORY_ENTER_TOTAL,
+  NAV_ENTER_STAGGER,
+  CATEGORY_PRODUCT_NAV_TOTAL as CATEGORY_ENTER_TOTAL,
   CATEGORY_ENTER_EASING,
   CATEGORY_EXIT_EASING,
+  prefersReducedMotion,
 } from '../hooks/useCategoryTransition.js';
 import { onPageExitRequest } from '../hooks/usePageTransition.js';
 
@@ -85,6 +87,82 @@ function isWithinRange(day, startStr, endStr) {
 function countDays(startStr, endStr) {
   if (!startStr || !endStr) return 0;
   return Math.round((new Date(endStr) - new Date(startStr)) / 86400000) + 1;
+}
+
+const GALLERY_GAP = 12;
+
+// Écart maximal toléré entre le ratio natif d'une photo et le ratio de la
+// case dédiée avant d'accepter un recadrage : une photo déjà proche du
+// format de la galerie s'affiche intacte (aucun recadrage nécessaire), une
+// photo trop éloignée (ex. un portrait serré dans une galerie très large)
+// est recadrée pour mieux occuper l'espace — mais seulement jusqu'à ce
+// facteur d'écart, jamais jusqu'à coller pile le ratio de la case entière.
+const MAX_RATIO_DEVIATION = 1.4;
+
+function clampRatioTowardTarget(ratio, target) {
+  return Math.min(Math.max(target, ratio / MAX_RATIO_DEVIATION), ratio * MAX_RATIO_DEVIATION);
+}
+
+// Toutes les répartitions en lignes qui respectent l'ordre des photos (seuls
+// des voisins peuvent partager une ligne) : un « mask » de n-1 bits, un bit
+// par frontière entre deux photos consécutives, posé (nouvelle ligne) ou non
+// (même ligne). 2^(n-1) combinaisons — négligeable pour n ≤ 5 (image
+// principale + 4 vignettes) — plutôt qu'une heuristique fixe qui devinerait
+// au hasard qui va avec qui.
+function consecutivePartitions(items) {
+  const breakCount = items.length - 1;
+  const partitions = [];
+  for (let mask = 0; mask < 1 << breakCount; mask++) {
+    const rows = [[items[0]]];
+    for (let i = 0; i < breakCount; i++) {
+      if (mask & (1 << i)) rows.push([items[i + 1]]);
+      else rows[rows.length - 1].push(items[i + 1]);
+    }
+    partitions.push(rows);
+  }
+  return partitions;
+}
+
+// Empile les photos de la galerie par lignes sans jamais déformer une image :
+// chaque ligne est dimensionnée pour occuper exactement toute la largeur
+// dispo, puis l'ensemble des lignes est réduit d'un bloc (jamais agrandi
+// au-delà de cette largeur) si leur hauteur cumulée dépasse l'espace dédié.
+// Chaque photo garde son ratio natif SAUF s'il est trop éloigné du ratio de
+// la case dédiée (clampRatioTowardTarget) : dans ce cas seulement, un léger
+// recadrage (object-fit: cover côté rendu) comble l'écart — plafonné, jamais
+// jusqu'à coller pile la forme de la case. Plusieurs répartitions en lignes
+// sont possibles pour un même jeu de photos (côte à côte vs empilé) : on les
+// évalue toutes et on garde celle dont l'aire réellement occupée, une fois
+// mise à l'échelle, remplit le mieux l'espace dédié.
+function layoutGalleryRows(items, containerWidth, containerHeight, gap) {
+  if (!containerWidth || !containerHeight || items.length === 0) return [];
+
+  const containerRatio = containerWidth / containerHeight;
+  const adjustedItems = items.map((item) => ({
+    ...item,
+    ratio: clampRatioTowardTarget(item.ratio, containerRatio),
+  }));
+
+  let best = null;
+  for (const rows of consecutivePartitions(adjustedItems)) {
+    const sizedRows = rows.map((row) => {
+      const sumRatios = row.reduce((sum, it) => sum + it.ratio, 0);
+      const rowGaps = gap * (row.length - 1);
+      return { items: row, height: (containerWidth - rowGaps) / sumRatios };
+    });
+    const interRowGaps = gap * (sizedRows.length - 1);
+    const naturalTotalHeight = sizedRows.reduce((sum, r) => sum + r.height, 0) + interRowGaps;
+    const scale =
+      naturalTotalHeight > containerHeight
+        ? (containerHeight - interRowGaps) / (naturalTotalHeight - interRowGaps)
+        : 1;
+    const utilization = (scale * scale * (naturalTotalHeight - interRowGaps)) / containerHeight;
+    if (!best || utilization > best.utilization) {
+      best = { sizedRows, scale, utilization };
+    }
+  }
+
+  return best.sizedRows.map((r) => ({ items: r.items, height: r.height * best.scale }));
 }
 
 // Mêmes surfaces "verre" que les blocs de la page catégorie.
@@ -153,11 +231,22 @@ function ProductPage() {
   // page entrent depuis les marges en cascade, et la SearchBar glisse (FLIP)
   // depuis sa position sur la page de départ jusqu'à son emplacement ici.
   const [transitionPayload] = useState(() => readTransitionPayload('product'));
-  const [enterActive, setEnterActive] = useState(Boolean(transitionPayload));
+  // Entrée animée, au sens large : soit la cascade orchestrée par la page de
+  // départ (payload ci-dessus), soit — à défaut (actualisation, accès direct,
+  // ou provenance d'une page sans intégration dédiée comme contact/à propos)
+  // — la même cascade générique rejouée sans FLIP (la SearchBar entre alors
+  // comme un bloc de plus, cf. son style plus bas). Figé au montage : ne doit
+  // pas retomber à false quand `enterActive` referme la fenêtre d'entrée.
+  const [animatedEntry] = useState(() => Boolean(transitionPayload) || !prefersReducedMotion());
+  const [enterActive, setEnterActive] = useState(animatedEntry);
   // Sections sous la ligne de flottaison (specs, carte, carrousel, avis)
   // différées pendant l'animation d'entrée : leur montage en pleine cascade
   // ferait saccader l'arrivée alors qu'elles sont hors écran à ce moment-là.
-  const [belowFoldReady, setBelowFoldReady] = useState(!transitionPayload);
+  const [belowFoldReady, setBelowFoldReady] = useState(!animatedEntry);
+  // FLIP continu (transform DOM direct, cf. useLayoutEffect ci-dessous) :
+  // seules les origines qui transmettent un rect valide pour la SearchBar.
+  const hasSearchBarContinuity =
+    transitionPayload?.from === 'category' || transitionPayload?.from === 'home';
   // Sortie vers l'accueil ou la catégorie : les blocs rejouent leur entrée à rebours.
   const [exiting, setExiting] = useState(false);
   // Sortie vers la catégorie ou une page statique (contact/à propos) : notre
@@ -197,10 +286,10 @@ function ProductPage() {
 
   // Fenêtre d'entrée : assez large pour couvrir les blocs montés en retard
   // (tout le contenu attend la réponse de l'API). Une fois refermée, plus
-  // aucun style d'animation.
+  // aucun style d'animation — marge réseau, pas un temps d'animation.
   useEffect(() => {
     if (!enterActive) return undefined;
-    const timer = setTimeout(() => setEnterActive(false), CATEGORY_ENTER_TOTAL + 1500);
+    const timer = setTimeout(() => setEnterActive(false), CATEGORY_ENTER_TOTAL + 800);
     return () => clearTimeout(timer);
   }, [enterActive]);
 
@@ -253,7 +342,7 @@ function ProductPage() {
       lockScroll();
       await smoothScrollToTop();
       if (cancelled) return;
-      setExitBgSrc(to === '/a-propos' ? aboutBg : contactBg);
+      setExitBgSrc(to === '/a-propos' ? aboutBg : to === '/contact' ? contactBg : legalBg);
       setExitIsGeneric(true);
       setExiting(true);
       navTimer = setTimeout(() => {
@@ -278,9 +367,7 @@ function ProductPage() {
   useLayoutEffect(() => {
     const from = transitionPayload?.searchBarRect;
     const el = searchBarWrapRef.current;
-    const hasContinuity =
-      transitionPayload?.from === 'category' || transitionPayload?.from === 'home';
-    if (!from || !el || !hasContinuity) return undefined;
+    if (!from || !el || !hasSearchBarContinuity) return undefined;
     const to = el.getBoundingClientRect();
     el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
@@ -321,12 +408,12 @@ function ProductPage() {
       // déplacée par la première.
       resetStyles();
     };
-  }, [transitionPayload]);
+  }, [transitionPayload, hasSearchBarContinuity]);
 
   // Sortie : l'entrée jouée à rebours, chaque bloc vers sa marge d'origine.
   function slideOutStyle(order, from) {
     const keyframes = from === 'left' ? 'categorySlideOutLeft' : 'categorySlideOutRight';
-    const duration = CATEGORY_ENTER_TOTAL - order * CATEGORY_ENTER_STAGGER;
+    const duration = CATEGORY_ENTER_TOTAL - order * NAV_ENTER_STAGGER;
     return {
       animation: `${keyframes} ${duration}ms ${CATEGORY_EXIT_EASING} both`,
       willChange: 'transform',
@@ -339,7 +426,7 @@ function ProductPage() {
     if (exiting) return slideOutStyle(order, from);
     if (!enterActive) return undefined;
     const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
-    const delay = order * CATEGORY_ENTER_STAGGER;
+    const delay = order * NAV_ENTER_STAGGER;
     return {
       animation: `${keyframes} ${CATEGORY_ENTER_TOTAL - delay}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
       willChange: 'transform',
@@ -357,7 +444,7 @@ function ProductPage() {
     const cache = lateAnimCache.current;
     if (!cache[key]) {
       const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
-      const intendedStart = order * CATEGORY_ENTER_STAGGER;
+      const intendedStart = order * NAV_ENTER_STAGGER;
       const delay = intendedStart - (Date.now() - enterStartRef.current);
       cache[key] = {
         animation: `${keyframes} ${CATEGORY_ENTER_TOTAL - intendedStart}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
@@ -390,7 +477,70 @@ function ProductPage() {
   const boat = useMemo(() => boats.find((b) => b.id_boat === boatId) ?? null, [boats, boatId]);
   const price = boat ? Number(boat.daily_price) : 0;
   const images = boat?.images ?? [];
-  const thumbs = images.slice(1, 5);
+  // Galerie : image principale + jusqu'à 4 secondaires, agencées par
+  // layoutGalleryRows selon leur ratio réel (cf. plus bas).
+  const galleryImages = useMemo(() => images.slice(0, 5), [images]);
+
+  // Ratio (largeur/hauteur naturelle) de chaque photo, connu une fois chargée
+  // — persistant en ref (pas d'état par url) pour ne provoquer qu'un seul
+  // re-render groupé par photo plutôt qu'une cascade de re-renders liés.
+  const galleryRatiosRef = useRef({});
+  const [galleryRatioTick, setGalleryRatioTick] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    galleryImages.forEach(({ url }) => {
+      if (!url || galleryRatiosRef.current[url]) return;
+      const probe = new window.Image();
+      probe.onload = () => {
+        if (cancelled || galleryRatiosRef.current[url]) return;
+        galleryRatiosRef.current[url] = probe.naturalWidth / probe.naturalHeight;
+        setGalleryRatioTick((n) => n + 1);
+      };
+      probe.src = url;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [galleryImages]);
+
+  // Espace réellement dispo pour la galerie (dépend du breakpoint via les
+  // classes Tailwind sur le conteneur, cf. rendu plus bas) — mesuré plutôt que
+  // recalculé en JS pour rester la seule source de vérité côté CSS.
+  const galleryContainerRef = useRef(null);
+  const [galleryContainerSize, setGalleryContainerSize] = useState({ width: 0, height: 0 });
+  useLayoutEffect(() => {
+    const el = galleryContainerRef.current;
+    // Le conteneur n'existe qu'une fois `boat` chargé (rendu conditionnel) :
+    // sans `boat` en dépendance, cet effet mesurerait une ref encore nulle au
+    // montage et ne se relancerait jamais après le fetch.
+    if (!el) return undefined;
+    const measure = () =>
+      setGalleryContainerSize({ width: el.clientWidth, height: el.clientHeight });
+    measure();
+    const observer = new window.ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [boat]);
+
+  // Ratio par défaut (paysage) tant qu'une photo n'a pas encore fini de
+  // charger — la plupart des photos bateau le sont, meilleure estimation
+  // qu'un carré avant d'avoir la vraie valeur.
+  const galleryLayout = useMemo(
+    () =>
+      layoutGalleryRows(
+        galleryImages.map((img, i) => ({
+          key: img.url ?? i,
+          url: img.url,
+          ratio: (img.url && galleryRatiosRef.current[img.url]) || 1.5,
+        })),
+        galleryContainerSize.width,
+        galleryContainerSize.height,
+        GALLERY_GAP
+      ),
+    // galleryRatioTick force le recalcul quand une photo finit de charger ;
+    // galleryRatiosRef lui-même n'est pas une dépendance réactive.
+    [galleryImages, galleryContainerSize, galleryRatioTick]
+  );
   const typeLabel = boat ? t(`carrousel.boatType.${boat.type}`, { defaultValue: boat.type }) : '';
   const isAvailable = (boat?.availabilities?.length ?? 0) > 0;
   const [reviewBooking, setReviewBooking] = useState(null);
@@ -678,7 +828,16 @@ function ProductPage() {
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
           {/* Section 1 — Searchbar + fil d'ariane sticky */}
-          <section className="relative z-40 w-full">
+          <section
+            className="sticky z-40 w-full"
+            style={{
+              top: scrolled ? '60px' : '80px',
+              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
+              backdropFilter: scrolled ? 'blur(5px)' : 'none',
+              WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
+              transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
+            }}
+          >
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
@@ -691,14 +850,24 @@ function ProductPage() {
               <div style={slideInStyle(0)}>
                 <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
               </div>
-              {/* Vers catégorie/accueil : le FLIP (ci-dessus) prend le relai
-                  via une manipulation directe du style, la barre ne doit donc
-                  recevoir aucun style concurrent ici. Vers une page statique
-                  (contact/à propos, cf. exitIsGeneric) : elle glisse comme un
-                  bloc de plus, avec le reste de la cascade. */}
+              {/* Avec continuité catégorie/accueil : le FLIP (ci-dessus) prend
+                  le relai via une manipulation directe du style, la barre ne
+                  doit donc recevoir aucun style React concurrent ici. Sans
+                  continuité — arrivée directe/actualisation, ou départ vers
+                  une page statique (contact/à propos, cf. exitIsGeneric) —
+                  elle entre/sort comme un bloc de plus, avec le reste de la
+                  cascade. */}
               <div
                 ref={searchBarWrapRef}
-                style={exiting && exitIsGeneric ? slideOutStyle(0, 'right') : undefined}
+                style={
+                  exiting
+                    ? exitIsGeneric
+                      ? slideOutStyle(0, 'right')
+                      : undefined
+                    : hasSearchBarContinuity
+                      ? undefined
+                      : slideInStyle(0, 'right')
+                }
               >
                 <SearchBar light compact={scrolled} />
               </div>
@@ -722,41 +891,45 @@ function ProductPage() {
           {boat && (
             <div className="flex flex-col items-stretch gap-6 px-4 py-5 pb-12 sm:px-8 lg:px-16 xl:flex-row xl:items-start xl:pl-28 xl:pr-20">
               {/* Colonne principale */}
-              <div className="contents xl:flex xl:min-w-0 xl:flex-1 xl:flex-col xl:gap-5">
-                {/* Galerie : image principale + vues secondaires (jusqu'à 4) */}
+              <div className="contents xl:flex xl:min-w-0 xl:flex-[7_3_0%] xl:flex-col xl:gap-5">
+                {/* Galerie : image principale + vues secondaires (jusqu'à 4),
+                    agencées par layoutGalleryRows selon leur ratio réel — jamais
+                    recadrées ni déformées. L'espace dédié (hauteur fixe) reste
+                    identique à avant ; un vide résiduel est accepté si
+                    l'agencement naturel est plus compact que cet espace. */}
                 <div
-                  className="order-1 grid h-[340px] grid-cols-1 grid-rows-1 gap-2 sm:h-[440px] sm:gap-4 xl:order-none xl:grid-cols-4 xl:grid-rows-2"
+                  ref={galleryContainerRef}
+                  className="order-1 relative h-[395px] sm:h-[495px] xl:order-none"
                   style={slideInStyleLate('gallery', 1)}
                 >
                   <div
-                    className={`relative overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] group sm:rounded-3xl ${
-                      thumbs.length > 0
-                        ? 'col-span-1 row-span-1 xl:col-span-2 xl:row-span-2'
-                        : 'col-span-1 row-span-1 xl:col-span-4 xl:row-span-2'
-                    }`}
+                    className="absolute inset-0 flex flex-col items-center justify-center"
+                    style={{ gap: GALLERY_GAP }}
                   >
-                    <img
-                      src={images[0]?.url ?? ''}
-                      alt={boat.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                    {galleryLayout.map((row, rowIndex) => (
+                      <div
+                        key={rowIndex}
+                        className="flex items-center"
+                        style={{ gap: GALLERY_GAP }}
+                      >
+                        {row.items.map((item) => (
+                          <img
+                            key={item.key}
+                            src={item.url}
+                            alt={boat.name}
+                            loading={rowIndex === 0 ? undefined : 'lazy'}
+                            decoding="async"
+                            className="rounded-2xl object-cover"
+                            style={{
+                              height: `${row.height}px`,
+                              width: `${row.height * item.ratio}px`,
+                              display: 'block',
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ))}
                   </div>
-                  {thumbs.map((img) => (
-                    <div
-                      key={img.url}
-                      className={`relative hidden overflow-hidden rounded-2xl border border-white/50 shadow-[0_8px_32px_rgba(14,165,233,0.15)] sm:rounded-3xl xl:block ${
-                        thumbs.length === 1 ? 'xl:col-span-2 xl:row-span-2' : ''
-                      }`}
-                    >
-                      <img
-                        src={img.url}
-                        alt={boat.name}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  ))}
                 </div>
 
                 {/* Spécifications : juste sous la galerie, dans la même
@@ -783,7 +956,7 @@ function ProductPage() {
                         scrollMarginTop: ANCHOR_OFFSETS.specifications,
                         ...(exiting
                           ? slideOutStyle(2, 'left')
-                          : transitionPayload && {
+                          : animatedEntry && {
                               animation: 'pageBgFadeIn 400ms ease both',
                             }),
                       }}
@@ -848,9 +1021,9 @@ function ProductPage() {
 
               {/* Panneau info + réservation — largeur fixe, sticky sous les barres fixes */}
               <aside
-                className="shrink-0 sticky flex flex-col gap-3"
+                className="shrink-0 sticky flex flex-col gap-3 xl:flex-[3_1_0%] xl:min-w-[530px]"
                 style={{
-                  width: '384px',
+                  width: '410px',
                   top: `${panelStickyTop}px`,
                   transition: 'top 0.3s ease',
                 }}

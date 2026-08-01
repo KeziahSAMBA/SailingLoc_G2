@@ -10,7 +10,7 @@ import {
   CATEGORY_ENTER_TOTAL,
   INTRO_SOFT_EASING,
 } from '../../../hooks/useCategoryTransition.js';
-import { usePageExitNavigate } from '../../../hooks/usePageTransition.js';
+import { usePageExitNavigate, EXIT_TRANSITION_PAGES } from '../../../hooks/usePageTransition.js';
 import { getUnreadCount } from '../../../services/messageService.js';
 import { nameToAvatarUrl } from '../../../utils/avatar.js';
 import { useScrolled } from './shared/useScrolled.js';
@@ -145,7 +145,7 @@ function DashboardHeader({
     e.preventDefault();
     if (location.pathname === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (location.pathname === '/contact' || location.pathname === '/a-propos') {
+    } else if (EXIT_TRANSITION_PAGES.includes(location.pathname)) {
       pageExitNavigate('/');
     } else {
       goHome();
@@ -158,7 +158,7 @@ function DashboardHeader({
       scrollToAnchor(anchor, location.pathname);
     } else if (to === location.pathname) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (location.pathname === '/contact' || location.pathname === '/a-propos') {
+    } else if (EXIT_TRANSITION_PAGES.includes(location.pathname)) {
       pageExitNavigate(to);
     } else {
       categoryNavigate(to);
