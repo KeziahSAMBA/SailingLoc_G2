@@ -121,11 +121,11 @@ function FilterBar({
 
   useEffect(() => {
     const el = ghostRef.current;
-    if (!el) return undefined;
+    if (!el || typeof window === 'undefined' || !window.ResizeObserver) return undefined;
     // +2px : marge de sécurité contre l'arrondi sous-pixel d'offsetWidth —
     // sans elle, un chip pile à la limite peut se faire couper un mot et
     // repasser à la ligne au lieu de rester sur une seule ligne.
-    const observer = new ResizeObserver(() => setHeaderWidth(el.offsetWidth + 2));
+    const observer = new window.ResizeObserver(() => setHeaderWidth(el.offsetWidth + 2));
     observer.observe(el);
     return () => observer.disconnect();
   }, []);

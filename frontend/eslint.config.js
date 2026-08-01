@@ -31,6 +31,7 @@ export default [
         URLSearchParams: 'readonly',
         Intl: 'readonly',
         AbortController: 'readonly',
+        ResizeObserver: 'readonly',
       },
     },
     rules: {
