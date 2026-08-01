@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FaPhone, FaEnvelope, FaComments } from 'react-icons/fa6';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { sendContactRequest } from '../services/contactService.js';
 import { contactSupport } from '../services/messageService.js';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
+import categoryBg from '../assets/image/paysage/cote_azur.jpg';
+import aboutBg from '../assets/image/paysage/about_bg.jpg';
+import { usePageExitNavigate, usePageSlideTransition } from '../hooks/usePageTransition.js';
+import {
+  PAGE_SLIDE_CSS,
+  PHOTO_OVERLAY_BOAT,
+  PHOTO_OVERLAY_STATIC_PAGE,
+  NAV_ENTER_TOTAL,
+} from '../hooks/useCategoryTransition.js';
 
 // Rubriques d'aide : mêmes questions que le footer, avec leurs réponses.
 function getFAQ(t) {
@@ -43,10 +51,24 @@ const PHOTO_BG_STYLE = {
   backgroundAttachment: 'fixed',
 };
 
+// Cascade d'entrée/sortie de la page : 0 titre, 1 sous-titre, 2 kicker
+// "Nous joindre", 3 titre coordonnées, 4 les 3 cartes (bloc unique),
+// 5 formulaire, 6 FAQ — atterrissage commun à NAV_ENTER_TOTAL, comme toutes
+// les pages (cf. useCategoryTransition.js).
+const CONTACT_ENTER_TOTAL = NAV_ENTER_TOTAL;
+
+// Constante de module (et non recréé à chaque rendu) : usePageSlideTransition
+// resouscrit son effet de sortie à chaque changement de référence.
+const CONTACT_STATIC_BG_TARGETS = { '/categorie': categoryBg, '/a-propos': aboutBg };
+
 function ContactPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const pageExitNavigate = usePageExitNavigate();
+  const { slide, exitBgSrc } = usePageSlideTransition(CONTACT_ENTER_TOTAL, {
+    ownBg: contactBg,
+    staticBgTargets: CONTACT_STATIC_BG_TARGETS,
+  });
   const [chatBusy, setChatBusy] = useState(false);
 
   // Rubriques FAQ ouvertes (plusieurs à la fois possible), pour l'effet de
@@ -72,10 +94,10 @@ function ContactPage() {
     setChatBusy(true);
     try {
       const res = await contactSupport();
-      navigate(messagesPath, { state: { openUser: res.data.admin } });
+      pageExitNavigate(messagesPath, { state: { openUser: res.data.admin } });
     } catch {
       // En cas de pépin, on retombe simplement sur la messagerie.
-      navigate(messagesPath);
+      pageExitNavigate(messagesPath);
     } finally {
       setChatBusy(false);
     }
@@ -125,17 +147,40 @@ function ContactPage() {
   }, [t]);
 
   return (
-    <main className="w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
+    <main className="relative w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
+      <style>{PAGE_SLIDE_CSS}</style>
+      {/* Crossfade vers le fond de la catégorie ou d'à propos pendant la
+          sortie : se pose derrière les blocs (qui glissent hors écran
+          par-dessus) et atterrit à pleine opacité pile pour le montage réel
+          de la page cible, qui utilise nativement cette même image. */}
+      {exitBgSrc && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `${exitBgSrc === categoryBg ? PHOTO_OVERLAY_BOAT : PHOTO_OVERLAY_STATIC_PAGE}, url(${exitBgSrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            animation: `pageBgFadeIn ${CONTACT_ENTER_TOTAL}ms ease forwards`,
+          }}
+        />
+      )}
       {/* Hero de la page Contact + coordonnées */}
       <section
         id="contact-hero"
         className="relative flex min-h-[100svh] w-full scroll-mt-[80px] flex-col items-center justify-center px-4 pb-10 pt-[96px]"
       >
         <div className="text-center">
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl">
+          <h1
+            className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl"
+            style={slide(0)}
+          >
             {t('contactPage.hero.title')}
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-white/75 sm:text-base">
+          <p
+            className="mx-auto mt-3 max-w-2xl text-sm text-white/75 sm:text-base"
+            style={slide(1, 'right')}
+          >
             {t('contactPage.hero.tagline')}
           </p>
         </div>
@@ -146,18 +191,22 @@ function ContactPage() {
           className="mt-10 w-full max-w-5xl scroll-mt-[80px]"
         >
           <div className="mb-10 text-center">
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
+            <p
+              className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4"
+              style={slide(2)}
+            >
               {t('contactPage.details.kicker')}
             </p>
             <h2
               id="coordonnees-title"
               className="text-xl font-semibold text-white sm:text-2xl md:text-3xl"
+              style={slide(3, 'right')}
             >
               {t('contactPage.details.title')}
             </h2>
           </div>
 
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-8">
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-8" style={slide(4)}>
             <li className={detailCardClass}>
               <FaPhone aria-hidden="true" className="text-3xl text-sky-500" />
               <h3 className="text-sm font-semibold text-white">
@@ -193,12 +242,16 @@ function ContactPage() {
                     : t('contactPage.details.chat.open')}
                 </button>
               ) : (
-                <Link
-                  to="/login"
+                <a
+                  href="/login"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    pageExitNavigate('/login');
+                  }}
                   className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
                 >
                   {t('contactPage.details.chat.login')}
-                </Link>
+                </a>
               )}
             </li>
             <li className={detailCardClass}>
@@ -229,6 +282,7 @@ function ContactPage() {
             id="contact-form"
             aria-labelledby="form-title"
             className="mx-auto w-full max-w-2xl scroll-mt-[130px]"
+            style={slide(5)}
           >
             <div className="mb-6 text-center">
               <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -357,6 +411,7 @@ function ContactPage() {
             id="contact-faq"
             aria-labelledby="faq-title"
             className="mx-auto w-full max-w-3xl scroll-mt-[130px]"
+            style={slide(6, 'right')}
           >
             <div className="mb-6 text-center">
               <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
@@ -420,12 +475,16 @@ function ContactPage() {
                   {t('contactPage.faq.contactDirect')}
                 </button>
               ) : (
-                <Link
-                  to="/login"
+                <a
+                  href="/login"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    pageExitNavigate('/login');
+                  }}
                   className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
                 >
                   {t('contactPage.faq.contactDirect')}
-                </Link>
+                </a>
               )}{' '}
               — {t('contactPage.faq.otherSuffix')}
             </p>

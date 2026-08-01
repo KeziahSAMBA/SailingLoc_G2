@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import bgImage from '../../assets/image/paysage/crique.jpg';
+import bgImage from '../../assets/image/paysage/dashboard_bg.jpg';
 
 function ProprietaireLayout() {
   const { t } = useTranslation();
@@ -16,15 +16,13 @@ function ProprietaireLayout() {
   ];
 
   return (
-    // Même univers visuel que l'accueil et la page produit : photo plein écran
-    // sous un voile sombre (contraste des textes) et panneaux en verre dépoli.
+    // Même univers visuel que les autres pages : photo plein écran sous un
+    // voile noir transparent (contraste des textes) et panneaux en verre dépoli.
     <div
       className="min-h-screen bg-cover bg-fixed bg-center text-white"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      {/* Voile dégradé accroché au viewport comme la photo : renforcé en haut,
-          où le ciel clair rendait laiteuses les cartes en verre au scroll. */}
-      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60">
+      <div className="min-h-screen w-full bg-black/40">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
           {/* Menu : pleine largeur sur mobile (barre horizontale défilable),
               colonne latérale à partir de lg. */}
