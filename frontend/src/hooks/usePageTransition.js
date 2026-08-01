@@ -6,7 +6,7 @@ import {
   unlockScroll,
   smoothScrollToTop,
   setTransitionPayload,
-  CATEGORY_ENTER_STAGGER,
+  NAV_ENTER_STAGGER,
   CATEGORY_ENTER_EASING,
   CATEGORY_EXIT_EASING,
 } from './useCategoryTransition.js';
@@ -22,7 +22,21 @@ import {
 const PAGE_EXIT_EVENT = 'sailingloc:page-exit-transition';
 
 // Pages équipées de leur propre animation de sortie — à étendre page par page.
-const EXIT_TRANSITION_PAGES = ['/contact', '/a-propos'];
+// Aussi la liste des destinations vers lesquelles Home/Catégorie/Produit
+// (STATIC_EXIT_AWARE_PAGES) jouent eux-mêmes une sortie avant de naviguer :
+// chacune de ces pages gère sa propre résolution de fond cible (cf. leur
+// beginExitToStatic) et son propre voile (cf. PHOTO_OVERLAY_*).
+// Exportée : les headers (Header.jsx, DashboardHeader.jsx) s'y réfèrent pour
+// savoir quand router leurs clics (logo, nav) via pageExitNavigate plutôt que
+// via useHomeNavigate/useCategoryNavigate (qui ignorent ces origines).
+export const EXIT_TRANSITION_PAGES = [
+  '/contact',
+  '/a-propos',
+  '/cgu',
+  '/cgv',
+  '/politique-de-confidentialite',
+  '/mentions-legales',
+];
 
 const isOnPath = (pathname, base) => pathname === base || pathname.startsWith(`${base}/`);
 
@@ -56,10 +70,10 @@ const STATIC_EXIT_AWARE_PAGES = ['/', '/categorie', '/product'];
 // nouvel état (ex. ouvrir une conversation précise dans la messagerie).
 //
 // Cas symétrique — depuis une page de STATIC_EXIT_AWARE_PAGES vers une page
-// statique (contact/à propos) : ces pages gèrent elles-mêmes leur cascade de
-// sortie et ne doivent pas en jouer une pour CHAQUE destination — la modale
-// de connexion, par exemple, laisse la page de fond montée
-// (backgroundLocation), et une sortie y resterait glissée hors écran
+// statique (contact/à propos/pages légales) : ces pages gèrent elles-mêmes
+// leur cascade de sortie et ne doivent pas en jouer une pour CHAQUE
+// destination — la modale de connexion, par exemple, laisse la page de fond
+// montée (backgroundLocation), et une sortie y resterait glissée hors écran
 // indéfiniment. On ne l'intercepte donc que vers une destination connue de
 // EXIT_TRANSITION_PAGES, sur le modèle destination-par-destination de
 // useHomeNavigate/useProductNavigate (useCategoryTransition.js).
@@ -104,8 +118,12 @@ export function usePageExitNavigate() {
 //     propre fond fait un crossfade vers cette image avant de naviguer (page
 //     statique comme nous — inutile qu'elle rejoue quoi que ce soit à
 //     l'arrivée, le raccord est déjà invisible à son montage).
+//   - `skipEnter` : pas d'entrée à jouer même en navigation interne — pour un
+//     groupe de pages sœurs qui naviguent librement entre elles sans
+//     transition (onglets légaux) : la page d'origine pose ce signal via
+//     `location.state` sur le lien emprunté (cf. LegalLayout.jsx).
 export function usePageSlideTransition(totalDuration, bgHandoff = {}) {
-  const { ownBg, staticBgTargets } = bgHandoff;
+  const { ownBg, staticBgTargets, skipEnter = false } = bgHandoff;
   const navigate = useNavigate();
   const location = useLocation();
   // react-router ne donne la clé "default" qu'à l'entrée d'historique du tout
@@ -114,7 +132,7 @@ export function usePageSlideTransition(totalDuration, bgHandoff = {}) {
   // donc pas d'entrée à jouer. Toute navigation interne (même vers une page
   // déjà visitée dans la session) reçoit une clé générée, différente.
   const [enterActive, setEnterActive] = useState(
-    () => location.key !== 'default' && !prefersReducedMotion()
+    () => !skipEnter && location.key !== 'default' && !prefersReducedMotion()
   );
   const [exiting, setExiting] = useState(false);
   // Crossfade de sortie vers une cible de bgHandoff.staticBgTargets ci-dessus :
@@ -171,7 +189,7 @@ export function usePageSlideTransition(totalDuration, bgHandoff = {}) {
     (order, from = 'left') => {
       if (exiting) {
         const keyframes = from === 'left' ? 'categorySlideOutLeft' : 'categorySlideOutRight';
-        const duration = totalDuration - order * CATEGORY_ENTER_STAGGER;
+        const duration = totalDuration - order * NAV_ENTER_STAGGER;
         return {
           animation: `${keyframes} ${duration}ms ${CATEGORY_EXIT_EASING} both`,
           willChange: 'transform',
@@ -179,7 +197,7 @@ export function usePageSlideTransition(totalDuration, bgHandoff = {}) {
       }
       if (enterActive) {
         const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
-        const delay = order * CATEGORY_ENTER_STAGGER;
+        const delay = order * NAV_ENTER_STAGGER;
         return {
           animation: `${keyframes} ${totalDuration - delay}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
           willChange: 'transform',

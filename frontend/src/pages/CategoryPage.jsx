@@ -13,6 +13,7 @@ import bateauBg from '../assets/image/paysage/cote_azur.jpg';
 import productBg from '../assets/image/paysage/crique.jpg';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
 import aboutBg from '../assets/image/paysage/about_bg.jpg';
+import legalBg from '../assets/image/portrait/cgu.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -42,11 +43,11 @@ import {
   PAGE_SLIDE_CSS,
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
-  CATEGORY_ENTER_STAGGER,
-  CATEGORY_ENTER_TOTAL,
   CATEGORY_ENTER_EASING,
   CATEGORY_EXIT_EASING,
-  HERO_EXIT_DURATION,
+  NAV_ENTER_DURATION,
+  NAV_ENTER_STAGGER,
+  CATEGORY_PRODUCT_NAV_TOTAL as CATEGORY_NAV_TOTAL,
   INTRO_SOFT_EASING,
 } from '../hooks/useCategoryTransition.js';
 import { onPageExitRequest } from '../hooks/usePageTransition.js';
@@ -398,7 +399,7 @@ function CategoryPage() {
             boatName: boatsRef.current.find((b) => b.id === productId)?.name ?? null,
           });
           navigate(to);
-        }, CATEGORY_ENTER_TOTAL);
+        }, CATEGORY_NAV_TOTAL);
       };
     // Sortie vers une page statique (contact/à propos) : même cascade, sans
     // payload à transmettre — ces pages rejouent leur propre entrée sur la
@@ -410,12 +411,12 @@ function CategoryPage() {
       lockScroll();
       await smoothScrollToTop();
       if (cancelled) return;
-      setExitBgSrc(to === '/a-propos' ? aboutBg : contactBg);
+      setExitBgSrc(to === '/a-propos' ? aboutBg : to === '/contact' ? contactBg : legalBg);
       setExitIsGeneric(true);
       setExiting(true);
       navTimer = setTimeout(() => {
         navigate(to, options);
-      }, CATEGORY_ENTER_TOTAL);
+      }, CATEGORY_NAV_TOTAL);
     };
     const unsubHome = onHomeTransitionRequest(beginExit('home'));
     const unsubProduct = onProductTransitionRequest(beginExit('product'));
@@ -587,12 +588,12 @@ function CategoryPage() {
   // (même traitement que le "Bienvenue sur" de l'intro HomePage), rejoue à
   // chaque arrivée sur la page et s'inverse dès la sortie. Son apparition est
   // calée sur l'atterrissage commun de la cascade des autres blocs
-  // (CATEGORY_ENTER_TOTAL) pour donner l'illusion que tout arrive ensemble —
+  // (CATEGORY_NAV_TOTAL) pour donner l'illusion que tout arrive ensemble —
   // sans quoi le fondu, plus court, finissait avant eux. Sans cascade
   // (arrivée directe, pas de transitionPayload), apparition immédiate.
   const [titlesVisible, setTitlesVisible] = useState(false);
   useEffect(() => {
-    const delay = transitionPayload ? Math.max(CATEGORY_ENTER_TOTAL - HERO_EXIT_DURATION, 0) : 0;
+    const delay = transitionPayload ? Math.max(CATEGORY_NAV_TOTAL - NAV_ENTER_DURATION, 0) : 0;
     const timer = setTimeout(() => setTitlesVisible(true), delay);
     return () => clearTimeout(timer);
   }, [transitionPayload]);
@@ -602,7 +603,7 @@ function CategoryPage() {
   const titleFadeStyle = {
     opacity: titlesVisible ? 1 : 0,
     transform: titlesVisible ? 'none' : 'translateY(14px)',
-    transition: `opacity ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}, transform ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}`,
+    transition: `opacity ${NAV_ENTER_DURATION}ms ${INTRO_SOFT_EASING}, transform ${NAV_ENTER_DURATION}ms ${INTRO_SOFT_EASING}`,
   };
 
   // Fenêtre d'entrée : assez large pour couvrir les blocs montés en retard
@@ -612,8 +613,9 @@ function CategoryPage() {
   useEffect(() => {
     if (!enterActive) return undefined;
     // Marge après l'atterrissage commun pour couvrir une grille de fiches
-    // montée en retard (API lente) sans lui couper son animation en vol.
-    const timer = setTimeout(() => setEnterActive(false), CATEGORY_ENTER_TOTAL + 1500);
+    // montée en retard (API lente) sans lui couper son animation en vol —
+    // fenêtre de tolérance réseau, pas un temps d'animation à raccourcir.
+    const timer = setTimeout(() => setEnterActive(false), CATEGORY_NAV_TOTAL + 800);
     return () => clearTimeout(timer);
   }, [enterActive]);
 
@@ -637,16 +639,25 @@ function CategoryPage() {
     // tout premier rendu) et atterrissait après elle au lieu d'en même temps.
     void el.offsetWidth;
     const raf = window.requestAnimationFrame(() => {
-      el.style.transition = `transform ${CATEGORY_ENTER_TOTAL}ms ${CATEGORY_ENTER_EASING}`;
+      el.style.transition = `transform ${CATEGORY_NAV_TOTAL}ms ${CATEGORY_ENTER_EASING}`;
       el.style.transform = 'none';
     });
     const resetStyles = () => {
-      el.style.transform = '';
-      el.style.transition = '';
+      el.style.transition = 'none';
+      el.style.transform = 'none';
+      // Force le navigateur à acter l'annulation immédiatement (transition
+      // coupée à la volée) avant que quoi que ce soit d'autre ne mesure cet
+      // élément — StrictMode démonte l'effet quelques ms après le rAF,
+      // transition à peine commencée : sans ce flush, la 2de passe
+      // mesurerait une position encore quasi identique à `from`, et plus
+      // aucune animation visible ne jouerait.
+      void el.getBoundingClientRect();
       el.style.transformOrigin = '';
       el.style.willChange = '';
+      el.style.transition = '';
+      el.style.transform = '';
     };
-    const cleanupTimer = setTimeout(resetStyles, CATEGORY_ENTER_TOTAL + 100);
+    const cleanupTimer = setTimeout(resetStyles, CATEGORY_NAV_TOTAL + 100);
     return () => {
       window.cancelAnimationFrame(raf);
       clearTimeout(cleanupTimer);
@@ -662,7 +673,7 @@ function CategoryPage() {
   // barre de filtres en dernier), chacun vers sa marge d'origine.
   function slideOutStyle(order, from) {
     const keyframes = from === 'left' ? 'categorySlideOutLeft' : 'categorySlideOutRight';
-    const duration = CATEGORY_ENTER_TOTAL - order * CATEGORY_ENTER_STAGGER;
+    const duration = CATEGORY_NAV_TOTAL - order * NAV_ENTER_STAGGER;
     return {
       animation: `${keyframes} ${duration}ms ${CATEGORY_EXIT_EASING} both`,
       // Promeut le bloc sur sa propre couche de composition avant le premier
@@ -674,14 +685,14 @@ function CategoryPage() {
   // Entrée décalée des blocs depuis les marges (direction alternée par bloc),
   // en écho à la sortie des éléments du hero. Hors fenêtre : aucun style.
   // Chaque bloc part avec son décalage mais sa durée est allongée d'autant,
-  // pour que tous atterrissent à CATEGORY_ENTER_TOTAL pile.
+  // pour que tous atterrissent à CATEGORY_NAV_TOTAL pile.
   function slideInStyle(order, from = 'left') {
     if (exiting) return slideOutStyle(order, from);
     if (!enterActive) return undefined;
     const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
-    const delay = order * CATEGORY_ENTER_STAGGER;
+    const delay = order * NAV_ENTER_STAGGER;
     return {
-      animation: `${keyframes} ${CATEGORY_ENTER_TOTAL - delay}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
+      animation: `${keyframes} ${CATEGORY_NAV_TOTAL - delay}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
       willChange: 'transform',
     };
   }
@@ -690,7 +701,7 @@ function CategoryPage() {
   // la réponse de l'API) : le délai est recalé sur l'horloge globale de la
   // cascade au moment du montage — négatif si le départ est déjà passé, ce qui
   // fait reprendre l'animation en cours de vol pour atterrir à
-  // CATEGORY_ENTER_TOTAL en même temps que les autres blocs. Le style est figé
+  // CATEGORY_NAV_TOTAL en même temps que les autres blocs. Le style est figé
   // au premier calcul : le recalculer à chaque rendu redémarrerait l'animation.
   function slideInStyleLate(key, order, from = 'left') {
     if (exiting) return slideOutStyle(order, from);
@@ -698,10 +709,10 @@ function CategoryPage() {
     const cache = lateAnimCache.current;
     if (!cache[key]) {
       const keyframes = from === 'left' ? 'categorySlideInLeft' : 'categorySlideInRight';
-      const intendedStart = order * CATEGORY_ENTER_STAGGER;
+      const intendedStart = order * NAV_ENTER_STAGGER;
       const delay = intendedStart - (Date.now() - enterStartRef.current);
       cache[key] = {
-        animation: `${keyframes} ${CATEGORY_ENTER_TOTAL - intendedStart}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
+        animation: `${keyframes} ${CATEGORY_NAV_TOTAL - intendedStart}ms ${CATEGORY_ENTER_EASING} ${delay}ms both`,
         willChange: 'transform',
       };
     }
@@ -785,11 +796,11 @@ function CategoryPage() {
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: `${exitBgSrc === contactBg || exitBgSrc === aboutBg ? PHOTO_OVERLAY_STATIC_PAGE : PHOTO_OVERLAY_BOAT}, url(${exitBgSrc})`,
+                backgroundImage: `${exitBgSrc === contactBg || exitBgSrc === aboutBg || exitBgSrc === legalBg ? PHOTO_OVERLAY_STATIC_PAGE : PHOTO_OVERLAY_BOAT}, url(${exitBgSrc})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundAttachment: 'fixed',
-                animation: `pageBgFadeIn ${CATEGORY_ENTER_TOTAL}ms ease forwards`,
+                animation: `pageBgFadeIn ${CATEGORY_NAV_TOTAL}ms ease forwards`,
               }}
             />
           )}
@@ -798,7 +809,16 @@ function CategoryPage() {
           <section className="relative w-full -mt-20" style={{ height: '80px' }} />
 
           {/* Section 1 — Searchbar sticky */}
-          <section className="relative z-20 w-full">
+          <section
+            className="sticky z-20 w-full"
+            style={{
+              top: scrolled ? '60px' : '80px',
+              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
+              backdropFilter: scrolled ? 'blur(5px)' : 'none',
+              WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
+              transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
+            }}
+          >
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
@@ -811,7 +831,10 @@ function CategoryPage() {
               <div style={slideInStyle(1)}>
                 <Breadcrumb light compact={scrolled} />
               </div>
-              <div className="w-full min-w-0 lg:w-52 lg:flex-none xl:w-60" style={slideInStyle(0)}>
+              <div
+                className="w-full min-w-0 lg:w-auto lg:min-w-[13rem] lg:flex-none xl:min-w-[15rem]"
+                style={slideInStyle(0)}
+              >
                 <FilterBar
                   light
                   compact={scrolled}
@@ -908,10 +931,18 @@ function CategoryPage() {
 
             {/* Carte — 45% */}
             {/* Offset sticky = hauteur du header fixe + hauteur de la barre filtre/recherche/fil
-                d'ariane (toutes deux sticky au-dessus) + un petit espace de respiration. */}
+                d'ariane (toutes deux sticky au-dessus) + un petit espace de respiration.
+                height = espace restant sous ce point jusqu'au bas du viewport, avec le
+                contenu centré dedans (justify-center) : la carte (plus courte que cet
+                espace sur sm/lg) se retrouve centrée entre le sous-header et le bas de
+                page au lieu de rester collée en haut avec un vide en dessous. */}
             <aside
-              className="w-[45%] sticky flex flex-col gap-2"
-              style={{ top: `${mapStickyTop}px`, transition: 'top 0.3s ease' }}
+              className="w-[45%] sticky flex flex-col justify-center gap-2"
+              style={{
+                top: `${mapStickyTop}px`,
+                height: `calc(100vh - ${mapStickyTop}px)`,
+                transition: 'top 0.3s ease, height 0.3s ease',
+              }}
             >
               {/* L'animation d'entrée s'applique au bloc interne et non à
                   l'<aside> sticky, dont le style transition (top) doit rester. */}

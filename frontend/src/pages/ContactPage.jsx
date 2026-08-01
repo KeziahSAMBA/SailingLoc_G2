@@ -12,8 +12,7 @@ import {
   PAGE_SLIDE_CSS,
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
-  CATEGORY_ENTER_DURATION,
-  CATEGORY_ENTER_STAGGER,
+  NAV_ENTER_TOTAL,
 } from '../hooks/useCategoryTransition.js';
 
 // Rubriques d'aide : mêmes questions que le footer, avec leurs réponses.
@@ -54,10 +53,9 @@ const PHOTO_BG_STYLE = {
 
 // Cascade d'entrée/sortie de la page : 0 titre, 1 sous-titre, 2 kicker
 // "Nous joindre", 3 titre coordonnées, 4 les 3 cartes (bloc unique),
-// 5 formulaire, 6 FAQ.
-const CONTACT_ENTER_LAST_ORDER = 6;
-const CONTACT_ENTER_TOTAL =
-  CATEGORY_ENTER_DURATION + CONTACT_ENTER_LAST_ORDER * CATEGORY_ENTER_STAGGER;
+// 5 formulaire, 6 FAQ — atterrissage commun à NAV_ENTER_TOTAL, comme toutes
+// les pages (cf. useCategoryTransition.js).
+const CONTACT_ENTER_TOTAL = NAV_ENTER_TOTAL;
 
 // Constante de module (et non recréé à chaque rendu) : usePageSlideTransition
 // resouscrit son effet de sortie à chaque changement de référence.
