@@ -120,15 +120,15 @@ const Footer = () => {
           <img src={logoLong} alt="SailingLoc logo" className="w-32 sm:w-36" />
         </div>
         <div className="hidden lg:block" />
-        <div className="order-2 flex min-w-0 flex-col items-start gap-4 border-b border-white/20 pb-6 sm:flex-row sm:items-center lg:order-none lg:flex-row lg:border-0 lg:pb-0">
-          <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto">
+        <div className="order-2 flex min-w-0 flex-row items-center gap-2 border-b border-white/20 pb-6 sm:gap-4 lg:order-none lg:border-0 lg:pb-0">
+          <div className="flex w-fit min-w-0 flex-wrap gap-1 sm:gap-2">
             {APP_LINKS.map(({ icon, label, href }) => (
               <a
                 key={label}
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs"
+                className="inline-flex w-fit min-w-0 flex-none items-center justify-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-xs sm:px-2.5"
                 style={appBtnStyle}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
@@ -146,7 +146,7 @@ const Footer = () => {
               </a>
             ))}
           </div>
-          <div className="flex gap-4 text-xl">
+          <div className="flex shrink-0 gap-2 text-lg sm:gap-4 sm:text-xl">
             {SOCIAL_LINKS.map(({ icon, label, href, hoverClass }) => (
               <a
                 key={label}
