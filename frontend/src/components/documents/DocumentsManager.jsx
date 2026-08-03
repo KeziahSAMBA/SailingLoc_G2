@@ -192,13 +192,13 @@ function DocumentRow({ config, docs, onChanged, stackFilePickerOnMobile }) {
         <label
           className={
             stackFilePickerOnMobile
-              ? 'flex w-full min-w-0 flex-col items-stretch gap-2 text-sm text-white/70 sm:max-w-xs sm:flex-1 sm:flex-row sm:items-center sm:gap-3'
+              ? 'flex w-full min-w-0 flex-col items-start gap-2 text-sm text-white/70 sm:max-w-xs sm:flex-1 sm:flex-row sm:items-center sm:gap-3'
               : 'flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-white/70'
           }
         >
           <span
             className={`shrink-0 cursor-pointer rounded-full border-0 bg-[#5AB4EC]/15 px-4 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/25 ${
-              stackFilePickerOnMobile ? 'text-center' : ''
+              stackFilePickerOnMobile ? 'self-start whitespace-nowrap text-center sm:self-auto' : ''
             }`}
           >
             {t('documentsManager.chooseFile')}
@@ -226,7 +226,7 @@ function DocumentRow({ config, docs, onChanged, stackFilePickerOnMobile }) {
           onClick={handleUpload}
           disabled={busy || !file}
           className={`rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${
-            stackFilePickerOnMobile ? 'w-full sm:w-auto' : ''
+            stackFilePickerOnMobile ? 'w-fit self-start whitespace-nowrap sm:self-auto' : ''
           }`}
         >
           {busy

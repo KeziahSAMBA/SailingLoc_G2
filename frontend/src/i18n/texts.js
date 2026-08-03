@@ -2328,6 +2328,7 @@ export const TEXTS = {
   accountForm: {
     avatar: {
       alt: { fr: 'Votre photo de profil', en: 'Your profile photo' },
+      manage: { fr: 'Gérer la photo de profil', en: 'Manage profile photo' },
       change: { fr: 'Changer la photo', en: 'Change photo' },
       sending: { fr: 'Envoi…', en: 'Uploading…' },
       remove: { fr: 'Supprimer la photo', en: 'Remove photo' },
