@@ -832,7 +832,7 @@ function ProprietaireReservations() {
                   <button
                     type="button"
                     onClick={messageLocataire}
-                    className={`mt-4 w-full rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 ${FOCUS_RING}`}
+                    className={`mt-4 w-fit max-w-full whitespace-nowrap rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 sm:w-full ${FOCUS_RING}`}
                   >
                     {t('proprietaireReservations.locataire.sendMessage')}
                   </button>

@@ -904,7 +904,7 @@ function ProprietaireBoatForm() {
             type="button"
             disabled={submitting}
             onClick={() => navigate('/proprietaire/bateaux')}
-            className={`w-full rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 sm:w-auto ${FOCUS_RING}`}
+            className={`w-fit max-w-full self-start whitespace-nowrap rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 sm:self-auto ${FOCUS_RING}`}
           >
             {t('proprietaireBoatForm.cancel')}
           </button>
@@ -914,7 +914,7 @@ function ProprietaireBoatForm() {
               type="button"
               disabled={submitting}
               onClick={(e) => handleSubmit(e, true)}
-              className={`w-full rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 sm:w-auto ${FOCUS_RING}`}
+              className={`w-fit max-w-full self-start whitespace-nowrap rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 sm:self-auto ${FOCUS_RING}`}
             >
               {t('proprietaireBoatForm.saveDraft')}
             </button>
@@ -922,7 +922,7 @@ function ProprietaireBoatForm() {
           <button
             type="submit"
             disabled={submitting}
-            className={`w-full rounded-full bg-sky-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${FOCUS_RING}`}
+            className={`w-fit max-w-full self-start whitespace-nowrap rounded-full bg-sky-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto ${FOCUS_RING}`}
           >
             {submitting
               ? t('proprietaireBoatForm.sending')
