@@ -248,7 +248,7 @@ function AdminBookingsPage() {
             ))}
           </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -341,8 +341,8 @@ function AdminBookingsPage() {
             </table>
           </div>
 
-          {/* Mobile : une carte par réservation (le tableau ci-dessus est masqué). */}
-          <ul className="mt-4 space-y-3 lg:hidden">
+          {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
+          <ul className="mt-4 space-y-3 xl:hidden">
             {bookingsLoading || bookings.length === 0 ? (
               <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
                 {bookingsLoading ? t('adminBookings.loading') : t('adminBookings.emptyBookings')}
@@ -428,7 +428,7 @@ function AdminBookingsPage() {
             ))}
           </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
             <table className="w-full text-sm">
               <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
                 <tr>
@@ -528,8 +528,8 @@ function AdminBookingsPage() {
             </table>
           </div>
 
-          {/* Mobile : une carte par litige (le tableau ci-dessus est masqué). */}
-          <ul className="mt-4 space-y-3 lg:hidden">
+          {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
+          <ul className="mt-4 space-y-3 xl:hidden">
             {disputesLoading || disputes.length === 0 ? (
               <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
                 {disputesLoading ? t('adminBookings.loading') : t('adminBookings.emptyDisputes')}
