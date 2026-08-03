@@ -346,7 +346,13 @@ function AccountForm({ compactMobile = false }) {
               disabled={!dirty || saving}
               className="flex-1 rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? t('accountForm.personalInfo.saving') : t('accountForm.personalInfo.save')}
+              {saving
+                ? t('accountForm.personalInfo.saving')
+                : t(
+                    compactMobile
+                      ? 'accountForm.personalInfo.saveShort'
+                      : 'accountForm.personalInfo.save'
+                  )}
             </button>
           </div>
         </form>

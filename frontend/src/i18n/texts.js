@@ -2364,6 +2364,7 @@ export const TEXTS = {
       cancel: { fr: 'Annuler', en: 'Cancel' },
       saving: { fr: 'Enregistrement…', en: 'Saving…' },
       save: { fr: 'Enregistrer les modifications', en: 'Save changes' },
+      saveShort: { fr: 'Enregistrer', en: 'Save' },
       updateSuccess: {
         fr: 'Vos informations ont été mises à jour.',
         en: 'Your information has been updated.',
