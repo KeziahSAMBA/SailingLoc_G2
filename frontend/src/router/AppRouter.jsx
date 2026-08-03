@@ -26,6 +26,7 @@ const AdminPortsPage = lazy(() => import('../components/admin/AdminPortsPage.jsx
 const AdminTransactionsPage = lazy(() => import('../components/admin/AdminTransactionsPage.jsx'));
 const AdminMessagesPage = lazy(() => import('../components/admin/AdminMessagesPage.jsx'));
 const AdminContactPage = lazy(() => import('../components/admin/AdminContactPage.jsx'));
+const AdminLogsPage = lazy(() => import('../components/admin/AdminLogsPage.jsx'));
 const AdminAccountPage = lazy(() => import('../components/admin/AdminAccountPage.jsx'));
 const AdminSpectateurLocatairePage = lazy(
   () => import('../components/admin/AdminSpectateurLocatairePage.jsx')
@@ -171,6 +172,7 @@ function AppRouter({ location }) {
         <Route path="transactions" element={suspended(<AdminTransactionsPage />)} />
         <Route path="messages" element={suspended(<AdminMessagesPage />)} />
         <Route path="contact" element={suspended(<AdminContactPage />)} />
+        <Route path="logs" element={suspended(<AdminLogsPage />)} />
         <Route path="compte" element={suspended(<AdminAccountPage />)} />
       </Route>
       {/* Attrape-tout : toute route inconnue affiche la page 404. */}

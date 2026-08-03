@@ -17,6 +17,7 @@ function AdminLayout() {
     { to: '/admin/transactions', label: t('adminLayout.nav.transaction') },
     { to: '/admin/messages', label: t('adminLayout.nav.messages') },
     { to: '/admin/contact', label: t('adminLayout.nav.contact') },
+    { to: '/admin/logs', label: t('adminLayout.nav.logs') },
     { to: '/admin/compte', label: t('adminLayout.nav.account') },
   ];
   return (
