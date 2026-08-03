@@ -289,7 +289,7 @@ function AdminTransactionsPage() {
       </div>
 
       {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
-      <div className="mt-4 flex flex-wrap items-center gap-2 lg:hidden">
+      <div className="mt-4 flex flex-wrap items-center gap-2 xl:hidden">
         <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
           {t('adminTransactions.sortLabel')}
         </span>
@@ -316,7 +316,7 @@ function AdminTransactionsPage() {
       </div>
 
       {/* Tableau (desktop) */}
-      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:block">
+      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -437,8 +437,8 @@ function AdminTransactionsPage() {
         </table>
       </div>
 
-      {/* Mobile : une carte par transaction (le tableau ci-dessus est masqué). */}
-      <ul className="mt-4 space-y-3 lg:hidden">
+      {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
+      <ul className="mt-4 space-y-3 xl:hidden">
         {loading || visiblePayments.length === 0 ? (
           <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
             {loading ? t('adminTransactions.loading') : t('adminTransactions.empty')}
