@@ -53,30 +53,30 @@ function LocataireLayout() {
                 onClick={() => setMobileNavOpen((open) => !open)}
                 className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:hidden"
               >
-                <span className="flex min-w-0 items-baseline gap-2">
-                  <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-white/60">
-                    {t('locataireLayout.mySpace')}
-                  </span>
+                <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-white/60">
+                  {t('locataireLayout.mySpace')}
+                </span>
+                <span className="ml-auto flex min-w-0 items-center gap-2">
                   <span className="min-w-0 truncate text-sm font-semibold text-white">
                     {activeItem.label}
                   </span>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    className={`h-5 w-5 shrink-0 text-white/70 transition-transform duration-200 ${
+                      mobileNavOpen ? 'rotate-180' : ''
+                    }`}
+                  >
+                    <path
+                      d="m5 7.5 5 5 5-5"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </span>
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  className={`h-5 w-5 shrink-0 text-white/70 transition-transform duration-200 ${
-                    mobileNavOpen ? 'rotate-180' : ''
-                  }`}
-                >
-                  <path
-                    d="m5 7.5 5 5 5-5"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
               </button>
 
               <p className="hidden px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-white/60 lg:block">
