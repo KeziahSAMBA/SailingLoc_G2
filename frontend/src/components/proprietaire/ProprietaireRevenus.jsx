@@ -754,7 +754,7 @@ function ProprietaireRevenus() {
             ) : (
               <>
                 <ul
-                  className="divide-y divide-white/15 md:hidden"
+                  className="divide-y divide-white/15 xl:hidden"
                   aria-label={t('proprietaireRevenus.history')}
                 >
                   {pageRows.map((payment) => (
@@ -764,7 +764,7 @@ function ProprietaireRevenus() {
                   ))}
                 </ul>
 
-                <div className="hidden overflow-x-auto md:block">
+                <div className="hidden overflow-x-auto xl:block">
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-white/20 text-xs uppercase tracking-wide text-white/60">
