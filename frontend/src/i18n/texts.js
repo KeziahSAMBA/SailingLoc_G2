@@ -626,10 +626,6 @@ export const TEXTS = {
         fr: 'Chaque annonce est vérifiée par notre équipe — documents, assurance, état du bateau — pour que chaque sortie en mer se fasse en toute confiance. De la voile légère au yacht avec skipper, il y a forcément un bateau pour votre prochaine aventure.',
         en: 'Every listing is checked by our team — documents, insurance, boat condition — so that every trip starts with peace of mind. From light sailing to skippered yachts, there is a boat for your next adventure.',
       },
-      imageAlt: {
-        fr: 'Voilier naviguant le long de la côte méditerranéenne',
-        en: 'Sailboat cruising along the Mediterranean coast',
-      },
     },
     stats: {
       boats: { fr: 'Bateaux vérifiés', en: 'Verified boats' },
@@ -682,6 +678,149 @@ export const TEXTS = {
       },
       browse: { fr: 'Trouver un bateau', en: 'Find a boat' },
       contact: { fr: 'Nous contacter', en: 'Contact us' },
+    },
+  },
+
+  contactPage: {
+    pageTitle: { fr: 'Contact & aide — SailingLoc', en: 'Contact & help — SailingLoc' },
+    hero: {
+      title: { fr: 'Contact & aide', en: 'Contact & help' },
+      tagline: {
+        fr: 'Une question, un souci ? Notre équipe vous répond du lundi au samedi, de 9 h à 18 h.',
+        en: 'A question, an issue? Our team replies Monday to Saturday, 9am to 6pm.',
+      },
+    },
+    details: {
+      kicker: { fr: 'Nous joindre', en: 'Contact us' },
+      title: { fr: 'Trois façons de nous contacter', en: 'Three ways to reach us' },
+      phone: {
+        title: { fr: 'Téléphone', en: 'Phone' },
+        hours: { fr: 'Du lundi au samedi, 9 h – 18 h.', en: 'Monday to Saturday, 9am – 6pm.' },
+      },
+      chat: {
+        title: { fr: 'Chat en ligne', en: 'Live chat' },
+        text: {
+          fr: 'Échangez en direct avec le support depuis votre messagerie.',
+          en: 'Chat live with our support team from your messages.',
+        },
+        open: { fr: 'Ouvrir la messagerie', en: 'Open messages' },
+        opening: { fr: 'Ouverture…', en: 'Opening…' },
+        login: { fr: 'Se connecter pour discuter', en: 'Log in to chat' },
+      },
+      email: {
+        title: { fr: 'Email', en: 'Email' },
+        text: { fr: 'Réponse sous 24 h ouvrées.', en: 'Reply within 24 business hours.' },
+      },
+    },
+    form: {
+      kicker: { fr: 'Écrivez-nous', en: 'Write to us' },
+      title: { fr: 'Envoyer un message', en: 'Send a message' },
+      name: { fr: 'Nom *', en: 'Name *' },
+      email: { fr: 'Email *', en: 'Email *' },
+      subject: { fr: 'Objet *', en: 'Subject *' },
+      subjectPlaceholder: {
+        fr: 'Ex. : question sur une réservation',
+        en: 'E.g.: question about a booking',
+      },
+      message: { fr: 'Message *', en: 'Message *' },
+      messagePlaceholder: { fr: 'Décrivez votre demande…', en: 'Describe your request…' },
+      submit: { fr: 'Envoyer le message', en: 'Send message' },
+      submitting: { fr: 'Envoi…', en: 'Sending…' },
+      error: {
+        fr: 'Une erreur est survenue, réessayez.',
+        en: 'Something went wrong, please try again.',
+      },
+      sent: {
+        title: { fr: 'Message bien envoyé !', en: 'Message sent!' },
+        text: {
+          fr: "Notre équipe vous répondra à l'adresse indiquée sous 24 h ouvrées.",
+          en: 'Our team will reply to the address you provided within 24 business hours.',
+        },
+        again: { fr: 'Envoyer un autre message', en: 'Send another message' },
+      },
+    },
+    faq: {
+      kicker: { fr: 'FAQ', en: 'FAQ' },
+      title: { fr: "Rubriques d'aide", en: 'Help topics' },
+      items: {
+        findBoat: {
+          q: { fr: 'Comment trouver et réserver un bateau ?', en: 'How to find and book a boat?' },
+          a: {
+            fr: 'Parcourez les annonces depuis la page Catégories ou la recherche par port, puis envoyez une demande de réservation aux dates souhaitées. Le propriétaire confirme (ou refuse) votre demande : vous êtes prévenu par email et dans votre espace.',
+            en: "Browse listings from the Categories page or search by port, then send a booking request for your chosen dates. The owner confirms (or declines) your request: you'll be notified by email and in your account.",
+          },
+        },
+        documents: {
+          q: {
+            fr: 'Quels documents sont requis pour louer ?',
+            en: 'What documents are required to rent?',
+          },
+          a: {
+            fr: 'Un permis bateau (côtier ou fluvial selon le bateau), une pièce d’identité en cours de validité et un CV nautique. Déposez-les dans « Mes documents » : notre équipe les vérifie sous 48 h.',
+            en: 'A boat license (coastal or river, depending on the boat), a valid ID and a sailing CV. Upload them under "My documents": our team checks them within 48 hours.',
+          },
+        },
+        cancel: {
+          q: {
+            fr: 'Comment annuler ou modifier une réservation ?',
+            en: 'How to cancel or change a booking?',
+          },
+          a: {
+            fr: 'Rendez-vous dans « Mes réservations » depuis votre espace. Une demande en attente peut être annulée librement ; pour une réservation confirmée, contactez le propriétaire via la messagerie — en cas de désaccord, notre équipe peut arbitrer via un litige.',
+            en: 'Go to "My bookings" in your account. A pending request can be cancelled freely; for a confirmed booking, contact the owner via messaging — in case of disagreement, our team can arbitrate through a dispute.',
+          },
+        },
+        payment: {
+          q: {
+            fr: 'Quels modes de paiement sont acceptés ?',
+            en: 'What payment methods are accepted?',
+          },
+          a: {
+            fr: 'La carte bancaire et le virement. Le paiement est encaissé à la confirmation de la réservation ; SailingLoc prélève une commission de 10 % sur chaque location.',
+            en: 'Credit card and bank transfer. Payment is charged when the booking is confirmed; SailingLoc takes a 10% commission on each rental.',
+          },
+        },
+        listBoat: {
+          q: { fr: 'Comment mettre mon bateau en location ?', en: 'How to list my boat for rent?' },
+          a: {
+            fr: 'Créez un compte propriétaire, puis « Publier un bateau » depuis votre espace : caractéristiques, photos, port d’attache, disponibilités et acte de francisation. Votre annonce est vérifiée par notre équipe avant d’être publiée.',
+            en: 'Create an owner account, then "List a boat" from your account: features, photos, home port, availability and proof of registration. Your listing is checked by our team before being published.',
+          },
+        },
+        insurance: {
+          q: {
+            fr: 'Les bateaux sont-ils assurés pendant la location ?',
+            en: 'Are boats insured during the rental?',
+          },
+          a: {
+            fr: 'Oui : chaque propriétaire doit fournir une attestation d’assurance valide, vérifiée par notre équipe avant la publication de l’annonce.',
+            en: 'Yes: every owner must provide a valid insurance certificate, checked by our team before the listing is published.',
+          },
+        },
+        review: {
+          q: {
+            fr: 'Comment laisser un avis après ma location ?',
+            en: 'How to leave a review after my rental?',
+          },
+          a: {
+            fr: 'Une fois la location terminée, ouvrez « Mes réservations » : un rappel vous invite à noter le bateau et laisser un commentaire. Les avis sont modérés avant publication.',
+            en: 'Once the rental is over, open "My bookings": a reminder invites you to rate the boat and leave a comment. Reviews are moderated before publication.',
+          },
+        },
+        incident: {
+          q: {
+            fr: "Que faire en cas d'incident en mer ?",
+            en: 'What to do in case of an incident at sea?',
+          },
+          a: {
+            fr: 'Votre sécurité d’abord : contactez le CROSS (196 ou VHF canal 16) en cas d’urgence. Ensuite, prévenez le propriétaire via la messagerie et signalez l’incident à notre équipe, qui ouvrira un litige si nécessaire.',
+            en: 'Safety first: contact the CROSS rescue service (196 or VHF channel 16) in an emergency. Then notify the owner via messaging and report the incident to our team, who will open a dispute if needed.',
+          },
+        },
+      },
+      otherQuestion: { fr: 'Une autre question ?', en: 'Another question?' },
+      contactDirect: { fr: 'Contactez-nous en direct', en: 'Contact us directly' },
+      otherSuffix: { fr: 'nous sommes là pour vous aider.', en: "we're here to help." },
     },
   },
 
@@ -2551,6 +2690,405 @@ export const TEXTS = {
     deleteError: { fr: 'Échec de la suppression.', en: 'Deletion failed.' },
     viewError: { fr: "Impossible d'ouvrir le document.", en: 'Unable to open the document.' },
     loading: { fr: 'Chargement…', en: 'Loading…' },
+  },
+
+  legalLayout: {
+    navAria: { fr: 'Documents légaux', en: 'Legal documents' },
+    updatedLabel: { fr: 'Dernière mise à jour : {{date}}', en: 'Last updated: {{date}}' },
+    disclaimer: {
+      fr: "SailingLoc est un projet pédagogique fictif : aucune location, aucun paiement ni aucun engagement contractuel réel n'est possible via ce site. Les présents documents sont rédigés à titre d'exercice et ne constituent pas un conseil juridique.",
+      en: 'SailingLoc is a fictional educational project: no real rental, payment or contractual commitment is possible through this site. These documents are written for practice purposes and do not constitute legal advice.',
+    },
+  },
+
+  cguPage: {
+    pageTitle: { fr: 'CGU — SailingLoc', en: 'Terms of service — SailingLoc' },
+    title: { fr: "Conditions générales d'utilisation", en: 'Terms of service' },
+    updated: { fr: '9 juillet 2026', en: 'July 9, 2026' },
+    s1: {
+      title: { fr: '1. Objet', en: '1. Purpose' },
+      p1: {
+        fr: 'Les présentes CGU encadrent l’utilisation de la plateforme SailingLoc, qui met en relation des propriétaires de bateaux et des locataires. SailingLoc agit en qualité d’intermédiaire : elle n’est ni propriétaire des bateaux proposés, ni partie aux contrats de location conclus entre utilisateurs.',
+        en: 'These Terms of Service govern the use of the SailingLoc platform, which connects boat owners and renters. SailingLoc acts as an intermediary: it is neither the owner of the listed boats nor a party to the rental contracts entered into between users.',
+      },
+      p2: {
+        fr: 'L’utilisation du site vaut acceptation pleine et entière des présentes CGU. Les conditions financières (réservation, paiement, annulation) sont détaillées dans les <cgv>CGV</cgv>.',
+        en: 'Using the site constitutes full acceptance of these Terms of Service. Financial terms (booking, payment, cancellation) are detailed in the <cgv>Terms of Sale</cgv>.',
+      },
+    },
+    s2: {
+      title: {
+        fr: '2. Accès au service et création de compte',
+        en: '2. Access to the service and account creation',
+      },
+      p1: {
+        fr: 'La consultation des annonces est libre. La réservation, la publication d’annonces, la messagerie et les avis nécessitent un compte. Deux profils existent : <renter>locataire</renter> et <owner>propriétaire</owner>.',
+        en: 'Browsing listings is free. Booking, publishing listings, messaging and reviews all require an account. Two profiles exist: <renter>renter</renter> and <owner>owner</owner>.',
+      },
+      p2: {
+        fr: 'L’utilisateur s’engage à fournir des informations exactes et à jour, à être majeur, et à garder ses identifiants confidentiels. Toute activité effectuée depuis son compte est réputée être de son fait. L’adresse email est vérifiée à l’inscription.',
+        en: 'Users agree to provide accurate, up-to-date information, to be of legal age, and to keep their login credentials confidential. Any activity carried out from their account is deemed to be their own doing. The email address is verified at registration.',
+      },
+    },
+    s3: {
+      title: { fr: '3. Documents requis pour louer', en: '3. Documents required to rent' },
+      p1: {
+        fr: 'La location d’un bateau nécessite le dépôt préalable de justificatifs : permis bateau (côtier ou fluvial selon le bateau), pièce d’identité en cours de validité et CV nautique. Ces documents sont vérifiés par l’équipe SailingLoc sous 48 h ouvrées ; une réservation ne peut être confirmée sans documents valides.',
+        en: 'Renting a boat requires supporting documents to be submitted beforehand: a boat license (coastal or inland, depending on the boat), a valid ID document and a sailing résumé. These documents are checked by the SailingLoc team within 48 business hours; a booking cannot be confirmed without valid documents.',
+      },
+    },
+    s4: {
+      title: { fr: '4. Obligations des propriétaires', en: '4. Owners’ obligations' },
+      p1: {
+        fr: 'Le propriétaire garantit que son bateau est en bon état de navigabilité, régulièrement entretenu, assuré (attestation vérifiée avant publication de l’annonce) et conforme à la réglementation. Il s’engage à décrire fidèlement son bateau (caractéristiques, photos, port d’attache, disponibilités) et à honorer les réservations qu’il confirme.',
+        en: 'The owner guarantees that their boat is seaworthy, regularly maintained, insured (certificate checked before the listing is published) and compliant with regulations. They agree to accurately describe their boat (features, photos, home marina, availability) and to honour the bookings they confirm.',
+      },
+      p2: {
+        fr: 'Chaque annonce est vérifiée par l’équipe SailingLoc avant d’être publiée.',
+        en: 'Every listing is checked by the SailingLoc team before being published.',
+      },
+    },
+    s5: {
+      title: { fr: '5. Obligations des locataires', en: '5. Renters’ obligations' },
+      p1: {
+        fr: 'Le locataire s’engage à utiliser le bateau en bon père de famille, dans le respect de la réglementation maritime, de la capacité maximale indiquée et de la zone de navigation convenue. Il s’engage à restituer le bateau à la date prévue, dans l’état constaté lors de l’état des lieux de départ.',
+        en: 'The renter agrees to use the boat responsibly, in compliance with maritime regulations, the stated maximum capacity and the agreed sailing area. They agree to return the boat on the scheduled date, in the condition recorded at the initial check-in inventory.',
+      },
+    },
+    s6: {
+      title: { fr: '6. Avis et contenus', en: '6. Reviews and content' },
+      p1: {
+        fr: 'Après une location terminée, le locataire peut noter le bateau et laisser un commentaire. Les avis sont modérés avant publication. Sont interdits : les contenus illicites, diffamatoires, discriminatoires, publicitaires, ou sans lien avec l’expérience de location. SailingLoc peut retirer tout contenu contraire aux présentes CGU.',
+        en: 'Once a rental is complete, the renter can rate the boat and leave a comment. Reviews are moderated before publication. The following are prohibited: unlawful, defamatory, discriminatory or promotional content, or content unrelated to the rental experience. SailingLoc may remove any content that breaches these Terms of Service.',
+      },
+    },
+    s7: {
+      title: { fr: '7. Messagerie interne', en: '7. Internal messaging' },
+      p1: {
+        fr: 'La messagerie permet les échanges entre locataires, propriétaires et le support. Elle ne doit pas être utilisée pour contourner la plateforme (conclusion de locations hors site), ni pour diffuser des contenus illicites. Les conversations peuvent être consultées par l’équipe en cas de litige signalé.',
+        en: 'The messaging system enables exchanges between renters, owners and support. It must not be used to bypass the platform (arranging rentals outside the site), nor to spread unlawful content. Conversations may be reviewed by the team in the event of a reported dispute.',
+      },
+    },
+    s8: {
+      title: { fr: '8. Responsabilité', en: '8. Liability' },
+      p1: {
+        fr: 'SailingLoc met en œuvre les moyens raisonnables pour assurer la disponibilité du service mais ne garantit ni l’absence d’interruption, ni l’exactitude des annonces rédigées par les propriétaires. La location est conclue entre le propriétaire et le locataire, seuls responsables de son exécution. En cas d’incident en mer, contactez le CROSS (196 ou VHF canal 16) avant toute autre démarche.',
+        en: 'SailingLoc uses reasonable means to ensure the availability of the service but does not guarantee uninterrupted service or the accuracy of listings written by owners. The rental is entered into between the owner and the renter, who alone are responsible for its performance. In the event of an incident at sea, contact the CROSS rescue service (196 or VHF channel 16) before any other action.',
+      },
+    },
+    s9: {
+      title: { fr: '9. Suspension et résiliation', en: '9. Suspension and termination' },
+      p1: {
+        fr: 'L’utilisateur peut supprimer son compte à tout moment depuis son espace ou en contactant le support. SailingLoc peut suspendre ou supprimer un compte en cas de manquement grave ou répété aux présentes CGU (faux documents, annonces trompeuses, impayés, comportement abusif), après notification par email sauf urgence.',
+        en: 'Users may delete their account at any time from their account area or by contacting support. SailingLoc may suspend or delete an account in the event of a serious or repeated breach of these Terms of Service (falsified documents, misleading listings, unpaid amounts, abusive behaviour), after notification by email except in urgent cases.',
+      },
+    },
+    s10: {
+      title: { fr: '10. Droit applicable', en: '10. Governing law' },
+      p1: {
+        fr: 'Les présentes CGU sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité ; à défaut, les tribunaux de Marseille sont compétents, sous réserve des règles protectrices du consommateur.',
+        en: 'These Terms of Service are governed by French law. In the event of a dispute, an amicable solution will be sought first; failing that, the courts of Marseille have jurisdiction, subject to consumer protection rules.',
+      },
+    },
+  },
+
+  cgvPage: {
+    pageTitle: { fr: 'CGV — SailingLoc', en: 'Terms of sale — SailingLoc' },
+    title: { fr: 'Conditions générales de vente', en: 'Terms of sale' },
+    updated: { fr: '9 juillet 2026', en: 'July 9, 2026' },
+    s1: {
+      title: { fr: "1. Champ d'application", en: '1. Scope' },
+      p1: {
+        fr: 'Les présentes CGV s’appliquent à toute réservation effectuée sur SailingLoc. SailingLoc agit comme intermédiaire de mise en relation : le contrat de location est conclu directement entre le propriétaire et le locataire. Toute réservation vaut acceptation des présentes CGV et des <cgu>CGU</cgu>.',
+        en: 'These Terms of Sale apply to every booking made on SailingLoc. SailingLoc acts as an intermediary connecting users: the rental contract is entered into directly between the owner and the renter. Every booking constitutes acceptance of these Terms of Sale and of the <cgu>Terms of Service</cgu>.',
+      },
+    },
+    s2: {
+      title: { fr: '2. Prix', en: '2. Prices' },
+      p1: {
+        fr: 'Les prix de location sont fixés librement par les propriétaires et affichés en euros, toutes taxes comprises, par jour de location. Le prix total (jours × tarif journalier, options éventuelles telles que le skipper) est récapitulé avant la validation de la demande de réservation.',
+        en: 'Rental prices are freely set by owners and displayed in euros, tax included, per rental day. The total price (days × daily rate, plus any options such as a skipper) is summarised before the booking request is confirmed.',
+      },
+    },
+    s3: {
+      title: { fr: '3. Commission de la plateforme', en: '3. Platform commission' },
+      p1: {
+        fr: 'SailingLoc prélève une commission de <strong>10 %</strong> sur le montant de chaque location, à la charge du propriétaire, déduite lors du reversement. Le montant payé par le locataire est celui affiché lors de la réservation.',
+        en: 'SailingLoc charges a <strong>10%</strong> commission on the amount of each rental, payable by the owner and deducted at payout. The amount paid by the renter is the one shown at the time of booking.',
+      },
+    },
+    s4: {
+      title: { fr: '4. Réservation', en: '4. Booking' },
+      p1: {
+        fr: 'Le locataire envoie une demande de réservation aux dates souhaitées. Le propriétaire l’accepte ou la refuse ; le locataire est informé par email et dans son espace. La réservation n’est ferme qu’à la confirmation du propriétaire <em>et</em> à l’encaissement du paiement. Les documents du locataire (permis, pièce d’identité, CV nautique) doivent être vérifiés avant la confirmation.',
+        en: 'The renter sends a booking request for the desired dates. The owner accepts or declines it; the renter is notified by email and in their account. The booking is only final once the owner has confirmed it <em>and</em> payment has been collected. The renter’s documents (license, ID document, sailing résumé) must be verified before confirmation.',
+      },
+    },
+    s5: {
+      title: { fr: '5. Paiement', en: '5. Payment' },
+      p1: {
+        fr: 'Le paiement s’effectue en ligne par carte bancaire ou virement, via notre prestataire de paiement sécurisé (Stripe). Il est encaissé à la confirmation de la réservation. SailingLoc ne stocke aucun numéro de carte bancaire. Le reversement au propriétaire, déduction faite de la commission, intervient après le début de la location.',
+        en: 'Payment is made online by card or bank transfer, through our secure payment provider (Stripe). It is collected when the booking is confirmed. SailingLoc does not store any card numbers. The payout to the owner, minus the commission, takes place after the rental has started.',
+      },
+    },
+    s6: {
+      title: { fr: '6. Annulation et modification', en: '6. Cancellation and changes' },
+      p1: {
+        fr: '<strong>Demande en attente</strong> : annulable librement et sans frais depuis l’espace « Mes réservations ».',
+        en: '<strong>Pending request</strong>: can be freely cancelled at no cost from the “My bookings” area.',
+      },
+      p2: {
+        fr: '<strong>Réservation confirmée</strong> : contactez le propriétaire via la messagerie pour convenir d’une modification ou d’une annulation. En cas de désaccord, l’équipe SailingLoc peut arbitrer via l’ouverture d’un litige ; le remboursement éventuel dépend du délai de prévenance et des circonstances (météo rendant la navigation dangereuse, avarie du bateau…).',
+        en: '<strong>Confirmed booking</strong>: contact the owner via messaging to agree on a change or cancellation. In the event of a disagreement, the SailingLoc team can arbitrate by opening a dispute; any refund depends on the notice given and the circumstances (weather making sailing unsafe, boat breakdown, etc.).',
+      },
+      p3: {
+        fr: '<strong>Annulation par le propriétaire</strong> : le locataire est intégralement remboursé.',
+        en: '<strong>Cancellation by the owner</strong>: the renter is fully refunded.',
+      },
+    },
+    s7: {
+      title: { fr: '7. Droit de rétractation', en: '7. Right of withdrawal' },
+      p1: {
+        fr: 'Conformément à l’article L221-28 12° du Code de la consommation, le droit de rétractation de 14 jours ne s’applique pas aux prestations de services de loisirs fournies à une date ou période déterminée. Les conditions d’annulation de l’article 6 s’appliquent en lieu et place.',
+        en: 'In accordance with Article L221-28 12° of the French Consumer Code, the 14-day right of withdrawal does not apply to leisure services provided on a specific date or period. The cancellation terms in Article 6 apply instead.',
+      },
+    },
+    s8: {
+      title: {
+        fr: '8. Assurance et état des lieux',
+        en: '8. Insurance and check-in/check-out inventory',
+      },
+      p1: {
+        fr: 'Chaque bateau proposé est couvert par l’assurance de son propriétaire (attestation vérifiée avant publication). Un état des lieux contradictoire est réalisé à la remise des clés et à la restitution. Les dommages constatés à la restitution et non signalés au départ sont à la charge du locataire, dans les conditions convenues avec le propriétaire.',
+        en: 'Every listed boat is covered by its owner’s insurance (certificate checked before publication). A joint inventory is carried out when the keys are handed over and when the boat is returned. Damage found at return that was not reported at departure is the renter’s responsibility, under the terms agreed with the owner.',
+      },
+    },
+    s9: {
+      title: { fr: '9. Litiges et médiation', en: '9. Disputes and mediation' },
+      p1: {
+        fr: 'En cas de litige lié à une location, ouvrez un litige depuis votre espace ou contactez le support : l’équipe SailingLoc instruit le dossier (échanges de la messagerie, états des lieux, justificatifs) et propose une résolution. Conformément aux articles L611-1 et suivants du Code de la consommation, le consommateur peut recourir gratuitement à un médiateur de la consommation. Plateforme européenne de règlement en ligne des litiges : <odr>ec.europa.eu/consumers/odr</odr>.',
+        en: 'In the event of a dispute related to a rental, open a dispute from your account or contact support: the SailingLoc team reviews the case (messaging exchanges, check-in/check-out inventories, supporting documents) and proposes a resolution. In accordance with Articles L611-1 et seq. of the French Consumer Code, consumers may use a consumer mediator free of charge. European online dispute resolution platform: <odr>ec.europa.eu/consumers/odr</odr>.',
+      },
+    },
+    s10: {
+      title: { fr: '10. Droit applicable', en: '10. Governing law' },
+      p1: {
+        fr: 'Les présentes CGV sont soumises au droit français. À défaut de résolution amiable, les tribunaux de Marseille sont compétents, sous réserve des règles protectrices du consommateur.',
+        en: 'These Terms of Sale are governed by French law. Failing an amicable resolution, the courts of Marseille have jurisdiction, subject to consumer protection rules.',
+      },
+    },
+  },
+
+  confidentialitePage: {
+    pageTitle: {
+      fr: 'Politique de confidentialité — SailingLoc',
+      en: 'Privacy policy — SailingLoc',
+    },
+    title: { fr: 'Politique de confidentialité', en: 'Privacy policy' },
+    updated: { fr: '9 juillet 2026', en: 'July 9, 2026' },
+    s1: {
+      title: { fr: '1. Responsable du traitement', en: '1. Data controller' },
+      p1: {
+        fr: 'SailingLoc SAS, 12 Quai du Port, 13002 Marseille, est responsable du traitement des données collectées sur la plateforme. Contact : <email>dpo@sailingloc.fr</email>.',
+        en: 'SailingLoc SAS, 12 Quai du Port, 13002 Marseille, France, is the controller for the data collected on the platform. Contact: <email>dpo@sailingloc.fr</email>.',
+      },
+    },
+    s2: {
+      title: { fr: '2. Données collectées', en: '2. Data collected' },
+      li1: {
+        fr: '<strong>Compte</strong> : nom, prénom, email, téléphone (facultatif), mot de passe (haché), photo de profil (facultative), rôle (locataire/propriétaire).',
+        en: '<strong>Account</strong>: last name, first name, email, phone (optional), password (hashed), profile photo (optional), role (renter/owner).',
+      },
+      li2: {
+        fr: '<strong>Justificatifs</strong> : permis bateau, pièce d’identité, CV nautique (locataires) ; acte de francisation, attestation d’assurance (propriétaires).',
+        en: '<strong>Supporting documents</strong>: boat license, ID document, sailing résumé (renters); registration certificate, insurance certificate (owners).',
+      },
+      li3: {
+        fr: '<strong>Activité</strong> : annonces, réservations, avis, messages échangés via la messagerie interne, demandes de contact.',
+        en: '<strong>Activity</strong>: listings, bookings, reviews, messages exchanged via internal messaging, contact requests.',
+      },
+      li4: {
+        fr: '<strong>Paiement</strong> : traité par notre prestataire Stripe — SailingLoc ne stocke aucun numéro de carte bancaire.',
+        en: '<strong>Payment</strong>: processed by our provider Stripe — SailingLoc does not store any card numbers.',
+      },
+      li5: {
+        fr: '<strong>Navigation</strong> : uniquement avec votre consentement — statistiques de visite via notre outil Matomo auto-hébergé (voir section cookies).',
+        en: '<strong>Browsing</strong>: only with your consent — visit statistics via our self-hosted Matomo tool (see the cookies section).',
+      },
+    },
+    s3: {
+      title: { fr: '3. Finalités et bases légales', en: '3. Purposes and legal bases' },
+      li1: {
+        fr: '<strong>Exécution du contrat</strong> : création du compte, mise en relation, réservations, messagerie, paiements.',
+        en: '<strong>Contract performance</strong>: account creation, connecting users, bookings, messaging, payments.',
+      },
+      li2: {
+        fr: '<strong>Obligation légale</strong> : vérification des documents de navigation, facturation, conservation comptable.',
+        en: '<strong>Legal obligation</strong>: verification of sailing documents, invoicing, accounting record retention.',
+      },
+      li3: {
+        fr: '<strong>Intérêt légitime</strong> : sécurité du service (sessions, détection de fraude), gestion des litiges, modération des avis.',
+        en: '<strong>Legitimate interest</strong>: service security (sessions, fraud detection), dispute management, review moderation.',
+      },
+      li4: {
+        fr: '<strong>Consentement</strong> : cookies non essentiels (mesure d’audience, personnalisation, publicité) — retirable à tout moment.',
+        en: '<strong>Consent</strong>: non-essential cookies (analytics, personalisation, advertising) — withdrawable at any time.',
+      },
+    },
+    s4: {
+      title: { fr: '4. Durées de conservation', en: '4. Retention periods' },
+      li1: {
+        fr: 'Compte et données associées : durée de vie du compte, puis 3 ans après la dernière activité.',
+        en: 'Account and related data: for the lifetime of the account, then 3 years after the last activity.',
+      },
+      li2: {
+        fr: 'Justificatifs : durée de détention du compte, supprimés à sa clôture.',
+        en: 'Supporting documents: for as long as the account exists, deleted when it is closed.',
+      },
+      li3: {
+        fr: 'Factures et pièces comptables : 10 ans (obligation légale).',
+        en: 'Invoices and accounting records: 10 years (legal obligation).',
+      },
+      li4: {
+        fr: 'Journaux de sécurité : 12 mois.',
+        en: 'Security logs: 12 months.',
+      },
+      li5: {
+        fr: 'Données de mesure d’audience : <strong1>25 mois maximum</strong1> ; choix de consentement : <strong2>6 mois</strong2> ; cookies : <strong3>13 mois maximum</strong3>.',
+        en: 'Analytics data: <strong1>25 months maximum</strong1>; consent choice: <strong2>6 months</strong2>; cookies: <strong3>13 months maximum</strong3>.',
+      },
+    },
+    s5: {
+      title: { fr: '5. Cookies et traceurs', en: '5. Cookies and trackers' },
+      p1: {
+        fr: 'Au premier accès, une bannière vous permet d’accepter, de refuser, ou de paramétrer les cookies finalité par finalité. <strong>Aucun cookie soumis à consentement n’est déposé avant votre choix</strong>, et refuser est aussi simple qu’accepter. Votre choix est conservé 6 mois, puis redemandé.',
+        en: 'On your first visit, a banner lets you accept, refuse, or set cookies purpose by purpose. <strong>No cookie subject to consent is set before you make your choice</strong>, and refusing is as easy as accepting. Your choice is kept for 6 months, after which you will be asked again.',
+      },
+      li1: {
+        fr: '<strong>Cookies essentiels (exemptés de consentement)</strong> : session de connexion, panier de réservation, préférence de langue, mémorisation de vos choix de consentement, sécurité.',
+        en: '<strong>Essential cookies (exempt from consent)</strong>: login session, booking cart, language preference, storage of your consent choices, security.',
+      },
+      li2: {
+        fr: '<strong>Mesure d’audience (consentement)</strong> : Matomo, auto-hébergé par SailingLoc — aucune donnée transmise à des tiers, adresses IP anonymisées, cookies conservés 13 mois.',
+        en: '<strong>Analytics (consent)</strong>: Matomo, self-hosted by SailingLoc — no data shared with third parties, anonymised IP addresses, cookies kept for 13 months.',
+      },
+      li3: {
+        fr: '<strong>Publicité & réseaux sociaux, personnalisation (consentement)</strong> : finalités décrites dans le panneau de paramétrage.',
+        en: '<strong>Advertising & social media, personalisation (consent)</strong>: purposes described in the settings panel.',
+      },
+      p2: {
+        fr: 'Vous pouvez modifier votre choix à tout moment : <button>gérer mes cookies</button> (également accessible en bas de chaque page).',
+        en: 'You can change your choice at any time: <button>manage my cookies</button> (also available at the bottom of every page).',
+      },
+    },
+    s6: {
+      title: { fr: '6. Destinataires des données', en: '6. Data recipients' },
+      p1: {
+        fr: 'Les données sont traitées par l’équipe SailingLoc et ses sous-traitants techniques : hébergeur, prestataire de paiement (Stripe), service d’envoi d’emails. Le propriétaire et le locataire d’une même réservation accèdent aux informations nécessaires à la location (nom, messagerie). Aucune donnée n’est vendue à des tiers.',
+        en: 'Data is processed by the SailingLoc team and its technical subprocessors: hosting provider, payment provider (Stripe), email delivery service. The owner and renter of a given booking can access the information needed for the rental (name, messaging). No data is sold to third parties.',
+      },
+    },
+    s7: {
+      title: { fr: '7. Sécurité', en: '7. Security' },
+      p1: {
+        fr: 'Mots de passe hachés (bcrypt), authentification par jetons à durée limitée avec révocation des sessions (notamment en cas de changement de mot de passe ou de détection de réutilisation d’un jeton), déconnexion automatique après inactivité, chiffrement des échanges (HTTPS en production), accès aux justificatifs restreint à l’équipe de vérification.',
+        en: 'Hashed passwords (bcrypt), time-limited token authentication with session revocation (notably on password change or detection of token reuse), automatic logout after inactivity, encrypted communications (HTTPS in production), access to supporting documents restricted to the verification team.',
+      },
+      p2: {
+        fr: '<strong>Chiffrement des données sensibles</strong> : les documents justificatifs (permis, pièces d’identité, attestations) sont stockés de manière chiffrée sur nos serveurs ; les données bancaires sont traitées exclusivement par notre prestataire Stripe, certifié PCI-DSS, et chiffrées de bout en bout — elles ne transitent ni ne sont stockées en clair chez SailingLoc.',
+        en: '<strong>Encryption of sensitive data</strong>: supporting documents (licenses, ID documents, certificates) are stored encrypted on our servers; banking data is processed exclusively by our provider Stripe, PCI-DSS certified, and encrypted end to end — it never passes through or is stored in clear text at SailingLoc.',
+      },
+    },
+    s8: {
+      title: { fr: '8. Vos droits', en: '8. Your rights' },
+      p1: {
+        fr: 'Conformément au RGPD, vous disposez des droits d’accès, de rectification, d’effacement, de portabilité, de limitation et d’opposition sur vos données. Vous pouvez les exercer depuis votre espace (rubrique « Mon compte ») ou en écrivant à <email>dpo@sailingloc.fr</email> — réponse sous 30 jours.',
+        en: 'In accordance with the GDPR, you have the rights to access, rectify, erase, port, restrict and object to the processing of your data. You can exercise these rights from your account (“My account” section) or by writing to <email>dpo@sailingloc.fr</email> — reply within 30 days.',
+      },
+      p2: {
+        fr: '<strong>Droit à l’effacement (art. 17 RGPD)</strong> : vous pouvez demander la suppression de votre compte et de vos données personnelles. Vos informations d’identification (nom, email, téléphone, photo, justificatifs) sont alors effacées ou anonymisées sous 30 jours. Certaines données sont conservées au-delà lorsque la loi l’impose (pièces comptables : 10 ans) ; elles sont alors dissociées de votre identité.',
+        en: '<strong>Right to erasure (GDPR Art. 17)</strong>: you can request the deletion of your account and personal data. Your identifying information (name, email, phone, photo, supporting documents) is then erased or anonymised within 30 days. Some data is retained beyond that when required by law (accounting records: 10 years); it is then dissociated from your identity.',
+      },
+      p3: {
+        fr: '<strong>Droit à la portabilité (art. 20 RGPD)</strong> : vous pouvez obtenir une copie des données que vous nous avez fournies (profil, annonces, réservations, avis, messages) dans un format structuré et lisible par machine (JSON), afin de les réutiliser ou de les transmettre à un autre service. La demande s’effectue auprès de <email>dpo@sailingloc.fr</email>.',
+        en: '<strong>Right to data portability (GDPR Art. 20)</strong>: you can obtain a copy of the data you have provided us (profile, listings, bookings, reviews, messages) in a structured, machine-readable format (JSON), so you can reuse it or transmit it to another service. Requests can be made to <email>dpo@sailingloc.fr</email>.',
+      },
+      p4: {
+        fr: 'Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL : <cnil>cnil.fr/fr/plaintes</cnil>.',
+        en: 'If you believe your rights are not being respected, you can lodge a complaint with the CNIL, the French data protection authority: <cnil>cnil.fr/fr/plaintes</cnil>.',
+      },
+    },
+    s9: {
+      title: { fr: '9. Mise à jour de la politique', en: '9. Policy updates' },
+      p1: {
+        fr: 'La présente politique peut évoluer (nouvelles finalités, nouveaux partenaires). En cas de changement substantiel concernant les cookies, votre consentement sera redemandé via la bannière.',
+        en: 'This policy may evolve (new purposes, new partners). In the event of a substantial change regarding cookies, your consent will be requested again via the banner.',
+      },
+    },
+  },
+
+  mentionsLegalesPage: {
+    pageTitle: { fr: 'Mentions légales — SailingLoc', en: 'Legal notice — SailingLoc' },
+    title: { fr: 'Mentions légales', en: 'Legal notice' },
+    updated: { fr: '9 juillet 2026', en: 'July 9, 2026' },
+    s1: {
+      title: { fr: '1. Éditeur du site', en: '1. Site publisher' },
+      p1: {
+        fr: 'Le site <site>sailingloc.fr</site> est édité par <company>SailingLoc SAS</company>, société par actions simplifiée au capital de 10 000 €, immatriculée au RCS de Marseille sous le numéro 000 000 000 (fictif).',
+        en: 'The site <site>sailingloc.fr</site> is published by <company>SailingLoc SAS</company>, a simplified joint-stock company (SAS) with capital of €10,000, registered with the Marseille Trade and Companies Register under number 000 000 000 (fictitious).',
+      },
+      address: {
+        fr: 'Siège social : 12 Quai du Port, 13002 Marseille, France',
+        en: 'Registered office: 12 Quai du Port, 13002 Marseille, France',
+      },
+      phoneLine: {
+        fr: 'Téléphone : +33 (0)2 00 66 77 89',
+        en: 'Phone: +33 (0)2 00 66 77 89',
+      },
+      emailLine: {
+        fr: 'Email : <email>contact@sailingloc.fr</email>',
+        en: 'Email: <email>contact@sailingloc.fr</email>',
+      },
+    },
+    s2: {
+      title: { fr: '2. Directeur de la publication', en: '2. Publication director' },
+      p1: {
+        fr: 'Le directeur de la publication est le représentant légal de SailingLoc SAS.',
+        en: 'The publication director is the legal representative of SailingLoc SAS.',
+      },
+    },
+    s3: {
+      title: { fr: '3. Hébergement', en: '3. Hosting' },
+      p1: {
+        fr: 'Le site est hébergé par <strong>OVHcloud</strong> — 2 rue Kellermann, 59100 Roubaix, France — <muted>(hébergeur indiqué à titre d’exemple pour ce projet pédagogique)</muted>.',
+        en: 'The site is hosted by <strong>OVHcloud</strong> — 2 rue Kellermann, 59100 Roubaix, France — <muted>(host given as an example for this educational project)</muted>.',
+      },
+    },
+    s4: {
+      title: { fr: '4. Propriété intellectuelle', en: '4. Intellectual property' },
+      p1: {
+        fr: 'L’ensemble des éléments du site (structure, textes, logos, images, charte graphique, code) est la propriété de SailingLoc ou de ses partenaires. Toute reproduction, représentation ou adaptation, totale ou partielle, sans autorisation écrite préalable est interdite (articles L335-2 et suivants du Code de la propriété intellectuelle).',
+        en: 'All elements of the site (structure, text, logos, images, visual identity, code) are the property of SailingLoc or its partners. Any reproduction, representation or adaptation, in whole or in part, without prior written authorisation is prohibited (Articles L335-2 et seq. of the French Intellectual Property Code).',
+      },
+      p2: {
+        fr: 'Les photos des bateaux sont fournies par leurs propriétaires, qui garantissent en détenir les droits.',
+        en: 'Photos of the boats are provided by their owners, who guarantee that they hold the rights to them.',
+      },
+    },
+    s5: {
+      title: { fr: '5. Données personnelles & cookies', en: '5. Personal data & cookies' },
+      p1: {
+        fr: 'Le traitement des données personnelles et l’usage des cookies sont détaillés dans la <privacy>politique de confidentialité</privacy>.',
+        en: 'The processing of personal data and the use of cookies are detailed in the <privacy>privacy policy</privacy>.',
+      },
+    },
+    s6: {
+      title: { fr: "6. Signalement d'un contenu", en: '6. Reporting content' },
+      p1: {
+        fr: 'Pour signaler un contenu illicite ou une erreur, utilisez la <contact>page contact</contact> ou écrivez à contact@sailingloc.fr. Nous accusons réception sous 48 h ouvrées.',
+        en: 'To report unlawful content or an error, use the <contact>contact page</contact> or write to contact@sailingloc.fr. We acknowledge receipt within 48 business hours.',
+      },
+    },
   },
 };
 

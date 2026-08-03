@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useCookieConsent } from '../../hooks/useCookieConsent.jsx';
+import { usePageExitNavigate } from '../../hooks/usePageTransition.js';
 import { contactSupport } from '../../services/messageService.js';
 import logoLong from '../../assets/image/SL_logo/logo SL long.webp';
 import bgImage from '../../assets/image/image_bateau/bateau_searchbar.webp';
@@ -79,7 +79,7 @@ const Footer = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { openPreferences } = useCookieConsent();
-  const navigate = useNavigate();
+  const pageExitNavigate = usePageExitNavigate();
   const [chatBusy, setChatBusy] = useState(false);
   const helpLinks = getHelpLinks(t);
   const infoLinks = getInfoLinks(t);
@@ -95,9 +95,9 @@ const Footer = () => {
     setChatBusy(true);
     try {
       const res = await contactSupport();
-      navigate(messagesPath, { state: { openUser: res.data.admin } });
+      pageExitNavigate(messagesPath, { state: { openUser: res.data.admin } });
     } catch {
-      navigate(messagesPath);
+      pageExitNavigate(messagesPath);
     } finally {
       setChatBusy(false);
     }
@@ -200,9 +200,16 @@ const Footer = () => {
                 {chatBusy ? 'Ouverture…' : t('footer.chat')}
               </button>
             ) : (
-              <Link to="/login" className="hover:text-white transition-colors">
+              <a
+                href="/login"
+                onClick={(e) => {
+                  e.preventDefault();
+                  pageExitNavigate('/login');
+                }}
+                className="hover:text-white transition-colors"
+              >
                 {t('footer.chat')}
-              </Link>
+              </a>
             )}
           </li>
         </ul>
@@ -210,13 +217,27 @@ const Footer = () => {
         <ul className="order-6 min-w-0 space-y-2 text-sm lg:order-none">
           {helpLinks.map((text) => (
             <li key={text}>
-              <a href="#" className="break-words transition-colors hover:text-white">
+              <a
+                href="/contact"
+                onClick={(e) => {
+                  e.preventDefault();
+                  pageExitNavigate('/contact');
+                }}
+                className="break-words transition-colors hover:text-white"
+              >
                 {text}
               </a>
             </li>
           ))}
           <li className="border-t border-white/20 pt-3">
-            <a href="#" className="flex items-start gap-2 transition-colors hover:text-white">
+            <a
+              href="/a-propos"
+              onClick={(e) => {
+                e.preventDefault();
+                pageExitNavigate('/a-propos');
+              }}
+              className="flex items-start gap-2 transition-colors hover:text-white"
+            >
               <FaCircleInfo className="mt-0.5 shrink-0 text-blue-400" />
               <span className="break-words">{t('footer.moreInfo')}</span>
             </a>
@@ -231,9 +252,16 @@ const Footer = () => {
           </li>
           {infoLinks.map(({ label, href }) => (
             <li key={label}>
-              <Link to={href} className="break-words transition-colors hover:text-white">
+              <a
+                href={href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  pageExitNavigate(href);
+                }}
+                className="break-words transition-colors hover:text-white"
+              >
                 {label}
-              </Link>
+              </a>
             </li>
           ))}
           {/* Point d'accès permanent au paramétrage des cookies (CNIL : le

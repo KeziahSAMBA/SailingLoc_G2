@@ -1,13 +1,8 @@
 export function getAboutNavigationItems(t) {
   return [
     {
-      label: t('aboutPage.hero.title'),
-      anchor: 'about-hero',
-      path: '/a-propos',
-    },
-    {
       label: t('aboutPage.story.kicker'),
-      anchor: 'about-story',
+      anchor: 'top',
       path: '/a-propos',
     },
     {
@@ -18,11 +13,6 @@ export function getAboutNavigationItems(t) {
     {
       label: t('aboutPage.destinations.kicker'),
       anchor: 'about-destinations',
-      path: '/a-propos',
-    },
-    {
-      label: t('aboutPage.cta.title'),
-      anchor: 'about-cta',
       path: '/a-propos',
     },
   ];

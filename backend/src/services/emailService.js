@@ -2,14 +2,29 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import { initConfig } from '../config/appConfig.js';
+import { mailgunApiTransport } from '../utils/mailgunTransport.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const LOGO_PATH = path.resolve(__dirname, '../assets/email/logo.webp');
+const LOGO_PATH = path.resolve(__dirname, '../assets/email/logo.png');
 const LOGO_CID = 'sailingloc-logo';
 
 function createTransporter() {
-  const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS, EMAIL_SECURE, EMAIL_IGNORE_TLS } =
-    initConfig();
+  const {
+    EMAIL_HOST,
+    EMAIL_PORT,
+    EMAIL_USER,
+    EMAIL_PASS,
+    EMAIL_SECURE,
+    EMAIL_IGNORE_TLS,
+    MAILGUN_API_KEY,
+    MAILGUN_DOMAIN,
+    MAILGUN_HOST,
+  } = initConfig();
+  if (MAILGUN_API_KEY && MAILGUN_DOMAIN) {
+    return nodemailer.createTransport(
+      mailgunApiTransport({ apiKey: MAILGUN_API_KEY, domain: MAILGUN_DOMAIN, host: MAILGUN_HOST })
+    );
+  }
   const port = Number(EMAIL_PORT);
   return nodemailer.createTransport({
     host: EMAIL_HOST,
@@ -49,9 +64,13 @@ function buildVerificationEmail({ link, firstName, email }) {
         <td align="center">
           <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
             <tr>
-              <td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+              <td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td>
+            </tr>
+
+            <tr>
+              <td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
                 <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0; outline:none; text-decoration:none;" />
-                <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Naviguez en toute liberté</p>
+                <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Naviguez en toute liberté</p>
               </td>
             </tr>
 
@@ -141,9 +160,13 @@ function buildResetEmail({ link, firstName, email }) {
         <td align="center">
           <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
             <tr>
-              <td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+              <td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td>
+            </tr>
+
+            <tr>
+              <td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
                 <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0; outline:none; text-decoration:none;" />
-                <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Réinitialisation de mot de passe</p>
+                <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Réinitialisation de mot de passe</p>
               </td>
             </tr>
 
@@ -231,9 +254,13 @@ function buildAccountCreatedEmail({ link, firstName, email }) {
         <td align="center">
           <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
             <tr>
-              <td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+              <td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td>
+            </tr>
+
+            <tr>
+              <td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
                 <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0; outline:none; text-decoration:none;" />
-                <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Bienvenue à bord</p>
+                <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Bienvenue à bord</p>
               </td>
             </tr>
 
@@ -317,7 +344,7 @@ export async function sendAccountCreatedEmail(to, token, firstName) {
     text,
     attachments: [
       {
-        filename: 'sailingloc-logo.webp',
+        filename: 'sailingloc-logo.png',
         path: LOGO_PATH,
         cid: LOGO_CID,
         contentDisposition: 'inline',
@@ -337,9 +364,10 @@ function buildBoatUnpublishedEmail({ firstName, boatName }) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
       <tr><td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
-          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
             <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
-            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Modération des annonces</p>
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Modération des annonces</p>
           </td></tr>
           <tr><td style="padding:40px 36px 24px;">
             <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
@@ -390,9 +418,10 @@ function buildBoatRepublishedEmail({ firstName, boatName }) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
       <tr><td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
-          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
             <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
-            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Votre annonce est en ligne</p>
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Votre annonce est en ligne</p>
           </td></tr>
           <tr><td style="padding:40px 36px 24px;">
             <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
@@ -436,7 +465,7 @@ export async function sendBoatRepublishedEmail(to, { firstName, boatName }) {
     text,
     attachments: [
       {
-        filename: 'sailingloc-logo.webp',
+        filename: 'sailingloc-logo.png',
         path: LOGO_PATH,
         cid: LOGO_CID,
         contentDisposition: 'inline',
@@ -455,7 +484,7 @@ export async function sendBoatUnpublishedEmail(to, { firstName, boatName }) {
     text,
     attachments: [
       {
-        filename: 'sailingloc-logo.webp',
+        filename: 'sailingloc-logo.png',
         path: LOGO_PATH,
         cid: LOGO_CID,
         contentDisposition: 'inline',
@@ -526,9 +555,10 @@ function buildDisputeDecisionEmail({
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
       <tr><td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
-          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
             <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
-            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Gestion des litiges</p>
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Gestion des litiges</p>
           </td></tr>
           <tr><td style="padding:40px 36px 24px;">
             <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
@@ -585,7 +615,7 @@ export async function sendDisputeDecisionEmail(
     text,
     attachments: [
       {
-        filename: 'sailingloc-logo.webp',
+        filename: 'sailingloc-logo.png',
         path: LOGO_PATH,
         cid: LOGO_CID,
         contentDisposition: 'inline',
@@ -670,9 +700,10 @@ function buildBookingDecisionEmail({
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
       <tr><td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
-          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
             <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
-            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">${meta.tagline}</p>
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">${meta.tagline}</p>
           </td></tr>
           <tr><td style="padding:40px 36px 24px;">
             <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
@@ -751,7 +782,7 @@ export async function sendBookingDecisionEmail(
     text,
     attachments: [
       {
-        filename: 'sailingloc-logo.webp',
+        filename: 'sailingloc-logo.png',
         path: LOGO_PATH,
         cid: LOGO_CID,
         contentDisposition: 'inline',
@@ -800,9 +831,10 @@ function buildBookingCancelledByLocataireEmail({
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
       <tr><td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
-          <tr><td style="background:linear-gradient(135deg, #0A3172 0%, #5AB4EC 100%); padding:32px 32px 28px; text-align:center;">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
             <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
-            <p style="margin:0; color:rgba(255,255,255,0.9); font-size:14px; font-style:italic;">Réservation annulée</p>
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Réservation annulée</p>
           </td></tr>
           <tr><td style="padding:40px 36px 24px;">
             <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
@@ -880,7 +912,7 @@ export async function sendBookingCancelledByLocataireEmail(
     text,
     attachments: [
       {
-        filename: 'sailingloc-logo.webp',
+        filename: 'sailingloc-logo.png',
         path: LOGO_PATH,
         cid: LOGO_CID,
         contentDisposition: 'inline',
@@ -902,7 +934,7 @@ export async function sendPasswordResetEmail(to, token, firstName) {
     text,
     attachments: [
       {
-        filename: 'sailingloc-logo.webp',
+        filename: 'sailingloc-logo.png',
         path: LOGO_PATH,
         cid: LOGO_CID,
         contentDisposition: 'inline',
@@ -924,7 +956,7 @@ export async function sendVerificationEmail(to, token, firstName) {
     text,
     attachments: [
       {
-        filename: 'sailingloc-logo.webp',
+        filename: 'sailingloc-logo.png',
         path: LOGO_PATH,
         cid: LOGO_CID,
         contentDisposition: 'inline',

@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useCookieConsent } from '../../hooks/useCookieConsent.jsx';
 import LegalLayout, { LegalSection } from './LegalLayout.jsx';
 
@@ -5,197 +6,160 @@ import LegalLayout, { LegalSection } from './LegalLayout.jsx';
 // La section cookies documente exactement ce que fait la bannière de
 // consentement (CookieConsentContext) et permet de rouvrir le panneau.
 function ConfidentialitePage() {
+  const { t } = useTranslation();
   const { openPreferences } = useCookieConsent();
 
   return (
     <LegalLayout
-      title="Politique de confidentialité"
-      pageTitle="Politique de confidentialité — SailingLoc"
-      updated="9 juillet 2026"
+      title={t('confidentialitePage.title')}
+      pageTitle={t('confidentialitePage.pageTitle')}
+      updated={t('confidentialitePage.updated')}
     >
-      <LegalSection title="1. Responsable du traitement">
+      <LegalSection title={t('confidentialitePage.s1.title')}>
         <p>
-          SailingLoc SAS, 12 Quai du Port, 13002 Marseille, est responsable du traitement des
-          données collectées sur la plateforme. Contact :{' '}
-          <a href="mailto:dpo@sailingloc.fr" className="text-sky-700 hover:underline">
-            dpo@sailingloc.fr
-          </a>
-          .
+          <Trans
+            i18nKey="confidentialitePage.s1.p1"
+            components={{
+              email: <a href="mailto:dpo@sailingloc.fr" className="text-sky-300 hover:underline" />,
+            }}
+          />
         </p>
       </LegalSection>
 
-      <LegalSection title="2. Données collectées">
+      <LegalSection title={t('confidentialitePage.s2.title')}>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong>Compte</strong> : nom, prénom, email, téléphone (facultatif), mot de passe
-            (haché), photo de profil (facultative), rôle (locataire/propriétaire).
+            <Trans i18nKey="confidentialitePage.s2.li1" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Justificatifs</strong> : permis bateau, pièce d’identité, CV nautique
-            (locataires) ; acte de francisation, attestation d’assurance (propriétaires).
+            <Trans i18nKey="confidentialitePage.s2.li2" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Activité</strong> : annonces, réservations, avis, messages échangés via la
-            messagerie interne, demandes de contact.
+            <Trans i18nKey="confidentialitePage.s2.li3" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Paiement</strong> : traité par notre prestataire Stripe — SailingLoc ne stocke
-            aucun numéro de carte bancaire.
+            <Trans i18nKey="confidentialitePage.s2.li4" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Navigation</strong> : uniquement avec votre consentement — statistiques de
-            visite via notre outil Matomo auto-hébergé (voir section cookies).
+            <Trans i18nKey="confidentialitePage.s2.li5" components={{ strong: <strong /> }} />
           </li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="3. Finalités et bases légales">
+      <LegalSection title={t('confidentialitePage.s3.title')}>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong>Exécution du contrat</strong> : création du compte, mise en relation,
-            réservations, messagerie, paiements.
+            <Trans i18nKey="confidentialitePage.s3.li1" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Obligation légale</strong> : vérification des documents de navigation,
-            facturation, conservation comptable.
+            <Trans i18nKey="confidentialitePage.s3.li2" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Intérêt légitime</strong> : sécurité du service (sessions, détection de fraude),
-            gestion des litiges, modération des avis.
+            <Trans i18nKey="confidentialitePage.s3.li3" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Consentement</strong> : cookies non essentiels (mesure d’audience,
-            personnalisation, publicité) — retirable à tout moment.
+            <Trans i18nKey="confidentialitePage.s3.li4" components={{ strong: <strong /> }} />
           </li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="4. Durées de conservation">
+      <LegalSection title={t('confidentialitePage.s4.title')}>
         <ul className="list-disc space-y-1 pl-5">
+          <li>{t('confidentialitePage.s4.li1')}</li>
+          <li>{t('confidentialitePage.s4.li2')}</li>
+          <li>{t('confidentialitePage.s4.li3')}</li>
+          <li>{t('confidentialitePage.s4.li4')}</li>
           <li>
-            Compte et données associées : durée de vie du compte, puis 3 ans après la dernière
-            activité.
-          </li>
-          <li>Justificatifs : durée de détention du compte, supprimés à sa clôture.</li>
-          <li>Factures et pièces comptables : 10 ans (obligation légale).</li>
-          <li>Journaux de sécurité : 12 mois.</li>
-          <li>
-            Données de mesure d’audience : <strong>25 mois maximum</strong> ; choix de consentement
-            : <strong>6 mois</strong> ; cookies : <strong>13 mois maximum</strong>.
+            <Trans
+              i18nKey="confidentialitePage.s4.li5"
+              components={{ strong1: <strong />, strong2: <strong />, strong3: <strong /> }}
+            />
           </li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="5. Cookies et traceurs">
+      <LegalSection title={t('confidentialitePage.s5.title')}>
         <p>
-          Au premier accès, une bannière vous permet d’accepter, de refuser, ou de paramétrer les
-          cookies finalité par finalité.{' '}
-          <strong>Aucun cookie soumis à consentement n’est déposé avant votre choix</strong>, et
-          refuser est aussi simple qu’accepter. Votre choix est conservé 6 mois, puis redemandé.
+          <Trans i18nKey="confidentialitePage.s5.p1" components={{ strong: <strong /> }} />
         </p>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong>Cookies essentiels (exemptés de consentement)</strong> : session de connexion,
-            panier de réservation, préférence de langue, mémorisation de vos choix de consentement,
-            sécurité.
+            <Trans i18nKey="confidentialitePage.s5.li1" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Mesure d’audience (consentement)</strong> : Matomo, auto-hébergé par SailingLoc
-            — aucune donnée transmise à des tiers, adresses IP anonymisées, cookies conservés 13
-            mois.
+            <Trans i18nKey="confidentialitePage.s5.li2" components={{ strong: <strong /> }} />
           </li>
           <li>
-            <strong>Publicité & réseaux sociaux, personnalisation (consentement)</strong> :
-            finalités décrites dans le panneau de paramétrage.
+            <Trans i18nKey="confidentialitePage.s5.li3" components={{ strong: <strong /> }} />
           </li>
         </ul>
         <p>
-          Vous pouvez modifier votre choix à tout moment :{' '}
-          <button
-            type="button"
-            onClick={openPreferences}
-            className="font-medium text-sky-700 hover:underline"
-          >
-            gérer mes cookies
-          </button>{' '}
-          (également accessible en bas de chaque page).
+          <Trans
+            i18nKey="confidentialitePage.s5.p2"
+            components={{
+              button: (
+                <button
+                  type="button"
+                  onClick={openPreferences}
+                  className="font-medium text-sky-300 hover:underline"
+                />
+              ),
+            }}
+          />
         </p>
       </LegalSection>
 
-      <LegalSection title="6. Destinataires des données">
+      <LegalSection title={t('confidentialitePage.s6.title')}>
+        <p>{t('confidentialitePage.s6.p1')}</p>
+      </LegalSection>
+
+      <LegalSection title={t('confidentialitePage.s7.title')}>
+        <p>{t('confidentialitePage.s7.p1')}</p>
         <p>
-          Les données sont traitées par l’équipe SailingLoc et ses sous-traitants techniques :
-          hébergeur, prestataire de paiement (Stripe), service d’envoi d’emails. Le propriétaire et
-          le locataire d’une même réservation accèdent aux informations nécessaires à la location
-          (nom, messagerie). Aucune donnée n’est vendue à des tiers.
+          <Trans i18nKey="confidentialitePage.s7.p2" components={{ strong: <strong /> }} />
         </p>
       </LegalSection>
 
-      <LegalSection title="7. Sécurité">
+      <LegalSection title={t('confidentialitePage.s8.title')}>
         <p>
-          Mots de passe hachés (bcrypt), authentification par jetons à durée limitée avec révocation
-          des sessions (notamment en cas de changement de mot de passe ou de détection de
-          réutilisation d’un jeton), déconnexion automatique après inactivité, chiffrement des
-          échanges (HTTPS en production), accès aux justificatifs restreint à l’équipe de
-          vérification.
+          <Trans
+            i18nKey="confidentialitePage.s8.p1"
+            components={{
+              email: <a href="mailto:dpo@sailingloc.fr" className="text-sky-300 hover:underline" />,
+            }}
+          />
         </p>
         <p>
-          <strong>Chiffrement des données sensibles</strong> : les documents justificatifs (permis,
-          pièces d’identité, attestations) sont stockés de manière chiffrée sur nos serveurs ; les
-          données bancaires sont traitées exclusivement par notre prestataire Stripe, certifié
-          PCI-DSS, et chiffrées de bout en bout — elles ne transitent ni ne sont stockées en clair
-          chez SailingLoc.
-        </p>
-      </LegalSection>
-
-      <LegalSection title="8. Vos droits">
-        <p>
-          Conformément au RGPD, vous disposez des droits d’accès, de rectification, d’effacement, de
-          portabilité, de limitation et d’opposition sur vos données. Vous pouvez les exercer depuis
-          votre espace (rubrique « Mon compte ») ou en écrivant à{' '}
-          <a href="mailto:dpo@sailingloc.fr" className="text-sky-700 hover:underline">
-            dpo@sailingloc.fr
-          </a>{' '}
-          — réponse sous 30 jours.
+          <Trans i18nKey="confidentialitePage.s8.p2" components={{ strong: <strong /> }} />
         </p>
         <p>
-          <strong>Droit à l’effacement (art. 17 RGPD)</strong> : vous pouvez demander la suppression
-          de votre compte et de vos données personnelles. Vos informations d’identification (nom,
-          email, téléphone, photo, justificatifs) sont alors effacées ou anonymisées sous 30 jours.
-          Certaines données sont conservées au-delà lorsque la loi l’impose (pièces comptables : 10
-          ans) ; elles sont alors dissociées de votre identité.
+          <Trans
+            i18nKey="confidentialitePage.s8.p3"
+            components={{
+              strong: <strong />,
+              email: <a href="mailto:dpo@sailingloc.fr" className="text-sky-300 hover:underline" />,
+            }}
+          />
         </p>
         <p>
-          <strong>Droit à la portabilité (art. 20 RGPD)</strong> : vous pouvez obtenir une copie des
-          données que vous nous avez fournies (profil, annonces, réservations, avis, messages) dans
-          un format structuré et lisible par machine (JSON), afin de les réutiliser ou de les
-          transmettre à un autre service. La demande s’effectue auprès de{' '}
-          <a href="mailto:dpo@sailingloc.fr" className="text-sky-700 hover:underline">
-            dpo@sailingloc.fr
-          </a>
-          .
-        </p>
-        <p>
-          Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation
-          à la CNIL :{' '}
-          <a
-            href="https://www.cnil.fr/fr/plaintes"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sky-700 hover:underline"
-          >
-            cnil.fr/fr/plaintes
-          </a>
-          .
+          <Trans
+            i18nKey="confidentialitePage.s8.p4"
+            components={{
+              cnil: (
+                <a
+                  href="https://www.cnil.fr/fr/plaintes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-300 hover:underline"
+                />
+              ),
+            }}
+          />
         </p>
       </LegalSection>
 
-      <LegalSection title="9. Mise à jour de la politique">
-        <p>
-          La présente politique peut évoluer (nouvelles finalités, nouveaux partenaires). En cas de
-          changement substantiel concernant les cookies, votre consentement sera redemandé via la
-          bannière.
-        </p>
+      <LegalSection title={t('confidentialitePage.s9.title')}>
+        <p>{t('confidentialitePage.s9.p1')}</p>
       </LegalSection>
     </LegalLayout>
   );

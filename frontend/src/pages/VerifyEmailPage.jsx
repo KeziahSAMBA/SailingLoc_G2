@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { MdCheck, MdClose } from 'react-icons/md';
 import { verifyEmail } from '../services/authService.js';
-import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
+import bgImage from '../assets/image/paysage/crique.jpg';
+
+const FOCUS_RING =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+const buttonClass = `mt-6 inline-block w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 ${FOCUS_RING}`;
 
 function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
@@ -33,28 +38,23 @@ function VerifyEmailPage() {
 
   return (
     <main
-      className="w-full min-h-screen"
-      style={{
-        backgroundImage: `url(${bateauBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
+      className="min-h-screen w-full bg-cover bg-fixed bg-center text-white"
+      style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="w-full min-h-screen bg-black/40 px-4 pt-[120px] pb-10 flex justify-center">
+      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
         <section aria-labelledby="verify-title" aria-live="polite" className="w-full max-w-md">
-          <article className="rounded-2xl bg-white p-8 text-center shadow-2xl ring-1 ring-slate-200">
+          <article className="rounded-2xl border border-white/20 bg-white/10 p-8 text-center shadow-2xl backdrop-blur-xl">
             {status === 'loading' && (
               <>
                 <div
                   role="status"
                   aria-label="Vérification en cours"
-                  className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#0A3172]"
+                  className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-sky-400"
                 />
-                <h1 id="verify-title" className="text-2xl font-bold text-[#0A3172]">
+                <h1 id="verify-title" className="text-2xl font-bold text-white">
                   Vérification en cours…
                 </h1>
-                <p className="mt-3 text-sm text-slate-600">
+                <p className="mt-3 text-sm text-white/70">
                   Nous validons votre adresse email, merci de patienter.
                 </p>
               </>
@@ -64,29 +64,15 @@ function VerifyEmailPage() {
               <>
                 <div
                   aria-hidden="true"
-                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#0A3172]/10 ring-2 ring-[#0A3172]"
+                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-sky-500/20 text-sky-300 ring-2 ring-sky-400"
                 >
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#0A3172"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                  <MdCheck size={30} />
                 </div>
-                <h1 id="verify-title" className="text-2xl font-bold text-[#0A3172]">
+                <h1 id="verify-title" className="text-2xl font-bold text-white">
                   Email confirmé !
                 </h1>
-                <p className="mt-3 text-sm text-slate-700">{message}</p>
-                <a
-                  href="/login"
-                  className="mt-6 inline-block w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90"
-                >
+                <p className="mt-3 text-sm text-white/80">{message}</p>
+                <a href="/login" className={buttonClass}>
                   Se connecter
                 </a>
               </>
@@ -96,33 +82,18 @@ function VerifyEmailPage() {
               <>
                 <div
                   aria-hidden="true"
-                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 ring-2 ring-red-500"
+                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15 text-red-300 ring-2 ring-red-400"
                 >
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#dc2626"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <MdClose size={30} />
                 </div>
-                <h1 id="verify-title" className="text-2xl font-bold text-[#0A3172]">
+                <h1 id="verify-title" className="text-2xl font-bold text-white">
                   Vérification impossible
                 </h1>
-                <p className="mt-3 text-sm text-slate-700">{message}</p>
-                <p className="mt-4 text-xs text-slate-500">
+                <p className="mt-3 text-sm text-white/80">{message}</p>
+                <p className="mt-4 text-xs text-white/60">
                   Le lien a peut-être expiré ou été déjà utilisé.
                 </p>
-                <a
-                  href="/register"
-                  className="mt-6 inline-block w-full rounded-full bg-[#0A3172] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#0A3172]/90"
-                >
+                <a href="/register" className={buttonClass}>
                   Recommencer l&apos;inscription
                 </a>
               </>

@@ -13,6 +13,7 @@ import { postContactRequest } from './controllers/contactRequestController.js';
 import { stripeWebhook } from './controllers/webhookController.js';
 import { cancelExpiredBookings } from './services/bookingService.js';
 import { initConfig } from './config/appConfig.js';
+import prisma from './config/db.js';
 
 const { PORT, APP_URL } = initConfig();
 
@@ -37,7 +38,8 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stri
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
-app.use('/uploads', express.static('uploads'));
+// UPLOADS_DIR : chemin disque configurable (volume Railway) ; l'URL /uploads ne change pas.
+app.use('/uploads', express.static(process.env.UPLOADS_DIR || 'uploads'));
 
 const registerLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
@@ -124,11 +126,34 @@ process.on('uncaughtException', (err) => {
 // au démarrage puis toutes les heures (complété par un appel à chaque création
 // de réservation, cf. bookingService).
 cancelExpiredBookings().catch((err) => console.error('[bookings] sweep:', err));
-setInterval(
+const sweepInterval = setInterval(
   () => cancelExpiredBookings().catch((err) => console.error('[bookings] sweep:', err)),
   60 * 60 * 1000
 );
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
 });
+
+// Railway envoie SIGTERM à chaque redéploiement : sans arrêt propre, le process
+// sort en code non nul et le déploiement est marqué en échec.
+let shuttingDown = false;
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[server] ${signal} reçu, arrêt en cours...`);
+  clearInterval(sweepInterval);
+  // Filet de sécurité si une connexion refuse de se fermer.
+  const forceExit = setTimeout(() => process.exit(0), 10000);
+  forceExit.unref();
+  // Les connexions keep-alive inactives empêcheraient close() de se terminer.
+  server.closeIdleConnections?.();
+  server.close(async () => {
+    clearTimeout(forceExit);
+    await prisma.$disconnect().catch((err) => console.error('[server] prisma disconnect:', err));
+    console.log('[server] arrêt terminé.');
+    process.exit(0);
+  });
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

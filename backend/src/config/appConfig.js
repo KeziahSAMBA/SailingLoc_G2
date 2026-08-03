@@ -21,6 +21,11 @@ export function initConfig() {
     EMAIL_SECURE: process.env.EMAIL_SECURE === 'true',
     // Désactive TLS — à réserver à MailDev en local (EMAIL_IGNORE_TLS=true).
     EMAIL_IGNORE_TLS: process.env.EMAIL_IGNORE_TLS === 'true',
+    // API HTTP Mailgun (prod Railway, SMTP bloqué) ; si absente, SMTP classique.
+    MAILGUN_API_KEY: process.env.MAILGUN_API_KEY || '',
+    MAILGUN_DOMAIN: process.env.MAILGUN_DOMAIN || '',
+    // Région EU : api.eu.mailgun.net
+    MAILGUN_HOST: process.env.MAILGUN_HOST || 'api.mailgun.net',
     APP_URL: process.env.APP_URL || 'http://localhost:5173',
   };
 }

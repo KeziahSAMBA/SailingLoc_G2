@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/db.js';
 import crypto from 'crypto';
@@ -519,7 +520,13 @@ export async function updateAvatar(id_user, file, origin) {
   for (const img of previous) {
     const idx = img.url.indexOf('/uploads/avatars/');
     if (idx !== -1) {
-      fs.unlink(img.url.slice(idx + 1), () => {});
+      // Chemin disque réel (UPLOADS_DIR configurable), pas le chemin de l'URL.
+      const diskPath = path.join(
+        process.env.UPLOADS_DIR || 'uploads',
+        'avatars',
+        path.basename(img.url)
+      );
+      fs.unlink(diskPath, () => {});
     }
   }
 
@@ -539,7 +546,13 @@ export async function removeAvatar(id_user) {
   for (const img of previous) {
     const idx = img.url.indexOf('/uploads/avatars/');
     if (idx !== -1) {
-      fs.unlink(img.url.slice(idx + 1), () => {});
+      // Chemin disque réel (UPLOADS_DIR configurable), pas le chemin de l'URL.
+      const diskPath = path.join(
+        process.env.UPLOADS_DIR || 'uploads',
+        'avatars',
+        path.basename(img.url)
+      );
+      fs.unlink(diskPath, () => {});
     }
   }
   return getCurrentUser(id_user);
