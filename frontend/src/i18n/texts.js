@@ -1828,6 +1828,10 @@ export const TEXTS = {
     next: { fr: 'Suivant', en: 'Next' },
     page: { fr: 'Page {{n}}', en: 'Page {{n}}' },
     aria: { fr: 'Pagination — {{label}}', en: 'Pagination — {{label}}' },
+    range: {
+      fr: '{{label}} {{first}} à {{last}} sur {{total}}',
+      en: '{{label}} {{first}} to {{last}} of {{total}}',
+    },
   },
 
   proprietaireBoats: {
