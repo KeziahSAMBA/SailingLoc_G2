@@ -319,7 +319,7 @@ function BoatChart({ boats }) {
 
 function TotalCard({ label, value, accent = 'text-white', hint }) {
   return (
-    <li className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+    <li className="rounded-2xl border border-white/20 bg-white/10 p-5 text-center backdrop-blur-xl sm:text-left">
       <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
         {label}
       </span>
@@ -677,7 +677,7 @@ function ProprietaireRevenus() {
 
           {/* Totaux : somme des transactions correspondant aux filtres actifs */}
           <ul
-            className="grid gap-4 sm:grid-cols-3"
+            className="mx-auto grid w-3/4 gap-4 sm:w-full sm:grid-cols-3"
             aria-label={t('proprietaireRevenus.totalsAria')}
           >
             <TotalCard
