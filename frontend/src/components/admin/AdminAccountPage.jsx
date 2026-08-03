@@ -23,7 +23,7 @@ function AdminAccountPage() {
         </p>
       </header>
 
-      <AccountForm />
+      <AccountForm compactMobile restoreDesktopActions />
     </section>
   );
 }
