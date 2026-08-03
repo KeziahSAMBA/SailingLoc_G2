@@ -277,18 +277,18 @@ function AdminUsersPage() {
         </Link>
       </div>
 
-      <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="mt-5 grid grid-cols-2 items-stretch gap-3 sm:grid-cols-[minmax(13.75rem,1fr)_auto_auto] sm:items-center">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminUsers.searchPlaceholder')}
-          className={`${selectClass} w-full sm:min-w-[13.75rem] sm:flex-1`}
+          className={`${selectClass} col-span-2 w-full min-w-0 sm:col-span-1`}
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className={`select-glass ${selectClass} w-full sm:w-auto`}
+          className={`select-glass ${selectClass} min-w-0 w-full sm:w-auto`}
         >
           <option value="">{t('adminUsers.allRoles')}</option>
           {ROLE_VALUES.map((v) => (
@@ -300,7 +300,7 @@ function AdminUsersPage() {
         <select
           value={active}
           onChange={(e) => setActive(e.target.value)}
-          className={`select-glass ${selectClass} w-full sm:w-auto`}
+          className={`select-glass ${selectClass} min-w-0 w-full sm:w-auto`}
         >
           <option value="">{t('adminUsers.allStatuses')}</option>
           <option value="true">{t('adminUsers.activeFilter')}</option>
