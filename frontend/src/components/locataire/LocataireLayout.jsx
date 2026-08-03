@@ -53,11 +53,11 @@ function LocataireLayout() {
                 onClick={() => setMobileNavOpen((open) => !open)}
                 className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:hidden"
               >
-                <span className="min-w-0">
-                  <span className="block text-xs font-semibold uppercase tracking-wide text-white/60">
+                <span className="flex min-w-0 items-baseline gap-2">
+                  <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-white/60">
                     {t('locataireLayout.mySpace')}
                   </span>
-                  <span className="mt-0.5 block truncate text-sm font-semibold text-white">
+                  <span className="min-w-0 truncate text-sm font-semibold text-white">
                     {activeItem.label}
                   </span>
                 </span>
