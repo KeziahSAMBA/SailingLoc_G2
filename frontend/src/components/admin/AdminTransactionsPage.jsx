@@ -39,9 +39,11 @@ const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 const selectClass =
   'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
 
-function StatCard({ label, value, sublabel, accent = 'text-white' }) {
+function StatCard({ label, value, sublabel, accent = 'text-white', className = '' }) {
   return (
-    <div className="h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+    <div
+      className={`h-full rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-xl ${className}`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</p>
       <p className={`mt-2 text-2xl font-bold ${accent}`}>{value}</p>
       {sublabel && <p className="mt-1 text-xs text-white/60">{sublabel}</p>}
@@ -158,18 +160,20 @@ function AdminTransactionsPage() {
       <p className="mt-1 text-sm text-white/70">{t('adminTransactions.subtitle')}</p>
 
       {/* Stats cards */}
-      <div className="mt-5 grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid auto-rows-fr grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={t('adminTransactions.volume')}
           value={statsLoading ? '…' : stats ? EURO.format(stats.total_volume) : EURO.format(0)}
           sublabel={t('adminTransactions.volumeSub')}
           accent="text-white"
+          className="col-span-2 sm:col-span-1"
         />
         <StatCard
           label={t('adminTransactions.commission')}
           value={statsLoading ? '…' : stats ? EURO.format(stats.total_commission) : EURO.format(0)}
           sublabel={t('adminTransactions.commissionSub')}
           accent="text-emerald-300"
+          className="col-span-2 sm:col-span-1"
         />
         <StatCard
           label={t('adminTransactions.successCount')}
