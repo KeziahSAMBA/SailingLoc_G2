@@ -23,7 +23,7 @@ function LocataireAccount() {
         </p>
       </header>
 
-      <AccountForm />
+      <AccountForm compactMobile />
     </section>
   );
 }

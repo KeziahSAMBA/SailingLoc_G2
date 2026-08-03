@@ -32,7 +32,7 @@ const EMPTY_PASSWORD_FORM = {
 // Composant "présentation seule" du contenu : l'enveloppe (fond, en-tête de page)
 // est fournie par la page hôte — réutilisé par AccountPage (plein écran) et par
 // l'espace locataire (dans le dashboard).
-function AccountForm() {
+function AccountForm({ compactMobile = false }) {
   const { t } = useTranslation();
   const { user, updateUser, logout } = useAuth();
   const { showToast } = useToast();
@@ -211,9 +211,15 @@ function AccountForm() {
             alt={t('accountForm.avatar.alt')}
             className="h-20 w-20 rounded-full border-2 border-white/30 object-cover"
           />
-          <div className="flex flex-wrap gap-3">
+          <div
+            className={
+              compactMobile
+                ? 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap'
+                : 'flex flex-wrap gap-3'
+            }
+          >
             <label
-              className={`cursor-pointer rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
+              className={`cursor-pointer rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white ${compactMobile ? `min-w-0 text-center ${user?.avatar ? '' : 'col-span-2 sm:col-span-1'}` : ''} ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
             >
               {avatarBusy ? t('accountForm.avatar.sending') : t('accountForm.avatar.change')}
               <input
@@ -229,7 +235,7 @@ function AccountForm() {
                 type="button"
                 onClick={handleAvatarDelete}
                 disabled={avatarBusy}
-                className="rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50"
+                className={`rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50 ${compactMobile ? 'min-w-0 text-center' : ''}`}
               >
                 {t('accountForm.avatar.remove')}
               </button>
