@@ -147,18 +147,18 @@ function AdminDocumentsPage() {
         ))}
       </AdminScrollableFilterRow>
 
-      <div className="mt-3 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="mt-3 grid grid-cols-2 items-stretch gap-3 sm:grid-cols-[minmax(13.75rem,1fr)_auto_auto] sm:items-center">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminDocuments.searchPlaceholder')}
-          className={`${selectClass} w-full sm:min-w-[13.75rem] sm:flex-1`}
+          className={`${selectClass} col-span-2 w-full min-w-0 sm:col-span-1`}
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className={`select-glass ${selectClass} w-full sm:w-auto`}
+          className={`select-glass ${selectClass} min-w-0 w-full sm:w-auto`}
         >
           <option value="">{t('adminDocuments.allRoles')}</option>
           <option value="locataire">{t('adminDocuments.roleRenter')}</option>
@@ -167,7 +167,7 @@ function AdminDocumentsPage() {
         <select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          className={`select-glass ${selectClass} w-full sm:w-auto`}
+          className={`select-glass ${selectClass} min-w-0 w-full sm:w-auto`}
         >
           <option value="">{t('adminDocuments.allTypes')}</option>
           {TYPE_OPTIONS.map((ty) => (
