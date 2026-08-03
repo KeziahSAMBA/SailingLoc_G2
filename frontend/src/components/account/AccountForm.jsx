@@ -33,7 +33,7 @@ const EMPTY_PASSWORD_FORM = {
 // Composant "présentation seule" du contenu : l'enveloppe (fond, en-tête de page)
 // est fournie par la page hôte — réutilisé par AccountPage (plein écran) et par
 // l'espace locataire (dans le dashboard).
-function AccountForm({ compactMobile = false }) {
+function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
   const { t } = useTranslation();
   const { user, updateUser, logout } = useAuth();
   const { showToast } = useToast();
@@ -459,22 +459,29 @@ function AccountForm({ compactMobile = false }) {
               type="button"
               onClick={handleCancel}
               disabled={!dirty || saving}
-              className={`w-fit rounded-full border border-white/40 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${compactMobile ? 'px-4 py-2.5' : 'px-6 py-3'}`}
+              className={`w-fit rounded-full border border-white/40 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${compactMobile ? `px-4 py-2.5 ${restoreDesktopActions ? 'lg:px-6 lg:py-3' : ''}` : 'px-6 py-3'}`}
             >
               {t('accountForm.personalInfo.cancel')}
             </button>
             <button
               type="submit"
               disabled={!dirty || saving}
-              className={`rounded-full bg-sky-500 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? 'w-fit flex-none px-4 py-2.5' : 'flex-1 px-6 py-3'}`}
+              className={`rounded-full bg-sky-500 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit flex-none px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-auto lg:flex-1 lg:px-6 lg:py-3' : ''}` : 'flex-1 px-6 py-3'}`}
             >
-              {saving
-                ? t('accountForm.personalInfo.saving')
-                : t(
-                    compactMobile
-                      ? 'accountForm.personalInfo.saveShort'
-                      : 'accountForm.personalInfo.save'
-                  )}
+              {saving ? (
+                t('accountForm.personalInfo.saving')
+              ) : compactMobile && restoreDesktopActions ? (
+                <>
+                  <span className="lg:hidden">{t('accountForm.personalInfo.saveShort')}</span>
+                  <span className="hidden lg:inline">{t('accountForm.personalInfo.save')}</span>
+                </>
+              ) : (
+                t(
+                  compactMobile
+                    ? 'accountForm.personalInfo.saveShort'
+                    : 'accountForm.personalInfo.save'
+                )
+              )}
             </button>
           </div>
         </form>
@@ -555,7 +562,7 @@ function AccountForm({ compactMobile = false }) {
             <button
               type="submit"
               disabled={pwdSaving}
-              className={`rounded-full bg-sky-500 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? 'w-fit whitespace-nowrap px-4 py-2.5' : 'w-full px-6 py-3'}`}
+              className={`rounded-full bg-sky-500 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit whitespace-nowrap px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-full lg:px-6 lg:py-3' : ''}` : 'w-full px-6 py-3'}`}
             >
               {pwdSaving ? t('accountForm.password.updating') : t('accountForm.password.submit')}
             </button>

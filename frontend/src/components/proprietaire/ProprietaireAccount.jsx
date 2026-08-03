@@ -23,7 +23,7 @@ function ProprietaireAccount() {
         </p>
       </header>
 
-      <AccountForm />
+      <AccountForm compactMobile restoreDesktopActions />
     </section>
   );
 }
