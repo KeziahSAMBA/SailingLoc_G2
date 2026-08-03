@@ -254,7 +254,11 @@ function AccountForm({ compactMobile = false }) {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div
+            className={
+              compactMobile ? 'grid grid-cols-2 gap-2 sm:gap-4' : 'grid gap-4 sm:grid-cols-2'
+            }
+          >
             <div>
               <label htmlFor="first_name" className={labelClass}>
                 {t('accountForm.personalInfo.firstName')}
