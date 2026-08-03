@@ -134,7 +134,7 @@ function fmtDate(value) {
 
 function StatTile({ label, value, accent }) {
   return (
-    <div className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-5 py-4">
+    <div className="rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-center backdrop-blur-xl sm:text-left">
       <p className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</p>
       <p className={`mt-1 text-2xl font-bold ${accent}`}>{value}</p>
     </div>
@@ -194,7 +194,7 @@ function LocataireDepenses() {
         <CardSkeleton count={4} height="h-32" withIcon />
       ) : (
         <>
-          <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          <div className="mx-auto mb-6 grid w-3/4 gap-4 sm:w-full sm:grid-cols-3">
             <StatTile
               label={t('locataireDepenses.totals.paid')}
               value={EURO.format(totals?.paid ?? 0)}
@@ -269,7 +269,7 @@ function LocataireDepenses() {
           </ScrollableFilterRow>
 
           {filtered.length === 0 ? (
-            <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
+            <p className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
               {payments.length === 0
                 ? t('locataireDepenses.empty')
                 : t('locataireDepenses.emptyFiltered')}
@@ -314,7 +314,9 @@ function LocataireDepenses() {
                           <span
                             className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${cls}`}
                           >
-                            {t(`locataireDepenses.status.${p.status}`, { defaultValue: p.status })}
+                            {t(`locataireDepenses.status.${p.status}`, {
+                              defaultValue: p.status,
+                            })}
                           </span>
                           {p.refunded_amount != null && (
                             <span
