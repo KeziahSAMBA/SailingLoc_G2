@@ -200,48 +200,72 @@ function AccountForm({ compactMobile = false }) {
     <>
       {/* Informations personnelles */}
       <article className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-xl">
-        <h2 className="mb-5 text-lg font-semibold text-white">
-          {t('accountForm.personalInfo.title')}
-        </h2>
+        <div
+          className={
+            compactMobile
+              ? 'mb-6 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-4 sm:gap-x-4 lg:mb-0 lg:block'
+              : ''
+          }
+        >
+          <h2
+            className={
+              compactMobile
+                ? 'col-start-2 row-start-1 min-w-0 whitespace-nowrap text-right text-[0.625rem] font-semibold tracking-tight text-white min-[350px]:text-xs min-[375px]:text-sm min-[430px]:text-base sm:text-lg sm:tracking-normal lg:mb-5 lg:whitespace-normal lg:text-left'
+                : 'mb-5 text-lg font-semibold text-white'
+            }
+          >
+            {t('accountForm.personalInfo.title')}
+          </h2>
 
-        {/* Photo de profil : visible dans le header et la messagerie. */}
-        <div className="mb-6 flex flex-wrap items-center gap-4">
-          <img
-            src={user?.avatar || nameToAvatarUrl(displayName || 'SailingLoc')}
-            alt={t('accountForm.avatar.alt')}
-            className="h-20 w-20 rounded-full border-2 border-white/30 object-cover"
-          />
+          {/* Photo de profil : visible dans le header et la messagerie. */}
           <div
             className={
               compactMobile
-                ? 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap'
-                : 'flex flex-wrap gap-3'
+                ? 'contents lg:mb-6 lg:flex lg:flex-wrap lg:items-center lg:gap-4'
+                : 'mb-6 flex flex-wrap items-center gap-4'
             }
           >
-            <label
-              className={`cursor-pointer rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white ${compactMobile ? `min-w-0 text-center ${user?.avatar ? '' : 'col-span-2 sm:col-span-1'}` : ''} ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
+            <img
+              src={user?.avatar || nameToAvatarUrl(displayName || 'SailingLoc')}
+              alt={t('accountForm.avatar.alt')}
+              className={`h-20 w-20 rounded-full border-2 border-white/30 object-cover ${compactMobile ? 'col-start-1 row-start-1' : ''}`}
+            />
+            <div
+              className={
+                compactMobile
+                  ? 'col-span-2 row-start-2 grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap'
+                  : 'flex flex-wrap gap-3'
+              }
             >
-              {avatarBusy ? t('accountForm.avatar.sending') : t('accountForm.avatar.change')}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleAvatarChange}
-                disabled={avatarBusy}
-                className="sr-only"
-              />
-            </label>
-            {user?.avatar && (
-              <button
-                type="button"
-                onClick={handleAvatarDelete}
-                disabled={avatarBusy}
-                className={`rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50 ${compactMobile ? 'min-w-0 text-center' : ''}`}
+              <label
+                className={`cursor-pointer rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white ${compactMobile ? `min-w-0 text-center ${user?.avatar ? '' : 'col-span-2 sm:col-span-1'}` : ''} ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
               >
-                {t('accountForm.avatar.remove')}
-              </button>
-            )}
+                {avatarBusy ? t('accountForm.avatar.sending') : t('accountForm.avatar.change')}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarChange}
+                  disabled={avatarBusy}
+                  className="sr-only"
+                />
+              </label>
+              {user?.avatar && (
+                <button
+                  type="button"
+                  onClick={handleAvatarDelete}
+                  disabled={avatarBusy}
+                  className={`rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50 ${compactMobile ? 'min-w-0 text-center' : ''}`}
+                >
+                  {t('accountForm.avatar.remove')}
+                </button>
+              )}
+            </div>
+            <p
+              className={`w-full text-xs text-white/60 ${compactMobile ? 'col-span-2 row-start-3' : ''}`}
+            >
+              {t('accountForm.avatar.hint')}
+            </p>
           </div>
-          <p className="w-full text-xs text-white/60">{t('accountForm.avatar.hint')}</p>
         </div>
 
         {serverError && (
