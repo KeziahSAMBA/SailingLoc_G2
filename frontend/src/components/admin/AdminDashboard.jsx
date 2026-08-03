@@ -48,7 +48,7 @@ function fmtMonth(m) {
 
 function StatCard({ label, value, accent }) {
   return (
-    <div className="h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+    <div className="h-full rounded-2xl border border-white/20 bg-white/10 p-5 text-center backdrop-blur-xl">
       <p className="text-xs font-semibold uppercase tracking-wide text-white/70">{label}</p>
       <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
     </div>
@@ -109,7 +109,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      <div className="mt-6 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid auto-rows-fr grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label={t('adminDashboard.users')}
           accent="text-white"
