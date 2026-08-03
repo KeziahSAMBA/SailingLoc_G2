@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 
 const LEVELS = ['info', 'warning', 'error'];
+const ROLES = ['admin', 'proprietaire', 'locataire'];
 const MAX_PAGE_SIZE = 100;
 const MESSAGE_MAX = 500;
 // Jamais stockés dans meta, même si un futur appelant les transmet par erreur.
@@ -33,6 +34,7 @@ export function logActivity({
   message,
   actorId,
   actorEmail,
+  actorRole,
   targetType,
   targetId,
   meta,
@@ -49,6 +51,7 @@ export function logActivity({
         message: truncate(message, MESSAGE_MAX),
         actor_id: Number.isInteger(actorId) ? actorId : null,
         actor_email: truncate(actorEmail, 255),
+        actor_role: truncate(actorRole, 20),
         target_type: truncate(targetType, 50),
         target_id: truncate(targetId, 50),
         meta: sanitizeMeta(meta),
@@ -66,6 +69,7 @@ export async function listLogs({
   category,
   action,
   actor,
+  role,
   search,
   from,
   to,
@@ -76,6 +80,7 @@ export async function listLogs({
   if (LEVELS.includes(level)) where.level = level;
   if (category && String(category).trim()) where.category = String(category).trim();
   if (action && String(action).trim()) where.action = String(action).trim();
+  if (ROLES.includes(role)) where.actor_role = role;
   if (actor !== undefined && actor !== '' && Number.isInteger(Number(actor))) {
     where.actor_id = Number(actor);
   }
@@ -123,6 +128,7 @@ export async function listLogFilters() {
   ]);
   return {
     levels: LEVELS,
+    roles: ROLES,
     categories: categories.map((c) => c.category).sort(),
     actions: actions.map((a) => a.action).sort(),
   };

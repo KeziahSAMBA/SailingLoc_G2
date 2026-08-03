@@ -1097,6 +1097,8 @@ export const TEXTS = {
     allCategories: { fr: 'Toutes les catégories', en: 'All categories' },
     levelLabel: { fr: 'Niveau', en: 'Level' },
     allLevels: { fr: 'Tous les niveaux', en: 'All levels' },
+    roleLabel: { fr: 'Rôle', en: 'Role' },
+    allRoles: { fr: 'Tous les rôles', en: 'All roles' },
     fromLabel: { fr: 'Du', en: 'From' },
     toLabel: { fr: 'Au', en: 'To' },
     resetFilters: { fr: 'Réinitialiser les filtres', en: 'Reset filters' },
@@ -1129,6 +1131,11 @@ export const TEXTS = {
       info: { fr: 'Information', en: 'Info' },
       warning: { fr: 'Avertissement', en: 'Warning' },
       error: { fr: 'Erreur', en: 'Error' },
+    },
+    roles: {
+      admin: { fr: 'Admin', en: 'Admin' },
+      proprietaire: { fr: 'Propriétaire', en: 'Owner' },
+      locataire: { fr: 'Locataire', en: 'Renter' },
     },
     categories: {
       auth: { fr: 'Connexion', en: 'Authentication' },
@@ -1168,18 +1175,32 @@ export const TEXTS = {
       },
       document: {
         status: { fr: 'Statut de document modifié', en: 'Document status changed' },
+        upload: { fr: 'Document déposé', en: 'Document uploaded' },
+        delete: { fr: 'Document supprimé', en: 'Document deleted' },
       },
       boat: {
         publish: { fr: 'Publication de bateau modifiée', en: 'Boat publication changed' },
+        create: { fr: 'Annonce créée', en: 'Listing created' },
+        update: { fr: 'Annonce modifiée', en: 'Listing updated' },
+        delete: { fr: 'Annonce supprimée', en: 'Listing deleted' },
       },
       report: {
         status: { fr: 'Statut de signalement modifié', en: 'Report status changed' },
       },
       booking: {
-        cancel: { fr: 'Réservation annulée', en: 'Booking cancelled' },
+        cancel: { fr: 'Réservation annulée (admin)', en: 'Booking cancelled (admin)' },
+        create: { fr: 'Réservation créée', en: 'Booking created' },
+        pay: { fr: 'Réservation payée', en: 'Booking paid' },
+        decide: { fr: 'Réservation validée ou refusée', en: 'Booking accepted or refused' },
+        cancel_guest: {
+          fr: 'Réservation annulée par le locataire',
+          en: 'Booking cancelled by the renter',
+        },
+        refund_request: { fr: 'Remboursement demandé', en: 'Refund requested' },
       },
       dispute: {
         status: { fr: 'Statut de litige modifié', en: 'Dispute status changed' },
+        open: { fr: 'Litige ouvert', en: 'Dispute opened' },
       },
       review: {
         update: { fr: 'Avis modifié', en: 'Review updated' },

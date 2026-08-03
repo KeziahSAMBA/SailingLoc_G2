@@ -19,6 +19,7 @@ import {
   deleteMyAvatar,
 } from '../controllers/userController.js';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { audit } from '../middlewares/auditMiddleware.js';
 import {
   getDashboard,
   getMyBookings,
@@ -169,10 +170,12 @@ router.get(
   requireRole('proprietaire'),
   getProprietaireBookingLocataire
 );
+// Le propriétaire valide ou refuse : le statut demandé part dans les détails.
 router.patch(
   '/me/proprietaire/bookings/:id_booking',
   protect,
   requireRole('proprietaire'),
+  audit('booking.decide', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   patchProprietaireBooking
 );
 router.post(
@@ -180,6 +183,7 @@ router.post(
   protect,
   requireRole('proprietaire'),
   uploadDisputePhotos,
+  audit('dispute.open', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   reportProprietaireDispute
 );
 router.get(
@@ -233,12 +237,31 @@ router.post(
   postMyBookingReview
 );
 router.get('/me/payments', protect, requireRole('locataire'), getMyPayments);
-router.post('/me/bookings/:id_booking/pay', protect, requireRole('locataire'), payMyBooking);
-router.post('/me/bookings/:id_booking/cancel', protect, requireRole('locataire'), cancelMyBooking);
+router.post(
+  '/me/bookings/:id_booking/pay',
+  protect,
+  requireRole('locataire'),
+  audit('booking.pay', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
+  payMyBooking
+);
+router.post(
+  '/me/bookings/:id_booking/cancel',
+  protect,
+  requireRole('locataire'),
+  audit('booking.cancel_guest', {
+    targetType: 'booking',
+    targetId: (req) => req.params.id_booking,
+  }),
+  cancelMyBooking
+);
 router.post(
   '/me/bookings/:id_booking/refund-request',
   protect,
   requireRole('locataire'),
+  audit('booking.refund_request', {
+    targetType: 'booking',
+    targetId: (req) => req.params.id_booking,
+  }),
   requestMyRefund
 );
 router.post(
@@ -246,6 +269,7 @@ router.post(
   protect,
   requireRole('locataire'),
   uploadDisputePhotos,
+  audit('dispute.open', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   reportMyDispute
 );
 router.patch('/me/reviews/:id_review', protect, requireRole('locataire'), patchMyReview);

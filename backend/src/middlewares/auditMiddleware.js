@@ -30,6 +30,7 @@ export function audit(action, { targetType, targetId, meta, when } = {}) {
         action,
         actorId: req.user?.id_user,
         actorEmail: req.user?.email,
+        actorRole: req.user?.role,
         targetType: targetType || category,
         // Sur une création, l'id n'existe pas dans l'URL : le contrôleur le dépose
         // dans res.locals.auditTargetId.

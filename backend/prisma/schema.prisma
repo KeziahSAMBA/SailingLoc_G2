@@ -69,6 +69,7 @@ model ActivityLog {
   message      String?   @db.VarChar(500)
   actor_id     Int?
   actor_email  String?   @db.VarChar(255)
+  actor_role   String?   @db.VarChar(20)
   target_type  String?   @db.VarChar(50)
   target_id    String?   @db.VarChar(50)
   meta         Json?

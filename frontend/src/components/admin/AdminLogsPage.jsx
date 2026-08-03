@@ -29,7 +29,7 @@ const FIELD_CLS = `w-full rounded-lg border border-white/20 bg-white/10 px-3 py-
 
 const ICON_BTN_CLS = `rounded-full bg-white/10 p-2 text-white/80 transition hover:bg-white/20 hover:text-white ${FOCUS_RING}`;
 
-const EMPTY_FILTERS = { search: '', category: '', level: '', from: '', to: '' };
+const EMPTY_FILTERS = { search: '', category: '', role: '', level: '', from: '', to: '' };
 
 function fileStamp(iso) {
   const d = new Date(iso);
@@ -49,6 +49,7 @@ function AdminLogsPage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [categories, setCategories] = useState([]);
   const [levels, setLevels] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
@@ -60,10 +61,12 @@ function AdminLogsPage() {
       .then((res) => {
         setCategories(res.data.categories || []);
         setLevels(res.data.levels || []);
+        setRoles(res.data.roles || []);
       })
       .catch(() => {
         setCategories([]);
         setLevels([]);
+        setRoles([]);
       });
   }, []);
 
@@ -133,6 +136,12 @@ function AdminLogsPage() {
       [t('adminLogs.colAction'), `${actionLabel(log.action)} (${log.action})`],
       [t('adminLogs.colActor'), actorLabel(log)],
       [t('adminLogs.fieldEmail'), log.actor_email || '—'],
+      [
+        t('adminLogs.roleLabel'),
+        log.actor_role
+          ? t(`adminLogs.roles.${log.actor_role}`, { defaultValue: log.actor_role })
+          : '—',
+      ],
       [t('adminLogs.fieldActorId'), log.actor_id != null ? String(log.actor_id) : '—'],
       [t('adminLogs.colTarget'), targetLabel(log)],
       [t('adminLogs.fieldIp'), log.ip || '—'],
@@ -168,7 +177,7 @@ function AdminLogsPage() {
         <p className="mt-1 text-sm text-white/70">{t('adminLogs.subtitle')}</p>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div className="sm:col-span-2 lg:col-span-1">
           <label htmlFor="log-search" className="mb-1 block text-xs font-medium text-white/70">
             {t('adminLogs.searchLabel')}
@@ -199,6 +208,27 @@ function AdminLogsPage() {
             {categories.map((c) => (
               <option key={c} value={c} className="text-slate-900">
                 {t(`adminLogs.categories.${c}`, { defaultValue: c })}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="log-role" className="mb-1 block text-xs font-medium text-white/70">
+            {t('adminLogs.roleLabel')}
+          </label>
+          <select
+            id="log-role"
+            value={filters.role}
+            onChange={(e) => updateFilter('role', e.target.value)}
+            className={FIELD_CLS}
+          >
+            <option value="" className="text-slate-900">
+              {t('adminLogs.allRoles')}
+            </option>
+            {roles.map((r) => (
+              <option key={r} value={r} className="text-slate-900">
+                {t(`adminLogs.roles.${r}`, { defaultValue: r })}
               </option>
             ))}
           </select>
@@ -304,9 +334,11 @@ function AdminLogsPage() {
                   </td>
                   <td className="px-3 py-3">
                     <div className="font-medium">{actorLabel(log)}</div>
-                    {log.actor_email && (
-                      <div className="text-xs text-white/60">{log.actor_email}</div>
-                    )}
+                    <div className="text-xs text-white/60">
+                      {log.actor_role
+                        ? t(`adminLogs.roles.${log.actor_role}`, { defaultValue: log.actor_role })
+                        : log.actor_email}
+                    </div>
                   </td>
                   <td className="px-3 py-3">
                     <span
