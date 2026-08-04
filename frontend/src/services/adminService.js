@@ -113,3 +113,21 @@ export function listLogs(params) {
 export function listLogFilters() {
   return api.get('/admin/logs/filters');
 }
+
+// Tâches planifiées.
+export function listCronJobs() {
+  return api.get('/admin/cron/jobs');
+}
+
+export function updateCronJob(key, payload) {
+  return api.patch(`/admin/cron/jobs/${key}`, payload);
+}
+
+// Répond 202 : l'exécution est lancée, son résultat arrive via listCronRuns.
+export function runCronJob(key) {
+  return api.post(`/admin/cron/jobs/${key}/run`);
+}
+
+export function listCronRuns(params) {
+  return api.get('/admin/cron/runs', { params });
+}

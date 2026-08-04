@@ -53,6 +53,8 @@ function AdminLayout() {
     { to: '/admin/messages', label: t('adminLayout.nav.messages') },
     { to: '/admin/contact', label: t('adminLayout.nav.contact') },
     { to: '/admin/logs', label: t('adminLayout.nav.logs') },
+    { to: '/admin/taches', label: t('adminLayout.nav.tasks'), end: true },
+    { to: '/admin/taches/programmation', label: t('adminLayout.nav.taskSchedule') },
     { to: '/admin/compte', label: t('adminLayout.nav.account') },
   ];
   const activeItem =
