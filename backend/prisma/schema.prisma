@@ -456,3 +456,54 @@ model BoatEquipment {
   @@index([id_boat])
   @@map("boat_equipment")
 }
+
+// Tâche planifiée. Le catalogue vit en code (src/jobs/registry.js) ; cette table
+// ne porte que ce que l'admin peut modifier et l'état d'exécution, qui doit
+// survivre aux redémarrages du process (Railway redéploie à chaque push).
+model CronJob {
+  id_job       Int       @id @default(autoincrement())
+  key          String    @unique @db.VarChar(50)
+  schedule     String    @db.VarChar(50)
+  enabled      Boolean   @default(false)
+  // Simulation : la tâche s'exécute et compte, mais n'écrit rien.
+  dry_run      Boolean   @default(true)
+  // Surcharges du paramétrage par défaut du registre (ex. { retentionDays: 90 }).
+  params       Json?
+  last_run_at  DateTime?
+  last_status  String?   @db.VarChar(20)
+  next_run_at  DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime?
+
+  runs         CronRun[]
+
+  @@map("cron_job")
+}
+
+model CronRun {
+  id_run       Int       @id @default(autoincrement())
+  id_job       Int
+  // 'schedule' (planifié) ou 'manual' (bouton admin).
+  trigger      String    @default("schedule") @db.VarChar(20)
+  // 'running', 'success', 'failed' ou 'skipped'.
+  status       String    @default("running") @db.VarChar(20)
+  dry_run      Boolean   @default(false)
+  started_at   DateTime  @default(now())
+  finished_at  DateTime?
+  duration_ms  Int?
+  affected     Int       @default(0)
+  // Détail par entité, ex. { users: 3, documents: 7, files: 7 }.
+  result       Json?
+  error        String?   @db.VarChar(1000)
+  // Sans clé étrangère, à l'inverse d'ActivityLog : users.purge ne doit pas
+  // pouvoir effacer la trace de l'admin qui l'a déclenchée.
+  actor_id     Int?
+  actor_email  String?   @db.VarChar(255)
+
+  job          CronJob   @relation(fields: [id_job], references: [id_job], onDelete: Cascade)
+
+  @@index([id_job, started_at])
+  @@index([status])
+  @@index([started_at])
+  @@map("cron_run")
+}

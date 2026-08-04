@@ -26,15 +26,19 @@ function parseDay(value) {
 // demande non payée ne bloque de toute façon aucun créneau). Les demandes déjà
 // payées (empreinte en attente) n'expirent pas : elles attendent la décision
 // du propriétaire.
-export async function cancelExpiredBookings() {
+export function expiredPendingWhere(now = new Date(), expiryMs = PENDING_EXPIRY_MS) {
+  return {
+    status: 'pending',
+    deleted_at: null,
+    booking_date: { lt: new Date(now.getTime() - expiryMs) },
+    payments: { none: { status: { in: ['pending', 'success'] } } },
+  };
+}
+
+export async function cancelExpiredBookings(expiryMs = PENDING_EXPIRY_MS) {
   const now = new Date();
-  await prisma.booking.updateMany({
-    where: {
-      status: 'pending',
-      deleted_at: null,
-      booking_date: { lt: new Date(now.getTime() - PENDING_EXPIRY_MS) },
-      payments: { none: { status: { in: ['pending', 'success'] } } },
-    },
+  const { count } = await prisma.booking.updateMany({
+    where: expiredPendingWhere(now, expiryMs),
     data: {
       status: 'cancelled',
       cancellation_reason: EXPIRY_REASON,
@@ -42,6 +46,7 @@ export async function cancelExpiredBookings() {
       updated_at: now,
     },
   });
+  return count;
 }
 
 // Annulation individuelle avec motif (expiration, créneau perdu…).
