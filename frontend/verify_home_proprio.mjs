@@ -13,7 +13,10 @@ function log(label, val) {
 await page.goto(BASE + '/', { waitUntil: 'networkidle' });
 await page.waitForTimeout(1500);
 const guestHasSearchBar = (await page.locator('input[placeholder], form').count()) > 0;
-const guestHeroText = await page.locator('#hero').innerText().catch(() => '(no #hero)');
+const guestHeroText = await page
+  .locator('#hero')
+  .innerText()
+  .catch(() => '(no #hero)');
 log('guest #hero present', await page.locator('#hero').count());
 await page.screenshot({ path: 'verify_guest_home.png' });
 
@@ -37,10 +40,16 @@ log('url after login', page.url());
 await page.screenshot({ path: 'verify_after_login.png', fullPage: true });
 
 // ── 3. Vérifications de la page HomePageProprio ───────────────────────────
-const hasSearchBar = await page.locator('input[type="search"], input[placeholder*="estination" i], input[placeholder*="Où" i]').count();
+const hasSearchBar = await page
+  .locator('input[type="search"], input[placeholder*="estination" i], input[placeholder*="Où" i]')
+  .count();
 log('searchbar inputs found (should be 0)', hasSearchBar);
 
-const logoBox = await page.locator('img[alt="SailingLoc"]').first().boundingBox().catch(() => null);
+const logoBox = await page
+  .locator('img[alt="SailingLoc"]')
+  .first()
+  .boundingBox()
+  .catch(() => null);
 log('logo bounding box (height should be reduced ~36-48px)', JSON.stringify(logoBox));
 
 const addBoatCard = await page.getByText(/Ajouter un bateau/i).count();
