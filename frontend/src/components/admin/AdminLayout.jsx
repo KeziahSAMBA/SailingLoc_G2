@@ -2,11 +2,41 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import bgImage from '../../assets/image/paysage/dashboard_bg.jpg';
+import contactBg from '../../assets/image/paysage/contact_bg.jpg';
+import aboutBg from '../../assets/image/paysage/about_bg.jpg';
+import legalBg from '../../assets/image/portrait/cgu.jpg';
+import { usePageSlideTransition } from '../../hooks/usePageTransition.js';
+import {
+  PAGE_SLIDE_CSS,
+  PHOTO_OVERLAY_STATIC_PAGE,
+  NAV_ENTER_TOTAL,
+} from '../../hooks/useCategoryTransition.js';
+
+// Cascade d'entrée/sortie du tableau de bord : 0 menu latéral, 1 zone de
+// contenu — même rythme que les autres pages navigables (cf.
+// useCategoryTransition.js).
+const ADMIN_ENTER_TOTAL = NAV_ENTER_TOTAL;
+
+// Vers ces pages, notre photo de fond fait un crossfade vers la leur avant de
+// naviguer — raccord invisible, comme entre Contact/À propos/légal. (Pas
+// /admin/login : route autonome, exclue de STATIC_EXIT_AWARE_PAGES.)
+const ADMIN_STATIC_BG_TARGETS = {
+  '/contact': contactBg,
+  '/a-propos': aboutBg,
+  '/mentions-legales': legalBg,
+  '/cgu': legalBg,
+  '/cgv': legalBg,
+  '/politique-de-confidentialite': legalBg,
+};
 
 const ADMIN_OUTLET_CONTEXT = { compactPagination: true };
 
 function AdminLayout() {
   const { t } = useTranslation();
+  const { slide, exitBgSrc } = usePageSlideTransition(ADMIN_ENTER_TOTAL, {
+    ownBg: bgImage,
+    staticBgTargets: ADMIN_STATIC_BG_TARGETS,
+  });
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const nav = [
@@ -22,6 +52,7 @@ function AdminLayout() {
     { to: '/admin/transactions', label: t('adminLayout.nav.transaction') },
     { to: '/admin/messages', label: t('adminLayout.nav.messages') },
     { to: '/admin/contact', label: t('adminLayout.nav.contact') },
+    { to: '/admin/logs', label: t('adminLayout.nav.logs') },
     { to: '/admin/compte', label: t('adminLayout.nav.account') },
   ];
   const activeItem =
@@ -38,15 +69,30 @@ function AdminLayout() {
     // Même univers visuel que les autres pages : photo plein écran sous un
     // voile noir transparent et panneaux en verre dépoli.
     <div
-      className="min-h-screen bg-cover bg-fixed bg-center text-white"
+      className="relative min-h-screen overflow-x-clip bg-cover bg-fixed bg-center text-white"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-[6.25rem] pb-10 lg:max-w-none lg:flex-row lg:px-16">
+      <style>{PAGE_SLIDE_CSS}</style>
+      {/* Crossfade vers le fond de la destination pendant la sortie : se pose
+          derrière les blocs (qui glissent hors écran par-dessus) et atterrit
+          à pleine opacité pile pour le montage réel de la page cible, qui
+          utilise nativement cette même image. */}
+      {exitBgSrc && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `${PHOTO_OVERLAY_STATIC_PAGE}, url(${exitBgSrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            animation: `pageBgFadeIn ${ADMIN_ENTER_TOTAL}ms ease forwards`,
+          }}
+        />
+      )}
       <div className="min-h-screen w-full bg-black/40">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
           {/* Menu : barre horizontale défilable sur mobile, colonne à partir de lg. */}
-          <aside className="w-full lg:w-60 lg:shrink-0">
+          <aside className="w-full lg:w-60 lg:shrink-0" style={slide(0)}>
             <nav
               aria-label={t('adminLayout.navAria')}
               className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[6rem]"
@@ -113,7 +159,7 @@ function AdminLayout() {
           </aside>
 
           {/* Zone de contenu droite */}
-          <main className="min-w-0 flex-1">
+          <main className="min-w-0 flex-1" style={slide(1, 'right')}>
             <Outlet context={ADMIN_OUTLET_CONTEXT} />
           </main>
         </div>

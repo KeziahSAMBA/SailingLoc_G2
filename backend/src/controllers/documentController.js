@@ -19,6 +19,7 @@ export async function listMyDocuments(req, res) {
 export async function uploadMyDocument(req, res) {
   try {
     const document = await uploadDocument(req.user, req.body?.type, req.file);
+    res.locals.auditTargetId = String(document.id_document);
     res.status(201).json({ document });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

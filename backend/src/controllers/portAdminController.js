@@ -12,6 +12,7 @@ export async function adminListPorts(req, res) {
 export async function adminCreatePort(req, res) {
   try {
     const port = await createPort(req.body || {});
+    res.locals.auditTargetId = String(port.id_port);
     res.status(201).json({ port });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

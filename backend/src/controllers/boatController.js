@@ -127,6 +127,7 @@ export async function uploadBoat(req, res) {
     // en statique (/uploads).
     const origin = `${req.protocol}://${req.get('host')}`;
     const boat = await createBoat(req.user.id_user, req.body, boatFiles(req), origin);
+    res.locals.auditTargetId = String(boat.id_boat);
     res.status(201).json({ boat });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
@@ -143,6 +144,7 @@ export async function createBookingController(req, res) {
       start_date: req.body.start_date,
       end_date: req.body.end_date,
     });
+    res.locals.auditTargetId = String(booking.id_booking);
     res.status(201).json({ booking });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

@@ -14,6 +14,7 @@ import categoryBg from '../assets/image/paysage/cote_azur.jpg';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
 import aboutBg from '../assets/image/paysage/about_bg.jpg';
 import legalBg from '../assets/image/portrait/cgu.jpg';
+import dashboardBg from '../assets/image/paysage/dashboard_bg.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -58,13 +59,14 @@ import {
   PAGE_SLIDE_CSS,
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
+  PHOTO_OVERLAY_DASHBOARD,
   NAV_ENTER_STAGGER,
   CATEGORY_PRODUCT_NAV_TOTAL as CATEGORY_ENTER_TOTAL,
   CATEGORY_ENTER_EASING,
   CATEGORY_EXIT_EASING,
   prefersReducedMotion,
 } from '../hooks/useCategoryTransition.js';
-import { onPageExitRequest } from '../hooks/usePageTransition.js';
+import { onPageExitRequest, isOnDashboardPage } from '../hooks/usePageTransition.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -342,7 +344,15 @@ function ProductPage() {
       lockScroll();
       await smoothScrollToTop();
       if (cancelled) return;
-      setExitBgSrc(to === '/a-propos' ? aboutBg : to === '/contact' ? contactBg : legalBg);
+      setExitBgSrc(
+        to === '/a-propos'
+          ? aboutBg
+          : to === '/contact'
+            ? contactBg
+            : isOnDashboardPage(to)
+              ? dashboardBg
+              : legalBg
+      );
       setExitIsGeneric(true);
       setExiting(true);
       navTimer = setTimeout(() => {
@@ -815,7 +825,13 @@ function ProductPage() {
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: `${exitBgSrc === categoryBg ? PHOTO_OVERLAY_BOAT : PHOTO_OVERLAY_STATIC_PAGE}, url(${exitBgSrc})`,
+                backgroundImage: `${
+                  exitBgSrc === categoryBg
+                    ? PHOTO_OVERLAY_BOAT
+                    : exitBgSrc === dashboardBg
+                      ? PHOTO_OVERLAY_DASHBOARD
+                      : PHOTO_OVERLAY_STATIC_PAGE
+                }, url(${exitBgSrc})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundAttachment: 'fixed',

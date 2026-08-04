@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { audit } from '../middlewares/auditMiddleware.js';
 import {
   listMyDocuments,
   uploadMyDocument,
@@ -53,11 +54,19 @@ function uploadSingle(req, res, next) {
 const router = Router();
 
 router.get('/', protect, requireRole('locataire', 'proprietaire'), listMyDocuments);
-router.post('/', protect, requireRole('locataire', 'proprietaire'), uploadSingle, uploadMyDocument);
+router.post(
+  '/',
+  protect,
+  requireRole('locataire', 'proprietaire'),
+  uploadSingle,
+  audit('document.upload', { meta: (req) => ({ type: req.body?.type }) }),
+  uploadMyDocument
+);
 router.delete(
   '/:id',
   protect,
   requireRole('locataire', 'proprietaire'),
+  audit('document.delete'),
   deleteMyDocumentController
 );
 // Téléchargement protégé : autorisé au propriétaire du document ou à un admin
