@@ -7,6 +7,7 @@ import productBg from '../assets/image/paysage/crique.jpg';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
 import aboutBg from '../assets/image/paysage/about_bg.jpg';
 import legalBg from '../assets/image/portrait/cgu.jpg';
+import dashboardBg from '../assets/image/paysage/dashboard_bg.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import { SiAppstore, SiGoogleplay } from 'react-icons/si';
 import logoLong from '../assets/image/SL_logo/logo SL long.webp';
@@ -31,6 +32,7 @@ import {
   prefersReducedMotion,
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
+  PHOTO_OVERLAY_DASHBOARD,
   HERO_EXIT_DURATION,
   HOME_NAV_DURATION,
   HERO_EXIT_EASING,
@@ -41,7 +43,11 @@ import {
   INTRO_WELCOME_HOLD_MS,
   INTRO_REVEAL_LAG_MS,
 } from '../hooks/useCategoryTransition.js';
-import { usePageExitNavigate, onPageExitRequest } from '../hooks/usePageTransition.js';
+import {
+  usePageExitNavigate,
+  onPageExitRequest,
+  isOnDashboardPage,
+} from '../hooks/usePageTransition.js';
 
 // Fondu des textes de l'intro : apparition et disparition symétriques,
 // opacité + légère dérive verticale, au même rythme que le crossfade.
@@ -358,7 +364,14 @@ function HomePage() {
       if (transitioningRef.current) return;
       transitioningRef.current = true;
       lockScroll();
-      const targetBg = to === '/a-propos' ? aboutBg : to === '/contact' ? contactBg : legalBg;
+      const targetBg =
+        to === '/a-propos'
+          ? aboutBg
+          : to === '/contact'
+            ? contactBg
+            : isOnDashboardPage(to)
+              ? dashboardBg
+              : legalBg;
       const bg = new window.Image();
       bg.src = targetBg;
       bg.decode?.().catch(() => {});
@@ -498,8 +511,8 @@ function HomePage() {
             payload par CategoryPage/ContactPage/AboutPage) qui s'efface pour
             révéler la vidéo —, pour un raccord invisible à la navigation
             dans les deux sens. Arrivée générique sans payload (origine non
-            équipée, ex. un dashboard) : pas d'image de départ connue, le
-            hero se contente de glisser en place au-dessus de la vidéo. */}
+            équipée) : pas d'image de départ connue, le hero se contente de
+            glisser en place au-dessus de la vidéo. */}
         {(exiting || (arrivalActive && homeArrival)) && (
           <div
             className="absolute inset-0"
@@ -509,7 +522,9 @@ function HomePage() {
                 (exiting ? exitBgSrc : arrivalBg) === aboutBg ||
                 (exiting ? exitBgSrc : arrivalBg) === legalBg
                   ? PHOTO_OVERLAY_STATIC_PAGE
-                  : PHOTO_OVERLAY_BOAT
+                  : (exiting ? exitBgSrc : arrivalBg) === dashboardBg
+                    ? PHOTO_OVERLAY_DASHBOARD
+                    : PHOTO_OVERLAY_BOAT
               }, url(${exiting ? exitBgSrc : arrivalBg})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
