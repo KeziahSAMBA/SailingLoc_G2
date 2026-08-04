@@ -38,6 +38,7 @@ model User {
   refreshTokens       RefreshToken[]
   reports             BoatReport[]   @relation("UserReports")
   disputes            Dispute[]      @relation("UserDisputes")
+  activityLogs        ActivityLog[]  @relation("ActorLogs")
 
   @@unique([email, role])
   @@map("user")
@@ -57,6 +58,30 @@ model RefreshToken {
   @@index([id_user])
   @@index([expires_at])
   @@map("refresh_token")
+}
+
+model ActivityLog {
+  id_log       Int       @id @default(autoincrement())
+  level        String    @default("info") @db.VarChar(10)
+  category     String    @db.VarChar(50)
+  // Clé machine (ex. « user.update ») : le libellé est traduit côté front.
+  action       String    @db.VarChar(100)
+  message      String?   @db.VarChar(500)
+  actor_id     Int?
+  actor_email  String?   @db.VarChar(255)
+  actor_role   String?   @db.VarChar(20)
+  target_type  String?   @db.VarChar(50)
+  target_id    String?   @db.VarChar(50)
+  meta         Json?
+  ip           String?   @db.VarChar(64)
+  created_at   DateTime  @default(now())
+
+  actor        User?     @relation("ActorLogs", fields: [actor_id], references: [id_user], onDelete: SetNull)
+
+  @@index([created_at])
+  @@index([category, created_at])
+  @@index([actor_id])
+  @@map("activity_log")
 }
 
 model Port {

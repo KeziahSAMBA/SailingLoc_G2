@@ -104,3 +104,12 @@ export function listContactRequests(params) {
 export function setContactRequestStatus(id, status) {
   return api.patch(`/admin/contact-requests/${id}`, { status });
 }
+
+// Journal d'activité : pagination assurée par le backend (params page / pageSize).
+export function listLogs(params) {
+  return api.get('/admin/logs', { params });
+}
+
+export function listLogFilters() {
+  return api.get('/admin/logs/filters');
+}

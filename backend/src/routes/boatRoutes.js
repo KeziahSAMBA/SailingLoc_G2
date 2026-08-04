@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { audit } from '../middlewares/auditMiddleware.js';
 import {
   uploadBoat,
   putBoat,
@@ -73,9 +74,46 @@ const router = Router();
 router.get('/by-type', getBoatsByType);
 router.get('/', getBoats);
 router.get('/:id_boat/reviews', getBoatReviews);
-router.post('/', protect, requireRole('proprietaire', 'admin'), uploadFiles, uploadBoat);
-router.post('/:id_boat/bookings', protect, requireRole('locataire'), createBookingController);
-router.put('/:id_boat', protect, requireRole('proprietaire'), uploadFiles, putBoat);
-router.delete('/:id_boat', protect, requireRole('proprietaire'), removeBoat);
+// `audit` est placé après `uploadFiles` : multer doit avoir rempli req.body.
+router.post(
+  '/',
+  protect,
+  requireRole('proprietaire', 'admin'),
+  uploadFiles,
+  audit('boat.create', { meta: (req) => ({ name: req.body?.name, type: req.body?.type }) }),
+  uploadBoat
+);
+router.post(
+  '/:id_boat/bookings',
+  protect,
+  requireRole('locataire'),
+  audit('booking.create', {
+    targetType: 'booking',
+    meta: (req) => ({
+      id_boat: req.params.id_boat,
+      start_date: req.body?.start_date,
+      end_date: req.body?.end_date,
+    }),
+  }),
+  createBookingController
+);
+router.put(
+  '/:id_boat',
+  protect,
+  requireRole('proprietaire'),
+  uploadFiles,
+  audit('boat.update', {
+    targetId: (req) => req.params.id_boat,
+    meta: (req) => ({ name: req.body?.name, status: req.body?.status }),
+  }),
+  putBoat
+);
+router.delete(
+  '/:id_boat',
+  protect,
+  requireRole('proprietaire'),
+  audit('boat.delete', { targetId: (req) => req.params.id_boat }),
+  removeBoat
+);
 
 export default router;

@@ -16,6 +16,7 @@ import {
   checkResetToken,
   REFRESH_TOKEN_TTL_MS,
 } from '../services/userService.js';
+import { logActivity } from '../services/logService.js';
 
 const REFRESH_COOKIE_NAME = 'sl_refresh';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -54,6 +55,7 @@ export async function register(req, res) {
 export async function adminCreateUser(req, res) {
   try {
     const user = await adminCreate(req.body || {});
+    res.locals.auditTargetId = String(user.id_user);
     res.status(201).json({ user });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
@@ -84,8 +86,25 @@ export async function adminLogin(req, res) {
       { userAgent: req.headers['user-agent'] }
     );
     setRefreshCookie(res, refreshToken);
+    logActivity({
+      category: 'auth',
+      action: 'admin.login',
+      actorId: user.id_user,
+      actorEmail: user.email,
+      targetType: 'user',
+      targetId: String(user.id_user),
+      ip: req.ip,
+    });
     res.status(200).json({ accessToken, user });
   } catch (err) {
+    logActivity({
+      level: 'warning',
+      category: 'auth',
+      action: 'admin.login_failed',
+      actorEmail: req.body?.email,
+      message: err.message,
+      ip: req.ip,
+    });
     res.status(err.status || 500).json({ message: err.message });
   }
 }
