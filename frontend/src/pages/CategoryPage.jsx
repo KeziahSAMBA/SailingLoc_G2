@@ -14,6 +14,7 @@ import productBg from '../assets/image/paysage/crique.jpg';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
 import aboutBg from '../assets/image/paysage/about_bg.jpg';
 import legalBg from '../assets/image/portrait/cgu.jpg';
+import dashboardBg from '../assets/image/paysage/dashboard_bg.jpg';
 import SearchBar from '../components/common/SearchBar.jsx';
 import FilterBar from '../components/common/FilterBar.jsx';
 import MapView from '../components/common/MapView.jsx';
@@ -43,6 +44,7 @@ import {
   PAGE_SLIDE_CSS,
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
+  PHOTO_OVERLAY_DASHBOARD,
   CATEGORY_ENTER_EASING,
   CATEGORY_EXIT_EASING,
   NAV_ENTER_DURATION,
@@ -50,7 +52,7 @@ import {
   CATEGORY_PRODUCT_NAV_TOTAL as CATEGORY_NAV_TOTAL,
   INTRO_SOFT_EASING,
 } from '../hooks/useCategoryTransition.js';
-import { onPageExitRequest } from '../hooks/usePageTransition.js';
+import { onPageExitRequest, isOnDashboardPage } from '../hooks/usePageTransition.js';
 
 // Fond photo bateau partagé par toutes les sections de la page (résultats,
 // carrousels, avis), qui reprennent toutes ce même habillage (image + assombrissement).
@@ -411,7 +413,15 @@ function CategoryPage() {
       lockScroll();
       await smoothScrollToTop();
       if (cancelled) return;
-      setExitBgSrc(to === '/a-propos' ? aboutBg : to === '/contact' ? contactBg : legalBg);
+      setExitBgSrc(
+        to === '/a-propos'
+          ? aboutBg
+          : to === '/contact'
+            ? contactBg
+            : isOnDashboardPage(to)
+              ? dashboardBg
+              : legalBg
+      );
       setExitIsGeneric(true);
       setExiting(true);
       navTimer = setTimeout(() => {
@@ -796,7 +806,13 @@ function CategoryPage() {
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: `${exitBgSrc === contactBg || exitBgSrc === aboutBg || exitBgSrc === legalBg ? PHOTO_OVERLAY_STATIC_PAGE : PHOTO_OVERLAY_BOAT}, url(${exitBgSrc})`,
+                backgroundImage: `${
+                  exitBgSrc === contactBg || exitBgSrc === aboutBg || exitBgSrc === legalBg
+                    ? PHOTO_OVERLAY_STATIC_PAGE
+                    : exitBgSrc === dashboardBg
+                      ? PHOTO_OVERLAY_DASHBOARD
+                      : PHOTO_OVERLAY_BOAT
+                }, url(${exitBgSrc})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundAttachment: 'fixed',

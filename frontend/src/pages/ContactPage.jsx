@@ -7,13 +7,23 @@ import { contactSupport } from '../services/messageService.js';
 import contactBg from '../assets/image/paysage/contact_bg.jpg';
 import categoryBg from '../assets/image/paysage/cote_azur.jpg';
 import aboutBg from '../assets/image/paysage/about_bg.jpg';
+import dashboardBg from '../assets/image/paysage/dashboard_bg.jpg';
 import { usePageExitNavigate, usePageSlideTransition } from '../hooks/usePageTransition.js';
 import {
   PAGE_SLIDE_CSS,
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
+  PHOTO_OVERLAY_DASHBOARD,
   NAV_ENTER_TOTAL,
 } from '../hooks/useCategoryTransition.js';
+
+// Le voile du crossfade doit être identique au pixel près à celui que la page
+// cible affiche réellement dès son montage (cf. PHOTO_OVERLAY_* ci-dessus).
+function overlayFor(bg) {
+  if (bg === categoryBg) return PHOTO_OVERLAY_BOAT;
+  if (bg === dashboardBg) return PHOTO_OVERLAY_DASHBOARD;
+  return PHOTO_OVERLAY_STATIC_PAGE;
+}
 
 // Rubriques d'aide : mêmes questions que le footer, avec leurs réponses.
 function getFAQ(t) {
@@ -59,7 +69,10 @@ const CONTACT_ENTER_TOTAL = NAV_ENTER_TOTAL;
 
 // Constante de module (et non recréé à chaque rendu) : usePageSlideTransition
 // resouscrit son effet de sortie à chaque changement de référence.
-const CONTACT_STATIC_BG_TARGETS = { '/categorie': categoryBg, '/a-propos': aboutBg };
+const CONTACT_STATIC_BG_TARGETS = {
+  '/categorie': categoryBg,
+  '/a-propos': aboutBg,
+};
 
 function ContactPage() {
   const { t } = useTranslation();
@@ -68,6 +81,7 @@ function ContactPage() {
   const { slide, exitBgSrc } = usePageSlideTransition(CONTACT_ENTER_TOTAL, {
     ownBg: contactBg,
     staticBgTargets: CONTACT_STATIC_BG_TARGETS,
+    dashboardBg,
   });
   const [chatBusy, setChatBusy] = useState(false);
 
@@ -157,7 +171,7 @@ function ContactPage() {
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: `${exitBgSrc === categoryBg ? PHOTO_OVERLAY_BOAT : PHOTO_OVERLAY_STATIC_PAGE}, url(${exitBgSrc})`,
+            backgroundImage: `${overlayFor(exitBgSrc)}, url(${exitBgSrc})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed',

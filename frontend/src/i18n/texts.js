@@ -185,6 +185,21 @@ export const TEXTS = {
     },
   },
 
+  homeProprio: {
+    pageTitle: { fr: 'Espace propriétaire — SailingLoc', en: 'Owner home — SailingLoc' },
+    hero: {
+      tagline: {
+        fr: 'Gérez vos bateaux, vos réservations et vos revenus, le tout en un seul endroit.',
+        en: 'Manage your boats, bookings and earnings, all in one place.',
+      },
+      addBoat: { fr: 'Ajouter un bateau', en: 'Add a boat' },
+      noBoats: {
+        fr: 'Aucun bateau pour l’instant. Ajoutez votre première annonce !',
+        en: 'No boat yet. Add your first listing!',
+      },
+    },
+  },
+
   category: {
     results: {
       kicker: { fr: 'Selon vos recherches', en: 'Based on your search' },

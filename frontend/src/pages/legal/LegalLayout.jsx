@@ -5,13 +5,23 @@ import heroBg from '../../assets/image/portrait/cgu.jpg';
 import aboutBg from '../../assets/image/paysage/about_bg.jpg';
 import categoryBg from '../../assets/image/paysage/cote_azur.jpg';
 import contactBg from '../../assets/image/paysage/contact_bg.jpg';
+import dashboardBg from '../../assets/image/paysage/dashboard_bg.jpg';
 import { usePageSlideTransition } from '../../hooks/usePageTransition.js';
 import {
   PAGE_SLIDE_CSS,
   PHOTO_OVERLAY_BOAT,
   PHOTO_OVERLAY_STATIC_PAGE,
+  PHOTO_OVERLAY_DASHBOARD,
   NAV_ENTER_TOTAL,
 } from '../../hooks/useCategoryTransition.js';
+
+// Le voile du crossfade doit être identique au pixel près à celui que la page
+// cible affiche réellement dès son montage (cf. PHOTO_OVERLAY_* ci-dessus).
+function overlayFor(bg) {
+  if (bg === categoryBg) return PHOTO_OVERLAY_BOAT;
+  if (bg === dashboardBg) return PHOTO_OVERLAY_DASHBOARD;
+  return PHOTO_OVERLAY_STATIC_PAGE;
+}
 
 // Focus clavier visible sur fond sombre — même convention que ContactPage/AboutPage.
 const FOCUS_LIGHT =
@@ -61,6 +71,7 @@ function LegalLayout({ title, pageTitle, updated, children }) {
   const { slide, exitBgSrc } = usePageSlideTransition(LEGAL_ENTER_TOTAL, {
     ownBg: heroBg,
     staticBgTargets: LEGAL_STATIC_BG_TARGETS,
+    dashboardBg,
     skipEnter: fromLegalNav,
   });
 
@@ -80,7 +91,7 @@ function LegalLayout({ title, pageTitle, updated, children }) {
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: `${exitBgSrc === categoryBg ? PHOTO_OVERLAY_BOAT : PHOTO_OVERLAY_STATIC_PAGE}, url(${exitBgSrc})`,
+            backgroundImage: `${overlayFor(exitBgSrc)}, url(${exitBgSrc})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed',

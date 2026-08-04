@@ -53,8 +53,29 @@ export function onPageExitRequest(handler) {
 // (contact/à propos), en plus de leur propre système d'entrée/sortie pour
 // d'autres destinations (FLIP de la SearchBar, crossfade vidéo...) : cf.
 // leur abonnement à onPageExitRequest dans CategoryPage.jsx / HomePage.jsx /
-// ProductPage.jsx.
-const STATIC_EXIT_AWARE_PAGES = ['/', '/categorie', '/product'];
+// HomePageProprio.jsx / ProductPage.jsx / ProprietaireLayout.jsx /
+// LocataireLayout.jsx / AdminLayout.jsx.
+const STATIC_EXIT_AWARE_PAGES = [
+  '/',
+  '/categorie',
+  '/product',
+  '/proprietaire',
+  '/locataire',
+  '/admin',
+];
+
+// Sous-ensemble de STATIC_EXIT_AWARE_PAGES : les 3 tableaux de bord
+// spécifiquement (pas Home/Catégorie/Produit, qui ont leur propre système
+// dédié pour rejoindre l'accueil, cf. useHomeNavigate dans
+// useCategoryTransition.js). Exportée : DashboardHeader.jsx s'y réfère pour
+// router ses clics "retour à l'accueil" (logo, nav, déconnexion) via
+// pageExitNavigate plutôt que via useHomeNavigate/useCategoryNavigate (qui
+// les ignorent, faute d'être sur /categorie ou /product).
+const DASHBOARD_PAGES = ['/proprietaire', '/locataire', '/admin'];
+
+export function isOnDashboardPage(pathname) {
+  return DASHBOARD_PAGES.some((base) => isOnPath(pathname, base)) && pathname !== '/admin/login';
+}
 
 // Remplaçant de navigate() utilisable depuis n'importe quel composant
 // (headers, footer, liens internes) : n'intercepte que si la page courante
@@ -81,9 +102,13 @@ export function usePageExitNavigate() {
   const navigate = useNavigate();
   const location = useLocation();
   const onExitPage = EXIT_TRANSITION_PAGES.some((base) => isOnPath(location.pathname, base));
-  const onStaticExitAwarePage = STATIC_EXIT_AWARE_PAGES.some((base) =>
-    isOnPath(location.pathname, base)
-  );
+  // /admin/login est une route autonome (hors RequireRole, pas de layout
+  // persistant ni d'abonnement onPageExitRequest) qui partage le préfixe
+  // /admin avec le tableau de bord : à exclure explicitement, sous peine
+  // d'intercepter ses liens footer/header sans personne pour les rejouer.
+  const onStaticExitAwarePage =
+    STATIC_EXIT_AWARE_PAGES.some((base) => isOnPath(location.pathname, base)) &&
+    location.pathname !== '/admin/login';
   return useCallback(
     (to, options) => {
       const samePage = to === location.pathname;
@@ -91,8 +116,25 @@ export function usePageExitNavigate() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
+      // Dashboard -> accueil (logo, nav "Mes publications", déconnexion) :
+      // seule destination hors EXIT_TRANSITION_PAGES qu'un tableau de bord
+      // anime lui-même (cf. DASHBOARD_PAGES et son propre usePageSlideTransition
+      // dans ProprietaireLayout.jsx / LocataireLayout.jsx / AdminLayout.jsx).
+      //
+      // Symétrique — Home/Catégorie/Produit -> un dashboard (menu "Tableau de
+      // bord", "Mon compte", messagerie... cf. DashboardHeader.jsx) : garde
+      // `!isOnDashboardPage(location.pathname)` indispensable, sous peine
+      // d'intercepter aussi une navigation d'une sous-route dashboard vers la
+      // racine du MÊME dashboard (ex. /proprietaire/compte -> /proprietaire) —
+      // ce layout ne démonte jamais entre ses propres sous-routes (Outlet
+      // imbriqué) et usePageSlideTransition n'a aucun code qui repasse
+      // `exiting` à false, ce qui laisserait le menu latéral glissé hors
+      // écran en permanence après ce clic.
       const shouldIntercept =
-        (onExitPage && !samePage) || (onStaticExitAwarePage && EXIT_TRANSITION_PAGES.includes(to));
+        (onExitPage && !samePage) ||
+        (onStaticExitAwarePage && EXIT_TRANSITION_PAGES.includes(to)) ||
+        (!isOnDashboardPage(location.pathname) && onStaticExitAwarePage && isOnDashboardPage(to)) ||
+        (isOnDashboardPage(location.pathname) && to === '/');
       if (shouldIntercept && !prefersReducedMotion()) {
         window.dispatchEvent(new window.CustomEvent(PAGE_EXIT_EVENT, { detail: { to, options } }));
       } else {
@@ -118,12 +160,16 @@ export function usePageExitNavigate() {
 //     propre fond fait un crossfade vers cette image avant de naviguer (page
 //     statique comme nous — inutile qu'elle rejoue quoi que ce soit à
 //     l'arrivée, le raccord est déjà invisible à son montage).
+//   - `dashboardBg` : comme `staticBgTargets`, mais pour n'importe quelle
+//     sous-route d'un des 3 tableaux de bord (préfixe via isOnDashboardPage,
+//     pas une entrée par chemin exact — la plupart des liens du menu
+//     dashboard visent une sous-route précise, cf. DashboardHeader.jsx).
 //   - `skipEnter` : pas d'entrée à jouer même en navigation interne — pour un
 //     groupe de pages sœurs qui naviguent librement entre elles sans
 //     transition (onglets légaux) : la page d'origine pose ce signal via
 //     `location.state` sur le lien emprunté (cf. LegalLayout.jsx).
 export function usePageSlideTransition(totalDuration, bgHandoff = {}) {
-  const { ownBg, staticBgTargets, skipEnter = false } = bgHandoff;
+  const { ownBg, staticBgTargets, dashboardBg, skipEnter = false } = bgHandoff;
   const navigate = useNavigate();
   const location = useLocation();
   // react-router ne donne la clé "default" qu'à l'entrée d'historique du tout
@@ -166,7 +212,8 @@ export function usePageSlideTransition(totalDuration, bgHandoff = {}) {
       lockScroll();
       await smoothScrollToTop();
       if (cancelled) return;
-      const targetBg = staticBgTargets?.[to];
+      const targetBg =
+        staticBgTargets?.[to] ?? (dashboardBg && isOnDashboardPage(to) ? dashboardBg : undefined);
       if (targetBg) setExitBgSrc(targetBg);
       setExiting(true);
       navTimer = setTimeout(() => {
@@ -183,7 +230,7 @@ export function usePageSlideTransition(totalDuration, bgHandoff = {}) {
       clearTimeout(navTimer);
       unsubscribe();
     };
-  }, [navigate, totalDuration, ownBg, staticBgTargets]);
+  }, [navigate, totalDuration, ownBg, staticBgTargets, dashboardBg]);
 
   const slide = useCallback(
     (order, from = 'left') => {

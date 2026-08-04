@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import HomePage from '../pages/HomePage.jsx';
+import HomePageProprio from '../pages/HomePageProprio.jsx';
+import { useAuth } from '../hooks/useAuth.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
 import ProductPage from '../pages/ProductPage.jsx';
 import ContactPage from '../pages/ContactPage.jsx';
@@ -63,12 +65,19 @@ import ResetPasswordPage from '../pages/ResetPasswordPage.jsx';
 import RequireRole from '../components/common/RequireRole.jsx';
 import RequireGuest from '../components/common/RequireGuest.jsx';
 
+// Accueil connecté en tant que propriétaire : tableau de bateaux plutôt que la
+// vitrine invité/locataire (recherche, carrousels publics, etc.).
+function HomeRoute() {
+  const { user } = useAuth();
+  return user?.role === 'proprietaire' ? <HomePageProprio /> : <HomePage />;
+}
+
 function AppRouter({ location }) {
   return (
     <Routes location={location}>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<HomePage />} />
-      <Route path="/register" element={<HomePage />} />
+      <Route path="/" element={<HomeRoute />} />
+      <Route path="/login" element={<HomeRoute />} />
+      <Route path="/register" element={<HomeRoute />} />
       <Route path="/categorie" element={<CategoryPage />} />
       <Route path="/product" element={<ProductPage />} />
       <Route path="/product/:id" element={<ProductPage />} />

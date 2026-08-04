@@ -10,7 +10,11 @@ import {
   CATEGORY_ENTER_TOTAL,
   INTRO_SOFT_EASING,
 } from '../../../hooks/useCategoryTransition.js';
-import { usePageExitNavigate, EXIT_TRANSITION_PAGES } from '../../../hooks/usePageTransition.js';
+import {
+  usePageExitNavigate,
+  EXIT_TRANSITION_PAGES,
+  isOnDashboardPage,
+} from '../../../hooks/usePageTransition.js';
 import { getUnreadCount } from '../../../services/messageService.js';
 import { nameToAvatarUrl } from '../../../utils/avatar.js';
 import { useScrolled } from './shared/useScrolled.js';
@@ -112,6 +116,12 @@ function DashboardHeader({
 
   function handleLogout() {
     setRightMenuOpen(false);
+    // logout() avant la navigation (comportement volontairement instantané,
+    // sans glissade) : différer l'effacement de la session pour animer la
+    // sortie ferait courir le nouveau home connecté (HomePageProprio) le
+    // temps de son propre fondu d'arrivée, puis basculerait brutalement vers
+    // la home invité une fois la session réellement coupée — un à-coup pire
+    // que l'absence d'animation.
     logout();
     pageExitNavigate('/', { replace: true });
   }
@@ -145,7 +155,10 @@ function DashboardHeader({
     e.preventDefault();
     if (location.pathname === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (EXIT_TRANSITION_PAGES.includes(location.pathname)) {
+    } else if (
+      EXIT_TRANSITION_PAGES.includes(location.pathname) ||
+      isOnDashboardPage(location.pathname)
+    ) {
       pageExitNavigate('/');
     } else {
       goHome();
@@ -158,7 +171,11 @@ function DashboardHeader({
       scrollToAnchor(anchor, location.pathname);
     } else if (to === location.pathname) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (EXIT_TRANSITION_PAGES.includes(location.pathname)) {
+    } else if (
+      EXIT_TRANSITION_PAGES.includes(location.pathname) ||
+      EXIT_TRANSITION_PAGES.includes(to) ||
+      (to === '/' && isOnDashboardPage(location.pathname))
+    ) {
       pageExitNavigate(to);
     } else {
       categoryNavigate(to);
