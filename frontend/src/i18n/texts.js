@@ -1182,6 +1182,13 @@ export const TEXTS = {
           en: 'Cancels booking requests left unpaid beyond the delay.',
         },
       },
+      'tokens.purge': {
+        name: { fr: 'Purge des jetons de session', en: 'Purge session tokens' },
+        description: {
+          fr: 'Supprime les jetons de rafraîchissement expirés depuis plus longtemps que la rétention. Les jetons encore valides, révoqués ou non, sont conservés.',
+          en: 'Deletes refresh tokens expired longer ago than the retention period. Tokens still valid, revoked or not, are kept.',
+        },
+      },
     },
   },
 

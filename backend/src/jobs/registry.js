@@ -1,9 +1,10 @@
 import bookingsExpire from './handlers/bookingsExpire.js';
+import tokensPurge from './handlers/tokensPurge.js';
 
 // Catalogue des tâches planifiées. Il vit en code : la base ne stocke que ce
 // que l'admin peut régler (planning, activation, simulation, paramètres) et
 // l'état d'exécution. Ajouter une tâche = ajouter son module ici.
-const JOBS = [bookingsExpire];
+const JOBS = [bookingsExpire, tokensPurge];
 
 export const REGISTRY = new Map(JOBS.map((job) => [job.key, job]));
 
