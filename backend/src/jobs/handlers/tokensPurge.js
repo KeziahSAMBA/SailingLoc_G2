@@ -28,6 +28,18 @@ export default {
 
   count: ({ params, now }) => prisma.refreshToken.count({ where: expiredTokensWhere(params, now) }),
 
+  // Identifiants seuls : ni token_hash, ni user_agent, ni id_user — la trace ne
+  // doit pas permettre de reconstituer une session ni de désigner une personne.
+  targets: ({ params, now, take }) =>
+    prisma.refreshToken
+      .findMany({
+        where: expiredTokensWhere(params, now),
+        select: { id_refresh: true },
+        orderBy: { id_refresh: 'asc' },
+        take,
+      })
+      .then((rows) => rows.map((row) => row.id_refresh)),
+
   async run({ params, now }) {
     const { count } = await prisma.refreshToken.deleteMany({
       where: expiredTokensWhere(params, now),

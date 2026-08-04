@@ -12,6 +12,20 @@ export const CRON_TZ = process.env.CRON_TIMEZONE || 'Europe/Paris';
 const RUN_TIMEOUT_MS = 30 * 60 * 1000;
 const ERROR_MAX = 1000;
 
+// Traçabilité des suppressions : on relève les identifiants des enregistrements
+// touchés, plafonnés pour ne pas écrire un JSON démesuré sur une purge de masse.
+// RGPD : identifiants techniques uniquement — jamais d'email, de nom, de nom de
+// fichier ni de contenu, sans quoi la trace de purge réintroduirait la donnée
+// personnelle qu'on vient justement d'effacer.
+const TARGETS_MAX = 500;
+const LOG_TARGETS_MAX = 100;
+
+function withTargets(detail, targets, affected) {
+  const base = detail ?? {};
+  if (!targets) return Object.keys(base).length ? base : null;
+  return { ...base, targets, truncated: affected > targets.length };
+}
+
 const notFound = (key) =>
   Object.assign(new Error(`Tâche inconnue : ${key}`), { status: 404, code: 'CRON_UNKNOWN_JOB' });
 
@@ -153,14 +167,21 @@ export async function runJob(
       );
     }
 
+    // Relevé AVANT l'exécution : après suppression, les lignes n'existent plus.
+    const targets =
+      typeof definition.targets === 'function'
+        ? await definition.targets({ params, now, take: TARGETS_MAX })
+        : null;
+
     const outcome = job.dry_run
       ? { affected: targeted ?? 0, detail: { simulated: true, targeted: targeted ?? 0 } }
       : await definition.run({ params, now, targeted });
 
+    const affected = outcome.affected ?? 0;
     const finished = await finalizeRun(run, job, {
       status: 'success',
-      affected: outcome.affected ?? 0,
-      detail: outcome.detail ?? null,
+      affected,
+      detail: withTargets(outcome.detail, targets, affected),
     });
 
     logActivity({
@@ -171,7 +192,13 @@ export async function runJob(
       actorEmail,
       targetType: 'cron_job',
       targetId: key,
-      meta: { trigger, dryRun: job.dry_run, affected: finished.affected },
+      meta: {
+        trigger,
+        dryRun: job.dry_run,
+        affected: finished.affected,
+        detail: outcome.detail ?? null,
+        ...(targets ? { targets: targets.slice(0, LOG_TARGETS_MAX) } : {}),
+      },
     });
 
     return finished;

@@ -38,6 +38,7 @@ const definition = {
   maxBatch: 10,
   count: jest.fn(),
   run: jest.fn(),
+  targets: jest.fn(),
 };
 jest.unstable_mockModule('../src/jobs/registry.js', () => ({
   getJobDefinition: (key) => (key === 'test.job' ? definition : null),
@@ -70,6 +71,7 @@ beforeEach(() => {
   mockJobUpdate.mockResolvedValue({});
   definition.count.mockResolvedValue(3);
   definition.run.mockResolvedValue({ affected: 3, detail: { deleted: 3 } });
+  definition.targets.mockResolvedValue([11, 22, 33]);
 });
 
 describe('runJob', () => {
@@ -79,7 +81,7 @@ describe('runJob', () => {
     expect(definition.run).toHaveBeenCalledTimes(1);
     expect(run.status).toBe('success');
     expect(run.affected).toBe(3);
-    expect(run.result).toEqual({ deleted: 3 });
+    expect(run.result).toEqual({ deleted: 3, targets: [11, 22, 33], truncated: false });
     expect(mockJobUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ last_status: 'success' }) })
     );
@@ -93,7 +95,47 @@ describe('runJob', () => {
     expect(definition.run).not.toHaveBeenCalled();
     expect(run.status).toBe('success');
     expect(run.affected).toBe(3);
-    expect(run.result).toEqual({ simulated: true, targeted: 3 });
+    expect(run.result).toEqual({
+      simulated: true,
+      targeted: 3,
+      targets: [11, 22, 33],
+      truncated: false,
+    });
+  });
+
+  it('relève les identifiants avant l’exécution, pas après', async () => {
+    const order = [];
+    definition.targets.mockImplementation(async () => {
+      order.push('targets');
+      return [11, 22, 33];
+    });
+    definition.run.mockImplementation(async () => {
+      order.push('run');
+      return { affected: 3, detail: { deleted: 3 } };
+    });
+
+    await runJob('test.job');
+
+    // Après suppression les lignes n'existent plus : le relevé doit précéder.
+    expect(order).toEqual(['targets', 'run']);
+  });
+
+  it('signale une liste d’identifiants tronquée', async () => {
+    definition.targets.mockResolvedValue([1, 2]);
+    definition.run.mockResolvedValue({ affected: 900, detail: { deleted: 900 } });
+
+    const run = await runJob('test.job');
+
+    expect(run.result.truncated).toBe(true);
+    expect(run.result.targets).toEqual([1, 2]);
+  });
+
+  it('n’ajoute pas de bloc identifiants si la tâche n’en relève pas', async () => {
+    definition.targets.mockResolvedValue(null);
+
+    const run = await runJob('test.job');
+
+    expect(run.result).toEqual({ deleted: 3 });
   });
 
   it('refuse d’agir au-delà du plafond de sécurité', async () => {

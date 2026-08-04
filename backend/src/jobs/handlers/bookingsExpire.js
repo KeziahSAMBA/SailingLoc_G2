@@ -25,6 +25,17 @@ export default {
       where: expiredPendingWhere(now, clampHours(params.expiryHours) * HOUR_MS),
     }),
 
+  // Identifiants de réservation seuls : pas d'id_user, pas de montant.
+  targets: ({ params, now, take }) =>
+    prisma.booking
+      .findMany({
+        where: expiredPendingWhere(now, clampHours(params.expiryHours) * HOUR_MS),
+        select: { id_booking: true },
+        orderBy: { id_booking: 'asc' },
+        take,
+      })
+      .then((rows) => rows.map((row) => row.id_booking)),
+
   async run({ params }) {
     const cancelled = await cancelExpiredBookings(clampHours(params.expiryHours) * HOUR_MS);
     return { affected: cancelled, detail: { bookingsCancelled: cancelled } };

@@ -1224,6 +1224,16 @@ export const TEXTS = {
     actorLabel: { fr: 'Déclenchée par', en: 'Triggered by' },
     errorLabel: { fr: 'Erreur', en: 'Error' },
     resultLabel: { fr: 'Détail', en: 'Details' },
+    targetsLabel: { fr: 'Enregistrements concernés', en: 'Records affected' },
+    targetsPrivacy: {
+      fr: 'Identifiants techniques uniquement : aucune donnée personnelle n’est conservée dans la trace.',
+      en: 'Technical identifiers only: no personal data is kept in the trace.',
+    },
+    targetsNone: { fr: 'Aucun enregistrement concerné.', en: 'No record affected.' },
+    targetsTruncated: {
+      fr: 'Liste tronquée : {{shown}} identifiants affichés sur {{total}} traités.',
+      en: 'Truncated list: {{shown}} identifiers shown out of {{total}} processed.',
+    },
     open: { fr: 'Ouvrir', en: 'Open' },
     openDetail: { fr: 'Ouvrir l’exécution {{id}}', en: 'Open execution {{id}}' },
     detailTitle: { fr: 'Exécution #{{id}}', en: 'Execution #{{id}}' },

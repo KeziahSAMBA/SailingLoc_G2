@@ -40,6 +40,16 @@ function formatDuration(ms) {
   return `${(ms / 1000).toFixed(1)} s`;
 }
 
+// Les identifiants concernés ont leur propre bloc : le reste du détail (les
+// compteurs par entité) reste affiché en JSON.
+function resultSummary(result) {
+  if (!result) return null;
+  const rest = Object.fromEntries(
+    Object.entries(result).filter(([key]) => key !== 'targets' && key !== 'truncated')
+  );
+  return Object.keys(rest).length ? rest : null;
+}
+
 // Exécutions des tâches planifiées : ce qui tourne maintenant, puis l'historique.
 function AdminCronRunsPage() {
   const { t } = useTranslation();
@@ -410,11 +420,46 @@ function AdminCronRunsPage() {
               </>
             )}
 
+            {Array.isArray(selected.result?.targets) && (
+              <>
+                <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-white/60">
+                  {t('adminCronRuns.targetsLabel')}
+                </h3>
+                <p className="mt-1 text-xs text-white/50">{t('adminCronRuns.targetsPrivacy')}</p>
+                {selected.result.targets.length === 0 ? (
+                  <p className="mt-2 text-sm text-white/70">{t('adminCronRuns.targetsNone')}</p>
+                ) : (
+                  <>
+                    <ul className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
+                      {selected.result.targets.map((id) => (
+                        <li
+                          key={id}
+                          className="rounded-md bg-white/10 px-2 py-0.5 font-mono text-xs text-white/80"
+                        >
+                          #{id}
+                        </li>
+                      ))}
+                    </ul>
+                    {selected.result.truncated && (
+                      <p className="mt-2 text-xs text-amber-300">
+                        {t('adminCronRuns.targetsTruncated', {
+                          shown: selected.result.targets.length,
+                          total: selected.affected,
+                        })}
+                      </p>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
             <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-white/60">
               {t('adminCronRuns.resultLabel')}
             </h3>
             <pre className="mt-1 overflow-x-auto rounded-lg bg-black/30 p-3 text-xs text-white/80">
-              {selected.result ? JSON.stringify(selected.result, null, 2) : '—'}
+              {resultSummary(selected.result)
+                ? JSON.stringify(resultSummary(selected.result), null, 2)
+                : '—'}
             </pre>
 
             <div className="mt-5 flex justify-end">
