@@ -22,7 +22,7 @@ function ProprietaireMessages() {
         <p className="mt-1 text-sm text-white/70">{t('proprietaireMessages.subtitle')}</p>
       </header>
 
-      <Messenger externalUser={state?.openUser || null} />
+      <Messenger externalUser={state?.openUser || null} tabletConversationDropdown relativeUnits />
     </section>
   );
 }

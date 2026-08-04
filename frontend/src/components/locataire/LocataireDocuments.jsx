@@ -13,7 +13,7 @@ function LocataireDocuments() {
   }, [t]);
 
   return (
-    <section aria-labelledby="documents-title" className="mx-auto w-full max-w-2xl">
+    <section aria-labelledby="documents-title" className="w-full">
       <header className="mb-6">
         <h1 id="documents-title" className="text-2xl font-bold text-white">
           {t('locataireDocuments.title')}
@@ -24,7 +24,7 @@ function LocataireDocuments() {
         </p>
       </header>
 
-      <DocumentsManager onCounts={onCounts} />
+      <DocumentsManager onCounts={onCounts} stackFilePickerOnMobile />
     </section>
   );
 }

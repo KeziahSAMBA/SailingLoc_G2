@@ -67,7 +67,15 @@ function getStatus(t) {
   };
 }
 
-function DocumentRow({ config, docs, onChanged }) {
+function DocumentRow({
+  config,
+  docs,
+  onChanged,
+  stackFilePickerOnMobile,
+  keepDocumentActionsTogether,
+  hideRepeatedValidatedStatus,
+  statusBadgeTopRight,
+}) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [file, setFile] = useState(null);
@@ -136,33 +144,41 @@ function DocumentRow({ config, docs, onChanged }) {
 
   return (
     <article className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div
+        className={
+          statusBadgeTopRight
+            ? 'flex flex-col items-stretch gap-3'
+            : 'flex flex-wrap items-start justify-between gap-3'
+        }
+      >
+        {statusBadgeTopRight && (
+          <span
+            className={`self-end shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+              headerBadge ? headerBadge.cls : 'bg-white/10 text-white/70'
+            }`}
+          >
+            {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
+          </span>
+        )}
         <div>
           <h2 className="text-base font-semibold text-white">{config.label}</h2>
           <p className="mt-1 text-sm text-white/70">{config.desc}</p>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-            headerBadge ? headerBadge.cls : 'bg-white/10 text-white/70'
-          }`}
-        >
-          {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
-        </span>
+        {!statusBadgeTopRight && (
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+              headerBadge ? headerBadge.cls : 'bg-white/10 text-white/70'
+            }`}
+          >
+            {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
+          </span>
+        )}
       </div>
 
       {docs.map((doc) => {
         const st = status[doc.status];
-        return (
-          <div
-            key={doc.id_document}
-            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-white/10 px-4 py-3"
-          >
-            <span className="truncate text-sm font-medium text-white/90">{doc.file_name}</span>
-            {st && (
-              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>
-                {st.label}
-              </span>
-            )}
+        const actions = (
+          <>
             <button
               type="button"
               onClick={() => handleView(doc)}
@@ -174,20 +190,59 @@ function DocumentRow({ config, docs, onChanged }) {
               type="button"
               onClick={() => handleDelete(doc)}
               disabled={busy}
-              className="ml-auto text-xs font-semibold text-red-300 hover:underline disabled:opacity-50"
+              className={`${keepDocumentActionsTogether ? '' : 'ml-auto '}text-xs font-semibold text-red-300 hover:underline disabled:opacity-50`}
             >
               {t('documentsManager.delete')}
             </button>
+          </>
+        );
+
+        return (
+          <div
+            key={doc.id_document}
+            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-white/10 px-4 py-3"
+          >
+            <span className="truncate text-sm font-medium text-white/90">{doc.file_name}</span>
+            {st && !(hideRepeatedValidatedStatus && doc.status === 'validated') && (
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>
+                {st.label}
+              </span>
+            )}
+            {keepDocumentActionsTogether ? (
+              <div className="ml-auto flex shrink-0 items-center gap-3">{actions}</div>
+            ) : (
+              actions
+            )}
           </div>
         );
       })}
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <label className="flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-white/70">
-          <span className="shrink-0 cursor-pointer rounded-full border-0 bg-[#5AB4EC]/15 px-4 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/25">
+      <div
+        className={
+          stackFilePickerOnMobile
+            ? 'mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center'
+            : 'mt-4 flex flex-wrap items-center gap-3'
+        }
+      >
+        <label
+          className={
+            stackFilePickerOnMobile
+              ? 'flex w-full min-w-0 flex-col items-start gap-2 text-sm text-white/70 sm:max-w-xs sm:flex-1 sm:flex-row sm:items-center sm:gap-3'
+              : 'flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-white/70'
+          }
+        >
+          <span
+            className={`shrink-0 cursor-pointer rounded-full border-0 bg-[#5AB4EC]/15 px-4 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/25 ${
+              stackFilePickerOnMobile ? 'self-start whitespace-nowrap text-center sm:self-auto' : ''
+            }`}
+          >
             {t('documentsManager.chooseFile')}
           </span>
-          <span className="min-w-0 truncate">
+          <span
+            className={
+              stackFilePickerOnMobile ? 'min-w-0 break-words sm:truncate' : 'min-w-0 truncate'
+            }
+          >
             {file ? file.name : t('documentsManager.noFile')}
           </span>
           <input
@@ -205,7 +260,9 @@ function DocumentRow({ config, docs, onChanged }) {
           type="button"
           onClick={handleUpload}
           disabled={busy || !file}
-          className="rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${
+            stackFilePickerOnMobile ? 'w-fit self-start whitespace-nowrap sm:self-auto' : ''
+          }`}
         >
           {busy
             ? t('documentsManager.sending')
@@ -227,7 +284,13 @@ function DocumentRow({ config, docs, onChanged }) {
 // Gestion des documents obligatoires (liste + dépôt/suppression).
 // Contenu seul : l'enveloppe (fond, en-tête de page) est fournie par la page hôte.
 // `onCounts` remonte la progression (fournis / total) pour l'afficher où l'hôte veut.
-function DocumentsManager({ onCounts }) {
+function DocumentsManager({
+  onCounts,
+  stackFilePickerOnMobile = false,
+  keepDocumentActionsTogether = false,
+  hideRepeatedValidatedStatus = false,
+  statusBadgeTopRight = false,
+}) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const docTypes = getDocTypesByRole(t)[user?.role] || [];
@@ -269,6 +332,10 @@ function DocumentsManager({ onCounts }) {
           config={config}
           docs={docsByType[config.key] || []}
           onChanged={load}
+          stackFilePickerOnMobile={stackFilePickerOnMobile}
+          keepDocumentActionsTogether={keepDocumentActionsTogether}
+          hideRepeatedValidatedStatus={hideRepeatedValidatedStatus}
+          statusBadgeTopRight={statusBadgeTopRight}
         />
       ))}
     </div>

@@ -7,6 +7,7 @@ import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, EditIcon, BanIcon, CheckIcon, TrashIcon } from './AdminActions.jsx';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -77,7 +78,7 @@ function EditUserModal({ user, onClose, onSaved }) {
         )}
 
         <form onSubmit={submit} noValidate className="mt-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="e-first" className={labelClass}>
                 {t('adminUsers.firstName')}
@@ -149,18 +150,18 @@ function EditUserModal({ user, onClose, onSaved }) {
             </select>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10"
+              className="w-full rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 sm:w-auto"
             >
               {t('adminUsers.cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90 disabled:opacity-60"
+              className="w-full rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90 disabled:opacity-60 sm:w-auto"
             >
               {saving ? t('adminUsers.saving') : t('adminUsers.save')}
             </button>
@@ -276,18 +277,18 @@ function AdminUsersPage() {
         </Link>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="mt-5 grid grid-cols-2 items-stretch gap-3 sm:grid-cols-[minmax(13.75rem,1fr)_auto_auto] sm:items-center">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminUsers.searchPlaceholder')}
-          className={`${selectClass} min-w-[220px] flex-1`}
+          className={`${selectClass} col-span-2 w-full min-w-0 sm:col-span-1`}
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          className={`select-glass ${selectClass}`}
+          className={`select-glass ${selectClass} min-w-0 w-full sm:w-auto`}
         >
           <option value="">{t('adminUsers.allRoles')}</option>
           {ROLE_VALUES.map((v) => (
@@ -299,7 +300,7 @@ function AdminUsersPage() {
         <select
           value={active}
           onChange={(e) => setActive(e.target.value)}
-          className={`select-glass ${selectClass}`}
+          className={`select-glass ${selectClass} min-w-0 w-full sm:w-auto`}
         >
           <option value="">{t('adminUsers.allStatuses')}</option>
           <option value="true">{t('adminUsers.activeFilter')}</option>
@@ -314,33 +315,39 @@ function AdminUsersPage() {
       )}
 
       {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
-      <div className="mt-5 flex flex-wrap items-center gap-2 md:hidden">
-        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+      <div className="mt-5 xl:hidden">
+        <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
           {t('adminUsers.sortLabel')}
         </span>
-        {[
-          { field: 'last_name', label: t('adminUsers.colName') },
-          { field: 'email', label: t('adminUsers.colEmail') },
-          { field: 'role', label: t('adminUsers.colRole') },
-          { field: 'created_at', label: t('adminUsers.colRegistered') },
-        ].map(({ field, label }) => (
-          <button
-            key={field}
-            type="button"
-            onClick={() => toggleSort(field)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              sort === field
-                ? 'bg-sky-500 text-white'
-                : 'border border-white/30 text-white/80 hover:bg-white/10'
-            }`}
-          >
-            {label}
-            {sort === field ? (order === 'asc' ? ' ▲' : ' ▼') : ''}
-          </button>
-        ))}
+        <AdminScrollableFilterRow
+          ariaLabel={t('adminUsers.sortLabel')}
+          contentKey={`${sort}|${order}|${t('adminUsers.sortLabel')}`}
+        >
+          {[
+            { field: 'last_name', label: t('adminUsers.colName') },
+            { field: 'email', label: t('adminUsers.colEmail') },
+            { field: 'role', label: t('adminUsers.colRole') },
+            { field: 'created_at', label: t('adminUsers.colRegistered') },
+          ].map(({ field, label }) => (
+            <button
+              key={field}
+              type="button"
+              aria-pressed={sort === field}
+              onClick={() => toggleSort(field)}
+              className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                sort === field
+                  ? 'bg-sky-500 text-white'
+                  : 'border border-white/30 text-white/80 hover:bg-white/10'
+              }`}
+            >
+              {label}
+              {sort === field ? (order === 'asc' ? ' ▲' : ' ▼') : ''}
+            </button>
+          ))}
+        </AdminScrollableFilterRow>
       </div>
 
-      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -431,8 +438,8 @@ function AdminUsersPage() {
         </table>
       </div>
 
-      {/* Mobile : une carte par utilisateur (le tableau ci-dessus est masqué). */}
-      <ul className="mt-5 space-y-3 md:hidden">
+      {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
+      <ul className="mt-5 space-y-3 xl:hidden">
         {loading || users.length === 0 ? (
           <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
             {loading ? t('adminUsers.loading') : t('adminUsers.empty')}

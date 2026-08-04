@@ -6,6 +6,7 @@ import { formatDate } from '../../utils/formatDate.js';
 import { IconBtn, CheckIcon, XIcon, EditIcon, TrashIcon } from './AdminActions.jsx';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -109,19 +110,19 @@ function EditReviewModal({ review, onClose, onSaved }) {
               className={inputClass}
             />
           </div>
-          <div className="flex justify-end gap-3 pt-1">
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50"
+              className="w-full rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50 sm:w-auto"
             >
               {t('adminComments.cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90 disabled:opacity-60"
+              className="w-full rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90 disabled:opacity-60 sm:w-auto"
             >
               {saving ? t('adminComments.saving') : t('adminComments.save')}
             </button>
@@ -223,21 +224,28 @@ function AdminCommentsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('adminComments.searchPlaceholder')}
-          className={`${selectClass} min-w-[220px] flex-1`}
+          className={`${selectClass} w-full sm:min-w-[13.75rem] sm:flex-1`}
         />
-        {FILTERS.map(({ value, labelKey }) => (
-          <button
-            key={labelKey}
-            type="button"
-            onClick={() => setStatus(value)}
-            className={pill(status === value)}
-          >
-            {t(`adminComments.filters.${labelKey}`)}
-          </button>
-        ))}
+        <AdminScrollableFilterRow
+          ariaLabel={t('adminComments.subtitle')}
+          contentKey={`${status}|${t('adminComments.subtitle')}`}
+          className="w-full sm:w-auto"
+        >
+          {FILTERS.map(({ value, labelKey }) => (
+            <button
+              key={labelKey}
+              type="button"
+              aria-pressed={status === value}
+              onClick={() => setStatus(value)}
+              className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+            >
+              {t(`adminComments.filters.${labelKey}`)}
+            </button>
+          ))}
+        </AdminScrollableFilterRow>
       </div>
 
-      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -337,8 +345,8 @@ function AdminCommentsPage() {
         </table>
       </div>
 
-      {/* Mobile : une carte par avis (le tableau ci-dessus est masqué). */}
-      <ul className="mt-5 space-y-3 md:hidden">
+      {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
+      <ul className="mt-5 space-y-3 xl:hidden">
         {loading || reviews.length === 0 ? (
           <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
             {loading ? t('adminComments.loading') : t('adminComments.empty')}
@@ -349,8 +357,8 @@ function AdminCommentsPage() {
               key={r.id_review}
               className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
             >
-              <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 font-medium text-white">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="min-w-0 break-words font-medium text-white">
                   {r.author ? `${r.author.first_name} ${r.author.last_name}` : '—'}
                 </p>
                 <span

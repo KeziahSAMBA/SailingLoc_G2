@@ -2128,6 +2128,10 @@ export const TEXTS = {
     next: { fr: 'Suivant', en: 'Next' },
     page: { fr: 'Page {{n}}', en: 'Page {{n}}' },
     aria: { fr: 'Pagination — {{label}}', en: 'Pagination — {{label}}' },
+    range: {
+      fr: '{{label}} {{first}} à {{last}} sur {{total}}',
+      en: '{{label}} {{first}} to {{last}} of {{total}}',
+    },
   },
 
   proprietaireBoats: {
@@ -2628,6 +2632,7 @@ export const TEXTS = {
   accountForm: {
     avatar: {
       alt: { fr: 'Votre photo de profil', en: 'Your profile photo' },
+      manage: { fr: 'Gérer la photo de profil', en: 'Manage profile photo' },
       change: { fr: 'Changer la photo', en: 'Change photo' },
       sending: { fr: 'Envoi…', en: 'Uploading…' },
       remove: { fr: 'Supprimer la photo', en: 'Remove photo' },
@@ -2664,6 +2669,7 @@ export const TEXTS = {
       cancel: { fr: 'Annuler', en: 'Cancel' },
       saving: { fr: 'Enregistrement…', en: 'Saving…' },
       save: { fr: 'Enregistrer les modifications', en: 'Save changes' },
+      saveShort: { fr: 'Enregistrer', en: 'Save' },
       updateSuccess: {
         fr: 'Vos informations ont été mises à jour.',
         en: 'Your information has been updated.',

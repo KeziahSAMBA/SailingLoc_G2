@@ -130,16 +130,16 @@ function AdminContactPage() {
             return (
               <li
                 key={r.id_request}
-                className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
+                className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl sm:p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-base font-semibold text-white">{r.subject}</h2>
-                    <p className="mt-0.5 text-sm text-white/70">
+                  <div className="min-w-0 flex-1 basis-60">
+                    <h2 className="break-words text-base font-semibold text-white">{r.subject}</h2>
+                    <p className="mt-0.5 break-words text-sm text-white/70">
                       {r.name} ·{' '}
                       <a
                         href={`mailto:${r.email}`}
-                        className={`text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                        className={`break-all text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
                       >
                         {r.email}
                       </a>{' '}
@@ -147,22 +147,22 @@ function AdminContactPage() {
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusCls}`}
+                    className={`max-w-full shrink-0 whitespace-normal rounded-full px-2.5 py-0.5 text-center text-xs font-semibold ${statusCls}`}
                   >
                     {t(`adminContact.status.${r.status}`, { defaultValue: r.status })}
                   </span>
                 </div>
 
-                <p className="mt-3 whitespace-pre-wrap rounded-lg bg-white/10 px-4 py-3 text-sm text-white/90">
+                <p className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-white/10 px-4 py-3 text-sm text-white/90">
                   {r.message}
                 </p>
 
-                <div className="mt-4 flex flex-wrap items-center gap-3">
+                <div className="mt-4 flex flex-wrap items-stretch gap-3 sm:items-center">
                   <button
                     type="button"
                     disabled={busyId === r.id_request}
                     onClick={() => toggleStatus(r)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${
+                    className={`w-full rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${FOCUS_RING} ${
                       r.status === 'processed'
                         ? 'border border-white/30 text-white/80 hover:bg-white/10 hover:text-white'
                         : 'bg-emerald-600 text-white hover:bg-emerald-500'

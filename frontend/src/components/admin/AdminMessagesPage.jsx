@@ -76,7 +76,7 @@ function AdminMessagesPage() {
           className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
         />
         {open && results.length > 0 && (
-          <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-white/30 bg-white/10 shadow-xl">
+          <ul className="absolute z-10 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-white/30 bg-white/10 shadow-xl">
             {results.map((u) => (
               <li key={u.id_user}>
                 <button
@@ -91,13 +91,13 @@ function AdminMessagesPage() {
                     setSearch('');
                     setOpen(false);
                   }}
-                  className="flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left text-sm text-white transition hover:bg-white/20"
+                  className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm text-white transition hover:bg-white/20"
                 >
-                  <span className="min-w-0 truncate">
+                  <span className="min-w-0 break-words">
                     {u.first_name} {u.last_name}
                     {u.email && <span className="text-white/70"> — {u.email}</span>}
                   </span>
-                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-white/70">
+                  <span className="shrink-0 text-[0.625rem] uppercase tracking-wide text-white/70">
                     {roleLabel(u.role)}
                   </span>
                 </button>
@@ -107,7 +107,7 @@ function AdminMessagesPage() {
         )}
       </div>
 
-      <Messenger externalUser={target} />
+      <Messenger externalUser={target} tabletConversationDropdown relativeUnits />
     </section>
   );
 }

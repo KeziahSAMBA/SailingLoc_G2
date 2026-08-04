@@ -5,6 +5,7 @@ import { listPayments, getPaymentStats } from '../../services/adminService.js';
 import { formatDate } from '../../utils/formatDate.js';
 import Pagination from '../common/Pagination.jsx';
 import usePagination from '../../hooks/usePagination.js';
+import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -38,9 +39,11 @@ const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 const selectClass =
   'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
 
-function StatCard({ label, value, sublabel, accent = 'text-white' }) {
+function StatCard({ label, value, sublabel, accent = 'text-white', className = '' }) {
   return (
-    <div className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
+    <div
+      className={`h-full rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-xl ${className}`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</p>
       <p className={`mt-2 text-2xl font-bold ${accent}`}>{value}</p>
       {sublabel && <p className="mt-1 text-xs text-white/60">{sublabel}</p>}
@@ -157,18 +160,20 @@ function AdminTransactionsPage() {
       <p className="mt-1 text-sm text-white/70">{t('adminTransactions.subtitle')}</p>
 
       {/* Stats cards */}
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid auto-rows-fr grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={t('adminTransactions.volume')}
           value={statsLoading ? '…' : stats ? EURO.format(stats.total_volume) : EURO.format(0)}
           sublabel={t('adminTransactions.volumeSub')}
           accent="text-white"
+          className="col-span-2 sm:col-span-1"
         />
         <StatCard
           label={t('adminTransactions.commission')}
           value={statsLoading ? '…' : stats ? EURO.format(stats.total_commission) : EURO.format(0)}
           sublabel={t('adminTransactions.commissionSub')}
           accent="text-emerald-300"
+          className="col-span-2 sm:col-span-1"
         />
         <StatCard
           label={t('adminTransactions.successCount')}
@@ -191,97 +196,131 @@ function AdminTransactionsPage() {
       </div>
 
       {/* Filtres */}
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('adminTransactions.searchPlaceholder')}
-          className={`${selectClass} min-w-[240px] flex-1`}
-        />
-        {STATUS_FILTERS.map(({ value, labelKey }) => (
-          <button
-            key={`s-${labelKey}`}
-            type="button"
-            onClick={() => setStatus(value)}
-            className={pill(status === value)}
-          >
-            {t(`adminTransactions.statusFilters.${labelKey}`)}
-          </button>
-        ))}
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
-          {t('adminTransactions.methodLabel')}
-        </span>
-        {METHOD_FILTERS.map(({ value, labelKey }) => (
-          <button
-            key={`m-${labelKey}`}
-            type="button"
-            onClick={() => setMethod(value)}
-            className={pill(method === value)}
-          >
-            {t(`adminTransactions.methodFilters.${labelKey}`)}
-          </button>
-        ))}
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-1.5 text-xs text-white/70">
-          {t('adminTransactions.dateFrom')}
+      <div className="mt-6 space-y-4 md:rounded-2xl md:border md:border-white/20 md:bg-white/10 md:p-5 md:backdrop-blur-xl">
+        <label className="block">
+          <span className="sr-only">{t('adminTransactions.searchPlaceholder')}</span>
           <input
-            type="date"
-            value={dateFrom}
-            max={dateTo || undefined}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className={selectClass}
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('adminTransactions.searchPlaceholder')}
+            className={`${selectClass} w-full`}
           />
         </label>
-        <label className="flex items-center gap-1.5 text-xs text-white/70">
-          {t('adminTransactions.dateTo')}
-          <input
-            type="date"
-            value={dateTo}
-            min={dateFrom || undefined}
-            onChange={(e) => setDateTo(e.target.value)}
-            className={selectClass}
-          />
-        </label>
-        {(dateFrom || dateTo) && (
-          <button
-            type="button"
-            onClick={() => {
-              setDateFrom('');
-              setDateTo('');
-            }}
-            className="rounded-full border border-white/30 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10"
-          >
-            {t('adminTransactions.reset')}
-          </button>
-        )}
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+          <fieldset className="min-w-0">
+            <legend className="text-xs font-semibold uppercase tracking-wide text-white/60">
+              {t('adminTransactions.colStatus')}
+            </legend>
+            <AdminScrollableFilterRow
+              ariaLabel={t('adminTransactions.colStatus')}
+              contentKey={`${status}|${t('adminTransactions.colStatus')}`}
+              className="mt-2 min-w-0"
+            >
+              {STATUS_FILTERS.map(({ value, labelKey }) => (
+                <button
+                  key={`s-${labelKey}`}
+                  type="button"
+                  aria-pressed={status === value}
+                  onClick={() => setStatus(value)}
+                  className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+                >
+                  {t(`adminTransactions.statusFilters.${labelKey}`)}
+                </button>
+              ))}
+            </AdminScrollableFilterRow>
+          </fieldset>
+
+          <fieldset className="min-w-0">
+            <legend className="text-xs font-semibold uppercase tracking-wide text-white/60">
+              {t('adminTransactions.methodLabel')}
+            </legend>
+            <AdminScrollableFilterRow
+              ariaLabel={t('adminTransactions.methodLabel')}
+              contentKey={`${method}|${t('adminTransactions.methodLabel')}`}
+              className="mt-2 min-w-0"
+            >
+              {METHOD_FILTERS.map(({ value, labelKey }) => (
+                <button
+                  key={`m-${labelKey}`}
+                  type="button"
+                  aria-pressed={method === value}
+                  onClick={() => setMethod(value)}
+                  className={`${pill(method === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+                >
+                  {t(`adminTransactions.methodFilters.${labelKey}`)}
+                </button>
+              ))}
+            </AdminScrollableFilterRow>
+          </fieldset>
+        </div>
+
+        <div className="grid gap-2 border-t border-white/15 pt-4 sm:grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+          <label className="flex min-w-0 flex-col items-stretch gap-1.5 text-xs text-white/70">
+            {t('adminTransactions.dateFrom')}
+            <input
+              type="date"
+              value={dateFrom}
+              max={dateTo || undefined}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className={`${selectClass} w-full min-w-0`}
+            />
+          </label>
+          <label className="flex min-w-0 flex-col items-stretch gap-1.5 text-xs text-white/70">
+            {t('adminTransactions.dateTo')}
+            <input
+              type="date"
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={(e) => setDateTo(e.target.value)}
+              className={`${selectClass} w-full min-w-0`}
+            />
+          </label>
+          {(dateFrom || dateTo) && (
+            <button
+              type="button"
+              onClick={() => {
+                setDateFrom('');
+                setDateTo('');
+              }}
+              className="w-full rounded-full border border-white/30 px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 sm:col-span-2 sm:w-auto sm:justify-self-start md:col-span-1 md:justify-self-auto"
+            >
+              {t('adminTransactions.reset')}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
-      <div className="mt-4 flex flex-wrap items-center gap-2 md:hidden">
+      <div className="mt-4 flex flex-wrap items-center gap-2 xl:hidden">
         <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
           {t('adminTransactions.sortLabel')}
         </span>
-        {['date', 'amount', 'commission'].map((field) => (
-          <button
-            key={field}
-            type="button"
-            onClick={() => toggleSort(field)}
-            className={pill(sortBy === field)}
-          >
-            {t(
-              `adminTransactions.col${field === 'date' ? 'Date' : field === 'amount' ? 'Amount' : 'Commission'}`
-            )}
-            {sortArrow(field)}
-          </button>
-        ))}
+        <AdminScrollableFilterRow
+          ariaLabel={t('adminTransactions.sortLabel')}
+          contentKey={`${sortBy}|${sortDir}|${t('adminTransactions.sortLabel')}`}
+          className="min-w-0 flex-1"
+        >
+          {['date', 'amount', 'commission'].map((field) => (
+            <button
+              key={field}
+              type="button"
+              aria-pressed={sortBy === field}
+              onClick={() => toggleSort(field)}
+              className={`${pill(sortBy === field)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+            >
+              {t(
+                `adminTransactions.col${field === 'date' ? 'Date' : field === 'amount' ? 'Amount' : 'Commission'}`
+              )}
+              {sortArrow(field)}
+            </button>
+          ))}
+        </AdminScrollableFilterRow>
       </div>
 
       {/* Tableau (desktop) */}
-      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
         <table className="w-full text-sm">
           <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
             <tr>
@@ -402,8 +441,8 @@ function AdminTransactionsPage() {
         </table>
       </div>
 
-      {/* Mobile : une carte par transaction (le tableau ci-dessus est masqué). */}
-      <ul className="mt-4 space-y-3 md:hidden">
+      {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
+      <ul className="mt-4 space-y-3 xl:hidden">
         {loading || visiblePayments.length === 0 ? (
           <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
             {loading ? t('adminTransactions.loading') : t('adminTransactions.empty')}

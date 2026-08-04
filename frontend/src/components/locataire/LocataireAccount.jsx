@@ -13,7 +13,7 @@ function LocataireAccount() {
   }, [t]);
 
   return (
-    <section aria-labelledby="account-title" className="mx-auto w-full max-w-2xl">
+    <section aria-labelledby="account-title" className="w-full">
       <header className="mb-6">
         <h1 id="account-title" className="text-2xl font-bold text-white">
           {t('locataireAccount.title')}
@@ -23,7 +23,7 @@ function LocataireAccount() {
         </p>
       </header>
 
-      <AccountForm />
+      <AccountForm compactMobile />
     </section>
   );
 }
