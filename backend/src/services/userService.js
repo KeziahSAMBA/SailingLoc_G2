@@ -287,6 +287,13 @@ export async function login({ email, password, role }, { userAgent } = {}) {
   const accessToken = signAccessToken(user);
   const refreshToken = await issueRefreshToken(user.id_user, userAgent);
 
+  // Le retour de la personne annule le compte à rebours d'inactivité, relance
+  // éventuelle comprise.
+  await prisma.user.update({
+    where: { id_user: user.id_user },
+    data: { last_login_at: new Date(), inactivity_notified_at: null },
+  });
+
   return { accessToken, refreshToken, user: publicUser(user) };
 }
 

@@ -31,6 +31,12 @@ import {
 } from '../controllers/portAdminController.js';
 import { adminListPayments, adminPaymentStats } from '../controllers/paymentAdminController.js';
 import { adminListLogs, adminLogFilters } from '../controllers/adminLogController.js';
+import {
+  adminListCronJobs,
+  adminUpdateCronJob,
+  adminRunCronJob,
+  adminListCronRuns,
+} from '../controllers/cronAdminController.js';
 import { protect, requireAdmin } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
 
@@ -111,5 +117,23 @@ router.patch(
 // Journal d'activité du back-office.
 router.get('/logs', protect, requireAdmin, adminListLogs);
 router.get('/logs/filters', protect, requireAdmin, adminLogFilters);
+
+// Tâches planifiées : catalogue, programmation et historique d'exécution.
+router.get('/cron/jobs', protect, requireAdmin, adminListCronJobs);
+router.get('/cron/runs', protect, requireAdmin, adminListCronRuns);
+router.patch(
+  '/cron/jobs/:key',
+  protect,
+  requireAdmin,
+  audit('cron.update', { targetType: 'cron_job', targetId: (req) => req.params.key }),
+  adminUpdateCronJob
+);
+router.post(
+  '/cron/jobs/:key/run',
+  protect,
+  requireAdmin,
+  audit('cron.trigger', { targetType: 'cron_job', targetId: (req) => req.params.key }),
+  adminRunCronJob
+);
 
 export default router;
