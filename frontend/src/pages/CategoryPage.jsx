@@ -1114,7 +1114,7 @@ function CategoryPage() {
               <div
                 id="category-mobile-search"
                 ref={searchBarWrapRef}
-                className={`w-full min-w-0 transition-[max-height,margin,opacity,transform] duration-300 motion-reduce:transition-none md:mt-0 md:max-h-none md:translate-y-0 md:overflow-visible md:opacity-100 md:pointer-events-auto xl:flex-1 ${
+                className={`w-full min-w-0 transition-[max-height,margin,opacity,transform] duration-300 motion-reduce:transition-none md:mt-0 md:max-h-none md:translate-y-0 md:overflow-visible md:opacity-100 md:pointer-events-auto md:[&>form]:ml-0 md:[&>form]:mr-auto xl:flex-1 xl:[&>form]:mx-auto ${
                   mobileSearchExpanded
                     ? 'mt-0 max-h-[24rem] opacity-100'
                     : 'pointer-events-none max-h-0 -translate-y-2 overflow-hidden opacity-0'
@@ -1129,7 +1129,7 @@ function CategoryPage() {
                       : undefined
                 }
               >
-                <SearchBar light compact={scrolled} />
+                <SearchBar light compact={scrolled} fitContentOnTablet />
               </div>
             </div>
           </section>
