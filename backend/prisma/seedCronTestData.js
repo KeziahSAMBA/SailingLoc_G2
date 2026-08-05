@@ -7,7 +7,7 @@
 //
 // Toutes les lignes créées portent un marqueur : préfixe « cron_demo_ » pour les
 // jetons, domaine « @cron-demo.test » pour les contacts, meta.demo pour les
-// logs, montant 1337 pour les réservations.
+// logs, result.demo pour les exécutions, montant 1337 pour les réservations.
 
 import prisma from '../src/config/db.js';
 
@@ -22,11 +22,12 @@ const hoursAgo = (n) => new Date(Date.now() - n * HOUR_MS);
 const between = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 
 async function clean() {
-  const [tokens, logs, contacts, bookings] = await Promise.all([
+  const [tokens, logs, contacts, bookings, runs] = await Promise.all([
     prisma.refreshToken.deleteMany({ where: { token_hash: { startsWith: DEMO_TOKEN_PREFIX } } }),
     prisma.activityLog.deleteMany({ where: { meta: { path: ['demo'], equals: true } } }),
     prisma.contactRequest.deleteMany({ where: { email: { endsWith: DEMO_DOMAIN } } }),
     prisma.booking.deleteMany({ where: { total_amount: DEMO_AMOUNT } }),
+    prisma.cronRun.deleteMany({ where: { result: { path: ['demo'], equals: true } } }),
   ]);
 
   console.log('Jeu de données de test retiré :');
@@ -34,6 +35,7 @@ async function clean() {
   console.log(`  entrées de journal  : ${logs.count}`);
   console.log(`  demandes de contact : ${contacts.count}`);
   console.log(`  réservations        : ${bookings.count}`);
+  console.log(`  exécutions de tâche : ${runs.count}`);
 }
 
 async function seedTokens(userId) {
@@ -189,6 +191,40 @@ async function seedContactRequests() {
   return { purgeables: 60, epargnes: 30 };
 }
 
+async function seedCronRuns() {
+  const jobs = await prisma.cronJob.findMany({ select: { id_job: true } });
+  if (!jobs.length) throw new Error('Aucune tâche en base : démarrez le backend une fois.');
+
+  const statuses = ['success', 'success', 'success', 'failed', 'skipped'];
+  const rows = [];
+
+  const run = (ageDays, i) => {
+    const status = statuses[i % statuses.length];
+    const started = daysAgo(ageDays);
+    const duration = between(20, 4000);
+    return {
+      id_job: jobs[i % jobs.length].id_job,
+      trigger: i % 7 === 0 ? 'manual' : 'schedule',
+      status,
+      dry_run: i % 4 === 0,
+      started_at: started,
+      finished_at: new Date(started.getTime() + duration),
+      duration_ms: duration,
+      affected: status === 'success' ? between(0, 500) : 0,
+      result: { demo: true },
+      error: status === 'failed' ? 'Erreur de démonstration.' : null,
+    };
+  };
+
+  // Cibles : terminées il y a plus de 90 jours.
+  for (let i = 0; i < 300; i += 1) rows.push(run(between(95, 400), i));
+  // Épargnées : dans la rétention.
+  for (let i = 0; i < 60; i += 1) rows.push(run(between(1, 89), i));
+
+  await prisma.cronRun.createMany({ data: rows });
+  return { purgeables: 300, epargnes: 60 };
+}
+
 async function seedBookings(userId, boatId) {
   const rows = [];
 
@@ -232,11 +268,12 @@ async function seed() {
     throw new Error('Base incomplète : lancez d’abord le seed principal (prisma db seed).');
   }
 
-  const [tokens, logs, contacts, bookings] = [
+  const [tokens, logs, contacts, bookings, runs] = [
     await seedTokens(user.id_user),
     await seedLogs(admin),
     await seedContactRequests(),
     await seedBookings(user.id_user, boat.id_boat),
+    await seedCronRuns(),
   ];
 
   const line = (label, task, r) =>
@@ -249,6 +286,7 @@ async function seed() {
   line('entrées de journal', 'logs.purge', logs);
   line('demandes de contact', 'contact.purge', contacts);
   line('réservations', 'bookings.expire', bookings);
+  line('exécutions de tâche', 'cron.runs.purge', runs);
   console.log('\nLancez chaque tâche en simulation depuis /admin/taches/programmation :');
   console.log('les chiffres « à purger » doivent correspondre à la colonne Traités.');
 }

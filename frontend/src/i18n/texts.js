@@ -1207,6 +1207,13 @@ export const TEXTS = {
           en: 'Deletes requests processed longer ago than the retention period, and those left unanswered beyond the second delay.',
         },
       },
+      'cron.runs.purge': {
+        name: { fr: 'Purge de l’historique des tâches', en: 'Purge task history' },
+        description: {
+          fr: 'Supprime les exécutions terminées depuis plus longtemps que la rétention, avec l’adresse de l’administrateur qui les a déclenchées. L’exécution en cours est toujours épargnée.',
+          en: 'Deletes runs finished longer ago than the retention period, along with the email of the admin who triggered them. The current run is always spared.',
+        },
+      },
     },
   },
 
