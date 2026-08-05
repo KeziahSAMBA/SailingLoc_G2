@@ -26,6 +26,9 @@ model User {
   created_at                 DateTime   @default(now())
   updated_at                 DateTime?
   deleted_at                 DateTime?
+  // Horodatage de l'anonymisation RGPD : évite le retraitement et sert de
+  // preuve d'exécution de l'effacement (art. 5.2).
+  anonymized_at              DateTime?
 
   boats               Boat[]     @relation("OwnerBoats")
   bookings            Booking[]  @relation("GuestBookings")

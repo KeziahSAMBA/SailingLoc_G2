@@ -1214,6 +1214,20 @@ export const TEXTS = {
           en: 'Deletes runs finished longer ago than the retention period, along with the email of the admin who triggered them. The current run is always spared.',
         },
       },
+      'users.purge': {
+        name: { fr: 'Anonymisation des comptes supprimés', en: 'Anonymise deleted accounts' },
+        description: {
+          fr: 'Anonymise les comptes supprimés depuis plus longtemps que le délai de grâce : identité, e-mail et téléphone effacés, pièces d’identité et avatar supprimés du disque, adresse retirée des journaux. Réservations et paiements sont conservés pour l’obligation comptable, rattachés à un compte anonyme.',
+          en: 'Anonymises accounts deleted longer ago than the grace period: identity, email and phone wiped, identity papers and avatar removed from disk, address scrubbed from the logs. Bookings and payments are kept for accounting obligations, attached to an anonymous account.',
+        },
+      },
+      'users.unverified.purge': {
+        name: { fr: 'Purge des inscriptions non confirmées', en: 'Purge unconfirmed sign-ups' },
+        description: {
+          fr: 'Supprime les comptes dont l’e-mail n’a jamais été confirmé au-delà du délai. Ces comptes ne peuvent pas se connecter et n’ont donc rien de rattaché : la suppression est franche, sans anonymisation.',
+          en: 'Deletes accounts whose email was never confirmed beyond the delay. These accounts cannot log in and have nothing attached, so they are deleted outright rather than anonymised.',
+        },
+      },
     },
   },
 
