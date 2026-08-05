@@ -1173,6 +1173,11 @@ export const TEXTS = {
     params: {
       expiryHours: { fr: 'Délai avant expiration (heures)', en: 'Expiry delay (hours)' },
       retentionDays: { fr: 'Rétention (jours)', en: 'Retention (days)' },
+      inactivityDays: {
+        fr: 'Inactivité avant suppression (jours)',
+        en: 'Inactivity before deletion (days)',
+      },
+      noticeDays: { fr: 'Préavis après relance (jours)', en: 'Notice period after warning (days)' },
       unprocessedRetentionDays: {
         fr: 'Rétention des demandes sans réponse (jours)',
         en: 'Retention for unanswered requests (days)',
@@ -1226,6 +1231,13 @@ export const TEXTS = {
         description: {
           fr: 'Supprime les comptes dont l’e-mail n’a jamais été confirmé au-delà du délai. Ces comptes ne peuvent pas se connecter et n’ont donc rien de rattaché : la suppression est franche, sans anonymisation.',
           en: 'Deletes accounts whose email was never confirmed beyond the delay. These accounts cannot log in and have nothing attached, so they are deleted outright rather than anonymised.',
+        },
+      },
+      'users.inactive.purge': {
+        name: { fr: 'Comptes inactifs', en: 'Inactive accounts' },
+        description: {
+          fr: 'Deux temps dans une seule tâche : relance par e-mail les comptes sans connexion depuis le délai d’inactivité moins le préavis, puis anonymise ceux restés sans réaction. Une simple reconnexion annule le compte à rebours.',
+          en: 'Two phases in a single task: emails a warning to accounts idle for the inactivity delay minus the notice period, then anonymises those that did not react. Logging back in cancels the countdown.',
         },
       },
     },

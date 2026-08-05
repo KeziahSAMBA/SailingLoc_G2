@@ -5,6 +5,7 @@ import contactPurge from './handlers/contactPurge.js';
 import cronRunsPurge from './handlers/cronRunsPurge.js';
 import usersPurge from './handlers/usersPurge.js';
 import usersUnverifiedPurge from './handlers/usersUnverifiedPurge.js';
+import usersInactivePurge from './handlers/usersInactivePurge.js';
 
 // Catalogue des tâches planifiées. Il vit en code : la base ne stocke que ce
 // que l'admin peut régler (planning, activation, simulation, paramètres) et
@@ -17,6 +18,7 @@ const JOBS = [
   cronRunsPurge,
   usersPurge,
   usersUnverifiedPurge,
+  usersInactivePurge,
 ];
 
 export const REGISTRY = new Map(JOBS.map((job) => [job.key, job]));

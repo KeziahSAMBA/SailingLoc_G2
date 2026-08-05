@@ -36,7 +36,10 @@ const removeFileQuiet = (diskPath) => {
   if (diskPath) fs.promises.unlink(diskPath).catch(() => {});
 };
 
-export async function anonymizeUser(id_user, now = new Date()) {
+// markDeleted : à poser quand l'anonymisation n'a pas été précédée d'une
+// suppression admin (cas de l'inactivité), sinon le compte resterait listé
+// dans le back-office, qui filtre sur deleted_at.
+export async function anonymizeUser(id_user, now = new Date(), { markDeleted = false } = {}) {
   const user = await prisma.user.findUnique({
     where: { id_user },
     select: { id_user: true, role: true },
@@ -116,6 +119,7 @@ export async function anonymizeUser(id_user, now = new Date()) {
         is_active: false,
         anonymized_at: now,
         updated_at: now,
+        ...(markDeleted ? { deleted_at: now } : {}),
       },
     });
 

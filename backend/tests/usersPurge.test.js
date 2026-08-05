@@ -103,6 +103,17 @@ describe('users.purge — anonymisation', () => {
     });
   });
 
+  it('ne touche pas deleted_at quand l’admin a déjà supprimé le compte', async () => {
+    await anonymizeUser(7, NOW);
+    expect(dataOf(db.user.update).deleted_at).toBeUndefined();
+  });
+
+  it('pose deleted_at quand aucune suppression ne l’a précédée', async () => {
+    // Sinon le compte resterait listé dans le back-office, qui filtre dessus.
+    await anonymizeUser(7, NOW, { markDeleted: true });
+    expect(dataOf(db.user.update).deleted_at).toBe(NOW);
+  });
+
   it('rend le compte non connectable', async () => {
     await anonymizeUser(7, NOW);
     // Aucun hash bcrypt ne peut valoir cette chaîne.

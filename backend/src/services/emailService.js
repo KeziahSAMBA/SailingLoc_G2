@@ -921,6 +921,87 @@ export async function sendBookingCancelledByLocataireEmail(
   });
 }
 
+function buildInactivityNoticeEmail({ firstName, days, link }) {
+  const safeFirstName = escapeHtml(firstName);
+  const safeLink = escapeHtml(link);
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Votre compte va être supprimé</title></head>
+  <body style="margin:0; padding:0; background-color:#f4f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
+            <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Protection de vos données</p>
+          </td></tr>
+          <tr><td style="padding:40px 36px 24px;">
+            <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">
+              Vous ne vous êtes pas connecté à SailingLoc depuis longtemps. Conformément à notre politique de
+              conservation des données, votre compte sera <strong>supprimé dans ${days} jours</strong> si vous ne
+              revenez pas d'ici là.
+            </p>
+            <p style="margin:0 0 24px; color:#334155; font-size:15px; line-height:1.6;">
+              Il vous suffit de vous connecter pour le conserver : aucune autre démarche n'est nécessaire.
+            </p>
+            <p style="margin:0 0 24px; text-align:center;">
+              <a href="${safeLink}" style="display:inline-block; padding:14px 28px; background-color:#0A3172; color:#ffffff; text-decoration:none; border-radius:8px; font-size:15px; font-weight:600;">Me connecter</a>
+            </p>
+            <p style="margin:28px 0 0; padding:14px 16px; background-color:#eff6ff; border-left:3px solid #5AB4EC; border-radius:6px; color:#1e3a5f; font-size:13px; line-height:1.5;">
+              Vos réservations passées seront conservées de façon anonyme pour répondre à nos obligations comptables.
+            </p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
+            <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
+              © ${new Date().getFullYear()} SailingLoc — Tous droits réservés.<br />Cet email a été envoyé automatiquement.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = `Bonjour ${firstName},
+
+Vous ne vous êtes pas connecté à SailingLoc depuis longtemps. Conformément à notre politique de conservation des données, votre compte sera supprimé dans ${days} jours si vous ne revenez pas d'ici là.
+
+Il vous suffit de vous connecter pour le conserver : ${link}
+
+Vos réservations passées seront conservées de façon anonyme pour répondre à nos obligations comptables.
+
+— L'équipe SailingLoc`;
+
+  return { html, text };
+}
+
+export async function sendInactivityNoticeEmail(to, { firstName, days }) {
+  const { APP_URL } = initConfig();
+  const { html, text } = buildInactivityNoticeEmail({
+    firstName,
+    days,
+    link: `${APP_URL}/login`,
+  });
+  await createTransporter().sendMail({
+    from: '"SailingLoc" <noreply@sailingloc.fr>',
+    to,
+    subject: `Votre compte SailingLoc sera supprimé dans ${days} jours`,
+    html,
+    text,
+    attachments: [
+      {
+        filename: 'sailingloc-logo.png',
+        path: LOGO_PATH,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  });
+}
+
 export async function sendPasswordResetEmail(to, token, firstName) {
   const { APP_URL } = initConfig();
   const link = `${APP_URL}/reset-password?token=${token}`;

@@ -98,6 +98,39 @@ async function seedDeletedUsers() {
   return { purgeables: 12, epargnes: 5 };
 }
 
+async function seedInactiveUsers() {
+  const makeUser = (i, lastLogin, notifiedAt) =>
+    prisma.user.create({
+      data: {
+        last_name: 'Dormant',
+        first_name: `Inactif ${i}`,
+        email: `inactif${i}${DEMO_DOMAIN}`,
+        password: 'demo',
+        role: 'locataire',
+        email_verified: true,
+        created_at: daysAgo(1200),
+        last_login_at: lastLogin,
+        inactivity_notified_at: notifiedAt,
+      },
+      select: { id_user: true },
+    });
+
+  // À relancer : inactifs depuis plus de 1065 jours, jamais prévenus.
+  for (let i = 0; i < 8; i += 1) await makeUser(i, daysAgo(between(1070, 1090)), null);
+  // Jamais connectés : last_login_at null, la date d'inscription fait foi.
+  for (let i = 50; i < 54; i += 1) await makeUser(i, null, null);
+  // À anonymiser : seuil franchi et relance partie il y a plus de 30 jours.
+  for (let i = 100; i < 105; i += 1)
+    await makeUser(i, daysAgo(between(1100, 1300)), daysAgo(between(35, 60)));
+
+  // Épargnés : relancés trop récemment, le préavis court encore.
+  for (let i = 200; i < 203; i += 1) await makeUser(i, daysAgo(1100), daysAgo(between(1, 20)));
+  // Épargnés : connexion récente.
+  for (let i = 300; i < 306; i += 1) await makeUser(i, daysAgo(between(1, 300)), null);
+
+  return { purgeables: 17, epargnes: 9 };
+}
+
 async function seedUnverifiedUsers() {
   const makeUser = (i, createdAt, verified) =>
     prisma.user.create({
@@ -354,7 +387,7 @@ async function seed() {
     throw new Error('Base incomplète : lancez d’abord le seed principal (prisma db seed).');
   }
 
-  const [tokens, logs, contacts, bookings, runs, deletedUsers, unverifiedUsers] = [
+  const [tokens, logs, contacts, bookings, runs, deletedUsers, unverifiedUsers, inactiveUsers] = [
     await seedTokens(user.id_user),
     await seedLogs(admin),
     await seedContactRequests(),
@@ -362,6 +395,7 @@ async function seed() {
     await seedCronRuns(),
     await seedDeletedUsers(),
     await seedUnverifiedUsers(),
+    await seedInactiveUsers(),
   ];
 
   const line = (label, task, r) =>
@@ -377,6 +411,7 @@ async function seed() {
   line('exécutions de tâche', 'cron.runs.purge', runs);
   line('comptes supprimés', 'users.purge', deletedUsers);
   line('inscriptions', 'users.unverified.purge', unverifiedUsers);
+  line('comptes inactifs', 'users.inactive.purge', inactiveUsers);
   console.log('\nLancez chaque tâche en simulation depuis /admin/taches/programmation :');
   console.log('les chiffres « à purger » doivent correspondre à la colonne Traités.');
 }

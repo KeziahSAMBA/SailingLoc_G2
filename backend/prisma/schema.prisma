@@ -29,6 +29,11 @@ model User {
   // Horodatage de l'anonymisation RGPD : évite le retraitement et sert de
   // preuve d'exécution de l'effacement (art. 5.2).
   anonymized_at              DateTime?
+  // Dernière connexion réussie : mesure l'inactivité. Null = jamais connecté.
+  last_login_at              DateTime?
+  // Relance envoyée avant suppression pour inactivité, remise à null au retour
+  // de la personne. Sans elle, la relance repartirait chaque nuit.
+  inactivity_notified_at     DateTime?
 
   boats               Boat[]     @relation("OwnerBoats")
   bookings            Booking[]  @relation("GuestBookings")
@@ -44,6 +49,7 @@ model User {
   activityLogs        ActivityLog[]  @relation("ActorLogs")
 
   @@unique([email, role])
+  @@index([last_login_at])
   @@map("user")
 }
 
