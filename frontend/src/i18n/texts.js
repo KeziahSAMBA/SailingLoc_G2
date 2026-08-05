@@ -1173,6 +1173,7 @@ export const TEXTS = {
     params: {
       expiryHours: { fr: 'Délai avant expiration (heures)', en: 'Expiry delay (hours)' },
       retentionDays: { fr: 'Rétention (jours)', en: 'Retention (days)' },
+      minAgeHours: { fr: 'Âge minimum du fichier (heures)', en: 'Minimum file age (hours)' },
       inactivityDays: {
         fr: 'Inactivité avant suppression (jours)',
         en: 'Inactivity before deletion (days)',
@@ -1245,6 +1246,13 @@ export const TEXTS = {
         description: {
           fr: 'Efface définitivement les messages qu’un expéditeur a supprimés pour tout le monde, et ceux que les deux correspondants ont masqués, au-delà de la rétention. Aujourd’hui ces textes restent en base : ils sont masqués, pas effacés. Un message masqué d’un seul côté est épargné.',
           en: 'Permanently erases messages a sender deleted for everyone, and those both correspondents hid, beyond the retention period. Today those texts remain in the database: hidden, not erased. A message hidden by only one side is spared.',
+        },
+      },
+      'images.purge': {
+        name: { fr: 'Fichiers images orphelins', en: 'Orphaned image files' },
+        description: {
+          fr: 'Supprime du disque les fichiers de photos qui ne correspondent à aucune ligne en base : retirer une photo d’une annonce efface la ligne mais laisse le fichier. Une image encore référencée est épargnée quel que soit son âge ; l’âge minimum ne sert qu’à protéger les envois en cours. Le dossier des documents n’est jamais balayé.',
+          en: 'Deletes photo files from disk that match no database row: removing a photo from a listing deletes the row but leaves the file behind. An image still referenced is spared whatever its age; the minimum age only protects uploads in flight. The documents folder is never swept.',
         },
       },
     },
