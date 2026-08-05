@@ -7,7 +7,8 @@
 //
 // Toutes les lignes créées portent un marqueur : préfixe « cron_demo_ » pour les
 // jetons, domaine « @cron-demo.test » pour les contacts, meta.demo pour les
-// logs, result.demo pour les exécutions, montant 1337 pour les réservations.
+// logs, result.demo pour les exécutions, montant 1337 pour les réservations,
+// contenu préfixé « Message de démonstration » pour les messages.
 //
 // Les comptes de démonstration font exception : users.purge efface justement
 // tout ce qui pourrait les identifier. Leur marqueur est donc une date de
@@ -21,18 +22,20 @@ const DEMO_AMOUNT = 1337;
 const DEMO_DOMAIN = '@cron-demo.test';
 const DEMO_TOKEN_PREFIX = 'cron_demo_';
 const DEMO_USER_CREATED_AT = new Date('2000-01-01T00:00:00.000Z');
+const DEMO_MESSAGE_PREFIX = 'Message de démonstration ';
 
 const daysAgo = (n) => new Date(Date.now() - n * DAY_MS);
 const hoursAgo = (n) => new Date(Date.now() - n * HOUR_MS);
 const between = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 
 async function clean() {
-  const [tokens, logs, contacts, bookings, runs] = await Promise.all([
+  const [tokens, logs, contacts, bookings, runs, messages] = await Promise.all([
     prisma.refreshToken.deleteMany({ where: { token_hash: { startsWith: DEMO_TOKEN_PREFIX } } }),
     prisma.activityLog.deleteMany({ where: { meta: { path: ['demo'], equals: true } } }),
     prisma.contactRequest.deleteMany({ where: { email: { endsWith: DEMO_DOMAIN } } }),
     prisma.booking.deleteMany({ where: { total_amount: DEMO_AMOUNT } }),
     prisma.cronRun.deleteMany({ where: { result: { path: ['demo'], equals: true } } }),
+    prisma.message.deleteMany({ where: { content: { startsWith: DEMO_MESSAGE_PREFIX } } }),
   ]);
 
   // Deux marqueurs : la sentinelle pour les comptes que l'anonymisation aura
@@ -53,6 +56,7 @@ async function clean() {
   console.log(`  demandes de contact : ${contacts.count}`);
   console.log(`  réservations        : ${bookings.count}`);
   console.log(`  exécutions de tâche : ${runs.count}`);
+  console.log(`  messages            : ${messages.count}`);
   console.log(`  comptes supprimés   : ${users.count}`);
 }
 
@@ -96,6 +100,47 @@ async function seedDeletedUsers() {
   for (let i = 200; i < 202; i += 1) await makeUser(i, daysAgo(300), daysAgo(250));
 
   return { purgeables: 12, epargnes: 5 };
+}
+
+async function seedMessages(userId, adminId) {
+  const rows = [];
+  const say = (i) => `${DEMO_MESSAGE_PREFIX}${i}`;
+
+  const base = (i, extra) => ({
+    id_sender: i % 2 === 0 ? userId : adminId,
+    id_receiver: i % 2 === 0 ? adminId : userId,
+    content: say(i),
+    sent_at: daysAgo(between(120, 400)),
+    is_read: true,
+    ...extra,
+  });
+
+  // Cibles : supprimés pour tout le monde il y a plus de 90 jours.
+  for (let i = 0; i < 30; i += 1) rows.push(base(i, { deleted_at: daysAgo(between(95, 300)) }));
+  // Cibles : masqués par les deux côtés.
+  for (let i = 30; i < 45; i += 1)
+    rows.push(
+      base(i, {
+        sender_deleted_at: daysAgo(between(95, 300)),
+        receiver_deleted_at: daysAgo(between(95, 300)),
+      })
+    );
+
+  // Épargnés : masqués d'un seul côté, l'autre les voit encore.
+  for (let i = 100; i < 112; i += 1)
+    rows.push(
+      base(
+        i,
+        i % 2 === 0 ? { sender_deleted_at: daysAgo(200) } : { receiver_deleted_at: daysAgo(200) }
+      )
+    );
+  // Épargnés : supprimés trop récemment.
+  for (let i = 200; i < 206; i += 1) rows.push(base(i, { deleted_at: daysAgo(between(1, 85)) }));
+  // Épargnés : conversation ordinaire, personne n'a rien supprimé.
+  for (let i = 300; i < 310; i += 1) rows.push(base(i, {}));
+
+  await prisma.message.createMany({ data: rows });
+  return { purgeables: 45, epargnes: 28 };
 }
 
 async function seedInactiveUsers() {
@@ -387,7 +432,17 @@ async function seed() {
     throw new Error('Base incomplète : lancez d’abord le seed principal (prisma db seed).');
   }
 
-  const [tokens, logs, contacts, bookings, runs, deletedUsers, unverifiedUsers, inactiveUsers] = [
+  const [
+    tokens,
+    logs,
+    contacts,
+    bookings,
+    runs,
+    deletedUsers,
+    unverifiedUsers,
+    inactiveUsers,
+    messages,
+  ] = [
     await seedTokens(user.id_user),
     await seedLogs(admin),
     await seedContactRequests(),
@@ -396,6 +451,7 @@ async function seed() {
     await seedDeletedUsers(),
     await seedUnverifiedUsers(),
     await seedInactiveUsers(),
+    await seedMessages(user.id_user, admin.id_user),
   ];
 
   const line = (label, task, r) =>
@@ -412,6 +468,7 @@ async function seed() {
   line('comptes supprimés', 'users.purge', deletedUsers);
   line('inscriptions', 'users.unverified.purge', unverifiedUsers);
   line('comptes inactifs', 'users.inactive.purge', inactiveUsers);
+  line('messages', 'messages.purge', messages);
   console.log('\nLancez chaque tâche en simulation depuis /admin/taches/programmation :');
   console.log('les chiffres « à purger » doivent correspondre à la colonne Traités.');
 }

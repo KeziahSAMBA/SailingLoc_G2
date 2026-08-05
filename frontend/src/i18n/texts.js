@@ -1240,6 +1240,13 @@ export const TEXTS = {
           en: 'Two phases in a single task: emails a warning to accounts idle for the inactivity delay minus the notice period, then anonymises those that did not react. Logging back in cancels the countdown.',
         },
       },
+      'messages.purge': {
+        name: { fr: 'Purge des messages supprimés', en: 'Purge deleted messages' },
+        description: {
+          fr: 'Efface définitivement les messages qu’un expéditeur a supprimés pour tout le monde, et ceux que les deux correspondants ont masqués, au-delà de la rétention. Aujourd’hui ces textes restent en base : ils sont masqués, pas effacés. Un message masqué d’un seul côté est épargné.',
+          en: 'Permanently erases messages a sender deleted for everyone, and those both correspondents hid, beyond the retention period. Today those texts remain in the database: hidden, not erased. A message hidden by only one side is spared.',
+        },
+      },
     },
   },
 
