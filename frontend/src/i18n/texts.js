@@ -1173,6 +1173,10 @@ export const TEXTS = {
     params: {
       expiryHours: { fr: 'Délai avant expiration (heures)', en: 'Expiry delay (hours)' },
       retentionDays: { fr: 'Rétention (jours)', en: 'Retention (days)' },
+      unprocessedRetentionDays: {
+        fr: 'Rétention des demandes sans réponse (jours)',
+        en: 'Retention for unanswered requests (days)',
+      },
     },
     jobs: {
       'bookings.expire': {
@@ -1187,6 +1191,20 @@ export const TEXTS = {
         description: {
           fr: 'Supprime les jetons de rafraîchissement expirés depuis plus longtemps que la rétention. Les jetons encore valides, révoqués ou non, sont conservés.',
           en: 'Deletes refresh tokens expired longer ago than the retention period. Tokens still valid, revoked or not, are kept.',
+        },
+      },
+      'logs.purge': {
+        name: { fr: 'Purge du journal d’activité', en: 'Purge activity log' },
+        description: {
+          fr: 'Supprime les entrées du journal plus anciennes que la rétention. Même règle pour tous les niveaux, y compris les erreurs.',
+          en: 'Deletes activity log entries older than the retention period. Same rule for every level, errors included.',
+        },
+      },
+      'contact.purge': {
+        name: { fr: 'Purge des demandes de contact', en: 'Purge contact requests' },
+        description: {
+          fr: 'Supprime les demandes traitées depuis plus longtemps que la rétention, et celles restées sans réponse au-delà du second délai.',
+          en: 'Deletes requests processed longer ago than the retention period, and those left unanswered beyond the second delay.',
         },
       },
     },
