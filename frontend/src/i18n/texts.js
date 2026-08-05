@@ -965,6 +965,7 @@ export const TEXTS = {
       transaction: { fr: 'Transaction', en: 'Transactions' },
       messages: { fr: 'Messagerie', en: 'Messages' },
       contact: { fr: 'Demandes contact', en: 'Contact requests' },
+      supervision: { fr: 'Supervision', en: 'Supervision' },
       logs: { fr: 'Journal', en: 'Activity log' },
       tasks: { fr: 'Tâches en cours', en: 'Running tasks' },
       taskSchedule: { fr: 'Programmation', en: 'Scheduling' },

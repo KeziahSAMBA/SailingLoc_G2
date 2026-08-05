@@ -142,13 +142,13 @@ function AdminCronJobsPage() {
           {t('adminCron.empty')}
         </p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="grid gap-4 sm:auto-rows-fr">
           {jobs.map((job) => (
             <li
               key={job.key}
-              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+              className="flex h-full flex-col rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-base font-semibold text-white">{jobLabel(job.key)}</h2>
@@ -172,7 +172,12 @@ function AdminCronJobsPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-white/70">{jobDescription(job.key)}</p>
+                  <p
+                    className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm text-white/70"
+                    title={jobDescription(job.key)}
+                  >
+                    {jobDescription(job.key)}
+                  </p>
                   <p className="mt-0.5 font-mono text-xs text-white/40">{job.key}</p>
                 </div>
 
@@ -237,7 +242,7 @@ function AdminCronJobsPage() {
                 </div>
               </dl>
 
-              <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
                 <button
                   type="button"
                   onClick={() => setEditing(job)}
