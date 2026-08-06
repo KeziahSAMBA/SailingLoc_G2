@@ -1002,6 +1002,242 @@ export async function sendInactivityNoticeEmail(to, { firstName, days }) {
   });
 }
 
+function buildAccountDeactivatedEmail({ firstName, link, days }) {
+  const safeFirstName = escapeHtml(firstName);
+  const safeLink = escapeHtml(link);
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Votre compte est en pause</title></head>
+  <body style="margin:0; padding:0; background-color:#f4f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
+            <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Votre compte</p>
+          </td></tr>
+          <tr><td style="padding:40px 36px 24px;">
+            <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">
+              Votre compte SailingLoc est désormais <strong>désactivé</strong>. Votre profil et vos
+              annonces ne sont plus visibles, et vous avez été déconnecté de tous vos appareils.
+            </p>
+            <p style="margin:0 0 24px; color:#334155; font-size:15px; line-height:1.6;">
+              Vos données sont conservées <strong>${days} jours</strong> : il vous suffit de vous
+              reconnecter pour réactiver votre compte et remettre vos annonces en ligne. Passé ce
+              délai, le compte est supprimé définitivement.
+            </p>
+            <p style="margin:0 0 24px; text-align:center;">
+              <a href="${safeLink}" style="display:inline-block; padding:14px 28px; background-color:#0A3172; color:#ffffff; text-decoration:none; border-radius:8px; font-size:15px; font-weight:600;">Réactiver mon compte</a>
+            </p>
+            <p style="margin:28px 0 0; padding:14px 16px; background-color:#eff6ff; border-left:3px solid #5AB4EC; border-radius:6px; color:#1e3a5f; font-size:13px; line-height:1.5;">
+              Si vous souhaitez au contraire effacer définitivement vos données, la suppression
+              du compte reste disponible depuis « Mon compte » après reconnexion.
+            </p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
+            <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
+              © ${new Date().getFullYear()} SailingLoc — Tous droits réservés.<br />Cet email a été envoyé automatiquement.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = `Bonjour ${firstName},
+
+Votre compte SailingLoc est désormais désactivé. Votre profil et vos annonces ne sont plus visibles, et vous avez été déconnecté de tous vos appareils.
+
+Vos données sont conservées ${days} jours : reconnectez-vous pour réactiver votre compte et remettre vos annonces en ligne : ${link}
+Passé ce délai, le compte est supprimé définitivement.
+
+Si vous souhaitez au contraire effacer définitivement vos données, la suppression du compte reste disponible depuis « Mon compte » après reconnexion.
+
+— L'équipe SailingLoc`;
+
+  return { html, text };
+}
+
+function buildPauseNoticeEmail({ firstName, link, days }) {
+  const safeFirstName = escapeHtml(firstName);
+  const safeLink = escapeHtml(link);
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Votre compte en pause va être supprimé</title></head>
+  <body style="margin:0; padding:0; background-color:#f4f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
+            <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Votre compte</p>
+          </td></tr>
+          <tr><td style="padding:40px 36px 24px;">
+            <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">
+              Votre compte SailingLoc est en pause depuis un moment déjà. Sans reconnexion de votre
+              part, il sera <strong>supprimé définitivement dans ${days} jours</strong>.
+            </p>
+            <p style="margin:0 0 24px; color:#334155; font-size:15px; line-height:1.6;">
+              Une simple connexion suffit à le réactiver et à remettre vos annonces en ligne.
+            </p>
+            <p style="margin:0 0 24px; text-align:center;">
+              <a href="${safeLink}" style="display:inline-block; padding:14px 28px; background-color:#0A3172; color:#ffffff; text-decoration:none; border-radius:8px; font-size:15px; font-weight:600;">Réactiver mon compte</a>
+            </p>
+            <p style="margin:28px 0 0; padding:14px 16px; background-color:#eff6ff; border-left:3px solid #5AB4EC; border-radius:6px; color:#1e3a5f; font-size:13px; line-height:1.5;">
+              Si vous ne souhaitez pas conserver ce compte, vous n'avez rien à faire : la suppression
+              se fera automatiquement à l'échéance.
+            </p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
+            <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
+              © ${new Date().getFullYear()} SailingLoc — Tous droits réservés.<br />Cet email a été envoyé automatiquement.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = `Bonjour ${firstName},
+
+Votre compte SailingLoc est en pause depuis un moment déjà. Sans reconnexion de votre part, il sera supprimé définitivement dans ${days} jours.
+
+Une simple connexion suffit à le réactiver et à remettre vos annonces en ligne : ${link}
+
+Si vous ne souhaitez pas conserver ce compte, vous n'avez rien à faire : la suppression se fera automatiquement à l'échéance.
+
+— L'équipe SailingLoc`;
+
+  return { html, text };
+}
+
+function buildAccountDeletionEmail({ firstName, days }) {
+  const safeFirstName = escapeHtml(firstName);
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Votre compte a été supprimé</title></head>
+  <body style="margin:0; padding:0; background-color:#f4f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6fa; padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(10,49,114,0.08);">
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#0A3172; background:linear-gradient(90deg, #0A3172 0%, #5AB4EC 100%);">&nbsp;</td></tr>
+          <tr><td style="background-color:#ffffff; padding:28px 32px 24px; text-align:center;">
+            <img src="cid:${LOGO_CID}" alt="SailingLoc" width="220" style="display:block; margin:0 auto 12px; max-width:220px; height:auto; border:0;" />
+            <p style="margin:0; color:#5A7599; font-size:14px; font-style:italic;">Protection de vos données</p>
+          </td></tr>
+          <tr><td style="padding:40px 36px 24px;">
+            <h2 style="margin:0 0 12px; color:#0A3172; font-size:22px; font-weight:700;">Bonjour ${safeFirstName},</h2>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">
+              Votre demande de suppression a bien été enregistrée. Votre compte est
+              <strong>fermé définitivement</strong> : il n'est plus accessible, vos annonces ont été
+              retirées et vos sessions ont toutes été révoquées.
+            </p>
+            <p style="margin:0 0 16px; color:#334155; font-size:15px; line-height:1.6;">
+              Vos données personnelles seront <strong>anonymisées sous ${days} jours</strong>. Ce délai
+              correspond à la durée de conservation nécessaire au traitement des éventuels litiges et
+              réclamations liés à vos locations.
+            </p>
+            <p style="margin:28px 0 0; padding:14px 16px; background-color:#eff6ff; border-left:3px solid #5AB4EC; border-radius:6px; color:#1e3a5f; font-size:13px; line-height:1.5;">
+              Les factures et écritures comptables liées à vos réservations passées sont conservées
+              de façon anonyme pour répondre à nos obligations légales.
+            </p>
+          </td></tr>
+          <tr><td style="padding:24px 36px 32px; border-top:1px solid #e2e8f0; background-color:#fafbfd;">
+            <p style="margin:0; text-align:center; color:#94a3b8; font-size:12px; line-height:1.5;">
+              © ${new Date().getFullYear()} SailingLoc — Tous droits réservés.<br />Cet email a été envoyé automatiquement.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = `Bonjour ${firstName},
+
+Votre demande de suppression a bien été enregistrée. Votre compte est fermé définitivement : il n'est plus accessible, vos annonces ont été retirées et vos sessions ont toutes été révoquées.
+
+Vos données personnelles seront anonymisées sous ${days} jours. Ce délai correspond à la durée de conservation nécessaire au traitement des éventuels litiges et réclamations liés à vos locations.
+
+Les factures et écritures comptables liées à vos réservations passées sont conservées de façon anonyme pour répondre à nos obligations légales.
+
+— L'équipe SailingLoc`;
+
+  return { html, text };
+}
+
+export async function sendAccountDeactivatedEmail(to, { firstName, days }) {
+  const { APP_URL } = initConfig();
+  const { html, text } = buildAccountDeactivatedEmail({
+    firstName,
+    link: `${APP_URL}/login`,
+    days,
+  });
+  await createTransporter().sendMail({
+    from: '"SailingLoc" <noreply@sailingloc.fr>',
+    to,
+    subject: 'Votre compte SailingLoc est désactivé',
+    html,
+    text,
+    attachments: [
+      {
+        filename: 'sailingloc-logo.png',
+        path: LOGO_PATH,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  });
+}
+
+export async function sendPauseNoticeEmail(to, { firstName, days }) {
+  const { APP_URL } = initConfig();
+  const { html, text } = buildPauseNoticeEmail({ firstName, link: `${APP_URL}/login`, days });
+  await createTransporter().sendMail({
+    from: '"SailingLoc" <noreply@sailingloc.fr>',
+    to,
+    subject: `Votre compte SailingLoc sera supprimé dans ${days} jours`,
+    html,
+    text,
+    attachments: [
+      {
+        filename: 'sailingloc-logo.png',
+        path: LOGO_PATH,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  });
+}
+
+export async function sendAccountDeletionEmail(to, { firstName, days }) {
+  const { html, text } = buildAccountDeletionEmail({ firstName, days });
+  await createTransporter().sendMail({
+    from: '"SailingLoc" <noreply@sailingloc.fr>',
+    to,
+    subject: 'Votre compte SailingLoc a été supprimé',
+    html,
+    text,
+    attachments: [
+      {
+        filename: 'sailingloc-logo.png',
+        path: LOGO_PATH,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
+  });
+}
+
 export async function sendPasswordResetEmail(to, token, firstName) {
   const { APP_URL } = initConfig();
   const link = `${APP_URL}/reset-password?token=${token}`;

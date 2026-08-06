@@ -6,6 +6,7 @@ import cronRunsPurge from './handlers/cronRunsPurge.js';
 import usersPurge from './handlers/usersPurge.js';
 import usersUnverifiedPurge from './handlers/usersUnverifiedPurge.js';
 import usersInactivePurge from './handlers/usersInactivePurge.js';
+import usersPausedPurge from './handlers/usersPausedPurge.js';
 import messagesPurge from './handlers/messagesPurge.js';
 import imagesPurge from './handlers/imagesPurge.js';
 
@@ -21,6 +22,7 @@ const JOBS = [
   usersPurge,
   usersUnverifiedPurge,
   usersInactivePurge,
+  usersPausedPurge,
   messagesPurge,
   imagesPurge,
 ];

@@ -34,6 +34,8 @@ model User {
   // Relance envoyée avant suppression pour inactivité, remise à null au retour
   // de la personne. Sans elle, la relance repartirait chaque nuit.
   inactivity_notified_at     DateTime?
+  deactivated_at             DateTime?
+  pause_notified_at          DateTime?
 
   boats               Boat[]     @relation("OwnerBoats")
   bookings            Booking[]  @relation("GuestBookings")
