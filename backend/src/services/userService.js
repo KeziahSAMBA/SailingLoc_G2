@@ -21,6 +21,7 @@ import {
   sendPasswordResetEmail,
   sendAccountCreatedEmail,
 } from './emailService.js';
+import { reactivateOwnAccount } from './accountClosureService.js';
 import { initConfig } from '../config/appConfig.js';
 
 const { JWT_SECRET } = initConfig();
@@ -273,7 +274,10 @@ export async function login({ email, password, role }, { userAgent } = {}) {
 
   if (!user || !passwordOk) throw genericInvalid;
 
-  if (!user.is_active) {
+  if (user.deleted_at) throw genericInvalid;
+
+  const reactivated = !user.is_active && Boolean(user.deactivated_at);
+  if (!user.is_active && !reactivated) {
     throw Object.assign(new Error('Compte désactivé. Contactez le support.'), { status: 403 });
   }
 
@@ -282,6 +286,10 @@ export async function login({ email, password, role }, { userAgent } = {}) {
       new Error('Email non confirmé. Vérifiez votre boîte mail pour activer votre compte.'),
       { status: 403 }
     );
+  }
+
+  if (reactivated) {
+    await reactivateOwnAccount(user.id_user);
   }
 
   const accessToken = signAccessToken(user);
@@ -294,7 +302,7 @@ export async function login({ email, password, role }, { userAgent } = {}) {
     data: { last_login_at: new Date(), inactivity_notified_at: null },
   });
 
-  return { accessToken, refreshToken, user: publicUser(user) };
+  return { accessToken, refreshToken, user: publicUser(user), reactivated };
 }
 
 export async function refreshSession(rawRefreshToken, { userAgent } = {}) {

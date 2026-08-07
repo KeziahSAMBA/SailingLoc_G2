@@ -17,6 +17,9 @@ import {
   verifyResetToken,
   patchMyAvatar,
   deleteMyAvatar,
+  getMyClosureStatus,
+  deactivateMe,
+  deleteMe,
 } from '../controllers/userController.js';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
@@ -151,6 +154,29 @@ router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
 router.patch('/me/avatar', protect, uploadAvatar, patchMyAvatar);
 router.delete('/me/avatar', protect, deleteMyAvatar);
+router.get('/me/closure', protect, requireRole('locataire', 'proprietaire'), getMyClosureStatus);
+router.post(
+  '/me/deactivate',
+  protect,
+  requireRole('locataire', 'proprietaire'),
+  audit('user.deactivate_self', {
+    targetType: 'user',
+    targetId: (req) => String(req.user.id_user),
+    meta: () => null,
+  }),
+  deactivateMe
+);
+router.delete(
+  '/me',
+  protect,
+  requireRole('locataire', 'proprietaire'),
+  audit('user.delete_self', {
+    targetType: 'user',
+    targetId: (req) => String(req.user.id_user),
+    meta: () => null,
+  }),
+  deleteMe
+);
 router.get('/me/dashboard', protect, requireRole('locataire'), getDashboard);
 router.get(
   '/me/proprietaire/dashboard',

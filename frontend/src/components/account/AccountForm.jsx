@@ -12,6 +12,7 @@ import {
 } from '../../services/authService.js';
 import { nameToAvatarUrl } from '../../utils/avatar.js';
 import PasswordField from '../auth/PasswordField.jsx';
+import DangerZone from './DangerZone.jsx';
 
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
@@ -569,6 +570,8 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
           </div>
         </form>
       </article>
+
+      {user?.role !== 'admin' && <DangerZone />}
     </>
   );
 }

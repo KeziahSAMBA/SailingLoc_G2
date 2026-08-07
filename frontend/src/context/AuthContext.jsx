@@ -133,7 +133,10 @@ export function AuthProvider({ children }) {
       const data = await apiLogin(credentials);
       setAccessToken(data.accessToken);
       setUser(data.user);
-      showToast('Vous êtes connecté.', 'success');
+      showToast(
+        data.reactivated ? 'Votre compte a été réactivé. Bon retour !' : 'Vous êtes connecté.',
+        'success'
+      );
       return data.user;
     },
     [showToast]

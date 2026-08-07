@@ -1242,6 +1242,13 @@ export const TEXTS = {
           en: 'Two phases in a single task: emails a warning to accounts idle for the inactivity delay minus the notice period, then anonymises those that did not react. Logging back in cancels the countdown.',
         },
       },
+      'users.paused.purge': {
+        name: { fr: 'Comptes en pause', en: 'Paused accounts' },
+        description: {
+          fr: 'Deux temps dans une seule tâche : relance par e-mail les comptes désactivés à l’approche de l’échéance, puis ferme ceux restés sans reconnexion. La fermeture pose la suppression, l’anonymisation revenant ensuite à la tâche des comptes supprimés. Un blocage administrateur n’est jamais concerné, et un litige ouvert épargne le compte.',
+          en: 'Two phases in a single task: emails a warning to deactivated accounts nearing the deadline, then closes those that were never reactivated. Closing marks the deletion; anonymisation is then handled by the deleted-accounts task. Administrator blocks are never affected, and an open dispute spares the account.',
+        },
+      },
       'messages.purge': {
         name: { fr: 'Purge des messages supprimés', en: 'Purge deleted messages' },
         description: {
@@ -1417,6 +1424,18 @@ export const TEXTS = {
         create: { fr: 'Création d’un compte', en: 'Account created' },
         update: { fr: 'Modification d’un compte', en: 'Account updated' },
         delete: { fr: 'Suppression d’un compte', en: 'Account deleted' },
+        deactivate_self: {
+          fr: 'Désactivation de son propre compte',
+          en: 'Self-service account deactivation',
+        },
+        delete_self: {
+          fr: 'Suppression de son propre compte',
+          en: 'Self-service account deletion',
+        },
+        reactivate_self: {
+          fr: 'Réactivation de son propre compte',
+          en: 'Self-service account reactivation',
+        },
       },
       document: {
         status: { fr: 'Statut de document modifié', en: 'Document status changed' },
@@ -2950,6 +2969,131 @@ export const TEXTS = {
         mismatch: {
           fr: 'Les mots de passe ne correspondent pas.',
           en: 'Passwords do not match.',
+        },
+      },
+    },
+
+    dangerZone: {
+      title: { fr: 'Fermer mon compte', en: 'Close my account' },
+      subtitle: {
+        fr: 'Mettez votre compte en pause ou supprimez définitivement vos données personnelles.',
+        en: 'Pause your account or permanently delete your personal data.',
+      },
+      passwordLabel: {
+        fr: 'Votre mot de passe, pour confirmer',
+        en: 'Your password, to confirm',
+      },
+      cancel: { fr: 'Annuler', en: 'Cancel' },
+      submitting: { fr: 'Traitement…', en: 'Processing…' },
+      blocked: {
+        title: {
+          fr: 'Votre compte ne peut pas être fermé pour le moment :',
+          en: 'Your account cannot be closed right now:',
+        },
+        guestBookings_one: {
+          fr: '{{count}} réservation en cours ou à venir. Attendez son terme ou annulez-la.',
+          en: '{{count}} ongoing or upcoming booking. Wait until it ends or cancel it.',
+        },
+        guestBookings_other: {
+          fr: '{{count}} réservations en cours ou à venir. Attendez leur terme ou annulez-les.',
+          en: '{{count}} ongoing or upcoming bookings. Wait until they end or cancel them.',
+        },
+        ownerBookings_one: {
+          fr: '{{count}} réservation en cours ou à venir sur vos annonces.',
+          en: '{{count}} ongoing or upcoming booking on your listings.',
+        },
+        ownerBookings_other: {
+          fr: '{{count}} réservations en cours ou à venir sur vos annonces.',
+          en: '{{count}} ongoing or upcoming bookings on your listings.',
+        },
+        disputes_one: {
+          fr: '{{count}} litige encore ouvert. Il doit être résolu avant la fermeture.',
+          en: '{{count}} dispute still open. It must be resolved before closing.',
+        },
+        disputes_other: {
+          fr: '{{count}} litiges encore ouverts. Ils doivent être résolus avant la fermeture.',
+          en: '{{count}} disputes still open. They must be resolved before closing.',
+        },
+      },
+      deactivate: {
+        title: { fr: 'Désactiver mon compte', en: 'Deactivate my account' },
+        guestDescription: {
+          fr: 'Votre profil devient invisible et vous êtes déconnecté partout. Vos données sont conservées {{days}} jours : une simple reconnexion réactive le compte, sinon il est supprimé définitivement.',
+          en: 'Your profile becomes invisible and you are logged out everywhere. Your data is kept for {{days}} days: simply logging back in reactivates the account, otherwise it is permanently deleted.',
+        },
+        ownerDescription: {
+          fr: 'Vos annonces sont retirées du catalogue et vous êtes déconnecté partout. Une simple reconnexion réactive le compte et republie vos annonces, sinon il est supprimé définitivement au bout de {{days}} jours.',
+          en: 'Your listings are removed from the catalogue and you are logged out everywhere. Simply logging back in reactivates the account and republishes your listings, otherwise it is permanently deleted after {{days}} days.',
+        },
+        action: { fr: 'Désactiver mon compte', en: 'Deactivate my account' },
+        dialogTitle: {
+          fr: 'Confirmer la désactivation',
+          en: 'Confirm deactivation',
+        },
+        consequences: {
+          profile: {
+            fr: 'Votre profil et vos annonces ne sont plus visibles.',
+            en: 'Your profile and listings are no longer visible.',
+          },
+          sessions: {
+            fr: 'Toutes vos sessions sont fermées, sur tous vos appareils.',
+            en: 'All your sessions are closed, on every device.',
+          },
+          reactivation: {
+            fr: 'Vos données sont conservées {{days}} jours : reconnectez-vous pour réactiver le compte, passé ce délai il est supprimé définitivement.',
+            en: 'Your data is kept for {{days}} days: log back in to reactivate the account; after that it is permanently deleted.',
+          },
+        },
+        confirm: { fr: 'Désactiver', en: 'Deactivate' },
+        success: {
+          fr: 'Compte désactivé. Reconnectez-vous sous {{days}} jours pour le réactiver.',
+          en: 'Account deactivated. Log back in within {{days}} days to reactivate it.',
+        },
+      },
+      delete: {
+        title: { fr: 'Supprimer mon compte', en: 'Delete my account' },
+        description: {
+          fr: 'Fermeture définitive : le compte devient inaccessible immédiatement et vos données personnelles sont anonymisées sous {{days}} jours.',
+          en: 'Permanent closure: the account becomes inaccessible immediately and your personal data is anonymised within {{days}} days.',
+        },
+        action: { fr: 'Supprimer mon compte', en: 'Delete my account' },
+        dialogTitle: {
+          fr: 'Confirmer la suppression définitive',
+          en: 'Confirm permanent deletion',
+        },
+        word: { fr: 'SUPPRIMER', en: 'DELETE' },
+        confirmationLabel: {
+          fr: 'Saisissez {{word}} pour confirmer',
+          en: 'Type {{word}} to confirm',
+        },
+        consequences: {
+          access: {
+            fr: 'Le compte est fermé immédiatement : plus aucune connexion possible.',
+            en: 'The account closes immediately: no further login is possible.',
+          },
+          data: {
+            fr: 'Vos données personnelles sont anonymisées sous {{days}} jours, délai de conservation légal.',
+            en: 'Your personal data is anonymised within {{days}} days, the legal retention period.',
+          },
+          invoices: {
+            fr: 'Les factures et écritures comptables sont conservées de façon anonyme.',
+            en: 'Invoices and accounting records are kept in anonymised form.',
+          },
+        },
+        confirm: { fr: 'Supprimer définitivement', en: 'Delete permanently' },
+        success: {
+          fr: 'Compte supprimé. Vos données seront anonymisées sous 30 jours.',
+          en: 'Account deleted. Your data will be anonymised within 30 days.',
+        },
+      },
+      errors: {
+        passwordRequired: {
+          fr: 'Votre mot de passe est requis.',
+          en: 'Your password is required.',
+        },
+        confirmationInvalid: {
+          fr: 'Saisissez exactement {{word}} pour confirmer.',
+          en: 'Type exactly {{word}} to confirm.',
         },
       },
     },

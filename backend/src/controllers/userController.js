@@ -16,6 +16,13 @@ import {
   checkResetToken,
   REFRESH_TOKEN_TTL_MS,
 } from '../services/userService.js';
+import {
+  getClosureStatus,
+  deactivateOwnAccount,
+  deleteOwnAccount,
+  DELETION_RETENTION_DAYS,
+  PAUSE_RETENTION_DAYS,
+} from '../services/accountClosureService.js';
 import { logActivity } from '../services/logService.js';
 
 const REFRESH_COOKIE_NAME = 'sl_refresh';
@@ -68,11 +75,23 @@ export async function login(req, res) {
     if (req.body?.role === 'admin') {
       return res.status(401).json({ message: 'Identifiants invalides.' });
     }
-    const { accessToken, refreshToken, user } = await loginService(req.body, {
+    const { accessToken, refreshToken, user, reactivated } = await loginService(req.body, {
       userAgent: req.headers['user-agent'],
     });
     setRefreshCookie(res, refreshToken);
-    res.status(200).json({ accessToken, user });
+    if (reactivated) {
+      logActivity({
+        category: 'user',
+        action: 'user.reactivate_self',
+        actorId: user.id_user,
+        actorEmail: user.email,
+        actorRole: user.role,
+        targetType: 'user',
+        targetId: String(user.id_user),
+        ip: req.ip,
+      });
+    }
+    res.status(200).json({ accessToken, user, reactivated });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
@@ -159,6 +178,39 @@ export async function changeMyPassword(req, res) {
     // Toutes les sessions sont révoquées : on efface aussi le cookie courant.
     clearRefreshCookie(res);
     res.json({ message: 'Mot de passe mis à jour. Veuillez vous reconnecter.' });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function getMyClosureStatus(req, res) {
+  try {
+    const status = await getClosureStatus(req.user.id_user);
+    res.json(status);
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function deactivateMe(req, res) {
+  try {
+    await deactivateOwnAccount(req.user.id_user, req.body || {});
+    clearRefreshCookie(res);
+    res.json({
+      message: `Compte désactivé. Reconnectez-vous sous ${PAUSE_RETENTION_DAYS} jours pour le réactiver.`,
+    });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function deleteMe(req, res) {
+  try {
+    await deleteOwnAccount(req.user.id_user, req.body || {});
+    clearRefreshCookie(res);
+    res.json({
+      message: `Compte supprimé. Vos données seront anonymisées sous ${DELETION_RETENTION_DAYS} jours.`,
+    });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
