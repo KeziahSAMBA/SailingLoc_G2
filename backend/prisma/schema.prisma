@@ -190,6 +190,7 @@ model Booking {
   reviews             Review[]
   documents           BookingDocument[]
   disputes            Dispute[]
+  invoices            Invoice[]
 
   @@index([id_user])
   @@index([id_boat])
@@ -240,6 +241,47 @@ model Payment {
   @@index([id_booking])
   @@index([id_dispute])
   @@map("payment")
+}
+
+model Invoice {
+  id_invoice       Int         @id @default(autoincrement())
+  id_booking       Int
+  kind             InvoiceKind
+
+  series           String      @db.VarChar(8)
+  year             Int
+  sequence         Int
+  number           String      @unique @db.VarChar(32)
+  issued_at        DateTime
+
+  total_amount     Decimal
+  commission       Decimal
+  net_amount       Decimal
+  vat_rate         Decimal
+  vat_amount       Decimal
+
+  issuer_name      String      @db.VarChar(255)
+  issuer_address   String      @db.VarChar(500)
+  issuer_legal     String      @db.VarChar(500)
+  issuer_vat       String?     @db.VarChar(64)
+
+  customer_name    String      @db.VarChar(255)
+  customer_email   String      @db.VarChar(255)
+  customer_address String?     @db.VarChar(500)
+
+  boat_name        String      @db.VarChar(255)
+  start_date       DateTime    @db.Date
+  end_date         DateTime    @db.Date
+  nights           Int
+
+  created_at       DateTime    @default(now())
+
+  booking          Booking     @relation(fields: [id_booking], references: [id_booking])
+
+  @@unique([id_booking, kind])
+  @@unique([series, year, sequence])
+  @@index([id_booking])
+  @@map("invoice")
 }
 
 model Document {
@@ -405,6 +447,13 @@ enum PaymentStatus {
   refunded
 
   @@map("payment_status")
+}
+
+enum InvoiceKind {
+  rental
+  commission
+
+  @@map("invoice_kind")
 }
 
 enum ReportStatus {
