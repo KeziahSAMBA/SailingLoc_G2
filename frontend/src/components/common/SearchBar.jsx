@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiSearch, FiX } from 'react-icons/fi';
@@ -56,6 +56,8 @@ function SearchBar({
   const [boats, setBoats] = useState([]);
   const [destinationFocused, setDestinationFocused] = useState(false);
   const [nearestSuggestion, setNearestSuggestion] = useState(null);
+  const destinationInputRef = useRef(null);
+  const travelersInputRef = useRef(null);
 
   const hasValues = destination || start || end || travelers;
 
@@ -165,7 +167,7 @@ function SearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`mx-auto flex w-full max-w-4xl flex-col items-stretch gap-1 rounded-2xl border p-1 shadow-xl sm:flex-row sm:gap-0 sm:rounded-full sm:p-0.5 ${
+      className={`mx-auto flex w-full max-w-4xl flex-col items-stretch gap-1 rounded-2xl border p-1 shadow-xl sm:flex-row sm:gap-0 sm:rounded-full sm:p-0.5 max-sm:flex-row max-sm:gap-0 max-sm:rounded-full max-sm:p-0.5 ${
         fitContentOnTablet
           ? 'md:w-fit md:max-w-full'
           : fitContentOnDesktop
@@ -187,18 +189,19 @@ function SearchBar({
         WebkitBackdropFilter: compact ? 'blur(14px)' : 'blur(40px)',
       }}
     >
-      <div className="flex items-stretch overflow-hidden">
+      <div className="flex items-stretch overflow-visible max-sm:min-w-0 max-sm:flex-[16_1_0%]">
         <div
-          className={`relative mx-0.5 flex flex-1 flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-6 sm:py-0.5 ${
+          className={`relative mx-0.5 flex flex-1 flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-6 sm:py-0.5 max-sm:mx-0 max-sm:flex-[6_1_0%] max-sm:rounded-full max-sm:px-1.5 max-sm:py-1 max-sm:min-w-0 ${
             fitContentOnTablet ? 'md:min-w-0' : fitContentOnDesktop ? 'lg:min-w-0' : ''
           } ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         >
           <span
-            className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
+            className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 max-sm:truncate ${light ? 'text-white' : 'text-black'}`}
           >
             {t('searchBar.destination')}
           </span>
           <input
+            ref={destinationInputRef}
             type="text"
             value={destination}
             onChange={(e) => {
@@ -209,11 +212,11 @@ function SearchBar({
             onBlur={() => setTimeout(() => setDestinationFocused(false), 150)}
             placeholder={t('searchBar.destinationPlaceholder')}
             autoComplete="off"
-            className={`w-full bg-transparent outline-none text-xs text-center ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
+            className={`w-full bg-transparent outline-none text-xs text-center max-sm:min-w-0 ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
           />
 
           {destinationFocused && (localMatches.length > 0 || nearestSuggestion) && (
-            <div className="absolute left-0 top-full mt-2 w-64 rounded-xl bg-white shadow-xl border border-gray-100 py-1.5 z-50 text-left">
+            <div className="absolute left-0 top-full mt-2 w-64 rounded-xl bg-white shadow-xl border border-gray-100 py-1.5 z-50 text-left max-sm:w-[min(16rem,calc(100vw-2rem))]">
               {localMatches.length > 0
                 ? localMatches.slice(0, 6).map((p) => (
                     <button
@@ -243,7 +246,7 @@ function SearchBar({
         </div>
 
         <div
-          className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`}
+          className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px max-sm:h-5 max-sm:w-px max-sm:shrink-0 ${light ? 'bg-white/20' : 'bg-black/20'}`}
         />
         <DateRangePicker
           start={start}
@@ -251,27 +254,33 @@ function SearchBar({
           onChangeStart={setStart}
           onChangeEnd={setEnd}
           isDateAvailable={isDateAvailable}
+          onOpen={() => {
+            setDestinationFocused(false);
+            destinationInputRef.current?.blur();
+            travelersInputRef.current?.blur();
+          }}
           light={light}
         />
         <div
-          className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px ${light ? 'bg-white/20' : 'bg-black/20'}`}
+          className={`h-px w-[calc(100%-1rem)] self-center sm:h-5 sm:w-px max-sm:h-5 max-sm:w-px max-sm:shrink-0 ${light ? 'bg-white/20' : 'bg-black/20'}`}
         />
 
         <div
-          className={`mx-0.5 flex flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-5 sm:py-0.5 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+          className={`mx-0.5 flex flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors sm:rounded-full sm:px-5 sm:py-0.5 max-sm:mx-0 max-sm:flex-[4_1_0%] max-sm:min-w-0 max-sm:rounded-full max-sm:px-1.5 max-sm:py-1 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         >
           <span
-            className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${light ? 'text-white' : 'text-black'}`}
+            className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 max-sm:whitespace-nowrap ${light ? 'text-white' : 'text-black'}`}
           >
             {t('searchBar.travelers')}
           </span>
           <input
+            ref={travelersInputRef}
             type="number"
             min="1"
             value={travelers}
             onChange={(e) => setTravelers(e.target.value)}
             placeholder={t('searchBar.travelersPlaceholder')}
-            className={`w-full bg-transparent text-center text-xs outline-none sm:w-29 ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
+            className={`w-full bg-transparent text-center text-xs outline-none sm:w-36 max-sm:min-w-0 max-sm:placeholder-transparent ${light ? 'text-white placeholder-white/50' : 'text-black placeholder-black/50'}`}
           />
         </div>
 
@@ -280,7 +289,7 @@ function SearchBar({
             type="button"
             onClick={handleReset}
             title={t('searchBar.resetTitle')}
-            className={`flex items-center justify-center w-6 h-6 rounded-full transition-colors self-center mr-1 ${light ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-black/50 hover:text-black hover:bg-black/10'}`}
+            className={`flex items-center justify-center w-6 h-6 rounded-full transition-colors self-center mr-1 max-sm:mr-0.5 max-sm:shrink-0 ${light ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-black/50 hover:text-black hover:bg-black/10'}`}
           >
             <FiX size={14} />
           </button>
@@ -289,10 +298,11 @@ function SearchBar({
 
       <button
         type="submit"
-        className="flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-sky-700/50 px-5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-900 sm:min-h-0 sm:w-auto sm:rounded-full"
+        title={t('searchBar.search')}
+        className="flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-sky-700/50 px-5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-900 sm:min-h-0 sm:w-auto sm:rounded-full max-sm:min-h-0 max-sm:min-w-0 max-sm:flex-[2.5_1_0%] max-sm:rounded-full max-sm:px-1.5 max-sm:py-1.5"
       >
         <FiSearch size={14} />
-        {t('searchBar.search')}
+        <span className="max-sm:hidden">{t('searchBar.search')}</span>
       </button>
     </form>
   );
