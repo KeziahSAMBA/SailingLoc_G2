@@ -116,6 +116,7 @@ export async function updateUserByAdmin(id_user, requesterId, payload = {}) {
       });
     }
     data.is_active = Boolean(is_active);
+    data.deactivated_at = null;
   }
 
   if (Object.keys(data).length === 0) {
@@ -141,6 +142,6 @@ export async function deleteUserByAdmin(id_user, requesterId) {
   // Soft delete : préserve l'intégrité (réservations, paiements, avis…).
   await prisma.user.update({
     where: { id_user: id },
-    data: { is_active: false, deleted_at: new Date() },
+    data: { is_active: false, deactivated_at: null, deleted_at: new Date() },
   });
 }

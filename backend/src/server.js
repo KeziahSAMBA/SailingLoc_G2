@@ -11,7 +11,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import { postContactRequest } from './controllers/contactRequestController.js';
 import { stripeWebhook } from './controllers/webhookController.js';
-import { cancelExpiredBookings } from './services/bookingService.js';
+import { startScheduler, stopScheduler } from './scheduler.js';
 import { initConfig } from './config/appConfig.js';
 import prisma from './config/db.js';
 
@@ -122,14 +122,10 @@ process.on('uncaughtException', (err) => {
   console.error('[server] uncaughtException:', err);
 });
 
-// Les réservations « pending » non payées expirent au bout de 72 h : balayage
-// au démarrage puis toutes les heures (complété par un appel à chaque création
-// de réservation, cf. bookingService).
-cancelExpiredBookings().catch((err) => console.error('[bookings] sweep:', err));
-const sweepInterval = setInterval(
-  () => cancelExpiredBookings().catch((err) => console.error('[bookings] sweep:', err)),
-  60 * 60 * 1000
-);
+// Tâches planifiées (dont l'expiration des réservations non payées, qui tournait
+// auparavant via un setInterval local) : le registre et l'historique vivent en
+// base, cf. src/scheduler.js.
+startScheduler().catch((err) => console.error('[cron] démarrage:', err));
 
 const server = app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
@@ -142,7 +138,7 @@ function shutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
   console.log(`[server] ${signal} reçu, arrêt en cours...`);
-  clearInterval(sweepInterval);
+  stopScheduler();
   // Filet de sécurité si une connexion refuse de se fermer.
   const forceExit = setTimeout(() => process.exit(0), 10000);
   forceExit.unref();

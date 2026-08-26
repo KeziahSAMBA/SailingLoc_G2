@@ -956,6 +956,27 @@ export const TEXTS = {
     cancelled: { fr: 'Annulée', en: 'Cancelled' },
   },
 
+  invoice: {
+    rentalLabel: { fr: 'Facture', en: 'Invoice' },
+    rentalTitle: {
+      fr: 'Facture de location — {{boat}}',
+      en: 'Rental invoice — {{boat}}',
+    },
+    commissionLabel: { fr: 'Facture', en: 'Invoice' },
+    commissionTitle: {
+      fr: 'Facture de commission — {{boat}}',
+      en: 'Commission invoice — {{boat}}',
+    },
+    loading: { fr: 'Génération…', en: 'Generating…' },
+    download: { fr: 'Télécharger', en: 'Download' },
+    close: { fr: 'Fermer', en: 'Close' },
+    fallbackFileName: { fr: 'facture.pdf', en: 'invoice.pdf' },
+    error: {
+      fr: "La facture n'a pas pu être générée. Réessayez dans un instant.",
+      en: 'The invoice could not be generated. Please try again shortly.',
+    },
+  },
+
   adminLayout: {
     navAria: { fr: 'Navigation administration', en: 'Administration navigation' },
     title: { fr: 'Administration', en: 'Administration' },
@@ -972,7 +993,10 @@ export const TEXTS = {
       transaction: { fr: 'Transaction', en: 'Transactions' },
       messages: { fr: 'Messagerie', en: 'Messages' },
       contact: { fr: 'Demandes contact', en: 'Contact requests' },
+      supervision: { fr: 'Supervision', en: 'Supervision' },
       logs: { fr: 'Journal', en: 'Activity log' },
+      tasks: { fr: 'Tâches en cours', en: 'Running tasks' },
+      taskSchedule: { fr: 'Programmation', en: 'Scheduling' },
       account: { fr: 'Compte', en: 'Account' },
     },
   },
@@ -1100,6 +1124,238 @@ export const TEXTS = {
     },
   },
 
+  adminCron: {
+    pageTitle: {
+      fr: 'Programmation des tâches — Admin SailingLoc',
+      en: 'Task scheduling — Admin SailingLoc',
+    },
+    title: { fr: 'Programmation des tâches', en: 'Task scheduling' },
+    subtitle: {
+      fr: 'Planning, activation et paramétrage des tâches automatiques.',
+      en: 'Schedule, activation and settings of automated tasks.',
+    },
+    timezoneNotice: {
+      fr: 'Les horaires sont exprimés dans le fuseau {{timezone}}.',
+      en: 'Times are expressed in the {{timezone}} time zone.',
+    },
+    refresh: { fr: 'Actualiser', en: 'Refresh' },
+    loading: { fr: 'Chargement…', en: 'Loading…' },
+    empty: { fr: 'Aucune tâche déclarée.', en: 'No task declared.' },
+    loadError: { fr: 'Erreur de chargement des tâches.', en: 'Failed to load tasks.' },
+    saveError: { fr: 'Enregistrement impossible.', en: 'Could not save.' },
+    runError: { fr: 'Lancement impossible.', en: 'Could not start the task.' },
+    runStarted: { fr: 'Exécution lancée.', en: 'Execution started.' },
+    activeLabel: { fr: 'Activée', en: 'Enabled' },
+    enabled: { fr: 'Tâche activée.', en: 'Task enabled.' },
+    disabled: { fr: 'Tâche désactivée.', en: 'Task disabled.' },
+    running: { fr: 'En cours', en: 'Running' },
+    dryRun: { fr: 'Simulation', en: 'Dry run' },
+    live: { fr: 'Réel', en: 'Live' },
+    orphan: { fr: 'Retirée du code', en: 'Removed from code' },
+    dryRunOn: { fr: 'Passée en simulation.', en: 'Switched to dry run.' },
+    liveOn: { fr: 'Passée en mode réel.', en: 'Switched to live mode.' },
+    switchToLive: { fr: 'Passer en réel', en: 'Switch to live' },
+    switchToDryRun: { fr: 'Passer en simulation', en: 'Switch to dry run' },
+    scheduleLabel: { fr: 'Planning', en: 'Schedule' },
+    lastRunLabel: { fr: 'Dernière exécution', en: 'Last run' },
+    nextRunLabel: { fr: 'Prochaine exécution', en: 'Next run' },
+    never: { fr: 'Jamais exécutée', en: 'Never run' },
+    notScheduled: { fr: 'Non programmée', en: 'Not scheduled' },
+    editSchedule: { fr: 'Modifier le planning', en: 'Edit schedule' },
+    runNow: { fr: 'Exécuter maintenant', en: 'Run now' },
+    dialogTitle: { fr: 'Planning — {{name}}', en: 'Schedule — {{name}}' },
+    frequencyLabel: { fr: 'Fréquence', en: 'Frequency' },
+    weekdayLabel: { fr: 'Jour de la semaine', en: 'Day of week' },
+    timeLabel: { fr: 'Heure', en: 'Time' },
+    minuteLabel: { fr: 'Minute de chaque heure', en: 'Minute of each hour' },
+    customLabel: { fr: 'Expression cron', en: 'Cron expression' },
+    customHelp: {
+      fr: 'Cinq champs : minute, heure, jour du mois, mois, jour de la semaine.',
+      en: 'Five fields: minute, hour, day of month, month, day of week.',
+    },
+    paramsLabel: { fr: 'Paramètres', en: 'Settings' },
+    preview: { fr: 'Exécution :', en: 'Runs:' },
+    save: { fr: 'Enregistrer', en: 'Save' },
+    close: { fr: 'Fermer', en: 'Close' },
+    scheduleSaved: { fr: 'Planning enregistré.', en: 'Schedule saved.' },
+    freq: {
+      hourly: { fr: 'Toutes les heures', en: 'Hourly' },
+      daily: { fr: 'Tous les jours', en: 'Daily' },
+      weekly: { fr: 'Toutes les semaines', en: 'Weekly' },
+      custom: { fr: 'Personnalisée', en: 'Custom' },
+      hourlyAt: {
+        fr: 'Toutes les heures, à la minute {{minute}}',
+        en: 'Every hour, at minute {{minute}}',
+      },
+      dailyAt: { fr: 'Tous les jours à {{time}}', en: 'Every day at {{time}}' },
+      weeklyAt: { fr: 'Chaque {{day}} à {{time}}', en: 'Every {{day}} at {{time}}' },
+    },
+    weekdays: {
+      0: { fr: 'dimanche', en: 'Sunday' },
+      1: { fr: 'lundi', en: 'Monday' },
+      2: { fr: 'mardi', en: 'Tuesday' },
+      3: { fr: 'mercredi', en: 'Wednesday' },
+      4: { fr: 'jeudi', en: 'Thursday' },
+      5: { fr: 'vendredi', en: 'Friday' },
+      6: { fr: 'samedi', en: 'Saturday' },
+    },
+    params: {
+      expiryHours: { fr: 'Délai avant expiration (heures)', en: 'Expiry delay (hours)' },
+      retentionDays: { fr: 'Rétention (jours)', en: 'Retention (days)' },
+      minAgeHours: { fr: 'Âge minimum du fichier (heures)', en: 'Minimum file age (hours)' },
+      inactivityDays: {
+        fr: 'Inactivité avant suppression (jours)',
+        en: 'Inactivity before deletion (days)',
+      },
+      noticeDays: { fr: 'Préavis après relance (jours)', en: 'Notice period after warning (days)' },
+      unprocessedRetentionDays: {
+        fr: 'Rétention des demandes sans réponse (jours)',
+        en: 'Retention for unanswered requests (days)',
+      },
+    },
+    jobs: {
+      'bookings.expire': {
+        name: { fr: 'Expiration des demandes non payées', en: 'Expire unpaid requests' },
+        description: {
+          fr: 'Annule les demandes de réservation restées sans paiement au-delà du délai.',
+          en: 'Cancels booking requests left unpaid beyond the delay.',
+        },
+      },
+      'tokens.purge': {
+        name: { fr: 'Purge des jetons de session', en: 'Purge session tokens' },
+        description: {
+          fr: 'Supprime les jetons de rafraîchissement expirés depuis plus longtemps que la rétention. Les jetons encore valides, révoqués ou non, sont conservés.',
+          en: 'Deletes refresh tokens expired longer ago than the retention period. Tokens still valid, revoked or not, are kept.',
+        },
+      },
+      'logs.purge': {
+        name: { fr: 'Purge du journal d’activité', en: 'Purge activity log' },
+        description: {
+          fr: 'Supprime les entrées du journal plus anciennes que la rétention. Même règle pour tous les niveaux, y compris les erreurs.',
+          en: 'Deletes activity log entries older than the retention period. Same rule for every level, errors included.',
+        },
+      },
+      'contact.purge': {
+        name: { fr: 'Purge des demandes de contact', en: 'Purge contact requests' },
+        description: {
+          fr: 'Supprime les demandes traitées depuis plus longtemps que la rétention, et celles restées sans réponse au-delà du second délai.',
+          en: 'Deletes requests processed longer ago than the retention period, and those left unanswered beyond the second delay.',
+        },
+      },
+      'cron.runs.purge': {
+        name: { fr: 'Purge de l’historique des tâches', en: 'Purge task history' },
+        description: {
+          fr: 'Supprime les exécutions terminées depuis plus longtemps que la rétention, avec l’adresse de l’administrateur qui les a déclenchées. L’exécution en cours est toujours épargnée.',
+          en: 'Deletes runs finished longer ago than the retention period, along with the email of the admin who triggered them. The current run is always spared.',
+        },
+      },
+      'users.purge': {
+        name: { fr: 'Anonymisation des comptes supprimés', en: 'Anonymise deleted accounts' },
+        description: {
+          fr: 'Anonymise les comptes supprimés depuis plus longtemps que le délai de grâce : identité, e-mail et téléphone effacés, pièces d’identité et avatar supprimés du disque, adresse retirée des journaux. Réservations et paiements sont conservés pour l’obligation comptable, rattachés à un compte anonyme.',
+          en: 'Anonymises accounts deleted longer ago than the grace period: identity, email and phone wiped, identity papers and avatar removed from disk, address scrubbed from the logs. Bookings and payments are kept for accounting obligations, attached to an anonymous account.',
+        },
+      },
+      'users.unverified.purge': {
+        name: { fr: 'Purge des inscriptions non confirmées', en: 'Purge unconfirmed sign-ups' },
+        description: {
+          fr: 'Supprime les comptes dont l’e-mail n’a jamais été confirmé au-delà du délai. Ces comptes ne peuvent pas se connecter et n’ont donc rien de rattaché : la suppression est franche, sans anonymisation.',
+          en: 'Deletes accounts whose email was never confirmed beyond the delay. These accounts cannot log in and have nothing attached, so they are deleted outright rather than anonymised.',
+        },
+      },
+      'users.inactive.purge': {
+        name: { fr: 'Comptes inactifs', en: 'Inactive accounts' },
+        description: {
+          fr: 'Deux temps dans une seule tâche : relance par e-mail les comptes sans connexion depuis le délai d’inactivité moins le préavis, puis anonymise ceux restés sans réaction. Une simple reconnexion annule le compte à rebours.',
+          en: 'Two phases in a single task: emails a warning to accounts idle for the inactivity delay minus the notice period, then anonymises those that did not react. Logging back in cancels the countdown.',
+        },
+      },
+      'users.paused.purge': {
+        name: { fr: 'Comptes en pause', en: 'Paused accounts' },
+        description: {
+          fr: 'Deux temps dans une seule tâche : relance par e-mail les comptes désactivés à l’approche de l’échéance, puis ferme ceux restés sans reconnexion. La fermeture pose la suppression, l’anonymisation revenant ensuite à la tâche des comptes supprimés. Un blocage administrateur n’est jamais concerné, et un litige ouvert épargne le compte.',
+          en: 'Two phases in a single task: emails a warning to deactivated accounts nearing the deadline, then closes those that were never reactivated. Closing marks the deletion; anonymisation is then handled by the deleted-accounts task. Administrator blocks are never affected, and an open dispute spares the account.',
+        },
+      },
+      'messages.purge': {
+        name: { fr: 'Purge des messages supprimés', en: 'Purge deleted messages' },
+        description: {
+          fr: 'Efface définitivement les messages qu’un expéditeur a supprimés pour tout le monde, et ceux que les deux correspondants ont masqués, au-delà de la rétention. Aujourd’hui ces textes restent en base : ils sont masqués, pas effacés. Un message masqué d’un seul côté est épargné.',
+          en: 'Permanently erases messages a sender deleted for everyone, and those both correspondents hid, beyond the retention period. Today those texts remain in the database: hidden, not erased. A message hidden by only one side is spared.',
+        },
+      },
+      'images.purge': {
+        name: { fr: 'Fichiers images orphelins', en: 'Orphaned image files' },
+        description: {
+          fr: 'Supprime du disque les fichiers de photos qui ne correspondent à aucune ligne en base : retirer une photo d’une annonce efface la ligne mais laisse le fichier. Une image encore référencée est épargnée quel que soit son âge ; l’âge minimum ne sert qu’à protéger les envois en cours. Le dossier des documents n’est jamais balayé.',
+          en: 'Deletes photo files from disk that match no database row: removing a photo from a listing deletes the row but leaves the file behind. An image still referenced is spared whatever its age; the minimum age only protects uploads in flight. The documents folder is never swept.',
+        },
+      },
+    },
+  },
+
+  adminCronRuns: {
+    pageTitle: {
+      fr: 'Tâches en cours — Admin SailingLoc',
+      en: 'Running tasks — Admin SailingLoc',
+    },
+    title: { fr: 'Tâches en cours', en: 'Running tasks' },
+    subtitle: {
+      fr: 'Exécutions en cours et historique des tâches automatiques.',
+      en: 'Running executions and history of automated tasks.',
+    },
+    nowRunning: { fr: 'En cours d’exécution', en: 'Currently running' },
+    nothingRunning: { fr: 'Aucune tâche en cours.', en: 'No task running.' },
+    startedAt: { fr: 'démarrée le {{date}}', en: 'started on {{date}}' },
+    refresh: { fr: 'Actualiser', en: 'Refresh' },
+    allJobs: { fr: 'Toutes les tâches', en: 'All tasks' },
+    allStatuses: { fr: 'Tous les statuts', en: 'All statuses' },
+    tableCaption: {
+      fr: 'Historique des exécutions de tâches planifiées',
+      en: 'History of scheduled task executions',
+    },
+    colStarted: { fr: 'Démarrée', en: 'Started' },
+    colJob: { fr: 'Tâche', en: 'Task' },
+    colStatus: { fr: 'Statut', en: 'Status' },
+    colTrigger: { fr: 'Déclenchement', en: 'Trigger' },
+    colAffected: { fr: 'Traités', en: 'Processed' },
+    colDuration: { fr: 'Durée', en: 'Duration' },
+    colActions: { fr: 'Actions', en: 'Actions' },
+    modeLabel: { fr: 'Mode', en: 'Mode' },
+    finishedLabel: { fr: 'Terminée', en: 'Finished' },
+    actorLabel: { fr: 'Déclenchée par', en: 'Triggered by' },
+    errorLabel: { fr: 'Erreur', en: 'Error' },
+    resultLabel: { fr: 'Détail', en: 'Details' },
+    targetsLabel: { fr: 'Enregistrements concernés', en: 'Records affected' },
+    targetsPrivacy: {
+      fr: 'Identifiants techniques uniquement : aucune donnée personnelle n’est conservée dans la trace.',
+      en: 'Technical identifiers only: no personal data is kept in the trace.',
+    },
+    targetsNone: { fr: 'Aucun enregistrement concerné.', en: 'No record affected.' },
+    targetsTruncated: {
+      fr: 'Liste tronquée : {{shown}} identifiants affichés sur {{total}} traités.',
+      en: 'Truncated list: {{shown}} identifiers shown out of {{total}} processed.',
+    },
+    open: { fr: 'Ouvrir', en: 'Open' },
+    openDetail: { fr: 'Ouvrir l’exécution {{id}}', en: 'Open execution {{id}}' },
+    detailTitle: { fr: 'Exécution #{{id}}', en: 'Execution #{{id}}' },
+    close: { fr: 'Fermer', en: 'Close' },
+    loading: { fr: 'Chargement…', en: 'Loading…' },
+    empty: { fr: 'Aucune exécution pour ces filtres.', en: 'No execution for these filters.' },
+    loadError: { fr: 'Erreur de chargement des exécutions.', en: 'Failed to load executions.' },
+    paginationLabel: { fr: 'Exécutions', en: 'Executions' },
+    statuses: {
+      running: { fr: 'En cours', en: 'Running' },
+      success: { fr: 'Réussie', en: 'Succeeded' },
+      failed: { fr: 'Échouée', en: 'Failed' },
+      skipped: { fr: 'Ignorée', en: 'Skipped' },
+    },
+    triggers: {
+      schedule: { fr: 'Planifiée', en: 'Scheduled' },
+      manual: { fr: 'Manuelle', en: 'Manual' },
+    },
+  },
+
   adminLogs: {
     pageTitle: {
       fr: 'Journal d’activité — Admin SailingLoc',
@@ -1172,6 +1428,7 @@ export const TEXTS = {
       contact: { fr: 'Demandes contact', en: 'Contact requests' },
       support: { fr: 'Support', en: 'Support' },
       message: { fr: 'Messagerie', en: 'Messages' },
+      cron: { fr: 'Tâches planifiées', en: 'Scheduled tasks' },
     },
     targets: {
       user: { fr: 'Utilisateur', en: 'User' },
@@ -1184,6 +1441,7 @@ export const TEXTS = {
       port: { fr: 'Port', en: 'Marina' },
       contact: { fr: 'Demande contact', en: 'Contact request' },
       message: { fr: 'Message', en: 'Message' },
+      cron_job: { fr: 'Tâche planifiée', en: 'Scheduled task' },
     },
     actions: {
       admin: {
@@ -1194,6 +1452,18 @@ export const TEXTS = {
         create: { fr: 'Création d’un compte', en: 'Account created' },
         update: { fr: 'Modification d’un compte', en: 'Account updated' },
         delete: { fr: 'Suppression d’un compte', en: 'Account deleted' },
+        deactivate_self: {
+          fr: 'Désactivation de son propre compte',
+          en: 'Self-service account deactivation',
+        },
+        delete_self: {
+          fr: 'Suppression de son propre compte',
+          en: 'Self-service account deletion',
+        },
+        reactivate_self: {
+          fr: 'Réactivation de son propre compte',
+          en: 'Self-service account reactivation',
+        },
       },
       document: {
         status: { fr: 'Statut de document modifié', en: 'Document status changed' },
@@ -1208,6 +1478,11 @@ export const TEXTS = {
       },
       report: {
         status: { fr: 'Statut de signalement modifié', en: 'Report status changed' },
+      },
+      cron: {
+        run: { fr: 'Tâche planifiée exécutée', en: 'Scheduled task executed' },
+        update: { fr: 'Planning de tâche modifié', en: 'Task schedule changed' },
+        trigger: { fr: 'Tâche lancée manuellement', en: 'Task started manually' },
       },
       booking: {
         cancel: { fr: 'Réservation annulée (admin)', en: 'Booking cancelled (admin)' },
@@ -2722,6 +2997,131 @@ export const TEXTS = {
         mismatch: {
           fr: 'Les mots de passe ne correspondent pas.',
           en: 'Passwords do not match.',
+        },
+      },
+    },
+
+    dangerZone: {
+      title: { fr: 'Fermer mon compte', en: 'Close my account' },
+      subtitle: {
+        fr: 'Mettez votre compte en pause ou supprimez définitivement vos données personnelles.',
+        en: 'Pause your account or permanently delete your personal data.',
+      },
+      passwordLabel: {
+        fr: 'Votre mot de passe, pour confirmer',
+        en: 'Your password, to confirm',
+      },
+      cancel: { fr: 'Annuler', en: 'Cancel' },
+      submitting: { fr: 'Traitement…', en: 'Processing…' },
+      blocked: {
+        title: {
+          fr: 'Votre compte ne peut pas être fermé pour le moment :',
+          en: 'Your account cannot be closed right now:',
+        },
+        guestBookings_one: {
+          fr: '{{count}} réservation en cours ou à venir. Attendez son terme ou annulez-la.',
+          en: '{{count}} ongoing or upcoming booking. Wait until it ends or cancel it.',
+        },
+        guestBookings_other: {
+          fr: '{{count}} réservations en cours ou à venir. Attendez leur terme ou annulez-les.',
+          en: '{{count}} ongoing or upcoming bookings. Wait until they end or cancel them.',
+        },
+        ownerBookings_one: {
+          fr: '{{count}} réservation en cours ou à venir sur vos annonces.',
+          en: '{{count}} ongoing or upcoming booking on your listings.',
+        },
+        ownerBookings_other: {
+          fr: '{{count}} réservations en cours ou à venir sur vos annonces.',
+          en: '{{count}} ongoing or upcoming bookings on your listings.',
+        },
+        disputes_one: {
+          fr: '{{count}} litige encore ouvert. Il doit être résolu avant la fermeture.',
+          en: '{{count}} dispute still open. It must be resolved before closing.',
+        },
+        disputes_other: {
+          fr: '{{count}} litiges encore ouverts. Ils doivent être résolus avant la fermeture.',
+          en: '{{count}} disputes still open. They must be resolved before closing.',
+        },
+      },
+      deactivate: {
+        title: { fr: 'Désactiver mon compte', en: 'Deactivate my account' },
+        guestDescription: {
+          fr: 'Votre profil devient invisible et vous êtes déconnecté partout. Vos données sont conservées {{days}} jours : une simple reconnexion réactive le compte, sinon il est supprimé définitivement.',
+          en: 'Your profile becomes invisible and you are logged out everywhere. Your data is kept for {{days}} days: simply logging back in reactivates the account, otherwise it is permanently deleted.',
+        },
+        ownerDescription: {
+          fr: 'Vos annonces sont retirées du catalogue et vous êtes déconnecté partout. Une simple reconnexion réactive le compte et republie vos annonces, sinon il est supprimé définitivement au bout de {{days}} jours.',
+          en: 'Your listings are removed from the catalogue and you are logged out everywhere. Simply logging back in reactivates the account and republishes your listings, otherwise it is permanently deleted after {{days}} days.',
+        },
+        action: { fr: 'Désactiver mon compte', en: 'Deactivate my account' },
+        dialogTitle: {
+          fr: 'Confirmer la désactivation',
+          en: 'Confirm deactivation',
+        },
+        consequences: {
+          profile: {
+            fr: 'Votre profil et vos annonces ne sont plus visibles.',
+            en: 'Your profile and listings are no longer visible.',
+          },
+          sessions: {
+            fr: 'Toutes vos sessions sont fermées, sur tous vos appareils.',
+            en: 'All your sessions are closed, on every device.',
+          },
+          reactivation: {
+            fr: 'Vos données sont conservées {{days}} jours : reconnectez-vous pour réactiver le compte, passé ce délai il est supprimé définitivement.',
+            en: 'Your data is kept for {{days}} days: log back in to reactivate the account; after that it is permanently deleted.',
+          },
+        },
+        confirm: { fr: 'Désactiver', en: 'Deactivate' },
+        success: {
+          fr: 'Compte désactivé. Reconnectez-vous sous {{days}} jours pour le réactiver.',
+          en: 'Account deactivated. Log back in within {{days}} days to reactivate it.',
+        },
+      },
+      delete: {
+        title: { fr: 'Supprimer mon compte', en: 'Delete my account' },
+        description: {
+          fr: 'Fermeture définitive : le compte devient inaccessible immédiatement et vos données personnelles sont anonymisées sous {{days}} jours.',
+          en: 'Permanent closure: the account becomes inaccessible immediately and your personal data is anonymised within {{days}} days.',
+        },
+        action: { fr: 'Supprimer mon compte', en: 'Delete my account' },
+        dialogTitle: {
+          fr: 'Confirmer la suppression définitive',
+          en: 'Confirm permanent deletion',
+        },
+        word: { fr: 'SUPPRIMER', en: 'DELETE' },
+        confirmationLabel: {
+          fr: 'Saisissez {{word}} pour confirmer',
+          en: 'Type {{word}} to confirm',
+        },
+        consequences: {
+          access: {
+            fr: 'Le compte est fermé immédiatement : plus aucune connexion possible.',
+            en: 'The account closes immediately: no further login is possible.',
+          },
+          data: {
+            fr: 'Vos données personnelles sont anonymisées sous {{days}} jours, délai de conservation légal.',
+            en: 'Your personal data is anonymised within {{days}} days, the legal retention period.',
+          },
+          invoices: {
+            fr: 'Les factures et écritures comptables sont conservées de façon anonyme.',
+            en: 'Invoices and accounting records are kept in anonymised form.',
+          },
+        },
+        confirm: { fr: 'Supprimer définitivement', en: 'Delete permanently' },
+        success: {
+          fr: 'Compte supprimé. Vos données seront anonymisées sous 30 jours.',
+          en: 'Account deleted. Your data will be anonymised within 30 days.',
+        },
+      },
+      errors: {
+        passwordRequired: {
+          fr: 'Votre mot de passe est requis.',
+          en: 'Your password is required.',
+        },
+        confirmationInvalid: {
+          fr: 'Saisissez exactement {{word}} pour confirmer.',
+          en: 'Type exactly {{word}} to confirm.',
         },
       },
     },

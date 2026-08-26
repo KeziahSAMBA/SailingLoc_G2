@@ -6,10 +6,12 @@ import {
   getBookingLocataire,
   updateBookingStatus,
   reportDispute,
+  getBookingInvoice,
 } from '../../services/proprietaireService.js';
 import { fetchDocumentFile } from '../../services/documentService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
+import InvoiceButton from '../common/InvoiceButton.jsx';
 import { formatDate } from '../../utils/formatDate.js';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -167,6 +169,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
   const canCancel = booking.status === 'confirmed' && !isPast(booking.end_date);
   const finished = booking.status === 'confirmed' && isPast(booking.end_date);
   const canDispute = (booking.status === 'cancelled' || finished) && !booking.has_open_dispute;
+  const canInvoice = booking.status === 'confirmed';
 
   return (
     <article className="group min-h-56 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
@@ -275,8 +278,15 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
             </p>
           )}
 
-          {(canDecide || canCancel || canDispute) && (
+          {(canDecide || canCancel || canDispute || canInvoice) && (
             <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+              {canInvoice && (
+                <InvoiceButton
+                  fetchInvoice={() => getBookingInvoice(booking.id_booking)}
+                  label={t('invoice.commissionLabel')}
+                  title={t('invoice.commissionTitle', { boat: booking.boat?.name })}
+                />
+              )}
               {canDecide && (
                 <>
                   <button

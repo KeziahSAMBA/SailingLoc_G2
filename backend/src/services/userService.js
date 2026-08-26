@@ -21,6 +21,7 @@ import {
   sendPasswordResetEmail,
   sendAccountCreatedEmail,
 } from './emailService.js';
+import { reactivateOwnAccount } from './accountClosureService.js';
 import { initConfig } from '../config/appConfig.js';
 
 const { JWT_SECRET } = initConfig();
@@ -273,7 +274,10 @@ export async function login({ email, password, role }, { userAgent } = {}) {
 
   if (!user || !passwordOk) throw genericInvalid;
 
-  if (!user.is_active) {
+  if (user.deleted_at) throw genericInvalid;
+
+  const reactivated = !user.is_active && Boolean(user.deactivated_at);
+  if (!user.is_active && !reactivated) {
     throw Object.assign(new Error('Compte désactivé. Contactez le support.'), { status: 403 });
   }
 
@@ -284,10 +288,21 @@ export async function login({ email, password, role }, { userAgent } = {}) {
     );
   }
 
+  if (reactivated) {
+    await reactivateOwnAccount(user.id_user);
+  }
+
   const accessToken = signAccessToken(user);
   const refreshToken = await issueRefreshToken(user.id_user, userAgent);
 
-  return { accessToken, refreshToken, user: publicUser(user) };
+  // Le retour de la personne annule le compte à rebours d'inactivité, relance
+  // éventuelle comprise.
+  await prisma.user.update({
+    where: { id_user: user.id_user },
+    data: { last_login_at: new Date(), inactivity_notified_at: null },
+  });
+
+  return { accessToken, refreshToken, user: publicUser(user), reactivated };
 }
 
 export async function refreshSession(rawRefreshToken, { userAgent } = {}) {

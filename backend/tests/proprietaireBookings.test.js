@@ -6,6 +6,8 @@ const mockBookingFindFirst = jest.fn();
 const tx = {
   booking: { update: jest.fn(), updateMany: jest.fn() },
   payment: { update: jest.fn(), updateMany: jest.fn() },
+  invoice: { findMany: jest.fn(), aggregate: jest.fn(), create: jest.fn() },
+  $executeRaw: jest.fn(),
 };
 jest.unstable_mockModule('../src/config/db.js', () => ({
   default: {
@@ -67,6 +69,10 @@ describe('setBookingStatus (décision du propriétaire)', () => {
     tx.booking.updateMany.mockReset().mockResolvedValue({ count: 0 });
     tx.payment.update.mockReset().mockResolvedValue({});
     tx.payment.updateMany.mockReset().mockResolvedValue({ count: 0 });
+    tx.invoice.findMany.mockReset().mockResolvedValue([]);
+    tx.invoice.aggregate.mockReset().mockResolvedValue({ _max: { sequence: 0 } });
+    tx.invoice.create.mockReset().mockImplementation(({ data }) => Promise.resolve(data));
+    tx.$executeRaw.mockReset().mockResolvedValue(1);
   });
 
   it("renvoie 404 si la réservation est sur le bateau d'un autre propriétaire", async () => {
@@ -95,6 +101,29 @@ describe('setBookingStatus (décision du propriétaire)', () => {
       status: 409,
     });
     expect(tx.booking.update).not.toHaveBeenCalled();
+  });
+
+  it('émet les deux factures dans la transaction de confirmation', async () => {
+    mockBookingFindUnique.mockResolvedValue(
+      paidPendingBooking({
+        payments: [{ id_payment: 11, status: 'pending', amount: '300', commission: '30' }],
+      })
+    );
+
+    await setBookingStatus(OWNER, 5, 'confirm');
+
+    const kinds = tx.invoice.create.mock.calls.map(([{ data }]) => data.kind);
+    expect(kinds).toEqual(['rental', 'commission']);
+
+    const [, commission] = tx.invoice.create.mock.calls.map(([{ data }]) => data);
+    expect(commission.commission).toBe(30);
+    expect(commission.net_amount).toBe(270);
+  });
+
+  it('ne facture ni un refus ni une annulation', async () => {
+    mockBookingFindUnique.mockResolvedValue(paidPendingBooking());
+    await setBookingStatus(OWNER, 5, 'refuse');
+    expect(tx.invoice.create).not.toHaveBeenCalled();
   });
 
   it("confirme : capture l'empreinte, confirme la réservation et refuse les demandes concurrentes", async () => {

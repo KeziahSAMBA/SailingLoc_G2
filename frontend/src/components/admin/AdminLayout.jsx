@@ -39,6 +39,13 @@ function AdminLayout() {
   });
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [supervisionPinned, setSupervisionPinned] = useState(false);
+  const [supervisionHovered, setSupervisionHovered] = useState(false);
+  const supervision = [
+    { to: '/admin/logs', label: t('adminLayout.nav.logs') },
+    { to: '/admin/taches', label: t('adminLayout.nav.tasks'), end: true },
+    { to: '/admin/taches/programmation', label: t('adminLayout.nav.taskSchedule') },
+  ];
   const nav = [
     { to: '/admin', label: t('adminLayout.nav.dashboard'), end: true },
     { to: '/admin/spectateur', label: t('adminLayout.nav.viewRenter'), end: true },
@@ -52,18 +59,24 @@ function AdminLayout() {
     { to: '/admin/transactions', label: t('adminLayout.nav.transaction') },
     { to: '/admin/messages', label: t('adminLayout.nav.messages') },
     { to: '/admin/contact', label: t('adminLayout.nav.contact') },
-    { to: '/admin/logs', label: t('adminLayout.nav.logs') },
+    { group: 'supervision', label: t('adminLayout.nav.supervision'), children: supervision },
     { to: '/admin/compte', label: t('adminLayout.nav.account') },
   ];
-  const activeItem =
-    nav.find((item) =>
-      item.end
-        ? location.pathname === item.to
-        : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)
-    ) ?? nav[0];
+
+  const matches = (item) =>
+    item.end
+      ? location.pathname === item.to
+      : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
+
+  const flatNav = nav.flatMap((item) => item.children ?? [item]);
+  const activeItem = flatNav.find(matches) ?? flatNav[0];
+  const supervisionActive = supervision.some(matches);
+  const supervisionOpen = supervisionHovered || supervisionPinned || mobileNavOpen;
 
   useEffect(() => {
     setMobileNavOpen(false);
+    setSupervisionPinned(false);
+    setSupervisionHovered(false);
   }, [location.pathname]);
   return (
     // Même univers visuel que les autres pages : photo plein écran sous un
@@ -92,7 +105,7 @@ function AdminLayout() {
       <div className="min-h-screen w-full bg-black/40">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
           {/* Menu : barre horizontale défilable sur mobile, colonne à partir de lg. */}
-          <aside className="w-full lg:w-60 lg:shrink-0" style={slide(0)}>
+          <aside className="relative z-30 w-full lg:w-60 lg:shrink-0" style={slide(0)}>
             <nav
               aria-label={t('adminLayout.navAria')}
               className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[6rem]"
@@ -138,22 +151,90 @@ function AdminLayout() {
                 id="admin-dashboard-navigation"
                 className={`${mobileNavOpen ? 'flex' : 'hidden'} mt-2 flex-col gap-1 border-t border-white/15 pt-2 lg:mt-0 lg:flex lg:border-0 lg:pt-0`}
               >
-                {nav.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) =>
-                      `block w-full rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
-                        isActive
-                          ? 'bg-sky-500 text-white'
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
-                      }`
-                    }
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
+                {nav.map((item) =>
+                  item.children ? (
+                    <div
+                      key={item.group}
+                      className="lg:relative"
+                      onMouseEnter={() => setSupervisionHovered(true)}
+                      onMouseLeave={() => {
+                        setSupervisionHovered(false);
+                        setSupervisionPinned(false);
+                      }}
+                      onKeyDown={(e) => e.key === 'Escape' && setSupervisionPinned(false)}
+                    >
+                      <button
+                        type="button"
+                        aria-expanded={supervisionOpen}
+                        aria-controls="admin-nav-supervision"
+                        onClick={() => setSupervisionPinned((pinned) => !pinned)}
+                        className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                          supervisionActive
+                            ? 'bg-white/15 text-white'
+                            : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        {item.label}
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                            supervisionOpen ? 'rotate-180' : ''
+                          }`}
+                        >
+                          <path
+                            d="m5 7.5 5 5 5-5"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <div
+                        id="admin-nav-supervision"
+                        className={`${supervisionOpen ? 'flex' : 'hidden'} mt-1 flex-col gap-1 border-l border-white/15 pl-2 lg:absolute lg:left-full lg:top-0 lg:z-20 lg:mt-0 lg:w-56 lg:border-l-0 lg:pl-3`}
+                      >
+                        <div className="flex flex-col gap-1 lg:rounded-2xl lg:border lg:border-white/20 lg:bg-black/40 lg:shadow-2xl lg:backdrop-blur-xl">
+                          <div className="flex flex-col gap-1 lg:rounded-2xl lg:bg-white/10 lg:p-3">
+                            {item.children.map((child) => (
+                              <NavLink
+                                key={child.to}
+                                to={child.to}
+                                end={child.end}
+                                className={({ isActive }) =>
+                                  `block w-full rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                                    isActive
+                                      ? 'bg-sky-500 text-white'
+                                      : 'text-white/80 hover:bg-white/10 hover:text-white'
+                                  }`
+                                }
+                              >
+                                {child.label}
+                              </NavLink>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      className={({ isActive }) =>
+                        `block w-full rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                          isActive
+                            ? 'bg-sky-500 text-white'
+                            : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        }`
+                      }
+                    >
+                      {item.label}
+                    </NavLink>
+                  )
+                )}
               </div>
             </nav>
           </aside>

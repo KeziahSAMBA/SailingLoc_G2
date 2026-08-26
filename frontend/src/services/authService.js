@@ -69,6 +69,21 @@ export async function verifyResetToken(token) {
   return response.data;
 }
 
+export async function getClosureStatus() {
+  const response = await api.get('/users/me/closure');
+  return response.data;
+}
+
+export async function deactivateAccount(data) {
+  const response = await api.post('/users/me/deactivate', data);
+  return response.data;
+}
+
+export async function deleteAccount(data) {
+  const response = await api.delete('/users/me', { data });
+  return response.data;
+}
+
 // Remplace la photo de profil (multipart, champ 'avatar').
 export function updateAvatar(file) {
   const form = new FormData();

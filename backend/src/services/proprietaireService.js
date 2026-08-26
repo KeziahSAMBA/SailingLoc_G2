@@ -3,6 +3,7 @@ import prisma from '../config/db.js';
 import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
 import { initConfig } from '../config/appConfig.js';
 import { sendBookingDecisionEmail } from './emailService.js';
+import { issueBookingInvoices } from './invoiceService.js';
 import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js';
 
 // Suppression best-effort d'un fichier remplacé (l'échec ne bloque pas la requête).
@@ -1004,14 +1005,26 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       start_date: true,
       end_date: true,
       total_amount: true,
-      user: { select: { first_name: true, email: true } },
-      boat: { select: { id_user: true, name: true } },
+      user: { select: { first_name: true, last_name: true, email: true } },
+      boat: {
+        select: {
+          id_user: true,
+          name: true,
+          owner: { select: { first_name: true, last_name: true, email: true } },
+        },
+      },
       // Paiements actifs : l'empreinte « pending » est exigée pour décider,
       // capturée à la confirmation, libérée au refus ; un paiement encaissé
       // (« success ») est intégralement remboursé si le proprio annule.
       payments: {
         where: { status: { in: ['pending', 'success'] } },
-        select: { id_payment: true, status: true, amount: true, transaction_ref: true },
+        select: {
+          id_payment: true,
+          status: true,
+          amount: true,
+          commission: true,
+          transaction_ref: true,
+        },
       },
     },
   });
@@ -1126,6 +1139,11 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
         where: { id_payment: holdPayment.id_payment },
         data: { status: 'success' },
       });
+      await issueBookingInvoices(
+        tx,
+        { ...booking, commission: Number(holdPayment.commission ?? 0) },
+        now
+      );
       // Les autres demandes en attente qui chevauchent le créneau confirmé
       // n'ont plus d'objet : refusées et empreintes libérées (l'ordre compte :
       // les paiements d'abord, tant que leurs réservations sont encore

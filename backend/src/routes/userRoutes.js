@@ -17,6 +17,9 @@ import {
   verifyResetToken,
   patchMyAvatar,
   deleteMyAvatar,
+  getMyClosureStatus,
+  deactivateMe,
+  deleteMe,
 } from '../controllers/userController.js';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
@@ -51,6 +54,7 @@ import {
   postStripeOnboarding,
   postStripeLoginLink,
 } from '../controllers/proprietaireController.js';
+import { getBookingInvoice } from '../controllers/invoiceController.js';
 
 // Photos de profil : servies en statique via /uploads (visibles dans le header
 // et la messagerie), extension conservée pour le bon type MIME.
@@ -151,6 +155,29 @@ router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
 router.patch('/me/avatar', protect, uploadAvatar, patchMyAvatar);
 router.delete('/me/avatar', protect, deleteMyAvatar);
+router.get('/me/closure', protect, requireRole('locataire', 'proprietaire'), getMyClosureStatus);
+router.post(
+  '/me/deactivate',
+  protect,
+  requireRole('locataire', 'proprietaire'),
+  audit('user.deactivate_self', {
+    targetType: 'user',
+    targetId: (req) => String(req.user.id_user),
+    meta: () => null,
+  }),
+  deactivateMe
+);
+router.delete(
+  '/me',
+  protect,
+  requireRole('locataire', 'proprietaire'),
+  audit('user.delete_self', {
+    targetType: 'user',
+    targetId: (req) => String(req.user.id_user),
+    meta: () => null,
+  }),
+  deleteMe
+);
 router.get('/me/dashboard', protect, requireRole('locataire'), getDashboard);
 router.get(
   '/me/proprietaire/dashboard',
@@ -169,6 +196,12 @@ router.get(
   protect,
   requireRole('proprietaire'),
   getProprietaireBookingLocataire
+);
+router.get(
+  '/me/proprietaire/bookings/:id_booking/invoice.pdf',
+  protect,
+  requireRole('proprietaire'),
+  getBookingInvoice
 );
 // Le propriétaire valide ou refuse : le statut demandé part dans les détails.
 router.patch(
@@ -230,6 +263,12 @@ router.get(
   getProprietaireBoat
 );
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
+router.get(
+  '/me/bookings/:id_booking/invoice.pdf',
+  protect,
+  requireRole('locataire'),
+  getBookingInvoice
+);
 router.post(
   '/me/bookings/:id_booking/review',
   protect,
