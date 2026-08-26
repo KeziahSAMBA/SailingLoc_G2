@@ -54,6 +54,7 @@ import {
   postStripeOnboarding,
   postStripeLoginLink,
 } from '../controllers/proprietaireController.js';
+import { getBookingInvoice } from '../controllers/invoiceController.js';
 
 // Photos de profil : servies en statique via /uploads (visibles dans le header
 // et la messagerie), extension conservée pour le bon type MIME.
@@ -196,6 +197,12 @@ router.get(
   requireRole('proprietaire'),
   getProprietaireBookingLocataire
 );
+router.get(
+  '/me/proprietaire/bookings/:id_booking/invoice.pdf',
+  protect,
+  requireRole('proprietaire'),
+  getBookingInvoice
+);
 // Le propriétaire valide ou refuse : le statut demandé part dans les détails.
 router.patch(
   '/me/proprietaire/bookings/:id_booking',
@@ -256,6 +263,12 @@ router.get(
   getProprietaireBoat
 );
 router.get('/me/bookings', protect, requireRole('locataire'), getMyBookings);
+router.get(
+  '/me/bookings/:id_booking/invoice.pdf',
+  protect,
+  requireRole('locataire'),
+  getBookingInvoice
+);
 router.post(
   '/me/bookings/:id_booking/review',
   protect,

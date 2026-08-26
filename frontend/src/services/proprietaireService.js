@@ -16,6 +16,12 @@ export function getBookingLocataire(idBooking) {
   return api.get(`/users/me/proprietaire/bookings/${idBooking}/locataire`);
 }
 
+export function getBookingInvoice(idBooking) {
+  return api.get(`/users/me/proprietaire/bookings/${idBooking}/invoice.pdf`, {
+    responseType: 'blob',
+  });
+}
+
 // Confirme, refuse ou annule une réservation (action: 'confirm' | 'refuse' | 'cancel').
 export function updateBookingStatus(idBooking, action, reason) {
   return api.patch(`/users/me/proprietaire/bookings/${idBooking}`, {

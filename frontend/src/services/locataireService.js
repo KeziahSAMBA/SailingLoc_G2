@@ -16,6 +16,10 @@ export function createBookingReview(idBooking, rating, comment) {
   return api.post(`/users/me/bookings/${idBooking}/review`, { rating, comment });
 }
 
+export function getBookingInvoice(idBooking) {
+  return api.get(`/users/me/bookings/${idBooking}/invoice.pdf`, { responseType: 'blob' });
+}
+
 // Historique des paiements du locataire (page « Mes dépenses »).
 export function getPayments() {
   return api.get('/users/me/payments');

@@ -949,6 +949,27 @@ export const TEXTS = {
     cancelled: { fr: 'Annulée', en: 'Cancelled' },
   },
 
+  invoice: {
+    rentalLabel: { fr: 'Facture', en: 'Invoice' },
+    rentalTitle: {
+      fr: 'Facture de location — {{boat}}',
+      en: 'Rental invoice — {{boat}}',
+    },
+    commissionLabel: { fr: 'Facture', en: 'Invoice' },
+    commissionTitle: {
+      fr: 'Facture de commission — {{boat}}',
+      en: 'Commission invoice — {{boat}}',
+    },
+    loading: { fr: 'Génération…', en: 'Generating…' },
+    download: { fr: 'Télécharger', en: 'Download' },
+    close: { fr: 'Fermer', en: 'Close' },
+    fallbackFileName: { fr: 'facture.pdf', en: 'invoice.pdf' },
+    error: {
+      fr: "La facture n'a pas pu être générée. Réessayez dans un instant.",
+      en: 'The invoice could not be generated. Please try again shortly.',
+    },
+  },
+
   adminLayout: {
     navAria: { fr: 'Navigation administration', en: 'Administration navigation' },
     title: { fr: 'Administration', en: 'Administration' },

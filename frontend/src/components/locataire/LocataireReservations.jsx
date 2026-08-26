@@ -8,9 +8,11 @@ import {
   requestRefund,
   reportDispute,
   createBookingReview,
+  getBookingInvoice,
 } from '../../services/locataireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
+import InvoiceButton from '../common/InvoiceButton.jsx';
 import { formatDate } from '../../utils/formatDate.js';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -207,6 +209,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
   const canDispute =
     (booking.status === 'cancelled' || finished) && !booking.refund_requested && !canRefund;
   const canReview = finished && !booking.reviewed;
+  const canInvoice = booking.status === 'confirmed';
 
   return (
     <article className="group min-h-52 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
@@ -304,8 +307,15 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
             </p>
           )}
 
-          {(canCancel || canRefund || canDispute || canReview) && (
+          {(canCancel || canRefund || canDispute || canReview || canInvoice) && (
             <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+              {canInvoice && (
+                <InvoiceButton
+                  fetchInvoice={() => getBookingInvoice(booking.id_booking)}
+                  label={t('invoice.rentalLabel')}
+                  title={t('invoice.rentalTitle', { boat: booking.boat?.name })}
+                />
+              )}
               {canReview && (
                 <button
                   type="button"
