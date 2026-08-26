@@ -205,6 +205,12 @@ function HomePage() {
   const [arrivalActive, setArrivalActive] = useState(
     () => Boolean(homeArrival) || (location.key !== 'default' && !prefersReducedMotion())
   );
+  // En dessous de md, la SearchBar de /categorie et /product/:id est repliée
+  // (fixed, pastille + bouton loupe) : sa forme n'a plus rien à voir avec
+  // celle du hero, donc un FLIP entre les deux donnerait un mouvement/
+  // redimensionnement incohérent. Sur mobile elle sort/rentre alors comme les
+  // autres blocs du hero, par la marge droite (cf. heroSlideStyle plus bas).
+  const [isMobileSearchBar] = useState(() => window.matchMedia('(max-width: 767px)').matches);
   // Intro de première visite : machine à phases 'black' → 'video' → 'welcome'
   // → 'reveal' → null (terminée ou pas d'intro).
   const [introPhase, setIntroPhase] = useState(() => (shouldPlayIntro() ? 'black' : null));
@@ -278,7 +284,7 @@ function HomePage() {
   useLayoutEffect(() => {
     const from = homeArrival?.searchBarRect;
     const el = searchBarWrapRef.current;
-    if (!from || !el) return undefined;
+    if (!from || !el || isMobileSearchBar) return undefined;
     const to = el.getBoundingClientRect();
     el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
@@ -316,7 +322,7 @@ function HomePage() {
       // position naturelle et non celle déplacée par la première.
       resetStyles();
     };
-  }, [homeArrival]);
+  }, [homeArrival, isMobileSearchBar]);
   const STEPS = useMemo(() => getSteps(t), [t]);
   const VALUE_CARDS = useMemo(() => getValueCards(t), [t]);
 
@@ -586,9 +592,13 @@ function HomePage() {
             style={
               introActive
                 ? introFromBelowStyle
-                : (exiting && exitIsGeneric) || (arrivalActive && !homeArrival?.searchBarRect)
-                  ? heroSlideStyle('right')
-                  : undefined
+                : exiting
+                  ? exitIsGeneric || isMobileSearchBar
+                    ? heroSlideStyle('right')
+                    : undefined
+                  : arrivalActive && (!homeArrival?.searchBarRect || isMobileSearchBar)
+                    ? heroSlideStyle('right')
+                    : undefined
             }
           >
             <SearchBar light />

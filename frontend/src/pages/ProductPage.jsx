@@ -34,6 +34,8 @@ import {
   MdPerson,
   MdBadge,
   MdChatBubbleOutline,
+  MdSearch,
+  MdClose,
 } from 'react-icons/md';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.jsx';
@@ -177,12 +179,56 @@ const GLASS_STYLE = {
 
 // Fond photo bateau partagé par le haut de page et la section avis, qui
 // reprennent tous deux ce même habillage (image + assombrissement).
+// L'attachement (fixed vs scroll) est piloté par la classe
+// .product-photo-background (cf. PRODUCT_RESPONSIVE_CSS) et non ici, pour
+// rester réactif au breakpoint plutôt que figé au premier rendu.
 const PHOTO_BG_STYLE = {
   backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
-  backgroundAttachment: 'fixed',
 };
+
+// Comportement mobile propre à la page produit : le fond "fixed" est coûteux
+// et saccade sur mobile (même traitement que .category-photo-background dans
+// CategoryPage.jsx), donc réservé à xl (≥80rem) et un simple scroll en dessous.
+// Ancrage des entrées du menu burger : espace laissé au-dessus de chaque
+// section pour ne pas atterrir sous le bandeau fixe/sticky (fil d'ariane +
+// recherche). Valeurs de base calées pour desktop (xl, bandeau sticky sur une
+// seule ligne) et mobile (en dessous de md, bandeau replié/fixed) — les deux
+// aboutissent à une hauteur de bandeau quasi identique, d'où une seule valeur
+// commune. Entre md et xl, la recherche reste dépliée en permanence (plus de
+// bouton loupe replié) : le bandeau y est nettement plus haut, d'où le
+// palier intermédiaire qui ajoute la différence.
+const PRODUCT_RESPONSIVE_CSS = `
+  .product-photo-background {
+    background-attachment: scroll;
+  }
+
+  @media (min-width: 80rem) {
+    .product-photo-background {
+      background-attachment: fixed;
+    }
+  }
+
+  #specifications { scroll-margin-top: 100px; }
+  #avis { scroll-margin-top: 230px; }
+  #localisation { scroll-margin-top: 60px; }
+  #suggestions { scroll-margin-top: 285px; }
+
+  /* En dessous de md : "avis" descend un peu (atterrit plus bas dans la
+     section) et "localisation" remonte un peu (atterrit plus haut). */
+  @media (max-width: 47.9375rem) {
+    #avis { scroll-margin-top: 150px; }
+    #localisation { scroll-margin-top: 100px; }
+  }
+
+  @media (min-width: 48rem) and (max-width: 79.9375rem) {
+    #specifications { scroll-margin-top: calc(100px + 2.75rem); }
+    #avis { scroll-margin-top: calc(230px + 2.75rem); }
+    #localisation { scroll-margin-top: calc(60px + 2.75rem); }
+    #suggestions { scroll-margin-top: calc(285px + 2.75rem); }
+  }
+`;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -197,6 +243,12 @@ function ProductPage() {
   const { showToast } = useToast();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const [scrolled, setScrolled] = useState(false);
+  // Barre sticky (fil d'Ariane + recherche) : repliée par défaut sur mobile,
+  // dépliée via le bouton loupe — même mécanique que CategoryPage.
+  const [mobileSearchExpanded, setMobileSearchExpanded] = useState(false);
+  // N'a plus lieu d'être une fois la section "Suggestions" atteinte, comme
+  // sur CategoryPage — cachée dès que #suggestions entre dans le viewport.
+  const [searchBarHidden, setSearchBarHidden] = useState(false);
 
   // Édition d'un avis : déclenchée depuis sa carte dans ClientReviews, rendue
   // par BoatReviews au-dessus de la liste. `reviewsVersion` remonte la liste
@@ -246,9 +298,19 @@ function ProductPage() {
   // ferait saccader l'arrivée alors qu'elles sont hors écran à ce moment-là.
   const [belowFoldReady, setBelowFoldReady] = useState(!animatedEntry);
   // FLIP continu (transform DOM direct, cf. useLayoutEffect ci-dessous) :
-  // seules les origines qui transmettent un rect valide pour la SearchBar.
-  const hasSearchBarContinuity =
-    transitionPayload?.from === 'category' || transitionPayload?.from === 'home';
+  // seulement depuis l'accueil, et seulement au-delà de md — en dessous, la
+  // SearchBar est repliée (fixed, pastille + bouton loupe) et n'a plus rien à
+  // voir visuellement avec sa forme sur Home/Category : un FLIP entre ces
+  // deux formes ferait un mouvement/redimensionnement incohérent, donc sur
+  // mobile elle suit le même traitement que les autres blocs (glissement
+  // latéral simple, cf. plus bas).
+  const [isMobileSearchBar] = useState(() => window.matchMedia('(max-width: 767px)').matches);
+  const hasSearchBarContinuity = transitionPayload?.from === 'home' && !isMobileSearchBar;
+  // Depuis la catégorie : même taille et même emplacement (fitContentOnTablet
+  // des deux côtés) que sur cette page-ci, donc aucun mouvement à jouer — la
+  // SearchBar reste simplement immobile pendant que le reste de la cascade
+  // anime autour d'elle.
+  const arrivedFromCategory = transitionPayload?.from === 'category' && !isMobileSearchBar;
   // Sortie vers l'accueil ou la catégorie : les blocs rejouent leur entrée à rebours.
   const [exiting, setExiting] = useState(false);
   // Sortie vers la catégorie ou une page statique (contact/à propos) : notre
@@ -371,9 +433,12 @@ function ProductPage() {
     };
   }, [navigate]);
 
-  // FLIP de la SearchBar depuis la catégorie ou l'accueil : translate + scale
-  // simultanés du bloc entier, comme catégorie ↔ accueil (plus de phase de
-  // rétractation séparée — la barre est désormais déployée partout).
+  // FLIP de la SearchBar depuis la catégorie ou l'accueil : translation seule
+  // (jamais de scale) — la SearchBar ne doit changer de position que d'un
+  // pixel à l'autre, jamais de taille. Category (fitContentOnTablet) rend sa
+  // barre plus étroite que celle de Product (pleine largeur) : un scale basé
+  // sur le ratio des deux rects ferait visiblement grossir/rétrécir la barre
+  // à l'arrivée, ce qu'on veut justement éviter.
   useLayoutEffect(() => {
     const from = transitionPayload?.searchBarRect;
     const el = searchBarWrapRef.current;
@@ -382,9 +447,7 @@ function ProductPage() {
     el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
     el.style.transition = 'none';
-    el.style.transform =
-      `translate(${from.left - to.left}px, ${from.top - to.top}px) ` +
-      `scale(${from.width / to.width}, ${from.height / to.height})`;
+    el.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
     // Force le reflow avant d'activer la transition : un seul rAF suffit
     // alors, pas deux — sinon la translation démarrait un cran plus tard que
     // la cascade des autres blocs et atterrissait après elle au lieu d'en
@@ -469,6 +532,33 @@ function ProductPage() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Barre sticky masquée dès qu'on atteint les suggestions, comme sur
+  // CategoryPage : plus lieu d'être une fois qu'on parcourt les embarcations
+  // similaires plutôt que la fiche de ce bateau-ci.
+  useEffect(() => {
+    const el = document.getElementById('suggestions');
+    if (!el) {
+      setSearchBarHidden(false);
+      return undefined;
+    }
+    const observer = new window.IntersectionObserver(
+      ([entry]) => setSearchBarHidden(entry.isIntersecting),
+      { rootMargin: '0px 0px -60% 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [belowFoldReady]);
+
+  // Focus automatique du champ destination à l'ouverture du panneau de
+  // recherche mobile (même comportement que CategoryPage).
+  useEffect(() => {
+    if (!mobileSearchExpanded) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      searchBarWrapRef.current?.querySelector('input[type="text"]')?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileSearchExpanded]);
 
   // ─── Données ────────────────────────────────────────────────────────────────
   // Pas d'endpoint GET /boats/:id côté API : on lit la liste publique (mise en
@@ -624,6 +714,7 @@ function ProductPage() {
   useEffect(() => {
     setStart('');
     setEnd('');
+    setMobileSearchExpanded(false);
   }, [boatId]);
 
   // Rafraîchit les disponibilités au moment où le locataire ouvre le
@@ -785,38 +876,34 @@ function ProductPage() {
     { label: boat?.name ?? transitionPayload?.boatName ?? '…', to: `/product/${id}` },
   ];
 
-  // Header fixe (60/80px) + barre fil d'ariane/recherche sticky, compactée au
-  // scroll (pt 20px → 8px, soit ~72px puis ~60px) : offset réel au-dessus du
-  // panneau de réservation sticky.
-  const panelStickyTop = (scrolled ? 60 : 80) + (scrolled ? 64 : 76);
+  // Header fixe (clamp(4rem,6vw,5rem), 3.75rem une fois compacté au scroll) +
+  // barre fil d'ariane/recherche sticky : offset réel au-dessus du panneau de
+  // réservation sticky — même formule que categoryHeaderHeight/categoryMapTop
+  // dans CategoryPage.jsx (la barre occupe la même hauteur dans les deux pages).
+  const productHeaderHeight = scrolled ? '3.75rem' : 'clamp(4rem, 6vw, 5rem)';
+  const panelStickyTop = scrolled ? '7.75rem' : 'calc(clamp(4rem, 6vw, 5rem) + 4.75rem)';
 
-  // Ancrage manuel des entrées du menu burger : espace (px) laissé au-dessus
-  // de chaque section quand on y saute depuis le menu. Un seul endroit à
-  // modifier par section pour caler l'atterrissage pile sur son titre —
-  // augmenter la valeur atterrit plus haut dans la section, la baisser
-  // atterrit plus bas. "Location" n'y figure pas : elle remonte simplement
-  // en haut de page (anchor: 'top' dans Header.jsx / HeaderLocataire.jsx).
-  const ANCHOR_OFFSETS = {
-    specifications: 100, // menu burger : "Caractéristiques"
-    avis: 230, // menu burger : "Avis & commentaires"
-    localisation: 60, // menu burger : "Emplacement"
-    suggestions: 285, // menu burger : "Suggestions"
-  };
+  // Ancrage des entrées du menu burger (#specifications, #avis, #localisation,
+  // #suggestions) : scroll-margin-top désormais posé en CSS dans
+  // PRODUCT_RESPONSIVE_CSS plutôt qu'en style inline, car la hauteur du
+  // bandeau fixe/sticky (fil d'ariane + recherche) au-dessus varie par palier
+  // selon le breakpoint (repliée en dessous de md, dépliée de md à xl) — un
+  // style inline React ne peut pas s'ajuster par media query.
 
   return (
     // overflow-x-clip (et non hidden : hidden créerait un conteneur de scroll
     // qui casserait les sticky) évite l'ascenseur horizontal pendant l'entrée
     // des blocs depuis la marge droite (translateX(110vw)).
-    <main className="w-full min-h-screen pt-20 bg-white overflow-x-clip">
-      <style>{PAGE_SLIDE_CSS}</style>
+    <main className="w-full min-h-[100svh] pt-[clamp(4rem,6vw,5rem)] bg-white overflow-x-clip">
+      <style>{`${PAGE_SLIDE_CSS}\n${PRODUCT_RESPONSIVE_CSS}`}</style>
       <div>
         {/* Fond photo bateau — image propre à la page produit ; le raccord
             invisible aux transitions est assuré par le crossfade ci-dessous
             plutôt que par une image partagée avec la catégorie.
-            min-h-screen : garantit une couverture plein écran même quand le
-            contenu (chargement en cours, bateau introuvable) est plus court
-            que le viewport. */}
-        <div className="relative min-h-screen" style={PHOTO_BG_STYLE}>
+            min-h-[100svh] : garantit une couverture plein écran (petite
+            hauteur de viewport mobile) même quand le contenu (chargement en
+            cours, bateau introuvable) est plus court que le viewport. */}
+        <div className="product-photo-background relative min-h-[100svh]" style={PHOTO_BG_STYLE}>
           {/* Crossfade vers le fond de la page cible pendant la sortie : se
               pose derrière les blocs (qui glissent hors écran par-dessus) et
               atterrit à pleine opacité pile pour le montage réel de la page
@@ -841,13 +928,18 @@ function ProductPage() {
           )}
 
           {/* Section 0 — Strip sous le header uniquement */}
-          <section className="relative w-full -mt-20" style={{ height: '80px' }} />
+          <section className="relative -mt-[clamp(4rem,6vw,5rem)] h-[clamp(4rem,6vw,5rem)] w-full" />
 
-          {/* Section 1 — Searchbar + fil d'ariane sticky */}
+          {/* Section 1 — Fil d'ariane + recherche, même mécanique que
+              CategoryPage : repliée derrière un bouton loupe et fixed
+              (au-dessus du flux) en dessous de md, dépliée et sticky à partir
+              de md, sur une seule ligne à partir de xl. */}
           <section
-            className="sticky z-40 w-full"
+            className={`fixed inset-x-0 z-40 w-full transition-transform duration-300 md:sticky xl:pb-4 ${
+              searchBarHidden ? '-translate-y-full pointer-events-none' : 'translate-y-0'
+            }`}
             style={{
-              top: scrolled ? '60px' : '80px',
+              top: productHeaderHeight,
               backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
               backdropFilter: scrolled ? 'blur(5px)' : 'none',
               WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
@@ -857,14 +949,32 @@ function ProductPage() {
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
-              className="flex items-center gap-4 pb-2 pl-28"
+              className="flex flex-col gap-0 px-4 pb-2 sm:px-8 lg:px-16 xl:relative xl:flex-row xl:items-center xl:gap-4 xl:pl-28 xl:pr-20"
               style={{
                 paddingTop: scrolled ? '8px' : '20px',
                 transition: 'padding-top 0.3s ease',
               }}
             >
-              <div style={slideInStyle(0)}>
-                <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
+              <div className="mb-2 flex w-full flex-wrap items-center gap-x-3 gap-y-2 xl:mb-0 xl:w-auto xl:flex-nowrap xl:gap-4">
+                <div className="flex-none" style={slideInStyle(0)}>
+                  <Breadcrumb light compact={scrolled} items={breadcrumbItems} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileSearchExpanded((expanded) => !expanded)}
+                  aria-expanded={mobileSearchExpanded}
+                  aria-controls="product-mobile-search"
+                  aria-label={
+                    mobileSearchExpanded ? t('cookieConsent.prefs.close') : t('searchBar.search')
+                  }
+                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-white shadow-lg transition-colors hover:bg-sky-800 md:hidden"
+                >
+                  {mobileSearchExpanded ? (
+                    <MdClose className="text-lg" aria-hidden="true" />
+                  ) : (
+                    <MdSearch className="text-lg" aria-hidden="true" />
+                  )}
+                </button>
               </div>
               {/* Avec continuité catégorie/accueil : le FLIP (ci-dessus) prend
                   le relai via une manipulation directe du style, la barre ne
@@ -874,21 +984,34 @@ function ProductPage() {
                   elle entre/sort comme un bloc de plus, avec le reste de la
                   cascade. */}
               <div
+                id="product-mobile-search"
                 ref={searchBarWrapRef}
+                className={`w-full min-w-0 transition-[max-height,margin,opacity,transform] duration-300 motion-reduce:transition-none md:mt-0 md:max-h-none md:translate-y-0 md:overflow-visible md:opacity-100 md:pointer-events-auto md:[&>form]:ml-0 md:[&>form]:mr-auto xl:absolute xl:inset-y-0 xl:right-20 xl:w-auto xl:flex xl:items-center xl:pt-[18px] xl:[&>form]:mx-0 ${
+                  mobileSearchExpanded
+                    ? 'mt-0 max-h-[24rem] opacity-100'
+                    : 'pointer-events-none max-h-0 -translate-y-2 overflow-hidden opacity-0'
+                }`}
                 style={
                   exiting
-                    ? exitIsGeneric
+                    ? exitIsGeneric || isMobileSearchBar
                       ? slideOutStyle(0, 'right')
                       : undefined
-                    : hasSearchBarContinuity
+                    : hasSearchBarContinuity || arrivedFromCategory
                       ? undefined
                       : slideInStyle(0, 'right')
                 }
               >
-                <SearchBar light compact={scrolled} />
+                <SearchBar light compact={scrolled} fitContentOnTablet />
               </div>
             </div>
           </section>
+          {/* Compense le retrait du flux par le "fixed" ci-dessus en dessous
+              de md (redevenu sticky, donc déjà dans le flux, à partir de là).
+              Volontairement plus bas que la hauteur réelle de la barre
+              repliée (fond transparent tant qu'on n'a pas scrollé) : le fil
+              d'ariane/bouton flotte sur le haut de la galerie plutôt que de
+              la repousser, pour remonter l'image au maximum. */}
+          <div className="h-[4rem] md:hidden" aria-hidden="true" />
 
           {/* Section 2 — Galerie + infos (2/3) et panneau de réservation (1/3) */}
           {!boatsLoaded && <div style={{ height: '70vh' }} aria-hidden="true" />}
@@ -967,9 +1090,8 @@ function ProductPage() {
                         figée à l'écran pendant que tout le reste s'en va. */}
                     <section
                       id="specifications"
-                      className="relative w-full flex flex-col items-start py-6"
+                      className="relative order-3 w-full flex flex-col items-start py-6 xl:order-none"
                       style={{
-                        scrollMarginTop: ANCHOR_OFFSETS.specifications,
                         ...(exiting
                           ? slideOutStyle(2, 'left')
                           : animatedEntry && {
@@ -1035,12 +1157,14 @@ function ProductPage() {
                 )}
               </div>
 
-              {/* Panneau info + réservation — largeur fixe, sticky sous les barres fixes */}
+              {/* Panneau info + réservation — pleine largeur et empilé après la
+                  galerie sur mobile (items-stretch du parent lui donne déjà
+                  100% de large) ; largeur fixe et sticky réservés à xl, où il
+                  redevient la colonne latérale à droite de la galerie. */}
               <aside
-                className="shrink-0 sticky flex flex-col gap-3 xl:flex-[3_1_0%] xl:min-w-[530px]"
+                className="order-2 w-full shrink-0 flex flex-col gap-3 xl:order-none xl:sticky xl:flex-[3_1_0%] xl:min-w-[530px]"
                 style={{
-                  width: '410px',
-                  top: `${panelStickyTop}px`,
+                  top: panelStickyTop,
                   transition: 'top 0.3s ease',
                 }}
               >
@@ -1374,14 +1498,13 @@ function ProductPage() {
               </aside>
             </div>
           )}
-        </div>
 
-        {/* Section 4+5+6 — Avis clients, puis localisation, puis embarcations
-            similaires : même fond photo (trois containers séparés mais même
-            image en background-attachment: fixed, donc raccord invisible),
-            en thème glassmorphism (verre) pour rester lisibles dessus — même
-            traitement que le carrousel/avis de la CategoryPage. */}
-        <div className="relative" style={PHOTO_BG_STYLE}>
+          {/* Section 4+5+6 — Avis clients, puis localisation, puis embarcations
+              similaires : même container que la galerie/réservation
+              ci-dessus (un seul fond photo continu, pas deux containers
+              séparés) pour éviter un raccord visible en
+              background-attachment: scroll sur mobile — même traitement que
+              le carrousel/avis de la CategoryPage. */}
           {/* Dépôt d'avis (locataire ayant une réservation terminée sur ce
               bateau) et édition de son propre avis, déclenchée depuis sa carte
               dans la liste ci-dessous. */}
@@ -1405,7 +1528,6 @@ function ProductPage() {
               commentsOnly
               id="avis"
               className="py-10"
-              style={{ scrollMarginTop: ANCHOR_OFFSETS.avis }}
               currentUserId={user?.id_user ?? null}
               onEditReview={setEditingReviewId}
               onDeleteReview={handleDeleteReview}
@@ -1423,8 +1545,7 @@ function ProductPage() {
           {belowFoldReady && boat && (
             <section
               id="localisation"
-              className="relative w-full flex flex-col items-center gap-3 py-10"
-              style={{ scrollMarginTop: ANCHOR_OFFSETS.localisation }}
+              className="relative w-full flex flex-col items-center gap-3 px-4 py-10 sm:px-8 lg:px-16"
             >
               <div className="w-full max-w-[919.9px] flex items-baseline gap-3">
                 <h2
@@ -1455,8 +1576,7 @@ function ProductPage() {
           {belowFoldReady && boat && (
             <section
               id="suggestions"
-              className="relative w-full flex flex-col gap-8 px-28 py-10"
-              style={{ scrollMarginTop: ANCHOR_OFFSETS.suggestions }}
+              className="relative w-full flex flex-col gap-8 px-4 py-10 sm:px-8 lg:px-16 xl:px-28"
             >
               <Carrousel similarTo={similarTo} />
             </section>

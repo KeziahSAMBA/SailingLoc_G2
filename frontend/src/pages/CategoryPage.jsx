@@ -853,12 +853,15 @@ function CategoryPage() {
   }, [enterActive]);
 
   // FLIP de la SearchBar : translate + scale simultanés du bloc entier,
-  // depuis sa position mesurée sur la page de départ (accueil ou produit,
-  // toutes deux avec une barre déployée désormais) jusqu'à sa place ici.
+  // depuis sa position mesurée sur la page de départ (accueil) jusqu'à sa
+  // place ici. Depuis le produit : même taille et même emplacement
+  // (fitContentOnTablet des deux côtés), donc aucun mouvement à jouer — la
+  // SearchBar reste immobile (pas de FLIP) pendant que le reste de la
+  // cascade anime autour d'elle.
   useLayoutEffect(() => {
     const from = transitionPayload?.searchBarRect;
     const el = searchBarWrapRef.current;
-    if (!from || !el) return undefined;
+    if (!from || !el || transitionPayload?.from === 'product') return undefined;
     const to = el.getBoundingClientRect();
     el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
@@ -1090,7 +1093,7 @@ function CategoryPage() {
             {/* pt réduit en mode compact (scroll) : la barre se resserre sur ses
                 composants au lieu de garder l'aération du haut de page. */}
             <div
-              className="flex flex-col gap-0 px-4 pb-2 sm:px-8 lg:px-16 xl:flex-row xl:items-center xl:gap-4 xl:pl-28 xl:pr-20"
+              className="flex flex-col gap-0 px-4 pb-2 sm:px-8 lg:px-16 xl:relative xl:flex-row xl:items-center xl:gap-4 xl:pl-28 xl:pr-20"
               style={{
                 paddingTop: scrolled ? '0.5rem' : '1.25rem',
                 transition: 'padding-top 0.3s ease',
@@ -1150,7 +1153,7 @@ function CategoryPage() {
               <div
                 id="category-mobile-search"
                 ref={searchBarWrapRef}
-                className={`w-full min-w-0 transition-[max-height,margin,opacity,transform] duration-300 motion-reduce:transition-none md:mt-0 md:max-h-none md:translate-y-0 md:overflow-visible md:opacity-100 md:pointer-events-auto md:[&>form]:ml-0 md:[&>form]:mr-auto xl:flex-1 xl:[&>form]:mx-auto ${
+                className={`w-full min-w-0 transition-[max-height,margin,opacity,transform] duration-300 motion-reduce:transition-none md:mt-0 md:max-h-none md:translate-y-0 md:overflow-visible md:opacity-100 md:pointer-events-auto md:[&>form]:ml-0 md:[&>form]:mr-auto xl:absolute xl:inset-y-0 xl:right-20 xl:w-auto xl:flex xl:items-center xl:[&>form]:mx-0 ${
                   mobileSearchExpanded
                     ? 'mt-0 max-h-[24rem] opacity-100'
                     : 'pointer-events-none max-h-0 -translate-y-2 overflow-hidden opacity-0'
