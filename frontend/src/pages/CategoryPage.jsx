@@ -101,6 +101,16 @@ const CATEGORY_RESPONSIVE_CSS = `
     text-shadow: 0 0.125rem 0.375rem rgb(0 0 0 / 45%);
   }
 
+  .category-page-reviews {
+    scroll-margin-top: calc(var(--category-header-height) + 1rem);
+  }
+
+  @media (min-width: 64rem) {
+    .category-page-reviews {
+      scroll-margin-top: 1.25rem;
+    }
+  }
+
   @media (min-width: 80rem) {
     .category-photo-background {
       background-attachment: fixed;
@@ -489,6 +499,10 @@ function CategoryPage() {
   const [searchParams] = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
   const [mobileSearchExpanded, setMobileSearchExpanded] = useState(false);
+  // Barre sticky (fil d'Ariane + filtre + recherche) : n'a plus lieu d'être
+  // une fois qu'on quitte la section "Nos bateaux" pour les carrousels de
+  // suggestions — cachée dès que #suggestions entre dans le viewport.
+  const [searchBarHidden, setSearchBarHidden] = useState(false);
   // Arrivée depuis la transition HomePage → catégorie : les blocs de la page
   // entrent depuis la marge gauche en cascade, et la SearchBar glisse (FLIP)
   // depuis sa position dans le hero de l'accueil jusqu'à son emplacement ici.
@@ -642,9 +656,12 @@ function CategoryPage() {
   // augmenter la valeur atterrit plus haut dans la section, la baisser
   // atterrit plus bas. "Nos bateaux" n'y figure pas : elle remonte
   // simplement en haut de page (anchor: 'top' dans Header.jsx / HeaderLocataire.jsx).
+  // "Avis" n'y figure pas non plus : son offset doit varier avec la hauteur du
+  // header (fixed, recouvre toujours le haut du viewport) et est donc géré en
+  // CSS (.category-page-reviews dans CATEGORY_RESPONSIVE_CSS) plutôt qu'en
+  // valeur fixe ici.
   const ANCHOR_OFFSETS = {
     suggestions: '1.875rem', // menu burger : "Nos suggestions"
-    avis: '1.25rem', // menu burger : "Avis & commentaires"
   };
   const [ports, setPorts] = useState([]);
   const [boats, setBoats] = useState([]);
@@ -785,6 +802,20 @@ function CategoryPage() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    const el = document.getElementById('suggestions');
+    if (!el) {
+      setSearchBarHidden(false);
+      return undefined;
+    }
+    const observer = new window.IntersectionObserver(
+      ([entry]) => setSearchBarHidden(entry.isIntersecting),
+      { rootMargin: '0px 0px -60% 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [belowFoldReady]);
 
   // Titres "Liste des propositions" / "N bateaux disponibles" : fondu simple
   // (même traitement que le "Bienvenue sur" de l'intro HomePage), rejoue à
@@ -1009,10 +1040,13 @@ function CategoryPage() {
     >
       <style>{`${PAGE_SLIDE_CSS}\n${CATEGORY_RESPONSIVE_CSS}`}</style>
       <div>
-        {/* Fond photo bateau — englobe le strip sous le header, la searchbar et les résultats.
-            min-h-screen : garantit une couverture plein écran même quand le
-            contenu (chargement en cours, peu de résultats) est plus court
-            que le viewport. */}
+        {/* Fond photo bateau — englobe tout : strip sous le header, searchbar,
+            résultats, carrousels et avis. Une seule image continue plutôt que
+            deux containers séparés, pour éviter un raccord visible sur mobile
+            (background-attachment: scroll, cf. CATEGORY_RESPONSIVE_CSS). Le
+            min-h-screen sur ce seul container garantit une couverture plein
+            écran même quand le contenu (chargement en cours, peu de résultats)
+            est plus court que le viewport. */}
         <div className="category-photo-background relative min-h-[100svh]" style={PHOTO_BG_STYLE}>
           {/* Crossfade vers le fond de la page produit pendant la sortie : se
               pose derrière les blocs (qui glissent hors écran par-dessus) et
@@ -1042,7 +1076,9 @@ function CategoryPage() {
 
           {/* Section 1 — Searchbar sticky */}
           <section
-            className="fixed inset-x-0 z-20 w-full md:sticky"
+            className={`fixed inset-x-0 z-20 w-full transition-transform duration-300 md:sticky ${
+              searchBarHidden ? '-translate-y-full pointer-events-none' : 'translate-y-0'
+            }`}
             style={{
               top: 'var(--category-header-height)',
               backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
@@ -1097,7 +1133,7 @@ function CategoryPage() {
                   aria-label={
                     mobileSearchExpanded ? t('cookieConsent.prefs.close') : t('searchBar.search')
                   }
-                  className="flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-white shadow-lg transition-colors hover:bg-sky-800 md:hidden"
+                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-white shadow-lg transition-colors hover:bg-sky-800 md:hidden"
                 >
                   {mobileSearchExpanded ? (
                     <MdClose className="text-lg" aria-hidden="true" />
@@ -1140,7 +1176,7 @@ function CategoryPage() {
               grille retrouve la repartition desktop 55/45. */}
           <div className="flex flex-col px-4 py-5 sm:px-8 lg:px-16 xl:grid xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)] xl:items-start xl:gap-6 xl:px-28">
             {/* Listings */}
-            <div className="relative order-2 z-10 -mt-[clamp(3rem,10svh,6rem)] flex min-w-0 flex-col gap-5 rounded-t-[2rem] border-t border-white/20 bg-[linear-gradient(to_bottom,rgb(8,31,49)_0%,rgb(8,31,49)_35%,rgb(10,49,72)_100%)] p-4 shadow-[0_-1.5rem_3rem_rgba(0,0,0,0.28)] sm:p-6 lg:p-8 xl:order-1 xl:col-start-1 xl:mt-0 xl:rounded-none xl:border-0 xl:bg-none xl:bg-transparent xl:p-0 xl:shadow-none">
+            <div className="relative order-2 z-10 -mt-[clamp(4rem,12svh,7rem)] flex min-w-0 flex-col gap-5 rounded-[2rem] border-t border-white/50 bg-white/10 p-4 shadow-[0_-1.5rem_3rem_rgba(0,0,0,0.28)] backdrop-blur-[40px] sm:p-6 lg:p-8 xl:order-1 xl:col-start-1 xl:mt-0 xl:rounded-none xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none xl:backdrop-blur-none">
               <div className="relative z-10 flex flex-col gap-5">
                 <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
@@ -1197,7 +1233,7 @@ function CategoryPage() {
                 contenu centré dedans (justify-center) : la carte (plus courte que cet
                 espace sur sm/lg) se retrouve centrée entre le sous-header et le bas de
                 page au lieu de rester collée en haut avec un vide en dessous. */}
-            <aside className="category-map-panel sticky order-1 z-0 flex w-full min-w-0 flex-col justify-start gap-2 transition-[top,height] duration-300 xl:order-2 xl:col-start-2 xl:justify-center">
+            <aside className="category-map-panel order-1 z-0 -mt-12 flex w-full min-w-0 flex-col justify-start gap-2 transition-[top,height] duration-300 xl:sticky xl:order-2 xl:col-start-2 xl:mt-0 xl:justify-center">
               {/* L'animation d'entrée s'applique au bloc interne et non à
                   l'<aside> sticky, dont le style transition (top) doit rester. */}
               <div
@@ -1248,16 +1284,14 @@ function CategoryPage() {
               </p>
             </aside>
           </div>
-        </div>
-
-        {/* Section 3+4 — Carrousels et avis clients : même fond photo que la
-            section bateaux ci-dessus (deux containers séparés mais même image
-            en background-attachment: fixed, donc raccord invisible), en thème
-            glassmorphism (verre) pour rester lisibles dessus — carrousel
-            inspiré du thème sombre de la HomePage, avis du thème `light` de
-            la ProductPage. Différée pendant l'entrée ; le bloc fantôme
-            conserve la hauteur (et la barre de défilement). */}
-        <div className="category-photo-background relative" style={PHOTO_BG_STYLE}>
+          {/* Section 3+4 — Carrousels et avis clients : même fond photo que la
+            section bateaux ci-dessus, dans la MÊME enveloppe (une seule image
+            continue, plus de raccord entre les deux sur mobile où
+            background-attachment reste "scroll" — cf. category-photo-background
+            ci-dessus), en thème glassmorphism (verre) pour rester lisibles
+            dessus — carrousel inspiré du thème sombre de la HomePage, avis du
+            thème `light` de la ProductPage. Différée pendant l'entrée ; le
+            bloc fantôme conserve la hauteur (et la barre de défilement). */}
           {belowFoldReady ? (
             <section
               id="suggestions"
@@ -1284,7 +1318,6 @@ function CategoryPage() {
               wide
               id="avis"
               className="category-page-reviews !px-4 py-8 sm:!px-8 sm:[&>.grid]:!grid-cols-2 lg:!px-16 xl:!px-28 xl:py-10 xl:[&>.grid]:!w-3/4 xl:[&>.grid]:!grid-cols-3 [&>.grid]:!w-full [&>.grid]:!grid-cols-1"
-              style={{ scrollMarginTop: ANCHOR_OFFSETS.avis }}
             />
           )}
         </div>
