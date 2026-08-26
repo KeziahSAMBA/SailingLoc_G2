@@ -234,9 +234,9 @@ export default function ClientReviews({
     return roleFilter === 'all' ? reviews : reviews.filter((r) => r.role === roleFilter);
   }, [reviews, roleFilter, boatId]);
   const sorted = useMemo(() => sortReviews(filtered, sort), [filtered, sort]);
-  // Mode boatId : une seule rangée de 4 (grille grid-cols-4 ci-dessous) plutôt
+  // Mode boatId : une seule rangée de 3 (grille grid-cols-3 ci-dessous) plutôt
   // que les 2 rangées de 3 du mode standard.
-  const pageSize = boatId != null ? 4 : PAGE_SIZE;
+  const pageSize = boatId != null ? 3 : PAGE_SIZE;
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages - 1);
   const visible = useMemo(
@@ -341,7 +341,7 @@ export default function ClientReviews({
               jusqu'aux marges de la page plutôt que resserré comme le
               carrousel/avis standard). */}
           <div
-            className={`w-full grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 ${boatId != null ? 'lg:grid-cols-4' : 'md:w-3/4 md:grid-cols-3'}`}
+            className={`w-full grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 ${boatId != null ? 'lg:grid-cols-3' : 'md:w-3/4 md:grid-cols-3'}`}
           >
             {visible.map((review) => (
               <ReviewCard
