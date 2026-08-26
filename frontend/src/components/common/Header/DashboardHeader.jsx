@@ -7,8 +7,6 @@ import {
   useCategoryNavigate,
   useHomeNavigate,
   useIntroHeaderReveal,
-  CATEGORY_ENTER_TOTAL,
-  INTRO_SOFT_EASING,
 } from '../../../hooks/useCategoryTransition.js';
 import {
   usePageExitNavigate,
@@ -19,13 +17,19 @@ import { getUnreadCount } from '../../../services/messageService.js';
 import { nameToAvatarUrl } from '../../../utils/avatar.js';
 import { useScrolled } from './shared/useScrolled.js';
 import { useClickOutside } from './shared/useClickOutside.js';
+import { scrollToAnchor as scrollToAnchorBase } from './shared/scrollToAnchor.js';
+import { hoverUnderlineStyle, hoverUnderlineHandlers } from './shared/hoverUnderline.js';
+import { hoverBackground } from './shared/hoverBackground.js';
+import HeaderShell from './shared/HeaderShell.jsx';
 import HeaderLogo from './shared/HeaderLogo.jsx';
 import BurgerIcon from './shared/BurgerIcon.jsx';
 import SidePanel from './shared/SidePanel.jsx';
 import PanelLink from './shared/PanelLink.jsx';
-import { LANGUAGES } from './shared/languages.js';
+import SettingsMenu from './shared/SettingsMenu.jsx';
 import { getAboutNavigationItems } from './shared/aboutNavigation.js';
 import { getContactNavigationItems } from './shared/contactNavigation.js';
+
+const roundIconHover = hoverBackground('rgba(255,255,255,0.25)', 'rgba(255,255,255,0.1)');
 
 /**
  * Header shared by every authenticated role (admin, propriétaire, locataire).
@@ -45,12 +49,11 @@ function DashboardHeader({
   showMessages = false,
   // Destination de l'icône messagerie (l'admin a sa page dédiée).
   messagesTo = '/messages',
-  languageAsFlags = true,
   // Révélation d'en haut à la première connexion (locataire/propriétaire) —
   // désactivée pour l'admin, qui n'en a pas besoin.
   introReveal = true,
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const scrolled = useScrolled();
   const [navOpen, setNavOpen] = useState(false);
   const [rightMenuOpen, setRightMenuOpen] = useState(false);
@@ -134,21 +137,11 @@ function DashboardHeader({
   }
 
   function scrollToAnchor(anchor, targetPath = '/') {
-    setNavOpen(false);
-    const scroll = () => {
-      if (anchor === 'top') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-      const el = document.getElementById(anchor);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    };
-    if (location.pathname === targetPath) {
-      scroll();
-    } else {
-      pageExitNavigate(targetPath);
-      setTimeout(scroll, 300);
-    }
+    scrollToAnchorBase(anchor, targetPath, {
+      pathname: location.pathname,
+      pageExitNavigate,
+      closeMenu: () => setNavOpen(false),
+    });
   }
 
   function handleLogoClick(e) {
@@ -183,30 +176,7 @@ function DashboardHeader({
   }
 
   return (
-    <header
-      className="fixed top-0 left-0 z-50 flex w-full items-center px-4 sm:px-6 lg:px-12"
-      style={{
-        height: scrolled ? '60px' : 'clamp(64px, 6vw, 80px)',
-        transform: introHidden ? 'translateY(-110%)' : 'none',
-        transition: `height 0.3s ease, transform ${CATEGORY_ENTER_TOTAL}ms ${INTRO_SOFT_EASING}`,
-      }}
-    >
-      {/*
-        Background lives on its own layer (not on <header> itself) because a
-        backdrop-filter on an element makes it a new containing block for
-        fixed-position descendants — which would break the SidePanels' own
-        backdrop-filter (they're nested inside <header>).
-      */}
-      <div
-        className="absolute inset-0 -z-10"
-        style={{
-          backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
-          borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
-          boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',
-          transition: 'box-shadow 0.3s ease, background-color 0.3s ease',
-        }}
-      />
-
+    <HeaderShell scrolled={scrolled} introHidden={introHidden}>
       {/* Gauche — Burger nav + Logo (33%) */}
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {resolvedLeftGroups && (
@@ -227,11 +197,17 @@ function DashboardHeader({
               darkerOverlay={onCategoriePage || onProductPage}
             >
               <div className="h-full overflow-y-auto">
-                <div className="flex flex-col border-b border-white/15 py-2 lg:hidden">
+                <div
+                  className="flex flex-col py-2 lg:hidden"
+                  style={{
+                    borderBottom: `1px solid ${scrolled ? 'rgba(10, 49, 114, 0.15)' : 'rgba(255, 255, 255, 0.2)'}`,
+                  }}
+                >
                   {centerNav.map((item) => (
                     <PanelLink
                       key={item.label}
                       scrolled={scrolled}
+                      large
                       onClick={() => handleCenterNavClick(item)}
                     >
                       {item.label}
@@ -250,6 +226,7 @@ function DashboardHeader({
                             key={label}
                             scrolled={scrolled}
                             stretch
+                            large={false}
                             onClick={anchor ? () => scrollToAnchor(anchor, path) : undefined}
                           >
                             {label}
@@ -290,25 +267,11 @@ function DashboardHeader({
                   handleCenterNavClick({ to, anchor });
                 }}
                 className="font-medium"
-                style={{
-                  color: '#fff',
+                style={hoverUnderlineStyle({
                   fontSize: scrolled ? centerFontSize.scrolled : centerFontSize.base,
                   whiteSpace: 'nowrap',
-                  backgroundImage: 'linear-gradient(#fff, #fff)',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '0% 1px',
-                  backgroundPosition: '0 100%',
-                  transition: 'font-size 0.3s ease, background-size 0.35s ease',
-                  paddingBottom: '3px',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundSize = '100% 1px';
-                  e.currentTarget.style.opacity = '0.75';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundSize = '0% 1px';
-                  e.currentTarget.style.opacity = '1';
-                }}
+                })}
+                {...hoverUnderlineHandlers()}
               >
                 {label}
               </a>
@@ -317,57 +280,9 @@ function DashboardHeader({
         </ul>
       </nav>
 
-      {/* Droite — Langue + Icône utilisateur + Burger menu (33%) */}
+      {/* Droite — Paramètres + Icône utilisateur + Burger menu (33%) */}
       <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-3 lg:w-1/3 lg:flex-none lg:pr-4">
-        <div className="hidden items-center gap-2.5 md:flex">
-          {languageAsFlags
-            ? LANGUAGES.map(({ code, Flag, label }) => (
-                <button
-                  key={code}
-                  onClick={() => i18n.changeLanguage(code)}
-                  aria-label={label}
-                  title={label}
-                  className="rounded-[3px] overflow-hidden transition-transform hover:scale-110"
-                  style={{
-                    width: scrolled ? '20px' : '24px',
-                    height: scrolled ? '14px' : '17px',
-                    opacity: i18n.language === code ? 1 : 0.45,
-                    boxShadow: '0 0 0 1px rgba(255,255,255,0.4)',
-                    transition:
-                      'width 0.3s ease, height 0.3s ease, opacity 0.2s ease, transform 0.2s ease',
-                  }}
-                >
-                  <Flag className="w-full h-full block" />
-                </button>
-              ))
-            : LANGUAGES.map(({ code }, i) => (
-                <span key={code} className="flex items-center gap-1">
-                  {i === 1 && (
-                    <span style={{ color: '#fff', opacity: 0.4, fontSize: '0.9rem' }}>/</span>
-                  )}
-                  <button
-                    onClick={() => i18n.changeLanguage(code)}
-                    className="px-1 font-medium"
-                    style={{
-                      color: '#fff',
-                      opacity: i18n.language === code ? 1 : 0.45,
-                      fontWeight: i18n.language === code ? 700 : 500,
-                      fontSize: scrolled ? '0.7rem' : '0.75rem',
-                      backgroundImage: 'linear-gradient(#fff, #fff)',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundSize: '0% 1px',
-                      backgroundPosition: '0 100%',
-                      paddingBottom: '2px',
-                      transition: 'font-size 0.3s ease, background-size 0.35s ease',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundSize = '100% 1px')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundSize = '0% 1px')}
-                  >
-                    {code.toUpperCase()}
-                  </button>
-                </span>
-              ))}
-        </div>
+        <SettingsMenu scrolled={scrolled} />
 
         <a
           href={profileHref}
@@ -380,26 +295,13 @@ function DashboardHeader({
         >
           <span
             className="hidden xl:inline"
-            style={{
-              color: '#fff',
+            style={hoverUnderlineStyle({
               fontSize: scrolled ? '0.75rem' : '0.85rem',
-              opacity: 0.9,
+              baseOpacity: 0.9,
               fontWeight: 500,
               transition: 'font-size 0.3s ease',
-              backgroundImage: 'linear-gradient(#fff, #fff)',
-              backgroundRepeat: 'no-repeat',
-              backgroundSize: '0% 1px',
-              backgroundPosition: '0 100%',
-              paddingBottom: '3px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundSize = '100% 1px';
-              e.currentTarget.style.opacity = '0.75';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundSize = '0% 1px';
-              e.currentTarget.style.opacity = '0.9';
-            }}
+            })}
+            {...hoverUnderlineHandlers(0.9)}
           >
             {displayName}
           </span>
@@ -412,8 +314,7 @@ function DashboardHeader({
               backgroundColor: 'rgba(255, 255, 255, 0.1)',
               transition: 'width 0.3s ease, height 0.3s ease, background-color 0.2s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
+            {...roundIconHover}
           >
             <img
               src={user?.avatar ?? nameToAvatarUrl(displayName)}
@@ -432,8 +333,7 @@ function DashboardHeader({
               height: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
               transition: 'width 0.3s ease, height 0.3s ease, opacity 0.2s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
+            {...roundIconHover}
             aria-label={t('dashboardHeader.messagesAria')}
           >
             <FiMail size={scrolled ? 18 : 22} color="#fff" />
@@ -485,7 +385,7 @@ function DashboardHeader({
           </SidePanel>
         </div>
       </div>
-    </header>
+    </HeaderShell>
   );
 }
 

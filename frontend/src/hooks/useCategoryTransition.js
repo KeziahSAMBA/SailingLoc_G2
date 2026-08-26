@@ -221,6 +221,22 @@ const INTRO_REVEAL_EVENT = 'sailingloc:intro-reveal';
 // s'il navigue vers la home ensuite (le header, déjà monté, serait visible).
 const sessionEntryPath = window.location.pathname;
 
+// Rattrapage d'un rechargement survenu pendant la fenêtre active de l'intro
+// (avant l'émission de la révélation) : la session ressort avec "seen" mais
+// jamais "revealed", et comme shouldPlayIntro() renverra false cette fois
+// (déjà vue), plus rien dans ce chargement n'émettra jamais la révélation —
+// le header resterait caché jusqu'au garde-fou de 12s de useIntroHeaderReveal,
+// à chaque rechargement suivant. On corrige donc le flag directement, au
+// niveau du module, avant qu'aucun composant (Header compris) ne lise
+// isIntroPending().
+if (
+  sessionEntryPath === '/' &&
+  window.sessionStorage.getItem(INTRO_SEEN_KEY) &&
+  !window.sessionStorage.getItem(INTRO_REVEALED_KEY)
+) {
+  window.sessionStorage.setItem(INTRO_REVEALED_KEY, '1');
+}
+
 // Démarrage de l'intro (HomePage uniquement) : une seule fois par session,
 // posé dès le montage pour ne pas la rejouer (StrictMode, remontage...).
 export function shouldPlayIntro() {
