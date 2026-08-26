@@ -84,7 +84,7 @@ const ReviewCard = memo(function ReviewCard({
     : date;
   return (
     <div
-      className={`flex min-w-0 flex-col gap-2 py-3 px-5 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
+      className={`flex min-w-0 flex-col gap-1.5 px-3 py-2 sm:gap-2 sm:px-5 sm:py-3 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
       style={
         light ? { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } : undefined
       }
@@ -97,27 +97,29 @@ const ReviewCard = memo(function ReviewCard({
           height={36}
           loading="lazy"
           decoding="async"
-          className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+          className="h-7 w-7 flex-shrink-0 rounded-full object-cover sm:h-9 sm:w-9"
         />
         <div className="flex flex-col">
           <span
-            className={`font-semibold text-sm leading-tight ${light ? 'text-white' : 'text-gray-800'}`}
+            className={`text-xs font-semibold leading-tight sm:text-sm ${light ? 'text-white' : 'text-gray-800'}`}
           >
             {name}
           </span>
           {role && (
-            <span className="text-sky-500 text-xs font-semibold">{roleLabels[role] ?? role}</span>
+            <span className="text-[11px] font-semibold text-sky-500 sm:text-xs">
+              {roleLabels[role] ?? role}
+            </span>
           )}
         </div>
       </div>
       <div className="flex items-center gap-2">
         <StarRating rating={rating} />
-        <span className={`text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>
+        <span className={`text-[11px] sm:text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>
           {displayedDate}
         </span>
       </div>
       <p
-        className={`break-words text-sm leading-relaxed ${light ? 'text-white/80' : 'text-gray-600'}`}
+        className={`break-words text-xs leading-relaxed sm:text-sm ${light ? 'text-white/80' : 'text-gray-600'}`}
       >
         {text}
       </p>
@@ -172,7 +174,7 @@ function sortReviews(reviews, sort) {
   return sorted;
 }
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 3;
 
 // Mêmes surfaces "verre" que les blocs des pages catégorie/produit sur fond photo.
 const GLASS_STYLE = {
@@ -278,7 +280,7 @@ export default function ClientReviews({
         // habituel — cette instance n'affiche que les avis locataire de ce
         // bateau, pas besoin d'un bloc aussi proéminent. Tri juste à côté,
         // sur la même ligne, comme le lien "Voir toute la flotte" du Carrousel.
-        <div className="w-full flex items-center gap-4">
+        <div className="w-full flex flex-wrap items-center gap-4">
           <h2
             className={`font-semibold ${light ? 'text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-gray-900'}`}
             style={{ fontSize: '20px', lineHeight: '22px' }}
@@ -294,14 +296,14 @@ export default function ClientReviews({
               {t('reviews.kicker')}
             </p>
             <h2
-              className={`text-3xl md:text-4xl font-semibold ${light ? 'text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-gray-900'}`}
+              className={`text-lg font-semibold sm:text-3xl md:text-4xl ${light ? 'text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-gray-900'}`}
             >
               {t('reviews.title')}
             </h2>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
+            <div className="flex flex-wrap justify-center gap-2">
               {roleFilters.map((opt) => (
                 <button
                   key={opt.value}
@@ -339,7 +341,7 @@ export default function ClientReviews({
               jusqu'aux marges de la page plutôt que resserré comme le
               carrousel/avis standard). */}
           <div
-            className={`w-full grid gap-6 ${boatId != null ? 'grid-cols-4' : 'md:w-3/4 grid-cols-3'}`}
+            className={`w-full grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 ${boatId != null ? 'lg:grid-cols-4' : 'md:w-3/4 md:grid-cols-3'}`}
           >
             {visible.map((review) => (
               <ReviewCard
@@ -402,8 +404,8 @@ export default function ClientReviews({
       id={id}
       className={
         light && !wide
-          ? `w-full flex flex-col items-start pl-28 pr-24 gap-5 ${className}`
-          : `w-full flex flex-col items-center gap-5 px-28 ${!light ? 'bg-white' : ''} ${className}`
+          ? `w-full flex flex-col items-start gap-5 px-4 sm:px-8 lg:pl-16 lg:pr-16 xl:pl-28 xl:pr-24 ${className}`
+          : `w-full flex flex-col items-center gap-5 px-4 sm:px-8 lg:px-16 xl:px-28 ${!light ? 'bg-white' : ''} ${className}`
       }
       style={style}
     >

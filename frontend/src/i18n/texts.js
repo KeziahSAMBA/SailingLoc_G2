@@ -34,6 +34,13 @@ export const TEXTS = {
       contact: { fr: 'Contact', en: 'Contact' },
       about: { fr: 'À propos', en: 'About' },
     },
+    settings: {
+      label: { fr: 'Paramètres', en: 'Settings' },
+      language: { fr: 'Langue', en: 'Language' },
+      mode: { fr: 'Mode', en: 'Mode' },
+      darkMode: { fr: 'Mode sombre', en: 'Dark mode' },
+      colorblindMode: { fr: 'Mode daltonien', en: 'Colorblind mode' },
+    },
     auth: {
       login: { fr: "Se connecter / S'inscrire", en: 'Log in / Sign up' },
       dashboard: { fr: 'Mon dashboard', en: 'My dashboard' },

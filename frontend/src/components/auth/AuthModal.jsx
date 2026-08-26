@@ -32,7 +32,7 @@ function AuthModal({ activeTab, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
-      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-10"
+      className="fixed inset-0 z-[100] flex [align-items:safe_center] justify-center overflow-y-auto bg-black/60 px-3 py-4 backdrop-blur-sm sm:items-start sm:px-4 sm:py-10"
       onClick={onClose}
     >
       <div
@@ -63,7 +63,7 @@ function AuthModal({ activeTab, onClose }) {
         <div
           role="tablist"
           aria-label="Connexion ou inscription"
-          className="relative mb-6 mt-2 flex rounded-full bg-white/10 p-1"
+          className="relative mb-6 mt-10 flex rounded-full bg-white/10 p-1 sm:mt-6"
         >
           {/* Indicateur coulissant : glisse entre les deux onglets au changement. */}
           <span
