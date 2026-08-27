@@ -296,6 +296,7 @@ model Document {
   type          String         @db.VarChar(50)
   file_name     String         @db.VarChar(255)
   file_url      String         @db.VarChar(500)
+  mime_type     String?        @db.VarChar(100)
   upload_date   DateTime
   status        DocumentStatus @default(pending)
   created_at    DateTime       @default(now())
@@ -364,6 +365,7 @@ model Image {
   id_dispute  Int?
   url         String   @db.VarChar(500)
   type        String   @db.VarChar(50)
+  mime_type   String?  @db.VarChar(100)
   order       Int      @default(0) @map("order")
   created_at  DateTime @default(now())
   updated_at  DateTime?

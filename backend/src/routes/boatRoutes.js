@@ -5,6 +5,12 @@ import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
 import {
+  acceptsMulterMetadata,
+  generatedFileName,
+  inspectUploadedFile,
+  privateDirectory,
+} from '../utils/fileSecurity.js';
+import {
   uploadBoat,
   putBoat,
   removeBoat,
@@ -18,18 +24,22 @@ import { getBoatReviews } from '../controllers/reviewController.js';
 // pour que le navigateur reçoive le bon type MIME. L'acte de francisation, lui, est
 // un document sensible : stockée hors du dossier statique et servie uniquement
 // par la route protégée GET /api/documents/:id/file.
-const IMAGES_DIR = path.join(process.env.UPLOADS_DIR || 'uploads', 'boats');
-const DOCUMENTS_DIR = process.env.DOCUMENTS_DIR || 'storage/documents';
-fs.mkdirSync(IMAGES_DIR, { recursive: true });
-fs.mkdirSync(DOCUMENTS_DIR, { recursive: true });
+const IMAGES_DIR = path.resolve(process.env.UPLOADS_DIR || 'uploads', 'boats');
+const DOCUMENTS_DIR = privateDirectory('document');
+fs.mkdirSync(IMAGES_DIR, { recursive: true, mode: 0o755 });
+fs.mkdirSync(DOCUMENTS_DIR, { recursive: true, mode: 0o700 });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) =>
     cb(null, file.fieldname === 'acte_francisation' ? DOCUMENTS_DIR : IMAGES_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  },
+  filename: (req, file, cb) =>
+    cb(
+      null,
+      generatedFileName(
+        file.originalname,
+        file.fieldname === 'acte_francisation' ? 'document' : 'image'
+      )
+    ),
 });
 
 const IMAGE_MIME = ['image/jpeg', 'image/png', 'image/webp'];
@@ -38,8 +48,9 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024, files: 6 }, // 5 Mo par fichier, 5 photos + 1 acte de francisation
   fileFilter: (req, file, cb) => {
+    const kind = file.fieldname === 'acte_francisation' ? 'document' : 'image';
     const allowed = file.fieldname === 'acte_francisation' ? DOCUMENT_MIME : IMAGE_MIME;
-    if (allowed.includes(file.mimetype)) return cb(null, true);
+    if (allowed.includes(file.mimetype) && acceptsMulterMetadata(file, kind)) return cb(null, true);
     cb(
       Object.assign(
         new Error(
@@ -54,6 +65,32 @@ const upload = multer({
 });
 
 // Exécute multer et transforme ses erreurs en réponses JSON propres.
+async function removeUploadedFiles(req) {
+  const files = Object.values(req.files || {}).flat();
+  await Promise.all(files.map((file) => fs.promises.unlink(file.path).catch(() => {})));
+}
+
+async function validateBoatFiles(req, res, next) {
+  const images = req.files?.images || [];
+  const acte = req.files?.acte_francisation?.[0];
+  try {
+    for (const file of images) {
+      const metadata = await inspectUploadedFile(file, 'image');
+      file.detectedMimeType = metadata.mimeType;
+      file.safeOriginalName = metadata.safeName;
+    }
+    if (acte) {
+      const metadata = await inspectUploadedFile(acte, 'document');
+      acte.detectedMimeType = metadata.mimeType;
+      acte.safeOriginalName = metadata.safeName;
+    }
+    return next();
+  } catch (err) {
+    await removeUploadedFiles(req);
+    return res.status(err.status || 400).json({ message: err.message });
+  }
+}
+
 function uploadFiles(req, res, next) {
   upload.fields([
     { name: 'images', maxCount: 5 },
@@ -63,7 +100,7 @@ function uploadFiles(req, res, next) {
       const status = err.code === 'LIMIT_FILE_SIZE' ? 400 : err.status || 500;
       const message =
         err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop volumineux (max 5 Mo).' : err.message;
-      return res.status(status).json({ message });
+      return removeUploadedFiles(req).finally(() => res.status(status).json({ message }));
     }
     next();
   });
@@ -80,6 +117,7 @@ router.post(
   protect,
   requireRole('proprietaire', 'admin'),
   uploadFiles,
+  validateBoatFiles,
   audit('boat.create', { meta: (req) => ({ name: req.body?.name, type: req.body?.type }) }),
   uploadBoat
 );
@@ -102,6 +140,7 @@ router.put(
   protect,
   requireRole('proprietaire'),
   uploadFiles,
+  validateBoatFiles,
   audit('boat.update', {
     targetId: (req) => req.params.id_boat,
     meta: (req) => ({ name: req.body?.name, status: req.body?.status }),

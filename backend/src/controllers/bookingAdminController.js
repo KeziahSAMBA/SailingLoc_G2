@@ -3,6 +3,7 @@ import {
   cancelBooking,
   listDisputes,
   setDisputeStatus,
+  getDisputeImageFile,
 } from '../services/bookingAdminService.js';
 
 export async function adminListBookings(req, res) {
@@ -39,6 +40,22 @@ export async function adminSetDisputeStatus(req, res) {
       refund_commission: req.body?.refund_commission,
     });
     res.json({ dispute });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+}
+
+export async function adminDownloadDisputeImage(req, res) {
+  try {
+    const { content, mimeType } = await getDisputeImageFile(req.params.id, req.params.imageId);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', String(content.length));
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="evidence-${Number(req.params.imageId)}"`
+    );
+    return res.send(content);
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

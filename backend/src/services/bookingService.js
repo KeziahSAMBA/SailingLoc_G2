@@ -1,7 +1,10 @@
+import fs from 'fs';
 import prisma from '../config/db.js';
 import { DOCUMENT_TYPES } from './documentService.js';
 import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
 import { sendBookingCancelledByLocataireEmail } from './emailService.js';
+import { encryptFileInPlace } from '../utils/fileCrypto.js';
+import { inspectUploadedFile, resolveStoredFilePath, storagePath } from '../utils/fileSecurity.js';
 
 const DAY_MS = 86400000;
 // Commission plateforme : même taux (10 %) que les paiements du seed.
@@ -427,14 +430,16 @@ export async function requestRefund(id_user, id_booking, reason) {
 // Signalement d'un problème (litige) par le locataire ou le propriétaire
 // (asOwner), uniquement sur une réservation annulée ou dont le séjour est fini.
 // `files` : photos multer déjà stockées dans uploads/disputes.
-export async function reportDispute({
-  id_user,
-  id_booking,
-  reason,
-  asOwner = false,
-  files = [],
-  origin = '',
-}) {
+async function preparePrivateDisputePhoto(file) {
+  const metadata = file.detectedMimeType
+    ? { mimeType: file.detectedMimeType }
+    : await inspectUploadedFile(file, 'dispute');
+  const absolutePath = resolveStoredFilePath(file.path, 'dispute');
+  await encryptFileInPlace(absolutePath);
+  return { storedPath: storagePath(absolutePath), mimeType: metadata.mimeType };
+}
+
+export async function reportDispute({ id_user, id_booking, reason, asOwner = false, files = [] }) {
   const cleanReason = reason && String(reason).trim();
   if (!cleanReason) throw bad('Le motif du litige est obligatoire.');
 
@@ -461,21 +466,48 @@ export async function reportDispute({
   if (booking.disputes.length > 0)
     throw bad('Un litige est déjà en cours pour cette réservation.', 409);
 
-  return prisma.$transaction(async (tx) => {
-    const dispute = await tx.dispute.create({
-      data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
+  let preparedFiles;
+  try {
+    preparedFiles = await Promise.all(files.map((file) => preparePrivateDisputePhoto(file)));
+  } catch (err) {
+    await Promise.all(
+      files.map((file) => {
+        try {
+          const filePath = resolveStoredFilePath(file.path, 'dispute');
+          return fs.promises.unlink(filePath).catch(() => {});
+        } catch {
+          return Promise.resolve();
+        }
+      })
+    );
+    throw Object.assign(new Error('Les preuves jointes n’ont pas pu être sécurisées.'), {
+      status: err.status || 400,
     });
-    if (files.length > 0) {
-      await tx.image.createMany({
-        data: files.map((f, i) => ({
-          id_dispute: dispute.id_dispute,
-          id_user,
-          url: `${origin}/uploads/disputes/${f.filename}`,
-          type: 'dispute',
-          order: i,
-        })),
+  }
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const dispute = await tx.dispute.create({
+        data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
       });
-    }
-    return dispute;
-  });
+      if (preparedFiles.length > 0) {
+        await tx.image.createMany({
+          data: preparedFiles.map((file, i) => ({
+            id_dispute: dispute.id_dispute,
+            id_user,
+            url: file.storedPath,
+            mime_type: file.mimeType,
+            type: 'dispute',
+            order: i,
+          })),
+        });
+      }
+      return dispute;
+    });
+  } catch (err) {
+    await Promise.all(
+      preparedFiles.map((file) => fs.promises.unlink(file.storedPath).catch(() => {}))
+    );
+    throw err;
+  }
 }

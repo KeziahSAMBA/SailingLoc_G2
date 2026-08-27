@@ -5,11 +5,42 @@ import { initConfig } from '../config/appConfig.js';
 import { sendBookingDecisionEmail } from './emailService.js';
 import { issueBookingInvoices } from './invoiceService.js';
 import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js';
+import { encryptFileInPlace } from '../utils/fileCrypto.js';
+import {
+  inspectUploadedFile,
+  resolveStoredFilePath,
+  safeDisplayName,
+  storagePath,
+} from '../utils/fileSecurity.js';
 
 // Suppression best-effort d'un fichier remplacé (l'échec ne bloque pas la requête).
 function removeFileQuiet(filePath) {
   if (!filePath) return;
-  fs.unlink(filePath, () => {});
+  try {
+    const safePath = resolveStoredFilePath(filePath, 'document');
+    fs.unlink(safePath, () => {});
+  } catch {
+    // Never let a malformed database value turn into an arbitrary unlink.
+  }
+}
+
+async function preparePrivateDocument(file) {
+  if (!file) return null;
+  const metadata = file.detectedMimeType
+    ? {
+        mimeType: file.detectedMimeType,
+        safeName:
+          file.safeOriginalName || safeDisplayName(file.originalname, file.detectedMimeType),
+      }
+    : await inspectUploadedFile(file, 'document');
+  const absolutePath = resolveStoredFilePath(file.path, 'document');
+  await encryptFileInPlace(absolutePath);
+  return {
+    ...file,
+    safeOriginalName: metadata.safeName,
+    detectedMimeType: metadata.mimeType,
+    storedPath: storagePath(absolutePath),
+  };
 }
 
 // Les demandes encore « en attente » dont le séjour a déjà commencé ne peuvent
@@ -515,6 +546,9 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
   const port = await resolveBoatPort(payload, isDraft);
   if (!isDraft && fields.with_skipper) await ensureSkipperCv(id_user);
 
+  let preparedActe = null;
+  if (acteFrancisation) preparedActe = await preparePrivateDocument(acteFrancisation);
+
   try {
     const boat = await prisma.$transaction(async (tx) => {
       const created = await tx.boat.create({
@@ -541,14 +575,15 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
       // Acte de francisation : soit un nouveau fichier (document privé, soumis à
       // validation admin), soit un document existant du propriétaire rattaché
       // tel quel (il garde son statut de vérification).
-      if (acteFrancisation) {
+      if (preparedActe) {
         await tx.document.create({
           data: {
             id_user,
             id_boat: created.id_boat,
             type: 'acte_francisation',
-            file_name: acteFrancisation.originalname,
-            file_url: acteFrancisation.path.replace(/\\/g, '/'),
+            file_name: preparedActe.safeOriginalName,
+            mime_type: preparedActe.detectedMimeType,
+            file_url: preparedActe.storedPath,
             upload_date: new Date(),
             status: 'pending',
           },
@@ -578,6 +613,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
       port: port ? { id_port: port.id_port, name: port.name, city: port.city } : null,
     };
   } catch (err) {
+    if (preparedActe) removeFileQuiet(preparedActe.storedPath);
     // Immatriculation unique : conflit → message clair pour le formulaire.
     if (err.code === 'P2002') {
       throw Object.assign(new Error('Cette immatriculation est déjà utilisée.'), { status: 409 });
@@ -711,6 +747,9 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
     nextStatus = substantialChange ? 'pending' : 'published';
   }
 
+  let preparedActe = null;
+  if (acteFrancisation) preparedActe = await preparePrivateDocument(acteFrancisation);
+
   try {
     const boat = await prisma.$transaction(async (tx) => {
       const updated = await tx.boat.update({
@@ -750,7 +789,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
       // Nouvel acte de francisation (fichier) : remplace l'ancien (ligne +
       // fichier) et repart en validation admin. Acte existant (id) : rattaché
       // tel quel, l'ancien rattaché au bateau est supprimé.
-      if (acteFrancisation) {
+      if (preparedActe) {
         const oldDocs = await tx.document.findMany({
           where: { id_boat: id, type: 'acte_francisation' },
           select: { id_document: true, file_url: true },
@@ -762,8 +801,9 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
             id_user,
             id_boat: id,
             type: 'acte_francisation',
-            file_name: acteFrancisation.originalname,
-            file_url: acteFrancisation.path.replace(/\\/g, '/'),
+            file_name: preparedActe.safeOriginalName,
+            mime_type: preparedActe.detectedMimeType,
+            file_url: preparedActe.storedPath,
             upload_date: new Date(),
             status: 'pending',
           },
@@ -799,6 +839,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
       port: port ? { id_port: port.id_port, name: port.name, city: port.city } : null,
     };
   } catch (err) {
+    if (preparedActe) removeFileQuiet(preparedActe.storedPath);
     if (err.code === 'P2002') {
       throw Object.assign(new Error('Cette immatriculation est déjà utilisée.'), { status: 409 });
     }

@@ -622,7 +622,12 @@ export async function updateAvatar(id_user, file, origin) {
   }
 
   await prisma.image.create({
-    data: { id_user, type: 'avatar', url: `${origin}/uploads/avatars/${file.filename}` },
+    data: {
+      id_user,
+      type: 'avatar',
+      url: `${origin}/uploads/avatars/${file.filename}`,
+      mime_type: file.detectedMimeType || 'application/octet-stream',
+    },
   });
   return getCurrentUser(id_user);
 }

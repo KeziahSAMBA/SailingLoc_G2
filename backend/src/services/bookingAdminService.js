@@ -1,9 +1,47 @@
 import prisma from '../config/db.js';
 import { refundIntent } from '../config/stripe.js';
 import { sendDisputeDecisionEmail } from './emailService.js';
+import { readDecrypted } from '../utils/fileCrypto.js';
+import { mimeTypeForFileName, resolveExistingPrivateFile } from '../utils/fileSecurity.js';
 
 const BOOKING_STATUSES = ['pending', 'confirmed', 'refused', 'cancelled'];
 const DISPUTE_STATUSES = ['open', 'resolved', 'rejected'];
+
+export async function getDisputeImageFile(id_dispute, id_image) {
+  const disputeId = Number(id_dispute);
+  const imageId = Number(id_image);
+  if (
+    !Number.isSafeInteger(disputeId) ||
+    !Number.isSafeInteger(imageId) ||
+    disputeId <= 0 ||
+    imageId <= 0
+  ) {
+    throw Object.assign(new Error('Preuve introuvable.'), { status: 404 });
+  }
+  const image = await prisma.image.findFirst({
+    where: {
+      id_image: imageId,
+      id_dispute: disputeId,
+      type: 'dispute',
+      deleted_at: null,
+    },
+    select: { url: true, mime_type: true },
+  });
+  if (!image) throw Object.assign(new Error('Preuve introuvable.'), { status: 404 });
+
+  let absPath;
+  try {
+    absPath = await resolveExistingPrivateFile(image.url, 'dispute');
+    const content = await readDecrypted(absPath);
+    const allowed = new Set(['image/jpeg', 'image/png', 'image/webp']);
+    const mimeType = allowed.has(image.mime_type)
+      ? image.mime_type
+      : mimeTypeForFileName(image.url);
+    return { content, mimeType: allowed.has(mimeType) ? mimeType : 'application/octet-stream' };
+  } catch {
+    throw Object.assign(new Error('Preuve introuvable.'), { status: 404 });
+  }
+}
 
 export async function listBookings({ status, search } = {}) {
   const where = { deleted_at: null };
@@ -106,7 +144,11 @@ export async function listDisputes({ status } = {}) {
         },
       },
       opener: { select: { id_user: true, first_name: true, last_name: true, email: true } },
-      images: { where: { deleted_at: null }, orderBy: { order: 'asc' }, select: { url: true } },
+      images: {
+        where: { deleted_at: null },
+        orderBy: { order: 'asc' },
+        select: { id_image: true },
+      },
     },
     orderBy: { created_at: 'desc' },
   });
@@ -118,7 +160,8 @@ export async function listDisputes({ status } = {}) {
     resolution: d.resolution,
     created_at: d.created_at,
     resolved_at: d.resolved_at,
-    photos: d.images.map((img) => img.url),
+    // Return protected API paths, never the private disk path or a public URL.
+    photos: d.images.map((img) => `/admin/disputes/${d.id_dispute}/images/${img.id_image}`),
     booking: d.booking
       ? {
           id_booking: d.booking.id_booking,

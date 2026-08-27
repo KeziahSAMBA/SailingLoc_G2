@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import boatRoutes from './routes/boatRoutes.js';
 import portRoutes from './routes/portRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -38,8 +39,16 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stri
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
-// UPLOADS_DIR : chemin disque configurable (volume Railway) ; l'URL /uploads ne change pas.
-app.use('/uploads', express.static(process.env.UPLOADS_DIR || 'uploads'));
+// Seuls les avatars et photos de bateaux sont publics.  Les preuves de litige
+// et documents résident sous storage/ et ne sont jamais exposés par le serveur
+// statique ; ils passent par des routes protégées qui déchiffrent à la volée.
+const publicUploads = path.resolve(process.env.UPLOADS_DIR || 'uploads');
+const publicStaticOptions = { dotfiles: 'deny', index: false, fallthrough: true };
+app.use('/uploads/boats', express.static(path.join(publicUploads, 'boats'), publicStaticOptions));
+app.use(
+  '/uploads/avatars',
+  express.static(path.join(publicUploads, 'avatars'), publicStaticOptions)
+);
 
 const registerLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
