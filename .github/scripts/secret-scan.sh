@@ -151,6 +151,59 @@ run_policy_self_test() {
     printf 'Secret scanner policy self-test failed: fixture was allow-listed for the wrong detector.\n' >&2
     return 1
   fi
+
+  # Exercise the complete git-grep path, including the revision prefix that
+  # git emits for a working-tree scan. The temporary repository keeps this
+  # integration check independent of the caller's checkout and avoids adding
+  # a fixture (or its value) to the real repository.
+  local fixture_repo
+  fixture_repo="$(mktemp -d)"
+  local integration_prefix='integration-'
+  local integration_suffix='secret-fixture-value-1234567890'
+  local integration_value="${integration_prefix}${integration_suffix}"
+  local blocked_key='INTEGRATION_'
+  blocked_key+='SECRET'
+  local blocked_line="const ${blocked_key} = ${quote}${integration_value}${quote};"
+  local scan_output=''
+  local scan_status=0
+
+  if ! mkdir -p "$fixture_repo/backend/tests" "$fixture_repo/backend/src" \
+    || ! printf '%s\n' "$env_line" >"$fixture_repo/backend/tests/securityAuth.test.js" \
+    || ! printf '%s\n' "$blocked_line" >"$fixture_repo/backend/src/server.js" \
+    || ! git -C "$fixture_repo" init -q \
+    || ! git -C "$fixture_repo" -c user.name='secret-scan-self-test' \
+      -c user.email='secret-scan-self-test@example.invalid' add -- \
+      backend/tests/securityAuth.test.js backend/src/server.js \
+    || ! git -C "$fixture_repo" -c user.name='secret-scan-self-test' \
+      -c user.email='secret-scan-self-test@example.invalid' commit -qm 'secret scanner fixture'; then
+    rm -rf -- "$fixture_repo"
+    printf 'Secret scanner integration self-test failed: unable to create fixture repository.\n' >&2
+    return 1
+  fi
+
+  if ! pushd "$fixture_repo" >/dev/null; then
+    rm -rf -- "$fixture_repo"
+    printf 'Secret scanner integration self-test failed: unable to enter fixture repository.\n' >&2
+    return 1
+  fi
+  scan_output="$(scan_revision HEAD 'long-secret-assignment' "${PATTERNS[8]}")" || scan_status=$?
+  popd >/dev/null || true
+  rm -rf -- "$fixture_repo"
+
+  if ((scan_status == 0)); then
+    printf 'Secret scanner integration self-test failed: unallow-listed fixture was not detected.\n' >&2
+    return 1
+  fi
+  if [[ "$scan_output" != *'backend/src/server.js'* \
+    || "$scan_output" == *'backend/tests/securityAuth.test.js'* ]]; then
+    printf 'Secret scanner integration self-test failed: fixture path handling is incorrect.\n' >&2
+    return 1
+  fi
+  if [[ "$scan_output" == *"$integration_value"* ]]; then
+    printf 'Secret scanner integration self-test failed: candidate value was printed.\n' >&2
+    return 1
+  fi
+
   printf 'Secret scanner policy self-test passed.\n'
 }
 
@@ -175,7 +228,10 @@ scan_revision() {
     [[ -z "$match" ]] && continue
     local match_fields
     if [[ "$revision" == "HEAD" ]]; then
-      match_fields="$match"
+      # git grep prefixes HEAD matches as HEAD:path:line:content, just as it
+      # prefixes historical matches with their commit id. Remove that prefix
+      # before extracting the path, line number and complete source line.
+      match_fields="${match#HEAD:}"
     else
       match_fields="${match#*:}"
     fi
