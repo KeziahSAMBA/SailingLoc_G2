@@ -32,6 +32,7 @@ const PAYMENT_STATES = Object.freeze({
   RELEASING: 'releasing',
   REFUNDING: 'refunding',
   REFUNDED: 'refunded',
+  PARTIALLY_REFUNDED: 'partially_refunded',
   FAILED: 'failed',
   RECONCILIATION_REQUIRED: 'reconciliation_required',
 });
@@ -87,7 +88,7 @@ function refundTransitionData(payment, providerResult, now) {
   const complete = refundedAmount >= Number(payment.amount) - 0.000001;
   return {
     status: complete ? 'refunded' : 'success',
-    payment_state: complete ? PAYMENT_STATES.REFUNDED : 'partially_refunded',
+    payment_state: complete ? PAYMENT_STATES.REFUNDED : PAYMENT_STATES.PARTIALLY_REFUNDED,
     refunded_amount: refundedAmount,
     refunded_at: now,
     refund_reason:
@@ -661,7 +662,10 @@ export async function refuseExpiredPendingBookings(now = new Date()) {
                 deleted_at: true,
                 start_date: true,
                 payments: {
-                  where: { status: 'pending' },
+                  // A captured payment is normally already `success`, but a
+                  // partial refund keeps that public status while the
+                  // remaining balance is reconciled by a later sweep.
+                  where: { status: { in: ACTIVE_PAYMENT_STATUSES } },
                   select: {
                     id_payment: true,
                     status: true,
@@ -686,27 +690,48 @@ export async function refuseExpiredPendingBookings(now = new Date()) {
       for (const payment of current.payments || []) {
         await lockBookingPayment(tx, current.id_booking, payment.id_payment);
         const state = payment.payment_state || 'legacy';
-        if ([PAYMENT_STATES.CAPTURING, PAYMENT_STATES.REFUNDING].includes(state)) {
+        if (
+          state === PAYMENT_STATES.CAPTURING ||
+          state === PAYMENT_STATES.REFUNDING ||
+          (payment.status === 'success' && state === PAYMENT_STATES.RELEASING)
+        ) {
           // A capture/refund worker owns this row; retry the expiry sweep after
           // that operation records its terminal provider state.
           return null;
         }
-        await transitionPaymentState(
-          tx,
-          payment.id_payment,
-          [
-            PAYMENT_STATES.CREATING,
-            'creation_unknown',
-            PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
-            PAYMENT_STATES.REQUIRES_CAPTURE,
+        if (payment.status === 'pending') {
+          await transitionPaymentState(
+            tx,
+            payment.id_payment,
+            [
+              PAYMENT_STATES.CREATING,
+              'creation_unknown',
+              PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
+              PAYMENT_STATES.REQUIRES_CAPTURE,
+              PAYMENT_STATES.RELEASING,
+              PAYMENT_STATES.RECONCILIATION_REQUIRED,
+              'legacy_pending',
+              'legacy',
+            ],
             PAYMENT_STATES.RELEASING,
-            PAYMENT_STATES.RECONCILIATION_REQUIRED,
-            'legacy_pending',
-            'legacy',
-          ],
-          PAYMENT_STATES.RELEASING,
-          { where: { status: 'pending' } }
-        );
+            { where: { status: 'pending' } }
+          );
+        } else {
+          // A previous partial refund and a provider error are both retryable,
+          // but a live capture/refund operation must be left to its owner.
+          await transitionPaymentState(
+            tx,
+            payment.id_payment,
+            [
+              PAYMENT_STATES.SUCCEEDED,
+              PAYMENT_STATES.PARTIALLY_REFUNDED,
+              PAYMENT_STATES.RECONCILIATION_REQUIRED,
+              'legacy',
+            ],
+            PAYMENT_STATES.REFUNDING,
+            { where: { status: 'success' } }
+          );
+        }
         payments.push(payment);
       }
       return { booking: current, payments };
@@ -718,7 +743,16 @@ export async function refuseExpiredPendingBookings(now = new Date()) {
       try {
         providerResults.set(
           payment.id_payment,
-          await releasePendingIntentStrict(payment.transaction_ref, payment.amount)
+          payment.status === 'success'
+            ? await refundCapturedIntentStrict(
+                payment.transaction_ref,
+                remainingRefundAmount(payment),
+                'expire-after-capture'
+              )
+            : await releasePendingIntentStrict(
+                payment.transaction_ref,
+                remainingRefundAmount(payment)
+              )
         );
       } catch (error) {
         await prisma.$transaction(async (tx) => {
@@ -727,10 +761,10 @@ export async function refuseExpiredPendingBookings(now = new Date()) {
             await transitionPaymentState(
               tx,
               payment.id_payment,
-              PAYMENT_STATES.RELEASING,
+              payment.status === 'success' ? PAYMENT_STATES.REFUNDING : PAYMENT_STATES.RELEASING,
               PAYMENT_STATES.RECONCILIATION_REQUIRED,
               {
-                where: { status: 'pending' },
+                where: { status: payment.status },
                 data: {
                   reconciliation_error: reconciliationError(error),
                   reconciliation_at: new Date(),
@@ -754,27 +788,23 @@ export async function refuseExpiredPendingBookings(now = new Date()) {
             })
           : null;
       if (!current || current.deleted_at || current.status !== 'pending') return false;
+      const paymentDataById = new Map();
       for (const payment of prepared.payments) {
         const providerResult = providerResults.get(payment.id_payment);
         if (!providerResult) continue;
         await lockBookingPayment(tx, prepared.booking.id_booking, payment.id_payment);
-        const refundData =
-          providerResult.kind === 'refunded'
-            ? {
-                refunded_amount: Math.min(
-                  Number(payment.amount),
-                  Math.max(0, Number(payment.refunded_amount || 0) + providerResult.amount)
-                ),
-              }
-            : {};
+        const paymentData = refundTransitionData(payment, providerResult, now);
+        paymentDataById.set(payment.id_payment, paymentData);
         await transitionPaymentState(
           tx,
           payment.id_payment,
-          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
-          PAYMENT_STATES.REFUNDED,
+          payment.status === 'success'
+            ? [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED]
+            : [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          paymentData.payment_state,
           {
-            where: { status: 'pending' },
-            data: { status: 'refunded', refunded_at: now, ...refundData },
+            where: { status: payment.status },
+            data: paymentData,
           }
         );
       }
@@ -782,7 +812,11 @@ export async function refuseExpiredPendingBookings(now = new Date()) {
       // unresolved.  Successful releases are finalized above, while failed
       // ones remain reconciliation_required and are retried by the next
       // scheduled sweep or an explicit decision.
-      if (!prepared.payments.every((payment) => providerResults.has(payment.id_payment))) {
+      if (
+        !prepared.payments.every(
+          (payment) => paymentDataById.get(payment.id_payment)?.status === 'refunded'
+        )
+      ) {
         return false;
       }
       await compareAndSetBooking(tx, prepared.booking.id_booking, ['pending'], {
