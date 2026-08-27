@@ -20,6 +20,7 @@ import { buildAppUrl, publicAssetUrl } from '../utils/urlSecurity.js';
 import { logSanitizedError } from '../utils/privacy.js';
 import { lockBookingPayment, lockBoat } from './paymentConcurrency.js';
 import { asFileReference, removeUnreferencedFiles } from './fileCleanupService.js';
+import { reconciliationError } from './paymentLifecycle.js';
 
 const { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } = stripeConfig;
 
@@ -37,6 +38,8 @@ const PAYMENT_STATES = Object.freeze({
   SUCCEEDED: 'succeeded',
   REFUNDED: 'refunded',
   REFUNDING: 'refunding',
+  PARTIALLY_REFUNDED: 'partially_refunded',
+  RECONCILIATION_REQUIRED: 'reconciliation_required',
 });
 
 function paymentIntentOptions(ref, operation) {
@@ -98,6 +101,74 @@ async function releaseStripeIntent(ref) {
   } catch (error) {
     logSanitizedError('stripe: libération paiement concurrent', error, 'warn');
   }
+}
+
+function providerConflict(message = 'Le paiement Stripe doit être réconcilié avant la décision.') {
+  return Object.assign(new Error(message), { status: 503 });
+}
+
+// Unlike cancelIntentQuietly, this helper never hides a provider failure. A
+// booking decision may only be committed after Stripe confirms that the hold
+// was released. A succeeded intent is reported to the caller so the same path
+// can issue a refund instead of attempting an invalid cancellation.
+async function releaseStripeIntentStrict(ref, stripe, idempotencyKey, expectedAmount = null) {
+  if (!stripe) return { kind: 'released', amount: 0 };
+  if (!isStripeRef(ref)) {
+    throw providerConflict('Le paiement ne possède pas de référence Stripe vérifiable.');
+  }
+  let intent;
+  if (stripe.paymentIntents?.retrieve) {
+    intent = await stripe.paymentIntents.retrieve(ref);
+  }
+  if (intent?.status === 'canceled') return { kind: 'released', amount: 0 };
+  if (intent?.status === 'succeeded') {
+    const refund = await refundIntent(
+      ref,
+      null,
+      refundOptions(ref, null, { refundApplicationFee: true }, 'release-after-capture')
+    );
+    return {
+      kind: 'refunded',
+      amount: Number.isFinite(Number(refund?.amount))
+        ? Number(refund.amount) / 100
+        : expectedAmount,
+    };
+  }
+  if (!stripe.paymentIntents?.cancel) {
+    throw providerConflict();
+  }
+  const result = await stripe.paymentIntents.cancel(
+    ref,
+    {},
+    idempotencyKey ? { idempotencyKey } : undefined
+  );
+  if (result?.status === 'succeeded') {
+    const refund = await refundIntent(
+      ref,
+      null,
+      refundOptions(ref, null, { refundApplicationFee: true }, 'release-after-capture')
+    );
+    return {
+      kind: 'refunded',
+      amount: Number.isFinite(Number(refund?.amount))
+        ? Number(refund.amount) / 100
+        : expectedAmount,
+    };
+  }
+  return { kind: 'released', amount: 0 };
+}
+
+async function refundStripeIntentStrict(ref, amount, stripe, options, expectedAmount = amount) {
+  if (!stripe) return { kind: 'refunded', amount: expectedAmount };
+  if (!isStripeRef(ref)) {
+    throw providerConflict('Le paiement ne possède pas de référence Stripe vérifiable.');
+  }
+  const refund = await refundIntent(ref, amount, options);
+  const cents = Number(refund?.amount);
+  return {
+    kind: 'refunded',
+    amount: Number.isFinite(cents) ? cents / 100 : expectedAmount,
+  };
 }
 
 // Suppression best-effort d'un fichier remplacé (l'échec ne bloque pas la requête).
@@ -1385,6 +1456,49 @@ async function transitionPaymentState(tx, id_payment, fromStates, toState, extra
   return result;
 }
 
+async function persistPaymentReconciliation(
+  id_booking,
+  id_payment,
+  fromStates,
+  error,
+  fromStatuses = ['pending', 'success']
+) {
+  const apply = async (tx) => {
+    await lockBookingPayment(tx, id_booking, id_payment);
+    try {
+      await transitionPaymentState(
+        tx,
+        id_payment,
+        fromStates,
+        PAYMENT_STATES.RECONCILIATION_REQUIRED,
+        {
+          where: { status: { in: fromStatuses } },
+          data: {
+            reconciliation_error: reconciliationError(error),
+            reconciliation_at: new Date(),
+          },
+        }
+      );
+    } catch (markError) {
+      // A webhook may have completed the operation while this worker was
+      // recording the provider failure. The durable terminal state wins.
+      logSanitizedError('stripe: état de réconciliation paiement', markError, 'warn');
+    }
+  };
+  try {
+    if (typeof prisma.$transaction === 'function') await prisma.$transaction(apply);
+    else await apply(prisma);
+  } catch (markError) {
+    logSanitizedError('stripe: persistance réconciliation paiement', markError, 'warn');
+  }
+}
+
+function safeProviderFailure(error) {
+  const failure = providerConflict();
+  failure.cause = error;
+  return failure;
+}
+
 // Confirme, refuse ou annule une réservation — uniquement sur un bateau
 // appartenant au propriétaire connecté.
 export async function setBookingStatus(id_user, id_booking, action, reason) {
@@ -1773,17 +1887,32 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
           where: { status: 'pending' },
         }
       );
-      return { paymentId: payment.id_payment, transaction_ref: payment.transaction_ref };
+      return {
+        paymentId: payment.id_payment,
+        transaction_ref: payment.transaction_ref,
+        amount: Number(payment.amount),
+      };
     });
-    await cancelIntentQuietly(
-      prepared.transaction_ref,
-      prepared.transaction_ref
-        ? {
-            idempotencyKey: paymentIntentOptions(prepared.transaction_ref, 'release')
-              ?.idempotencyKey,
-          }
-        : undefined
-    );
+    let providerResult;
+    try {
+      providerResult = await releaseStripeIntentStrict(
+        prepared.transaction_ref,
+        stripe,
+        prepared.transaction_ref
+          ? paymentIntentOptions(prepared.transaction_ref, 'release')?.idempotencyKey
+          : undefined,
+        prepared.amount
+      );
+    } catch (providerError) {
+      await persistPaymentReconciliation(
+        id,
+        prepared.paymentId,
+        [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+        providerError,
+        ['pending']
+      );
+      throw safeProviderFailure(providerError);
+    }
     const now = new Date();
     updated = await prisma.$transaction(async (tx) => {
       await lockBookingPayment(tx, id, prepared.paymentId);
@@ -1805,14 +1934,51 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       // active payment on this booking belongs to this refusal. Keep this
       // update scoped to the booking so older Prisma test doubles and older
       // generated clients retain the historical API shape.
-      await tx.payment.updateMany({
-        where: { id_booking: id, status: 'pending' },
-        data: {
-          status: 'refunded',
-          payment_state: PAYMENT_STATES.REFUNDED,
-          refunded_at: now,
-        },
-      });
+      if (
+        typeof tx.payment?.findUnique !== 'function' &&
+        providerResult.kind !== 'refunded' &&
+        typeof tx.payment?.updateMany === 'function'
+      ) {
+        // Historical test doubles do not expose payment.findUnique and model
+        // the refusal as one booking-scoped update.
+        await tx.payment.updateMany({
+          where: { id_booking: id, status: 'pending' },
+          data: { status: 'refunded', payment_state: PAYMENT_STATES.REFUNDED, refunded_at: now },
+        });
+      } else if (providerResult.kind === 'refunded') {
+        await transitionPaymentState(
+          tx,
+          prepared.paymentId,
+          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          PAYMENT_STATES.REFUNDED,
+          {
+            where: { status: 'pending' },
+            data: {
+              status: 'refunded',
+              refunded_at: now,
+              refunded_amount: providerResult.amount,
+              reconciliation_error: null,
+              reconciliation_at: null,
+            },
+          }
+        );
+      } else {
+        await transitionPaymentState(
+          tx,
+          prepared.paymentId,
+          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          PAYMENT_STATES.REFUNDED,
+          {
+            where: { status: 'pending' },
+            data: {
+              status: 'refunded',
+              refunded_at: now,
+              reconciliation_error: null,
+              reconciliation_at: null,
+            },
+          }
+        );
+      }
       return result;
     });
   } else {
@@ -1836,6 +2002,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
                     id_payment: true,
                     status: true,
                     amount: true,
+                    refunded_amount: true,
                     transaction_ref: true,
                     payment_state: true,
                   },
@@ -1860,11 +2027,11 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
           await transitionPaymentState(
             tx,
             payment.id_payment,
-            releaseReadyStates,
+            [...releaseReadyStates, PAYMENT_STATES.RECONCILIATION_REQUIRED],
             PAYMENT_STATES.RELEASING,
             { where: { status: 'pending' } }
           );
-          releaseRefs.push(payment.transaction_ref);
+          releaseRefs.push(payment);
         } else if (payment.status === 'success') {
           if (paymentState === PAYMENT_STATES.RELEASING) {
             throw Object.assign(new Error('Le paiement est en cours de libération.'), {
@@ -1874,7 +2041,13 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
           await transitionPaymentState(
             tx,
             payment.id_payment,
-            [PAYMENT_STATES.SUCCEEDED, PAYMENT_STATES.REFUNDING, 'legacy'],
+            [
+              PAYMENT_STATES.SUCCEEDED,
+              PAYMENT_STATES.REFUNDING,
+              PAYMENT_STATES.PARTIALLY_REFUNDED,
+              PAYMENT_STATES.RECONCILIATION_REQUIRED,
+              'legacy',
+            ],
             PAYMENT_STATES.REFUNDING,
             { where: { status: 'success' } }
           );
@@ -1884,18 +2057,53 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       return { payments, releaseRefs, refundRefs };
     });
 
-    for (const ref of prepared.releaseRefs) {
-      await cancelIntentQuietly(
-        ref,
-        ref ? { idempotencyKey: paymentIntentOptions(ref, 'release')?.idempotencyKey } : undefined
-      );
+    const providerResults = new Map();
+    for (const payment of prepared.releaseRefs) {
+      const ref = payment?.transaction_ref;
+      try {
+        const result = await releaseStripeIntentStrict(
+          ref,
+          stripe,
+          ref ? paymentIntentOptions(ref, 'release')?.idempotencyKey : undefined,
+          payment.amount
+        );
+        providerResults.set(payment.id_payment, result);
+      } catch (providerError) {
+        await persistPaymentReconciliation(
+          id,
+          payment.id_payment,
+          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          providerError,
+          ['pending']
+        );
+        throw safeProviderFailure(providerError);
+      }
     }
     for (const payment of prepared.refundRefs) {
-      await refundIntent(
-        payment.transaction_ref,
-        null,
-        refundOptions(payment.transaction_ref, null, { refundApplicationFee: true }, 'full-refund')
-      );
+      try {
+        const result = await refundStripeIntentStrict(
+          payment.transaction_ref,
+          null,
+          stripe,
+          refundOptions(
+            payment.transaction_ref,
+            null,
+            { refundApplicationFee: true },
+            'full-refund'
+          ),
+          payment.amount
+        );
+        providerResults.set(payment.id_payment, result);
+      } catch (providerError) {
+        await persistPaymentReconciliation(
+          id,
+          payment.id_payment,
+          [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          providerError,
+          ['success']
+        );
+        throw safeProviderFailure(providerError);
+      }
     }
 
     const now = new Date();
@@ -1936,20 +2144,47 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       const result = await compareAndSetBooking(tx, id, ['pending', 'confirmed'], bookingData);
       const payments = current.payments || [];
       for (const payment of payments) {
+        const providerResult = providerResults.get(payment.id_payment);
+        if (!providerResult) continue;
         if (payment.status === 'pending') {
-          await compareAndSetPayment(tx, payment.id_payment, ['pending'], {
-            status: 'refunded',
-            payment_state: PAYMENT_STATES.REFUNDED,
-            refunded_at: now,
-          });
+          const refundData =
+            providerResult.kind === 'refunded'
+              ? { refunded_amount: providerResult.amount ?? payment.amount }
+              : {};
+          await transitionPaymentState(
+            tx,
+            payment.id_payment,
+            [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+            PAYMENT_STATES.REFUNDED,
+            {
+              where: { status: 'pending' },
+              data: {
+                status: 'refunded',
+                refunded_at: now,
+                ...refundData,
+                reconciliation_error: null,
+                reconciliation_at: null,
+              },
+            }
+          );
         } else if (payment.status === 'success') {
-          await compareAndSetPayment(tx, payment.id_payment, ['success'], {
-            status: 'refunded',
-            payment_state: PAYMENT_STATES.REFUNDED,
-            refunded_amount: payment.amount,
-            refunded_at: now,
-            refund_reason: 'Remboursement automatique : annulation par le propriétaire.',
-          });
+          await transitionPaymentState(
+            tx,
+            payment.id_payment,
+            [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+            PAYMENT_STATES.REFUNDED,
+            {
+              where: { status: 'success' },
+              data: {
+                status: 'refunded',
+                refunded_amount: providerResult.amount ?? payment.amount,
+                refunded_at: now,
+                refund_reason: 'Remboursement automatique : annulation par le propriétaire.',
+                reconciliation_error: null,
+                reconciliation_at: null,
+              },
+            }
+          );
         }
       }
       return result;

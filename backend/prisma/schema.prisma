@@ -233,6 +233,10 @@ model Payment {
   // It is deliberately separate from the public payment status: a row can be
   // pending while a PaymentIntent is being created or captured.
   payment_state    String        @default("legacy") @db.VarChar(40)
+  // Internal marker used when the provider outcome is unknown or conflicts
+  // with the booking decision. These fields are never part of the public API.
+  reconciliation_error String?   @db.VarChar(500)
+  reconciliation_at    DateTime?
   transaction_ref  String?       @unique @db.VarChar(255)
   // Clé stable de réservation/essai : elle est également envoyée à Stripe
   // comme clé d'idempotence lors de la création du PaymentIntent. Les lignes

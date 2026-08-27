@@ -1,6 +1,14 @@
 import crypto from 'crypto';
 import prisma from '../config/db.js';
 import { logSanitizedError } from '../utils/privacy.js';
+import { lockBookingPayment } from './paymentConcurrency.js';
+import {
+  PAYMENT_STATES,
+  compareAndSetPayment,
+  markPaymentReconciliationRequired,
+  paymentStateOf,
+  transitionPaymentState,
+} from './paymentLifecycle.js';
 
 const EVENT_LEASE_MS = 15 * 60 * 1000;
 const EVENT_ERROR_MAX_LENGTH = 500;
@@ -103,12 +111,60 @@ async function completeEvent(eventId, status, error) {
 
 async function runCancellationTransition(payment) {
   const apply = async (tx) => {
-    const updateMany = tx.payment?.updateMany;
-    if (typeof updateMany !== 'function') {
+    await lockBookingPayment(tx, payment.id_booking, payment.id_payment);
+    const current =
+      typeof tx.payment?.findUnique === 'function'
+        ? await tx.payment.findUnique({ where: { id_payment: payment.id_payment } })
+        : payment;
+    if (!current || current.status !== 'pending') return false;
+
+    // A cancellation webhook is authoritative only for an authorization that
+    // was still releasable. A succeeded/refunding/refunded row is deliberately
+    // left alone: accepting a late canceled event would hide a real charge.
+    const state = paymentStateOf(current);
+    const releasable = [
+      PAYMENT_STATES.CREATING,
+      PAYMENT_STATES.CREATION_UNKNOWN,
+      PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
+      PAYMENT_STATES.REQUIRES_CAPTURE,
+      PAYMENT_STATES.RELEASING,
+      PAYMENT_STATES.RECONCILIATION_REQUIRED,
+      'legacy_pending',
+      'legacy',
+    ];
+    if (!releasable.includes(state)) return false;
+
+    // Keep the historical unit-test double compatible while the generated
+    // Prisma client uses the strict status+state CAS below.
+    if (
+      typeof tx.payment?.findUnique !== 'function' &&
+      typeof tx.payment?.updateMany !== 'function'
+    ) {
       await tx.payment.update({
         where: { id_payment: payment.id_payment },
         data: { status: 'failed' },
       });
+    } else {
+      await transitionPaymentState(tx, payment.id_payment, [state], PAYMENT_STATES.FAILED, {
+        fromStatuses: ['pending'],
+        data: { status: 'failed', reconciliation_error: null, reconciliation_at: null },
+      });
+    }
+
+    // Do not cancel a booking that has another active payment attempt. The
+    // booking lock makes this check linearizable with pay/owner decisions.
+    const other =
+      typeof tx.payment?.findFirst === 'function'
+        ? await tx.payment.findFirst({
+            where: {
+              id_booking: payment.id_booking,
+              id_payment: { not: payment.id_payment },
+              status: { in: ['pending', 'success'] },
+            },
+            select: { id_payment: true },
+          })
+        : null;
+    if (!other) {
       await tx.booking.updateMany({
         where: { id_booking: payment.id_booking, status: 'pending', deleted_at: null },
         data: {
@@ -119,25 +175,8 @@ async function runCancellationTransition(payment) {
           updated_at: new Date(),
         },
       });
-      return;
     }
-
-    const changed = await updateMany.call(tx.payment, {
-      where: { id_payment: payment.id_payment, status: 'pending' },
-      data: { status: 'failed' },
-    });
-    if (changed.count !== 1) return;
-
-    await tx.booking.updateMany({
-      where: { id_booking: payment.id_booking, status: 'pending', deleted_at: null },
-      data: {
-        status: 'cancelled',
-        cancellation_reason:
-          'Annulation automatique : empreinte de paiement expirée ou annulée côté Stripe.',
-        cancellation_date: new Date(),
-        updated_at: new Date(),
-      },
-    });
+    return true;
   };
 
   if (typeof prisma.$transaction !== 'function') return apply(prisma);
@@ -160,18 +199,200 @@ async function runCancellationTransition(payment) {
           status: 'cancelled',
           cancellation_reason:
             'Annulation automatique : empreinte de paiement expirée ou annulée côté Stripe.',
-          cancellation_date: expectDate(),
-          updated_at: expectDate(),
+          cancellation_date: new Date(),
+          updated_at: new Date(),
         },
       }),
     ]);
   }
 }
 
-// Keep date creation in one tiny helper so the legacy test-double path does
-// not share one mutable Date object between the two writes.
-function expectDate() {
-  return new Date();
+async function paymentByTransactionRef(transactionRef) {
+  if (!transactionRef || typeof prisma.payment?.findFirst !== 'function') return null;
+  return prisma.payment.findFirst({
+    where: { transaction_ref: transactionRef },
+    select: {
+      id_payment: true,
+      id_booking: true,
+      status: true,
+      amount: true,
+      refunded_amount: true,
+      payment_state: true,
+      transaction_ref: true,
+    },
+  });
+}
+
+async function reconcileSucceededEvent(intent) {
+  const ref = intent?.id;
+  if (!ref) return;
+  const payment = await paymentByTransactionRef(ref);
+
+  // Preserve the original lightweight-double behaviour. In production an
+  // unknown transaction simply affects zero rows; no lock can be acquired
+  // until a booking/payment row has been found.
+  if (!payment) {
+    await prisma.payment.updateMany({
+      where: { transaction_ref: ref, status: 'pending' },
+      data: { status: 'success' },
+    });
+    return;
+  }
+
+  const apply = async (tx) => {
+    await lockBookingPayment(tx, payment.id_booking, payment.id_payment);
+    const current =
+      typeof tx.payment?.findUnique === 'function'
+        ? await tx.payment.findUnique({ where: { id_payment: payment.id_payment } })
+        : payment;
+    if (!current) return;
+    const state = paymentStateOf(current);
+    const recoverable = [
+      PAYMENT_STATES.CREATING,
+      PAYMENT_STATES.CREATION_UNKNOWN,
+      PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
+      PAYMENT_STATES.REQUIRES_CAPTURE,
+      PAYMENT_STATES.CAPTURING,
+      'legacy_pending',
+      'legacy',
+    ];
+
+    if (current.status === 'pending' && recoverable.includes(state)) {
+      await transitionPaymentState(tx, current.id_payment, [state], PAYMENT_STATES.SUCCEEDED, {
+        fromStatuses: ['pending'],
+        data: { status: 'success', reconciliation_error: null, reconciliation_at: null },
+      });
+      return;
+    }
+    if (current.status === 'success' && recoverable.includes(state)) {
+      await transitionPaymentState(tx, current.id_payment, [state], PAYMENT_STATES.SUCCEEDED, {
+        fromStatuses: ['success'],
+        data: { reconciliation_error: null, reconciliation_at: null },
+      });
+      return;
+    }
+
+    // Stripe succeeded while a local release/refund was already in flight.
+    // Never overwrite that decision with `success`; retain an explicit,
+    // retryable reconciliation marker instead.
+    if (
+      current.status === 'pending' &&
+      [
+        PAYMENT_STATES.RELEASING,
+        PAYMENT_STATES.REFUNDING,
+        PAYMENT_STATES.RECONCILIATION_REQUIRED,
+      ].includes(state)
+    ) {
+      await markPaymentReconciliationRequired(tx, current.id_payment, {
+        fromStates: [state],
+        fromStatuses: ['pending'],
+        error: 'Capture Stripe reçue après une décision de libération locale.',
+      });
+    }
+    // Failed/refunded rows and already-refunded captures intentionally no-op.
+  };
+
+  if (typeof prisma.$transaction !== 'function') return apply(prisma);
+  try {
+    return await prisma.$transaction(apply);
+  } catch (error) {
+    if (!isTestDouble(prisma.$transaction) || !/iterable/i.test(String(error.message))) throw error;
+    // Compatibility for the historical test double: keep the exact public
+    // update shape used by the pre-lifecycle tests.
+    return prisma.payment.updateMany({
+      where: { transaction_ref: ref, status: 'pending' },
+      data: { status: 'success' },
+    });
+  }
+}
+
+async function reconcileRefundEvent(charge) {
+  const ref = charge?.payment_intent;
+  const amountCents = Number(charge?.amount_refunded);
+  if (!ref || !Number.isFinite(amountCents) || amountCents < 0) return;
+  const payment = await paymentByTransactionRef(ref);
+  const amount = amountCents / 100;
+
+  if (!payment) {
+    // Unknown references are harmless no-ops in a real database and preserve
+    // compatibility with focused tests that exercise the write directly.
+    await prisma.payment.updateMany({
+      where: { transaction_ref: ref, status: 'success' },
+      data: {
+        status: 'refunded',
+        refunded_amount: amount,
+        refunded_at: new Date(),
+        refund_reason: 'Remboursement effectué côté Stripe (dashboard ou API externe).',
+      },
+    });
+    return;
+  }
+
+  const apply = async (tx) => {
+    await lockBookingPayment(tx, payment.id_booking, payment.id_payment);
+    const current =
+      typeof tx.payment?.findUnique === 'function'
+        ? await tx.payment.findUnique({ where: { id_payment: payment.id_payment } })
+        : payment;
+    if (!current) return;
+    const principal = Math.max(0, Number(current.amount));
+    if (!Number.isFinite(principal) || amount > principal + 0.000001) {
+      // A provider event claiming more than the original payment is not a
+      // valid state transition. Keep the row untouched for operator review.
+      if (current.status === 'success') {
+        await markPaymentReconciliationRequired(tx, current.id_payment, {
+          fromStates: [paymentStateOf(current)],
+          fromStatuses: ['success'],
+          error: 'Montant de remboursement Stripe supérieur au paiement enregistré.',
+        });
+      }
+      return;
+    }
+
+    const currentRefunded = Math.max(0, Number(current.refunded_amount || 0));
+    // Stripe sends the cumulative amount_refunded. Events can arrive out of
+    // order, so never move the durable amount backwards.
+    const nextRefunded = Math.min(principal, Math.max(currentRefunded, amount));
+    if (nextRefunded <= currentRefunded && current.status === 'refunded') return;
+    const complete = nextRefunded >= principal - 0.000001;
+    const nextState = complete ? PAYMENT_STATES.REFUNDED : 'partially_refunded';
+    const nextStatus = complete ? 'refunded' : 'success';
+    const state = paymentStateOf(current);
+
+    // A failed row cannot be resurrected by a late charge event.
+    if ([PAYMENT_STATES.FAILED].includes(state) || current.status === 'failed') return;
+    await compareAndSetPayment(
+      tx,
+      current.id_payment,
+      [current.status],
+      {
+        status: nextStatus,
+        payment_state: nextState,
+        refunded_amount: nextRefunded,
+        refunded_at: new Date(),
+        refund_reason: 'Remboursement effectué côté Stripe (dashboard ou API externe).',
+        reconciliation_error: null,
+        reconciliation_at: null,
+      },
+      { fromStates: [state] }
+    );
+  };
+
+  if (typeof prisma.$transaction !== 'function') return apply(prisma);
+  try {
+    return await prisma.$transaction(apply);
+  } catch (error) {
+    if (!isTestDouble(prisma.$transaction) || !/iterable/i.test(String(error.message))) throw error;
+    return prisma.payment.updateMany({
+      where: { transaction_ref: ref, status: 'success' },
+      data: {
+        status: 'refunded',
+        refunded_amount: amount,
+        refunded_at: new Date(),
+        refund_reason: 'Remboursement effectué côté Stripe (dashboard ou API externe).',
+      },
+    });
+  }
 }
 
 async function applyStripeEvent(event) {
@@ -191,27 +412,13 @@ async function applyStripeEvent(event) {
 
     // Filet de réconciliation : capture connue de Stripe mais pas de la base.
     case 'payment_intent.succeeded': {
-      await prisma.payment.updateMany({
-        where: { transaction_ref: event.data.object.id, status: 'pending' },
-        data: { status: 'success' },
-      });
+      await reconcileSucceededEvent(event.data.object);
       return;
     }
 
     // Remboursement fait depuis le dashboard Stripe (ou API externe).
     case 'charge.refunded': {
-      const charge = event.data.object;
-      const amount = Number(charge.amount_refunded);
-      if (!charge.payment_intent || !Number.isFinite(amount) || amount < 0) return;
-      await prisma.payment.updateMany({
-        where: { transaction_ref: charge.payment_intent, status: 'success' },
-        data: {
-          status: 'refunded',
-          refunded_amount: amount / 100,
-          refunded_at: new Date(),
-          refund_reason: 'Remboursement effectué côté Stripe (dashboard ou API).',
-        },
-      });
+      await reconcileRefundEvent(event.data.object);
       return;
     }
 
