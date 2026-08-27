@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 import {
@@ -141,15 +142,33 @@ function uploadDisputePhotos(req, res, next) {
 
 const router = Router();
 
+// Les endpoints de session et de jetons restent publics, mais ne doivent pas
+// pouvoir être utilisés comme oracle ou comme boucle de rejeu à grande
+// vitesse. Les limites sont par IP et n'affectent pas les routes métier.
+const sessionActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+});
+const verificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+});
+
 router.post('/register', register);
 router.post('/login', login);
-router.post('/refresh', refresh);
-router.post('/logout', logout);
+router.post('/refresh', sessionActionLimiter, refresh);
+router.post('/logout', sessionActionLimiter, logout);
 router.post('/resend-verification', resend);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.get('/reset-password/:token', verifyResetToken);
-router.get('/verify-email/:token', confirmEmail);
+router.get('/verify-email/:token', verificationLimiter, confirmEmail);
 router.get('/me', protect, me);
 router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);

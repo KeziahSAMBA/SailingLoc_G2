@@ -13,8 +13,9 @@ import {
   updateUser,
   createRefreshToken,
   findRefreshTokenByHash,
-  revokeRefreshToken,
+  rotateRefreshToken,
   revokeAllUserRefreshTokens,
+  consumeEmailVerificationToken,
 } from '../repositories/userRepository.js';
 import {
   sendVerificationEmail,
@@ -23,10 +24,11 @@ import {
 } from './emailService.js';
 import { reactivateOwnAccount } from './accountClosureService.js';
 import { initConfig } from '../config/appConfig.js';
+import { ACCESS_TOKEN_TTL, JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER } from '../config/auth.js';
 
 const { JWT_SECRET } = initConfig();
-const ACCESS_TOKEN_TTL = '15m';
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const EMAIL_VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const SET_PASSWORD_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24h pour définir son mdp après création
 const DUMMY_HASH = '$2a$12$CwTycUXWue0Thq9StjUM0uJ8eVCD7vYz3uTtbpcLzqAOJBT5VnYf6';
 
@@ -50,14 +52,21 @@ function signAccessToken(user) {
       email: user.email,
       role: user.role,
       first_name: user.first_name,
+      auth_version: Number.isInteger(user.auth_version) ? user.auth_version : 0,
     },
     JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_TTL }
+    {
+      expiresIn: ACCESS_TOKEN_TTL,
+      algorithm: JWT_ALGORITHM,
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+      subject: String(user.id_user),
+    }
   );
 }
 
 function hashToken(rawToken) {
-  return crypto.createHash('sha256').update(rawToken).digest('hex');
+  return crypto.createHash('sha256').update(String(rawToken), 'utf8').digest('hex');
 }
 
 async function issueRefreshToken(id_user, userAgent) {
@@ -68,7 +77,7 @@ async function issueRefreshToken(id_user, userAgent) {
     id_user,
     token_hash,
     expires_at,
-    user_agent: userAgent ? userAgent.slice(0, 255) : null,
+    user_agent: userAgent ? String(userAgent).slice(0, 255) : null,
   });
   return rawToken;
 }
@@ -142,6 +151,8 @@ export async function create({
 
   const hashed = await bcrypt.hash(password, 12);
   const token = crypto.randomBytes(32).toString('hex');
+  const tokenHash = hashToken(token);
+  const tokenExpiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TOKEN_TTL_MS);
 
   const user = await createUser({
     first_name: trimmedFirstName,
@@ -151,7 +162,8 @@ export async function create({
     role,
     phone: normalizedPhone || null,
     email_verified: false,
-    email_verification_token: token,
+    email_verification_token: tokenHash,
+    email_verification_token_expires_at: tokenExpiresAt,
   });
 
   try {
@@ -251,7 +263,11 @@ export async function resendVerification({ email, role }) {
   if (!user || user.email_verified) return;
 
   const token = crypto.randomBytes(32).toString('hex');
-  await updateUser(user.id_user, { email_verification_token: token });
+  const tokenHash = hashToken(token);
+  await updateUser(user.id_user, {
+    email_verification_token: tokenHash,
+    email_verification_token_expires_at: new Date(Date.now() + EMAIL_VERIFICATION_TOKEN_TTL_MS),
+  });
 
   try {
     await sendVerificationEmail(normalizedEmail, token, user.first_name);
@@ -322,15 +338,33 @@ export async function refreshSession(rawRefreshToken, { userAgent } = {}) {
     });
   }
 
-  if (stored.expires_at < new Date()) throw invalid;
+  const now = new Date();
+  if (stored.expires_at <= now) throw invalid;
 
   const user = await findUserById(stored.id_user);
-  if (!user || !user.is_active) throw invalid;
+  if (!user || !user.is_active || user.deleted_at) throw invalid;
 
   // Rotation : on révoque l'ancien et on émet un nouveau couple.
-  await revokeRefreshToken(stored.id_refresh);
+  const newRawToken = crypto.randomBytes(64).toString('hex');
+  const rotated = await rotateRefreshToken(
+    stored.id_refresh,
+    {
+      id_user: user.id_user,
+      token_hash: hashToken(newRawToken),
+      expires_at: new Date(now.getTime() + REFRESH_TOKEN_TTL_MS),
+      user_agent: userAgent ? String(userAgent).slice(0, 255) : null,
+    },
+    now
+  );
+  if (!rotated) {
+    await revokeAllUserRefreshTokens(stored.id_user);
+    throw Object.assign(new Error('Session compromise dÃ©tectÃ©e. Reconnectez-vous.'), {
+      status: 401,
+    });
+  }
+
   const accessToken = signAccessToken(user);
-  const newRefreshToken = await issueRefreshToken(user.id_user, userAgent);
+  const newRefreshToken = newRawToken;
 
   return { accessToken, refreshToken: newRefreshToken, user: publicUser(user) };
 }
@@ -340,13 +374,16 @@ export async function logoutSession(rawRefreshToken) {
   const token_hash = hashToken(rawRefreshToken);
   const stored = await findRefreshTokenByHash(token_hash);
   if (stored && !stored.revoked_at) {
-    await revokeRefreshToken(stored.id_refresh);
+    await prisma.refreshToken.updateMany({
+      where: { id_refresh: stored.id_refresh, revoked_at: null },
+      data: { revoked_at: new Date() },
+    });
   }
 }
 
 export async function getCurrentUser(id_user) {
   const user = await findUserById(id_user);
-  if (!user || !user.is_active) {
+  if (!user || !user.is_active || user.deleted_at) {
     throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
   }
   return publicUser(user);
@@ -401,7 +438,7 @@ export async function changePassword(id_user, { currentPassword, newPassword, co
   }
 
   const user = await findUserById(id_user);
-  if (!user || !user.is_active) {
+  if (!user || !user.is_active || user.deleted_at) {
     throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
   }
 
@@ -428,11 +465,23 @@ export async function changePassword(id_user, { currentPassword, newPassword, co
   }
 
   const hashed = await bcrypt.hash(newPassword, 12);
-  await updateUser(id_user, { password: hashed, updated_at: new Date() });
+  const now = new Date();
+  await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.updateMany({
+      where: { id_user, is_active: true, deleted_at: null },
+      data: { password: hashed, auth_version: { increment: 1 }, updated_at: now },
+    });
+    if (updated.count !== 1) {
+      throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
+    }
+    await tx.refreshToken.updateMany({
+      where: { id_user, revoked_at: null },
+      data: { revoked_at: now },
+    });
+  });
 
   // Sécurité : invalide TOUTES les sessions actives (tous les appareils, y compris
   // celui-ci). L'utilisateur devra se reconnecter avec son nouveau mot de passe.
-  await revokeAllUserRefreshTokens(id_user);
 }
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1h
@@ -444,10 +493,10 @@ export async function requestPasswordReset({ email, role }) {
 
   const normalizedEmail = String(email).trim().toLowerCase();
   const user = await findUserByEmailAndRole(normalizedEmail, role);
-  if (!user || !user.is_active) return;
+  if (!user || !user.is_active || user.deleted_at) return;
 
   const rawToken = crypto.randomBytes(32).toString('hex');
-  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const tokenHash = hashToken(rawToken);
   const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
 
   await updateUser(user.id_user, {
@@ -464,10 +513,10 @@ export async function requestPasswordReset({ email, role }) {
 
 export async function checkResetToken(token) {
   if (!token) return false;
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const tokenHash = hashToken(token);
   const user = await findUserByResetToken(tokenHash);
   if (!user || !user.reset_token_expires_at) return false;
-  return user.reset_token_expires_at > new Date();
+  return Boolean(user.is_active && !user.deleted_at && user.reset_token_expires_at > new Date());
 }
 
 export async function resetPassword({ token, password, confirmPassword }) {
@@ -486,22 +535,48 @@ export async function resetPassword({ token, password, confirmPassword }) {
     throw Object.assign(new Error('Les mots de passe ne correspondent pas.'), { status: 400 });
   }
 
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const tokenHash = hashToken(token);
   const user = await findUserByResetToken(tokenHash);
 
-  if (!user || !user.reset_token_expires_at || user.reset_token_expires_at < new Date()) {
+  const now = new Date();
+  if (
+    !user ||
+    !user.is_active ||
+    user.deleted_at ||
+    !user.reset_token_expires_at ||
+    user.reset_token_expires_at <= now
+  ) {
     throw Object.assign(new Error('Lien invalide ou expiré.'), { status: 400 });
   }
 
   const hashed = await bcrypt.hash(password, 12);
-  await updateUser(user.id_user, {
-    password: hashed,
-    reset_token: null,
-    reset_token_expires_at: null,
+  await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.updateMany({
+      where: {
+        id_user: user.id_user,
+        is_active: true,
+        deleted_at: null,
+        reset_token: tokenHash,
+        reset_token_expires_at: { gt: now },
+      },
+      data: {
+        password: hashed,
+        reset_token: null,
+        reset_token_expires_at: null,
+        auth_version: { increment: 1 },
+        updated_at: now,
+      },
+    });
+    if (updated.count !== 1) {
+      throw Object.assign(new Error('Lien invalide ou expirÃ©.'), { status: 400 });
+    }
+    await tx.refreshToken.updateMany({
+      where: { id_user: user.id_user, revoked_at: null },
+      data: { revoked_at: now },
+    });
   });
 
   // Force la déconnexion de toutes les sessions actives sur ce compte.
-  await revokeAllUserRefreshTokens(user.id_user);
 }
 
 export async function verifyEmail(token) {
@@ -509,15 +584,16 @@ export async function verifyEmail(token) {
     throw Object.assign(new Error('Token manquant.'), { status: 400 });
   }
 
-  const user = await findUserByVerificationToken(token);
+  const tokenHash = hashToken(token);
+  const user = await findUserByVerificationToken(tokenHash);
   if (!user) {
-    throw Object.assign(new Error('Token invalide ou expiré.'), { status: 404 });
+    throw Object.assign(new Error('Token invalide ou expiré.'), { status: 400 });
   }
 
-  await updateUser(user.id_user, {
-    email_verified: true,
-    email_verification_token: null,
-  });
+  const consumed = await consumeEmailVerificationToken(user.id_user, tokenHash, new Date());
+  if (consumed.count !== 1) {
+    throw Object.assign(new Error('Token invalide ou expirÃ©.'), { status: 400 });
+  }
 }
 
 // Remplace la photo de profil : l'ancienne (ligne + fichier local) est

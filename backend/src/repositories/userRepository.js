@@ -44,6 +44,22 @@ export async function revokeRefreshToken(id_refresh) {
   });
 }
 
+// Rotation atomique : deux requêtes concurrentes ne peuvent pas toutes deux
+// consommer le même refresh token. Le nombre de lignes mis à jour sert de
+// verrou logique pour détecter le rejeu.
+export async function rotateRefreshToken(id_refresh, data, now = new Date()) {
+  return prisma.$transaction(async (tx) => {
+    const claimed = await tx.refreshToken.updateMany({
+      where: { id_refresh, revoked_at: null, expires_at: { gt: now } },
+      data: { revoked_at: now },
+    });
+    if (claimed.count !== 1) return false;
+
+    await tx.refreshToken.create({ data });
+    return true;
+  });
+}
+
 export async function revokeAllUserRefreshTokens(id_user) {
   return prisma.refreshToken.updateMany({
     where: { id_user, revoked_at: null },
@@ -52,7 +68,31 @@ export async function revokeAllUserRefreshTokens(id_user) {
 }
 
 export async function findUserByVerificationToken(token) {
-  return prisma.user.findFirst({ where: { email_verification_token: token } });
+  return prisma.user.findFirst({
+    where: {
+      email_verification_token: token,
+      email_verified: false,
+      deleted_at: null,
+    },
+  });
+}
+
+export async function consumeEmailVerificationToken(id_user, token, now = new Date()) {
+  return prisma.user.updateMany({
+    where: {
+      id_user,
+      email_verification_token: token,
+      email_verification_token_expires_at: { gt: now },
+      email_verified: false,
+      deleted_at: null,
+    },
+    data: {
+      email_verified: true,
+      email_verification_token: null,
+      email_verification_token_expires_at: null,
+      updated_at: now,
+    },
+  });
 }
 
 export async function createUser(data) {

@@ -133,7 +133,12 @@ export async function deactivateOwnAccount(id_user, { password } = {}) {
     });
     await tx.user.update({
       where: { id_user },
-      data: { is_active: false, deactivated_at: now, updated_at: now },
+      data: {
+        is_active: false,
+        deactivated_at: now,
+        auth_version: { increment: 1 },
+        updated_at: now,
+      },
     });
   });
 
@@ -170,7 +175,13 @@ export async function deleteOwnAccount(id_user, { password, confirmation } = {})
     });
     await tx.user.update({
       where: { id_user },
-      data: { is_active: false, deactivated_at: null, deleted_at: now, updated_at: now },
+      data: {
+        is_active: false,
+        deactivated_at: null,
+        deleted_at: now,
+        auth_version: { increment: 1 },
+        updated_at: now,
+      },
     });
   });
 
@@ -275,7 +286,13 @@ export async function closePausedAccount(id_user, now = new Date()) {
     });
     await tx.user.update({
       where: { id_user },
-      data: { is_active: false, deactivated_at: null, deleted_at: now, updated_at: now },
+      data: {
+        is_active: false,
+        deactivated_at: null,
+        deleted_at: now,
+        auth_version: { increment: 1 },
+        updated_at: now,
+      },
     });
   });
 }

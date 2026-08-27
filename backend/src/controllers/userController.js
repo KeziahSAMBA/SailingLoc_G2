@@ -24,17 +24,18 @@ import {
   PAUSE_RETENTION_DAYS,
 } from '../services/accountClosureService.js';
 import { logActivity } from '../services/logService.js';
+import { getRuntimeEnvironment } from '../config/appConfig.js';
 
 const REFRESH_COOKIE_NAME = 'sl_refresh';
-const isProduction = process.env.NODE_ENV === 'production';
+const isProductionLike = ['production', 'staging'].includes(getRuntimeEnvironment());
 
 function refreshCookieOptions() {
   return {
     httpOnly: true,
     // En dev (http://localhost), un cookie Secure est rejeté par le navigateur.
     // On n'active Secure/SameSite=strict qu'en production (HTTPS).
-    secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    secure: isProductionLike,
+    sameSite: isProductionLike ? 'strict' : 'lax',
     path: '/api/users',
     maxAge: REFRESH_TOKEN_TTL_MS,
   };

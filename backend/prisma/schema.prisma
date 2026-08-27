@@ -19,8 +19,12 @@ model User {
   is_active                  Boolean    @default(true)
   email_verified             Boolean    @default(false)
   email_verification_token   String?    @db.VarChar(255)
+  email_verification_token_expires_at DateTime?
   reset_token                String?    @db.VarChar(255)
   reset_token_expires_at     DateTime?
+  // Incrémenté lors d'un changement de mot de passe, rôle ou état du compte.
+  // Les access tokens portant une version antérieure sont immédiatement rejetés.
+  auth_version               Int        @default(0)
   // Compte Stripe Connect du propriétaire (acct_…) : l'IBAN reste chez Stripe.
   stripe_account_id          String?    @db.VarChar(255)
   created_at                 DateTime   @default(now())
