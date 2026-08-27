@@ -62,10 +62,6 @@ allowlisted_fixture() {
   local expected_pattern=''
 
   case "$path|$label" in
-    'backend/tests/authSecurity.test.js|long-secret-assignment')
-      expected_value='a-secure-production-secret-with-more-than-32-characters'
-      expected_pattern="^[[:space:]]*process[.]env[.]JWT_SECRET[[:space:]]*=[[:space:]]*'${expected_value}'[[:space:]]*;[[:space:]]*$"
-      ;;
     'backend/tests/securityAuth.test.js|long-secret-assignment')
       expected_value='local-security-test-secret-with-more-than-32-chars'
       expected_pattern="^[[:space:]]*process[.]env[.]JWT_SECRET[[:space:]]*=[[:space:]]*'${expected_value}'[[:space:]]*;[[:space:]]*$"
@@ -108,32 +104,51 @@ run_policy_self_test() {
   local quote="'"
   local jwt_key='JWT_'
   jwt_key+='SECRET'
-  local env_line="process.env.${jwt_key} = ${quote}a-secure-production-secret-with-more-than-32-characters${quote};"
-  local altered_env_line="process.env.${jwt_key} = ${quote}a-secure-production-secret-with-more-than-32-characterX${quote};"
-  local object_line="  ${jwt_key}: ${quote}v3ry-long-random-production-secret-value-123${quote},"
+  local env_line="process.env.${jwt_key} = ${quote}local-security-test-secret-with-more-than-32-chars${quote};"
+  local altered_env_line="process.env.${jwt_key} = ${quote}local-security-test-secret-with-more-than-32-charX${quote};"
+  local production_object_line="  ${jwt_key}: ${quote}v3ry-long-random-production-secret-value-123${quote},"
+  local webhook_key='STRIPE_'
+  webhook_key+='WEBHOOK_SECRET'
+  local webhook_line="  ${webhook_key}: ${quote}whsec_productionWebhook123${quote},"
   local stripe_key='STRIPE_'
   stripe_key+='SECRET_KEY'
   local stripe_value="${SYNTHETIC_STRIPE_PREFIX}${SYNTHETIC_STRIPE_BODY}"
   local stripe_line="      ${stripe_key}: ${quote}${stripe_value}${quote},"
 
-  if ! allowlisted_fixture 'backend/tests/authSecurity.test.js' 'long-secret-assignment' "$env_line"; then
+  if ! allowlisted_fixture 'backend/tests/securityAuth.test.js' 'long-secret-assignment' "$env_line"; then
     printf 'Secret scanner policy self-test failed: known fixture was not allow-listed.\n' >&2
     return 1
   fi
-  if allowlisted_fixture 'backend/tests/authSecurity.test.js' 'long-secret-assignment' "$altered_env_line"; then
+  if allowlisted_fixture 'backend/tests/securityAuth.test.js' 'long-secret-assignment' "$altered_env_line"; then
     printf 'Secret scanner policy self-test failed: altered fixture was allow-listed.\n' >&2
     return 1
   fi
-  if ! allowlisted_fixture 'backend/tests/securitySecrets.test.js' 'long-secret-assignment' "$object_line"; then
+  if ! allowlisted_fixture 'backend/tests/securitySecrets.test.js' 'long-secret-assignment' "$production_object_line"; then
     printf 'Secret scanner policy self-test failed: object fixture was not allow-listed.\n' >&2
+    return 1
+  fi
+  if ! allowlisted_fixture 'backend/tests/securitySecrets.test.js' 'long-secret-assignment' "$webhook_line"; then
+    printf 'Secret scanner policy self-test failed: webhook fixture was not allow-listed.\n' >&2
+    return 1
+  fi
+  if ! allowlisted_fixture 'backend/tests/emailService.test.js' 'long-secret-assignment' "$webhook_line"; then
+    printf 'Secret scanner policy self-test failed: staging webhook fixture was not allow-listed.\n' >&2
     return 1
   fi
   if ! allowlisted_fixture 'backend/tests/emailService.test.js' 'stripe-live-key' "$stripe_line"; then
     printf 'Secret scanner policy self-test failed: key fixture was not allow-listed.\n' >&2
     return 1
   fi
+  if ! allowlisted_fixture 'backend/tests/securitySecrets.test.js' 'stripe-live-key' "$stripe_line"; then
+    printf 'Secret scanner policy self-test failed: production key fixture was not allow-listed.\n' >&2
+    return 1
+  fi
   if allowlisted_fixture 'backend/src/server.js' 'long-secret-assignment' "$env_line"; then
     printf 'Secret scanner policy self-test failed: copied fixture was allow-listed.\n' >&2
+    return 1
+  fi
+  if allowlisted_fixture 'backend/tests/securityAuth.test.js' 'stripe-live-key' "$stripe_line"; then
+    printf 'Secret scanner policy self-test failed: fixture was allow-listed for the wrong detector.\n' >&2
     return 1
   fi
   printf 'Secret scanner policy self-test passed.\n'

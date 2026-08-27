@@ -5,11 +5,13 @@ on:
     branches:
       - master
       - develop
+      - staging
       - feature/security-audit
   pull_request:
     branches:
       - master
       - develop
+      - staging
       - feature/security-audit
   workflow_dispatch:
 
@@ -127,6 +129,9 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify secret scanner policy fixtures
+        shell: bash
+        run: bash .github/scripts/secret-scan.sh --self-test
       - name: Scan tracked tree and reachable commits
         shell: bash
         run: bash .github/scripts/secret-scan.sh
