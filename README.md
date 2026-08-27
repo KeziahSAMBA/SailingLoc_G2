@@ -173,11 +173,16 @@ cp .env.example .env
 
 > **En Docker**, c'est le `.env` **racine** qui compte (copié depuis `.env.example` racine) : Docker Compose y lit toutes les variables et elles ont priorité sur les `.env` locaux.
 
+En production, le backend refuse de démarrer si `JWT_SECRET`, `DATABASE_URL`,
+`FILE_ENCRYPTION_KEY`, `APP_URL` HTTPS, les deux secrets Stripe live et une
+configuration email valide ne sont pas fournis. Le seed de démonstration est
+réservé aux environnements de développement et de test.
+
 Variables backend à renseigner dans `backend/.env` :
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/sailingloc
-JWT_SECRET=votre_secret_jwt
+JWT_SECRET=                         # générer une valeur aléatoire locale (32 caractères minimum)
 STRIPE_SECRET_KEY=sk_test_...        # voir section Paiements Stripe
 STRIPE_WEBHOOK_SECRET=whsec_...      # voir section Paiements Stripe
 FILE_ENCRYPTION_KEY=                 # openssl rand -hex 32
@@ -243,9 +248,9 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 ### Compte Administrateur
 
-| Email                 | Mot de passe   |
-| --------------------- | -------------- |
-| `admin@sailingloc.fr` | `Admin@123456` |
+| Email                 | Mot de passe                    |
+| --------------------- | ------------------------------- |
+| `admin@sailingloc.fr` | configuré localement uniquement |
 
 > **Connexion admin :** la page de login administrateur est séparée de celle des utilisateurs.
 > URL : [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
@@ -253,17 +258,17 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 ### Compte Locataire
 
-| Email                     | Mot de passe           |
-| ------------------------- | ---------------------- |
-| `thomas.bernard@email.fr` | `Locataire@2025Secure` |
+| Email                     | Mot de passe                    |
+| ------------------------- | ------------------------------- |
+| `thomas.bernard@email.fr` | configuré localement uniquement |
 
 ### Compte Propriétaire
 
-| Email                 | Mot de passe              |
-| --------------------- | ------------------------- |
-| `luc.martin@email.fr` | `Proprietaire@2025Secure` |
+| Email                 | Mot de passe                    |
+| --------------------- | ------------------------------- |
+| `luc.martin@email.fr` | configuré localement uniquement |
 
-> **Note :** Tous les mots de passe sont hachés avec bcrypt. Les données de test incluent 13 utilisateurs, 8 bateaux, 8 ports et 14 réservations pour un environnement de développement complet.
+> **Note :** Ces comptes sont uniquement créés par le seed de développement. Aucun mot de passe de démonstration n'est publié dans le dépôt ; ne lancez jamais le seed sur une base de staging ou de production.
 
 ---
 

@@ -1,13 +1,23 @@
 import { PrismaClient } from '@prisma/client';
 import { seedBoatReviews } from './reviewSeedData.js';
+import { enforceSeedPolicy, isSeedForced } from './seedPolicy.js';
 
-const prisma = new PrismaClient();
+let prisma;
 
 async function main() {
+  const seedPolicy = enforceSeedPolicy();
+  const force = isSeedForced();
+  if (!seedPolicy.allowed) {
+    console.log(
+      `[seed] Seed de démonstration ignoré en environnement ${seedPolicy.environment || 'déploiement'}.`
+    );
+    return;
+  }
+  prisma = new PrismaClient();
+
   // Le seed tourne à chaque démarrage du conteneur : on NE réinitialise PAS si des
   // données existent déjà, sinon on effacerait les comptes créés en cours de route.
   // Pour forcer un reset complet : SEED_FORCE=true.
-  const force = process.env.SEED_FORCE === 'true';
   const existingUsers = await prisma.user.count();
   if (existingUsers > 0 && !force) {
     console.log(
@@ -28,8 +38,9 @@ async function main() {
     RESTART IDENTITY CASCADE
   `);
 
-  // Passwords: Admin@123456 | Proprietaire@2025Secure | Locataire@2025Secure (bcryptjs)
-  // email_verified = TRUE for accounts listed in README (ready to login without verification step)
+  // Demo passwords are bcrypt hashes and are loaded only by development/test
+  // seeds. This script is never run by a production image or deployment.
+  // email_verified = TRUE keeps local fixtures ready to use without an email step.
   await prisma.$executeRawUnsafe(`
     INSERT INTO "user" (last_name, first_name, email, password, role, phone, is_active, email_verified) VALUES
     ('Admin',     'Super',    'admin@sailingloc.fr',       '$2a$12$tsDdeCb5vK.n7/Z7cW7wq.G0HU/2eBbkHtW/XqGnRFBdszjhVT5Ay', 'admin',        '0600000001', TRUE, TRUE),
@@ -1252,4 +1263,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => prisma?.$disconnect());

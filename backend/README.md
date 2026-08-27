@@ -57,7 +57,7 @@ Variables d'environnement principales (`backend/.env`) :
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/sailingloc
-JWT_SECRET=votre_secret_jwt
+JWT_SECRET=                         # générer une valeur aléatoire locale (32 caractères minimum)
 STRIPE_SECRET_KEY=sk_test_...
 EMAIL_HOST=localhost
 EMAIL_PORT=1025

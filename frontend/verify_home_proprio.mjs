@@ -1,6 +1,12 @@
 import { chromium } from 'playwright';
 
 const BASE = 'http://localhost:5173';
+const PROPRIETAIRE_EMAIL = process.env.E2E_PROPRIETAIRE_EMAIL || 'luc.martin@email.fr';
+const PROPRIETAIRE_PASSWORD = process.env.E2E_PROPRIETAIRE_PASSWORD;
+
+if (!PROPRIETAIRE_PASSWORD) {
+  throw new Error('E2E_PROPRIETAIRE_PASSWORD doit être défini dans l’environnement local.');
+}
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -29,8 +35,8 @@ await page.screenshot({ path: 'verify_login_page.png' });
 const emailInput = page.locator('input[type="email"]').first();
 const passwordInput = page.locator('input[type="password"]').first();
 await emailInput.waitFor({ state: 'visible', timeout: 10000 });
-await emailInput.fill('luc.martin@email.fr');
-await passwordInput.fill('Proprietaire@2025Secure');
+await emailInput.fill(PROPRIETAIRE_EMAIL);
+await passwordInput.fill(PROPRIETAIRE_PASSWORD);
 
 await page.waitForTimeout(500);
 await passwordInput.press('Enter');

@@ -36,10 +36,21 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      FILE_ENCRYPTION_KEY: ${FILE_ENCRYPTION_KEY}
+      APP_URL: ${APP_URL}
       EMAIL_HOST: ${EMAIL_HOST}
       EMAIL_PORT: ${EMAIL_PORT}
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_SECURE: ${EMAIL_SECURE:-false}
+      EMAIL_IGNORE_TLS: ${EMAIL_IGNORE_TLS:-false}
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
+      MAILGUN_HOST: ${MAILGUN_HOST:-api.mailgun.net}
+      # A production container must never be allowed to reset a database with
+      # the demonstration seed, even if its command is overridden locally.
+      SEED_FORCE: 'false'
     ports:
       - '4000:4000'
     volumes:

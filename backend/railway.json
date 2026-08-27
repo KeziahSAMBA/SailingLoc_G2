@@ -6,10 +6,8 @@
     "watchPatterns": ["backend/**", "package.json", "package-lock.json"]
   },
   "deploy": {
-    "preDeployCommand": [
-      "npm run prisma:deploy --workspace backend && cd backend && node prisma/seed.js"
-    ],
-    "startCommand": "npm start --workspace backend",
+    "preDeployCommand": ["npm run prisma:deploy --workspace backend"],
+    "startCommand": "NODE_ENV=production npm start --workspace backend",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
