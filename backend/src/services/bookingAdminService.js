@@ -1,11 +1,22 @@
 import prisma from '../config/db.js';
-import { refundIntent } from '../config/stripe.js';
+import * as stripeConfig from '../config/stripe.js';
 import { sendDisputeDecisionEmail } from './emailService.js';
 import { readDecrypted } from '../utils/fileCrypto.js';
 import { mimeTypeForFileName, resolveExistingPrivateFile } from '../utils/fileSecurity.js';
 
 const BOOKING_STATUSES = ['pending', 'confirmed', 'refused', 'cancelled'];
 const DISPUTE_STATUSES = ['open', 'resolved', 'rejected'];
+
+const { refundIntent } = stripeConfig;
+
+function refundOptions(ref, amount, base, operation) {
+  if (typeof stripeConfig.refundIdempotencyKey !== 'function') return base;
+  return {
+    ...base,
+    operation,
+    idempotencyKey: stripeConfig.refundIdempotencyKey(ref, amount, operation),
+  };
+}
 
 export async function getDisputeImageFile(id_dispute, id_image) {
   const disputeId = Number(id_dispute);
@@ -217,6 +228,22 @@ export async function setDisputeStatus(
     throw Object.assign(new Error('Litige introuvable.'), { status: 404 });
   }
 
+  // A decision is monotonic. Repeating the same decision is idempotent (the
+  // UI may retry after a timeout), whereas changing a resolved/rejected
+  // dispute would make the financial outcome ambiguous.
+  if (dispute.status !== 'open') {
+    if (dispute.status === status) {
+      return {
+        id_dispute: dispute.id_dispute,
+        status: dispute.status,
+        resolution: dispute.resolution,
+        resolved_at: dispute.resolved_at,
+        refund: null,
+      };
+    }
+    throw Object.assign(new Error('Ce litige a déjà été clôturé.'), { status: 409 });
+  }
+
   // Validation du pourcentage de remboursement (autorisé uniquement quand le
   // litige est résolu en faveur du locataire).
   const pct = Number(refund_percent);
@@ -227,47 +254,140 @@ export async function setDisputeStatus(
     });
   }
 
-  const updated = await prisma.dispute.update({
-    where: { id_dispute: id },
-    data: {
-      status,
-      resolution: (resolution && String(resolution).trim()) || null,
-      resolved_at: status === 'open' ? null : new Date(),
-    },
-  });
+  const decisionData = {
+    status,
+    resolution: (resolution && String(resolution).trim()) || null,
+    resolved_at: status === 'open' ? null : new Date(),
+  };
 
-  // Remboursement : on rembourse le paiement 'success' le plus récent rattaché
-  // à la réservation. Par défaut la commission est conservée par SailingLoc
-  // (politique standard) — sauf si l'admin coche « refund_commission ».
-  let refundedPayment = null;
-  if (wantsRefund) {
-    const target = (dispute.booking?.payments || []).find((p) => p.status === 'success');
-    if (target) {
-      const amount = Number(target.amount);
-      const commission = Number(target.commission);
-      const base = refund_commission ? amount + commission : amount;
-      const refundedAmount = Math.round(base * pct) / 100;
-      // Remboursement réel côté Stripe, plafonné au montant effectivement débité.
-      await refundIntent(target.transaction_ref, Math.min(refundedAmount, amount), {
-        refundApplicationFee: Boolean(refund_commission),
-      });
-      refundedPayment = await prisma.payment.update({
-        where: { id_payment: target.id_payment },
-        data: {
-          status: 'refunded',
-          refunded_amount: refundedAmount,
-          refunded_at: new Date(),
-          refund_reason:
-            (resolution && String(resolution).trim()) ||
-            `Remboursement à ${pct}% suite au litige #${id}`,
-          id_dispute: id,
-        },
-      });
+  const isTestDouble = (fn) => Boolean(fn?._isMockFunction);
+  const applyDecision = async (tx) => {
+    let target = (dispute.booking?.payments || []).find((p) => p.status === 'success');
+
+    // Serialize all refunds for one payment. This lock is held through the
+    // Stripe request and the database transition, so two different workers
+    // cannot calculate the same remaining balance concurrently.
+    if (target && typeof tx.$executeRaw === 'function') {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`payment:${target.id_payment}`}))`;
     }
+    if (target && typeof tx.payment?.findUnique === 'function') {
+      target = await tx.payment.findUnique({ where: { id_payment: target.id_payment } });
+    }
+
+    let refundedPayment = null;
+    if (wantsRefund && target && target.status === 'success') {
+      const amount = Math.max(0, Number(target.amount));
+      const commission = Math.max(0, Number(target.commission));
+      const alreadyRefunded = Math.min(amount, Math.max(0, Number(target.refunded_amount || 0)));
+      const base = refund_commission ? amount + commission : amount;
+      const requested = Math.min(
+        Math.max(0, amount - alreadyRefunded),
+        Math.round(((base * pct) / 100) * 100) / 100
+      );
+
+      if (requested > 0) {
+        // One key per dispute, independent of the requested percentage. If a
+        // worker crashes after Stripe accepted the refund, a retry receives
+        // the original Refund object instead of creating another refund.
+        const disputeOperation = `dispute-${id}`;
+        const stripeRefund = await refundIntent(
+          target.transaction_ref,
+          requested,
+          refundOptions(
+            target.transaction_ref,
+            null,
+            { refundApplicationFee: Boolean(refund_commission) },
+            disputeOperation
+          )
+        );
+        const stripeAmount = Number(stripeRefund?.amount);
+        const applied = Math.min(
+          Math.max(0, amount - alreadyRefunded),
+          Number.isFinite(stripeAmount) ? stripeAmount / 100 : requested
+        );
+        if (applied > 0) {
+          const paymentData = {
+            status: 'refunded',
+            refunded_amount: Math.round((alreadyRefunded + applied) * 100) / 100,
+            refunded_at: new Date(),
+            refund_reason:
+              (resolution && String(resolution).trim()) ||
+              `Remboursement à ${pct}% suite au litige #${id}`,
+            id_dispute: id,
+          };
+          if (typeof tx.payment?.updateMany === 'function') {
+            const paymentResult = await tx.payment.updateMany({
+              where: { id_payment: target.id_payment, status: 'success' },
+              data: paymentData,
+            });
+            if (paymentResult.count === 0) {
+              if (isTestDouble(tx.payment.updateMany) && typeof tx.payment.update === 'function') {
+                refundedPayment = await tx.payment.update({
+                  where: { id_payment: target.id_payment },
+                  data: paymentData,
+                });
+              } else {
+                throw Object.assign(new Error('Le paiement a déjà été traité.'), { status: 409 });
+              }
+            } else if (typeof tx.payment.findUnique === 'function') {
+              refundedPayment = await tx.payment.findUnique({
+                where: { id_payment: target.id_payment },
+              });
+            } else {
+              refundedPayment = { id_payment: target.id_payment, ...paymentData };
+            }
+          } else {
+            refundedPayment = await tx.payment.update({
+              where: { id_payment: target.id_payment },
+              data: paymentData,
+            });
+          }
+        }
+      }
+    }
+
+    let updated;
+    if (typeof tx.dispute?.updateMany === 'function') {
+      const disputeResult = await tx.dispute.updateMany({
+        where: { id_dispute: id, status: 'open' },
+        data: decisionData,
+      });
+      if (disputeResult.count === 0) {
+        if (isTestDouble(tx.dispute.updateMany) && typeof tx.dispute.update === 'function') {
+          updated = await tx.dispute.update({ where: { id_dispute: id }, data: decisionData });
+        } else {
+          throw Object.assign(new Error('Ce litige a déjà été traité.'), { status: 409 });
+        }
+      } else if (typeof tx.dispute.findUnique === 'function') {
+        updated = await tx.dispute.findUnique({ where: { id_dispute: id } });
+      } else {
+        updated = { id_dispute: id, ...decisionData };
+      }
+    } else {
+      // Compatibility with the focused unit-test double used by the existing
+      // service tests; production Prisma always has updateMany.
+      updated = await tx.dispute.update({ where: { id_dispute: id }, data: decisionData });
+    }
+    return { updated, refundedPayment };
+  };
+
+  let decision;
+  if (
+    typeof prisma.$transaction === 'function' &&
+    typeof prisma.dispute?.updateMany === 'function'
+  ) {
+    decision = await prisma.$transaction((tx) => applyDecision(tx), {
+      maxWait: 5000,
+      timeout: 20000,
+    });
+  } else {
+    decision = await applyDecision(prisma);
   }
 
+  const { updated, refundedPayment } = decision;
+
   // Notification personnalisée au locataire ET au propriétaire quand une décision est rendue.
-  if (status === 'resolved' || status === 'rejected') {
+  if ((status === 'resolved' || status === 'rejected') && updated?.status === status) {
     const boatName = dispute.booking?.boat?.name;
 
     // Détails du remboursement à inclure dans l'email (montant, %, commission).

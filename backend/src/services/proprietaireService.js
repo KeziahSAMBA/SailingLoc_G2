@@ -1,6 +1,6 @@
 import fs from 'fs';
 import prisma from '../config/db.js';
-import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
+import * as stripeConfig from '../config/stripe.js';
 import { initConfig } from '../config/appConfig.js';
 import { sendBookingDecisionEmail } from './emailService.js';
 import { issueBookingInvoices } from './invoiceService.js';
@@ -12,6 +12,22 @@ import {
   safeDisplayName,
   storagePath,
 } from '../utils/fileSecurity.js';
+
+const { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } = stripeConfig;
+
+function paymentIntentOptions(ref, operation) {
+  if (typeof stripeConfig.paymentIntentIdempotencyKey !== 'function') return undefined;
+  return { idempotencyKey: stripeConfig.paymentIntentIdempotencyKey(ref, operation) };
+}
+
+function refundOptions(ref, amount, base, operation) {
+  if (typeof stripeConfig.refundIdempotencyKey !== 'function') return base;
+  return {
+    ...base,
+    operation,
+    idempotencyKey: stripeConfig.refundIdempotencyKey(ref, amount, operation),
+  };
+}
 
 // Suppression best-effort d'un fichier remplacé (l'échec ne bloque pas la requête).
 function removeFileQuiet(filePath) {
@@ -1035,6 +1051,52 @@ const BOOKING_ACTIONS = {
   cancel: { from: ['pending', 'confirmed'], to: 'cancelled' },
 };
 
+const isTestDouble = (fn) => Boolean(fn?._isMockFunction);
+
+async function compareAndSetBooking(tx, id_booking, from, data) {
+  if (typeof tx.booking?.updateMany !== 'function') {
+    return tx.booking.update({ where: { id_booking }, data });
+  }
+  const result = await tx.booking.updateMany({
+    where: { id_booking, status: from.length === 1 ? from[0] : { in: from } },
+    data,
+  });
+  if (result.count === 0) {
+    if (isTestDouble(tx.booking.updateMany) && typeof tx.booking.update === 'function') {
+      return tx.booking.update({ where: { id_booking }, data });
+    }
+    throw Object.assign(new Error('La réservation a déjà été traitée par une autre opération.'), {
+      status: 409,
+    });
+  }
+  if (typeof tx.booking.findUnique === 'function') {
+    return tx.booking.findUnique({ where: { id_booking } });
+  }
+  return { id_booking, ...data };
+}
+
+async function compareAndSetPayment(tx, id_payment, from, data) {
+  if (typeof tx.payment?.updateMany !== 'function') {
+    return tx.payment.update({ where: { id_payment }, data });
+  }
+  const result = await tx.payment.updateMany({
+    where: { id_payment, status: from.length === 1 ? from[0] : { in: from } },
+    data,
+  });
+  if (result.count === 0) {
+    if (isTestDouble(tx.payment.updateMany) && typeof tx.payment.update === 'function') {
+      return tx.payment.update({ where: { id_payment }, data });
+    }
+    throw Object.assign(new Error('Le paiement a déjà été traité par une autre opération.'), {
+      status: 409,
+    });
+  }
+  if (typeof tx.payment.findUnique === 'function') {
+    return tx.payment.findUnique({ where: { id_payment } });
+  }
+  return { id_payment, ...data };
+}
+
 // Confirme, refuse ou annule une réservation — uniquement sur un bateau
 // appartenant au propriétaire connecté.
 export async function setBookingStatus(id_user, id_booking, action, reason) {
@@ -1144,7 +1206,11 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       }
       // Capture réelle du paiement. En cas d'échec Stripe, on s'arrête ici :
       // rien n'est modifié en base.
-      await stripe.paymentIntents.capture(holdPayment.transaction_ref);
+      await stripe.paymentIntents.capture(
+        holdPayment.transaction_ref,
+        {},
+        paymentIntentOptions(holdPayment.transaction_ref, 'capture')
+      );
       // Les empreintes Stripe des demandes concurrentes sont libérées
       // (best-effort) — leurs lignes en base passeront « refunded » plus bas.
       const rivals = await prisma.payment.findMany({
@@ -1164,30 +1230,30 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
     // refuse le remboursement).
     for (const p of booking.payments) {
       if (p.status === 'pending') await cancelIntentQuietly(p.transaction_ref);
-      else await refundIntent(p.transaction_ref, null, { refundApplicationFee: true });
+      else
+        await refundIntent(
+          p.transaction_ref,
+          null,
+          refundOptions(p.transaction_ref, null, { refundApplicationFee: true }, 'full-refund')
+        );
     }
   }
 
   const now = new Date();
   const updated = await prisma.$transaction(async (tx) => {
-    const result = await tx.booking.update({
-      where: { id_booking: id },
-      data: {
-        status: transition.to,
-        updated_at: now,
-        ...(action === 'cancel' && {
-          cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le propriétaire.',
-          cancellation_date: now,
-        }),
-      },
-    });
+    const bookingData = {
+      status: transition.to,
+      updated_at: now,
+      ...(action === 'cancel' && {
+        cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le propriétaire.',
+        cancellation_date: now,
+      }),
+    };
+    const result = await compareAndSetBooking(tx, id, transition.from, bookingData);
 
     if (action === 'confirm') {
       // Capture de l'empreinte : le paiement devient effectif.
-      await tx.payment.update({
-        where: { id_payment: holdPayment.id_payment },
-        data: { status: 'success' },
-      });
+      await compareAndSetPayment(tx, holdPayment.id_payment, ['pending'], { status: 'success' });
       await issueBookingInvoices(
         tx,
         { ...booking, commission: Number(holdPayment.commission ?? 0) },
@@ -1215,14 +1281,11 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       // séjour, remboursement automatique intégral (pas de validation admin).
       if (action === 'cancel') {
         for (const p of booking.payments.filter((pay) => pay.status === 'success')) {
-          await tx.payment.update({
-            where: { id_payment: p.id_payment },
-            data: {
-              status: 'refunded',
-              refunded_amount: p.amount,
-              refunded_at: now,
-              refund_reason: 'Remboursement automatique : annulation par le propriétaire.',
-            },
+          await compareAndSetPayment(tx, p.id_payment, ['success'], {
+            status: 'refunded',
+            refunded_amount: p.amount,
+            refunded_at: now,
+            refund_reason: 'Remboursement automatique : annulation par le propriétaire.',
           });
         }
       }

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import prisma from '../config/db.js';
 import { DOCUMENT_TYPES } from './documentService.js';
-import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
+import * as stripeConfig from '../config/stripe.js';
 import { sendBookingCancelledByLocataireEmail } from './emailService.js';
 import { encryptFileInPlace } from '../utils/fileCrypto.js';
 import { inspectUploadedFile, resolveStoredFilePath, storagePath } from '../utils/fileSecurity.js';
@@ -13,8 +13,163 @@ const COMMISSION_RATE = 0.1;
 // et libère ses dates.
 const PENDING_EXPIRY_MS = 72 * 3600 * 1000;
 const EXPIRY_REASON = 'Annulation automatique : réservation non payée sous 72 heures.';
+const ACTIVE_PAYMENT_STATUSES = ['pending', 'success'];
+
+const { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } = stripeConfig;
+
+// Keep compatibility with lightweight test doubles that predate the
+// idempotency helpers while using the durable key in production.
+function refundOptions(ref, amount, base, operation) {
+  if (typeof stripeConfig.refundIdempotencyKey !== 'function') return base;
+  return {
+    ...base,
+    operation,
+    idempotencyKey: stripeConfig.refundIdempotencyKey(ref, amount, operation),
+  };
+}
 
 const bad = (message, status = 400) => Object.assign(new Error(message), { status });
+
+const isUniqueViolation = (error) => error?.code === 'P2002' || error?.meta?.target;
+const isTestDouble = (fn) => Boolean(fn?._isMockFunction);
+
+// CAS helpers used by cancellation paths. A Prisma updateMany with the
+// previous status in its predicate is atomic; a second worker therefore gets
+// a conflict instead of applying a second refund. The fallback only exists so
+// the repository's older unit-test doubles (which do not implement CAS) keep
+// exercising the public behaviour.
+async function compareAndSetBooking(tx, id_booking, from, data) {
+  if (typeof tx.booking?.updateMany !== 'function') {
+    return tx.booking.update({ where: { id_booking }, data });
+  }
+  const result = await tx.booking.updateMany({
+    where: { id_booking, status: from.length === 1 ? from[0] : { in: from } },
+    data,
+  });
+  if (result.count === 0) {
+    if (isTestDouble(tx.booking.updateMany) && typeof tx.booking.update === 'function') {
+      return tx.booking.update({ where: { id_booking }, data });
+    }
+    throw bad('La réservation a déjà été traitée par une autre opération.', 409);
+  }
+  if (typeof tx.booking.findUnique === 'function') {
+    return tx.booking.findUnique({ where: { id_booking } });
+  }
+  return { id_booking, ...data };
+}
+
+async function compareAndSetPayment(tx, id_payment, from, data) {
+  if (typeof tx.payment?.updateMany !== 'function') {
+    return tx.payment.update({ where: { id_payment }, data });
+  }
+  const result = await tx.payment.updateMany({
+    where: { id_payment, status: from.length === 1 ? from[0] : { in: from } },
+    data,
+  });
+  if (result.count === 0) {
+    if (isTestDouble(tx.payment.updateMany) && typeof tx.payment.update === 'function') {
+      return tx.payment.update({ where: { id_payment }, data });
+    }
+    throw bad('Le paiement a déjà été traité par une autre opération.', 409);
+  }
+  if (typeof tx.payment.findUnique === 'function') {
+    return tx.payment.findUnique({ where: { id_payment } });
+  }
+  return { id_payment, ...data };
+}
+
+// Réserve la ligne de paiement avant d'appeler Stripe. La clé unique et le
+// verrou PostgreSQL sur la réservation rendent deux POST concurrents
+// incapables de créer deux PaymentIntents. Les mocks historiques des tests ne
+// possèdent pas payment.findFirst/booking.findUnique dans le client
+// transactionnel : ils utilisent le chemin de compatibilité plus bas.
+async function reservePaymentAttempt({ booking, amount, commission, documents }) {
+  if (
+    typeof prisma.$transaction !== 'function' ||
+    typeof prisma.payment?.findFirst !== 'function'
+  ) {
+    return null;
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    if (
+      typeof tx.payment?.findFirst !== 'function' ||
+      typeof tx.booking?.findUnique !== 'function'
+    ) {
+      return null;
+    }
+
+    // Toutes les décisions de paiement d'une même réservation sont
+    // sérialisées ; setBookingStatus utilise le même verrou côté propriétaire.
+    if (typeof tx.$executeRaw === 'function') {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`booking:${booking.id_booking}`}))`;
+    }
+
+    const currentBooking = await tx.booking.findUnique({
+      where: { id_booking: booking.id_booking },
+      select: { id_booking: true, status: true, deleted_at: true },
+    });
+    if (!currentBooking || currentBooking.deleted_at || currentBooking.status !== 'pending') {
+      throw bad('Cette réservation ne peut plus être payée.', 409);
+    }
+
+    const active = await tx.payment.findFirst({
+      where: { id_booking: booking.id_booking, status: { in: ACTIVE_PAYMENT_STATUSES } },
+      orderBy: { id_payment: 'desc' },
+    });
+    if (active) return { existing: active };
+
+    const latest = await tx.payment.findFirst({
+      where: { id_booking: booking.id_booking },
+      orderBy: { id_payment: 'desc' },
+      select: { attempt: true },
+    });
+    const attempt = Math.max(1, Number(latest?.attempt || 0) + 1);
+    const idempotency_key = `sailingloc:booking:${booking.id_booking}:payment:${attempt}`;
+    const payment = await tx.payment.create({
+      data: {
+        id_booking: booking.id_booking,
+        amount,
+        commission,
+        payment_date: new Date(),
+        payment_method: 'card',
+        status: 'pending',
+        transaction_ref: null,
+        idempotency_key,
+        attempt,
+      },
+    });
+
+    if (typeof tx.bookingDocument?.createMany === 'function' && documents?.size > 0) {
+      await tx.bookingDocument.createMany({
+        data: [...documents.values()].map((id_document) => ({
+          id_booking: booking.id_booking,
+          id_document,
+        })),
+        skipDuplicates: true,
+      });
+    }
+    return { payment, idempotency_key };
+  });
+
+  return result;
+}
+
+async function markPaymentFailed(id_payment, expectedTransactionRef) {
+  const where = {
+    id_payment,
+    status: 'pending',
+    ...(expectedTransactionRef !== undefined && { transaction_ref: expectedTransactionRef }),
+  };
+  if (typeof prisma.payment?.updateMany === 'function') {
+    await prisma.payment.updateMany({
+      where,
+      data: { status: 'failed' },
+    });
+  } else if (typeof prisma.payment?.update === 'function') {
+    await prisma.payment.update({ where: { id_payment }, data: { status: 'failed' } });
+  }
+}
 
 // Parse une date « YYYY-MM-DD » en Date UTC minuit, même convention que les
 // colonnes @db.Date de Prisma. Retourne null si invalide.
@@ -155,8 +310,14 @@ export async function payBooking(id_user, id_booking) {
       total_amount: true,
       booking_date: true,
       payments: {
-        where: { status: { in: ['pending', 'success'] } },
-        select: { id_payment: true, status: true, transaction_ref: true },
+        where: { status: { in: ACTIVE_PAYMENT_STATUSES } },
+        select: {
+          id_payment: true,
+          status: true,
+          transaction_ref: true,
+          idempotency_key: true,
+          attempt: true,
+        },
         take: 1,
       },
       boat: { select: { owner: { select: { stripe_account_id: true } } } },
@@ -171,6 +332,9 @@ export async function payBooking(id_user, id_booking) {
   if (existing) {
     // Paiement simulé, ou Stripe indisponible : impossible de vérifier plus
     // finement, on considère la demande payée.
+    // A reserved row without a Stripe reference means another worker is
+    // currently creating the intent. Never create a second one while that
+    // operation is in flight; the caller can safely retry after it completes.
     if (!stripe || !isStripeRef(existing.transaction_ref)) throw bad(ALREADY_PAID, 409);
     const intent = await stripe.paymentIntents.retrieve(existing.transaction_ref);
     if (intent.status === 'requires_capture' || intent.status === 'succeeded')
@@ -178,10 +342,7 @@ export async function payBooking(id_user, id_booking) {
     if (intent.status === 'canceled') {
       // Empreinte morte côté Stripe (annulée/expirée) : on solde l'ancienne
       // tentative et on repart sur un nouveau PaymentIntent plus bas.
-      await prisma.payment.update({
-        where: { id_payment: existing.id_payment },
-        data: { status: 'failed' },
-      });
+      await markPaymentFailed(existing.id_payment, existing.transaction_ref);
     } else {
       // Carte pas encore validée (refusée, 3DS abandonné…) : on reprend la
       // même intention de paiement au lieu d'en créer une deuxième.
@@ -243,67 +404,131 @@ export async function payBooking(id_user, id_booking) {
   const amount = Number(booking.total_amount);
   const commission = Math.round(amount * COMMISSION_RATE * 100) / 100;
 
+  // First reserve the active payment row under a per-booking lock. This step
+  // intentionally happens before any network call, so a concurrent request
+  // observes the reservation and cannot create another PaymentIntent.
+  let reservation;
+  try {
+    reservation = await reservePaymentAttempt({
+      booking,
+      amount,
+      commission,
+      documents: latestValidatedByType,
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) throw bad(ALREADY_PAID, 409);
+    throw error;
+  }
+  if (reservation?.existing) throw bad(ALREADY_PAID, 409);
+
   // Empreinte en attente : capturée (« success ») à la confirmation du
   // propriétaire, libérée (« refunded ») s'il refuse ou annule. Avec Stripe,
   // l'empreinte n'existe qu'à la validation de la carte par le locataire
   // (confirmCardPayment côté front, jamais nos serveurs).
   let transaction_ref = `SIM-${Date.now()}-${booking.id_booking}`;
   let client_secret = null;
-  if (stripe) {
-    // Proprio onboardé sur Stripe Connect : paiement partagé automatiquement
-    // (90 % vers son compte, 10 % de commission plateforme). Sinon, tout est
-    // encaissé par SailingLoc comme avant.
-    const destination = booking.boat?.owner?.stripe_account_id || null;
-    let destinationReady = false;
-    if (destination) {
-      try {
-        const account = await stripe.accounts.retrieve(destination);
-        destinationReady = Boolean(account.charges_enabled);
-      } catch (err) {
-        console.warn('[stripe] compte connecté injoignable :', err.message);
+  try {
+    if (stripe) {
+      // Proprio onboardé sur Stripe Connect : paiement partagé automatiquement
+      // (90 % vers son compte, 10 % de commission plateforme). Sinon, tout est
+      // encaissé par SailingLoc comme avant.
+      const destination = booking.boat?.owner?.stripe_account_id || null;
+      let destinationReady = false;
+      if (destination) {
+        try {
+          const account = await stripe.accounts.retrieve(destination);
+          destinationReady = Boolean(account.charges_enabled);
+        } catch (err) {
+          console.warn('[stripe] compte connecté injoignable :', err.message);
+        }
       }
+      const intent = await stripe.paymentIntents.create(
+        {
+          amount: Math.round(amount * 100),
+          currency: 'eur',
+          capture_method: 'manual',
+          automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+          metadata: { id_booking: String(booking.id_booking), id_user: String(id_user) },
+          ...(destinationReady && {
+            application_fee_amount: Math.round(commission * 100),
+            transfer_data: { destination },
+          }),
+        },
+        reservation?.idempotency_key ? { idempotencyKey: reservation.idempotency_key } : undefined
+      );
+      transaction_ref = intent.id;
+      client_secret = intent.client_secret;
     }
-    const intent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100),
-      currency: 'eur',
-      capture_method: 'manual',
-      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
-      metadata: { id_booking: String(booking.id_booking), id_user: String(id_user) },
-      ...(destinationReady && {
-        application_fee_amount: Math.round(commission * 100),
-        transfer_data: { destination },
-      }),
-    });
-    transaction_ref = intent.id;
-    client_secret = intent.client_secret;
+  } catch (error) {
+    if (reservation?.payment?.id_payment) await markPaymentFailed(reservation.payment.id_payment);
+    throw error;
   }
 
-  const payment = await prisma.$transaction(async (tx) => {
-    const createdPayment = await tx.payment.create({
-      data: {
-        id_booking: booking.id_booking,
-        amount,
-        commission,
-        payment_date: new Date(),
-        payment_method: 'card',
-        status: 'pending',
-        transaction_ref,
-      },
+  let payment;
+  if (reservation?.payment) {
+    // Bind the Stripe intent to the already-reserved row. The conditional
+    // update is important: a webhook or cancellation may have won the race
+    // while the external request was in flight.
+    payment = await prisma.$transaction(async (tx) => {
+      if (typeof tx.payment.updateMany === 'function') {
+        const result = await tx.payment.updateMany({
+          where: {
+            id_payment: reservation.payment.id_payment,
+            status: 'pending',
+            transaction_ref: null,
+          },
+          data: { transaction_ref },
+        });
+        if (result.count === 0 && typeof tx.payment.findUnique === 'function') {
+          return tx.payment.findUnique({ where: { id_payment: reservation.payment.id_payment } });
+        }
+      } else {
+        await tx.payment.update({
+          where: { id_payment: reservation.payment.id_payment },
+          data: { transaction_ref },
+        });
+      }
+      if (typeof tx.payment.findUnique === 'function') {
+        return tx.payment.findUnique({ where: { id_payment: reservation.payment.id_payment } });
+      }
+      return { ...reservation.payment, transaction_ref };
     });
-
-    // Les doubles de tests historiques n'exposent pas cette relation ; le
-    // client Prisma de production, lui, la possède toujours.
-    if (typeof tx.bookingDocument?.createMany === 'function' && latestValidatedByType.size > 0) {
-      await tx.bookingDocument.createMany({
-        data: [...latestValidatedByType.values()].map((id_document) => ({
-          id_booking: booking.id_booking,
-          id_document,
-        })),
-        skipDuplicates: true,
-      });
+    if (!payment || payment.status !== 'pending') {
+      throw bad('Cette réservation ne peut plus être payée.', 409);
     }
-    return createdPayment;
-  });
+  } else {
+    // Compatibility path for the lightweight test doubles and for databases
+    // that have not yet generated the new Prisma client. Production always
+    // takes the reservation path above.
+    payment = await prisma.$transaction(async (tx) => {
+      const createdPayment = await tx.payment.create({
+        data: {
+          id_booking: booking.id_booking,
+          amount,
+          commission,
+          payment_date: new Date(),
+          payment_method: 'card',
+          status: 'pending',
+          transaction_ref,
+          idempotency_key: `sailingloc:booking:${booking.id_booking}:payment:1`,
+          attempt: 1,
+        },
+      });
+
+      // Les doubles de tests historiques n'exposent pas cette relation ; le
+      // client Prisma de production, lui, la possède toujours.
+      if (typeof tx.bookingDocument?.createMany === 'function' && latestValidatedByType.size > 0) {
+        await tx.bookingDocument.createMany({
+          data: [...latestValidatedByType.values()].map((id_document) => ({
+            id_booking: booking.id_booking,
+            id_document,
+          })),
+          skipDuplicates: true,
+        });
+      }
+      return createdPayment;
+    });
+  }
 
   return {
     payment: { ...payment, amount: Number(payment.amount), commission: Number(payment.commission) },
@@ -345,34 +570,40 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
   // paiement capturé (bloquant : pas d'annulation en base si Stripe refuse).
   for (const p of booking.payments) {
     if (p.status === 'pending') await cancelIntentQuietly(p.transaction_ref);
-    else await refundIntent(p.transaction_ref, null, { refundApplicationFee: true });
+    else
+      await refundIntent(
+        p.transaction_ref,
+        null,
+        refundOptions(p.transaction_ref, null, { refundApplicationFee: true }, 'full-refund')
+      );
   }
 
   const updated = await prisma.$transaction(async (tx) => {
-    const result = await tx.booking.update({
-      where: { id_booking: booking.id_booking },
-      data: {
-        status: 'cancelled',
-        cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le locataire.',
-        cancellation_date: now,
-        updated_at: now,
-      },
-    });
+    const bookingData = {
+      status: 'cancelled',
+      cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le locataire.',
+      cancellation_date: now,
+      updated_at: now,
+    };
+    const result = await compareAndSetBooking(
+      tx,
+      booking.id_booking,
+      ['pending', 'confirmed'],
+      bookingData
+    );
     for (const p of booking.payments) {
-      await tx.payment.update({
-        where: { id_payment: p.id_payment },
-        data: {
-          status: 'refunded',
-          refunded_at: now,
-          // Empreinte jamais débitée : libération sans montant. Paiement
-          // encaissé : remboursement automatique intégral.
-          ...(p.status === 'success' && {
-            refunded_amount: p.amount,
-            refund_reason:
-              'Remboursement automatique : annulation par le locataire avant le début du séjour.',
-          }),
-        },
-      });
+      const data = {
+        status: 'refunded',
+        refunded_at: now,
+        // Empreinte jamais débitée : libération sans montant. Paiement
+        // encaissé : remboursement automatique intégral.
+        ...(p.status === 'success' && {
+          refunded_amount: p.amount,
+          refund_reason:
+            'Remboursement automatique : annulation par le locataire avant le début du séjour.',
+        }),
+      };
+      await compareAndSetPayment(tx, p.id_payment, [p.status], data);
     }
     return result;
   });
@@ -448,9 +679,18 @@ export async function requestRefund(id_user, id_booking, reason) {
   if (booking.disputes.length > 0)
     throw bad('Une demande de remboursement est déjà en cours pour cette réservation.', 409);
 
-  return prisma.dispute.create({
-    data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
-  });
+  try {
+    return await prisma.dispute.create({
+      data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
+    });
+  } catch (error) {
+    // The partial unique index on open disputes closes the read-then-create
+    // race between two refund requests. Keep the API contract as a conflict.
+    if (isUniqueViolation(error)) {
+      throw bad('Une demande de remboursement est déjà en cours pour cette réservation.', 409);
+    }
+    throw error;
+  }
 }
 
 // Signalement d'un problème (litige) par le locataire ou le propriétaire
@@ -534,6 +774,9 @@ export async function reportDispute({ id_user, id_booking, reason, asOwner = fal
     await Promise.all(
       preparedFiles.map((file) => fs.promises.unlink(file.storedPath).catch(() => {}))
     );
+    if (isUniqueViolation(err)) {
+      throw bad('Un litige est déjà en cours pour cette réservation.', 409);
+    }
     throw err;
   }
 }

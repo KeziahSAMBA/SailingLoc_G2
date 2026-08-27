@@ -230,6 +230,11 @@ model Payment {
   payment_method   String        @db.VarChar(50)
   status           PaymentStatus @default(pending)
   transaction_ref  String?       @unique @db.VarChar(255)
+  // Clé stable de réservation/essai : elle est également envoyée à Stripe
+  // comme clé d'idempotence lors de la création du PaymentIntent. Les lignes
+  // historiques restent nulles et sont donc compatibles avec l'index unique.
+  idempotency_key   String?       @unique @db.VarChar(255)
+  attempt           Int           @default(1)
   created_at       DateTime      @default(now())
 
   // Remboursement (partiel ou total). refunded_amount inclut la commission
@@ -245,6 +250,25 @@ model Payment {
   @@index([id_booking])
   @@index([id_dispute])
   @@map("payment")
+}
+
+// Événements Stripe traités. L'identifiant fourni par Stripe est unique :
+// l'insertion est le verrou distribué qui empêche deux livraisons concurrentes
+// de modifier deux fois un paiement ou une réservation.
+model StripeWebhookEvent {
+  id_event     Int       @id @default(autoincrement())
+  event_id     String    @unique @db.VarChar(255)
+  event_type   String    @db.VarChar(100)
+  status       String    @default("processing") @db.VarChar(20)
+  payload_hash String?   @db.VarChar(128)
+  error        String?   @db.VarChar(500)
+  processed_at DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime?
+
+  @@index([status, created_at])
+  @@index([created_at])
+  @@map("stripe_webhook_event")
 }
 
 model Invoice {
