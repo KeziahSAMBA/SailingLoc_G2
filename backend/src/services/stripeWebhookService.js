@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import prisma from '../config/db.js';
+import { getRuntimeEnvironment } from '../config/appConfig.js';
 import { logSanitizedError } from '../utils/privacy.js';
 import { lockBookingPayment } from './paymentConcurrency.js';
 import {
@@ -12,6 +13,7 @@ import {
 
 const EVENT_LEASE_MS = 15 * 60 * 1000;
 const EVENT_ERROR_MAX_LENGTH = 500;
+const DURABLE_WEBHOOK_ENVIRONMENTS = new Set(['staging', 'production']);
 
 function eventHash(event) {
   return crypto.createHash('sha256').update(JSON.stringify(event)).digest('hex');
@@ -30,6 +32,22 @@ function eventStore() {
   return store;
 }
 
+function requireDurableEventStore() {
+  const store = eventStore();
+  const environment = getRuntimeEnvironment();
+  if (!store && DURABLE_WEBHOOK_ENVIRONMENTS.has(environment)) {
+    // A webhook must never mutate a payment without the durable event claim.
+    // If the generated Prisma client is stale (or the model was removed), fail
+    // closed and let Stripe retry instead of falling back to an in-memory
+    // best-effort write.
+    throw Object.assign(new Error('Le stockage durable des webhooks Stripe est indisponible.'), {
+      status: 503,
+      code: 'STRIPE_WEBHOOK_STORE_UNAVAILABLE',
+    });
+  }
+  return store;
+}
+
 function isUniqueViolation(error) {
   return error?.code === 'P2002' || error?.meta?.target;
 }
@@ -39,7 +57,7 @@ function isUniqueViolation(error) {
 // event is considered owned by the worker until its lease expires.
 async function claimEvent(event) {
   const eventId = typeof event?.id === 'string' ? event.id.trim() : '';
-  const store = eventStore();
+  const store = requireDurableEventStore();
   if (!store || !eventId) return { claimed: true, eventId: null };
 
   const hash = eventHash(event);
@@ -267,7 +285,9 @@ async function reconcileSucceededEvent(intent) {
 async function reconcileRefundEvent(charge) {
   const ref = charge?.payment_intent;
   const amountCents = Number(charge?.amount_refunded);
-  if (!ref || !Number.isFinite(amountCents) || amountCents < 0) return;
+  // A zero/negative provider amount is not a refund event we can reconcile.
+  // Treat it as a no-op instead of manufacturing a partial/refunded row.
+  if (!ref || !Number.isSafeInteger(amountCents) || amountCents <= 0) return;
   const payment = await paymentByTransactionRef(ref);
   const amount = amountCents / 100;
 
@@ -298,6 +318,11 @@ async function reconcileRefundEvent(charge) {
     }
 
     const currentRefunded = Math.max(0, Number(current.refunded_amount || 0));
+    // Historical rows marked `refunded` without a durable amount are not
+    // evidence of a real refund.  Never let a late webhook resurrect or
+    // rewrite such a terminal row; an operator/reconciliation pass must repair
+    // the missing provider amount explicitly.
+    if (current.status === 'refunded' && currentRefunded <= 0) return;
     // Stripe sends the cumulative amount_refunded. Events can arrive out of
     // order, so never move the durable amount backwards.
     const nextRefunded = Math.min(principal, Math.max(currentRefunded, amount));

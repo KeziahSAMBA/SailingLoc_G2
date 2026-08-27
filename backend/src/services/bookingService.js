@@ -7,7 +7,12 @@ import { encryptFileInPlace } from '../utils/fileCrypto.js';
 import { inspectUploadedFile, resolveStoredFilePath, storagePath } from '../utils/fileSecurity.js';
 import { boundedString, parseDateOnly, requirePositiveId } from '../utils/inputSecurity.js';
 import { logSanitizedError } from '../utils/privacy.js';
-import { lockBooking, lockBookingPayment, lockBoat } from './paymentConcurrency.js';
+import {
+  lockBooking,
+  lockBookingPayment,
+  lockBoat,
+  lockBoatBookingPayment,
+} from './paymentConcurrency.js';
 import { reconciliationError } from './paymentLifecycle.js';
 
 const DAY_MS = 86400000;
@@ -59,6 +64,37 @@ function cumulativeRefundAmount(payment, refundAmount) {
   // Prisma accepts either representation.  Preserve string-shaped values in
   // lightweight doubles while real Decimal values are persisted as numbers.
   return typeof payment?.amount === 'string' ? String(total) : total;
+}
+
+function remainingRefundAmount(payment) {
+  const principal = Number(payment?.amount);
+  const already = Number(payment?.refunded_amount || 0);
+  if (!Number.isFinite(principal) || principal <= 0) return 0;
+  return Math.max(0, Math.round((principal - Math.max(0, already)) * 100) / 100);
+}
+
+function refundTransitionData(payment, providerResult, now) {
+  if (providerResult?.kind !== 'refunded') {
+    return {
+      status: 'refunded',
+      payment_state: PAYMENT_STATES.REFUNDED,
+      refunded_at: now,
+      reconciliation_error: null,
+      reconciliation_at: null,
+    };
+  }
+  const refundedAmount = cumulativeRefundAmount(payment, providerResult.amount);
+  const complete = refundedAmount >= Number(payment.amount) - 0.000001;
+  return {
+    status: complete ? 'refunded' : 'success',
+    payment_state: complete ? PAYMENT_STATES.REFUNDED : 'partially_refunded',
+    refunded_amount: refundedAmount,
+    refunded_at: now,
+    refund_reason:
+      'Remboursement automatique : annulation par le locataire avant le début du séjour.',
+    reconciliation_error: null,
+    reconciliation_at: null,
+  };
 }
 
 const bad = (message, status = 400) => Object.assign(new Error(message), { status });
@@ -165,7 +201,7 @@ async function reservePaymentAttempt({ booking, amount, commission, documents })
     // Toutes les décisions de paiement d'une même réservation sont
     // sérialisées ; setBookingStatus, cancelOwnBooking et expiration utilisent
     // exactement le même verrou partagé.
-    await lockBookingPayment(tx, booking.id_booking);
+    await lockBoatBookingPayment(tx, booking.id_boat, booking.id_booking);
 
     const currentBooking = await tx.booking.findUnique({
       where: { id_booking: booking.id_booking },
@@ -541,11 +577,14 @@ async function releasePendingIntentStrict(ref, expectedAmount) {
       throw bad('Le remboursement Stripe n’est pas confirmé.', 503);
     }
     const cents = Number(refund.amount);
-    if (!Number.isFinite(cents) || cents < 0) {
+    if (!Number.isSafeInteger(cents) || cents <= 0) {
       throw bad('Le montant du remboursement Stripe est invalide.', 503);
     }
-    const expected = Number(expectedAmount);
-    if (Number.isFinite(expected) && cents / 100 > expected + 0.000001) {
+    const expected = expectedAmount == null ? null : Number(expectedAmount);
+    if (expected !== null && !Number.isFinite(expected)) {
+      throw bad('Le montant du remboursement attendu est invalide.', 503);
+    }
+    if (expected !== null && cents / 100 > expected + 0.000001) {
       throw bad('Le montant du remboursement Stripe dépasse le paiement enregistré.', 503);
     }
     return { kind: 'refunded', amount: cents / 100 };
@@ -580,11 +619,14 @@ async function refundCapturedIntentStrict(ref, expectedAmount, operation = 'owne
     throw bad('Le remboursement Stripe n’est pas confirmé.', 503);
   }
   const cents = Number(refund.amount);
-  if (!Number.isFinite(cents) || cents < 0) {
+  if (!Number.isSafeInteger(cents) || cents <= 0) {
     throw bad('Le montant du remboursement Stripe est invalide.', 503);
   }
-  const expected = Number(expectedAmount);
-  if (Number.isFinite(expected) && cents / 100 > expected + 0.000001) {
+  const expected = expectedAmount == null ? null : Number(expectedAmount);
+  if (expected !== null && !Number.isFinite(expected)) {
+    throw bad('Le montant du remboursement attendu est invalide.', 503);
+  }
+  if (expected !== null && cents / 100 > expected + 0.000001) {
     throw bad('Le montant du remboursement Stripe dépasse le paiement enregistré.', 503);
   }
   return { kind: 'refunded', amount: cents / 100 };
@@ -1118,7 +1160,12 @@ export async function payBooking(id_user, id_booking) {
     // while the external request was in flight.
     let bindConflict = false;
     payment = await prisma.$transaction(async (tx) => {
-      await lockBookingPayment(tx, booking.id_booking, reservation.payment.id_payment);
+      await lockBoatBookingPayment(
+        tx,
+        booking.id_boat,
+        booking.id_booking,
+        reservation.payment.id_payment
+      );
       if (typeof tx.payment.updateMany === 'function') {
         const result = await tx.payment.updateMany({
           where: {
@@ -1225,6 +1272,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
     where: { id_booking: bookingId, id_user: userId, deleted_at: null },
     select: {
       id_booking: true,
+      id_boat: true,
       status: true,
       start_date: true,
       end_date: true,
@@ -1264,7 +1312,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
       // Stripe is deliberately called while the transaction is open: no other
       // worker can move the booking/payment pair between provider operation and
       // the final CAS.
-      await lockBookingPayment(tx, booking.id_booking);
+      await lockBoatBookingPayment(tx, booking.id_boat, booking.id_booking);
       const current =
         typeof tx.booking?.findUnique === 'function'
           ? await tx.booking.findUnique({
@@ -1304,7 +1352,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
           if (stripe) {
             providerResults.set(
               p.id_payment,
-              await releasePendingIntentStrict(p.transaction_ref, Number(p.amount))
+              await releasePendingIntentStrict(p.transaction_ref, remainingRefundAmount(p))
             );
           } else {
             await cancelIntentQuietly(p.transaction_ref);
@@ -1320,7 +1368,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
           }
           providerResults.set(
             p.id_payment,
-            await refundCapturedIntentStrict(p.transaction_ref, Number(p.amount))
+            await refundCapturedIntentStrict(p.transaction_ref, remainingRefundAmount(p))
           );
         }
       }
@@ -1338,18 +1386,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
       );
       for (const p of payments) {
         const providerResult = providerResults.get(p.id_payment);
-        const data = {
-          status: 'refunded',
-          payment_state: PAYMENT_STATES.REFUNDED,
-          refunded_at: now,
-          // Empreinte jamais débitée : libération sans montant. Paiement
-          // encaissé : remboursement automatique intégral.
-          ...((p.status === 'success' || providerResult?.kind === 'refunded') && {
-            refunded_amount: cumulativeRefundAmount(p, providerResult?.amount ?? Number(p.amount)),
-            refund_reason:
-              'Remboursement automatique : annulation par le locataire avant le début du séjour.',
-          }),
-        };
+        const data = refundTransitionData(p, providerResult, now);
         await compareAndSetPayment(tx, p.id_payment, [p.status], data);
       }
       return result;

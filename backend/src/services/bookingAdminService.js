@@ -5,7 +5,7 @@ import { readDecrypted } from '../utils/fileCrypto.js';
 import { mimeTypeForFileName, resolveExistingPrivateFile } from '../utils/fileSecurity.js';
 import { logSanitizedError } from '../utils/privacy.js';
 import { boundedString, requirePositiveId } from '../utils/inputSecurity.js';
-import { lockBookingPayment } from './paymentConcurrency.js';
+import { lockBookingPayment, lockBoatBookingPayment } from './paymentConcurrency.js';
 import {
   PAYMENT_STATES,
   markPaymentReconciliationRequired,
@@ -47,11 +47,14 @@ function confirmedRefund(ref, refund, expectedAmount) {
     throw providerConflict('Le remboursement Stripe n’est pas confirmé.');
   }
   const cents = Number(refund.amount);
-  if (!Number.isFinite(cents) || cents < 0) {
+  if (!Number.isSafeInteger(cents) || cents <= 0) {
     throw providerConflict('Le montant du remboursement Stripe est invalide.');
   }
-  const expected = Number(expectedAmount);
-  if (Number.isFinite(expected) && cents / 100 > expected + 0.000001) {
+  const expected = expectedAmount == null ? null : Number(expectedAmount);
+  if (expected !== null && !Number.isFinite(expected)) {
+    throw providerConflict('Le montant du remboursement attendu est invalide.');
+  }
+  if (expected !== null && cents / 100 > expected + 0.000001) {
     throw providerConflict('Le montant du remboursement Stripe dépasse le paiement enregistré.');
   }
   return {
@@ -67,6 +70,35 @@ function cumulativeRefundAmount(payment, refundAmount) {
   const already = Math.min(principal, Math.max(0, Number(payment.refunded_amount || 0)));
   const increment = Math.max(0, Number(refundAmount));
   return Math.round(Math.min(principal, already + increment) * 100) / 100;
+}
+
+function remainingRefundAmount(payment) {
+  const principal = Number(payment?.amount);
+  const already = Number(payment?.refunded_amount || 0);
+  if (!Number.isFinite(principal) || principal <= 0) return 0;
+  return Math.max(0, Math.round((principal - Math.max(0, already)) * 100) / 100);
+}
+
+function refundTransitionData(payment, providerResult, now) {
+  if (providerResult?.kind !== 'refunded') {
+    return {
+      status: 'refunded',
+      payment_state: PAYMENT_STATES.REFUNDED,
+      refunded_at: now,
+      reconciliation_error: null,
+      reconciliation_at: null,
+    };
+  }
+  const refundedAmount = cumulativeRefundAmount(payment, providerResult.amount);
+  const complete = refundedAmount >= Number(payment.amount) - 0.000001;
+  return {
+    status: complete ? 'refunded' : 'success',
+    payment_state: complete ? PAYMENT_STATES.REFUNDED : PAYMENT_STATES.PARTIALLY_REFUNDED,
+    refunded_amount: refundedAmount,
+    refunded_at: now,
+    reconciliation_error: null,
+    reconciliation_at: null,
+  };
 }
 
 function runTransaction(callback) {
@@ -264,7 +296,7 @@ export async function cancelBooking(id_booking, reason) {
     );
   }
   const prepared = await runTransaction(async (tx) => {
-    await lockBookingPayment(tx, id);
+    await lockBoatBookingPayment(tx, booking.id_boat, id);
     const current =
       typeof tx.booking?.findUnique === 'function'
         ? await tx.booking.findUnique({
@@ -344,7 +376,7 @@ export async function cancelBooking(id_booking, reason) {
     try {
       providerResults.set(
         payment.id_payment,
-        await releaseStripeIntentStrict(payment.transaction_ref, payment.amount)
+        await releaseStripeIntentStrict(payment.transaction_ref, remainingRefundAmount(payment))
       );
     } catch (error) {
       await persistPaymentReconciliation(id, payment, error);
@@ -358,7 +390,7 @@ export async function cancelBooking(id_booking, reason) {
     try {
       providerResults.set(
         payment.id_payment,
-        await refundStripeIntentStrict(payment.transaction_ref, payment.amount)
+        await refundStripeIntentStrict(payment.transaction_ref, remainingRefundAmount(payment))
       );
     } catch (error) {
       await persistPaymentReconciliation(id, payment, error);
@@ -371,7 +403,7 @@ export async function cancelBooking(id_booking, reason) {
 
   const now = new Date();
   const updated = await runTransaction(async (tx) => {
-    await lockBookingPayment(tx, id);
+    await lockBoatBookingPayment(tx, booking.id_boat, id);
     const current =
       typeof tx.booking?.findUnique === 'function'
         ? await tx.booking.findUnique({
@@ -422,39 +454,29 @@ export async function cancelBooking(id_booking, reason) {
       const providerResult = providerResults.get(payment.id_payment);
       if (!providerResult) continue;
       if (payment.status === 'pending') {
+        const paymentData = refundTransitionData(payment, providerResult, now);
         await transitionPaymentState(
           tx,
           payment.id_payment,
           [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
-          PAYMENT_STATES.REFUNDED,
+          paymentData.payment_state,
           {
             fromStatuses: ['pending'],
-            data: {
-              status: 'refunded',
-              refunded_at: now,
-              ...(providerResult.kind === 'refunded' && {
-                refunded_amount: cumulativeRefundAmount(payment, providerResult.amount),
-              }),
-              reconciliation_error: null,
-              reconciliation_at: null,
-            },
+            data: paymentData,
           }
         );
       } else if (payment.status === 'success') {
+        const paymentData = refundTransitionData(payment, providerResult, now);
         await transitionPaymentState(
           tx,
           payment.id_payment,
           [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
-          PAYMENT_STATES.REFUNDED,
+          paymentData.payment_state,
           {
             fromStatuses: ['success'],
             data: {
-              status: 'refunded',
-              refunded_amount: cumulativeRefundAmount(payment, providerResult.amount),
-              refunded_at: now,
+              ...paymentData,
               refund_reason: 'Remboursement automatique : annulation par un administrateur.',
-              reconciliation_error: null,
-              reconciliation_at: null,
             },
           }
         );

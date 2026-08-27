@@ -41,6 +41,19 @@ export async function lockBookingPayment(tx, id_booking, id_payment) {
   return true;
 }
 
+/**
+ * Lock a boat-scoped booking/payment transition in the global order.
+ *
+ * Availability decisions can touch all three advisory-lock namespaces.  The
+ * boat lock is deliberately acquired before the booking and payment locks so
+ * an owner confirmation cannot deadlock with a tenant payment attempt.
+ */
+export async function lockBoatBookingPayment(tx, id_boat, id_booking, id_payment) {
+  await lockBoat(tx, id_boat);
+  await lockBookingPayment(tx, id_booking, id_payment);
+  return true;
+}
+
 /** Lock a boat when a transition can claim or release one of its time slots. */
 export async function lockBoat(tx, id_boat) {
   const id = validId(id_boat);
