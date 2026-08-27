@@ -9,6 +9,7 @@ import usersInactivePurge from './handlers/usersInactivePurge.js';
 import usersPausedPurge from './handlers/usersPausedPurge.js';
 import messagesPurge from './handlers/messagesPurge.js';
 import imagesPurge from './handlers/imagesPurge.js';
+import privateFilesMigrate from './handlers/privateFilesMigrate.js';
 
 // Catalogue des tâches planifiées. Il vit en code : la base ne stocke que ce
 // que l'admin peut régler (planning, activation, simulation, paramètres) et
@@ -25,6 +26,7 @@ const JOBS = [
   usersPausedPurge,
   messagesPurge,
   imagesPurge,
+  privateFilesMigrate,
 ];
 
 export const REGISTRY = new Map(JOBS.map((job) => [job.key, job]));

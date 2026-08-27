@@ -1,4 +1,3 @@
-import fs from 'fs';
 import {
   inspectUploadedFile,
   mimeTypeForFileName,
@@ -8,10 +7,12 @@ import {
   storagePath,
 } from '../utils/fileSecurity.js';
 import { encryptFileInPlace } from '../utils/fileCrypto.js';
+import { removeUnreferencedFiles, asFileReference } from './fileCleanupService.js';
 import {
   createDocument,
   findDocumentsByUser,
   findDocumentsByUserAndType,
+  findDocumentsByFileUrl,
   findDocumentById,
   findAllDocuments,
   updateDocument,
@@ -46,14 +47,33 @@ function publicDocument(doc) {
 }
 
 // file_url contient le chemin disque (ex. "storage/documents/xxx.pdf").
-function removeFileQuiet(diskPath) {
-  if (!diskPath) return;
-  try {
-    const safePath = resolveStoredFilePath(diskPath, 'document');
-    fs.promises.unlink(safePath).catch(() => {});
-  } catch {
-    // A malformed legacy row must never turn into an arbitrary unlink.
+async function removeFileQuiet(diskPath, id_document = null) {
+  if (!diskPath) return 0;
+  if (id_document !== null) {
+    let references;
+    try {
+      references = (await findDocumentsByFileUrl(diskPath)).map((row) =>
+        asFileReference(row.id_document, row.file_url)
+      );
+    } catch {
+      // A failed reference lookup is fail-closed: another row may still point
+      // at the same object, so keep the file for a later cleanup pass.
+      return 0;
+    }
+    return removeUnreferencedFiles([{ id: id_document, value: diskPath }], {
+      kind: 'document',
+      references,
+      removedIds: [id_document],
+    });
   }
+
+  // A freshly rejected upload has no persisted row and therefore cannot be
+  // shared. Its path is still constrained by the private resolver.
+  return removeUnreferencedFiles([{ id: 'upload', value: diskPath }], {
+    kind: 'document',
+    references: [asFileReference('upload', diskPath)],
+    removedIds: ['upload'],
+  });
 }
 
 export async function getMyDocuments(id_user) {
@@ -67,7 +87,7 @@ export async function uploadDocument(requester, type, file) {
   }
   const allowedTypes = DOCUMENT_TYPES[requester.role] || [];
   if (!allowedTypes.includes(type)) {
-    removeFileQuiet(file.path);
+    await removeFileQuiet(file.path);
     throw Object.assign(new Error('Type de document invalide.'), { status: 400 });
   }
 
@@ -83,7 +103,7 @@ export async function uploadDocument(requester, type, file) {
     const safePath = resolveStoredFilePath(file.path, 'document');
     await encryptFileInPlace(safePath);
   } catch (err) {
-    removeFileQuiet(file.path);
+    await removeFileQuiet(file.path);
     throw Object.assign(new Error('Le fichier n’a pas pu être sécurisé.'), {
       status: err.status || 400,
     });
@@ -94,8 +114,8 @@ export async function uploadDocument(requester, type, file) {
   if (!MULTI_TYPES.includes(type)) {
     const existing = await findDocumentsByUserAndType(requester.id_user, type);
     for (const doc of existing) {
-      removeFileQuiet(doc.file_url);
       await deleteDocumentRepo(doc.id_document);
+      await removeFileQuiet(doc.file_url, doc.id_document);
     }
   }
 
@@ -214,6 +234,6 @@ export async function deleteMyDocument(id_user, id_document) {
       { status: 400 }
     );
   }
-  removeFileQuiet(doc.file_url);
   await deleteDocumentRepo(id);
+  await removeFileQuiet(doc.file_url, doc.id_document);
 }

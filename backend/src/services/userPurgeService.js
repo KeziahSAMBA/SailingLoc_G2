@@ -1,6 +1,5 @@
-import fs from 'fs';
-import path from 'path';
 import prisma from '../config/db.js';
+import { asFileReference, removeUnreferencedFiles } from './fileCleanupService.js';
 
 const DAY_MS = 86400000;
 const ANONYMOUS_NAME = 'Anonyme';
@@ -26,15 +25,46 @@ export function anonymizableUsersWhere(params = {}, now = new Date()) {
   };
 }
 
-// Les avatars stockent une URL publique ; le fichier vit sous UPLOADS_DIR.
-const avatarDiskPath = (url) =>
-  typeof url === 'string' && url.includes('/uploads/avatars/')
-    ? path.join(process.env.UPLOADS_DIR || 'uploads', 'avatars', path.basename(url))
-    : null;
+async function findManySafe(model, args) {
+  if (typeof model?.findMany !== 'function') return [];
+  try {
+    return (await model.findMany(args)) || [];
+  } catch {
+    // A cleanup query must never make account anonymisation fail. The actual
+    // unlink path still goes through a fail-closed resolver.
+    return [];
+  }
+}
 
-const removeFileQuiet = (diskPath) => {
-  if (diskPath) fs.promises.unlink(diskPath).catch(() => {});
-};
+// Unlike the best-effort relationship reads above, a complete reference list
+// is a prerequisite for deleting a physical object. `null` distinguishes a
+// transient query failure from a valid empty table so cleanup can fail closed.
+async function findManyForCleanup(model, args) {
+  if (typeof model?.findMany !== 'function') return null;
+  try {
+    return (await model.findMany(args)) || [];
+  } catch {
+    return null;
+  }
+}
+
+async function disputeIdsForUser(id_user) {
+  const rows = await findManySafe(prisma.dispute, {
+    where: {
+      OR: [{ id_user }, { booking: { id_user } }, { booking: { boat: { id_user } } }],
+    },
+    select: { id_dispute: true },
+  });
+  return rows.map((row) => row.id_dispute).filter((id) => Number.isSafeInteger(id));
+}
+
+function imageKind(image) {
+  if (image?.type === 'dispute' || image?.id_dispute) return 'dispute';
+  if (image?.type === 'avatar' || /\/uploads\/avatars\//i.test(String(image?.url || ''))) {
+    return 'avatar';
+  }
+  return 'boat';
+}
 
 // markDeleted : à poser quand l'anonymisation n'a pas été précédée d'une
 // suppression admin (cas de l'inactivité), sinon le compte resterait listé
@@ -46,14 +76,43 @@ export async function anonymizeUser(id_user, now = new Date(), { markDeleted = f
   });
   if (!user) return null;
 
-  const [documents, avatars, boats] = await Promise.all([
-    prisma.document.findMany({ where: { id_user }, select: { id_document: true, file_url: true } }),
-    prisma.image.findMany({ where: { id_user }, select: { id_image: true, url: true } }),
-    prisma.boat.findMany({ where: { id_user, deleted_at: null }, select: { id_boat: true } }),
-  ]);
+  // Include already soft-deleted boats: their public photos are no longer
+  // reachable from the UI but remain sensitive user uploads on disk.
+  const boats = await findManySafe(prisma.boat, {
+    where: { id_user },
+    select: { id_boat: true },
+  });
+  const boatIds = boats.map((boat) => boat.id_boat).filter((id) => Number.isSafeInteger(id));
+  const disputeIds = await disputeIdsForUser(id_user);
+
+  const documents = await findManySafe(prisma.document, {
+    where: { id_user },
+    select: { id_document: true, file_url: true },
+  });
+  const imageWhere = {
+    OR: [
+      { id_user },
+      ...(boatIds.length ? [{ id_boat: { in: boatIds } }] : []),
+      ...(disputeIds.length ? [{ id_dispute: { in: disputeIds } }] : []),
+    ],
+  };
+  const images = await findManySafe(prisma.image, {
+    where: imageWhere,
+    select: { id_image: true, url: true, type: true, id_boat: true, id_dispute: true },
+  });
+
+  // All references are loaded before the transaction. They are used only to
+  // decide whether a physical object is shared; no path or personal field is
+  // emitted to the purge journal.
+  const allDocuments = await findManyForCleanup(prisma.document, {
+    select: { id_document: true, file_url: true },
+  });
+  const allImages = await findManyForCleanup(prisma.image, {
+    select: { id_image: true, url: true, type: true, id_boat: true, id_dispute: true },
+  });
 
   const documentIds = documents.map((doc) => doc.id_document);
-  const boatIds = boats.map((boat) => boat.id_boat);
+  const imageIds = images.map((image) => image.id_image);
   const isOwner = user.role === 'proprietaire';
 
   // La réponse du propriétaire vit sur l'avis d'un locataire : supprimer la
@@ -69,7 +128,9 @@ export async function anonymizeUser(id_user, now = new Date(), { markDeleted = f
     // Le lien vers la réservation part avec le document qu'il désigne.
     await tx.bookingDocument.deleteMany({ where: { id_document: { in: documentIds } } });
     const removedDocuments = await tx.document.deleteMany({ where: { id_user } });
-    const removedImages = await tx.image.deleteMany({ where: { id_user } });
+    const removedImages = imageIds.length
+      ? await tx.image.deleteMany({ where: { id_image: { in: imageIds } } })
+      : await tx.image.deleteMany({ where: { id_user } });
     await tx.refreshToken.deleteMany({ where: { id_user } });
     await tx.userBoatFavorite.deleteMany({ where: { id_user } });
 
@@ -136,12 +197,39 @@ export async function anonymizeUser(id_user, now = new Date(), { markDeleted = f
     };
   });
 
-  // Hors transaction : un effacement disque ne se rejoue pas en arrière.
-  const diskPaths = [
-    ...documents.map((doc) => doc.file_url),
-    ...avatars.map((image) => avatarDiskPath(image.url)),
-  ].filter(Boolean);
-  diskPaths.forEach(removeFileQuiet);
+  // Hors transaction : le nettoyage est idempotent et le resolver refuse les
+  // chemins hors racine ou les symlinks sortant du stockage configuré.
+  const documentFiles = documents
+    .filter((doc) => doc.file_url)
+    .map((doc) => ({ id: doc.id_document, value: doc.file_url }));
+  const removedDocumentFiles =
+    allDocuments === null
+      ? 0
+      : await removeUnreferencedFiles(documentFiles, {
+          kind: 'document',
+          references: allDocuments
+            .filter((doc) => doc.file_url)
+            .map((doc) => asFileReference(doc.id_document, doc.file_url)),
+          removedIds: documentIds,
+        });
 
-  return { ...counts, files: diskPaths.length };
+  let removedImageFiles = 0;
+  if (allImages !== null) {
+    for (const kind of ['boat', 'avatar', 'dispute']) {
+      const selected = images
+        .filter((image) => imageKind(image) === kind && image.url)
+        .map((image) => ({ id: image.id_image, value: image.url }));
+      const references = allImages
+        .filter((image) => imageKind(image) === kind && image.url)
+        .map((image) => asFileReference(image.id_image, image.url));
+      removedImageFiles += await removeUnreferencedFiles(selected, {
+        kind,
+        isPublic: kind !== 'dispute',
+        references,
+        removedIds: imageIds,
+      });
+    }
+  }
+
+  return { ...counts, files: removedDocumentFiles + removedImageFiles };
 }

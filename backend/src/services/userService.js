@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/db.js';
 import crypto from 'crypto';
@@ -27,6 +25,7 @@ import { initConfig } from '../config/appConfig.js';
 import { ACCESS_TOKEN_TTL, JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER } from '../config/auth.js';
 import { publicAssetUrl } from '../utils/urlSecurity.js';
 import { logSanitizedError } from '../utils/privacy.js';
+import { asFileReference, removeUnreferencedFiles } from './fileCleanupService.js';
 
 const { JWT_SECRET } = initConfig();
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -609,18 +608,28 @@ export async function updateAvatar(id_user, file) {
     where: { id_user, type: 'avatar' },
     select: { id_image: true, url: true },
   });
+  let references;
+  try {
+    references = await prisma.image.findMany({
+      where: { type: 'avatar' },
+      select: { id_image: true, url: true },
+    });
+  } catch {
+    // The row replacement may continue, but without a complete reference list
+    // no physical object is safe to unlink. A later cleanup pass can retry.
+    references = null;
+  }
   await prisma.image.deleteMany({ where: { id_user, type: 'avatar' } });
-  for (const img of previous) {
-    const idx = img.url.indexOf('/uploads/avatars/');
-    if (idx !== -1) {
-      // Chemin disque réel (UPLOADS_DIR configurable), pas le chemin de l'URL.
-      const diskPath = path.join(
-        process.env.UPLOADS_DIR || 'uploads',
-        'avatars',
-        path.basename(img.url)
-      );
-      fs.unlink(diskPath, () => {});
-    }
+  if (references) {
+    await removeUnreferencedFiles(
+      previous.map((img) => ({ id: img.id_image, value: img.url })),
+      {
+        kind: 'avatar',
+        isPublic: true,
+        references: references.map((img) => asFileReference(img.id_image, img.url)),
+        removedIds: previous.map((img) => img.id_image),
+      }
+    );
   }
 
   await prisma.image.create({
@@ -638,20 +647,30 @@ export async function updateAvatar(id_user, file) {
 export async function removeAvatar(id_user) {
   const previous = await prisma.image.findMany({
     where: { id_user, type: 'avatar' },
-    select: { url: true },
+    select: { id_image: true, url: true },
   });
+  let references;
+  try {
+    references = await prisma.image.findMany({
+      where: { type: 'avatar' },
+      select: { id_image: true, url: true },
+    });
+  } catch {
+    // A complete reference list is required to avoid deleting another user's
+    // avatar when rows happen to share a legacy path.
+    references = null;
+  }
   await prisma.image.deleteMany({ where: { id_user, type: 'avatar' } });
-  for (const img of previous) {
-    const idx = img.url.indexOf('/uploads/avatars/');
-    if (idx !== -1) {
-      // Chemin disque réel (UPLOADS_DIR configurable), pas le chemin de l'URL.
-      const diskPath = path.join(
-        process.env.UPLOADS_DIR || 'uploads',
-        'avatars',
-        path.basename(img.url)
-      );
-      fs.unlink(diskPath, () => {});
-    }
+  if (references) {
+    await removeUnreferencedFiles(
+      previous.map((img) => ({ id: img.id_image, value: img.url })),
+      {
+        kind: 'avatar',
+        isPublic: true,
+        references: references.map((img) => asFileReference(img.id_image, img.url)),
+        removedIds: previous.map((img) => img.id_image),
+      }
+    );
   }
   return getCurrentUser(id_user);
 }

@@ -15,6 +15,7 @@ const clampHours = (value) => {
 };
 
 const uploadsRoot = () => process.env.UPLOADS_DIR || 'uploads';
+const portablePath = (value) => String(value).replace(/\\/g, '/');
 
 // Le seul critère est l'absence de ligne Image : un fichier référencé est
 // épargné quel que soit son âge. L'ancienneté ne fait entrer personne, elle
@@ -26,7 +27,10 @@ export async function findOrphanFiles(params = {}, now = new Date()) {
 
   const orphans = [];
   for (const dir of SWEPT_DIRS) {
-    const base = path.join(uploadsRoot(), dir);
+    // Cron targets are persisted in logs and displayed by the admin UI. Keep
+    // them portable across Windows workers and POSIX containers; Node accepts
+    // forward slashes for filesystem operations on both platforms.
+    const base = portablePath(path.join(uploadsRoot(), dir));
     let entries;
     try {
       entries = await fs.promises.readdir(base);
@@ -36,7 +40,7 @@ export async function findOrphanFiles(params = {}, now = new Date()) {
 
     for (const name of entries) {
       if (referenced.has(name)) continue;
-      const full = path.join(base, name);
+      const full = portablePath(path.join(base, name));
       try {
         const stat = await fs.promises.stat(full);
         if (stat.isFile() && stat.mtimeMs <= newestAllowed) orphans.push(full);

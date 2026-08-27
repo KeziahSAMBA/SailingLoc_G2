@@ -38,7 +38,7 @@ function allowedKeys(kind) {
   throw new Error(`Type de fichier inconnu : ${kind}`);
 }
 
-function isWithin(root, candidate) {
+export function isWithin(root, candidate) {
   const relative = path.relative(path.resolve(root), path.resolve(candidate));
   return (
     relative === '' ||
@@ -79,6 +79,12 @@ function rootCandidates(kind) {
   if (kind === 'document') return [documentsRoot(), legacyDocumentsRoot()];
   if (kind === 'dispute') return [disputesRoot(), legacyDisputesRoot()];
   throw new Error(`Type privé inconnu : ${kind}`);
+}
+
+function publicRootFor(kind) {
+  if (kind === 'boat' || kind === 'boats') return path.join(uploadsRoot(), 'boats');
+  if (kind === 'avatar' || kind === 'avatars') return path.join(uploadsRoot(), 'avatars');
+  throw new Error(`Type public inconnu : ${kind}`);
 }
 
 function extensionForKey(key) {
@@ -287,6 +293,14 @@ function candidateFromStoredValue(storedValue, kind) {
     // kind's root.
     const candidate = path.resolve(cwd(), decoded);
     if (isWithin(rootAbs, candidate)) return candidate;
+
+    // Configured private roots can be mounted outside cwd. On POSIX, stripping
+    // the leading slash above would otherwise turn `/srv/private/a.pdf` into a
+    // cwd-relative path; retain absolute values when they are supplied.
+    if (path.isAbsolute(decoded)) {
+      const absoluteCandidate = path.resolve(decoded);
+      if (isWithin(rootAbs, absoluteCandidate)) return absoluteCandidate;
+    }
   }
   throw new Error('Chemin de fichier hors du stockage privé.');
 }
@@ -300,6 +314,71 @@ export async function resolveExistingPrivateFile(storedValue, kind) {
   const realPath = await fs.promises.realpath(candidate);
   if (!rootCandidates(kind).some((root) => isWithin(root, realPath))) {
     throw new Error('Le fichier réel est hors du stockage privé.');
+  }
+  const stat = await fs.promises.stat(realPath);
+  if (!stat.isFile()) throw new Error('Le chemin ne désigne pas un fichier.');
+  return realPath;
+}
+
+function candidateFromPublicStoredValue(storedValue, kind) {
+  const raw = String(storedValue || '').trim();
+  if (!raw) throw new Error('Chemin de fichier absent.');
+
+  let pathname = raw;
+  try {
+    if (/^[a-z][a-z\d+.-]*:\/\//i.test(raw)) pathname = new URL(raw).pathname;
+  } catch {
+    throw new Error('Chemin de fichier invalide.');
+  }
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    throw new Error('Chemin de fichier invalide.');
+  }
+  decoded = decoded.replace(/\\/g, '/');
+
+  const root = publicRootFor(kind);
+  const rootAbs = path.resolve(root);
+  const normalized = decoded.replace(/^\/+/, '');
+  const rootRelative = path.relative(cwd(), rootAbs).replace(/\\/g, '/').replace(/^\/+/, '');
+  if (normalized === rootRelative || normalized.startsWith(`${rootRelative}/`)) {
+    const candidate = path.resolve(cwd(), normalized);
+    if (isWithin(rootAbs, candidate)) return candidate;
+  }
+
+  // Existing rows contain absolute APP_URL values. Only a single basename
+  // below the expected `/uploads/{boats|avatars}/` segment is accepted; this
+  // deliberately rejects nested paths and traversal attempts.
+  const segment = `/uploads/${kind === 'boat' || kind === 'boats' ? 'boats' : 'avatars'}/`;
+  const marker = normalized.toLowerCase().indexOf(segment.slice(1));
+  if (marker >= 0) {
+    const suffix = normalized.slice(marker + segment.length - 1);
+    if (suffix && !suffix.includes('/') && !suffix.includes('..')) {
+      const candidate = path.resolve(rootAbs, suffix);
+      if (isWithin(rootAbs, candidate)) return candidate;
+    }
+  }
+
+  // Configured roots may be absolute (particularly on Windows and in a
+  // separately mounted volume). Do not reinterpret those as cwd-relative.
+  if (path.isAbsolute(decoded)) {
+    const candidate = path.resolve(decoded);
+    if (isWithin(rootAbs, candidate)) return candidate;
+  }
+  throw new Error('Chemin de fichier hors du stockage public.');
+}
+
+export function resolveStoredPublicFilePath(storedValue, kind) {
+  return candidateFromPublicStoredValue(storedValue, kind);
+}
+
+export async function resolveExistingPublicFile(storedValue, kind) {
+  const candidate = resolveStoredPublicFilePath(storedValue, kind);
+  const realPath = await fs.promises.realpath(candidate);
+  const root = publicRootFor(kind);
+  if (!isWithin(root, realPath)) {
+    throw new Error('Le fichier réel est hors du stockage public.');
   }
   const stat = await fs.promises.stat(realPath);
   if (!stat.isFile()) throw new Error('Le chemin ne désigne pas un fichier.');

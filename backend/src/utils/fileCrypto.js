@@ -8,8 +8,8 @@ import path from 'path';
 //
 // Format sur disque : MAGIC(6) | IV(12) | TAG(16) | contenu chiffré.
 // Les fichiers déposés avant l'activation du chiffrement n'ont pas l'en-tête
-// magique : ils sont servis tels quels (rétrocompatibilité, aucune migration
-// obligatoire).
+// magique. Ils restent lisibles en développement le temps de la migration,
+// mais un déploiement staging/production refuse par défaut de les servir.
 //
 // La clé vient de FILE_ENCRYPTION_KEY (64 caractères hexadécimaux = 32 octets,
 // générés avec `openssl rand -hex 32`). Une clé différente par environnement ;
@@ -18,6 +18,7 @@ import path from 'path';
 const MAGIC = Buffer.from('SLENC1');
 const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
+const HEADER_LENGTH = MAGIC.length + IV_LENGTH + TAG_LENGTH;
 
 function getKey() {
   const hex = process.env.FILE_ENCRYPTION_KEY;
@@ -53,9 +54,31 @@ export function decryptBuffer(stored) {
 
 export function isEncrypted(stored) {
   return (
-    stored.length > MAGIC.length + IV_LENGTH + TAG_LENGTH &&
+    Buffer.isBuffer(stored) &&
+    stored.length >= HEADER_LENGTH &&
     stored.subarray(0, MAGIC.length).equals(MAGIC)
   );
+}
+
+function isProductionLike() {
+  return ['production', 'staging'].includes(
+    String(process.env.NODE_ENV || '')
+      .trim()
+      .toLowerCase()
+  );
+}
+
+// Cleartext compatibility is intentionally opt-in outside development. The
+// migration command reads the bytes directly and therefore never needs this
+// escape hatch. `ALLOW_LEGACY_CLEAR_FILE_READ=true` is a short-lived rollback
+// switch for a controlled maintenance window, not a production default.
+export function allowLegacyCleartextRead() {
+  const configured = String(process.env.ALLOW_LEGACY_CLEAR_FILE_READ || '')
+    .trim()
+    .toLowerCase();
+  if (configured === 'true') return true;
+  if (configured === 'false') return false;
+  return !isProductionLike();
 }
 
 // Écrit `plain` chiffré à `destPath` (écriture atomique : fichier temporaire
@@ -76,8 +99,17 @@ export async function encryptFileInPlace(filePath) {
 }
 
 // Lit un fichier et renvoie son contenu en clair : déchiffré s'il porte
-// l'en-tête magique, tel quel sinon (fichier antérieur au chiffrement).
+// l'en-tête magique. En production/staging, un fichier sans en-tête est
+// refusé par défaut afin qu'une migration incomplète ne réintroduise pas une
+// lecture de données sensibles en clair.
 export async function readDecrypted(filePath) {
   const stored = await fs.promises.readFile(filePath);
-  return isEncrypted(stored) ? decryptBuffer(stored) : stored;
+  if (isEncrypted(stored)) return decryptBuffer(stored);
+  if (!allowLegacyCleartextRead()) {
+    throw Object.assign(new Error('Fichier privé non chiffré.'), {
+      status: 503,
+      code: 'LEGACY_CLEAR_FILE',
+    });
+  }
+  return stored;
 }

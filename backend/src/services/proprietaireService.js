@@ -1,4 +1,3 @@
-import fs from 'fs';
 import prisma from '../config/db.js';
 import * as stripeConfig from '../config/stripe.js';
 import { sendBookingDecisionEmail } from './emailService.js';
@@ -20,6 +19,7 @@ import {
 import { buildAppUrl, publicAssetUrl } from '../utils/urlSecurity.js';
 import { logSanitizedError } from '../utils/privacy.js';
 import { lockBookingPayment, lockBoat } from './paymentConcurrency.js';
+import { asFileReference, removeUnreferencedFiles } from './fileCleanupService.js';
 
 const { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } = stripeConfig;
 
@@ -101,14 +101,62 @@ async function releaseStripeIntent(ref) {
 }
 
 // Suppression best-effort d'un fichier remplacé (l'échec ne bloque pas la requête).
-function removeFileQuiet(filePath) {
-  if (!filePath) return;
+async function removeFileQuiet(filePath) {
+  if (!filePath) return 0;
+  return removeUnreferencedFiles([{ id: 'temporary', value: filePath }], {
+    kind: 'document',
+    references: [{ id: 'temporary', value: filePath }],
+    removedIds: ['temporary'],
+  });
+}
+
+async function removeReplacedDocuments(documents) {
+  if (!Array.isArray(documents) || documents.length === 0) return 0;
+  let references = [];
   try {
-    const safePath = resolveStoredFilePath(filePath, 'document');
-    fs.unlink(safePath, () => {});
+    references = (
+      await prisma.document.findMany({
+        select: { id_document: true, file_url: true },
+      })
+    ).map((row) => asFileReference(row.id_document, row.file_url));
   } catch {
-    // Never let a malformed database value turn into an arbitrary unlink.
+    // A failed reference lookup is fail-closed: keep the old object and let a
+    // later maintenance pass retry instead of unlinking a shared file.
+    return 0;
   }
+  return removeUnreferencedFiles(
+    documents.map((doc) => ({ id: doc.id_document, value: doc.file_url })),
+    {
+      kind: 'document',
+      references,
+      removedIds: documents.map((doc) => doc.id_document),
+    }
+  );
+}
+
+async function removeBoatImages(images) {
+  if (!Array.isArray(images) || images.length === 0) return 0;
+  let references = [];
+  try {
+    references = (
+      await prisma.image.findMany({
+        select: { id_image: true, url: true },
+      })
+    ).map((row) => asFileReference(row.id_image, row.url));
+  } catch {
+    // A failed reference lookup is fail-closed: keep the old object and let a
+    // later maintenance pass retry instead of unlinking a shared image.
+    return 0;
+  }
+  return removeUnreferencedFiles(
+    images.map((image) => ({ id: image.id_image, value: image.url })),
+    {
+      kind: 'boat',
+      isPublic: true,
+      references,
+      removedIds: images.map((image) => image.id_image),
+    }
+  );
 }
 
 async function preparePrivateDocument(file) {
@@ -805,7 +853,7 @@ export async function createBoat(id_user, payload = {}, files = {}) {
       port: port ? { id_port: port.id_port, name: port.name, city: port.city } : null,
     };
   } catch (err) {
-    if (preparedActe) removeFileQuiet(preparedActe.storedPath);
+    if (preparedActe) await removeFileQuiet(preparedActe.storedPath);
     // Immatriculation unique : conflit → message clair pour le formulaire.
     if (err.code === 'P2002') {
       throw Object.assign(new Error('Cette immatriculation est déjà utilisée.'), { status: 409 });
@@ -893,7 +941,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
       images: {
         where: { deleted_at: null },
         orderBy: { order: 'asc' },
-        select: { id_image: true },
+        select: { id_image: true, url: true },
       },
     },
   });
@@ -969,6 +1017,10 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
 
   let preparedActe = null;
   if (acteFrancisation) preparedActe = await preparePrivateDocument(acteFrancisation);
+  const replacedDocuments = [];
+  const removedBoatImages = existing.images.filter(
+    (image) => !keptImageIds.map(Number).includes(Number(image.id_image))
+  );
 
   try {
     const boat = await prisma.$transaction(async (tx) => {
@@ -1015,7 +1067,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
           select: { id_document: true, file_url: true },
         });
         await tx.document.deleteMany({ where: { id_boat: id, type: 'acte_francisation' } });
-        oldDocs.forEach((d) => removeFileQuiet(d.file_url));
+        replacedDocuments.push(...oldDocs);
         await tx.document.create({
           data: {
             id_user: ownerId,
@@ -1043,7 +1095,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
         await tx.document.deleteMany({
           where: { id_boat: id, type: 'acte_francisation', id_document: { not: targetId } },
         });
-        oldDocs.forEach((d) => removeFileQuiet(d.file_url));
+        replacedDocuments.push(...oldDocs);
         await linkExistingActeFrancisation(tx, ownerId, id, targetId);
       }
 
@@ -1058,6 +1110,9 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
       return updated;
     });
 
+    await removeReplacedDocuments(replacedDocuments);
+    await removeBoatImages(removedBoatImages);
+
     return {
       id_boat: boat.id_boat,
       name: boat.name,
@@ -1065,7 +1120,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
       port: port ? { id_port: port.id_port, name: port.name, city: port.city } : null,
     };
   } catch (err) {
-    if (preparedActe) removeFileQuiet(preparedActe.storedPath);
+    if (preparedActe) await removeFileQuiet(preparedActe.storedPath);
     if (err.code === 'P2002') {
       throw Object.assign(new Error('Cette immatriculation est déjà utilisée.'), { status: 409 });
     }

@@ -175,6 +175,9 @@ export function initConfig() {
     STRIPE_SECRET_KEY: value('STRIPE_SECRET_KEY'),
     STRIPE_WEBHOOK_SECRET: value('STRIPE_WEBHOOK_SECRET'),
     FILE_ENCRYPTION_KEY: value('FILE_ENCRYPTION_KEY'),
+    // Temporary, explicitly configured rollback switch for legacy cleartext
+    // files. fileCrypto defaults this to false in production-like environments.
+    ALLOW_LEGACY_CLEAR_FILE_READ: value('ALLOW_LEGACY_CLEAR_FILE_READ'),
     EMAIL_HOST: value('EMAIL_HOST'),
     EMAIL_PORT: Number(process.env.EMAIL_PORT) || 587,
     EMAIL_USER: value('EMAIL_USER'),
