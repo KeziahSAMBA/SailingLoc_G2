@@ -3,10 +3,12 @@ name: Security gates
 on:
   push:
     branches:
+      - master
       - develop
       - feature/security-audit
   pull_request:
     branches:
+      - master
       - develop
       - feature/security-audit
   workflow_dispatch:
@@ -26,9 +28,22 @@ env:
 
 jobs:
   dependency-audit:
-    name: npm audit and SBOM
+    name: npm audit and SBOM (${{ matrix.workspace.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace:
+          - name: root
+            path: .
+            lockfile: package-lock.json
+          - name: backend
+            path: backend
+            lockfile: backend/package-lock.json
+          - name: frontend
+            path: frontend
+            lockfile: frontend/package-lock.json
     steps:
       - name: Check out source
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -38,27 +53,48 @@ jobs:
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          package-manager-cache: false
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace.lockfile }}
       - name: Install locked dependencies without lifecycle scripts
+        working-directory: ${{ matrix.workspace.path }}
         run: npm ci --ignore-scripts
       - name: Generate SBOMs
+        working-directory: ${{ matrix.workspace.path }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/sbom"
-          npm sbom --package-lock-only --sbom-format cyclonedx --workspaces > "$RUNNER_TEMP/sbom/npm-development.cdx.json"
-          npm sbom --package-lock-only --sbom-format cyclonedx --workspaces --omit=dev > "$RUNNER_TEMP/sbom/npm-production.cdx.json"
+          workspace_args=()
+          if [[ "${{ matrix.workspace.name }}" == "root" ]]; then
+            workspace_args+=(--workspaces)
+          fi
+          npm sbom --package-lock-only --sbom-format cyclonedx "${workspace_args[@]}" > "$RUNNER_TEMP/sbom/${{ matrix.workspace.name }}-development.cdx.json"
+          npm sbom --package-lock-only --sbom-format cyclonedx --omit=dev "${workspace_args[@]}" > "$RUNNER_TEMP/sbom/${{ matrix.workspace.name }}-production.cdx.json"
       - name: Upload SBOMs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: npm-sbom-${{ github.sha }}
+          name: npm-sbom-${{ github.sha }}-${{ matrix.workspace.name }}
           path: ${{ runner.temp }}/sbom/*.cdx.json
           if-no-files-found: error
           retention-days: 7
       - name: Audit production dependencies
-        run: npm audit --audit-level=high --omit=dev --workspaces
+        working-directory: ${{ matrix.workspace.path }}
+        run: |
+          set -euo pipefail
+          workspace_args=()
+          if [[ "${{ matrix.workspace.name }}" == "root" ]]; then
+            workspace_args+=(--workspaces)
+          fi
+          npm audit --audit-level=high --omit=dev "${workspace_args[@]}"
       - name: Audit production and development dependencies
-        run: npm audit --audit-level=high --workspaces
+        working-directory: ${{ matrix.workspace.path }}
+        run: |
+          set -euo pipefail
+          workspace_args=()
+          if [[ "${{ matrix.workspace.name }}" == "root" ]]; then
+            workspace_args+=(--workspaces)
+          fi
+          npm audit --audit-level=high "${workspace_args[@]}"
 
   dependency-review:
     name: Dependency review (pull requests)

@@ -16,6 +16,11 @@ declare -a PATHSPEC=(
   ":(exclude)**/*.map"
   ":(exclude).env.example"
   ":(exclude)**/.env.example"
+  # These security tests intentionally use format-only credential fixtures to
+  # exercise production validation. Keep the exception narrow so all other
+  # tracked tests and the complete production tree remain covered.
+  ":(exclude)backend/tests/securityAuth.test.js"
+  ":(exclude)backend/tests/securitySecrets.test.js"
 )
 
 declare -a LABELS=(
