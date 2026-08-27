@@ -1,0 +1,23 @@
+# Dependencies and local build output are installed/generated in the image.
+node_modules
+dist
+coverage
+.nyc_output
+
+# Never send credentials or local environment overrides to the Docker daemon.
+.env
+.env.*
+!.env.example
+
+# Repository metadata, editor state and diagnostics.
+.git
+.github
+.vscode
+*.log
+*.pid
+*.seed
+
+# User-controlled/private runtime data is mounted as named volumes in compose.
+uploads
+storage
+tests

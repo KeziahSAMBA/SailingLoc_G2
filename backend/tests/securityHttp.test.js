@@ -95,5 +95,43 @@ describe('frontend CSP', () => {
     expect(nginx).toContain("frame-ancestors 'self'");
     expect(nginx).not.toContain("script-src 'self' 'unsafe-inline'");
     expect(nginx).toContain('listen 8080');
+
+    const csp = nginx.split(/\r?\n/).find((line) => line.includes('Content-Security-Policy'));
+    expect(csp).not.toContain('localhost');
+    expect(csp).not.toContain('127.0.0.1');
+  });
+});
+
+describe('deployment container boundaries', () => {
+  it('uses the header-enabled nginx image for Railway frontend deployments', () => {
+    const railway = JSON.parse(
+      fs.readFileSync(new URL('../../frontend/railway.json', import.meta.url), 'utf8')
+    );
+    const dockerfile = fs.readFileSync(
+      new URL('../../frontend/Dockerfile', import.meta.url),
+      'utf8'
+    );
+
+    expect(railway.build.builder).toBe('DOCKERFILE');
+    expect(railway.build.dockerfilePath).toBe('Dockerfile');
+    expect(railway.deploy.startCommand).toBeUndefined();
+    expect(dockerfile).toContain('ARG VITE_API_BASE_URL');
+    expect(dockerfile).toContain('VITE_API_BASE_URL=$VITE_API_BASE_URL');
+  });
+
+  it('keeps production and staging backend ports on loopback only', () => {
+    const productionCompose = fs.readFileSync(
+      new URL('../../docker-compose.yml', import.meta.url),
+      'utf8'
+    );
+    const stagingCompose = fs.readFileSync(
+      new URL('../../docker-compose.staging.yml', import.meta.url),
+      'utf8'
+    );
+
+    expect(productionCompose).toContain("'127.0.0.1:4000:4000'");
+    expect(stagingCompose).toContain("'127.0.0.1:4100:4000'");
+    expect(productionCompose).not.toContain("- '4000:4000'");
+    expect(stagingCompose).not.toContain("- '4100:4000'");
   });
 });

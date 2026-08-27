@@ -1,11 +1,40 @@
 import axios from 'axios';
 
+const configuredApiBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim();
+const localDevelopmentApiBaseUrl = 'http://localhost:4000/api';
+const deploymentBuild = ['production', 'staging'].includes(
+  String(import.meta.env.VITE_BUILD_ENV || (import.meta.env.PROD ? 'production' : 'development'))
+    .trim()
+    .toLowerCase()
+);
+
+// The Docker/Railway build validator catches this earlier. Keep a runtime
+// guard as a second line of defence against a stale/cached static bundle or a
+// deployment that forgot to rebuild after changing its service variables.
+if (deploymentBuild && !configuredApiBaseUrl) {
+  throw new Error('VITE_API_BASE_URL est obligatoire dans le bundle de déploiement.');
+}
+
+if (deploymentBuild && configuredApiBaseUrl) {
+  try {
+    const parsedApiBaseUrl = new URL(configuredApiBaseUrl);
+    if (
+      parsedApiBaseUrl.protocol !== 'https:' ||
+      ['localhost', '127.0.0.1', '::1', '[::1]'].includes(parsedApiBaseUrl.hostname.toLowerCase())
+    ) {
+      throw new Error('unsafe API origin');
+    }
+  } catch {
+    throw new Error('VITE_API_BASE_URL doit être une URL HTTPS publique en déploiement.');
+  }
+}
+
 // Timeout global : sans lui, une perte de connexion laisse l'UI bloquée sur un
 // spinner infini. Les uploads (multipart) surchargent avec UPLOAD_TIMEOUT_MS.
 export const UPLOAD_TIMEOUT_MS = 60000;
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
+  baseURL: configuredApiBaseUrl || localDevelopmentApiBaseUrl,
   withCredentials: true,
   timeout: 15000,
   headers: {

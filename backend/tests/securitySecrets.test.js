@@ -48,6 +48,26 @@ describe('production configuration', () => {
   });
 });
 
+describe('deployment configuration boundaries', () => {
+  it('rejects unknown runtime environments instead of falling back to development', () => {
+    expect(() => validateConfig(validProductionConfig, 'qa')).toThrow(/NODE_ENV/);
+  });
+
+  it('rejects disabled email TLS in staging as well as production', () => {
+    expect(() =>
+      validateConfig(
+        {
+          ...validProductionConfig,
+          NODE_ENV: 'staging',
+          STRIPE_SECRET_KEY: 'sk_test_stagingKey123',
+          EMAIL_IGNORE_TLS: true,
+        },
+        'staging'
+      )
+    ).toThrow(/EMAIL_IGNORE_TLS/);
+  });
+});
+
 describe('demonstration seed policy', () => {
   it('blocks the seed and destructive force mode in production', () => {
     expect(enforceSeedPolicy({ NODE_ENV: 'production', SEED_FORCE: 'false' })).toMatchObject({

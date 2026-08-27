@@ -135,7 +135,10 @@ jobs:
         run: |
           set -euo pipefail
           docker build --pull --tag sailingloc-backend:ci ./backend
-          docker build --pull --tag sailingloc-frontend:ci ./frontend
+          docker build --pull \
+            --build-arg VITE_API_BASE_URL=https://api.sailingloc.fr/api \
+            --build-arg VITE_BUILD_ENV=production \
+            --tag sailingloc-frontend:ci ./frontend
           mkdir -p "$RUNNER_TEMP/container-images"
           docker save --output "$RUNNER_TEMP/container-images/backend.tar" sailingloc-backend:ci
           docker save --output "$RUNNER_TEMP/container-images/frontend.tar" sailingloc-frontend:ci

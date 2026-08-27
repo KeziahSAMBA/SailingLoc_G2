@@ -46,9 +46,14 @@ services:
       EMAIL_PORT: ${EMAIL_PORT}
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_IGNORE_TLS: ${EMAIL_IGNORE_TLS:-false}
       SEED_FORCE: 'false'
+    # Keep only a loopback maintenance/reverse-proxy binding. Service-to-
+    # service traffic continues over backend:4000 on the private network.
     ports:
-      - '4100:4000'
+      - '127.0.0.1:4100:4000'
+    expose:
+      - '4000'
     volumes:
       - uploads_staging_data:/app/uploads
       - documents_staging_data:/app/storage/documents
@@ -73,13 +78,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?VITE_API_BASE_URL must be set to the public HTTPS API URL}
+        VITE_MATOMO_URL: ${VITE_MATOMO_URL:-}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-}
+        VITE_BUILD_ENV: staging
     container_name: sailingloc_frontend_staging
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
-      VITE_MATOMO_URL: ${VITE_MATOMO_URL:-}
     ports:
       - '5174:8080'
     depends_on:

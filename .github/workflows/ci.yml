@@ -49,6 +49,9 @@ jobs:
         run: npm test
 
       - name: Build frontend
+        env:
+          VITE_API_BASE_URL: https://api.sailingloc.fr/api
+          VITE_BUILD_ENV: production
         run: npm run build --workspace frontend
 
       # The repository predates this gate and contains unrelated formatting

@@ -58,8 +58,13 @@ services:
       # A production container must never be allowed to reset a database with
       # the demonstration seed, even if its command is overridden locally.
       SEED_FORCE: 'false'
+    # Keep the host diagnostic/reverse-proxy path available without exposing
+    # the API on the LAN. Other containers use backend:4000 on the private
+    # Docker network.
     ports:
-      - '4000:4000'
+      - '127.0.0.1:4000:4000'
+    expose:
+      - '4000'
     volumes:
       - uploads_data:/app/uploads
       - documents_data:/app/storage/documents
@@ -87,15 +92,17 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?VITE_API_BASE_URL must be set to the public HTTPS API URL}
+        VITE_MATOMO_URL: ${VITE_MATOMO_URL:-}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-}
+        VITE_BUILD_ENV: production
     container_name: sailingloc_frontend
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     ports:
       - '3000:8080'
-    environment:
-      VITE_API_BASE_URL: http://localhost:4000/api
-      VITE_MATOMO_URL: ${VITE_MATOMO_URL:-}
     depends_on:
       - backend
     networks:

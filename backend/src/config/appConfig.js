@@ -29,6 +29,15 @@ dotenv.config({ path: envModePath, override: true });
 const value = (name) => String(process.env[name] || '').trim();
 
 const PRODUCTION_LIKE_ENVS = new Set(['production', 'staging']);
+// Keep the deployment mode finite. An unknown NODE_ENV must never silently
+// fall through to development defaults (which can enable local integrations
+// or weaker operational safeguards).
+export const SUPPORTED_RUNTIME_ENVIRONMENTS = new Set([
+  'development',
+  'test',
+  'staging',
+  'production',
+]);
 const WEAK_JWT_SECRETS = new Set([
   'change-me',
   'changeme',
@@ -89,6 +98,22 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
     if (!currentValue) errors.push(`${name} est obligatoire`);
   };
 
+  if (!SUPPORTED_RUNTIME_ENVIRONMENTS.has(env)) {
+    errors.push(
+      `NODE_ENV doit être l'une des valeurs suivantes : ${[...SUPPORTED_RUNTIME_ENVIRONMENTS].join(
+        ', '
+      )}`
+    );
+  }
+  const declaredEnvironment = String(config.NODE_ENV || '')
+    .trim()
+    .toLowerCase();
+  if (declaredEnvironment && !SUPPORTED_RUNTIME_ENVIRONMENTS.has(declaredEnvironment)) {
+    errors.push('NODE_ENV configuré est inconnu');
+  } else if (declaredEnvironment && declaredEnvironment !== env) {
+    errors.push('NODE_ENV ne correspond pas à l’environnement validé');
+  }
+
   // There is deliberately no JWT fallback in any environment. A missing key
   // must be visible during deployment rather than creating forgeable tokens.
   if (config.JWT_SECRET && !isValidJwtSecret(config.JWT_SECRET)) {
@@ -124,10 +149,6 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
       errors.push('STRIPE_WEBHOOK_SECRET est invalide');
     }
 
-    if (config.EMAIL_IGNORE_TLS) {
-      errors.push('EMAIL_IGNORE_TLS doit être désactivé en production');
-    }
-
     const hasMailgunKey = Boolean(config.MAILGUN_API_KEY);
     const hasMailgunDomain = Boolean(config.MAILGUN_DOMAIN);
     if (hasMailgunKey !== hasMailgunDomain) {
@@ -143,6 +164,10 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
     }
   } else if (config.APP_URL && !isValidDevelopmentAppUrl(config.APP_URL)) {
     errors.push('APP_URL doit être une URL HTTP(S) valide sans identifiants');
+  }
+
+  if (PRODUCTION_LIKE_ENVS.has(env) && config.EMAIL_IGNORE_TLS) {
+    errors.push('EMAIL_IGNORE_TLS doit être désactivé en staging et en production');
   }
 
   // CORS_ORIGINS is optional (APP_URL is always allowed), but every extra

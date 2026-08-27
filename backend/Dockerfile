@@ -7,6 +7,11 @@ RUN apk add --no-cache openssl
 # Set working directory
 WORKDIR /app
 
+# The production image must not silently start with development semantics when
+# a platform omits NODE_ENV. Compose/Railway may override this explicitly for
+# staging or tests, but the image-safe default is always production.
+ENV NODE_ENV=production
+
 # Copy package files
 COPY package*.json ./
 

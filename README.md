@@ -214,10 +214,21 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...   # voir section Paiements Stripe
 
 L'image frontend de staging/production écoute sur le port interne `8080` avec
 un utilisateur nginx non privilégié (les compose publient respectivement
-`5174:8080` et `3000:8080`). Le CSP autorise uniquement les services réellement
-utilisés : Stripe, Google Fonts, les tuiles Carto/Leaflet, Nominatim, les
-images seed Unsplash/Pexels/RandomUser et l'instance Matomo déclarée
-`analytics.sailingloc.fr` (ou `http://localhost:8081` en local).
+`5174:8080` et `3000:8080`). Le déploiement Railway utilise cette image Docker
+et nginx afin que les headers de sécurité soient réellement appliqués. Le CSP
+autorise uniquement les services réellement utilisés : Stripe, Google Fonts,
+les tuiles Carto/Leaflet, Nominatim, les images seed Unsplash/Pexels/RandomUser
+et l'instance Matomo déclarée `analytics.sailingloc.fr`.
+
+`VITE_API_BASE_URL` est une variable publique, mais elle est figée dans le
+bundle Vite au moment du build. Elle est donc obligatoire pour les builds
+Docker/Railway de staging et de production et doit être une URL API HTTPS
+publique (par exemple `https://api.sailingloc.fr/api`), jamais `localhost`.
+Dans Railway, configurez le service frontend avec le root directory
+`/frontend`, le fichier de configuration `/frontend/railway.json`, et cette
+variable dans le service avant le premier déploiement. Les variables publiques
+`VITE_MATOMO_URL` et `VITE_STRIPE_PUBLISHABLE_KEY` doivent également être
+définies avant le build si ces intégrations sont activées.
 
 > **Matomo sans Docker ?** Matomo (PHP + MariaDB) n'est pas fourni en méthode locale — l'installer à la main est lourd et inutile pour développer. Deux options : ne rien faire (recommandé — sans `VITE_MATOMO_URL`, le code de tracking est un no-op silencieux), ou lancer uniquement les deux conteneurs Matomo si Docker est disponible : `docker compose -f docker-compose.dev.yml up -d matomo matomo_db`.
 
