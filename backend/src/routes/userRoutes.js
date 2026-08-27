@@ -31,6 +31,7 @@ import {
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
 import { bookingActionLimiter, uploadLimiter } from '../middlewares/abuseProtection.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 import {
   getDashboard,
   getMyBookings,
@@ -117,7 +118,7 @@ function uploadAvatar(req, res, next) {
       return fs.promises
         .unlink(req.file?.path)
         .catch(() => {})
-        .finally(() => res.status(status).json({ message }));
+        .finally(() => sendError(res, Object.assign(err, { status }), { message }));
     }
     next();
   });
@@ -132,7 +133,7 @@ async function validateAvatarFile(req, res, next) {
     return next();
   } catch (err) {
     await fs.promises.unlink(req.file.path).catch(() => {});
-    return res.status(err.status || 400).json({ message: err.message });
+    return sendError(res, err.status ? err : Object.assign(err, { status: 400 }));
   }
 }
 
@@ -190,7 +191,7 @@ function uploadDisputePhotos(req, res, next) {
       const files = req.files || [];
       return Promise.all(
         files.map((file) => fs.promises.unlink(file.path).catch(() => {}))
-      ).finally(() => res.status(status).json({ message }));
+      ).finally(() => sendError(res, Object.assign(err, { status }), { message }));
     }
     next();
   });
@@ -207,7 +208,7 @@ async function validateDisputePhotos(req, res, next) {
     return next();
   } catch (err) {
     await Promise.all(files.map((file) => fs.promises.unlink(file.path).catch(() => {})));
-    return res.status(err.status || 400).json({ message: err.message });
+    return sendError(res, err.status ? err : Object.assign(err, { status: 400 }));
   }
 }
 

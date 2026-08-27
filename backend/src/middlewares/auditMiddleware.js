@@ -1,4 +1,5 @@
 import { logActivity } from '../services/logService.js';
+import { sanitizeAuditMetadata, sanitizeAuditEmail, sanitizeAuditIp } from '../utils/privacy.js';
 
 const BODY_VALUE_MAX = 200;
 
@@ -10,7 +11,7 @@ function snapshotBody(body) {
       snapshot[key] = typeof value === 'string' ? value.slice(0, BODY_VALUE_MAX) : value;
     }
   }
-  return Object.keys(snapshot).length ? snapshot : null;
+  return sanitizeAuditMetadata(snapshot);
 }
 
 // Trace une action d'administration. Le log est écrit après coup (res « finish »)
@@ -29,7 +30,7 @@ export function audit(action, { targetType, targetId, meta, when } = {}) {
         category,
         action,
         actorId: req.user?.id_user,
-        actorEmail: req.user?.email,
+        actorEmail: sanitizeAuditEmail(req.user?.email),
         actorRole: req.user?.role,
         targetType: targetType || category,
         // Sur une création, l'id n'existe pas dans l'URL : le contrôleur le dépose
@@ -38,8 +39,8 @@ export function audit(action, { targetType, targetId, meta, when } = {}) {
           typeof targetId === 'function'
             ? targetId(req)
             : req.params.id || res.locals.auditTargetId,
-        meta: typeof meta === 'function' ? meta(req) : body,
-        ip: req.ip,
+        meta: sanitizeAuditMetadata(typeof meta === 'function' ? meta(req) : body),
+        ip: sanitizeAuditIp(req.ip),
       });
     });
 

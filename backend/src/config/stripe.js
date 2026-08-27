@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { initConfig } from './appConfig.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 // Client Stripe partagé (mode test : clé sk_test_…). Sans STRIPE_SECRET_KEY,
 // getStripe() renvoie null et le paiement reste simulé comme avant — les
@@ -47,7 +48,7 @@ export async function cancelIntentQuietly(ref, { idempotencyKey } = {}) {
       requestOptions(idempotencyKey || paymentIntentIdempotencyKey(ref, 'cancel'))
     );
   } catch (err) {
-    console.warn('[stripe] annulation empreinte :', err.message);
+    logSanitizedError('stripe: annulation empreinte', err, 'warn');
   }
 }
 

@@ -3,6 +3,7 @@ import * as stripeConfig from '../config/stripe.js';
 import { sendDisputeDecisionEmail } from './emailService.js';
 import { readDecrypted } from '../utils/fileCrypto.js';
 import { mimeTypeForFileName, resolveExistingPrivateFile } from '../utils/fileSecurity.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 const BOOKING_STATUSES = ['pending', 'confirmed', 'refused', 'cancelled'];
 const DISPUTE_STATUSES = ['open', 'resolved', 'rejected'];
@@ -419,7 +420,7 @@ export async function setDisputeStatus(
           refund: refundDetails,
         });
       } catch (emailErr) {
-        console.error('[email] décision litige :', emailErr.message);
+        logSanitizedError('email: décision litige', emailErr);
       }
     }
   }

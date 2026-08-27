@@ -15,10 +15,16 @@ import { stripeWebhook } from './controllers/webhookController.js';
 import { startScheduler, stopScheduler } from './scheduler.js';
 import { initConfig } from './config/appConfig.js';
 import prisma from './config/db.js';
+import { safeErrorResponses, secureErrorHandler } from './middlewares/errorSecurityMiddleware.js';
+import { logSanitizedError } from './utils/privacy.js';
 
 const { PORT, APP_URL } = initConfig();
 
 const app = express();
+
+// Error responses are normalized before any route can accidentally serialize
+// an SDK/ORM message.  Detailed diagnostics stay in the internal log sink.
+app.use(safeErrorResponses);
 
 // Derrière un proxy en production (Railway, etc.) : permet à Express de reconnaître
 // HTTPS (X-Forwarded-Proto) et la vraie IP cliente (cookies Secure, rate-limit).
@@ -124,17 +130,24 @@ app.use('/api/messages', messageRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Keep unknown API routes JSON-shaped and avoid Express' default HTML error
+// page, which may include a stack trace outside development.
+app.use((req, _res, next) => {
+  next(Object.assign(new Error('Route introuvable.'), { status: 404 }));
+});
+app.use(secureErrorHandler);
+
 process.on('unhandledRejection', (reason) => {
-  console.error('[server] unhandledRejection:', reason);
+  logSanitizedError('server: unhandledRejection', reason);
 });
 process.on('uncaughtException', (err) => {
-  console.error('[server] uncaughtException:', err);
+  logSanitizedError('server: uncaughtException', err);
 });
 
 // Tâches planifiées (dont l'expiration des réservations non payées, qui tournait
 // auparavant via un setInterval local) : le registre et l'historique vivent en
 // base, cf. src/scheduler.js.
-startScheduler().catch((err) => console.error('[cron] démarrage:', err));
+startScheduler().catch((err) => logSanitizedError('cron: démarrage', err));
 
 const server = app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
@@ -155,7 +168,7 @@ function shutdown(signal) {
   server.closeIdleConnections?.();
   server.close(async () => {
     clearTimeout(forceExit);
-    await prisma.$disconnect().catch((err) => console.error('[server] prisma disconnect:', err));
+    await prisma.$disconnect().catch((err) => logSanitizedError('server: prisma disconnect', err));
     console.log('[server] arrêt terminé.');
     process.exit(0);
   });

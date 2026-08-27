@@ -1,12 +1,13 @@
 import prisma from '../config/db.js';
 import { listBoatReviews } from '../services/reviewService.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 
 export async function getBoatReviews(req, res) {
   try {
     const reviews = await listBoatReviews(req.params.id_boat, req.user);
     res.json({ reviews });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -74,7 +75,6 @@ export async function getPublicReviews(req, res) {
 
     res.json(formatted);
   } catch (err) {
-    console.error('[reviewController] getPublicReviews:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
+    return sendError(res, err);
   }
 }

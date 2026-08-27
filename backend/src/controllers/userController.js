@@ -25,6 +25,7 @@ import {
 } from '../services/accountClosureService.js';
 import { logActivity } from '../services/logService.js';
 import { getRuntimeEnvironment } from '../config/appConfig.js';
+import { sendError, logInternalError } from '../middlewares/errorSecurityMiddleware.js';
 
 const REFRESH_COOKIE_NAME = 'sl_refresh';
 const isProductionLike = ['production', 'staging'].includes(getRuntimeEnvironment());
@@ -56,7 +57,7 @@ export async function register(req, res) {
       message: 'Inscription réussie. Vérifiez votre email pour confirmer votre compte.',
     });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -66,7 +67,7 @@ export async function adminCreateUser(req, res) {
     res.locals.auditTargetId = String(user.id_user);
     res.status(201).json({ user });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -94,7 +95,7 @@ export async function login(req, res) {
     }
     res.status(200).json({ accessToken, user, reactivated });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -125,7 +126,7 @@ export async function adminLogin(req, res) {
       message: err.message,
       ip: req.ip,
     });
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -139,7 +140,7 @@ export async function refresh(req, res) {
     res.status(200).json({ accessToken, user });
   } catch (err) {
     clearRefreshCookie(res);
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -148,7 +149,7 @@ export async function logout(req, res) {
     const raw = req.cookies?.[REFRESH_COOKIE_NAME];
     await logoutSession(raw);
   } catch (err) {
-    console.error('[logout]', err.message);
+    logInternalError(req, err, { controller: 'userController', action: 'logout' });
   } finally {
     clearRefreshCookie(res);
     res.status(204).end();
@@ -160,7 +161,7 @@ export async function me(req, res) {
     const user = await getCurrentUser(req.user.id_user);
     res.json({ user });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -169,7 +170,7 @@ export async function updateMe(req, res) {
     const user = await updateProfile(req.user.id_user, req.body || {});
     res.json({ user });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -180,7 +181,7 @@ export async function changeMyPassword(req, res) {
     clearRefreshCookie(res);
     res.json({ message: 'Mot de passe mis à jour. Veuillez vous reconnecter.' });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -189,7 +190,7 @@ export async function getMyClosureStatus(req, res) {
     const status = await getClosureStatus(req.user.id_user);
     res.json(status);
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -201,7 +202,7 @@ export async function deactivateMe(req, res) {
       message: `Compte désactivé. Reconnectez-vous sous ${PAUSE_RETENTION_DAYS} jours pour le réactiver.`,
     });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -213,7 +214,7 @@ export async function deleteMe(req, res) {
       message: `Compte supprimé. Vos données seront anonymisées sous ${DELETION_RETENTION_DAYS} jours.`,
     });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -224,7 +225,7 @@ export async function resend(req, res) {
       message: 'Si un compte non confirmé existe pour cet email, un nouveau lien a été envoyé.',
     });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -237,7 +238,7 @@ export async function forgotPassword(req, res) {
         'Si un compte correspond à ces informations, un lien de réinitialisation a été envoyé.',
     });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -248,7 +249,7 @@ export async function resetPassword(req, res) {
       message: 'Mot de passe mis à jour. Vous pouvez maintenant vous connecter.',
     });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -260,7 +261,7 @@ export async function verifyResetToken(req, res) {
     }
     res.status(200).json({ valid: true });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -269,17 +270,16 @@ export async function confirmEmail(req, res) {
     await verifyEmail(req.params.token);
     res.json({ message: 'Email confirmé. Vous pouvez maintenant vous connecter.' });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
 export async function patchMyAvatar(req, res) {
   try {
-    const origin = `${req.protocol}://${req.get('host')}`;
-    const user = await updateAvatar(req.user.id_user, req.file, origin);
+    const user = await updateAvatar(req.user.id_user, req.file);
     res.json({ user });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -288,6 +288,6 @@ export async function deleteMyAvatar(req, res) {
     const user = await removeAvatar(req.user.id_user);
     res.json({ user });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }

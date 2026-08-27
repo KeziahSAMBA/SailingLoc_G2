@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import prisma from '../config/db.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 const EVENT_LEASE_MS = 15 * 60 * 1000;
 const EVENT_ERROR_MAX_LENGTH = 500;
@@ -238,7 +239,7 @@ export async function handleStripeEvent(event) {
     try {
       await completeEvent(claim.eventId, 'failed', error);
     } catch (markError) {
-      console.error('[stripe webhook] impossible de journaliser l’échec :', markError.message);
+      logSanitizedError('stripe webhook: journalisation échec', markError);
     }
     throw error;
   }

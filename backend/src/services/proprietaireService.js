@@ -1,7 +1,6 @@
 import fs from 'fs';
 import prisma from '../config/db.js';
 import * as stripeConfig from '../config/stripe.js';
-import { initConfig } from '../config/appConfig.js';
 import { sendBookingDecisionEmail } from './emailService.js';
 import { issueBookingInvoices } from './invoiceService.js';
 import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js';
@@ -18,6 +17,8 @@ import {
   parseStrictBoolean,
   requirePositiveId,
 } from '../utils/inputSecurity.js';
+import { buildAppUrl, publicAssetUrl } from '../utils/urlSecurity.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 const { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } = stripeConfig;
 
@@ -667,7 +668,7 @@ async function linkExistingActeFrancisation(tx, id_user, id_boat, docId) {
 // Crée l'annonce d'un bateau du propriétaire connecté : caractéristiques,
 // photos (déjà stockées par multer), port (réutilisé ou créé) et périodes de
 // disponibilité. L'annonce part en validation admin (ou reste en brouillon).
-export async function createBoat(id_user, payload = {}, files = {}, origin = '') {
+export async function createBoat(id_user, payload = {}, files = {}) {
   const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   payload = payload ?? {};
   const images = files.images || [];
@@ -700,7 +701,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
         await tx.image.createMany({
           data: images.map((f, i) => ({
             id_boat: created.id_boat,
-            url: `${origin}/uploads/boats/${f.filename}`,
+            url: publicAssetUrl('boats', f.filename),
             type: 'boat',
             order: i,
           })),
@@ -817,7 +818,7 @@ export async function getBoat(id_user, id_boat) {
 // Photos : `existing_images` (JSON d'ids) liste celles à conserver, dans
 // l'ordre ; les nouveaux fichiers s'ajoutent à la suite. Les disponibilités
 // sont remplacées. `draft=true` → reste brouillon, sinon → soumis (pending).
-export async function updateBoat(id_user, id_boat, payload = {}, files = {}, origin = '') {
+export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
   const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
   payload = payload ?? {};
@@ -942,7 +943,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
         await tx.image.createMany({
           data: images.map((f, i) => ({
             id_boat: id,
-            url: `${origin}/uploads/boats/${f.filename}`,
+            url: publicAssetUrl('boats', f.filename),
             type: 'boat',
             order: keptImageIds.length + i,
           })),
@@ -1106,11 +1107,10 @@ export async function createStripeOnboardingLink(id_user) {
       data: { stripe_account_id: accountId, updated_at: new Date() },
     });
   }
-  const { APP_URL } = initConfig();
   const link = await stripe.accountLinks.create({
     account: accountId,
-    refresh_url: `${APP_URL}/proprietaire/revenus?stripe=refresh`,
-    return_url: `${APP_URL}/proprietaire/revenus?stripe=done`,
+    refresh_url: buildAppUrl('/proprietaire/revenus', { stripe: 'refresh' }),
+    return_url: buildAppUrl('/proprietaire/revenus', { stripe: 'done' }),
     type: 'account_onboarding',
   });
   return { url: link.url };
@@ -1476,7 +1476,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
         refundAmount: refundedAmount,
       });
     } catch (emailErr) {
-      console.error('[email] décision réservation :', emailErr.message);
+      logSanitizedError('email: décision réservation', emailErr);
     }
   }
 

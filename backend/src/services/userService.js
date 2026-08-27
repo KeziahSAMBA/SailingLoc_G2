@@ -25,6 +25,8 @@ import {
 import { reactivateOwnAccount } from './accountClosureService.js';
 import { initConfig } from '../config/appConfig.js';
 import { ACCESS_TOKEN_TTL, JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER } from '../config/auth.js';
+import { publicAssetUrl } from '../utils/urlSecurity.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 const { JWT_SECRET } = initConfig();
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -169,7 +171,7 @@ export async function create({
   try {
     await sendVerificationEmail(normalizedEmail, token, trimmedFirstName);
   } catch (emailErr) {
-    console.error('[email] Échec envoi email de confirmation :', emailErr.message);
+    logSanitizedError('email: envoi confirmation', emailErr);
   }
 
   return { id_user: user.id_user, email: user.email, role: user.role };
@@ -242,7 +244,7 @@ export async function adminCreate({ first_name, last_name, email, role, phone })
   try {
     await sendAccountCreatedEmail(normalizedEmail, rawToken, trimmedFirstName);
   } catch (emailErr) {
-    console.error('[email] Échec envoi email création de compte :', emailErr.message);
+    logSanitizedError('email: création compte', emailErr);
   }
 
   return publicUser(user);
@@ -272,7 +274,7 @@ export async function resendVerification({ email, role }) {
   try {
     await sendVerificationEmail(normalizedEmail, token, user.first_name);
   } catch (emailErr) {
-    console.error('[email] Échec renvoi email de confirmation :', emailErr.message);
+    logSanitizedError('email: renvoi confirmation', emailErr);
   }
 }
 
@@ -507,7 +509,7 @@ export async function requestPasswordReset({ email, role }) {
   try {
     await sendPasswordResetEmail(normalizedEmail, rawToken, user.first_name);
   } catch (emailErr) {
-    console.error('[email] Échec envoi reset password :', emailErr.message);
+    logSanitizedError('email: envoi reset password', emailErr);
   }
 }
 
@@ -598,7 +600,7 @@ export async function verifyEmail(token) {
 
 // Remplace la photo de profil : l'ancienne (ligne + fichier local) est
 // supprimée, la nouvelle enregistrée comme image de type 'avatar'.
-export async function updateAvatar(id_user, file, origin) {
+export async function updateAvatar(id_user, file) {
   if (!file) {
     throw Object.assign(new Error('Aucune image fournie.'), { status: 400 });
   }
@@ -625,7 +627,7 @@ export async function updateAvatar(id_user, file, origin) {
     data: {
       id_user,
       type: 'avatar',
-      url: `${origin}/uploads/avatars/${file.filename}`,
+      url: publicAssetUrl('avatars', file.filename),
       mime_type: file.detectedMimeType || 'application/octet-stream',
     },
   });

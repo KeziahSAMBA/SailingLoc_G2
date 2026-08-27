@@ -5,13 +5,14 @@ import {
   setDisputeStatus,
   getDisputeImageFile,
 } from '../services/bookingAdminService.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 
 export async function adminListBookings(req, res) {
   try {
     const bookings = await listBookings(req.query);
     res.json({ bookings });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -20,7 +21,7 @@ export async function adminCancelBooking(req, res) {
     const booking = await cancelBooking(req.params.id, req.body?.reason);
     res.json({ booking });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -29,7 +30,7 @@ export async function adminListDisputes(req, res) {
     const disputes = await listDisputes(req.query);
     res.json({ disputes });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -41,7 +42,7 @@ export async function adminSetDisputeStatus(req, res) {
     });
     res.json({ dispute });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -57,6 +58,6 @@ export async function adminDownloadDisputeImage(req, res) {
     );
     return res.send(content);
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }

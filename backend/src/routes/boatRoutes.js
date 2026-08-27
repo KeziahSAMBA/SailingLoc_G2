@@ -5,6 +5,7 @@ import fs from 'fs';
 import { optionalProtect, protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
 import { bookingCreateLimiter, uploadLimiter } from '../middlewares/abuseProtection.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 import {
   acceptsMulterMetadata,
   generatedFileName,
@@ -95,7 +96,7 @@ async function validateBoatFiles(req, res, next) {
     return next();
   } catch (err) {
     await removeUploadedFiles(req);
-    return res.status(err.status || 400).json({ message: err.message });
+    return sendError(res, err.status ? err : Object.assign(err, { status: 400 }));
   }
 }
 
@@ -118,7 +119,9 @@ function uploadFiles(req, res, next) {
         : err.status || 500;
       const message =
         err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop volumineux (max 5 Mo).' : err.message;
-      return removeUploadedFiles(req).finally(() => res.status(status).json({ message }));
+      return removeUploadedFiles(req).finally(() =>
+        sendError(res, Object.assign(err, { status }), { message })
+      );
     }
     next();
   });

@@ -50,7 +50,24 @@ function isValidHttpsAppUrl(appUrl) {
       parsed.protocol === 'https:' &&
       !parsed.username &&
       !parsed.password &&
+      !parsed.search &&
+      !parsed.hash &&
       !['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isValidDevelopmentAppUrl(appUrl) {
+  try {
+    const parsed = new URL(appUrl);
+    return (
+      ['http:', 'https:'].includes(parsed.protocol) &&
+      !parsed.username &&
+      !parsed.password &&
+      !parsed.search &&
+      !parsed.hash
     );
   } catch {
     return false;
@@ -118,6 +135,13 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
     if (!hasMailgunKey && !config.EMAIL_HOST) {
       errors.push('Une configuration Mailgun complète ou EMAIL_HOST est obligatoire');
     }
+  } else if (PRODUCTION_LIKE_ENVS.has(env)) {
+    required('APP_URL', config.APP_URL);
+    if (config.APP_URL && !isValidHttpsAppUrl(config.APP_URL)) {
+      errors.push('APP_URL doit être une URL HTTPS publique sans identifiants');
+    }
+  } else if (config.APP_URL && !isValidDevelopmentAppUrl(config.APP_URL)) {
+    errors.push('APP_URL doit être une URL HTTP(S) valide sans identifiants');
   }
 
   if (errors.length > 0) {

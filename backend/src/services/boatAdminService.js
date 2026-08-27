@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { sendBoatUnpublishedEmail, sendBoatRepublishedEmail } from './emailService.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 const REPORT_STATUSES = ['pending', 'resolved', 'dismissed'];
 
@@ -72,7 +73,7 @@ export async function setBoatPublished(id_boat, is_published) {
           boatName: boat.name,
         });
       } catch (emailErr) {
-        console.error('[email] dépublication bateau :', emailErr.message);
+        logSanitizedError('email: dépublication bateau', emailErr);
       }
     }
   } else if (!boat.is_published) {
@@ -84,7 +85,7 @@ export async function setBoatPublished(id_boat, is_published) {
           boatName: boat.name,
         });
       } catch (emailErr) {
-        console.error('[email] republication bateau :', emailErr.message);
+        logSanitizedError('email: republication bateau', emailErr);
       }
     }
   }

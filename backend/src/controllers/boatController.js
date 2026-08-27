@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
 import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 
 const BOAT_INCLUDE = {
   // La vitrine publique ne renvoie que les attributs nécessaires à l'UI ; les
@@ -72,47 +73,55 @@ function enrichWithRating(boats) {
 }
 
 export async function getBoats(req, res) {
-  const boats = await prisma.boat.findMany({
-    where: {
-      is_published: true,
-      status: 'published',
-      deleted_at: null,
-      owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
-      port: { deleted_at: null },
-    },
-    include: BOAT_INCLUDE,
-  });
+  try {
+    const boats = await prisma.boat.findMany({
+      where: {
+        is_published: true,
+        status: 'published',
+        deleted_at: null,
+        owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
+        port: { deleted_at: null },
+      },
+      include: BOAT_INCLUDE,
+    });
 
-  res.json(enrichWithRating(boats));
+    res.json(enrichWithRating(boats));
+  } catch (err) {
+    return sendError(res, err);
+  }
 }
 
 export async function getBoatsByType(req, res) {
-  const boats = await prisma.boat.findMany({
-    where: {
-      is_published: true,
-      status: 'published',
-      deleted_at: null,
-      owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
-      port: { deleted_at: null },
-    },
-    include: BOAT_INCLUDE,
-    orderBy: { id_boat: 'asc' },
-  });
+  try {
+    const boats = await prisma.boat.findMany({
+      where: {
+        is_published: true,
+        status: 'published',
+        deleted_at: null,
+        owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
+        port: { deleted_at: null },
+      },
+      include: BOAT_INCLUDE,
+      orderBy: { id_boat: 'asc' },
+    });
 
-  const enriched = enrichWithRating(boats);
+    const enriched = enrichWithRating(boats);
 
-  // Group by type, keep at most 3 boats per type
-  const groups = {};
-  for (const boat of enriched) {
-    if (!groups[boat.type]) groups[boat.type] = [];
-    if (groups[boat.type].length < 3) groups[boat.type].push(boat);
+    // Group by type, keep at most 3 boats per type
+    const groups = {};
+    for (const boat of enriched) {
+      if (!groups[boat.type]) groups[boat.type] = [];
+      if (groups[boat.type].length < 3) groups[boat.type].push(boat);
+    }
+
+    const sections = Object.entries(groups)
+      .filter(([, list]) => list.length > 0)
+      .map(([type, list]) => ({ type, boats: list }));
+
+    res.json(sections);
+  } catch (err) {
+    return sendError(res, err);
   }
-
-  const sections = Object.entries(groups)
-    .filter(([, list]) => list.length > 0)
-    .map(([type, list]) => ({ type, boats: list }));
-
-  res.json(sections);
 }
 
 // Fichiers reçus par upload.fields : photos publiques + acte de francisation privé.
@@ -126,17 +135,10 @@ function boatFiles(req) {
 // Mise à jour d'un brouillon d'annonce par son propriétaire.
 export async function putBoat(req, res) {
   try {
-    const origin = `${req.protocol}://${req.get('host')}`;
-    const boat = await updateBoat(
-      req.user.id_user,
-      req.params.id_boat,
-      req.body,
-      boatFiles(req),
-      origin
-    );
+    const boat = await updateBoat(req.user.id_user, req.params.id_boat, req.body, boatFiles(req));
     res.json({ boat });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -146,7 +148,7 @@ export async function removeBoat(req, res) {
     await deleteBoat(req.user.id_user, req.params.id_boat);
     res.json({ deleted: true });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -154,14 +156,11 @@ export async function removeBoat(req, res) {
 // acte de francisation + port (réutilisé s'il existe, créé sinon) + disponibilités.
 export async function uploadBoat(req, res) {
   try {
-    // Origine publique du backend pour construire les URLs des photos servies
-    // en statique (/uploads).
-    const origin = `${req.protocol}://${req.get('host')}`;
-    const boat = await createBoat(req.user.id_user, req.body, boatFiles(req), origin);
+    const boat = await createBoat(req.user.id_user, req.body, boatFiles(req));
     res.locals.auditTargetId = String(boat.id_boat);
     res.status(201).json({ boat });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -178,6 +177,6 @@ export async function createBookingController(req, res) {
     res.locals.auditTargetId = String(booking.id_booking);
     res.status(201).json({ booking });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }

@@ -1,11 +1,12 @@
 import { listPayments, paymentStats } from '../services/paymentAdminService.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 
 export async function adminListPayments(req, res) {
   try {
     const payments = await listPayments(req.query);
     res.json({ payments });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -14,6 +15,6 @@ export async function adminPaymentStats(_req, res) {
     const stats = await paymentStats();
     res.json({ stats });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }

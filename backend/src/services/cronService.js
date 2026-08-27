@@ -2,6 +2,7 @@ import { Cron } from 'croner';
 import prisma from '../config/db.js';
 import { getJobDefinition, listJobDefinitions, resolveParams } from '../jobs/registry.js';
 import { logActivity } from './logService.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 // Railway tourne en UTC : sans fuseau explicite, « tous les jours à 3 h »
 // tomberait à 4 h ou 5 h heure française selon la saison.
@@ -217,7 +218,7 @@ export async function runJob(
       meta: { trigger, dryRun: job.dry_run },
     });
 
-    console.error(`[cron] ${key} :`, err.message);
+    logSanitizedError(`cron: ${key}`, err);
     return finished;
   }
 }

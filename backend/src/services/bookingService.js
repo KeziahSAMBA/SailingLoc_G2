@@ -6,6 +6,7 @@ import { sendBookingCancelledByLocataireEmail } from './emailService.js';
 import { encryptFileInPlace } from '../utils/fileCrypto.js';
 import { inspectUploadedFile, resolveStoredFilePath, storagePath } from '../utils/fileSecurity.js';
 import { boundedString, parseDateOnly, requirePositiveId } from '../utils/inputSecurity.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 const DAY_MS = 86400000;
 // Commission plateforme : même taux (10 %) que les paiements du seed.
@@ -472,7 +473,7 @@ export async function payBooking(id_user, id_booking) {
           const account = await stripe.accounts.retrieve(destination);
           destinationReady = Boolean(account.charges_enabled);
         } catch (err) {
-          console.warn('[stripe] compte connecté injoignable :', err.message);
+          logSanitizedError('stripe: compte connecté injoignable', err, 'warn');
         }
       }
       const intent = await stripe.paymentIntents.create(
@@ -679,7 +680,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
         ...emailBase,
       });
     } catch (emailErr) {
-      console.error('[email] annulation réservation :', emailErr.message);
+      logSanitizedError('email: annulation réservation', emailErr);
     }
   }
 

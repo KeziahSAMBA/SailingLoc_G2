@@ -1,28 +1,28 @@
 import prisma from '../config/db.js';
+import {
+  redactSensitive,
+  sanitizeAuditEmail,
+  sanitizeAuditIp,
+  sanitizeLogText,
+  logSanitizedError,
+} from '../utils/privacy.js';
 
 const LEVELS = ['info', 'warning', 'error'];
 const ROLES = ['admin', 'proprietaire', 'locataire'];
 const MAX_PAGE_SIZE = 100;
 const MESSAGE_MAX = 500;
 // Jamais stockés dans meta, même si un futur appelant les transmet par erreur.
-const SENSITIVE_KEYS = ['password', 'token', 'accessToken', 'refreshToken', 'secret'];
-
 function sanitizeMeta(meta) {
   if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
-  const clean = {};
-  for (const [key, value] of Object.entries(meta)) {
-    if (SENSITIVE_KEYS.includes(key)) continue;
-    if (value === undefined || typeof value === 'function') continue;
-    clean[key] = value;
-  }
-  return Object.keys(clean).length ? clean : null;
+  const clean = redactSensitive(meta, { maxDepth: 4, maxEntries: 30, maxArrayItems: 10 });
+  return clean && typeof clean === 'object' && !Array.isArray(clean) ? clean : null;
 }
 
 function truncate(value, max) {
   if (value === undefined || value === null) return null;
-  const s = String(value).trim();
+  const s = sanitizeLogText(value, max);
   if (!s) return null;
-  return s.length > max ? s.slice(0, max) : s;
+  return s;
 }
 
 // Volontairement « fire and forget » : une écriture de log qui échoue ne doit
@@ -50,16 +50,16 @@ export function logActivity({
         action: truncate(action, 100),
         message: truncate(message, MESSAGE_MAX),
         actor_id: Number.isInteger(actorId) ? actorId : null,
-        actor_email: truncate(actorEmail, 255),
+        actor_email: sanitizeAuditEmail(actorEmail),
         actor_role: truncate(actorRole, 20),
         target_type: truncate(targetType, 50),
         target_id: truncate(targetId, 50),
         meta: sanitizeMeta(meta),
-        ip: truncate(ip, 64),
+        ip: sanitizeAuditIp(ip),
       },
     })
     .catch((err) => {
-      console.error('[logs] écriture impossible:', err.message);
+      logSanitizedError('logs: écriture impossible', err);
       return null;
     });
 }
