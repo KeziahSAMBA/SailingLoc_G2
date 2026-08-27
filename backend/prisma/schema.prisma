@@ -229,6 +229,10 @@ model Payment {
   payment_date     DateTime
   payment_method   String        @db.VarChar(50)
   status           PaymentStatus @default(pending)
+  // Internal lifecycle marker used to recover an interrupted Stripe request.
+  // It is deliberately separate from the public payment status: a row can be
+  // pending while a PaymentIntent is being created or captured.
+  payment_state    String        @default("legacy") @db.VarChar(40)
   transaction_ref  String?       @unique @db.VarChar(255)
   // Clé stable de réservation/essai : elle est également envoyée à Stripe
   // comme clé d'idempotence lors de la création du PaymentIntent. Les lignes
