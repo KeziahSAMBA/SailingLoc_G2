@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { optionalProtect, protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
+import { bookingCreateLimiter, uploadLimiter } from '../middlewares/abuseProtection.js';
 import {
   acceptsMulterMetadata,
   generatedFileName,
@@ -46,7 +47,14 @@ const IMAGE_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const DOCUMENT_MIME = ['application/pdf', 'image/jpeg', 'image/png'];
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 6 }, // 5 Mo par fichier, 5 photos + 1 acte de francisation
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 6,
+    fields: 25,
+    fieldSize: 16 * 1024,
+    parts: 35,
+    headerPairs: 200,
+  }, // 5 Mo par fichier, 5 photos + 1 acte de francisation
   fileFilter: (req, file, cb) => {
     const kind = file.fieldname === 'acte_francisation' ? 'document' : 'image';
     const allowed = file.fieldname === 'acte_francisation' ? DOCUMENT_MIME : IMAGE_MIME;
@@ -97,7 +105,17 @@ function uploadFiles(req, res, next) {
     { name: 'acte_francisation', maxCount: 1 },
   ])(req, res, (err) => {
     if (err) {
-      const status = err.code === 'LIMIT_FILE_SIZE' ? 400 : err.status || 500;
+      const status = [
+        'LIMIT_FILE_SIZE',
+        'LIMIT_FILE_COUNT',
+        'LIMIT_FIELD_SIZE',
+        'LIMIT_FIELD_COUNT',
+        'LIMIT_PART_COUNT',
+        'LIMIT_HEADER_COUNT',
+        'LIMIT_UNEXPECTED_FILE',
+      ].includes(err.code)
+        ? 400
+        : err.status || 500;
       const message =
         err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop volumineux (max 5 Mo).' : err.message;
       return removeUploadedFiles(req).finally(() => res.status(status).json({ message }));
@@ -116,6 +134,7 @@ router.post(
   '/',
   protect,
   requireRole('proprietaire', 'admin'),
+  uploadLimiter,
   uploadFiles,
   validateBoatFiles,
   audit('boat.create', { meta: (req) => ({ name: req.body?.name, type: req.body?.type }) }),
@@ -125,6 +144,7 @@ router.post(
   '/:id_boat/bookings',
   protect,
   requireRole('locataire'),
+  bookingCreateLimiter,
   audit('booking.create', {
     targetType: 'booking',
     meta: (req) => ({
@@ -139,6 +159,7 @@ router.put(
   '/:id_boat',
   protect,
   requireRole('proprietaire'),
+  uploadLimiter,
   uploadFiles,
   validateBoatFiles,
   audit('boat.update', {

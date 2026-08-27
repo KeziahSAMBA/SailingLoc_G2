@@ -18,6 +18,7 @@ import {
   deleteBookingReview,
   getReviewEligibility,
 } from '../services/reviewService.js';
+import { requirePositiveId } from '../utils/inputSecurity.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -148,10 +149,7 @@ export async function getMyFavorites(req, res) {
 
 export async function postFavorite(req, res) {
   try {
-    const id_boat = Number(req.params.id_boat);
-    if (!Number.isInteger(id_boat)) {
-      return res.status(400).json({ message: 'Identifiant de bateau invalide.' });
-    }
+    const id_boat = requirePositiveId(req.params.id_boat, 'Identifiant de bateau');
     await addFavorite(req.user.id_user, id_boat);
     res.status(201).json({ success: true });
   } catch (err) {
@@ -161,10 +159,7 @@ export async function postFavorite(req, res) {
 
 export async function deleteFavorite(req, res) {
   try {
-    const id_boat = Number(req.params.id_boat);
-    if (!Number.isInteger(id_boat)) {
-      return res.status(400).json({ message: 'Identifiant de bateau invalide.' });
-    }
+    const id_boat = requirePositiveId(req.params.id_boat, 'Identifiant de bateau');
     await removeFavorite(req.user.id_user, id_boat);
     res.json({ success: true });
   } catch (err) {

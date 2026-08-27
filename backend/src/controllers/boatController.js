@@ -171,7 +171,7 @@ export async function createBookingController(req, res) {
   try {
     const booking = await createBooking({
       id_user: req.user.id_user,
-      id_boat: Number(req.params.id_boat),
+      id_boat: req.params.id_boat,
       start_date: req.body.start_date,
       end_date: req.body.end_date,
     });

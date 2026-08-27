@@ -5,6 +5,7 @@ import * as stripeConfig from '../config/stripe.js';
 import { sendBookingCancelledByLocataireEmail } from './emailService.js';
 import { encryptFileInPlace } from '../utils/fileCrypto.js';
 import { inspectUploadedFile, resolveStoredFilePath, storagePath } from '../utils/fileSecurity.js';
+import { boundedString, parseDateOnly, requirePositiveId } from '../utils/inputSecurity.js';
 
 const DAY_MS = 86400000;
 // Commission plateforme : même taux (10 %) que les paiements du seed.
@@ -14,6 +15,12 @@ const COMMISSION_RATE = 0.1;
 const PENDING_EXPIRY_MS = 72 * 3600 * 1000;
 const EXPIRY_REASON = 'Annulation automatique : réservation non payée sous 72 heures.';
 const ACTIVE_PAYMENT_STATUSES = ['pending', 'success'];
+// Limite métier et garde-fou contre une boucle de dates contrôlée par le
+// client. Elle reste suffisamment large pour une location saisonnière tout en
+// bornant le coût de validation à 90 itérations au maximum.
+export const MAX_BOOKING_DAYS = 90;
+const MAX_DISPUTE_FILES = 5;
+const MAX_REASON_LENGTH = 1000;
 
 const { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } = stripeConfig;
 
@@ -173,11 +180,7 @@ async function markPaymentFailed(id_payment, expectedTransactionRef) {
 
 // Parse une date « YYYY-MM-DD » en Date UTC minuit, même convention que les
 // colonnes @db.Date de Prisma. Retourne null si invalide.
-function parseDay(value) {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
+const parseDay = parseDateOnly;
 
 // Annule les réservations « pending » NON payées créées il y a plus de 72 h
 // (balayage périodique lancé par server.js — nettoyage d'affichage : une
@@ -225,6 +228,8 @@ function cancelBooking(id_booking, reason) {
 // montant recalculé côté serveur. La demande ne bloque pas le créneau : seules
 // les réservations confirmées par le propriétaire le font.
 export async function createBooking({ id_user, id_boat, start_date, end_date }) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
   const start = parseDay(start_date);
   const end = parseDay(end_date);
   if (!start || !end) throw bad('Dates invalides (format attendu : YYYY-MM-DD).');
@@ -234,8 +239,13 @@ export async function createBooking({ id_user, id_boat, start_date, end_date }) 
   const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   if (start < today) throw bad('La date de début est déjà passée.');
 
+  const dayCount = Math.floor((end.getTime() - start.getTime()) / DAY_MS) + 1;
+  if (dayCount > MAX_BOOKING_DAYS) {
+    throw bad(`Une réservation ne peut pas dépasser ${MAX_BOOKING_DAYS} jours.`);
+  }
+
   const boat = await prisma.boat.findFirst({
-    where: { id_boat, deleted_at: null, is_published: true },
+    where: { id_boat: boatId, deleted_at: null, is_published: true },
     select: {
       daily_price: true,
       availabilities: {
@@ -270,13 +280,34 @@ export async function createBooking({ id_user, id_boat, start_date, end_date }) 
   }
 
   // Jours inclusifs × prix journalier (même calcul que l'affichage du front).
-  const dayCount = Math.round((end - start) / DAY_MS) + 1;
-  const total_amount = dayCount * Number(boat.daily_price);
+  const dailyPrice = Number(boat.daily_price);
+  if (!Number.isFinite(dailyPrice) || dailyPrice <= 0 || dailyPrice > 1_000_000) {
+    throw bad('Le tarif journalier du bateau est invalide.', 409);
+  }
+  const total_amount = dayCount * dailyPrice;
+  if (!Number.isFinite(total_amount) || !Number.isSafeInteger(Math.round(total_amount * 100))) {
+    throw bad('Le montant de la réservation est invalide.', 409);
+  }
+
+  // Une même demande ne doit pas pouvoir être multipliée par des retries
+  // parallèles du navigateur. La limite HTTP complète cette vérification.
+  const duplicate = await prisma.booking.findFirst?.({
+    where: {
+      id_user: userId,
+      id_boat: boatId,
+      start_date: start,
+      end_date: end,
+      status: 'pending',
+      deleted_at: null,
+    },
+    select: { id_booking: true },
+  });
+  if (duplicate) throw bad('Une demande identique est déjà en cours.', 409);
 
   const booking = await prisma.booking.create({
     data: {
-      id_user,
-      id_boat,
+      id_user: userId,
+      id_boat: boatId,
       start_date: start,
       end_date: end,
       status: 'pending',
@@ -298,9 +329,11 @@ export async function createBooking({ id_user, id_boat, start_date, end_date }) 
 // du propriétaire (setBookingStatus) qui capture le paiement et bloque le
 // calendrier ; son refus libère l'empreinte.
 export async function payBooking(id_user, id_booking) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const bookingId = requirePositiveId(id_booking, 'Identifiant réservation');
   const stripe = getStripe();
   const booking = await prisma.booking.findFirst({
-    where: { id_booking: Number(id_booking), id_user, deleted_at: null },
+    where: { id_booking: bookingId, id_user: userId, deleted_at: null },
     select: {
       id_booking: true,
       id_boat: true,
@@ -383,7 +416,7 @@ export async function payBooking(id_user, id_booking) {
   // Les documents obligatoires du locataire doivent avoir été validés par
   // l'admin (même exigence que l'étape documents du tunnel côté front).
   const validated = await prisma.document.findMany({
-    where: { id_user, status: 'validated', type: { in: DOCUMENT_TYPES.locataire } },
+    where: { id_user: userId, status: 'validated', type: { in: DOCUMENT_TYPES.locataire } },
     orderBy: { upload_date: 'desc' },
     select: { id_document: true, type: true },
   });
@@ -448,7 +481,7 @@ export async function payBooking(id_user, id_booking) {
           currency: 'eur',
           capture_method: 'manual',
           automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
-          metadata: { id_booking: String(booking.id_booking), id_user: String(id_user) },
+          metadata: { id_booking: String(booking.id_booking), id_user: String(userId) },
           ...(destinationReady && {
             application_fee_amount: Math.round(commission * 100),
             transfer_data: { destination },
@@ -540,8 +573,14 @@ export async function payBooking(id_user, id_booking) {
 // empreinte en attente est simplement libérée ; un paiement encaissé est
 // intégralement remboursé, sans validation admin : le séjour n'a pas eu lieu.
 export async function cancelOwnBooking(id_user, id_booking, reason) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const bookingId = requirePositiveId(id_booking, 'Identifiant réservation');
+  const cleanReason =
+    reason === undefined || reason === null
+      ? null
+      : boundedString(reason, { label: 'Motif', max: MAX_REASON_LENGTH });
   const booking = await prisma.booking.findFirst({
-    where: { id_booking: Number(id_booking), id_user, deleted_at: null },
+    where: { id_booking: bookingId, id_user: userId, deleted_at: null },
     select: {
       id_booking: true,
       status: true,
@@ -581,7 +620,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
   const updated = await prisma.$transaction(async (tx) => {
     const bookingData = {
       status: 'cancelled',
-      cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le locataire.',
+      cancellation_reason: cleanReason || 'Annulée par le locataire.',
       cancellation_date: now,
       updated_at: now,
     };
@@ -656,11 +695,17 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
 // pour une réservation annulée dont le paiement encaissé n'a pas été remboursé
 // automatiquement.
 export async function requestRefund(id_user, id_booking, reason) {
-  const cleanReason = reason && String(reason).trim();
-  if (!cleanReason) throw bad('Le motif de la demande est obligatoire.');
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const bookingId = requirePositiveId(id_booking, 'Identifiant réservation');
+  if (typeof reason !== 'string') throw bad('Le motif de la demande est obligatoire.');
+  const cleanReason = boundedString(reason, {
+    label: 'Le motif de la demande',
+    max: MAX_REASON_LENGTH,
+    min: 1,
+  });
 
   const booking = await prisma.booking.findFirst({
-    where: { id_booking: Number(id_booking), id_user, deleted_at: null },
+    where: { id_booking: bookingId, id_user: userId, deleted_at: null },
     select: {
       id_booking: true,
       status: true,
@@ -681,7 +726,7 @@ export async function requestRefund(id_user, id_booking, reason) {
 
   try {
     return await prisma.dispute.create({
-      data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
+      data: { id_booking: booking.id_booking, id_user: userId, reason: cleanReason },
     });
   } catch (error) {
     // The partial unique index on open disputes closes the read-then-create
@@ -706,14 +751,23 @@ async function preparePrivateDisputePhoto(file) {
 }
 
 export async function reportDispute({ id_user, id_booking, reason, asOwner = false, files = [] }) {
-  const cleanReason = reason && String(reason).trim();
-  if (!cleanReason) throw bad('Le motif du litige est obligatoire.');
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const bookingId = requirePositiveId(id_booking, 'Identifiant réservation');
+  if (typeof reason !== 'string') throw bad('Le motif du litige est obligatoire.');
+  const cleanReason = boundedString(reason, {
+    label: 'Le motif du litige',
+    max: MAX_REASON_LENGTH,
+    min: 1,
+  });
+  if (!Array.isArray(files) || files.length > MAX_DISPUTE_FILES) {
+    throw bad(`Le nombre de preuves est limité à ${MAX_DISPUTE_FILES}.`);
+  }
 
   const booking = await prisma.booking.findFirst({
     where: {
-      id_booking: Number(id_booking),
+      id_booking: bookingId,
       deleted_at: null,
-      ...(asOwner ? { boat: { id_user, deleted_at: null } } : { id_user }),
+      ...(asOwner ? { boat: { id_user: userId, deleted_at: null } } : { id_user: userId }),
     },
     select: {
       id_booking: true,
@@ -754,13 +808,13 @@ export async function reportDispute({ id_user, id_booking, reason, asOwner = fal
   try {
     return await prisma.$transaction(async (tx) => {
       const dispute = await tx.dispute.create({
-        data: { id_booking: booking.id_booking, id_user, reason: cleanReason.slice(0, 1000) },
+        data: { id_booking: booking.id_booking, id_user: userId, reason: cleanReason },
       });
       if (preparedFiles.length > 0) {
         await tx.image.createMany({
           data: preparedFiles.map((file, i) => ({
             id_dispute: dispute.id_dispute,
-            id_user,
+            id_user: userId,
             url: file.storedPath,
             mime_type: file.mimeType,
             type: 'dispute',

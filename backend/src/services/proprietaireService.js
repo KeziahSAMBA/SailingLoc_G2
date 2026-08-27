@@ -12,8 +12,22 @@ import {
   safeDisplayName,
   storagePath,
 } from '../utils/fileSecurity.js';
+import {
+  boundedString,
+  parseDateOnly,
+  parseStrictBoolean,
+  requirePositiveId,
+} from '../utils/inputSecurity.js';
 
 const { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } = stripeConfig;
+
+const MAX_AVAILABILITY_PERIODS = 100;
+const MAX_IMAGES = 5;
+const MAX_BOAT_DESCRIPTION = 5000;
+const MAX_BOAT_DAILY_PRICE = 1_000_000;
+const MAX_BOAT_CAPACITY = 1_000;
+const MAX_REASON_LENGTH = 1000;
+const MAX_HISTORY_ROWS = 500;
 
 function paymentIntentOptions(ref, operation) {
   if (typeof stripeConfig.paymentIntentIdempotencyKey !== 'function') return undefined;
@@ -65,6 +79,7 @@ async function preparePrivateDocument(file) {
 // leur éventuelle empreinte de paiement est libérée — rien n'a été débité, le
 // paiement passe « refunded » sans montant remboursé.
 async function refuseExpiredPending(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const expired = await prisma.booking.findMany({
@@ -72,12 +87,13 @@ async function refuseExpiredPending(id_user) {
       deleted_at: null,
       status: 'pending',
       start_date: { lt: today },
-      boat: { id_user, deleted_at: null },
+      boat: { id_user: ownerId, deleted_at: null },
     },
     select: {
       id_booking: true,
       payments: { where: { status: 'pending' }, select: { transaction_ref: true } },
     },
+    take: MAX_HISTORY_ROWS,
   });
   if (expired.length === 0) return;
   // Empreintes Stripe libérées en best-effort avant la mise à jour en base.
@@ -102,7 +118,8 @@ async function refuseExpiredPending(id_user) {
 
 // Vue synthétique du tableau de bord propriétaire : compteurs agrégés en une seule passe.
 export async function getDashboardStats(id_user) {
-  await refuseExpiredPending(id_user);
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  await refuseExpiredPending(ownerId);
   // « Revenus du mois » : somme des réservations confirmées de mes bateaux
   // dont le séjour démarre dans le mois en cours.
   const monthStart = new Date();
@@ -115,7 +132,7 @@ export async function getDashboardStats(id_user) {
     await Promise.all([
       // Bateaux publiés (non supprimés) du propriétaire.
       prisma.boat.count({
-        where: { id_user, deleted_at: null, is_published: true },
+        where: { id_user: ownerId, deleted_at: null, is_published: true },
       }),
       // Réservations à confirmer : demandes en attente ET payées (empreinte en
       // attente) sur mes bateaux — les demandes non payées ne sont pas encore
@@ -124,7 +141,7 @@ export async function getDashboardStats(id_user) {
         where: {
           deleted_at: null,
           status: 'pending',
-          boat: { id_user, deleted_at: null },
+          boat: { id_user: ownerId, deleted_at: null },
           payments: { some: { status: 'pending' } },
         },
       }),
@@ -133,13 +150,13 @@ export async function getDashboardStats(id_user) {
         where: {
           deleted_at: null,
           status: 'confirmed',
-          boat: { id_user, deleted_at: null },
+          boat: { id_user: ownerId, deleted_at: null },
           start_date: { gte: monthStart, lt: nextMonthStart },
         },
       }),
       // Dernières réservations (tous statuts) sur mes bateaux, avec le locataire.
       prisma.booking.findMany({
-        where: { deleted_at: null, boat: { id_user, deleted_at: null } },
+        where: { deleted_at: null, boat: { id_user: ownerId, deleted_at: null } },
         orderBy: { booking_date: 'desc' },
         take: 5,
         select: {
@@ -154,7 +171,7 @@ export async function getDashboardStats(id_user) {
       }),
       // Aperçu des derniers bateaux publiés (avec l'image principale).
       prisma.boat.findMany({
-        where: { id_user, deleted_at: null, is_published: true },
+        where: { id_user: ownerId, deleted_at: null, is_published: true },
         orderBy: { created_at: 'desc' },
         take: 4,
         select: {
@@ -190,10 +207,12 @@ export async function getDashboardStats(id_user) {
 // Liste complète des réservations reçues sur les bateaux du propriétaire
 // (plus récentes d'abord), avec le locataire demandeur.
 export async function listBookings(id_user) {
-  await refuseExpiredPending(id_user);
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  await refuseExpiredPending(ownerId);
   const bookings = await prisma.booking.findMany({
-    where: { deleted_at: null, boat: { id_user, deleted_at: null } },
+    where: { deleted_at: null, boat: { id_user: ownerId, deleted_at: null } },
     orderBy: { start_date: 'desc' },
+    take: 500,
     select: {
       id_booking: true,
       start_date: true,
@@ -257,11 +276,13 @@ const LOCATAIRE_DOC_TYPES = ['permis_conduire', 'piece_identite', 'cv_nautique']
 // si la réservation porte sur l'un de ses bateaux (sinon 404). Renvoie le profil
 // et les documents d'identité du locataire (statut de validation inclus).
 export async function getBookingLocataire(id_owner, id_booking) {
+  const ownerId = requirePositiveId(id_owner, 'Identifiant utilisateur');
+  const bookingId = requirePositiveId(id_booking, 'Identifiant réservation');
   const booking = await prisma.booking.findFirst({
     where: {
-      id_booking: Number(id_booking),
+      id_booking: bookingId,
       deleted_at: null,
-      boat: { id_user: id_owner, deleted_at: null },
+      boat: { id_user: ownerId, deleted_at: null },
     },
     select: {
       id_booking: true,
@@ -291,6 +312,7 @@ export async function getBookingLocataire(id_owner, id_booking) {
       bookings: { some: { id_booking: booking.id_booking } },
     },
     orderBy: { upload_date: 'desc' },
+    take: MAX_HISTORY_ROWS,
     select: {
       id_document: true,
       type: true,
@@ -306,9 +328,11 @@ export async function getBookingLocataire(id_owner, id_booking) {
 // Liste des bateaux du propriétaire (plus récents d'abord) avec leur statut
 // d'annonce (brouillon, en attente de validation, publiée, refusée).
 export async function listBoats(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const boats = await prisma.boat.findMany({
-    where: { id_user, deleted_at: null },
+    where: { id_user: ownerId, deleted_at: null },
     orderBy: { created_at: 'desc' },
+    take: 500,
     select: {
       id_boat: true,
       name: true,
@@ -360,15 +384,20 @@ const BOAT_TYPES = [
 // sinon le port est créé, la ville est alors obligatoire. Pour les ports issus
 // du catalogue IGN, le code INSEE permet de déduire département et région.
 async function findOrCreatePort({ id_port, name, city, country, insee, latitude, longitude }) {
-  if (id_port) {
-    const port = await prisma.port.findUnique({ where: { id_port: Number(id_port) } });
+  const hasPortId = id_port !== undefined && id_port !== null && id_port !== '';
+  if (hasPortId) {
+    const portId = requirePositiveId(id_port, 'Identifiant port');
+    const port = await prisma.port.findUnique({ where: { id_port: portId } });
     if (!port || port.deleted_at) {
       throw Object.assign(new Error('Port sélectionné introuvable.'), { status: 400 });
     }
     return port;
   }
 
-  const cleanName = name && String(name).trim();
+  const cleanName =
+    name === undefined || name === null
+      ? ''
+      : boundedString(name, { label: 'Le nom du port', max: 150 });
   if (!cleanName) {
     throw Object.assign(new Error("Le port d'attache est obligatoire."), { status: 400 });
   }
@@ -384,21 +413,38 @@ async function findOrCreatePort({ id_port, name, city, country, insee, latitude,
     });
   }
 
-  const cleanCity = city && String(city).trim();
+  const cleanCity =
+    city === undefined || city === null ? '' : boundedString(city, { label: 'La ville', max: 100 });
   if (!cleanCity) {
     throw Object.assign(new Error('La ville est requise pour ajouter un nouveau port.'), {
       status: 400,
     });
   }
+  const cleanCountry =
+    country === undefined || country === null || country === ''
+      ? 'France'
+      : boundedString(country, { label: 'Le pays', max: 100 });
+  const coordinate = (value, min, max, label) => {
+    if (value === undefined || value === null || value === '') return null;
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < min || number > max) {
+      throw Object.assign(new Error(`${label} invalide.`), { status: 400 });
+    }
+    return number;
+  };
+  const cleanInsee =
+    insee === undefined || insee === null || insee === ''
+      ? null
+      : boundedString(insee, { label: 'Le code INSEE', max: 10 });
   return prisma.port.create({
     data: {
       name: cleanName,
       city: cleanCity,
-      country: (country && String(country).trim()) || 'France',
-      department: departmentFromInsee(insee),
-      region: regionFromInsee(insee),
-      latitude: latitude != null && latitude !== '' ? Number(latitude) : null,
-      longitude: longitude != null && longitude !== '' ? Number(longitude) : null,
+      country: cleanCountry,
+      department: departmentFromInsee(cleanInsee),
+      region: regionFromInsee(cleanInsee),
+      latitude: coordinate(latitude, -90, 90, 'Latitude'),
+      longitude: coordinate(longitude, -180, 180, 'Longitude'),
     },
   });
 }
@@ -416,10 +462,19 @@ function parseAvailabilities(raw) {
   if (!Array.isArray(list)) {
     throw Object.assign(new Error('Disponibilités invalides.'), { status: 400 });
   }
+  if (list.length > MAX_AVAILABILITY_PERIODS) {
+    throw Object.assign(
+      new Error(`Le nombre de périodes de disponibilité est limité à ${MAX_AVAILABILITY_PERIODS}.`),
+      { status: 400 }
+    );
+  }
   return list.map((a) => {
-    const start = new Date(a.start_date);
-    const end = new Date(a.end_date);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    if (!a || typeof a !== 'object' || Array.isArray(a)) {
+      throw Object.assign(new Error('Disponibilité invalide.'), { status: 400 });
+    }
+    const start = parseDateOnly(a.start_date);
+    const end = parseDateOnly(a.end_date);
+    if (!start || !end || end <= start) {
       throw Object.assign(
         new Error('Chaque période de disponibilité doit avoir une fin postérieure au début.'),
         { status: 400 }
@@ -427,7 +482,10 @@ function parseAvailabilities(raw) {
     }
     const override =
       a.price_override != null && a.price_override !== '' ? Number(a.price_override) : null;
-    if (override != null && (!Number.isFinite(override) || override <= 0)) {
+    if (
+      override != null &&
+      (!Number.isFinite(override) || override <= 0 || override > MAX_BOAT_DAILY_PRICE)
+    ) {
       throw Object.assign(new Error('Le prix spécifique d’une période doit être positif.'), {
         status: 400,
       });
@@ -437,7 +495,10 @@ function parseAvailabilities(raw) {
       end_date: end,
       is_available: true,
       price_override: override,
-      notes: (a.notes && String(a.notes).trim().slice(0, 255)) || null,
+      notes:
+        a.notes === undefined || a.notes === null || a.notes === ''
+          ? null
+          : boundedString(a.notes, { label: 'Les notes', max: 255 }),
     };
   });
 }
@@ -447,16 +508,58 @@ function parseAvailabilities(raw) {
 function validateBoatPayload(payload, isDraft) {
   const bad = (message) => Object.assign(new Error(message), { status: 400 });
 
-  const name = payload.name && String(payload.name).trim();
-  const type = payload.type && String(payload.type).trim();
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw bad('Données de bateau invalides.');
+  }
+  const optionalText = (value, options) => {
+    if (value === undefined || value === null || value === '') return null;
+    return boundedString(value, options);
+  };
+  const finiteNumber = (
+    value,
+    label,
+    { integer = false, min = 0, max = Number.MAX_SAFE_INTEGER } = {}
+  ) => {
+    if (value === undefined || value === null || value === '') return null;
+    if (typeof value !== 'number' && typeof value !== 'string') throw bad(`${label} invalide.`);
+    const number = Number(String(value).trim());
+    if (
+      !Number.isFinite(number) ||
+      (integer && !Number.isInteger(number)) ||
+      number < min ||
+      number > max
+    ) {
+      throw bad(`${label} invalide.`);
+    }
+    return number;
+  };
+  const booleanValue = (value, fallback, label) =>
+    value === undefined || value === null || value === ''
+      ? fallback
+      : parseStrictBoolean(value, label);
+
+  const name = optionalText(payload.name, { label: 'Le nom du bateau', max: 150 });
+  const type = optionalText(payload.type, { label: 'Le type du bateau', max: 50 });
   const registration =
-    (payload.registration && String(payload.registration).trim().toUpperCase()) || null;
-  const size = payload.size !== '' && payload.size != null ? Number(payload.size) : null;
-  const daily_price =
-    payload.daily_price !== '' && payload.daily_price != null ? Number(payload.daily_price) : null;
-  const capacity =
-    payload.capacity !== '' && payload.capacity != null ? Number(payload.capacity) : null;
-  const build_year = payload.build_year ? Number(payload.build_year) : null;
+    optionalText(payload.registration, {
+      label: "L'immatriculation",
+      max: 50,
+    })?.toUpperCase() || null;
+  const size = finiteNumber(payload.size, 'La taille', { min: 0, max: 1_000 });
+  const daily_price = finiteNumber(payload.daily_price, 'Le prix par jour', {
+    min: 0,
+    max: MAX_BOAT_DAILY_PRICE,
+  });
+  const capacity = finiteNumber(payload.capacity, 'La capacité', {
+    integer: true,
+    min: 0,
+    max: MAX_BOAT_CAPACITY,
+  });
+  const build_year = finiteNumber(payload.build_year, "L'année de construction", {
+    integer: true,
+    min: 0,
+    max: new Date().getFullYear(),
+  });
 
   if (!name) throw bad('Le nom du bateau est obligatoire.');
   if (!BOAT_TYPES.includes(type)) throw bad('Type de bateau invalide.');
@@ -492,10 +595,13 @@ function validateBoatPayload(payload, isDraft) {
     daily_price,
     capacity,
     build_year,
-    engine: (payload.engine && String(payload.engine).trim()) || null,
-    with_skipper: payload.with_skipper === 'true' || payload.with_skipper === true,
-    description: (payload.description && String(payload.description).trim()) || null,
-    license_required: !(payload.license_required === 'false' || payload.license_required === false),
+    engine: optionalText(payload.engine, { label: 'Le moteur', max: 100 }),
+    with_skipper: booleanValue(payload.with_skipper, false, 'with_skipper'),
+    description: optionalText(payload.description, {
+      label: 'La description',
+      max: MAX_BOAT_DESCRIPTION,
+    }),
+    license_required: booleanValue(payload.license_required, true, 'license_required'),
   };
 }
 
@@ -562,13 +668,18 @@ async function linkExistingActeFrancisation(tx, id_user, id_boat, docId) {
 // photos (déjà stockées par multer), port (réutilisé ou créé) et périodes de
 // disponibilité. L'annonce part en validation admin (ou reste en brouillon).
 export async function createBoat(id_user, payload = {}, files = {}, origin = '') {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  payload = payload ?? {};
   const images = files.images || [];
   const acteFrancisation = files.acteFrancisation || null;
-  const isDraft = payload.draft === 'true' || payload.draft === true;
+  const isDraft =
+    payload.draft === undefined || payload.draft === null || payload.draft === ''
+      ? false
+      : parseStrictBoolean(payload.draft, 'draft');
   const fields = validateBoatPayload(payload, isDraft);
   const availabilities = parseAvailabilities(payload.availabilities);
   const port = await resolveBoatPort(payload, isDraft);
-  if (!isDraft && fields.with_skipper) await ensureSkipperCv(id_user);
+  if (!isDraft && fields.with_skipper) await ensureSkipperCv(ownerId);
 
   let preparedActe = null;
   if (acteFrancisation) preparedActe = await preparePrivateDocument(acteFrancisation);
@@ -577,7 +688,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
     const boat = await prisma.$transaction(async (tx) => {
       const created = await tx.boat.create({
         data: {
-          id_user,
+          id_user: ownerId,
           id_port: port?.id_port ?? null,
           ...fields,
           is_published: false,
@@ -602,7 +713,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
       if (preparedActe) {
         await tx.document.create({
           data: {
-            id_user,
+            id_user: ownerId,
             id_boat: created.id_boat,
             type: 'acte_francisation',
             file_name: preparedActe.safeOriginalName,
@@ -615,7 +726,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
       } else if (payload.acte_francisation_id) {
         await linkExistingActeFrancisation(
           tx,
-          id_user,
+          ownerId,
           created.id_boat,
           payload.acte_francisation_id
         );
@@ -648,8 +759,10 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
 
 // Détail d'un bateau du propriétaire, pour pré-remplir le formulaire d'édition.
 export async function getBoat(id_user, id_boat) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
   const boat = await prisma.boat.findUnique({
-    where: { id_boat: Number(id_boat) },
+    where: { id_boat: boatId },
     include: {
       port: { select: { id_port: true, name: true, city: true } },
       images: {
@@ -670,7 +783,7 @@ export async function getBoat(id_user, id_boat) {
     },
   });
   // 404 aussi pour le bateau d'un autre propriétaire : on ne révèle rien.
-  if (!boat || boat.deleted_at || boat.id_user !== id_user) {
+  if (!boat || boat.deleted_at || boat.id_user !== ownerId) {
     throw Object.assign(new Error('Bateau introuvable.'), { status: 404 });
   }
 
@@ -705,9 +818,18 @@ export async function getBoat(id_user, id_boat) {
 // l'ordre ; les nouveaux fichiers s'ajoutent à la suite. Les disponibilités
 // sont remplacées. `draft=true` → reste brouillon, sinon → soumis (pending).
 export async function updateBoat(id_user, id_boat, payload = {}, files = {}, origin = '') {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
+  payload = payload ?? {};
+  files = files ?? {};
   const images = files.images || [];
   const acteFrancisation = files.acteFrancisation || null;
-  const id = Number(id_boat);
+  if (!Array.isArray(images) || images.length > MAX_IMAGES) {
+    throw Object.assign(new Error(`Le nombre de photos est limité à ${MAX_IMAGES}.`), {
+      status: 400,
+    });
+  }
+  const id = boatId;
   const existing = await prisma.boat.findUnique({
     where: { id_boat: id },
     include: {
@@ -718,22 +840,39 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
       },
     },
   });
-  if (!existing || existing.deleted_at || existing.id_user !== id_user) {
+  if (!existing || existing.deleted_at || existing.id_user !== ownerId) {
     throw Object.assign(new Error('Bateau introuvable.'), { status: 404 });
   }
 
   const isDraft =
-    existing.status === 'draft' && (payload.draft === 'true' || payload.draft === true);
+    existing.status === 'draft' &&
+    (payload.draft === undefined || payload.draft === null || payload.draft === ''
+      ? false
+      : parseStrictBoolean(payload.draft, 'draft'));
   const fields = validateBoatPayload(payload, isDraft);
   const availabilities = parseAvailabilities(payload.availabilities);
   const port = await resolveBoatPort(payload, isDraft);
-  if (!isDraft && fields.with_skipper) await ensureSkipperCv(id_user);
+  if (!isDraft && fields.with_skipper) await ensureSkipperCv(ownerId);
 
-  let keptImageIds = [];
-  try {
-    keptImageIds = payload.existing_images ? JSON.parse(payload.existing_images) : [];
-  } catch {
-    keptImageIds = [];
+  let keptImageIds = existing.images.map((img) => img.id_image);
+  if (payload.existing_images !== undefined) {
+    let parsed;
+    try {
+      parsed = JSON.parse(payload.existing_images);
+    } catch {
+      throw Object.assign(new Error('Liste de photos existantes invalide.'), { status: 400 });
+    }
+    if (!Array.isArray(parsed) || parsed.length > MAX_IMAGES) {
+      throw Object.assign(new Error(`La liste de photos existantes est limitée à ${MAX_IMAGES}.`), {
+        status: 400,
+      });
+    }
+    keptImageIds = parsed.map((imageId) => requirePositiveId(imageId, 'Identifiant image'));
+    if (new Set(keptImageIds).size !== keptImageIds.length) {
+      throw Object.assign(new Error('La liste de photos existantes contient des doublons.'), {
+        status: 400,
+      });
+    }
   }
 
   // Statut après modification :
@@ -822,7 +961,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
         oldDocs.forEach((d) => removeFileQuiet(d.file_url));
         await tx.document.create({
           data: {
-            id_user,
+            id_user: ownerId,
             id_boat: id,
             type: 'acte_francisation',
             file_name: preparedActe.safeOriginalName,
@@ -832,8 +971,14 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
             status: 'pending',
           },
         });
-      } else if (payload.acte_francisation_id) {
-        const targetId = Number(payload.acte_francisation_id);
+      } else if (
+        payload.acte_francisation_id !== undefined &&
+        payload.acte_francisation_id !== ''
+      ) {
+        const targetId = requirePositiveId(
+          payload.acte_francisation_id,
+          'Identifiant acte de francisation'
+        );
         const oldDocs = await tx.document.findMany({
           where: { id_boat: id, type: 'acte_francisation', id_document: { not: targetId } },
           select: { id_document: true, file_url: true },
@@ -842,7 +987,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
           where: { id_boat: id, type: 'acte_francisation', id_document: { not: targetId } },
         });
         oldDocs.forEach((d) => removeFileQuiet(d.file_url));
-        await linkExistingActeFrancisation(tx, id_user, id, targetId);
+        await linkExistingActeFrancisation(tx, ownerId, id, targetId);
       }
 
       // Disponibilités : remplacement complet par celles du formulaire.
@@ -875,12 +1020,13 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
 // Bloquée s'il reste des réservations en cours ou à venir sur le bateau ;
 // l'acte de francisation rattaché redevient réutilisable pour une autre annonce.
 export async function deleteBoat(id_user, id_boat) {
-  const id = Number(id_boat);
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const id = requirePositiveId(id_boat, 'Identifiant bateau');
   const boat = await prisma.boat.findUnique({
     where: { id_boat: id },
     select: { id_user: true, deleted_at: true },
   });
-  if (!boat || boat.deleted_at || boat.id_user !== id_user) {
+  if (!boat || boat.deleted_at || boat.id_user !== ownerId) {
     throw Object.assign(new Error('Bateau introuvable.'), { status: 404 });
   }
 
@@ -917,10 +1063,11 @@ export async function deleteBoat(id_user, id_boat) {
 
 // Statut du compte Stripe Connect du propriétaire, pour l'UI « Mes revenus ».
 export async function getStripeAccountStatus(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const stripe = getStripe();
   if (!stripe) return { enabled: false, has_account: false, onboarded: false };
   const user = await prisma.user.findUnique({
-    where: { id_user },
+    where: { id_user: ownerId },
     select: { stripe_account_id: true },
   });
   if (!user?.stripe_account_id) return { enabled: true, has_account: false, onboarded: false };
@@ -935,12 +1082,13 @@ export async function getStripeAccountStatus(id_user) {
 // Crée au besoin le compte Express du proprio puis renvoie un lien
 // d'onboarding hébergé par Stripe — l'IBAN ne transite jamais par nos serveurs.
 export async function createStripeOnboardingLink(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const stripe = getStripe();
   if (!stripe) {
     throw Object.assign(new Error("Stripe n'est pas configuré."), { status: 503 });
   }
   const user = await prisma.user.findUnique({
-    where: { id_user },
+    where: { id_user: ownerId },
     select: { stripe_account_id: true, email: true },
   });
   let accountId = user?.stripe_account_id;
@@ -954,7 +1102,7 @@ export async function createStripeOnboardingLink(id_user) {
     });
     accountId = account.id;
     await prisma.user.update({
-      where: { id_user },
+      where: { id_user: ownerId },
       data: { stripe_account_id: accountId, updated_at: new Date() },
     });
   }
@@ -970,12 +1118,13 @@ export async function createStripeOnboardingLink(id_user) {
 
 // Lien de connexion au dashboard Express du proprio (gestion IBAN, virements).
 export async function createStripeLoginLink(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const stripe = getStripe();
   if (!stripe) {
     throw Object.assign(new Error("Stripe n'est pas configuré."), { status: 503 });
   }
   const user = await prisma.user.findUnique({
-    where: { id_user },
+    where: { id_user: ownerId },
     select: { stripe_account_id: true },
   });
   if (!user?.stripe_account_id) {
@@ -990,9 +1139,11 @@ export async function createStripeLoginLink(id_user) {
 // net propriétaire — calculés sur les paiements réussis uniquement (même règle
 // que l'admin : pending/failed ne sont pas du chiffre d'affaires).
 export async function listPayments(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const payments = await prisma.payment.findMany({
-    where: { booking: { deleted_at: null, boat: { id_user, deleted_at: null } } },
+    where: { booking: { deleted_at: null, boat: { id_user: ownerId, deleted_at: null } } },
     orderBy: { payment_date: 'desc' },
+    take: 500,
     include: {
       booking: {
         select: {
@@ -1100,12 +1251,21 @@ async function compareAndSetPayment(tx, id_payment, from, data) {
 // Confirme, refuse ou annule une réservation — uniquement sur un bateau
 // appartenant au propriétaire connecté.
 export async function setBookingStatus(id_user, id_booking, action, reason) {
-  const transition = BOOKING_ACTIONS[action];
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const bookingId = requirePositiveId(id_booking, 'Identifiant réservation');
+  const transition =
+    typeof action === 'string' && Object.prototype.hasOwnProperty.call(BOOKING_ACTIONS, action)
+      ? BOOKING_ACTIONS[action]
+      : null;
   if (!transition) {
     throw Object.assign(new Error('Action invalide.'), { status: 400 });
   }
 
-  const id = Number(id_booking);
+  const cleanReason =
+    reason === undefined || reason === null
+      ? null
+      : boundedString(reason, { label: 'Motif', max: MAX_REASON_LENGTH });
+  const id = bookingId;
   const booking = await prisma.booking.findUnique({
     where: { id_booking: id },
     select: {
@@ -1141,7 +1301,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
   });
   // 404 aussi quand la réservation appartient à un autre propriétaire :
   // on ne révèle pas l'existence de réservations qui ne nous concernent pas.
-  if (!booking || booking.deleted_at || booking.boat?.id_user !== id_user) {
+  if (!booking || booking.deleted_at || booking.boat?.id_user !== ownerId) {
     throw Object.assign(new Error('Réservation introuvable.'), { status: 404 });
   }
   if (!transition.from.includes(booking.status)) {
@@ -1245,7 +1405,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       status: transition.to,
       updated_at: now,
       ...(action === 'cancel' && {
-        cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le propriétaire.',
+        cancellation_reason: cleanReason || 'Annulée par le propriétaire.',
         cancellation_date: now,
       }),
     };

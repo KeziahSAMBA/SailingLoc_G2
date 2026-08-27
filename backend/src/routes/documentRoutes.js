@@ -3,6 +3,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
+import { uploadLimiter } from '../middlewares/abuseProtection.js';
 import {
   acceptsMulterMetadata,
   generatedFileName,
@@ -29,7 +30,14 @@ const storage = multer.diskStorage({
 const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png'];
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 Mo
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1,
+    fields: 4,
+    fieldSize: 16 * 1024,
+    parts: 6,
+    headerPairs: 100,
+  }, // 5 Mo
   fileFilter: (req, file, cb) => {
     if (ALLOWED_MIME.includes(file.mimetype) && acceptsMulterMetadata(file, 'document')) {
       return cb(null, true);
@@ -46,7 +54,17 @@ const upload = multer({
 function uploadSingle(req, res, next) {
   upload.single('file')(req, res, (err) => {
     if (err) {
-      const status = err.code === 'LIMIT_FILE_SIZE' ? 400 : err.status || 500;
+      const status = [
+        'LIMIT_FILE_SIZE',
+        'LIMIT_FILE_COUNT',
+        'LIMIT_FIELD_SIZE',
+        'LIMIT_FIELD_COUNT',
+        'LIMIT_PART_COUNT',
+        'LIMIT_HEADER_COUNT',
+        'LIMIT_UNEXPECTED_FILE',
+      ].includes(err.code)
+        ? 400
+        : err.status || 500;
       const message =
         err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop volumineux (max 5 Mo).' : err.message;
       return removeUploadedFiles(req).finally(() => res.status(status).json({ message }));
@@ -84,6 +102,7 @@ router.post(
   '/',
   protect,
   requireRole('locataire', 'proprietaire'),
+  uploadLimiter,
   uploadSingle,
   validateDocumentFile,
   audit('document.upload', { meta: (req) => ({ type: req.body?.type }) }),

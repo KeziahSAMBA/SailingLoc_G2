@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
+import { messageLimiter } from '../middlewares/abuseProtection.js';
 import {
   getConversations,
   getThreadWith,
@@ -32,15 +33,34 @@ router.get(
   requireRole('locataire', 'proprietaire', 'admin'),
   getThreadWith
 );
-router.post('/', protect, requireRole('locataire', 'proprietaire', 'admin'), postMessage);
+router.post(
+  '/',
+  protect,
+  requireRole('locataire', 'proprietaire', 'admin'),
+  messageLimiter,
+  postMessage
+);
 // Ouvre la conversation support (admin choisi côté serveur).
-router.post('/support', protect, requireRole('locataire', 'proprietaire'), postSupport);
-router.post('/boat/:id_boat/contact', protect, requireRole('locataire'), postBoatContact);
+router.post(
+  '/support',
+  protect,
+  requireRole('locataire', 'proprietaire'),
+  messageLimiter,
+  postSupport
+);
+router.post(
+  '/boat/:id_boat/contact',
+  protect,
+  requireRole('locataire'),
+  messageLimiter,
+  postBoatContact
+);
 // L'admin clôt la demande support d'un utilisateur.
 router.post(
   '/support/:id_user/resolve',
   protect,
   requireRole('admin'),
+  messageLimiter,
   audit('support.resolve', { targetType: 'user', targetId: (req) => req.params.id_user }),
   postResolveSupport
 );
@@ -50,6 +70,7 @@ router.patch(
   '/:id_message',
   protect,
   requireRole('locataire', 'proprietaire', 'admin'),
+  messageLimiter,
   audit('message.update', {
     targetType: 'message',
     targetId: (req) => req.params.id_message,
@@ -61,6 +82,7 @@ router.delete(
   '/:id_message',
   protect,
   requireRole('locataire', 'proprietaire', 'admin'),
+  messageLimiter,
   audit('message.delete', {
     targetType: 'message',
     targetId: (req) => req.params.id_message,

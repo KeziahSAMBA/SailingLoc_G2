@@ -1,8 +1,12 @@
 import prisma from '../config/db.js';
 import { DOCUMENT_TYPES } from './documentService.js';
+import { requirePositiveId } from '../utils/inputSecurity.js';
+
+const MAX_HISTORY_ROWS = 500;
 
 // Vue synthétique du tableau de bord locataire : compteurs agrégés en une seule passe.
 export async function getDashboardStats(id_user) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
   // « Réservations en cours » : réservations non supprimées, en attente ou
   // confirmées, et non encore terminées (date de fin >= aujourd'hui).
   const today = new Date();
@@ -20,20 +24,20 @@ export async function getDashboardStats(id_user) {
   ] = await Promise.all([
     prisma.booking.count({
       where: {
-        id_user,
+        id_user: userId,
         deleted_at: null,
         status: { in: ['pending', 'confirmed'] },
         end_date: { gte: today },
       },
     }),
-    prisma.userBoatFavorite.count({ where: { id_user } }),
+    prisma.userBoatFavorite.count({ where: { id_user: userId } }),
     prisma.message.count({
-      where: { id_receiver: id_user, is_read: false, deleted_at: null },
+      where: { id_receiver: userId, is_read: false, deleted_at: null },
     }),
     // Prochaine réservation confirmée à venir (la plus proche).
     prisma.booking.findFirst({
       where: {
-        id_user,
+        id_user: userId,
         deleted_at: null,
         status: 'confirmed',
         start_date: { gte: today },
@@ -56,22 +60,22 @@ export async function getDashboardStats(id_user) {
     // Documents du locataire (type + statut) : sert à calculer les documents
     // en attente/refusés ET les types obligatoires manquants.
     prisma.document.findMany({
-      where: { id_user },
+      where: { id_user: userId },
       select: { type: true, status: true },
     }),
     // Réservations terminées pour lesquelles le locataire n'a pas encore laissé d'avis.
     prisma.booking.count({
       where: {
-        id_user,
+        id_user: userId,
         deleted_at: null,
         status: 'confirmed',
         end_date: { lt: today },
-        reviews: { none: { id_user } },
+        reviews: { none: { id_user: userId } },
       },
     }),
     // Dernières réservations (tous statuts) pour un aperçu chronologique.
     prisma.booking.findMany({
-      where: { id_user, deleted_at: null },
+      where: { id_user: userId, deleted_at: null },
       orderBy: { booking_date: 'desc' },
       take: 5,
       select: {
@@ -85,7 +89,7 @@ export async function getDashboardStats(id_user) {
     }),
     // Aperçu des derniers favoris (avec l'image principale du bateau).
     prisma.userBoatFavorite.findMany({
-      where: { id_user },
+      where: { id_user: userId },
       orderBy: { created_at: 'desc' },
       take: 4,
       select: {
@@ -145,9 +149,11 @@ export async function getDashboardStats(id_user) {
 // payé (réellement encaissé), remboursé, dépense nette. Les empreintes en
 // attente et les tentatives échouées sont listées mais hors totaux.
 export async function listPayments(id_user) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const payments = await prisma.payment.findMany({
-    where: { booking: { id_user, deleted_at: null } },
+    where: { booking: { id_user: userId, deleted_at: null } },
     orderBy: { payment_date: 'desc' },
+    take: MAX_HISTORY_ROWS,
     include: {
       booking: {
         select: {
@@ -196,9 +202,11 @@ export async function listPayments(id_user) {
 }
 
 export async function listBookings(id_user) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const bookings = await prisma.booking.findMany({
-    where: { id_user, deleted_at: null },
+    where: { id_user: userId, deleted_at: null },
     orderBy: { start_date: 'desc' },
+    take: MAX_HISTORY_ROWS,
     select: {
       id_booking: true,
       start_date: true,
@@ -217,7 +225,7 @@ export async function listBookings(id_user) {
           images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
         },
       },
-      reviews: { where: { id_user }, select: { id_review: true } },
+      reviews: { where: { id_user: userId }, select: { id_review: true } },
       // Dernier paiement (empreinte, encaissé ou remboursé) et demande de
       // remboursement en cours, pour l'affichage du dashboard.
       payments: {
@@ -259,9 +267,11 @@ export async function listBookings(id_user) {
 
 // Liste des bateaux favoris du locataire (plus récents d'abord).
 export async function listFavorites(id_user) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const favorites = await prisma.userBoatFavorite.findMany({
-    where: { id_user },
+    where: { id_user: userId },
     orderBy: { created_at: 'desc' },
+    take: MAX_HISTORY_ROWS,
     select: {
       id_favorite: true,
       boat: {
@@ -294,14 +304,18 @@ export async function listFavorites(id_user) {
 
 // Ajoute un bateau aux favoris du locataire (idempotent).
 export async function addFavorite(id_user, id_boat) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
   await prisma.userBoatFavorite.upsert({
-    where: { id_user_id_boat: { id_user, id_boat } },
-    create: { id_user, id_boat },
+    where: { id_user_id_boat: { id_user: userId, id_boat: boatId } },
+    create: { id_user: userId, id_boat: boatId },
     update: {},
   });
 }
 
 // Retire un bateau des favoris du locataire (idempotent).
 export async function removeFavorite(id_user, id_boat) {
-  await prisma.userBoatFavorite.deleteMany({ where: { id_user, id_boat } });
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
+  await prisma.userBoatFavorite.deleteMany({ where: { id_user: userId, id_boat: boatId } });
 }

@@ -30,6 +30,7 @@ import {
 } from '../controllers/userController.js';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
+import { bookingActionLimiter, uploadLimiter } from '../middlewares/abuseProtection.js';
 import {
   getDashboard,
   getMyBookings,
@@ -76,7 +77,14 @@ const avatarStorage = multer.diskStorage({
 const AVATAR_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const avatarUpload = multer({
   storage: avatarStorage,
-  limits: { fileSize: 3 * 1024 * 1024 }, // 3 Mo
+  limits: {
+    fileSize: 3 * 1024 * 1024,
+    files: 1,
+    fields: 1,
+    fieldSize: 8 * 1024,
+    parts: 2,
+    headerPairs: 100,
+  }, // 3 Mo
   fileFilter: (req, file, cb) => {
     if (AVATAR_MIME.includes(file.mimetype) && acceptsMulterMetadata(file, 'avatar')) {
       return cb(null, true);
@@ -93,7 +101,17 @@ const avatarUpload = multer({
 function uploadAvatar(req, res, next) {
   avatarUpload.single('avatar')(req, res, (err) => {
     if (err) {
-      const status = err.code === 'LIMIT_FILE_SIZE' ? 400 : err.status || 500;
+      const status = [
+        'LIMIT_FILE_SIZE',
+        'LIMIT_FILE_COUNT',
+        'LIMIT_FIELD_SIZE',
+        'LIMIT_FIELD_COUNT',
+        'LIMIT_PART_COUNT',
+        'LIMIT_HEADER_COUNT',
+        'LIMIT_UNEXPECTED_FILE',
+      ].includes(err.code)
+        ? 400
+        : err.status || 500;
       const message =
         err.code === 'LIMIT_FILE_SIZE' ? 'Image trop volumineuse (max 3 Mo).' : err.message;
       return fs.promises
@@ -129,7 +147,14 @@ const disputeUpload = multer({
       cb(null, generatedFileName(file.originalname, 'dispute'));
     },
   }),
-  limits: { fileSize: 5 * 1024 * 1024, files: 5 },
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 5,
+    fields: 3,
+    fieldSize: 16 * 1024,
+    parts: 10,
+    headerPairs: 150,
+  },
   fileFilter: (req, file, cb) => {
     if (AVATAR_MIME.includes(file.mimetype) && acceptsMulterMetadata(file, 'dispute')) {
       return cb(null, true);
@@ -145,9 +170,15 @@ const disputeUpload = multer({
 function uploadDisputePhotos(req, res, next) {
   disputeUpload.array('photos', 5)(req, res, (err) => {
     if (err) {
-      const status = ['LIMIT_FILE_SIZE', 'LIMIT_FILE_COUNT', 'LIMIT_UNEXPECTED_FILE'].includes(
-        err.code
-      )
+      const status = [
+        'LIMIT_FILE_SIZE',
+        'LIMIT_FILE_COUNT',
+        'LIMIT_UNEXPECTED_FILE',
+        'LIMIT_FIELD_SIZE',
+        'LIMIT_FIELD_COUNT',
+        'LIMIT_PART_COUNT',
+        'LIMIT_HEADER_COUNT',
+      ].includes(err.code)
         ? 400
         : err.status || 500;
       const message =
@@ -212,7 +243,7 @@ router.get('/verify-email/:token', verificationLimiter, confirmEmail);
 router.get('/me', protect, me);
 router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
-router.patch('/me/avatar', protect, uploadAvatar, validateAvatarFile, patchMyAvatar);
+router.patch('/me/avatar', protect, uploadLimiter, uploadAvatar, validateAvatarFile, patchMyAvatar);
 router.delete('/me/avatar', protect, deleteMyAvatar);
 router.get('/me/closure', protect, requireRole('locataire', 'proprietaire'), getMyClosureStatus);
 router.post(
@@ -267,6 +298,7 @@ router.patch(
   '/me/proprietaire/bookings/:id_booking',
   protect,
   requireRole('proprietaire'),
+  bookingActionLimiter,
   audit('booking.decide', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   patchProprietaireBooking
 );
@@ -274,6 +306,8 @@ router.post(
   '/me/proprietaire/bookings/:id_booking/dispute',
   protect,
   requireRole('proprietaire'),
+  bookingActionLimiter,
+  uploadLimiter,
   uploadDisputePhotos,
   validateDisputePhotos,
   audit('dispute.open', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
@@ -340,6 +374,7 @@ router.post(
   '/me/bookings/:id_booking/pay',
   protect,
   requireRole('locataire'),
+  bookingActionLimiter,
   audit('booking.pay', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   payMyBooking
 );
@@ -347,6 +382,7 @@ router.post(
   '/me/bookings/:id_booking/cancel',
   protect,
   requireRole('locataire'),
+  bookingActionLimiter,
   audit('booking.cancel_guest', {
     targetType: 'booking',
     targetId: (req) => req.params.id_booking,
@@ -357,6 +393,7 @@ router.post(
   '/me/bookings/:id_booking/refund-request',
   protect,
   requireRole('locataire'),
+  bookingActionLimiter,
   audit('booking.refund_request', {
     targetType: 'booking',
     targetId: (req) => req.params.id_booking,
@@ -367,6 +404,8 @@ router.post(
   '/me/bookings/:id_booking/dispute',
   protect,
   requireRole('locataire'),
+  bookingActionLimiter,
+  uploadLimiter,
   uploadDisputePhotos,
   validateDisputePhotos,
   audit('dispute.open', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
