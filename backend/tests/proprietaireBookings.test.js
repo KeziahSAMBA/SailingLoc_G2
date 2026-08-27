@@ -262,4 +262,114 @@ describe('setBookingStatus (décision du propriétaire)', () => {
       })
     );
   });
+
+  it('laisse la demande pending après un remboursement partiel puis termine au retry', async () => {
+    const payment = {
+      id_payment: 12,
+      status: 'pending',
+      amount: 300,
+      refunded_amount: 0,
+      transaction_ref: 'pi_owner_refuse',
+      payment_state: 'requires_capture',
+    };
+    const booking = paidPendingBooking({ payments: [payment] });
+
+    mockBookingFindUnique.mockResolvedValue(booking);
+    tx.payment.updateMany.mockImplementation(async ({ data }) => {
+      Object.assign(payment, data);
+      return { count: 1 };
+    });
+    tx.booking.updateMany.mockImplementation(async ({ data }) => {
+      Object.assign(booking, data);
+      return { count: 1 };
+    });
+    mockGetStripe.mockReturnValue({
+      paymentIntents: {
+        retrieve: jest.fn().mockResolvedValue({ status: 'succeeded' }),
+      },
+    });
+    mockRefundIntent
+      .mockResolvedValueOnce({ status: 'succeeded', amount: 10000 })
+      .mockResolvedValueOnce({ status: 'succeeded', amount: 20000 });
+
+    const first = await setBookingStatus(OWNER, 5, 'refuse');
+
+    expect(first.status).toBe('pending');
+    expect(booking.status).toBe('pending');
+    expect(payment).toEqual(
+      expect.objectContaining({
+        status: 'success',
+        payment_state: 'partially_refunded',
+        refunded_amount: 100,
+      })
+    );
+    expect(tx.booking.updateMany).not.toHaveBeenCalled();
+
+    const second = await setBookingStatus(OWNER, 5, 'refuse');
+
+    expect(second.status).toBe('refused');
+    expect(booking.status).toBe('refused');
+    expect(payment).toEqual(
+      expect.objectContaining({
+        status: 'refunded',
+        payment_state: 'refunded',
+        refunded_amount: 300,
+      })
+    );
+    expect(mockRefundIntent).toHaveBeenNthCalledWith(
+      1,
+      'pi_owner_refuse',
+      300,
+      expect.objectContaining({
+        idempotencyKey: 'test:release-after-capture:pi_owner_refuse:300',
+      })
+    );
+    expect(mockRefundIntent).toHaveBeenNthCalledWith(
+      2,
+      'pi_owner_refuse',
+      200,
+      expect.objectContaining({
+        idempotencyKey: 'test:release-after-capture:pi_owner_refuse:200',
+      })
+    );
+  });
+
+  it.each(['pending', 'failed'])(
+    'laisse la demande pending et marque la reconciliation si Stripe renvoie %s',
+    async (providerStatus) => {
+      const payment = {
+        id_payment: 12,
+        status: 'pending',
+        amount: 300,
+        refunded_amount: 0,
+        transaction_ref: 'pi_owner_provider_error',
+        payment_state: 'requires_capture',
+      };
+      const booking = paidPendingBooking({ payments: [payment] });
+
+      mockBookingFindUnique.mockResolvedValue(booking);
+      tx.payment.updateMany.mockImplementation(async ({ data }) => {
+        Object.assign(payment, data);
+        return { count: 1 };
+      });
+      mockGetStripe.mockReturnValue({
+        paymentIntents: {
+          retrieve: jest.fn().mockResolvedValue({ status: 'succeeded' }),
+        },
+      });
+      mockRefundIntent.mockResolvedValue({ status: providerStatus, amount: 10000 });
+
+      await expect(setBookingStatus(OWNER, 5, 'refuse')).rejects.toMatchObject({ status: 503 });
+
+      expect(booking.status).toBe('pending');
+      expect(payment).toEqual(
+        expect.objectContaining({
+          status: 'pending',
+          payment_state: 'reconciliation_required',
+        })
+      );
+      expect(tx.booking.update).not.toHaveBeenCalled();
+      expect(tx.booking.updateMany).not.toHaveBeenCalled();
+    }
+  );
 });

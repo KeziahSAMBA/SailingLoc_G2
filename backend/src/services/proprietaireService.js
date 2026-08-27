@@ -36,6 +36,7 @@ const PAYMENT_STATES = Object.freeze({
   REQUIRES_CAPTURE: 'requires_capture',
   CAPTURING: 'capturing',
   SUCCEEDED: 'succeeded',
+  RELEASING: 'releasing',
   REFUNDED: 'refunded',
   REFUNDING: 'refunding',
   PARTIALLY_REFUNDED: 'partially_refunded',
@@ -1575,10 +1576,26 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       { status: 400 }
     );
   }
+  const stateOf = (payment) =>
+    payment?.payment_state || (payment?.status === 'success' ? PAYMENT_STATES.SUCCEEDED : 'legacy');
   // Le locataire doit être allé au bout du tunnel (empreinte de paiement en
-  // attente) pour que le propriétaire puisse accepter ou refuser sa demande.
+  // attente) pour que le propriétaire puisse accepter sa demande. Un refus
+  // peut toutefois être repris après un remboursement Stripe partiel : le
+  // paiement est alors exposé comme `success` avec un état partiel ou de
+  // réconciliation, et la réservation doit rester `pending` jusqu'au solde.
   const holdPayment = booking.payments.find((p) => p.status === 'pending');
-  if ((action === 'confirm' || action === 'refuse') && !holdPayment) {
+  const retryableRefundPayment = booking.payments.find(
+    (p) =>
+      p.status === 'success' &&
+      [
+        PAYMENT_STATES.SUCCEEDED,
+        PAYMENT_STATES.PARTIALLY_REFUNDED,
+        PAYMENT_STATES.RECONCILIATION_REQUIRED,
+        'legacy',
+      ].includes(stateOf(p))
+  );
+  const decisionPayment = action === 'refuse' ? holdPayment || retryableRefundPayment : holdPayment;
+  if ((action === 'confirm' || action === 'refuse') && !decisionPayment) {
     throw Object.assign(
       new Error("Le locataire n'a pas encore payé cette demande : elle ne peut pas être traitée."),
       { status: 400 }
@@ -1596,8 +1613,6 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
   };
 
   const stripe = getStripe();
-  const stateOf = (payment) =>
-    payment?.payment_state || (payment?.status === 'success' ? PAYMENT_STATES.SUCCEEDED : 'legacy');
   const captureReadyStates = [
     PAYMENT_STATES.REQUIRES_CAPTURE,
     PAYMENT_STATES.CAPTURING,
@@ -2075,9 +2090,10 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
   } else if (action === 'refuse') {
     // Mark the hold as releasing before leaving the transaction. This closes
     // the window in which a retry could re-use a payment while Stripe.cancel
-    // is in flight. A stale releasing marker is safely retryable.
+    // is in flight. A stale releasing marker and a partial captured refund
+    // are both safely retryable.
     const prepared = await prisma.$transaction(async (tx) => {
-      await lockBoatBookingPayment(tx, booking.id_boat, id, holdPayment.id_payment);
+      await lockBoatBookingPayment(tx, booking.id_boat, id, decisionPayment.id_payment);
       const current =
         typeof tx.booking?.findUnique === 'function'
           ? await tx.booking.findUnique({
@@ -2090,51 +2106,92 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       }
       const payment =
         typeof tx.payment?.findUnique === 'function'
-          ? await tx.payment.findUnique({ where: { id_payment: holdPayment.id_payment } })
-          : holdPayment;
+          ? await tx.payment.findUnique({ where: { id_payment: decisionPayment.id_payment } })
+          : decisionPayment;
       const paymentState = stateOf(payment);
-      if (!payment || payment.status !== 'pending') {
+      if (!payment || !['pending', 'success'].includes(payment.status)) {
         throw Object.assign(new Error('Le paiement de cette demande a déjà été traité.'), {
           status: 409,
         });
       }
-      if ([PAYMENT_STATES.CAPTURING, PAYMENT_STATES.REFUNDING].includes(paymentState)) {
-        throw Object.assign(new Error('Le paiement est en cours de capture.'), { status: 409 });
+      if (
+        paymentState === PAYMENT_STATES.CAPTURING ||
+        paymentState === PAYMENT_STATES.REFUNDING ||
+        (payment.status === 'success' &&
+          ![
+            PAYMENT_STATES.SUCCEEDED,
+            PAYMENT_STATES.PARTIALLY_REFUNDED,
+            PAYMENT_STATES.RECONCILIATION_REQUIRED,
+            'legacy',
+          ].includes(paymentState))
+      ) {
+        throw Object.assign(new Error('Le paiement est en cours de traitement.'), { status: 409 });
       }
-      await transitionPaymentState(
-        tx,
-        payment.id_payment,
-        releaseReadyStates,
-        PAYMENT_STATES.RELEASING,
-        {
-          where: { status: 'pending' },
-        }
-      );
+      if (payment.status === 'pending') {
+        await transitionPaymentState(
+          tx,
+          payment.id_payment,
+          releaseReadyStates,
+          PAYMENT_STATES.RELEASING,
+          {
+            where: { status: 'pending' },
+          }
+        );
+      } else {
+        await transitionPaymentState(
+          tx,
+          payment.id_payment,
+          [
+            PAYMENT_STATES.SUCCEEDED,
+            PAYMENT_STATES.PARTIALLY_REFUNDED,
+            PAYMENT_STATES.RECONCILIATION_REQUIRED,
+            'legacy',
+          ],
+          PAYMENT_STATES.REFUNDING,
+          { where: { status: 'success' } }
+        );
+      }
       return {
         paymentId: payment.id_payment,
         transaction_ref: payment.transaction_ref,
         amount: remainingRefundAmount(payment),
         principal: Number(payment.amount),
         refunded_amount: Number(payment.refunded_amount || 0),
+        captured: payment.status === 'success',
       };
     });
     let providerResult;
     try {
-      providerResult = await releaseStripeIntentStrict(
-        prepared.transaction_ref,
-        stripe,
-        prepared.transaction_ref
-          ? paymentIntentOptions(prepared.transaction_ref, 'release')?.idempotencyKey
-          : undefined,
-        prepared.amount
-      );
+      providerResult = prepared.captured
+        ? await refundStripeIntentStrict(
+            prepared.transaction_ref,
+            prepared.amount,
+            stripe,
+            refundOptions(
+              prepared.transaction_ref,
+              prepared.amount,
+              { refundApplicationFee: true },
+              'release-after-capture'
+            ),
+            prepared.amount
+          )
+        : await releaseStripeIntentStrict(
+            prepared.transaction_ref,
+            stripe,
+            prepared.transaction_ref
+              ? paymentIntentOptions(prepared.transaction_ref, 'release')?.idempotencyKey
+              : undefined,
+            prepared.amount
+          );
     } catch (providerError) {
       await persistPaymentReconciliation(
         id,
         prepared.paymentId,
-        [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+        prepared.captured
+          ? [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED]
+          : [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
         providerError,
-        ['pending']
+        prepared.captured ? ['success'] : ['pending']
       );
       throw safeProviderFailure(providerError);
     }
@@ -2151,69 +2208,67 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       if (!current || current.deleted_at || current.status !== 'pending') {
         throw Object.assign(new Error('Cette réservation a déjà été traitée.'), { status: 409 });
       }
-      const result = await compareAndSetBooking(tx, id, ['pending'], {
-        status: 'refused',
-        updated_at: now,
-      });
       const payment =
         typeof tx.payment?.findUnique === 'function'
           ? await tx.payment.findUnique({ where: { id_payment: prepared.paymentId } })
-          : holdPayment;
-      if (!payment || payment.status !== 'pending') {
+          : decisionPayment;
+      if (!payment || !['pending', 'success'].includes(payment.status)) {
         throw Object.assign(new Error('Le paiement de cette demande a déjà été traité.'), {
           status: 409,
         });
       }
-      // The booking lock and the durable releasing marker ensure that every
-      // active payment on this booking belongs to this refusal. Keep this
-      // update scoped to the booking so older Prisma test doubles and older
-      // generated clients retain the historical API shape.
+      // Older focused test doubles do not expose payment.findUnique and model
+      // a released hold as one booking-scoped update. Production Prisma takes
+      // the strict per-payment transition below.
       if (
         typeof tx.payment?.findUnique !== 'function' &&
         providerResult.kind !== 'refunded' &&
+        payment.status === 'pending' &&
         typeof tx.payment?.updateMany === 'function'
       ) {
-        // Historical test doubles do not expose payment.findUnique and model
-        // the refusal as one booking-scoped update.
         await tx.payment.updateMany({
           where: { id_booking: id, status: 'pending' },
           data: { status: 'refunded', payment_state: PAYMENT_STATES.REFUNDED, refunded_at: now },
         });
-      } else if (providerResult.kind === 'refunded') {
-        const paymentData = refundTransitionData(
-          payment || holdPayment,
-          providerResult,
-          now,
-          'Remboursement effectué : demande refusée par le propriétaire.'
-        );
-        await transitionPaymentState(
-          tx,
-          prepared.paymentId,
-          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
-          paymentData.payment_state,
-          {
-            where: { status: 'pending' },
-            data: paymentData,
-          }
-        );
-      } else {
-        await transitionPaymentState(
-          tx,
-          prepared.paymentId,
-          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
-          PAYMENT_STATES.REFUNDED,
-          {
-            where: { status: 'pending' },
-            data: {
-              status: 'refunded',
-              refunded_at: now,
-              reconciliation_error: null,
-              reconciliation_at: null,
-            },
-          }
-        );
+        return compareAndSetBooking(tx, id, ['pending'], {
+          status: 'refused',
+          updated_at: now,
+        });
       }
-      return result;
+      const paymentData = refundTransitionData(
+        payment,
+        providerResult,
+        now,
+        'Remboursement effectué : demande refusée par le propriétaire.'
+      );
+      await transitionPaymentState(
+        tx,
+        prepared.paymentId,
+        payment.status === 'success'
+          ? [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED]
+          : [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+        paymentData.payment_state,
+        {
+          where: { status: payment.status },
+          data: paymentData,
+        }
+      );
+
+      // A partial Stripe refund is a successful provider operation but not a
+      // terminal refusal. Keep the booking pending so the owner can retry the
+      // refusal and refund only the remaining balance with a fresh key.
+      if (paymentData.status !== 'refunded') {
+        return {
+          id_booking: id,
+          status: current.status,
+          cancellation_reason: current.cancellation_reason,
+          cancellation_date: current.cancellation_date,
+        };
+      }
+      return compareAndSetBooking(tx, id, ['pending'], {
+        status: 'refused',
+        updated_at: now,
+      });
     });
   } else {
     // Cancellation can contain both a pending authorization and one or more
@@ -2430,7 +2485,10 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
           .filter((p) => p.status === 'success')
           .reduce((sum, p) => sum + Number(p.amount), 0)
       : 0;
-  if (booking.user?.email) {
+  // Do not announce a refusal while a partial refund is still pending. The
+  // owner must retry the refusal until the payment reaches its terminal state.
+  const decisionFinalized = action !== 'refuse' || updated?.status === 'refused';
+  if (decisionFinalized && booking.user?.email) {
     try {
       await sendBookingDecisionEmail(booking.user.email, {
         firstName: booking.user.first_name,
