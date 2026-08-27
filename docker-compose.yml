@@ -6,12 +6,16 @@ services:
     image: postgres:16-alpine
     container_name: sailingloc_postgres
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - '5432:5432'
+    # Database traffic stays on the private Docker network. Use an explicit
+    # temporary tunnel for maintenance instead of publishing the port.
+    expose:
+      - '5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -30,6 +34,8 @@ services:
       dockerfile: Dockerfile
     container_name: sailingloc_backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       NODE_ENV: production
       PORT: 4000
@@ -48,20 +54,30 @@ services:
       MAILGUN_API_KEY: ${MAILGUN_API_KEY}
       MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
       MAILGUN_HOST: ${MAILGUN_HOST:-api.mailgun.net}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       # A production container must never be allowed to reset a database with
       # the demonstration seed, even if its command is overridden locally.
       SEED_FORCE: 'false'
     ports:
       - '4000:4000'
     volumes:
-      - ./backend/uploads:/app/uploads
+      - uploads_data:/app/uploads
+      - documents_data:/app/storage/documents
+      - disputes_data:/app/storage/disputes
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - sailingloc_network
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:4000/health']
+      # The runtime image is deliberately minimal and does not ship curl.
+      # Reuse Node's built-in fetch for a healthcheck that also works as the
+      # Dockerfile HEALTHCHECK under the non-root runtime user.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,10 +89,13 @@ services:
       dockerfile: Dockerfile
     container_name: sailingloc_frontend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - '3000:80'
+      - '3000:8080'
     environment:
       VITE_API_BASE_URL: http://localhost:4000/api
+      VITE_MATOMO_URL: ${VITE_MATOMO_URL:-}
     depends_on:
       - backend
     networks:
@@ -87,15 +106,26 @@ services:
     image: redis:7-alpine
     container_name: sailingloc_redis
     restart: unless-stopped
-    ports:
-      - '6379:6379'
+    security_opt:
+      - no-new-privileges:true
+    # Redis is not currently consumed by the API; keep it private for future
+    # rate-limit/session stores and fail closed when no password is supplied.
+    expose:
+      - '6379'
     volumes:
       - redis_data:/data
     networks:
       - sailingloc_network
-    command: redis-server --appendonly yes
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command:
+      - sh
+      - -c
+      - >-
+        test -n "$$REDIS_PASSWORD" &&
+        exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD-SHELL', 'REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -103,6 +133,9 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:
+  documents_data:
+  disputes_data:
 
 networks:
   sailingloc_network:

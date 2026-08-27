@@ -178,6 +178,15 @@ En production, le backend refuse de démarrer si `JWT_SECRET`, `DATABASE_URL`,
 configuration email valide ne sont pas fournis. Le seed de démonstration est
 réservé aux environnements de développement et de test.
 
+`CORS_ORIGINS` est optionnelle : elle contient, séparées par des virgules, les
+origines frontend supplémentaires autorisées à envoyer les cookies de session.
+`APP_URL` est toujours autorisée et les origines staging/production doivent
+être en HTTPS. PostgreSQL et Redis ne sont pas publiés par les compose de
+staging/production ; le Redis de production exige `REDIS_PASSWORD` (il échoue
+volontairement au démarrage si elle est absente). Les volumes privés
+`storage/documents` et `storage/disputes` sont persistants et ne sont jamais
+servis par nginx.
+
 Variables backend à renseigner dans `backend/.env` :
 
 ```env
@@ -202,6 +211,13 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...   # voir section Paiements Stripe
 # Sans cette variable, le tracking est simplement désactivé : le site fonctionne normalement.
 # VITE_MATOMO_URL=http://localhost:8081
 ```
+
+L'image frontend de staging/production écoute sur le port interne `8080` avec
+un utilisateur nginx non privilégié (les compose publient respectivement
+`5174:8080` et `3000:8080`). Le CSP autorise uniquement les services réellement
+utilisés : Stripe, Google Fonts, les tuiles Carto/Leaflet, Nominatim, les
+images seed Unsplash/Pexels/RandomUser et l'instance Matomo déclarée
+`analytics.sailingloc.fr` (ou `http://localhost:8081` en local).
 
 > **Matomo sans Docker ?** Matomo (PHP + MariaDB) n'est pas fourni en méthode locale — l'installer à la main est lourd et inutile pour développer. Deux options : ne rien faire (recommandé — sans `VITE_MATOMO_URL`, le code de tracking est un no-op silencieux), ou lancer uniquement les deux conteneurs Matomo si Docker est disponible : `docker compose -f docker-compose.dev.yml up -d matomo matomo_db`.
 

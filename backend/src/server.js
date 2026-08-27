@@ -17,27 +17,49 @@ import { initConfig } from './config/appConfig.js';
 import prisma from './config/db.js';
 import { safeErrorResponses, secureErrorHandler } from './middlewares/errorSecurityMiddleware.js';
 import { logSanitizedError } from './utils/privacy.js';
+import { allowedCorsOrigins, normalizeRequestOrigin } from './utils/corsSecurity.js';
+import { securityHeaders } from './middlewares/securityHeaders.js';
 
-const { PORT, APP_URL } = initConfig();
+const { PORT, APP_URL, CORS_ORIGINS, NODE_ENV } = initConfig();
+const corsOrigins = allowedCorsOrigins({
+  appUrl: APP_URL,
+  configuredOrigins: CORS_ORIGINS,
+  environment: NODE_ENV,
+});
 
 const app = express();
+app.disable('x-powered-by');
 
 // Error responses are normalized before any route can accidentally serialize
 // an SDK/ORM message.  Detailed diagnostics stay in the internal log sink.
 app.use(safeErrorResponses);
 
-// Derrière un proxy en production (Railway, etc.) : permet à Express de reconnaître
+// Derrière un proxy en production/staging (Railway, etc.) : permet à Express de reconnaître
 // HTTPS (X-Forwarded-Proto) et la vraie IP cliente (cookies Secure, rate-limit).
-if (process.env.NODE_ENV === 'production') {
+if (['production', 'staging'].includes(NODE_ENV)) {
   app.set('trust proxy', 1);
 }
 
+// All API responses carry the same defensive browser/container headers. The
+// frontend has a separate, resource-specific CSP in its nginx container.
+app.use('/api', securityHeaders({ environment: NODE_ENV }));
 app.use(
   cors({
-    origin: APP_URL,
+    origin: (requestOrigin, callback) => {
+      // Same-origin/non-browser requests have no Origin header and should be
+      // able to use health checks and server-to-server integrations without
+      // receiving credentialed CORS headers.
+      if (!requestOrigin) return callback(null, true);
+      const normalized = normalizeRequestOrigin(requestOrigin);
+      if (normalized && corsOrigins.has(normalized)) return callback(null, true);
+      return callback(Object.assign(new Error('Origine non autorisée.'), { status: 403 }));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Accept', 'Content-Type', 'Authorization'],
     exposedHeaders: ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
+    maxAge: 600,
+    optionsSuccessStatus: 204,
   })
 );
 // Avant express.json : la vérification de signature Stripe exige le corps brut.

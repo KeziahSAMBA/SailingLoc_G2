@@ -1,5 +1,6 @@
 import path from 'path';
 import dotenv from 'dotenv';
+import { allowedCorsOrigins } from '../utils/corsSecurity.js';
 
 const envPath = path.resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
@@ -144,6 +145,19 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
     errors.push('APP_URL doit être une URL HTTP(S) valide sans identifiants');
   }
 
+  // CORS_ORIGINS is optional (APP_URL is always allowed), but every extra
+  // origin is parsed and normalized here so a malformed or insecure value
+  // cannot silently widen credentialed access at runtime.
+  try {
+    allowedCorsOrigins({
+      appUrl: config.APP_URL,
+      configuredOrigins: config.CORS_ORIGINS,
+      environment: env,
+    });
+  } catch (error) {
+    errors.push(error.message);
+  }
+
   if (errors.length > 0) {
     throw new Error(`[config] Configuration ${env || 'inconnue'} invalide : ${errors.join('; ')}`);
   }
@@ -174,6 +188,9 @@ export function initConfig() {
     MAILGUN_DOMAIN: value('MAILGUN_DOMAIN'),
     // Région EU : api.eu.mailgun.net
     MAILGUN_HOST: value('MAILGUN_HOST') || 'api.mailgun.net',
+    // Origines frontend supplémentaires autorisées à appeler l'API avec les
+    // cookies de session (séparées par des virgules, sans wildcard).
+    CORS_ORIGINS: value('CORS_ORIGINS'),
     APP_URL: value('APP_URL') || (environment === 'production' ? '' : 'http://localhost:5173'),
   };
 

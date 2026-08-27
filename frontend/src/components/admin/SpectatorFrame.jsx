@@ -152,6 +152,11 @@ function SpectatorFrame({ mode, title, description, banner }) {
               key={iframeSrc}
               src={iframeSrc}
               title={t('spectatorFrame.iframeTitle')}
+              // La vue spectateur est un document embarqué : elle conserve
+              // son origine pour charger les assets locaux, mais ne peut pas
+              // naviguer le contexte admin ni accéder à ses fenêtres.
+              sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+              referrerPolicy="no-referrer"
               className="block h-full w-full"
             />
           ) : (
@@ -195,6 +200,8 @@ function SpectatorFrame({ mode, title, description, banner }) {
             key={iframeSrc}
             src={iframeSrc}
             title={t('spectatorFrame.iframeTitle')}
+            sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+            referrerPolicy="no-referrer"
             className="block h-[calc(100svh-20rem)] min-h-96 w-full sm:min-h-[37.5rem]"
           />
         ) : (

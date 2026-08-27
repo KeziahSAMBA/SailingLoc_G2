@@ -25,7 +25,7 @@ services:
 
   # MailDev — SMTP local + interface web (dev only)
   maildev:
-    image: maildev/maildev:latest
+    image: maildev/maildev:2.2.1
     container_name: sailingloc_maildev
     restart: unless-stopped
     ports:
@@ -98,7 +98,7 @@ services:
   # Le script de tracking n'est chargé par le frontend qu'avec le consentement
   # « mesure d'audience » (voir frontend/src/utils/matomo.js).
   matomo:
-    image: matomo:latest
+    image: matomo:5-apache
     container_name: sailingloc_matomo_dev
     restart: unless-stopped
     environment:
@@ -118,7 +118,7 @@ services:
   # MariaDB dédiée à Matomo (Matomo ne supporte pas PostgreSQL) — isolée de la
   # base métier, port non publié : accessible uniquement depuis le réseau Docker.
   matomo_db:
-    image: mariadb:11
+    image: mariadb:11.4
     container_name: sailingloc_matomo_db_dev
     restart: unless-stopped
     command: --max-allowed-packet=64MB
@@ -134,7 +134,7 @@ services:
 
   # pgAdmin - PostgreSQL Web Interface
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:9
     container_name: sailingloc_pgadmin_dev
     restart: unless-stopped
     environment:
