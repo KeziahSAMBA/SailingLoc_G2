@@ -2,6 +2,10 @@ import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
 import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
 import { sendError } from '../middlewares/errorSecurityMiddleware.js';
+import { parsePagination } from '../utils/inputSecurity.js';
+
+const PUBLIC_BOAT_PAGE_SIZE = 25;
+const PUBLIC_RELATION_LIMIT = 500;
 
 const BOAT_INCLUDE = {
   // La vitrine publique ne renvoie que les attributs nécessaires à l'UI ; les
@@ -23,20 +27,26 @@ const BOAT_INCLUDE = {
     where: { deleted_at: null, type: 'boat' },
     orderBy: { order: 'asc' },
     select: { url: true },
+    take: 20,
   },
-  equipment: { select: { id_equipment: true, category: true, name: true } },
+  equipment: { select: { id_equipment: true, category: true, name: true }, take: 100 },
   availabilities: {
     where: { is_available: true },
     orderBy: { start_date: 'asc' },
+    take: PUBLIC_RELATION_LIMIT,
   },
   bookings: {
     where: { deleted_at: null },
+    orderBy: { id_booking: 'desc' },
+    take: PUBLIC_RELATION_LIMIT,
     select: {
       status: true,
       start_date: true,
       end_date: true,
       reviews: {
         where: { status: 'validated', deleted_at: null },
+        orderBy: { id_review: 'desc' },
+        take: 1,
         select: { rating: true, comment: true },
       },
     },
@@ -74,25 +84,7 @@ function enrichWithRating(boats) {
 
 export async function getBoats(req, res) {
   try {
-    const boats = await prisma.boat.findMany({
-      where: {
-        is_published: true,
-        status: 'published',
-        deleted_at: null,
-        owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
-        port: { deleted_at: null },
-      },
-      include: BOAT_INCLUDE,
-    });
-
-    res.json(enrichWithRating(boats));
-  } catch (err) {
-    return sendError(res, err);
-  }
-}
-
-export async function getBoatsByType(req, res) {
-  try {
+    const { skip, take } = parsePagination(req.query, PUBLIC_BOAT_PAGE_SIZE);
     const boats = await prisma.boat.findMany({
       where: {
         is_published: true,
@@ -103,6 +95,31 @@ export async function getBoatsByType(req, res) {
       },
       include: BOAT_INCLUDE,
       orderBy: { id_boat: 'asc' },
+      skip,
+      take,
+    });
+
+    res.json(enrichWithRating(boats));
+  } catch (err) {
+    return sendError(res, err);
+  }
+}
+
+export async function getBoatsByType(req, res) {
+  try {
+    const { skip, take } = parsePagination(req.query, PUBLIC_BOAT_PAGE_SIZE);
+    const boats = await prisma.boat.findMany({
+      where: {
+        is_published: true,
+        status: 'published',
+        deleted_at: null,
+        owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
+        port: { deleted_at: null },
+      },
+      include: BOAT_INCLUDE,
+      orderBy: { id_boat: 'asc' },
+      skip,
+      take,
     });
 
     const enriched = enrichWithRating(boats);

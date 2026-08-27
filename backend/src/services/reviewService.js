@@ -1,4 +1,5 @@
 import prisma from '../config/db.js';
+import { parsePagination, parsePositiveId } from '../utils/inputSecurity.js';
 
 const RATING_MIN = 1;
 const RATING_MAX = 5;
@@ -108,11 +109,12 @@ export async function getReviewEligibility(id_user, id_boat) {
 // Avis d'un bateau pour la page publique : validés ET en attente de modération
 // (les refusés restent masqués). Le statut est renvoyé pour n'afficher le badge
 // « vérifié » que sur les avis validés.
-export async function listBoatReviews(id_boat, viewer = null) {
-  const boatId = Number(id_boat);
-  if (!Number.isSafeInteger(boatId) || boatId <= 0) {
+export async function listBoatReviews(id_boat, viewer = null, query = {}) {
+  const boatId = parsePositiveId(id_boat);
+  if (boatId === null) {
     throw Object.assign(new Error('Identifiant de bateau invalide.'), { status: 400 });
   }
+  const { skip, take } = parsePagination(query);
 
   // Les avis en attente restent consultables uniquement par leur auteur afin
   // qu'il puisse les corriger. Ils ne doivent jamais devenir du contenu public
@@ -138,6 +140,8 @@ export async function listBoatReviews(id_boat, viewer = null) {
       OR: ownPending ? [validatedForPublishedBoat, ownPending] : [validatedForPublishedBoat],
     },
     orderBy: { created_at: 'desc' },
+    skip,
+    take,
     select: {
       id_review: true,
       id_user: true,

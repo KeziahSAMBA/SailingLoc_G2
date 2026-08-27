@@ -1,10 +1,11 @@
 import prisma from '../config/db.js';
 import { listBoatReviews } from '../services/reviewService.js';
 import { sendError } from '../middlewares/errorSecurityMiddleware.js';
+import { parsePositiveId, parsePagination } from '../utils/inputSecurity.js';
 
 export async function getBoatReviews(req, res) {
   try {
-    const reviews = await listBoatReviews(req.params.id_boat, req.user);
+    const reviews = await listBoatReviews(req.params.id_boat, req.user, req.query);
     res.json({ reviews });
   } catch (err) {
     return sendError(res, err);
@@ -13,10 +14,11 @@ export async function getBoatReviews(req, res) {
 
 export async function getPublicReviews(req, res) {
   try {
-    const idBoat = req.query.id_boat === undefined ? null : Number(req.query.id_boat);
-    if (idBoat !== null && (!Number.isInteger(idBoat) || idBoat <= 0)) {
+    const idBoat = req.query.id_boat === undefined ? null : parsePositiveId(req.query.id_boat);
+    if (idBoat === null && req.query.id_boat !== undefined) {
       return res.status(400).json({ message: 'Identifiant de bateau invalide.' });
     }
+    const { skip, take } = parsePagination(req.query);
     const reviews = await prisma.review.findMany({
       where: {
         status: 'validated',
@@ -28,6 +30,8 @@ export async function getPublicReviews(req, res) {
         },
       },
       orderBy: { created_at: 'desc' },
+      skip,
+      take,
       select: {
         id_review: true,
         // Auteur exposé pour que celui-ci retrouve son avis et puisse l'éditer.

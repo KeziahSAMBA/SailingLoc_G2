@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 import { sendBoatUnpublishedEmail, sendBoatRepublishedEmail } from './emailService.js';
 import { logSanitizedError } from '../utils/privacy.js';
+import { parseStrictBoolean, requirePositiveId } from '../utils/inputSecurity.js';
 
 const REPORT_STATUSES = ['pending', 'resolved', 'dismissed'];
 
@@ -27,8 +28,9 @@ function publicBoat(b) {
 
 export async function listBoats({ published } = {}) {
   const where = { deleted_at: null };
-  if (published === 'true') where.is_published = true;
-  if (published === 'false') where.is_published = false;
+  if (published !== undefined && published !== null && published !== '') {
+    where.is_published = parseStrictBoolean(published, 'Le filtre publié');
+  }
 
   const boats = await prisma.boat.findMany({
     where,
@@ -42,13 +44,13 @@ export async function listBoats({ published } = {}) {
 }
 
 export async function setBoatPublished(id_boat, is_published) {
-  const id = Number(id_boat);
+  const id = requirePositiveId(id_boat, 'Identifiant bateau');
+  const publishing = parseStrictBoolean(is_published, 'Le statut publié');
   const boat = await prisma.boat.findUnique({ where: { id_boat: id }, include: { owner: true } });
   if (!boat || boat.deleted_at) {
     throw Object.assign(new Error('Bateau introuvable.'), { status: 404 });
   }
 
-  const publishing = Boolean(is_published);
   const updated = await prisma.boat.update({
     where: { id_boat: id },
     // Le statut d'annonce suit la décision : validée → publiée, retirée → refusée.
