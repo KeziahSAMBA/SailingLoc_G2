@@ -569,10 +569,17 @@ async function releasePendingIntentStrict(ref, expectedAmount) {
   const intent = await stripe.paymentIntents.retrieve(ref);
   if (intent?.status === 'canceled') return { kind: 'released', amount: 0 };
   const refundCaptured = async () => {
+    const expected = expectedAmount == null ? null : Number(expectedAmount);
+    if (expected === null || !Number.isFinite(expected) || expected < 0) {
+      throw bad('Le montant du remboursement attendu est invalide.', 503);
+    }
+    // Never turn a zero remaining balance into a Stripe full refund. A
+    // completed prior refund is already terminal for this provider action.
+    if (expected <= 0) return { kind: 'refunded', amount: 0 };
     const refund = await refundIntent(
       ref,
-      null,
-      refundOptions(ref, null, { refundApplicationFee: true }, 'expire-after-capture')
+      expected,
+      refundOptions(ref, expected, { refundApplicationFee: true }, 'expire-after-capture')
     );
     if (refund?.status !== 'succeeded') {
       throw bad('Le remboursement Stripe n’est pas confirmé.', 503);
@@ -581,11 +588,7 @@ async function releasePendingIntentStrict(ref, expectedAmount) {
     if (!Number.isSafeInteger(cents) || cents <= 0) {
       throw bad('Le montant du remboursement Stripe est invalide.', 503);
     }
-    const expected = expectedAmount == null ? null : Number(expectedAmount);
-    if (expected !== null && !Number.isFinite(expected)) {
-      throw bad('Le montant du remboursement attendu est invalide.', 503);
-    }
-    if (expected !== null && cents / 100 > expected + 0.000001) {
+    if (cents / 100 > expected + 0.000001) {
       throw bad('Le montant du remboursement Stripe dépasse le paiement enregistré.', 503);
     }
     return { kind: 'refunded', amount: cents / 100 };
@@ -607,14 +610,22 @@ async function releasePendingIntentStrict(ref, expectedAmount) {
 
 async function refundCapturedIntentStrict(ref, expectedAmount, operation = 'owner-cancel-refund') {
   const stripe = getStripe();
-  if (!stripe) return { kind: 'refunded', amount: expectedAmount };
+  // Capture compensation may run before a payment row can be bound and has
+  // no persisted amount; retain the provider's full-refund semantics there.
+  // Every normal cancellation/expiry caller supplies the remaining balance.
+  const expected = expectedAmount == null ? null : Number(expectedAmount);
+  if (expected !== null && (!Number.isFinite(expected) || expected < 0)) {
+    throw bad('Le montant du remboursement attendu est invalide.', 503);
+  }
+  if (expected !== null && expected <= 0) return { kind: 'refunded', amount: 0 };
+  if (!stripe) return { kind: 'refunded', amount: expected };
   if (!isStripeRef(ref)) {
     throw bad('Le paiement ne possède pas de référence Stripe vérifiable.', 503);
   }
   const refund = await refundIntent(
     ref,
-    null,
-    refundOptions(ref, null, { refundApplicationFee: true }, operation)
+    expected,
+    refundOptions(ref, expected, { refundApplicationFee: true }, operation)
   );
   if (refund?.status !== 'succeeded') {
     throw bad('Le remboursement Stripe n’est pas confirmé.', 503);
@@ -622,10 +633,6 @@ async function refundCapturedIntentStrict(ref, expectedAmount, operation = 'owne
   const cents = Number(refund.amount);
   if (!Number.isSafeInteger(cents) || cents <= 0) {
     throw bad('Le montant du remboursement Stripe est invalide.', 503);
-  }
-  const expected = expectedAmount == null ? null : Number(expectedAmount);
-  if (expected !== null && !Number.isFinite(expected)) {
-    throw bad('Le montant du remboursement attendu est invalide.', 503);
   }
   if (expected !== null && cents / 100 > expected + 0.000001) {
     throw bad('Le montant du remboursement Stripe dépasse le paiement enregistré.', 503);

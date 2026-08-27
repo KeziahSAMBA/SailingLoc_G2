@@ -137,10 +137,15 @@ async function releaseStripeIntentStrict(ref, expectedAmount) {
   const intent = await stripe.paymentIntents.retrieve(ref);
   if (intent?.status === 'canceled') return { kind: 'released', amount: 0 };
   if (intent?.status === 'succeeded') {
+    const amount = Number(expectedAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw providerConflict('Le montant du remboursement attendu est invalide.');
+    }
+    if (amount <= 0) return { kind: 'refunded', amount: 0 };
     const refund = await refundIntent(
       ref,
-      null,
-      refundOptions(ref, null, { refundApplicationFee: true }, 'admin-cancel-release')
+      amount,
+      refundOptions(ref, amount, { refundApplicationFee: true }, 'admin-cancel-release')
     );
     return confirmedRefund(ref, refund, expectedAmount);
   }
@@ -151,10 +156,15 @@ async function releaseStripeIntentStrict(ref, expectedAmount) {
   );
   if (result?.status === 'canceled') return { kind: 'released', amount: 0 };
   if (result?.status === 'succeeded') {
+    const amount = Number(expectedAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw providerConflict('Le montant du remboursement attendu est invalide.');
+    }
+    if (amount <= 0) return { kind: 'refunded', amount: 0 };
     const refund = await refundIntent(
       ref,
-      null,
-      refundOptions(ref, null, { refundApplicationFee: true }, 'admin-cancel-release')
+      amount,
+      refundOptions(ref, amount, { refundApplicationFee: true }, 'admin-cancel-release')
     );
     return confirmedRefund(ref, refund, expectedAmount);
   }
@@ -163,14 +173,19 @@ async function releaseStripeIntentStrict(ref, expectedAmount) {
 
 async function refundStripeIntentStrict(ref, expectedAmount) {
   const stripe = getStripe();
-  if (!stripe) return { kind: 'refunded', amount: expectedAmount };
+  const amount = Number(expectedAmount);
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw providerConflict('Le montant du remboursement attendu est invalide.');
+  }
+  if (amount <= 0) return { kind: 'refunded', amount: 0 };
+  if (!stripe) return { kind: 'refunded', amount };
   if (!isStripeRef(ref)) {
     throw providerConflict('Le paiement ne possède pas de référence Stripe vérifiable.');
   }
   const refund = await refundIntent(
     ref,
-    null,
-    refundOptions(ref, null, { refundApplicationFee: true }, 'admin-cancel-refund')
+    amount,
+    refundOptions(ref, amount, { refundApplicationFee: true }, 'admin-cancel-refund')
   );
   return confirmedRefund(ref, refund, expectedAmount);
 }
@@ -660,7 +675,7 @@ export async function setDisputeStatus(
           requested,
           refundOptions(
             target.transaction_ref,
-            null,
+            requested,
             { refundApplicationFee: Boolean(refund_commission) },
             disputeOperation
           )

@@ -2,6 +2,8 @@ import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 
 const mockBookingFindUnique = jest.fn();
 const mockBookingFindFirst = jest.fn();
+const mockGetStripe = jest.fn(() => null);
+const mockRefundIntent = jest.fn();
 // Client transactionnel passé au callback de $transaction.
 const tx = {
   booking: { update: jest.fn(), updateMany: jest.fn() },
@@ -26,10 +28,12 @@ jest.unstable_mockModule('../src/services/emailService.js', () => ({
 
 // Stripe désactivé dans les tests, même si une clé est présente dans l'env.
 jest.unstable_mockModule('../src/config/stripe.js', () => ({
-  getStripe: () => null,
+  getStripe: mockGetStripe,
   isStripeRef: (ref) => typeof ref === 'string' && ref.startsWith('pi_'),
+  refundIdempotencyKey: (ref, amount, operation) =>
+    `test:${operation}:${ref}:${amount == null ? 'full' : amount}`,
   cancelIntentQuietly: jest.fn().mockResolvedValue(undefined),
-  refundIntent: jest.fn().mockResolvedValue(null),
+  refundIntent: mockRefundIntent,
 }));
 
 const { setBookingStatus } = await import('../src/services/proprietaireService.js');
@@ -62,6 +66,8 @@ describe('setBookingStatus (décision du propriétaire)', () => {
   beforeEach(() => {
     mockBookingFindUnique.mockReset();
     mockBookingFindFirst.mockReset().mockResolvedValue(null);
+    mockGetStripe.mockReset().mockReturnValue(null);
+    mockRefundIntent.mockReset().mockResolvedValue(null);
     mockSendEmail.mockClear();
     tx.booking.update
       .mockReset()
@@ -223,6 +229,36 @@ describe('setBookingStatus (décision du propriétaire)', () => {
       expect.objectContaining({
         where: { id_payment: 12 },
         data: expect.objectContaining({ status: 'refunded', refunded_amount: 300 }),
+      })
+    );
+  });
+
+  it('rembourse seulement le restant et inclut ce montant dans la clé', async () => {
+    mockGetStripe.mockReturnValue({});
+    mockRefundIntent.mockResolvedValue({ status: 'succeeded', amount: 10000 });
+    mockBookingFindUnique.mockResolvedValue(
+      paidPendingBooking({
+        status: 'confirmed',
+        payments: [
+          {
+            id_payment: 12,
+            status: 'success',
+            amount: '300',
+            refunded_amount: '100',
+            transaction_ref: 'pi_owner',
+            payment_state: 'partially_refunded',
+          },
+        ],
+      })
+    );
+
+    await setBookingStatus(OWNER, 5, 'cancel', 'Avarie moteur');
+
+    expect(mockRefundIntent).toHaveBeenCalledWith(
+      'pi_owner',
+      200,
+      expect.objectContaining({
+        idempotencyKey: 'test:owner-cancel-refund:pi_owner:200',
       })
     );
   });

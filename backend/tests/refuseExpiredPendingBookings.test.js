@@ -24,6 +24,8 @@ jest.unstable_mockModule('../src/config/db.js', () => ({ default: db }));
 jest.unstable_mockModule('../src/config/stripe.js', () => ({
   getStripe: mockGetStripe,
   isStripeRef: (ref) => typeof ref === 'string' && ref.startsWith('pi_'),
+  refundIdempotencyKey: (ref, amount, operation) =>
+    `test:${operation}:${ref}:${amount == null ? 'full' : amount}`,
   cancelIntentQuietly: jest.fn().mockResolvedValue(undefined),
   refundIntent: mockRefundIntent,
 }));
@@ -86,5 +88,68 @@ describe('refuseExpiredPendingBookings', () => {
       expect.objectContaining({ data: expect.objectContaining({ status: 'refused' }) })
     );
     expect(result).toBe(0);
+  });
+
+  it('uses a new exact remaining amount and idempotency key on the next sweep', async () => {
+    let bookingStatus = 'pending';
+    let payment = {
+      id_payment: 12,
+      status: 'success',
+      amount: 300,
+      refunded_amount: 0,
+      transaction_ref: 'pi_captured',
+      payment_state: 'succeeded',
+    };
+
+    mockBookingFindUnique.mockReset().mockImplementation(async ({ select }) => {
+      if (select?.payments) {
+        return {
+          id_booking: 7,
+          status: bookingStatus,
+          deleted_at: null,
+          start_date: new Date('2026-08-26T00:00:00.000Z'),
+          payments: [{ ...payment }],
+        };
+      }
+      return { status: bookingStatus, deleted_at: null };
+    });
+    mockPaymentUpdateMany.mockReset().mockImplementation(async ({ data }) => {
+      payment = { ...payment, ...data };
+      return { count: 1 };
+    });
+    mockBookingUpdateMany.mockReset().mockImplementation(async ({ data }) => {
+      bookingStatus = data.status || bookingStatus;
+      return { count: 1 };
+    });
+    mockGetStripe.mockReturnValue({
+      paymentIntents: {
+        retrieve: jest.fn().mockResolvedValue({ status: 'succeeded' }),
+      },
+    });
+    mockRefundIntent
+      .mockReset()
+      .mockResolvedValueOnce({ status: 'succeeded', amount: 10000 })
+      .mockResolvedValueOnce({ status: 'succeeded', amount: 20000 });
+
+    expect(await refuseExpiredPendingBookings(new Date('2026-08-27T12:00:00.000Z'))).toBe(0);
+    expect(await refuseExpiredPendingBookings(new Date('2026-08-27T12:00:00.000Z'))).toBe(1);
+
+    expect(mockRefundIntent).toHaveBeenNthCalledWith(
+      1,
+      'pi_captured',
+      300,
+      expect.objectContaining({
+        idempotencyKey: 'test:expire-after-capture:pi_captured:300',
+      })
+    );
+    expect(mockRefundIntent).toHaveBeenNthCalledWith(
+      2,
+      'pi_captured',
+      200,
+      expect.objectContaining({
+        idempotencyKey: 'test:expire-after-capture:pi_captured:200',
+      })
+    );
+    expect(payment).toEqual(expect.objectContaining({ status: 'refunded', refunded_amount: 300 }));
   });
 });

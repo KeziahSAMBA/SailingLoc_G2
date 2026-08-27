@@ -98,13 +98,18 @@ function refundTransitionData(payment, providerResult, now, reason) {
 // cannot be committed after Stripe reports a capture, refund the captured
 // intent before returning the conflict; otherwise a successful charge would be
 // left without a confirmed booking.
-async function compensateCapturedIntent(ref) {
+async function compensateCapturedIntent(ref, expectedAmount) {
   if (!isStripeRef(ref)) return;
+  const amount = Number(expectedAmount);
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw providerConflict('Le montant du remboursement attendu est invalide.');
+  }
+  if (amount <= 0) return;
   try {
     const refund = await refundIntent(
       ref,
-      null,
-      refundOptions(ref, null, { refundApplicationFee: true }, 'capture-conflict')
+      amount,
+      refundOptions(ref, amount, { refundApplicationFee: true }, 'capture-conflict')
     );
     if (refund?.status !== 'succeeded') {
       throw providerConflict('Le remboursement Stripe n’est pas confirmé.');
@@ -158,10 +163,15 @@ async function releaseStripeIntentStrict(ref, stripe, idempotencyKey, expectedAm
   const intent = await stripe.paymentIntents.retrieve(ref);
   if (intent?.status === 'canceled') return { kind: 'released', amount: 0 };
   if (intent?.status === 'succeeded') {
+    const amount = Number(expectedAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw providerConflict('Le montant du remboursement attendu est invalide.');
+    }
+    if (amount <= 0) return { kind: 'refunded', amount: 0 };
     const refund = await refundIntent(
       ref,
-      null,
-      refundOptions(ref, null, { refundApplicationFee: true }, 'release-after-capture')
+      amount,
+      refundOptions(ref, amount, { refundApplicationFee: true }, 'release-after-capture')
     );
     return confirmedRefund(ref, refund, expectedAmount);
   }
@@ -173,10 +183,15 @@ async function releaseStripeIntentStrict(ref, stripe, idempotencyKey, expectedAm
   );
   if (result?.status === 'canceled') return { kind: 'released', amount: 0 };
   if (result?.status === 'succeeded') {
+    const amount = Number(expectedAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw providerConflict('Le montant du remboursement attendu est invalide.');
+    }
+    if (amount <= 0) return { kind: 'refunded', amount: 0 };
     const refund = await refundIntent(
       ref,
-      null,
-      refundOptions(ref, null, { refundApplicationFee: true }, 'release-after-capture')
+      amount,
+      refundOptions(ref, amount, { refundApplicationFee: true }, 'release-after-capture')
     );
     return confirmedRefund(ref, refund, expectedAmount);
   }
@@ -188,7 +203,12 @@ async function refundStripeIntentStrict(ref, amount, stripe, options, expectedAm
   if (!isStripeRef(ref)) {
     throw providerConflict('Le paiement ne possède pas de référence Stripe vérifiable.');
   }
-  const refund = await refundIntent(ref, amount, options);
+  const remaining = Number(expectedAmount);
+  if (!Number.isFinite(remaining) || remaining < 0) {
+    throw providerConflict('Le montant du remboursement attendu est invalide.');
+  }
+  if (remaining <= 0) return { kind: 'refunded', amount: 0 };
+  const refund = await refundIntent(ref, remaining, options);
   return confirmedRefund(ref, refund, expectedAmount);
 }
 
@@ -1652,6 +1672,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
         return {
           paymentId: payment.id_payment,
           transaction_ref: payment.transaction_ref,
+          amount: remainingRefundAmount(payment),
           captureSucceeded: true,
         };
       }
@@ -1680,6 +1701,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       return {
         paymentId: payment.id_payment,
         transaction_ref: payment.transaction_ref,
+        amount: remainingRefundAmount(payment),
         captureSucceeded: false,
       };
     });
@@ -1983,7 +2005,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       });
       updated = result;
     } catch (error) {
-      await compensateCapturedIntent(prepared.transaction_ref);
+      await compensateCapturedIntent(prepared.transaction_ref, prepared.amount);
       throw error;
     }
     for (const rival of rivalPayments) {
@@ -2294,13 +2316,13 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       try {
         const result = await refundStripeIntentStrict(
           payment.transaction_ref,
-          null,
+          remainingRefundAmount(payment),
           stripe,
           refundOptions(
             payment.transaction_ref,
-            null,
+            remainingRefundAmount(payment),
             { refundApplicationFee: true },
-            'full-refund'
+            'owner-cancel-refund'
           ),
           remainingRefundAmount(payment)
         );

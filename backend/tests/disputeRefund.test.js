@@ -14,6 +14,8 @@ const mockRefundIntent = jest
   .fn()
   .mockResolvedValue({ id: 're_1', status: 'succeeded', amount: 15000 });
 jest.unstable_mockModule('../src/config/stripe.js', () => ({
+  refundIdempotencyKey: (ref, amount, operation) =>
+    `test:${operation}:${ref}:${amount == null ? 'full' : amount}`,
   refundIntent: mockRefundIntent,
 }));
 
@@ -59,9 +61,14 @@ describe('setDisputeStatus (remboursement litige via Stripe)', () => {
 
     await setDisputeStatus(3, 'resolved', 'Geste commercial', { refund_percent: 50 });
 
-    expect(mockRefundIntent).toHaveBeenCalledWith('pi_test_123', 150, {
-      refundApplicationFee: false,
-    });
+    expect(mockRefundIntent).toHaveBeenCalledWith(
+      'pi_test_123',
+      150,
+      expect.objectContaining({
+        refundApplicationFee: false,
+        idempotencyKey: 'test:dispute-3:pi_test_123:150',
+      })
+    );
     expect(mockPaymentUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id_payment: 12 },
@@ -82,9 +89,14 @@ describe('setDisputeStatus (remboursement litige via Stripe)', () => {
       refund_commission: true,
     });
 
-    expect(mockRefundIntent).toHaveBeenCalledWith('pi_test_123', 300, {
-      refundApplicationFee: true,
-    });
+    expect(mockRefundIntent).toHaveBeenCalledWith(
+      'pi_test_123',
+      300,
+      expect.objectContaining({
+        refundApplicationFee: true,
+        idempotencyKey: 'test:dispute-3:pi_test_123:300',
+      })
+    );
   });
 
   it('ne rembourse rien quand le litige est rejeté', async () => {
