@@ -4,9 +4,40 @@ import { requirePositiveId } from '../utils/inputSecurity.js';
 
 const MAX_HISTORY_ROWS = 500;
 
+// A favorite is only useful (and safe to expose) while its boat is part of the
+// public catalogue.  Keep this predicate shared by writes and reads so a
+// hidden, unpublished or soft-deleted boat can never be added or leak through
+// a tenant dashboard/list response.
+const PUBLIC_BOAT_WHERE = Object.freeze({
+  deleted_at: null,
+  is_published: true,
+  status: 'published',
+  owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
+  port: { deleted_at: null },
+});
+
+const unavailableFavoriteWhere = (id_user) => ({
+  id_user,
+  NOT: { boat: PUBLIC_BOAT_WHERE },
+});
+
+// Existing favorites can become unavailable after an owner unpublishes or
+// deletes a boat.  Cleanup is deliberately best-effort: all reads still apply
+// PUBLIC_BOAT_WHERE, so a transient cleanup failure cannot expose stale data.
+async function purgeUnavailableFavorites(id_user) {
+  if (typeof prisma.userBoatFavorite?.deleteMany !== 'function') return;
+  try {
+    await prisma.userBoatFavorite.deleteMany({ where: unavailableFavoriteWhere(id_user) });
+  } catch {
+    // Do not turn a dashboard/list read into a 500 because a maintenance purge
+    // failed.  The visibility predicate below remains the security boundary.
+  }
+}
+
 // Vue synthétique du tableau de bord locataire : compteurs agrégés en une seule passe.
 export async function getDashboardStats(id_user) {
   const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  await purgeUnavailableFavorites(userId);
   // « Réservations en cours » : réservations non supprimées, en attente ou
   // confirmées, et non encore terminées (date de fin >= aujourd'hui).
   const today = new Date();
@@ -30,7 +61,9 @@ export async function getDashboardStats(id_user) {
         end_date: { gte: today },
       },
     }),
-    prisma.userBoatFavorite.count({ where: { id_user: userId } }),
+    prisma.userBoatFavorite.count({
+      where: { id_user: userId, boat: PUBLIC_BOAT_WHERE },
+    }),
     prisma.message.count({
       where: { id_receiver: userId, is_read: false, deleted_at: null },
     }),
@@ -89,7 +122,7 @@ export async function getDashboardStats(id_user) {
     }),
     // Aperçu des derniers favoris (avec l'image principale du bateau).
     prisma.userBoatFavorite.findMany({
-      where: { id_user: userId },
+      where: { id_user: userId, boat: PUBLIC_BOAT_WHERE },
       orderBy: { created_at: 'desc' },
       take: 4,
       select: {
@@ -132,15 +165,17 @@ export async function getDashboardStats(id_user) {
       ...b,
       total_amount: Number(b.total_amount),
     })),
-    favoriteBoatsPreview: favoriteBoatsPreview.map((f) => ({
-      id_favorite: f.id_favorite,
-      boat: {
-        ...f.boat,
-        daily_price: Number(f.boat.daily_price),
-        image: f.boat.images[0]?.url ?? null,
-        images: undefined,
-      },
-    })),
+    favoriteBoatsPreview: favoriteBoatsPreview
+      .filter((f) => f?.boat)
+      .map((f) => ({
+        id_favorite: f.id_favorite,
+        boat: {
+          ...f.boat,
+          daily_price: Number(f.boat.daily_price),
+          image: f.boat.images[0]?.url ?? null,
+          images: undefined,
+        },
+      })),
   };
 }
 
@@ -268,8 +303,9 @@ export async function listBookings(id_user) {
 // Liste des bateaux favoris du locataire (plus récents d'abord).
 export async function listFavorites(id_user) {
   const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  await purgeUnavailableFavorites(userId);
   const favorites = await prisma.userBoatFavorite.findMany({
-    where: { id_user: userId },
+    where: { id_user: userId, boat: PUBLIC_BOAT_WHERE },
     orderBy: { created_at: 'desc' },
     take: MAX_HISTORY_ROWS,
     select: {
@@ -288,24 +324,31 @@ export async function listFavorites(id_user) {
     },
   });
 
-  return favorites.map((f) => ({
-    id_favorite: f.id_favorite,
-    boat: {
-      id_boat: f.boat.id_boat,
-      name: f.boat.name,
-      type: f.boat.type,
-      daily_price: Number(f.boat.daily_price),
-      capacity: f.boat.capacity,
-      port: f.boat.port,
-      image: f.boat.images?.[0]?.url ?? null,
-    },
-  }));
+  return favorites
+    .filter((f) => f?.boat)
+    .map((f) => ({
+      id_favorite: f.id_favorite,
+      boat: {
+        id_boat: f.boat.id_boat,
+        name: f.boat.name,
+        type: f.boat.type,
+        daily_price: Number(f.boat.daily_price),
+        capacity: f.boat.capacity,
+        port: f.boat.port,
+        image: f.boat.images?.[0]?.url ?? null,
+      },
+    }));
 }
 
 // Ajoute un bateau aux favoris du locataire (idempotent).
 export async function addFavorite(id_user, id_boat) {
   const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
+  const boat = await prisma.boat.findFirst({
+    where: { id_boat: boatId, ...PUBLIC_BOAT_WHERE },
+    select: { id_boat: true },
+  });
+  if (!boat) throw Object.assign(new Error('Bateau introuvable.'), { status: 404 });
   await prisma.userBoatFavorite.upsert({
     where: { id_user_id_boat: { id_user: userId, id_boat: boatId } },
     create: { id_user: userId, id_boat: boatId },
