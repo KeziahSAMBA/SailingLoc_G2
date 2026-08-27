@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-# Scan tracked files in the current tree and every reachable commit without
-# ever printing a candidate secret. This intentionally uses high-confidence
-# token formats and a long-value assignment heuristic to avoid blocking on
-# ordinary documentation or the checked-in *.env.example templates.
+# Scan tracked files without ever printing a candidate secret. By default this
+# checks the current tree and every reachable commit; --tree-only intentionally
+# limits the scan to HEAD so a separate full-history scanner can own history.
+# This intentionally uses high-confidence token formats and a long-value
+# assignment heuristic to avoid blocking on ordinary documentation or the
+# checked-in *.env.example templates.
 
 set -uo pipefail
 
@@ -174,30 +176,45 @@ run_policy_self_test() {
     return 1
   fi
 
-  # Exercise both working-tree and historical git-grep paths in a temporary
-  # repository. It has two independent branches and several commits so the
-  # batcher is forced across revision chunks while the exact allowlist and
-  # value-redaction guarantees remain covered.
+  # Exercise tree-only and historical git-grep paths in a temporary repository.
+  # The current tree contains one synthetic finding while another finding is
+  # present only in an older commit. Two independent branches and several
+  # commits force the history batcher across revision chunks while the exact
+  # allowlist and value-redaction guarantees remain covered.
   local fixture_repo
   fixture_repo="$(mktemp -d)"
-  local integration_prefix='integration-'
-  local integration_suffix='secret-fixture-value-1234567890'
-  local integration_value="${integration_prefix}${integration_suffix}"
-  local blocked_key='INTEGRATION_'
-  blocked_key+='SECRET'
-  local blocked_line="const ${blocked_key} = ${quote}${integration_value}${quote};"
+  local historical_prefix='historical-'
+  local historical_suffix='secret-fixture-value-1234567890'
+  local historical_value="${historical_prefix}${historical_suffix}"
+  local historical_key='HISTORICAL_'
+  historical_key+='SECRET'
+  local historical_line="const ${historical_key} = ${quote}${historical_value}${quote};"
+  local current_prefix='current-'
+  local current_suffix='secret-fixture-value-2468135790'
+  local current_value="${current_prefix}${current_suffix}"
+  local current_key='CURRENT_'
+  current_key+='SECRET'
+  local current_line="const ${current_key} = ${quote}${current_value}${quote};"
   local branch_prefix='branch-'
   local branch_suffix='secret-fixture-value-0987654321'
   local branch_value="${branch_prefix}${branch_suffix}"
   local branch_key='BRANCH_'
   branch_key+='SECRET'
   local branch_line="const ${branch_key} = ${quote}${branch_value}${quote};"
-  local working_output=''
-  local working_status=0
+  local tree_output=''
+  local tree_status=0
   local history_output=''
   local history_status=0
-  local main_commit=''
+  local historical_commit=''
+  local current_commit=''
   local side_commit=''
+  local scanner_path=''
+
+  scanner_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")" || {
+    rm -rf -- "$fixture_repo"
+    printf 'Secret scanner integration self-test failed: unable to locate scanner script.\n' >&2
+    return 1
+  }
 
   if ! mkdir -p "$fixture_repo/backend/tests" "$fixture_repo/backend/src" \
     || ! printf '%s\n' "$env_line" >"$fixture_repo/backend/tests/securityAuth.test.js" \
@@ -209,13 +226,26 @@ run_policy_self_test() {
     || ! git -C "$fixture_repo" commit -qm 'secret scanner fixture base' \
     || ! git -C "$fixture_repo" branch -M scan-main \
     || ! git -C "$fixture_repo" branch scan-side \
-    || ! printf '%s\n' "$blocked_line" >"$fixture_repo/backend/src/server.js" \
+    || ! printf '%s\n' "$historical_line" >"$fixture_repo/backend/src/server.js" \
     || ! git -C "$fixture_repo" add -- backend/src/server.js \
-    || ! git -C "$fixture_repo" commit -qm 'secret scanner fixture main finding'; then
+    || ! git -C "$fixture_repo" commit -qm 'secret scanner fixture historical finding'; then
     rm -rf -- "$fixture_repo"
     printf 'Secret scanner integration self-test failed: unable to create main fixture history.\n' >&2
     return 1
   fi
+
+  historical_commit="$(git -C "$fixture_repo" rev-parse scan-main)"
+
+  if ! printf '%s\n' 'const safeValue = true;' >"$fixture_repo/backend/src/server.js" \
+    || ! printf '%s\n' "$current_line" >"$fixture_repo/backend/src/current-secret.js" \
+    || ! git -C "$fixture_repo" add -- backend/src/server.js backend/src/current-secret.js \
+    || ! git -C "$fixture_repo" commit -qm 'secret scanner fixture current finding'; then
+    rm -rf -- "$fixture_repo"
+    printf 'Secret scanner integration self-test failed: unable to create current-tree fixture.\n' >&2
+    return 1
+  fi
+
+  current_commit="$(git -C "$fixture_repo" rev-parse scan-main)"
 
   if ! git -C "$fixture_repo" checkout -q scan-side \
     || ! printf '%s\n' "$branch_line" >"$fixture_repo/backend/src/branch-secret.js" \
@@ -232,9 +262,8 @@ run_policy_self_test() {
     printf 'Secret scanner integration self-test failed: unable to enter fixture repository.\n' >&2
     return 1
   fi
-  main_commit="$(git rev-parse scan-main)"
   side_commit="$(git rev-parse scan-side)"
-  working_output="$(scan_revision HEAD 'long-secret-assignment' "${PATTERNS[8]}")" || working_status=$?
+  tree_output="$(bash "$scanner_path" --tree-only)" || tree_status=$?
 
   # Force one revision per batch in this tiny repository. The production
   # default remains 12 KiB; this override is scoped to the self-test process.
@@ -250,26 +279,31 @@ run_policy_self_test() {
   popd >/dev/null || true
   rm -rf -- "$fixture_repo"
 
-  if ((working_status == 0)); then
-    printf 'Secret scanner integration self-test failed: working-tree fixture was not detected.\n' >&2
+  if ((tree_status == 0)); then
+    printf 'Secret scanner integration self-test failed: tree-only fixture was not detected.\n' >&2
     return 1
   fi
-  if [[ "$working_output" != *'backend/src/server.js'* \
-    || "$working_output" == *'backend/tests/securityAuth.test.js'* \
-    || "$working_output" == *"$integration_value"* ]]; then
-    printf 'Secret scanner integration self-test failed: working-tree normalization or redaction is incorrect.\n' >&2
+  if [[ "$tree_output" != *'backend/src/current-secret.js'* \
+    || "$tree_output" == *'backend/src/server.js'* \
+    || "$tree_output" == *'backend/tests/securityAuth.test.js'* \
+    || "$tree_output" == *"$historical_value"* \
+    || "$tree_output" == *"$current_value"* ]]; then
+    printf 'Secret scanner integration self-test failed: tree-only scope or redaction is incorrect.\n' >&2
     return 1
   fi
   if ((history_status == 0)); then
     printf 'Secret scanner integration self-test failed: historical fixtures were not detected.\n' >&2
     return 1
   fi
-  if [[ "$history_output" != *"$main_commit"* \
+  if [[ "$history_output" != *"$historical_commit"* \
+    || "$history_output" != *"$current_commit"* \
     || "$history_output" != *"$side_commit"* \
     || "$history_output" != *'backend/src/server.js'* \
+    || "$history_output" != *'backend/src/current-secret.js'* \
     || "$history_output" != *'backend/src/branch-secret.js'* \
     || "$history_output" == *'backend/tests/securityAuth.test.js'* \
-    || "$history_output" == *"$integration_value"* \
+    || "$history_output" == *"$historical_value"* \
+    || "$history_output" == *"$current_value"* \
     || "$history_output" == *"$branch_value"* ]]; then
     printf 'Secret scanner integration self-test failed: batched history handling or redaction is incorrect.\n' >&2
     return 1
@@ -512,17 +546,43 @@ scan_all_history() {
   return "$found"
 }
 
+# Scan only the tracked tree at HEAD. This deliberately does not enumerate
+# refs or call scan_all_history; callers that need history use the dedicated
+# full-history scanner instead.
+scan_tracked_tree() {
+  local found=0
+  local index
+  for index in "${!PATTERNS[@]}"; do
+    if ! scan_revision HEAD "${LABELS[$index]}" "${PATTERNS[$index]}"; then
+      found=1
+    fi
+  done
+  return "$found"
+}
+
 if [[ "${1:-}" == '--self-test' ]]; then
   run_policy_self_test
   exit $?
 fi
 
-found=0
-for index in "${!PATTERNS[@]}"; do
-  if ! scan_revision HEAD "${LABELS[$index]}" "${PATTERNS[$index]}"; then
-    found=1
+if [[ "${1:-}" == '--tree-only' ]]; then
+  if ! scan_tracked_tree; then
+    printf '\nSecret scan failed. Rotate any exposed credential before removing it from history.\n'
+    exit 1
   fi
-done
+  printf 'Secret scan passed for the current tracked tree.\n'
+  exit 0
+fi
+
+if (($# > 0)); then
+  printf 'Usage: %s [--self-test|--tree-only]\n' "${0##*/}" >&2
+  exit 2
+fi
+
+found=0
+if ! scan_tracked_tree; then
+  found=1
+fi
 
 # fetch-depth: 0 is required by the workflow so deleted or rotated secrets are
 # also checked. Scan all reachable refs, including branches and tags.

@@ -122,21 +122,21 @@ jobs:
           retry-on-snapshot-warnings-timeout: 60
 
   secret-scan:
-    name: Secret scan (tree and history)
+    name: Current-tree secret scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Check out complete history
+      - name: Check out current tree
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
       - name: Verify secret scanner policy fixtures
         shell: bash
         run: bash .github/scripts/secret-scan.sh --self-test
-      - name: Scan tracked tree and reachable commits
+      - name: Scan current tracked tree
         shell: bash
-        run: bash .github/scripts/secret-scan.sh
+        run: bash .github/scripts/secret-scan.sh --tree-only
 
   secret-scan-history:
     name: TruffleHog full-history secret scan
