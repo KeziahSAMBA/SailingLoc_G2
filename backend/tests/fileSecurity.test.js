@@ -31,6 +31,17 @@ afterAll(() => {
 });
 
 describe('fileSecurity', () => {
+  it('normalise les séparateurs de chemin Windows et POSIX pour les noms affichés', () => {
+    expect(safeDisplayName('../evil.pdf', 'application/pdf')).toBe('evil.pdf');
+    expect(safeDisplayName('..\\evil.pdf', 'application/pdf')).toBe('evil.pdf');
+    expect(safeDisplayName('/documents/contrat final.pdf', 'application/pdf')).toBe(
+      'contrat final.pdf'
+    );
+    expect(safeDisplayName('C:\\documents\\contrat final.pdf', 'application/pdf')).toBe(
+      'contrat final.pdf'
+    );
+  });
+
   it('vérifie les octets et neutralise le nom original', async () => {
     const filePath = path.join(tmpDir, 'upload.bin');
     fs.writeFileSync(filePath, Buffer.from('%PDF-1.7\n'));

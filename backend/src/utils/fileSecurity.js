@@ -147,7 +147,7 @@ async function readHeader(filePath) {
 }
 
 function sanitizedStem(name) {
-  const input = path.basename(String(name || 'fichier')).normalize('NFKC');
+  const input = path.basename(String(name || 'fichier').replace(/\\/g, '/')).normalize('NFKC');
   // Unicode category Cc covers ASCII controls (including NUL, CR/LF and DEL)
   // without triggering eslint's no-control-regex rule.
   const withoutControls = input.replace(/\p{Cc}/gu, '');
