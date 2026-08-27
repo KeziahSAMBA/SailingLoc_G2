@@ -3,14 +3,33 @@ import { createBooking } from '../services/bookingService.js';
 import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
 
 const BOAT_INCLUDE = {
-  port: true,
-  images: { orderBy: { order: 'asc' } },
-  equipment: true,
+  // La vitrine publique ne renvoie que les attributs nécessaires à l'UI ; les
+  // timestamps internes, suppressions et métadonnées de stockage restent
+  // privés.
+  port: {
+    select: {
+      id_port: true,
+      name: true,
+      city: true,
+      country: true,
+      department: true,
+      region: true,
+      latitude: true,
+      longitude: true,
+    },
+  },
+  images: {
+    where: { deleted_at: null, type: 'boat' },
+    orderBy: { order: 'asc' },
+    select: { url: true },
+  },
+  equipment: { select: { id_equipment: true, category: true, name: true } },
   availabilities: {
     where: { is_available: true },
     orderBy: { start_date: 'asc' },
   },
   bookings: {
+    where: { deleted_at: null },
     select: {
       status: true,
       start_date: true,
@@ -54,7 +73,13 @@ function enrichWithRating(boats) {
 
 export async function getBoats(req, res) {
   const boats = await prisma.boat.findMany({
-    where: { is_published: true },
+    where: {
+      is_published: true,
+      status: 'published',
+      deleted_at: null,
+      owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
+      port: { deleted_at: null },
+    },
     include: BOAT_INCLUDE,
   });
 
@@ -63,7 +88,13 @@ export async function getBoats(req, res) {
 
 export async function getBoatsByType(req, res) {
   const boats = await prisma.boat.findMany({
-    where: { is_published: true },
+    where: {
+      is_published: true,
+      status: 'published',
+      deleted_at: null,
+      owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
+      port: { deleted_at: null },
+    },
     include: BOAT_INCLUDE,
     orderBy: { id_boat: 'asc' },
   });

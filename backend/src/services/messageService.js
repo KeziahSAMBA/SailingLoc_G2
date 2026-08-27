@@ -17,9 +17,9 @@ async function canMessage(sender, id_receiver) {
 
   const receiver = await prisma.user.findUnique({
     where: { id_user: id_receiver },
-    select: { role: true },
+    select: { role: true, is_active: true, deleted_at: true },
   });
-  if (!receiver) return false;
+  if (!receiver || !receiver.is_active || receiver.deleted_at) return false;
   if (receiver.role === 'admin') return true;
 
   const [existing, bookingLink] = await Promise.all([
@@ -87,6 +87,8 @@ export async function listConversations(id_user) {
       ) AS unread
     FROM last_msg l
     JOIN "user" u ON u.id_user = l.other_id
+      AND u.is_active = TRUE
+      AND u.deleted_at IS NULL
     ORDER BY l.sent_at DESC
   `;
 

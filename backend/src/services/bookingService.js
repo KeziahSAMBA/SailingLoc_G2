@@ -223,11 +223,22 @@ export async function payBooking(id_user, id_booking) {
   // l'admin (même exigence que l'étape documents du tunnel côté front).
   const validated = await prisma.document.findMany({
     where: { id_user, status: 'validated', type: { in: DOCUMENT_TYPES.locataire } },
-    select: { type: true },
+    orderBy: { upload_date: 'desc' },
+    select: { id_document: true, type: true },
   });
   const validatedTypes = new Set(validated.map((d) => d.type));
   if (DOCUMENT_TYPES.locataire.some((type) => !validatedTypes.has(type)))
     throw bad('Vos documents doivent être validés par SailingLoc avant le paiement.', 409);
+
+  // Fige les versions validées utilisées pour cette réservation. Le
+  // propriétaire ne pourra ensuite lire que ces pièces, jamais l'ensemble des
+  // documents du locataire ni ceux d'une autre location.
+  const latestValidatedByType = new Map();
+  for (const document of validated) {
+    if (document.id_document && !latestValidatedByType.has(document.type)) {
+      latestValidatedByType.set(document.type, document.id_document);
+    }
+  }
 
   const amount = Number(booking.total_amount);
   const commission = Math.round(amount * COMMISSION_RATE * 100) / 100;
@@ -267,16 +278,31 @@ export async function payBooking(id_user, id_booking) {
     client_secret = intent.client_secret;
   }
 
-  const payment = await prisma.payment.create({
-    data: {
-      id_booking: booking.id_booking,
-      amount,
-      commission,
-      payment_date: new Date(),
-      payment_method: 'card',
-      status: 'pending',
-      transaction_ref,
-    },
+  const payment = await prisma.$transaction(async (tx) => {
+    const createdPayment = await tx.payment.create({
+      data: {
+        id_booking: booking.id_booking,
+        amount,
+        commission,
+        payment_date: new Date(),
+        payment_method: 'card',
+        status: 'pending',
+        transaction_ref,
+      },
+    });
+
+    // Les doubles de tests historiques n'exposent pas cette relation ; le
+    // client Prisma de production, lui, la possède toujours.
+    if (typeof tx.bookingDocument?.createMany === 'function' && latestValidatedByType.size > 0) {
+      await tx.bookingDocument.createMany({
+        data: [...latestValidatedByType.values()].map((id_document) => ({
+          id_booking: booking.id_booking,
+          id_document,
+        })),
+        skipDuplicates: true,
+      });
+    }
+    return createdPayment;
   });
 
   return {

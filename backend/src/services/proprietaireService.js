@@ -248,6 +248,7 @@ export async function getBookingLocataire(id_owner, id_booking) {
       boat: { id_user: id_owner, deleted_at: null },
     },
     select: {
+      id_booking: true,
       user: {
         select: {
           id_user: true,
@@ -265,7 +266,14 @@ export async function getBookingLocataire(id_owner, id_booking) {
   }
 
   const documents = await prisma.document.findMany({
-    where: { id_user: booking.user.id_user, type: { in: LOCATAIRE_DOC_TYPES } },
+    // Une pièce d'identité est consultable dans la fiche uniquement si elle a
+    // été rattachée à CETTE réservation. La relation utilisateur seule
+    // permettrait de consulter les documents déposés pour d'autres bateaux.
+    where: {
+      id_user: booking.user.id_user,
+      type: { in: LOCATAIRE_DOC_TYPES },
+      bookings: { some: { id_booking: booking.id_booking } },
+    },
     orderBy: { upload_date: 'desc' },
     select: {
       id_document: true,

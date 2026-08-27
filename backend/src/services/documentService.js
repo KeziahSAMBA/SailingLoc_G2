@@ -16,7 +16,7 @@ import {
   findAllDocuments,
   updateDocument,
   deleteDocument as deleteDocumentRepo,
-  hasBookingBetweenOwnerAndGuest,
+  hasBookingAccessToDocument,
 } from '../repositories/documentRepository.js';
 
 const VALIDATION_STATUSES = ['pending', 'validated', 'refused'];
@@ -130,7 +130,8 @@ export async function getDocumentFile(requester, id_document) {
   const isBookingOwner =
     requester.role === 'proprietaire' &&
     DOCUMENT_TYPES.locataire.includes(doc.type) &&
-    (await hasBookingBetweenOwnerAndGuest(requester.id_user, doc.id_user));
+    doc.status === 'validated' &&
+    (await hasBookingAccessToDocument(requester.id_user, doc.id_user, doc.id_document));
   if (!isOwner && !isAdmin && !isBookingOwner) {
     throw Object.assign(new Error('Accès refusé.'), { status: 403 });
   }

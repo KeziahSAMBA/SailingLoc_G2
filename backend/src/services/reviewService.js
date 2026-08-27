@@ -42,7 +42,12 @@ export async function createBookingReview(id_user, id_booking, { rating, comment
   }
 
   const booking = await prisma.booking.findFirst({
-    where: { id_booking: Number(id_booking), id_user, deleted_at: null },
+    where: {
+      id_booking: Number(id_booking),
+      id_user,
+      deleted_at: null,
+      boat: { deleted_at: null },
+    },
     select: {
       id_booking: true,
       status: true,
@@ -91,6 +96,7 @@ export async function getReviewEligibility(id_user, id_boat) {
       id_boat: Number(id_boat),
       status: 'confirmed',
       deleted_at: null,
+      boat: { deleted_at: null },
       end_date: { lt: startOfToday() },
     },
     orderBy: { end_date: 'desc' },
@@ -102,12 +108,34 @@ export async function getReviewEligibility(id_user, id_boat) {
 // Avis d'un bateau pour la page publique : validés ET en attente de modération
 // (les refusés restent masqués). Le statut est renvoyé pour n'afficher le badge
 // « vérifié » que sur les avis validés.
-export async function listBoatReviews(id_boat) {
+export async function listBoatReviews(id_boat, viewer = null) {
+  const boatId = Number(id_boat);
+  if (!Number.isSafeInteger(boatId) || boatId <= 0) {
+    throw Object.assign(new Error('Identifiant de bateau invalide.'), { status: 400 });
+  }
+
+  // Les avis en attente restent consultables uniquement par leur auteur afin
+  // qu'il puisse les corriger. Ils ne doivent jamais devenir du contenu public
+  // avant validation ; les avis supprimés sont exclus dans tous les cas.
+  const validatedForPublishedBoat = {
+    status: 'validated',
+    booking: {
+      id_boat: boatId,
+      deleted_at: null,
+      boat: { deleted_at: null, is_published: true, status: 'published' },
+    },
+  };
+  const ownPending = viewer?.id_user
+    ? {
+        status: 'pending',
+        id_user: viewer.id_user,
+        booking: { id_boat: boatId, deleted_at: null, boat: { deleted_at: null } },
+      }
+    : null;
   const reviews = await prisma.review.findMany({
     where: {
-      status: { in: ['validated', 'pending'] },
       deleted_at: null,
-      booking: { id_boat: Number(id_boat), deleted_at: null },
+      OR: ownPending ? [validatedForPublishedBoat, ownPending] : [validatedForPublishedBoat],
     },
     orderBy: { created_at: 'desc' },
     select: {
@@ -133,8 +161,8 @@ export async function listBoatReviews(id_boat) {
     created_at: r.created_at,
     author: authorName(r.user),
     avatar: r.user.images[0]?.url ?? null,
-    owner_reply: r.owner_reply,
-    owner_reply_at: r.owner_reply_at,
+    owner_reply: r.status === 'validated' ? r.owner_reply : null,
+    owner_reply_at: r.status === 'validated' ? r.owner_reply_at : null,
   }));
 }
 

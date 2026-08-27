@@ -3,7 +3,7 @@ import { listBoatReviews } from '../services/reviewService.js';
 
 export async function getBoatReviews(req, res) {
   try {
-    const reviews = await listBoatReviews(req.params.id_boat);
+    const reviews = await listBoatReviews(req.params.id_boat, req.user);
     res.json({ reviews });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
@@ -20,7 +20,11 @@ export async function getPublicReviews(req, res) {
       where: {
         status: 'validated',
         deleted_at: null,
-        ...(idBoat !== null ? { booking: { id_boat: idBoat } } : {}),
+        booking: {
+          ...(idBoat !== null ? { id_boat: idBoat } : {}),
+          deleted_at: null,
+          boat: { deleted_at: null, is_published: true, status: 'published' },
+        },
       },
       orderBy: { created_at: 'desc' },
       select: {

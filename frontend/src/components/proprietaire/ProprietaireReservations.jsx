@@ -880,8 +880,8 @@ function ProprietaireReservations() {
                         </div>
                         <button
                           type="button"
-                          disabled={viewingDocId === doc.id_document}
-                          onClick={() => viewDocument(doc)}
+                          disabled={doc.status !== 'validated' || viewingDocId === doc.id_document}
+                          onClick={() => doc.status === 'validated' && viewDocument(doc)}
                           className={`shrink-0 rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                         >
                           {t('proprietaireReservations.locataire.view')}

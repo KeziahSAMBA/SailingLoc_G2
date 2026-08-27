@@ -93,6 +93,14 @@ export async function protect(req, res, next) {
 
 // Fabrique de middleware : restreint une route aux rôles passés en argument.
 // À utiliser après `protect` (qui renseigne req.user). Ex : requireRole('proprietaire', 'admin').
+// Variante pour les ressources publiques qui peuvent enrichir la réponse
+// lorsqu'un utilisateur est déjà connecté. Sans Authorization la requête reste
+// anonyme ; un jeton présent mais invalide est rejeté comme toute route privée.
+export function optionalProtect(req, res, next) {
+  if (!req.headers.authorization) return next();
+  return protect(req, res, next);
+}
+
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) {

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { protect, requireRole } from '../middlewares/authMiddleware.js';
+import { optionalProtect, protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
 import {
   acceptsMulterMetadata,
@@ -110,7 +110,7 @@ const router = Router();
 
 router.get('/by-type', getBoatsByType);
 router.get('/', getBoats);
-router.get('/:id_boat/reviews', getBoatReviews);
+router.get('/:id_boat/reviews', optionalProtect, getBoatReviews);
 // `audit` est placé après `uploadFiles` : multer doit avoir rempli req.body.
 router.post(
   '/',
