@@ -62,7 +62,12 @@ export function isEncrypted(stored) {
 
 function isProductionLike() {
   return ['production', 'staging'].includes(
-    String(process.env.NODE_ENV || '')
+    String(
+      process.env.NODE_ENV ||
+        process.env.RAILWAY_ENVIRONMENT_NAME ||
+        process.env.RAILWAY_ENVIRONMENT ||
+        ''
+    )
       .trim()
       .toLowerCase()
   );
@@ -73,12 +78,16 @@ function isProductionLike() {
 // escape hatch. `ALLOW_LEGACY_CLEAR_FILE_READ=true` is a short-lived rollback
 // switch for a controlled maintenance window, not a production default.
 export function allowLegacyCleartextRead() {
+  // Production-like deployments must remain fail-closed even if a caller
+  // bypasses initConfig() or mutates the process environment after startup.
+  if (isProductionLike()) return false;
+
   const configured = String(process.env.ALLOW_LEGACY_CLEAR_FILE_READ || '')
     .trim()
     .toLowerCase();
   if (configured === 'true') return true;
   if (configured === 'false') return false;
-  return !isProductionLike();
+  return true;
 }
 
 // Écrit `plain` chiffré à `destPath` (écriture atomique : fichier temporaire

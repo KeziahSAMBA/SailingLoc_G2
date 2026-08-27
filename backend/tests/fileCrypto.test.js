@@ -64,6 +64,28 @@ describe('fileCrypto', () => {
     expect((await readDecrypted(legacy)).equals(plain)).toBe(true);
   });
 
+  it.each(['staging', 'production'])(
+    'refuse toujours le cleartext en %s, même avec le secours explicitement activé',
+    async (environment) => {
+      const legacy = path.join(tmpDir, `legacy-${environment}.pdf`);
+      fs.writeFileSync(legacy, plain);
+      const previousEnvironment = process.env.NODE_ENV;
+      const previousSwitch = process.env.ALLOW_LEGACY_CLEAR_FILE_READ;
+      process.env.NODE_ENV = environment;
+      process.env.ALLOW_LEGACY_CLEAR_FILE_READ = 'true';
+      try {
+        await expect(readDecrypted(legacy)).rejects.toMatchObject({
+          code: 'LEGACY_CLEAR_FILE',
+          status: 503,
+        });
+      } finally {
+        process.env.NODE_ENV = previousEnvironment;
+        if (previousSwitch === undefined) delete process.env.ALLOW_LEGACY_CLEAR_FILE_READ;
+        else process.env.ALLOW_LEGACY_CLEAR_FILE_READ = previousSwitch;
+      }
+    }
+  );
+
   it('encryptFileInPlace chiffre un fichier en clair et est idempotent', async () => {
     const file = path.join(tmpDir, 'acte.pdf');
     fs.writeFileSync(file, plain);

@@ -66,6 +66,35 @@ describe('deployment configuration boundaries', () => {
       )
     ).toThrow(/EMAIL_IGNORE_TLS/);
   });
+
+  it('rejects the legacy cleartext file switch in staging and production', () => {
+    for (const environment of ['staging', 'production']) {
+      expect(() =>
+        validateConfig(
+          {
+            ...validProductionConfig,
+            NODE_ENV: environment,
+            ALLOW_LEGACY_CLEAR_FILE_READ: 'true',
+          },
+          environment
+        )
+      ).toThrow(/ALLOW_LEGACY_CLEAR_FILE_READ/);
+    }
+  });
+
+  it('keeps explicit legacy cleartext compatibility available in development and tests', () => {
+    for (const environment of ['development', 'test']) {
+      const config = validateConfig(
+        {
+          ...validProductionConfig,
+          NODE_ENV: environment,
+          ALLOW_LEGACY_CLEAR_FILE_READ: 'true',
+        },
+        environment
+      );
+      expect(config.ALLOW_LEGACY_CLEAR_FILE_READ).toBe('true');
+    }
+  });
 });
 
 describe('demonstration seed policy', () => {

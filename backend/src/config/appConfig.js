@@ -84,6 +84,10 @@ function isValidDevelopmentAppUrl(appUrl) {
   }
 }
 
+function isConfigFlagEnabled(value) {
+  return value === true || String(value || '').trim().toLowerCase() === 'true';
+}
+
 /**
  * Validate deployment-critical configuration. Development and tests retain
  * optional integrations, but production-like deployments fail closed instead
@@ -166,7 +170,11 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
     errors.push('APP_URL doit être une URL HTTP(S) valide sans identifiants');
   }
 
-  if (PRODUCTION_LIKE_ENVS.has(env) && config.EMAIL_IGNORE_TLS) {
+  if (PRODUCTION_LIKE_ENVS.has(env) && isConfigFlagEnabled(config.ALLOW_LEGACY_CLEAR_FILE_READ)) {
+    errors.push('ALLOW_LEGACY_CLEAR_FILE_READ doit être désactivé en staging et en production');
+  }
+
+  if (PRODUCTION_LIKE_ENVS.has(env) && isConfigFlagEnabled(config.EMAIL_IGNORE_TLS)) {
     errors.push('EMAIL_IGNORE_TLS doit être désactivé en staging et en production');
   }
 
