@@ -15,14 +15,21 @@ ENV NODE_ENV=production
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install only the locked production dependency graph.  Keep npm's cache out
+# of every committed image layer; it is not needed at runtime and may contain
+# package metadata that unnecessarily increases the attack surface.
+RUN npm ci --omit=dev --no-audit --no-fund \
+  && npm cache clean --force \
+  && rm -rf /root/.npm /home/node/.npm /tmp/npm-*
 
 # Copy source code
 COPY . .
 
-# Generate Prisma Client for Linux
-RUN npx prisma generate
+# Generate Prisma Client for Linux.  `npx` resolves the already-installed
+# production CLI; clean once more so a future npm/prisma change cannot leave a
+# cache in the final image.
+RUN npx prisma generate \
+  && rm -rf /root/.npm /home/node/.npm /tmp/npm-*
 
 # Create public/private storage directories and hand ownership to the runtime
 # user. Named volumes mounted by compose inherit these permissions.

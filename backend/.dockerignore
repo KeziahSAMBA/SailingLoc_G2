@@ -1,5 +1,6 @@
 # Dependencies and local build output are installed/generated in the image.
 node_modules
+.npm
 dist
 coverage
 .nyc_output
