@@ -5,7 +5,7 @@ const mockBookingFindFirst = jest.fn();
 // Client transactionnel passé au callback de $transaction.
 const tx = {
   booking: { update: jest.fn(), updateMany: jest.fn() },
-  payment: { update: jest.fn(), updateMany: jest.fn() },
+  payment: { update: jest.fn(), updateMany: jest.fn(), findMany: jest.fn() },
   invoice: { findMany: jest.fn(), aggregate: jest.fn(), create: jest.fn() },
   $executeRaw: jest.fn(),
 };
@@ -69,6 +69,7 @@ describe('setBookingStatus (décision du propriétaire)', () => {
     tx.booking.updateMany.mockReset().mockResolvedValue({ count: 0 });
     tx.payment.update.mockReset().mockResolvedValue({});
     tx.payment.updateMany.mockReset().mockResolvedValue({ count: 0 });
+    tx.payment.findMany.mockReset().mockResolvedValue([]);
     tx.invoice.findMany.mockReset().mockResolvedValue([]);
     tx.invoice.aggregate.mockReset().mockResolvedValue({ _max: { sequence: 0 } });
     tx.invoice.create.mockReset().mockImplementation(({ data }) => Promise.resolve(data));
@@ -128,6 +129,15 @@ describe('setBookingStatus (décision du propriétaire)', () => {
 
   it("confirme : capture l'empreinte, confirme la réservation et refuse les demandes concurrentes", async () => {
     mockBookingFindUnique.mockResolvedValue(paidPendingBooking());
+    tx.payment.findMany.mockResolvedValue([
+      {
+        id_payment: 21,
+        id_booking: 6,
+        status: 'pending',
+        amount: '300',
+        transaction_ref: 'SIM-rival',
+      },
+    ]);
 
     const result = await setBookingStatus(OWNER, 5, 'confirm');
 
@@ -212,7 +222,7 @@ describe('setBookingStatus (décision du propriétaire)', () => {
     expect(tx.payment.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id_payment: 12 },
-        data: expect.objectContaining({ status: 'refunded', refunded_amount: '300' }),
+        data: expect.objectContaining({ status: 'refunded', refunded_amount: 300 }),
       })
     );
   });

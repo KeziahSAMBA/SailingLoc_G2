@@ -8,6 +8,7 @@ import { inspectUploadedFile, resolveStoredFilePath, storagePath } from '../util
 import { boundedString, parseDateOnly, requirePositiveId } from '../utils/inputSecurity.js';
 import { logSanitizedError } from '../utils/privacy.js';
 import { lockBooking, lockBookingPayment, lockBoat } from './paymentConcurrency.js';
+import { reconciliationError } from './paymentLifecycle.js';
 
 const DAY_MS = 86400000;
 // Commission plateforme : même taux (10 %) que les paiements du seed.
@@ -27,6 +28,7 @@ const PAYMENT_STATES = Object.freeze({
   REFUNDING: 'refunding',
   REFUNDED: 'refunded',
   FAILED: 'failed',
+  RECONCILIATION_REQUIRED: 'reconciliation_required',
 });
 // Limite métier et garde-fou contre une boucle de dates contrôlée par le
 // client. Elle reste suffisamment large pour une location saisonnière tout en
@@ -47,6 +49,16 @@ function refundOptions(ref, amount, base, operation) {
     operation,
     idempotencyKey: stripeConfig.refundIdempotencyKey(ref, amount, operation),
   };
+}
+
+function cumulativeRefundAmount(payment, refundAmount) {
+  const principal = Math.max(0, Number(payment?.amount));
+  const already = Math.min(principal, Math.max(0, Number(payment?.refunded_amount || 0)));
+  const increment = Math.max(0, Number(refundAmount));
+  const total = Math.round(Math.min(principal, already + increment) * 100) / 100;
+  // Prisma accepts either representation.  Preserve string-shaped values in
+  // lightweight doubles while real Decimal values are persisted as numbers.
+  return typeof payment?.amount === 'string' ? String(total) : total;
 }
 
 const bad = (message, status = 400) => Object.assign(new Error(message), { status });
@@ -295,6 +307,48 @@ async function markPaymentCreationUnknown(id_payment) {
   return apply(prisma);
 }
 
+// Persist a provider failure as a retryable state without exposing the SDK
+// error to the caller.  The booking/payment lock and the lifecycle CAS make a
+// late webhook win safely if it has already completed the operation.
+async function persistPaymentReconciliation(
+  id_booking,
+  id_payment,
+  fromStates,
+  error,
+  fromStatuses = ['pending', 'success']
+) {
+  const apply = async (tx) => {
+    await lockBookingPayment(tx, id_booking, id_payment);
+    try {
+      await transitionPaymentState(
+        tx,
+        id_payment,
+        fromStates,
+        PAYMENT_STATES.RECONCILIATION_REQUIRED,
+        {
+          where: {
+            status: fromStatuses.length === 1 ? fromStatuses[0] : { in: fromStatuses },
+          },
+          data: {
+            reconciliation_error: reconciliationError(error),
+            reconciliation_at: new Date(),
+          },
+        }
+      );
+    } catch (markError) {
+      // A webhook or a competing retry may have committed the terminal state
+      // between the provider error and this marker; keep that state intact.
+      logSanitizedError('stripe: état de réconciliation paiement', markError, 'warn');
+    }
+  };
+  try {
+    if (typeof prisma.$transaction === 'function') await prisma.$transaction(apply);
+    else await apply(prisma);
+  } catch (markError) {
+    logSanitizedError('stripe: persistance réconciliation paiement', markError, 'warn');
+  }
+}
+
 function isDefiniteProviderFailure(error) {
   const status = Number(error?.statusCode || error?.status);
   return (
@@ -309,16 +363,31 @@ function isDefiniteProviderFailure(error) {
 async function compensateStripeIntent(ref, idempotencyKey) {
   if (!isStripeRef(ref)) return;
   try {
-    if (typeof stripeConfig.cancelIntent === 'function') {
-      await stripeConfig.cancelIntent(ref, { idempotencyKey });
-      return;
-    }
     const stripe = getStripe();
-    if (stripe?.paymentIntents?.cancel) {
-      await stripe.paymentIntents.cancel(ref, {}, idempotencyKey ? { idempotencyKey } : undefined);
+    if (!stripe) return;
+    if (!stripe.paymentIntents?.retrieve) throw new Error('Stripe retrieval is unavailable.');
+    const intent = await stripe.paymentIntents.retrieve(ref);
+    if (intent?.status === 'canceled') return;
+    if (intent?.status === 'succeeded') {
+      await refundCapturedIntentStrict(ref, null, 'capture-compensation');
       return;
     }
-    await cancelIntentQuietly(ref, { idempotencyKey });
+    if (!stripe.paymentIntents?.cancel) throw new Error('Stripe cancellation is unavailable.');
+    const result = await stripe.paymentIntents.cancel(
+      ref,
+      {},
+      idempotencyKey
+        ? { idempotencyKey }
+        : typeof stripeConfig.paymentIntentIdempotencyKey === 'function'
+          ? { idempotencyKey: stripeConfig.paymentIntentIdempotencyKey(ref, 'compensate') }
+          : undefined
+    );
+    if (result?.status === 'canceled') return;
+    if (result?.status === 'succeeded') {
+      await refundCapturedIntentStrict(ref, null, 'capture-compensation');
+      return;
+    }
+    throw new Error('Stripe did not confirm compensation.');
   } catch (error) {
     logSanitizedError('stripe: compensation création paiement', error, 'error');
     throw Object.assign(new Error('Le paiement Stripe n’a pas pu être compensé.'), {
@@ -429,6 +498,7 @@ export async function cancelExpiredBookings(expiryMs = PENDING_EXPIRY_MS) {
         updated_at: now,
       });
       for (const payment of creating) {
+        await lockBookingPayment(tx, candidate.id_booking, payment.id_payment);
         await compareAndSetPayment(tx, payment.id_payment, ['pending'], {
           status: 'failed',
           payment_state: PAYMENT_STATES.FAILED,
@@ -439,6 +509,251 @@ export async function cancelExpiredBookings(expiryMs = PENDING_EXPIRY_MS) {
     count += Number(result || 0);
   }
   return count;
+}
+
+const STARTED_PENDING_REASON = 'Demande refusée automatiquement : le séjour a déjà commencé.';
+
+function startedPendingWhere(now = new Date()) {
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  return {
+    status: 'pending',
+    deleted_at: null,
+    start_date: { lt: today },
+  };
+}
+
+async function releasePendingIntentStrict(ref, expectedAmount) {
+  const stripe = getStripe();
+  if (!stripe) return { kind: 'released', amount: 0 };
+  if (!isStripeRef(ref) || !stripe.paymentIntents?.retrieve) {
+    throw bad('Le paiement ne possède pas de référence Stripe vérifiable.', 503);
+  }
+  const intent = await stripe.paymentIntents.retrieve(ref);
+  if (intent?.status === 'canceled') return { kind: 'released', amount: 0 };
+  const refundCaptured = async () => {
+    const refund = await refundIntent(
+      ref,
+      null,
+      refundOptions(ref, null, { refundApplicationFee: true }, 'expire-after-capture')
+    );
+    if (refund?.status !== 'succeeded') {
+      throw bad('Le remboursement Stripe n’est pas confirmé.', 503);
+    }
+    const cents = Number(refund.amount);
+    if (!Number.isFinite(cents) || cents < 0) {
+      throw bad('Le montant du remboursement Stripe est invalide.', 503);
+    }
+    const expected = Number(expectedAmount);
+    if (Number.isFinite(expected) && cents / 100 > expected + 0.000001) {
+      throw bad('Le montant du remboursement Stripe dépasse le paiement enregistré.', 503);
+    }
+    return { kind: 'refunded', amount: cents / 100 };
+  };
+  if (intent?.status === 'succeeded') return refundCaptured();
+  if (!stripe.paymentIntents?.cancel)
+    throw bad('Stripe ne permet pas de libérer ce paiement.', 503);
+  const result = await stripe.paymentIntents.cancel(
+    ref,
+    {},
+    typeof stripeConfig.paymentIntentIdempotencyKey === 'function'
+      ? { idempotencyKey: stripeConfig.paymentIntentIdempotencyKey(ref, 'expire-release') }
+      : undefined
+  );
+  if (result?.status === 'canceled') return { kind: 'released', amount: 0 };
+  if (result?.status === 'succeeded') return refundCaptured();
+  throw bad('Stripe n’a pas confirmé l’annulation de l’empreinte.', 503);
+}
+
+async function refundCapturedIntentStrict(ref, expectedAmount, operation = 'owner-cancel-refund') {
+  const stripe = getStripe();
+  if (!stripe) return { kind: 'refunded', amount: expectedAmount };
+  if (!isStripeRef(ref)) {
+    throw bad('Le paiement ne possède pas de référence Stripe vérifiable.', 503);
+  }
+  const refund = await refundIntent(
+    ref,
+    null,
+    refundOptions(ref, null, { refundApplicationFee: true }, operation)
+  );
+  if (refund?.status !== 'succeeded') {
+    throw bad('Le remboursement Stripe n’est pas confirmé.', 503);
+  }
+  const cents = Number(refund.amount);
+  if (!Number.isFinite(cents) || cents < 0) {
+    throw bad('Le montant du remboursement Stripe est invalide.', 503);
+  }
+  const expected = Number(expectedAmount);
+  if (Number.isFinite(expected) && cents / 100 > expected + 0.000001) {
+    throw bad('Le montant du remboursement Stripe dépasse le paiement enregistré.', 503);
+  }
+  return { kind: 'refunded', amount: cents / 100 };
+}
+
+// Refuse les demandes dont le séjour a déjà commencé from the scheduled job.
+// This intentionally does not run from owner GET endpoints: every candidate
+// is re-read under the booking/payment advisory locks and every write uses a
+// status/state CAS. A provider failure leaves a retryable reconciliation row.
+export async function refuseExpiredPendingBookings(now = new Date()) {
+  if (typeof prisma.booking?.findMany !== 'function') return 0;
+  const where = startedPendingWhere(now);
+  const expired = await prisma.booking.findMany({
+    where,
+    select: { id_booking: true },
+    orderBy: { id_booking: 'asc' },
+    take: MAX_HISTORY_ROWS,
+  });
+  let refused = 0;
+  for (const candidate of expired) {
+    const prepared = await prisma.$transaction(async (tx) => {
+      await lockBookingPayment(tx, candidate.id_booking);
+      const today = new Date(now);
+      today.setHours(0, 0, 0, 0);
+      const current =
+        typeof tx.booking?.findUnique === 'function'
+          ? await tx.booking.findUnique({
+              where: { id_booking: candidate.id_booking },
+              select: {
+                id_booking: true,
+                status: true,
+                deleted_at: true,
+                start_date: true,
+                payments: {
+                  where: { status: 'pending' },
+                  select: {
+                    id_payment: true,
+                    status: true,
+                    amount: true,
+                    refunded_amount: true,
+                    transaction_ref: true,
+                    payment_state: true,
+                  },
+                },
+              },
+            })
+          : null;
+      if (
+        !current ||
+        current.deleted_at ||
+        current.status !== 'pending' ||
+        new Date(current.start_date).getTime() >= today.getTime()
+      ) {
+        return null;
+      }
+      const payments = [];
+      for (const payment of current.payments || []) {
+        await lockBookingPayment(tx, current.id_booking, payment.id_payment);
+        const state = payment.payment_state || 'legacy';
+        if ([PAYMENT_STATES.CAPTURING, PAYMENT_STATES.REFUNDING].includes(state)) {
+          // A capture/refund worker owns this row; retry the expiry sweep after
+          // that operation records its terminal provider state.
+          return null;
+        }
+        await transitionPaymentState(
+          tx,
+          payment.id_payment,
+          [
+            PAYMENT_STATES.CREATING,
+            'creation_unknown',
+            PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
+            PAYMENT_STATES.REQUIRES_CAPTURE,
+            PAYMENT_STATES.RELEASING,
+            PAYMENT_STATES.RECONCILIATION_REQUIRED,
+            'legacy_pending',
+            'legacy',
+          ],
+          PAYMENT_STATES.RELEASING,
+          { where: { status: 'pending' } }
+        );
+        payments.push(payment);
+      }
+      return { booking: current, payments };
+    });
+    if (!prepared) continue;
+
+    const providerResults = new Map();
+    for (const payment of prepared.payments) {
+      try {
+        providerResults.set(
+          payment.id_payment,
+          await releasePendingIntentStrict(payment.transaction_ref, payment.amount)
+        );
+      } catch (error) {
+        await prisma.$transaction(async (tx) => {
+          await lockBookingPayment(tx, prepared.booking.id_booking, payment.id_payment);
+          try {
+            await transitionPaymentState(
+              tx,
+              payment.id_payment,
+              PAYMENT_STATES.RELEASING,
+              PAYMENT_STATES.RECONCILIATION_REQUIRED,
+              {
+                where: { status: 'pending' },
+                data: {
+                  reconciliation_error: reconciliationError(error),
+                  reconciliation_at: new Date(),
+                },
+              }
+            );
+          } catch (markError) {
+            logSanitizedError('booking expiry: état de réconciliation paiement', markError, 'warn');
+          }
+        });
+      }
+    }
+
+    const changed = await prisma.$transaction(async (tx) => {
+      await lockBookingPayment(tx, prepared.booking.id_booking);
+      const current =
+        typeof tx.booking?.findUnique === 'function'
+          ? await tx.booking.findUnique({
+              where: { id_booking: prepared.booking.id_booking },
+              select: { status: true, deleted_at: true },
+            })
+          : null;
+      if (!current || current.deleted_at || current.status !== 'pending') return false;
+      for (const payment of prepared.payments) {
+        const providerResult = providerResults.get(payment.id_payment);
+        if (!providerResult) continue;
+        await lockBookingPayment(tx, prepared.booking.id_booking, payment.id_payment);
+        const refundData =
+          providerResult.kind === 'refunded'
+            ? {
+                refunded_amount: Math.min(
+                  Number(payment.amount),
+                  Math.max(0, Number(payment.refunded_amount || 0) + providerResult.amount)
+                ),
+              }
+            : {};
+        await transitionPaymentState(
+          tx,
+          payment.id_payment,
+          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          PAYMENT_STATES.REFUNDED,
+          {
+            where: { status: 'pending' },
+            data: { status: 'refunded', refunded_at: now, ...refundData },
+          }
+        );
+      }
+      // Do not refuse the booking while any provider operation is still
+      // unresolved.  Successful releases are finalized above, while failed
+      // ones remain reconciliation_required and are retried by the next
+      // scheduled sweep or an explicit decision.
+      if (!prepared.payments.every((payment) => providerResults.has(payment.id_payment))) {
+        return false;
+      }
+      await compareAndSetBooking(tx, prepared.booking.id_booking, ['pending'], {
+        status: 'refused',
+        cancellation_reason: STARTED_PENDING_REASON,
+        cancellation_date: now,
+        updated_at: now,
+      });
+      return true;
+    });
+    if (changed) refused += 1;
+  }
+  return refused;
 }
 
 // Annulation individuelle avec motif (expiration, créneau perdu…).
@@ -922,6 +1237,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
           id_payment: true,
           status: true,
           amount: true,
+          refunded_amount: true,
           transaction_ref: true,
           payment_state: true,
         },
@@ -939,103 +1255,168 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
 
   const stripe = getStripe();
 
-  const updated = await prisma.$transaction(async (tx) => {
-    // This lock is shared with payBooking, owner decisions and expiration.
-    // Stripe is deliberately called while the transaction is open: no other
-    // worker can move the booking/payment pair between provider operation and
-    // the final CAS.
-    await lockBookingPayment(tx, booking.id_booking);
-    const current =
-      typeof tx.booking?.findUnique === 'function'
-        ? await tx.booking.findUnique({
-            where: { id_booking: booking.id_booking },
-            select: {
-              id_booking: true,
-              status: true,
-              deleted_at: true,
-              payments: {
-                where: { status: { in: ACTIVE_PAYMENT_STATUSES } },
-                select: {
-                  id_payment: true,
-                  status: true,
-                  amount: true,
-                  transaction_ref: true,
-                  payment_state: true,
+  let providerAttempted = false;
+  const providerResults = new Map();
+  let updated;
+  try {
+    updated = await prisma.$transaction(async (tx) => {
+      // This lock is shared with payBooking, owner decisions and expiration.
+      // Stripe is deliberately called while the transaction is open: no other
+      // worker can move the booking/payment pair between provider operation and
+      // the final CAS.
+      await lockBookingPayment(tx, booking.id_booking);
+      const current =
+        typeof tx.booking?.findUnique === 'function'
+          ? await tx.booking.findUnique({
+              where: { id_booking: booking.id_booking },
+              select: {
+                id_booking: true,
+                status: true,
+                deleted_at: true,
+                payments: {
+                  where: { status: { in: ACTIVE_PAYMENT_STATUSES } },
+                  select: {
+                    id_payment: true,
+                    status: true,
+                    amount: true,
+                    refunded_amount: true,
+                    transaction_ref: true,
+                    payment_state: true,
+                  },
                 },
               },
-            },
-          })
-        : booking;
-    if (!current || current.deleted_at || !['pending', 'confirmed'].includes(current.status)) {
-      throw bad('Cette réservation ne peut plus être annulée.', 409);
-    }
-    const payments = current.payments || booking.payments;
-    for (const p of payments) {
-      await lockBookingPayment(tx, booking.id_booking, p.id_payment);
-      if (p.status === 'pending') {
-        if (['capturing', 'releasing', 'refunding'].includes(p.payment_state)) {
-          throw bad('Le paiement est déjà en cours de traitement.', 409);
-        }
-        if (stripe && p.transaction_ref && isStripeRef(p.transaction_ref)) {
-          await compensateStripeIntent(
-            p.transaction_ref,
-            refundOptions(p.transaction_ref, null, {}, 'release')?.idempotencyKey
-          );
+            })
+          : booking;
+      if (!current || current.deleted_at || !['pending', 'confirmed'].includes(current.status)) {
+        throw bad('Cette réservation ne peut plus être annulée.', 409);
+      }
+      const payments = current.payments || booking.payments;
+      for (const p of payments) {
+        await lockBookingPayment(tx, booking.id_booking, p.id_payment);
+        if (p.status === 'pending') {
+          if ([PAYMENT_STATES.CAPTURING, PAYMENT_STATES.REFUNDING].includes(p.payment_state)) {
+            throw bad('Le paiement est déjà en cours de traitement.', 409);
+          }
+          if (stripe) providerAttempted = true;
+          if (stripe && !isStripeRef(p.transaction_ref)) {
+            throw bad('Le paiement ne possède pas de référence Stripe vérifiable.', 503);
+          }
+          if (stripe) {
+            providerResults.set(
+              p.id_payment,
+              await releasePendingIntentStrict(p.transaction_ref, Number(p.amount))
+            );
+          } else {
+            await cancelIntentQuietly(p.transaction_ref);
+            providerResults.set(p.id_payment, { kind: 'released', amount: 0 });
+          }
         } else {
-          await cancelIntentQuietly(p.transaction_ref);
+          if (stripe) providerAttempted = true;
+          if ([PAYMENT_STATES.CAPTURING, PAYMENT_STATES.RELEASING].includes(p.payment_state)) {
+            throw bad('Le paiement est dÃ©jÃ  en cours de traitement.', 409);
+          }
+          if (stripe && !isStripeRef(p.transaction_ref)) {
+            throw bad('Le paiement capturé ne possède pas de référence Stripe.', 409);
+          }
+          providerResults.set(
+            p.id_payment,
+            await refundCapturedIntentStrict(p.transaction_ref, Number(p.amount))
+          );
         }
-      } else {
-        if (stripe && !isStripeRef(p.transaction_ref)) {
-          throw bad('Le paiement capturé ne possède pas de référence Stripe.', 409);
+      }
+      const bookingData = {
+        status: 'cancelled',
+        cancellation_reason: cleanReason || 'Annulée par le locataire.',
+        cancellation_date: now,
+        updated_at: now,
+      };
+      const result = await compareAndSetBooking(
+        tx,
+        current.id_booking,
+        ['pending', 'confirmed'],
+        bookingData
+      );
+      for (const p of payments) {
+        const providerResult = providerResults.get(p.id_payment);
+        const data = {
+          status: 'refunded',
+          payment_state: PAYMENT_STATES.REFUNDED,
+          refunded_at: now,
+          // Empreinte jamais débitée : libération sans montant. Paiement
+          // encaissé : remboursement automatique intégral.
+          ...((p.status === 'success' || providerResult?.kind === 'refunded') && {
+            refunded_amount: cumulativeRefundAmount(p, providerResult?.amount ?? Number(p.amount)),
+            refund_reason:
+              'Remboursement automatique : annulation par le locataire avant le début du séjour.',
+          }),
+        };
+        await compareAndSetPayment(tx, p.id_payment, [p.status], data);
+      }
+      return result;
+    });
+  } catch (error) {
+    // The provider call may have succeeded even when this transaction failed
+    // or the request timed out. Persist a retryable marker before surfacing a
+    // generic 503; deterministic Stripe keys make the next attempt safe.
+    if (providerAttempted) {
+      for (const payment of booking.payments || []) {
+        const state =
+          payment.payment_state ||
+          (payment.status === 'success' ? PAYMENT_STATES.SUCCEEDED : 'legacy');
+        const fromStates =
+          payment.status === 'success'
+            ? [
+                PAYMENT_STATES.SUCCEEDED,
+                PAYMENT_STATES.REFUNDING,
+                PAYMENT_STATES.PARTIALLY_REFUNDED,
+                PAYMENT_STATES.RECONCILIATION_REQUIRED,
+                'legacy',
+              ]
+            : [
+                PAYMENT_STATES.CREATING,
+                'creation_unknown',
+                PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
+                PAYMENT_STATES.REQUIRES_CAPTURE,
+                PAYMENT_STATES.RELEASING,
+                PAYMENT_STATES.RECONCILIATION_REQUIRED,
+                'legacy_pending',
+                'legacy',
+              ];
+        if (fromStates.includes(state)) {
+          await persistPaymentReconciliation(
+            booking.id_booking,
+            payment.id_payment,
+            fromStates,
+            error,
+            [payment.status]
+          );
         }
-        await refundIntent(
-          p.transaction_ref,
-          null,
-          refundOptions(p.transaction_ref, null, { refundApplicationFee: true }, 'full-refund')
-        );
       }
     }
-    const bookingData = {
-      status: 'cancelled',
-      cancellation_reason: cleanReason || 'Annulée par le locataire.',
-      cancellation_date: now,
-      updated_at: now,
-    };
-    const result = await compareAndSetBooking(
-      tx,
-      current.id_booking,
-      ['pending', 'confirmed'],
-      bookingData
+    throw Object.assign(
+      new Error('Le paiement Stripe doit Ãªtre rÃ©conciliÃ© avant la dÃ©cision.'),
+      {
+        status: 503,
+        cause: error,
+      }
     );
-    for (const p of payments) {
-      const data = {
-        status: 'refunded',
-        payment_state: PAYMENT_STATES.REFUNDED,
-        refunded_at: now,
-        // Empreinte jamais débitée : libération sans montant. Paiement
-        // encaissé : remboursement automatique intégral.
-        ...(p.status === 'success' && {
-          refunded_amount: p.amount,
-          refund_reason:
-            'Remboursement automatique : annulation par le locataire avant le début du séjour.',
-        }),
-      };
-      await compareAndSetPayment(tx, p.id_payment, [p.status], data);
-    }
-    return result;
-  });
+  }
 
   // Notifications non bloquantes : le propriétaire apprend que le créneau se
   // libère, le locataire reçoit la confirmation (et celle du remboursement
   // intégral si un paiement avait été encaissé).
   const captured = booking.payments.find((p) => p.status === 'success');
+  const capturedRefund = captured ? providerResults.get(captured.id_payment) : null;
   const emailBase = {
     boatName: booking.boat?.name,
     startDate: booking.start_date,
     endDate: booking.end_date,
     totalAmount: Number(booking.total_amount),
     reason: updated.cancellation_reason,
-    refundAmount: captured ? Number(captured.amount) : 0,
+    refundAmount:
+      captured && capturedRefund?.kind === 'refunded'
+        ? Number(cumulativeRefundAmount(captured, capturedRefund.amount))
+        : 0,
   };
   const recipients = [
     booking.boat?.owner?.email && {

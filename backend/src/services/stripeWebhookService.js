@@ -13,8 +13,6 @@ import {
 const EVENT_LEASE_MS = 15 * 60 * 1000;
 const EVENT_ERROR_MAX_LENGTH = 500;
 
-const isTestDouble = (fn) => Boolean(fn?._isMockFunction);
-
 function eventHash(event) {
   return crypto.createHash('sha256').update(JSON.stringify(event)).digest('hex');
 }
@@ -180,31 +178,7 @@ async function runCancellationTransition(payment) {
   };
 
   if (typeof prisma.$transaction !== 'function') return apply(prisma);
-  try {
-    return await prisma.$transaction(apply);
-  } catch (error) {
-    // Older unit-test doubles implement only the array form of $transaction.
-    // Production Prisma never enters this compatibility path.
-    if (!isTestDouble(prisma.$transaction) || !/iterable/i.test(String(error.message))) {
-      throw error;
-    }
-    return prisma.$transaction([
-      prisma.payment.update({
-        where: { id_payment: payment.id_payment },
-        data: { status: 'failed' },
-      }),
-      prisma.booking.updateMany({
-        where: { id_booking: payment.id_booking, status: 'pending', deleted_at: null },
-        data: {
-          status: 'cancelled',
-          cancellation_reason:
-            'Annulation automatique : empreinte de paiement expirée ou annulée côté Stripe.',
-          cancellation_date: new Date(),
-          updated_at: new Date(),
-        },
-      }),
-    ]);
-  }
+  return prisma.$transaction(apply);
 }
 
 async function paymentByTransactionRef(transactionRef) {
@@ -228,16 +202,10 @@ async function reconcileSucceededEvent(intent) {
   if (!ref) return;
   const payment = await paymentByTransactionRef(ref);
 
-  // Preserve the original lightweight-double behaviour. In production an
-  // unknown transaction simply affects zero rows; no lock can be acquired
-  // until a booking/payment row has been found.
-  if (!payment) {
-    await prisma.payment.updateMany({
-      where: { transaction_ref: ref, status: 'pending' },
-      data: { status: 'success' },
-    });
-    return;
-  }
+  // An unknown transaction cannot be safely attributed to a local payment.
+  // Never perform a booking-scoped update without first acquiring the pair's
+  // advisory locks and re-reading its lifecycle state.
+  if (!payment) return;
 
   const apply = async (tx) => {
     await lockBookingPayment(tx, payment.id_booking, payment.id_payment);
@@ -293,17 +261,7 @@ async function reconcileSucceededEvent(intent) {
   };
 
   if (typeof prisma.$transaction !== 'function') return apply(prisma);
-  try {
-    return await prisma.$transaction(apply);
-  } catch (error) {
-    if (!isTestDouble(prisma.$transaction) || !/iterable/i.test(String(error.message))) throw error;
-    // Compatibility for the historical test double: keep the exact public
-    // update shape used by the pre-lifecycle tests.
-    return prisma.payment.updateMany({
-      where: { transaction_ref: ref, status: 'pending' },
-      data: { status: 'success' },
-    });
-  }
+  return prisma.$transaction(apply);
 }
 
 async function reconcileRefundEvent(charge) {
@@ -313,20 +271,10 @@ async function reconcileRefundEvent(charge) {
   const payment = await paymentByTransactionRef(ref);
   const amount = amountCents / 100;
 
-  if (!payment) {
-    // Unknown references are harmless no-ops in a real database and preserve
-    // compatibility with focused tests that exercise the write directly.
-    await prisma.payment.updateMany({
-      where: { transaction_ref: ref, status: 'success' },
-      data: {
-        status: 'refunded',
-        refunded_amount: amount,
-        refunded_at: new Date(),
-        refund_reason: 'Remboursement effectué côté Stripe (dashboard ou API externe).',
-      },
-    });
-    return;
-  }
+  // An unknown reference is deliberately ignored. Applying a refund to every
+  // matching row without a lock/state CAS could resurrect or overwrite a
+  // payment that another worker is currently reconciling.
+  if (!payment) return;
 
   const apply = async (tx) => {
     await lockBookingPayment(tx, payment.id_booking, payment.id_payment);
@@ -379,20 +327,7 @@ async function reconcileRefundEvent(charge) {
   };
 
   if (typeof prisma.$transaction !== 'function') return apply(prisma);
-  try {
-    return await prisma.$transaction(apply);
-  } catch (error) {
-    if (!isTestDouble(prisma.$transaction) || !/iterable/i.test(String(error.message))) throw error;
-    return prisma.payment.updateMany({
-      where: { transaction_ref: ref, status: 'success' },
-      data: {
-        status: 'refunded',
-        refunded_amount: amount,
-        refunded_at: new Date(),
-        refund_reason: 'Remboursement effectué côté Stripe (dashboard ou API externe).',
-      },
-    });
-  }
+  return prisma.$transaction(apply);
 }
 
 async function applyStripeEvent(event) {
@@ -403,7 +338,7 @@ async function applyStripeEvent(event) {
       const intent = event.data.object;
       const payment = await prisma.payment.findFirst({
         where: { transaction_ref: intent.id, status: 'pending' },
-        select: { id_payment: true, id_booking: true },
+        select: { id_payment: true, id_booking: true, status: true, payment_state: true },
       });
       if (!payment) return;
       await runCancellationTransition(payment);

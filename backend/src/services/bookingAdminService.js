@@ -42,6 +42,33 @@ function providerConflict(message = 'Le paiement Stripe doit être réconcilié 
   return Object.assign(new Error(message), { status: 503 });
 }
 
+function confirmedRefund(ref, refund, expectedAmount) {
+  if (refund?.status !== 'succeeded') {
+    throw providerConflict('Le remboursement Stripe n’est pas confirmé.');
+  }
+  const cents = Number(refund.amount);
+  if (!Number.isFinite(cents) || cents < 0) {
+    throw providerConflict('Le montant du remboursement Stripe est invalide.');
+  }
+  const expected = Number(expectedAmount);
+  if (Number.isFinite(expected) && cents / 100 > expected + 0.000001) {
+    throw providerConflict('Le montant du remboursement Stripe dépasse le paiement enregistré.');
+  }
+  return {
+    kind: 'refunded',
+    amount: cents / 100,
+    reference: ref,
+    ...(expectedAmount !== undefined && { expectedAmount }),
+  };
+}
+
+function cumulativeRefundAmount(payment, refundAmount) {
+  const principal = Math.max(0, Number(payment.amount));
+  const already = Math.min(principal, Math.max(0, Number(payment.refunded_amount || 0)));
+  const increment = Math.max(0, Number(refundAmount));
+  return Math.round(Math.min(principal, already + increment) * 100) / 100;
+}
+
 function runTransaction(callback) {
   return typeof prisma.$transaction === 'function'
     ? prisma.$transaction(callback)
@@ -74,6 +101,7 @@ async function releaseStripeIntentStrict(ref, expectedAmount) {
   if (!isStripeRef(ref)) {
     throw providerConflict('Le paiement ne possède pas de référence Stripe vérifiable.');
   }
+  if (!stripe.paymentIntents?.retrieve) throw providerConflict();
   const intent = await stripe.paymentIntents.retrieve(ref);
   if (intent?.status === 'canceled') return { kind: 'released', amount: 0 };
   if (intent?.status === 'succeeded') {
@@ -82,30 +110,23 @@ async function releaseStripeIntentStrict(ref, expectedAmount) {
       null,
       refundOptions(ref, null, { refundApplicationFee: true }, 'admin-cancel-release')
     );
-    const cents = Number(refund?.amount);
-    return {
-      kind: 'refunded',
-      amount: Number.isFinite(cents) ? cents / 100 : expectedAmount,
-    };
+    return confirmedRefund(ref, refund, expectedAmount);
   }
   const result = await stripe.paymentIntents.cancel(
     ref,
     {},
     paymentIntentOptions(ref, 'admin-cancel-release')
   );
+  if (result?.status === 'canceled') return { kind: 'released', amount: 0 };
   if (result?.status === 'succeeded') {
     const refund = await refundIntent(
       ref,
       null,
       refundOptions(ref, null, { refundApplicationFee: true }, 'admin-cancel-release')
     );
-    const cents = Number(refund?.amount);
-    return {
-      kind: 'refunded',
-      amount: Number.isFinite(cents) ? cents / 100 : expectedAmount,
-    };
+    return confirmedRefund(ref, refund, expectedAmount);
   }
-  return { kind: 'released', amount: 0 };
+  throw providerConflict('Stripe n’a pas confirmé l’annulation de l’empreinte.');
 }
 
 async function refundStripeIntentStrict(ref, expectedAmount) {
@@ -119,11 +140,7 @@ async function refundStripeIntentStrict(ref, expectedAmount) {
     null,
     refundOptions(ref, null, { refundApplicationFee: true }, 'admin-cancel-refund')
   );
-  const cents = Number(refund?.amount);
-  return {
-    kind: 'refunded',
-    amount: Number.isFinite(cents) ? cents / 100 : expectedAmount,
-  };
+  return confirmedRefund(ref, refund, expectedAmount);
 }
 
 async function persistPaymentReconciliation(id_booking, payment, error) {
@@ -262,6 +279,7 @@ export async function cancelBooking(id_booking, reason) {
                   id_payment: true,
                   status: true,
                   amount: true,
+                  refunded_amount: true,
                   transaction_ref: true,
                   payment_state: true,
                 },
@@ -369,6 +387,7 @@ export async function cancelBooking(id_booking, reason) {
                   id_payment: true,
                   status: true,
                   amount: true,
+                  refunded_amount: true,
                   transaction_ref: true,
                   payment_state: true,
                 },
@@ -414,7 +433,7 @@ export async function cancelBooking(id_booking, reason) {
               status: 'refunded',
               refunded_at: now,
               ...(providerResult.kind === 'refunded' && {
-                refunded_amount: providerResult.amount ?? payment.amount,
+                refunded_amount: cumulativeRefundAmount(payment, providerResult.amount),
               }),
               reconciliation_error: null,
               reconciliation_at: null,
@@ -431,7 +450,7 @@ export async function cancelBooking(id_booking, reason) {
             fromStatuses: ['success'],
             data: {
               status: 'refunded',
-              refunded_amount: providerResult.amount ?? payment.amount,
+              refunded_amount: cumulativeRefundAmount(payment, providerResult.amount),
               refunded_at: now,
               refund_reason: 'Remboursement automatique : annulation par un administrateur.',
               reconciliation_error: null,
@@ -624,15 +643,24 @@ export async function setDisputeStatus(
             disputeOperation
           )
         );
+        if (stripeRefund?.status !== 'succeeded') {
+          throw providerConflict('Le remboursement Stripe n’est pas confirmé.');
+        }
         const stripeAmount = Number(stripeRefund?.amount);
-        const applied = Math.min(
-          Math.max(0, amount - alreadyRefunded),
-          Number.isFinite(stripeAmount) ? stripeAmount / 100 : requested
-        );
+        if (!Number.isFinite(stripeAmount) || stripeAmount <= 0) {
+          throw providerConflict('Le montant du remboursement Stripe est invalide.');
+        }
+        if (stripeAmount / 100 > requested + 0.000001) {
+          throw providerConflict('Le montant du remboursement Stripe dépasse le montant demandé.');
+        }
+        const applied = Math.min(Math.max(0, amount - alreadyRefunded), stripeAmount / 100);
         if (applied > 0) {
+          const refundedAmount = Math.round((alreadyRefunded + applied) * 100) / 100;
+          const complete = refundedAmount >= amount - 0.000001;
           const paymentData = {
-            status: 'refunded',
-            refunded_amount: Math.round((alreadyRefunded + applied) * 100) / 100,
+            status: complete ? 'refunded' : 'success',
+            payment_state: complete ? PAYMENT_STATES.REFUNDED : PAYMENT_STATES.PARTIALLY_REFUNDED,
+            refunded_amount: refundedAmount,
             refunded_at: new Date(),
             refund_reason:
               (resolution && String(resolution).trim()) ||
