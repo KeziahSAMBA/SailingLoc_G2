@@ -110,8 +110,8 @@ export function paymentStateOf(payment) {
 // identifiers.  A short, bounded description is enough for reconciliation
 // dashboards while the full sanitized error remains in logs.
 export function reconciliationError(error, fallback = 'Erreur du prestataire de paiement.') {
-  // eslint-disable-next-line no-control-regex -- deliberately strip C0 controls from provider errors
   const candidate = String(error?.message || error || '')
+    // eslint-disable-next-line no-control-regex -- deliberately strip C0 controls from provider errors
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
     .trim();
   return (candidate || fallback).slice(0, 500);
