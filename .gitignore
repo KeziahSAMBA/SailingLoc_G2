@@ -15,6 +15,10 @@ frontend/verify-searchbar-toggle.mjs
 backend/uploads
 backend/storage/documents
 
+# Rapports de couverture Jest
+coverage
+backend/coverage
+
 # Docker
 docker-compose.override.yml
 docker volumes (handled by docker-compose)

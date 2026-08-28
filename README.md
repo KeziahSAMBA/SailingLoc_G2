@@ -14,6 +14,7 @@ Plateforme de location de bateaux — projet fullstack avec un backend Node.js/E
 - [Installation](#installation)
 - [Paiements Stripe](#paiements-stripe)
 - [Scripts disponibles](#scripts-disponibles)
+- [Tests et couverture](#tests-et-couverture)
 - [Structure du projet](#structure-du-projet)
 - [API](#api)
 - [Choses à savoir](#choses-à-savoir)
@@ -328,21 +329,23 @@ En production : déclarer l'endpoint `https://<domaine>/api/webhooks/stripe` dan
 
 ### Racine
 
-| Commande         | Description                  |
-| ---------------- | ---------------------------- |
-| `npm run lint`   | Lint backend + frontend      |
-| `npm run format` | Formatage backend + frontend |
-| `npm test`       | Tests backend                |
+| Commande                | Description                           |
+| ----------------------- | ------------------------------------- |
+| `npm run lint`          | Lint backend + frontend               |
+| `npm run format`        | Formatage backend + frontend          |
+| `npm test`              | Tests backend                         |
+| `npm run test:coverage` | Tests backend + rapport de couverture |
 
 ### Backend (`cd backend`)
 
-| Commande         | Description                         |
-| ---------------- | ----------------------------------- |
-| `npm run dev`    | Démarrage avec hot reload (nodemon) |
-| `npm start`      | Démarrage en production             |
-| `npm test`       | Tests Jest                          |
-| `npm run lint`   | ESLint                              |
-| `npm run format` | Prettier                            |
+| Commande                | Description                         |
+| ----------------------- | ----------------------------------- |
+| `npm run dev`           | Démarrage avec hot reload (nodemon) |
+| `npm start`             | Démarrage en production             |
+| `npm test`              | Tests Jest                          |
+| `npm run test:coverage` | Tests Jest + rapport de couverture  |
+| `npm run lint`          | ESLint                              |
+| `npm run format`        | Prettier                            |
 
 ### Frontend (`cd frontend`)
 
@@ -353,6 +356,30 @@ En production : déclarer l'endpoint `https://<domaine>/api/webhooks/stripe` dan
 | `npm run preview` | Prévisualisation du build     |
 | `npm run lint`    | ESLint                        |
 | `npm run format`  | Prettier                      |
+
+---
+
+## Tests et couverture
+
+Les tests backend sont des **tests unitaires** : Prisma, Stripe et l'envoi d'emails sont mockés. Ils ne nécessitent **ni base de données ni serveur lancé**, et tournent donc aussi bien en local qu'en CI.
+
+```bash
+# À la racine, ou dans backend/
+npm run test:coverage
+
+# En Docker
+docker compose -f docker-compose.dev.yml exec backend npm run test:coverage
+```
+
+Le rapport HTML détaillé, ligne par ligne, est généré dans `backend/coverage/lcov-report/index.html` (dossier non versionné). La CI l'archive à chaque exécution sous l'artefact **`backend-coverage`**, téléchargeable depuis l'onglet Actions de GitHub pendant 14 jours.
+
+### Seuils de couverture
+
+`backend/jest.config.js` définit des **planchers anti-régression** vérifiés à chaque run : si la couverture passe en dessous, la commande échoue et la CI devient rouge.
+
+Ces planchers sont volontairement calés juste sous la couverture réelle du moment. Après chaque lot de nouveaux tests, on les remonte au niveau atteint — la progression est ainsi acquise définitivement, sans jamais laisser la CI rouge (ce qui bloquerait les déploiements, `deploy-staging` dépendant de `test-and-build`).
+
+> Attention à la lecture des seuils : dès qu'un groupe par chemin existe (ici `./src/jobs/handlers/`), Jest **retire ses fichiers du groupe `global`**. Le pourcentage du bloc « Coverage summary » et celui évalué contre le seuil `global` sont donc différents, et c'est normal.
 
 ---
 
