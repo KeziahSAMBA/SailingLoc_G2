@@ -7,3 +7,6 @@ be5d8fc653091116a33bd8e8b1488eb255a9c781:URI:backend/tests/securityPrivacy.test.
 b112b43a56863b1bdd323f462355a4dc44cdcb4f:URI:backend/tests/securityPrivacy.test.js:113
 # Fixture documentaire historique vérifiée ; emplacement uniquement, sans secret.
 0a8fcb3fd1ad2feee7cb56a62d2c60bd940d6767:URI:README.md:67
+fde6afe984cb3f422bb94568606db94c648ef36e:Postgres:docker-compose.dev.yml:35
+74e2396e6967ebf8901e82cc707bf0b7e7ae91e8:Postgres:docker-compose.staging.yml:33
+fde6afe984cb3f422bb94568606db94c648ef36e:Postgres:docker-compose.yml:36
