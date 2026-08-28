@@ -1,0 +1,7 @@
+# Exact TruffleHog v3.97.1 metadata fingerprints for intentional synthetic
+# URI fixtures. Format: <commit>:<detector>:<path>:<line>.
+# These entries identify locations only; no secret value is allow-listed.
+# Provenance: securityPrivacy.test.js sanitization regression fixture, original
+# English commit and its French message-only rewrite, line 113, detector URI.
+be5d8fc653091116a33bd8e8b1488eb255a9c781:URI:backend/tests/securityPrivacy.test.js:113
+b112b43a56863b1bdd323f462355a4dc44cdcb4f:URI:backend/tests/securityPrivacy.test.js:113

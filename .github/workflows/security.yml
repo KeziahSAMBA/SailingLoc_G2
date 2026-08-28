@@ -158,12 +158,16 @@ jobs:
           test -n "$(git rev-list --all -1)"
       - name: Pull pinned TruffleHog scanner
         run: docker pull "$TRUFFLEHOG_IMAGE"
+      - name: Verify exact history ignore policy
+        shell: bash
+        run: bash .github/scripts/trufflehog-history-scan.sh --self-test
       - name: Scan complete Git history with TruffleHog
         shell: bash
         run: |
           set -euo pipefail
           report="$RUNNER_TEMP/trufflehog-output.json"
-          trap 'rm -f -- "$report"' EXIT
+          scanner_log="$RUNNER_TEMP/trufflehog-stderr.log"
+          trap 'rm -f -- "$report" "$scanner_log"' EXIT
           if docker run --rm \
             --network none \
             --read-only \
@@ -179,24 +183,15 @@ jobs:
             --fail-on-scan-errors \
             --no-update \
             --no-color \
-            --json >"$report" 2>&1; then
+            --json >"$report" 2>"$scanner_log"; then
             status=0
           else
             status=$?
           fi
-          case "$status" in
-            0)
-              printf 'TruffleHog full-history secret scan passed.\n'
-              ;;
-            183)
-              printf 'TruffleHog detected a verified or unknown credential; scanner output was withheld.\n' >&2
-              exit 1
-              ;;
-            *)
-              printf 'TruffleHog full-history scan failed (exit %s); scanner output was withheld.\n' "$status" >&2
-              exit 1
-              ;;
-          esac
+          bash .github/scripts/trufflehog-history-scan.sh \
+            --report "$report" \
+            --status "$status" \
+            --ignore-file "$GITHUB_WORKSPACE/.trufflehogignore"
 
   codeql:
     name: CodeQL (JavaScript and TypeScript)
