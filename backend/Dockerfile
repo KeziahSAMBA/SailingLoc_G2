@@ -1,8 +1,10 @@
 # Use Node.js 20 Alpine for smaller image size
 FROM node:20.19.4-alpine3.21
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL for Prisma, then apply the latest security updates available
+# from the pinned Alpine repository.
+RUN apk add --no-cache openssl \
+  && apk upgrade --no-cache
 
 # Set working directory
 WORKDIR /app
@@ -18,7 +20,8 @@ COPY package*.json ./
 # Install only the locked production dependency graph.  Keep npm's cache out
 # of every committed image layer; it is not needed at runtime and may contain
 # package metadata that unnecessarily increases the attack surface.
-RUN npm ci --omit=dev --no-audit --no-fund \
+RUN npm install --global npm@11.19.1 --no-audit --no-fund \
+  && npm ci --omit=dev --no-audit --no-fund \
   && npm cache clean --force \
   && rm -rf /root/.npm /home/node/.npm /tmp/npm-*
 

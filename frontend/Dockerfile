@@ -33,6 +33,11 @@ RUN npm run build
 # Production stage
 FROM nginxinc/nginx-unprivileged:1.27-alpine
 
+# Apply Alpine security updates while retaining the image's documented
+# unprivileged runtime identity (UID 101).
+USER root
+RUN apk upgrade --no-cache
+
 # Copy built assets from builder stage
 COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
 
@@ -41,6 +46,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Nginx runs as the unprivileged `nginx` user and therefore listens above 1024.
 EXPOSE 8080
+
+# nginxinc/nginx-unprivileged runs as nginx UID 101; keep that exact identity
+# after the root-only package update above.
+USER 101
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
