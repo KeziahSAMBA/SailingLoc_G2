@@ -7,7 +7,7 @@
   },
   "deploy": {
     "preDeployCommand": [
-      "npm run prisma:deploy --workspace backend && cd backend && node prisma/seed.js"
+      "npm run prisma:deploy --workspace backend && cd backend && node prisma/seed.js && node prisma/seedLoad.js"
     ],
     "startCommand": "npm start --workspace backend",
     "healthcheckPath": "/health",

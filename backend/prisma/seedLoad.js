@@ -109,8 +109,25 @@ async function cleanup() {
 }
 
 async function main() {
+  // Ce script est appelé au déploiement (backend/railway.json). Trois garde-fous,
+  // car railway.json est versionné et sert aussi aux autres environnements.
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('seedLoad refuse de tourner avec NODE_ENV=production.');
+    console.log('Seed de charge ignoré : NODE_ENV=production.');
+    return;
+  }
+  if (process.env.LOAD_TEST_MODE !== 'true') {
+    console.log('Seed de charge ignoré : LOAD_TEST_MODE absent.');
+    return;
+  }
+
+  // Sans ce test, chaque déploiement régénérerait 35 000 lignes inutilement.
+  const existing = await prisma.user.count({ where: { email: { endsWith: MARKER } } });
+  if (existing > 0 && process.env.LOAD_SEED_FORCE !== 'true') {
+    console.log(
+      `Seed de charge ignoré : ${existing} compte(s) déjà présents ` +
+        '(LOAD_SEED_FORCE=true pour régénérer).'
+    );
+    return;
   }
 
   console.log(`Cible : ${BOATS} bateaux, ${BOOKINGS} réservations, ${GUESTS} locataires.\n`);

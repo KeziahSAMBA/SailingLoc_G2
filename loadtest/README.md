@@ -52,11 +52,52 @@ Si cette ligne n'apparaît pas, le tir mesurera le rate limiting et sera à refa
 Le staging ne contient qu'une cinquantaine de bateaux : un `findMany` dessus est
 instantané quel que soit le code, aucun problème d'index n'apparaîtrait.
 
-Depuis le service Railway (onglet **Settings → Deploy → Run command**, ou la CLI
-`railway run`) :
+**Aucune commande à lancer.** Le seed est branché sur le `preDeployCommand` de
+`backend/railway.json` : il s'exécute tout seul au déploiement, juste après les
+migrations et le seed de démo. Il tourne alors depuis le réseau interne de
+Railway, sans la latence du proxy public.
+
+### Trois garde-fous
+
+`railway.json` est versionné et sert à tous les environnements. Le script se
+protège donc lui-même et **ne fait rien** sauf si les trois conditions sont
+réunies :
+
+| Condition                                   | Sinon                                                |
+| ------------------------------------------- | ---------------------------------------------------- |
+| `NODE_ENV` ≠ `production`                   | `Seed de charge ignoré : NODE_ENV=production.`       |
+| `LOAD_TEST_MODE=true`                       | `Seed de charge ignoré : LOAD_TEST_MODE absent.`     |
+| Aucun compte `@loadtest.local` déjà présent | `Seed de charge ignoré : N compte(s) déjà présents.` |
+
+Conséquence : seul le **premier** déploiement après activation de
+`LOAD_TEST_MODE` paie le coût du seed. Les suivants ne font qu'un `COUNT` et
+passent leur tour — les déploiements ne s'allongent pas.
+
+### Régénérer un jeu propre
+
+Les scénarios locataire créent et suppriment des favoris ; pour repartir d'un
+état identique entre deux campagnes, posez `LOAD_SEED_FORCE=true` sur le service
+et redéployez. Le script supprime alors ses propres données (`@loadtest.local`,
+préfixe `LT-`) et les recrée. **Retirez la variable ensuite**, sinon chaque
+déploiement régénère 35 000 lignes.
+
+### Vérifier
 
 ```bash
-node prisma/seedLoad.js
+curl -s "https://sailinglocbackend-staging.up.railway.app/api/boats" \
+  | python3 -c "import json,sys; print(len(json.load(sys.stdin)), 'bateaux publiés')"
+```
+
+### Le lancer à la main malgré tout
+
+Si vous préférez ne pas attendre un déploiement, prenez `DATABASE_PUBLIC_URL`
+dans Railway → service **Postgres** → **Variables** (surtout pas `DATABASE_URL`,
+qui pointe sur `postgres.railway.internal` et ne résout pas hors de leur réseau) :
+
+```bash
+cd backend
+LOAD_TEST_MODE=true DATABASE_URL="postgresql://…@<hôte>.proxy.rlwy.net:<port>/railway" \
+  npm run seed:load
 ```
 
 Le script crée ~500 bateaux, ~20 000 réservations, leurs paiements et avis, puis
