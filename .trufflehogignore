@@ -5,3 +5,5 @@
 # English commit and its French message-only rewrite, line 113, detector URI.
 be5d8fc653091116a33bd8e8b1488eb255a9c781:URI:backend/tests/securityPrivacy.test.js:113
 b112b43a56863b1bdd323f462355a4dc44cdcb4f:URI:backend/tests/securityPrivacy.test.js:113
+# Fixture documentaire historique vérifiée ; emplacement uniquement, sans secret.
+0a8fcb3fd1ad2feee7cb56a62d2c60bd940d6767:URI:README.md:67
