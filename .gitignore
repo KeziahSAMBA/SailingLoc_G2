@@ -19,6 +19,9 @@ backend/storage/documents
 coverage
 backend/coverage
 
+# Rapports de tests de charge k6
+loadtest/rapports
+
 # Docker
 docker-compose.override.yml
 docker volumes (handled by docker-compose)

@@ -79,6 +79,28 @@ describe('choix du transporteur', () => {
     expect(mockMailgunTransport).not.toHaveBeenCalled();
   });
 
+  it('bascule sur un transport nul en mode test de charge', async () => {
+    config = { ...SMTP_CONFIG, LOAD_TEST_MODE: true };
+
+    await emails.sendVerificationEmail('jean@example.com', 'jeton', 'Jean');
+
+    expect(mockCreateTransport).toHaveBeenCalledWith({ jsonTransport: true });
+  });
+
+  it('ignore Mailgun même configuré quand le mode test de charge est actif', async () => {
+    config = {
+      ...SMTP_CONFIG,
+      LOAD_TEST_MODE: true,
+      MAILGUN_API_KEY: 'key-123',
+      MAILGUN_DOMAIN: 'mg.sailingloc.fr',
+    };
+
+    await emails.sendVerificationEmail('jean@example.com', 'jeton', 'Jean');
+
+    expect(mockMailgunTransport).not.toHaveBeenCalled();
+    expect(mockCreateTransport).toHaveBeenCalledWith({ jsonTransport: true });
+  });
+
   it('active le TLS implicite sur le port 465', async () => {
     config = { ...SMTP_CONFIG, EMAIL_PORT: '465' };
 

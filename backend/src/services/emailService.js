@@ -19,7 +19,13 @@ function createTransporter() {
     MAILGUN_API_KEY,
     MAILGUN_DOMAIN,
     MAILGUN_HOST,
+    LOAD_TEST_MODE,
   } = initConfig();
+  // Test de charge : le message est sérialisé et jeté. Aucun envoi réel, et
+  // surtout aucune latence SMTP qui polluerait la mesure.
+  if (LOAD_TEST_MODE) {
+    return nodemailer.createTransport({ jsonTransport: true });
+  }
   if (MAILGUN_API_KEY && MAILGUN_DOMAIN) {
     return nodemailer.createTransport(
       mailgunApiTransport({ apiKey: MAILGUN_API_KEY, domain: MAILGUN_DOMAIN, host: MAILGUN_HOST })

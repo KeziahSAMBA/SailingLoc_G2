@@ -15,7 +15,20 @@ import { startScheduler, stopScheduler } from './scheduler.js';
 import { initConfig } from './config/appConfig.js';
 import prisma from './config/db.js';
 
-const { PORT, APP_URL } = initConfig();
+const { PORT, APP_URL, LOAD_TEST_MODE } = initConfig();
+
+if (LOAD_TEST_MODE) {
+  console.warn(
+    '[server] LOAD_TEST_MODE actif : rate limiting, emails et tâches planifiées désactivés.'
+  );
+}
+
+// En test de charge, les limiteurs plafonneraient le tir à 10 connexions par
+// quart d'heure et la mesure ne porterait plus que sur des 429.
+const limiter = (options) =>
+  LOAD_TEST_MODE
+    ? (req, res, next) => next()
+    : rateLimit({ standardHeaders: 'draft-7', legacyHeaders: false, ...options });
 
 const app = express();
 
@@ -41,69 +54,70 @@ app.use(cookieParser());
 // UPLOADS_DIR : chemin disque configurable (volume Railway) ; l'URL /uploads ne change pas.
 app.use('/uploads', express.static(process.env.UPLOADS_DIR || 'uploads'));
 
-const registerLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
-});
-app.use('/api/users/register', registerLimiter);
+app.use(
+  '/api/users/register',
+  limiter({
+    windowMs: 5 * 60 * 1000,
+    limit: 5,
+    message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+  })
+);
 
-const resendLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  limit: 3,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de renvois. Réessayez dans quelques minutes.' },
-});
-app.use('/api/users/resend-verification', resendLimiter);
+app.use(
+  '/api/users/resend-verification',
+  limiter({
+    windowMs: 5 * 60 * 1000,
+    limit: 3,
+    message: { message: 'Trop de renvois. Réessayez dans quelques minutes.' },
+  })
+);
 
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de tentatives de connexion. Réessayez dans quelques minutes.' },
-});
-app.use('/api/users/login', loginLimiter);
+app.use(
+  '/api/users/login',
+  limiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: { message: 'Trop de tentatives de connexion. Réessayez dans quelques minutes.' },
+  })
+);
 
-const adminLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
-});
-app.use('/api/admin/login', adminLoginLimiter);
+app.use(
+  '/api/admin/login',
+  limiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+  })
+);
 
-const forgotPasswordLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 3,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de demandes. Réessayez dans quelques minutes.' },
-});
-app.use('/api/users/forgot-password', forgotPasswordLimiter);
+app.use(
+  '/api/users/forgot-password',
+  limiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 3,
+    message: { message: 'Trop de demandes. Réessayez dans quelques minutes.' },
+  })
+);
 
-const resetPasswordLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
-});
-app.use('/api/users/reset-password', resetPasswordLimiter);
+app.use(
+  '/api/users/reset-password',
+  limiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+  })
+);
 
 // Formulaire public de contact : limité pour éviter le spam.
-const contactLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Trop de messages envoyés. Réessayez dans une heure.' },
-});
-app.post('/api/contact', contactLimiter, postContactRequest);
+app.post(
+  '/api/contact',
+  limiter({
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+    message: { message: 'Trop de messages envoyés. Réessayez dans une heure.' },
+  }),
+  postContactRequest
+);
 
 app.use('/api/boats', boatRoutes);
 app.use('/api/ports', portRoutes);
@@ -125,7 +139,11 @@ process.on('uncaughtException', (err) => {
 // Tâches planifiées (dont l'expiration des réservations non payées, qui tournait
 // auparavant via un setInterval local) : le registre et l'historique vivent en
 // base, cf. src/scheduler.js.
-startScheduler().catch((err) => console.error('[cron] démarrage:', err));
+// Sous charge, les tâches muteraient les données pendant le tir et fausseraient
+// les mesures : on ne démarre pas le planificateur.
+if (!LOAD_TEST_MODE) {
+  startScheduler().catch((err) => console.error('[cron] démarrage:', err));
+}
 
 const server = app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);

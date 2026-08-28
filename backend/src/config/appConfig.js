@@ -27,5 +27,8 @@ export function initConfig() {
     // Région EU : api.eu.mailgun.net
     MAILGUN_HOST: process.env.MAILGUN_HOST || 'api.mailgun.net',
     APP_URL: process.env.APP_URL || 'http://localhost:5173',
+    // Environnement de test de charge uniquement : neutralise le rate limiting,
+    // l'envoi réel d'emails et les tâches planifiées. Jamais activé en production.
+    LOAD_TEST_MODE: process.env.LOAD_TEST_MODE === 'true',
   };
 }
