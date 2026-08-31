@@ -10,3 +10,5 @@ b112b43a56863b1bdd323f462355a4dc44cdcb4f:URI:backend/tests/securityPrivacy.test.
 fde6afe984cb3f422bb94568606db94c648ef36e:Postgres:docker-compose.dev.yml:35
 74e2396e6967ebf8901e82cc707bf0b7e7ae91e8:Postgres:docker-compose.staging.yml:33
 fde6afe984cb3f422bb94568606db94c648ef36e:Postgres:docker-compose.yml:36
+e89d1516c364525b2ce4b1fe93583d85d2bfefd0:URI:backend/tests/securityHttp.test.js:148
+e89d1516c364525b2ce4b1fe93583d85d2bfefd0:URI:backend/tests/securitySecrets.test.js:74
