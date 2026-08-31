@@ -8,6 +8,7 @@ const validProductionConfig = {
   JWT_SECRET: 'v3ry-long-random-production-secret-value-123',
   FILE_ENCRYPTION_KEY: 'a'.repeat(64),
   APP_URL: 'https://app.sailingloc.example',
+  PUBLIC_API_URL: 'https://api.sailingloc.example',
   STRIPE_SECRET_KEY: 'sk_live_51productionKey123',
   STRIPE_WEBHOOK_SECRET: 'whsec_productionWebhook123',
   EMAIL_HOST: 'smtp.example.test',
@@ -45,6 +46,45 @@ describe('production configuration', () => {
         'production'
       )
     ).toThrow(/Stripe live|64 caractères hexadécimaux/);
+  });
+
+  it('requires a separate public backend origin for uploaded assets', () => {
+    expect(() =>
+      validateConfig({ ...validProductionConfig, PUBLIC_API_URL: '' }, 'production')
+    ).toThrow(/PUBLIC_API_URL.*obligatoire/);
+
+    expect(() =>
+      validateConfig(
+        { ...validProductionConfig, PUBLIC_API_URL: 'http://localhost:4000' },
+        'production'
+      )
+    ).toThrow(/PUBLIC_API_URL.*HTTPS/);
+  });
+
+  it('applique une validation stricte d origine identique au constructeur d URL', () => {
+    expect(
+      validateConfig(
+        { ...validProductionConfig, PUBLIC_API_URL: 'https://api.sailingloc.example/' },
+        'production'
+      )
+    ).toBeDefined();
+
+    for (const PUBLIC_API_URL of [
+      'https://api.sailingloc.example/api',
+      'https://user:pass@api.sailingloc.example',
+      'https://api.sailingloc.example?source=host',
+      'https://api.sailingloc.example#fragment',
+      'https://[::1]:4000',
+      'https://0.0.0.0:4000',
+      'https://127.0.0.2:4000',
+      'https://[::ffff:127.0.0.1]:4000',
+      'https://[::ffff:7f00:1]:4000',
+      'https://localhost.:4000',
+    ]) {
+      expect(() =>
+        validateConfig({ ...validProductionConfig, PUBLIC_API_URL }, 'production')
+      ).toThrow(/PUBLIC_API_URL/);
+    }
   });
 });
 

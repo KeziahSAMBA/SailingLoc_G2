@@ -1,8 +1,16 @@
 import api, { UPLOAD_TIMEOUT_MS } from './api.js';
 import { cachedRequest, invalidateCachedRequest } from './requestCache.js';
+import { fetchBoundedPublicPages } from './publicPagination.js';
 
 export function fetchBoats() {
-  return cachedRequest('boats', () => api.get('/boats'));
+  // Le serveur borne chaque page ; le cache conserve ensuite l'agrégat pour
+  // les différents consommateurs du catalogue pendant sa courte durée de vie.
+  return cachedRequest('boats', () =>
+    fetchBoundedPublicPages(
+      ({ page, pageSize }) => api.get('/boats', { params: { page, pageSize } }),
+      { getItemId: (boat) => boat?.id_boat }
+    )
+  );
 }
 
 // Relecture forcée au serveur (disponibilités à jour), en repeuplant le cache

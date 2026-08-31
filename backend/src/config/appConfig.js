@@ -28,7 +28,8 @@ dotenv.config({ path: envModePath, override: true });
 
 const value = (name) => String(process.env[name] || '').trim();
 
-const PRODUCTION_LIKE_ENVS = new Set(['production', 'staging']);
+export const PRODUCTION_LIKE_ENVS = new Set(['production', 'staging']);
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::', '::1', '0:0:0:0:0:0:0:1']);
 // Keep the deployment mode finite. An unknown NODE_ENV must never silently
 // fall through to development defaults (which can enable local integrations
 // or weaker operational safeguards).
@@ -62,11 +63,47 @@ function isValidHttpsAppUrl(appUrl) {
       !parsed.password &&
       !parsed.search &&
       !parsed.hash &&
-      !['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)
+      !isLocalHost(parsed.hostname)
     );
   } catch {
     return false;
   }
+}
+
+function normalizeHostname(hostname) {
+  return String(hostname || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^\[/, '')
+    .replace(/\]$/, '')
+    .replace(/\.$/, '');
+}
+
+function ipv4Bytes(hostname) {
+  const parts = hostname.split('.');
+  if (parts.length !== 4 || parts.some((part) => !/^\d{1,3}$/.test(part))) return null;
+  const bytes = parts.map(Number);
+  return bytes.every((byte) => byte >= 0 && byte <= 255) ? bytes : null;
+}
+
+function mappedIpv4Bytes(hostname) {
+  const matched = hostname.match(/^(?:::ffff:|0:0:0:0:0:ffff:)(.+)$/i);
+  if (!matched) return null;
+  const dotted = ipv4Bytes(matched[1]);
+  if (dotted) return dotted;
+  const words = matched[1].split(':');
+  if (words.length !== 2 || words.some((word) => !/^[0-9a-f]{1,4}$/i.test(word))) return null;
+  const [high, low] = words.map((word) => Number.parseInt(word, 16));
+  return [high >> 8, high & 0xff, low >> 8, low & 0xff];
+}
+
+export function isLocalHost(hostname) {
+  const normalized = normalizeHostname(hostname);
+  const bytes = ipv4Bytes(normalized) || mappedIpv4Bytes(normalized);
+  return (
+    LOCAL_HOSTS.has(normalized) ||
+    Boolean(bytes && (bytes[0] === 127 || bytes.every((byte) => byte === 0)))
+  );
 }
 
 function isValidDevelopmentAppUrl(appUrl) {
@@ -85,7 +122,59 @@ function isValidDevelopmentAppUrl(appUrl) {
 }
 
 function isConfigFlagEnabled(value) {
-  return value === true || String(value || '').trim().toLowerCase() === 'true';
+  return (
+    value === true ||
+    String(value || '')
+      .trim()
+      .toLowerCase() === 'true'
+  );
+}
+
+function trimOriginPath(pathname) {
+  const value = String(pathname || '').replace(/\/+$/g, '');
+  return value === '/' ? '' : value;
+}
+
+/**
+ * Parse the configured backend origin used to build public asset URLs.
+ * Express serves `/uploads` from the host root, so API paths are deliberately
+ * rejected. Keeping this parser next to configuration validation ensures the
+ * boot-time and runtime rules cannot diverge.
+ */
+export function parsePublicApiUrl(apiUrl, environment = getRuntimeEnvironment()) {
+  const valueToParse = String(apiUrl || '').trim();
+  if (!valueToParse) throw new Error('PUBLIC_API_URL est obligatoire.');
+
+  let parsed;
+  try {
+    parsed = new URL(valueToParse);
+  } catch {
+    throw new Error('PUBLIC_API_URL est invalide.');
+  }
+
+  const env = String(environment || '')
+    .trim()
+    .toLowerCase();
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    throw new Error('PUBLIC_API_URL doit utiliser HTTP ou HTTPS.');
+  }
+  if (parsed.username || parsed.password || parsed.search || parsed.hash) {
+    throw new Error(
+      'PUBLIC_API_URL ne doit contenir ni identifiants, ni query string, ni fragment.'
+    );
+  }
+  if (trimOriginPath(parsed.pathname)) {
+    throw new Error('PUBLIC_API_URL doit être une origine sans chemin.');
+  }
+  if (
+    PRODUCTION_LIKE_ENVS.has(env) &&
+    (parsed.protocol !== 'https:' || isLocalHost(parsed.hostname))
+  ) {
+    throw new Error('PUBLIC_API_URL doit être une URL HTTPS publique.');
+  }
+
+  parsed.pathname = '';
+  return parsed;
 }
 
 /**
@@ -170,6 +259,18 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
     errors.push('APP_URL doit être une URL HTTP(S) valide sans identifiants');
   }
 
+  // Les fichiers publics sont servis par le backend, pas par le frontend.
+  // Cette origine est donc distincte de APP_URL et doit être configurée
+  // explicitement pour les environnements déployés.
+  if (PRODUCTION_LIKE_ENVS.has(env)) required('PUBLIC_API_URL', config.PUBLIC_API_URL);
+  if (config.PUBLIC_API_URL) {
+    try {
+      parsePublicApiUrl(config.PUBLIC_API_URL, env);
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+
   if (PRODUCTION_LIKE_ENVS.has(env) && isConfigFlagEnabled(config.ALLOW_LEGACY_CLEAR_FILE_READ)) {
     errors.push('ALLOW_LEGACY_CLEAR_FILE_READ doit être désactivé en staging et en production');
   }
@@ -228,6 +329,11 @@ export function initConfig() {
     // cookies de session (séparées par des virgules, sans wildcard).
     CORS_ORIGINS: value('CORS_ORIGINS'),
     APP_URL: value('APP_URL') || (environment === 'production' ? '' : 'http://localhost:5173'),
+    // Origine publique du backend : les fichiers sous /uploads sont servis
+    // par cette origine, jamais par APP_URL ni par l'en-tête Host de la requête.
+    PUBLIC_API_URL:
+      value('PUBLIC_API_URL') ||
+      (PRODUCTION_LIKE_ENVS.has(environment) ? '' : 'http://localhost:4000'),
   };
 
   return validateConfig(config, environment);

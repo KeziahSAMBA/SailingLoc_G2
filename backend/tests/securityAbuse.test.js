@@ -11,6 +11,7 @@ const db = {
     findMany: jest.fn(),
     update: jest.fn(),
   },
+  port: { findMany: jest.fn() },
   boatReport: {
     updateMany: jest.fn(),
     count: jest.fn(),
@@ -36,6 +37,7 @@ jest.unstable_mockModule('../src/services/proprietaireService.js', () => ({
 const { updateUserByAdmin, listUsers } = await import('../src/services/adminUserService.js');
 const { listBoats, setBoatPublished } = await import('../src/services/boatAdminService.js');
 const { getBoats, getBoatsByType } = await import('../src/controllers/boatController.js');
+const { getPorts } = await import('../src/controllers/portController.js');
 const { getBoatReviews, getPublicReviews } = await import('../src/controllers/reviewController.js');
 
 const USER = {
@@ -89,6 +91,7 @@ beforeEach(() => {
   db.boatReport.updateMany.mockResolvedValue({ count: 0 });
   db.boatReport.count.mockResolvedValue(0);
   db.boat.findMany.mockResolvedValue([]);
+  db.port.findMany.mockResolvedValue([]);
   db.review.findMany.mockResolvedValue([]);
 });
 
@@ -130,24 +133,97 @@ describe('strict administrative booleans', () => {
 });
 
 describe('bounded public boat and review queries', () => {
+  it('expose les photos historiques et récentes, sans ouvrir les autres types', async () => {
+    const res = response();
+    db.boat.findMany.mockResolvedValue([
+      {
+        ...BOAT,
+        bookings: [],
+        images: [
+          { url: 'https://images.example/historique.jpg' },
+          { url: 'http://localhost:4000/uploads/boats/recent.webp' },
+        ],
+      },
+    ]);
+
+    await getBoats({ query: {} }, res);
+
+    const args = db.boat.findMany.mock.calls[0][0];
+    expect(args.select.images.where).toEqual({
+      deleted_at: null,
+      type: { in: ['boat', 'bateau'] },
+    });
+    expect(res.json.mock.calls[0][0][0].images).toEqual([
+      { url: 'https://images.example/historique.jpg' },
+      { url: 'http://localhost:4000/uploads/boats/recent.webp' },
+    ]);
+  });
+
   it('keeps the public boat array response while applying bounded pagination', async () => {
     const res = response();
     await getBoats({ query: { page: '2', pageSize: '9999' } }, res);
 
     const args = db.boat.findMany.mock.calls[0][0];
     expect(args).toEqual(expect.objectContaining({ skip: 500, take: 500 }));
-    expect(args.include.bookings).toEqual(expect.objectContaining({ take: 500 }));
+    expect(args.select.bookings).toEqual(expect.objectContaining({ take: 500 }));
     expect(res.json).toHaveBeenCalledWith([]);
     expect(Array.isArray(res.json.mock.calls[0][0])).toBe(true);
   });
 
-  it('bounds the grouped boat endpoint without changing its section response', async () => {
+  it('retire les champs internes de la projection publique des bateaux', async () => {
     const res = response();
+    db.boat.findMany.mockResolvedValue([
+      {
+        ...BOAT,
+        id_port: 4,
+        bookings: [],
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+    ]);
+
+    await getBoats({ query: {} }, res);
+
+    const args = db.boat.findMany.mock.calls[0][0];
+    expect(args.select).not.toHaveProperty('id_user');
+    expect(args.select).not.toHaveProperty('registration');
+    expect(args.select).not.toHaveProperty('created_at');
+    expect(args.select).not.toHaveProperty('updated_at');
+    expect(args.select).not.toHaveProperty('deleted_at');
+    expect(res.json.mock.calls[0][0][0]).not.toHaveProperty('id_user');
+    expect(res.json.mock.calls[0][0][0]).not.toHaveProperty('registration');
+    expect(res.json.mock.calls[0][0][0]).not.toHaveProperty('created_at');
+    expect(res.json.mock.calls[0][0][0]).not.toHaveProperty('updated_at');
+    expect(res.json.mock.calls[0][0][0]).not.toHaveProperty('deleted_at');
+  });
+
+  it('regroupe plus de 25 bateaux sans dépasser la borne publique globale', async () => {
+    const res = response();
+    db.boat.findMany.mockResolvedValue(
+      Array.from({ length: 30 }, (_, index) => ({
+        ...BOAT,
+        id_boat: index + 1,
+        type: `type-${index + 1}`,
+        bookings: [],
+      }))
+    );
     await getBoatsByType({ query: {} }, res);
 
     const args = db.boat.findMany.mock.calls[0][0];
-    expect(args).toEqual(expect.objectContaining({ skip: 0, take: 25 }));
-    expect(res.json).toHaveBeenCalledWith([]);
+    expect(args).toEqual(expect.objectContaining({ skip: 0, take: 500 }));
+    expect(args.select).not.toHaveProperty('id_user');
+    expect(args.select).not.toHaveProperty('registration');
+    expect(args.select).not.toHaveProperty('created_at');
+    expect(args.select).not.toHaveProperty('updated_at');
+    expect(args.select).not.toHaveProperty('deleted_at');
+    const sections = res.json.mock.calls[0][0];
+    expect(sections).toHaveLength(30);
+    expect(sections[29]).toEqual(
+      expect.objectContaining({
+        type: 'type-30',
+        boats: [expect.objectContaining({ id_boat: 30 })],
+      })
+    );
   });
 
   it('returns 400 for invalid public pagination', async () => {
@@ -165,6 +241,84 @@ describe('bounded public boat and review queries', () => {
     const args = db.review.findMany.mock.calls[0][0];
     expect(args).toEqual(expect.objectContaining({ skip: 100, take: 50 }));
     expect(res.json).toHaveBeenCalledWith([]);
+  });
+
+  it('autorise uniquement les avatars publics historiques et actuels', async () => {
+    const res = response();
+    db.review.findMany.mockResolvedValue([
+      {
+        id_review: 3,
+        id_user: 7,
+        rating: 5,
+        comment: 'Très bon séjour.',
+        created_at: new Date('2026-01-01T00:00:00.000Z'),
+        owner_reply: null,
+        booking: { id_boat: 12 },
+        user: {
+          first_name: 'Lea',
+          last_name: 'Martin',
+          role: 'locataire',
+          images: [{ url: 'https://images.example/avatar.webp' }],
+        },
+      },
+    ]);
+
+    await getPublicReviews({ query: {} }, res);
+
+    const imageFilter = db.review.findMany.mock.calls[0][0].select.user.select.images.where;
+    expect(imageFilter).toEqual({
+      type: { in: ['profil', 'avatar'] },
+      deleted_at: null,
+    });
+    expect(imageFilter.type.in).not.toContain('document');
+    expect(res.json.mock.calls[0][0][0].avatar).toBe('https://images.example/avatar.webp');
+  });
+
+  it('minimise la projection publique des ports et exclut les ports supprimés', async () => {
+    const res = response();
+    db.port.findMany.mockResolvedValue([
+      {
+        id_port: 2,
+        name: 'Port test',
+        city: 'Marseille',
+        country: 'France',
+        department: '13',
+        region: 'Provence-Alpes-Côte d’Azur',
+        latitude: '43.29',
+        longitude: '5.36',
+        image_url: 'https://images.example/port.webp',
+        created_at: new Date(),
+        updated_at: new Date(),
+        deleted_at: null,
+      },
+    ]);
+
+    await getPorts({ query: {} }, res);
+
+    const args = db.port.findMany.mock.calls[0][0];
+    expect(args.where).toEqual({ deleted_at: null });
+    expect(args.select).toEqual({
+      id_port: true,
+      name: true,
+      city: true,
+      country: true,
+      department: true,
+      region: true,
+      latitude: true,
+      longitude: true,
+      image_url: true,
+    });
+    expect(res.json.mock.calls[0][0][0]).toEqual({
+      id_port: 2,
+      name: 'Port test',
+      city: 'Marseille',
+      country: 'France',
+      department: '13',
+      region: 'Provence-Alpes-Côte d’Azur',
+      latitude: '43.29',
+      longitude: '5.36',
+      image_url: 'https://images.example/port.webp',
+    });
   });
 
   it('bounds per-boat reviews and preserves the { reviews } response', async () => {

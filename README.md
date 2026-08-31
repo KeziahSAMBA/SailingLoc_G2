@@ -174,8 +174,8 @@ cp .env.example .env
 > **En Docker**, c'est le `.env` **racine** qui compte (copié depuis `.env.example` racine) : Docker Compose y lit toutes les variables et elles ont priorité sur les `.env` locaux.
 
 En production, le backend refuse de démarrer si `JWT_SECRET`, `DATABASE_URL`,
-`FILE_ENCRYPTION_KEY`, `APP_URL` HTTPS, les deux secrets Stripe live et une
-configuration email valide ne sont pas fournis. Le seed de démonstration est
+`FILE_ENCRYPTION_KEY`, `APP_URL` HTTPS, `PUBLIC_API_URL` HTTPS, les deux secrets
+Stripe live et une configuration email valide ne sont pas fournis. Le seed de démonstration est
 réservé aux environnements de développement et de test.
 
 `CORS_ORIGINS` est optionnelle : elle contient, séparées par des virgules, les
@@ -200,6 +200,7 @@ EMAIL_PORT=1025
 EMAIL_USER=
 EMAIL_PASS=
 PORT=4000
+PUBLIC_API_URL=http://localhost:4000  # origine qui sert les fichiers publics
 ```
 
 Variable frontend à renseigner dans `frontend/.env` :
@@ -224,6 +225,10 @@ et l'instance Matomo déclarée `analytics.sailingloc.fr`.
 bundle Vite au moment du build. Elle est donc obligatoire pour les builds
 Docker/Railway de staging et de production et doit être une URL API HTTPS
 publique (par exemple `https://api.sailingloc.fr/api`), jamais `localhost`.
+Le backend utilise séparément `PUBLIC_API_URL` (par exemple
+`https://api.sailingloc.fr`, sans chemin) pour construire les URL des photos et
+avatars qu'il sert sous `/uploads`. Cette valeur est obligatoire en
+staging/production et ne doit jamais être déduite de l'en-tête `Host`.
 Dans Railway, configurez le service frontend avec le root directory
 `/frontend`, le fichier de configuration `/frontend/railway.json`, et cette
 variable dans le service avant le premier déploiement. Les variables publiques

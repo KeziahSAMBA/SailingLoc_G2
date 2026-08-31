@@ -41,8 +41,9 @@ RUN apk upgrade --no-cache
 # Copy built assets from builder stage
 COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy the policy rendered by the validated build step. The runtime image never
+# interpolates environment values and cannot fall back to an unrendered template.
+COPY --from=builder --chown=root:root /app/.generated/default.conf /etc/nginx/conf.d/default.conf
 
 # Nginx runs as the unprivileged `nginx` user and therefore listens above 1024.
 EXPOSE 8080

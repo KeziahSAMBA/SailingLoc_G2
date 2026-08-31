@@ -11,7 +11,12 @@ import {
   publicError,
   sendError,
 } from '../src/middlewares/errorSecurityMiddleware.js';
-import { buildAppUrl, canonicalAppUrl, publicAssetUrl } from '../src/utils/urlSecurity.js';
+import {
+  buildAppUrl,
+  canonicalApiUrl,
+  canonicalAppUrl,
+  publicAssetUrl,
+} from '../src/utils/urlSecurity.js';
 
 describe('privacy and diagnostic safeguards', () => {
   afterEach(() => {
@@ -116,20 +121,46 @@ describe('privacy and diagnostic safeguards', () => {
 
     const previousEnvironment = process.env.NODE_ENV;
     const previousAppUrl = process.env.APP_URL;
+    const previousPublicApiUrl = process.env.PUBLIC_API_URL;
     process.env.NODE_ENV = 'test';
     process.env.APP_URL = 'https://app.example.test/base';
+    process.env.PUBLIC_API_URL = 'https://api.example.test';
     try {
       expect(buildAppUrl('/reset-password', { token: 'a&b' })).toBe(
         'https://app.example.test/base/reset-password?token=a%26b'
       );
+      expect(canonicalApiUrl()).toBe('https://api.example.test');
+      expect(canonicalApiUrl('http://[::1]:4000/', 'development')).toBe('http://[::1]:4000');
+      expect(canonicalApiUrl('http://[::ffff:127.0.0.1]:4000/', 'development')).toBe(
+        'http://[::ffff:7f00:1]:4000'
+      );
       expect(publicAssetUrl('avatars', 'safe-file.png')).toBe(
-        'https://app.example.test/base/uploads/avatars/safe-file.png'
+        'https://api.example.test/uploads/avatars/safe-file.png'
+      );
+      expect(publicAssetUrl('boats', 'new-boat.webp')).toBe(
+        'https://api.example.test/uploads/boats/new-boat.webp'
+      );
+      expect(() => canonicalApiUrl('https://api.example.test/api', 'production')).toThrow(
+        /sans chemin/
+      );
+      expect(() => canonicalApiUrl('http://localhost:4000', 'production')).toThrow(/HTTPS/);
+      expect(() => canonicalApiUrl('https://[::1]:4000', 'production')).toThrow(/HTTPS/);
+      expect(() => canonicalApiUrl('https://0.0.0.0:4000', 'production')).toThrow(/HTTPS/);
+      expect(() => canonicalApiUrl('https://127.0.0.2:4000', 'production')).toThrow(/HTTPS/);
+      expect(() => canonicalApiUrl('https://[::ffff:127.0.0.1]:4000', 'production')).toThrow(
+        /HTTPS/
+      );
+      expect(() => canonicalApiUrl('https://[::ffff:7f00:1]:4000', 'production')).toThrow(/HTTPS/);
+      expect(() => canonicalApiUrl('https://api.example.test?host=evil', 'production')).toThrow(
+        /query string/
       );
     } finally {
       if (previousEnvironment === undefined) delete process.env.NODE_ENV;
       else process.env.NODE_ENV = previousEnvironment;
       if (previousAppUrl === undefined) delete process.env.APP_URL;
       else process.env.APP_URL = previousAppUrl;
+      if (previousPublicApiUrl === undefined) delete process.env.PUBLIC_API_URL;
+      else process.env.PUBLIC_API_URL = previousPublicApiUrl;
     }
   });
 });

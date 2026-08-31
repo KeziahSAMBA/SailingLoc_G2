@@ -2,15 +2,28 @@ import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
 import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
 import { sendError } from '../middlewares/errorSecurityMiddleware.js';
-import { parsePagination } from '../utils/inputSecurity.js';
+import { MAX_LIST_ITEMS, parsePagination } from '../utils/inputSecurity.js';
 
 const PUBLIC_BOAT_PAGE_SIZE = 25;
 const PUBLIC_RELATION_LIMIT = 500;
 
-const BOAT_INCLUDE = {
-  // La vitrine publique ne renvoie que les attributs nécessaires à l'UI ; les
-  // timestamps internes, suppressions et métadonnées de stockage restent
-  // privés.
+const BOAT_SELECT = {
+  // Les clés publiques utiles à la vitrine sont explicites : id_user, les
+  // timestamps internes et deleted_at ne sortent jamais de cette projection.
+  id_boat: true,
+  id_port: true,
+  name: true,
+  type: true,
+  size: true,
+  engine: true,
+  with_skipper: true,
+  daily_price: true,
+  capacity: true,
+  build_year: true,
+  description: true,
+  is_published: true,
+  status: true,
+  license_required: true,
   port: {
     select: {
       id_port: true,
@@ -24,7 +37,10 @@ const BOAT_INCLUDE = {
     },
   },
   images: {
-    where: { deleted_at: null, type: 'boat' },
+    // Les annonces historiques utilisent « bateau », tandis que les uploads
+    // récents utilisent « boat ». Ces deux valeurs sont explicitement limitées
+    // aux photos de bateaux ; avatars, litiges et documents restent exclus.
+    where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
     orderBy: { order: 'asc' },
     select: { url: true },
     take: 20,
@@ -34,6 +50,7 @@ const BOAT_INCLUDE = {
     where: { is_available: true },
     orderBy: { start_date: 'asc' },
     take: PUBLIC_RELATION_LIMIT,
+    select: { start_date: true, end_date: true },
   },
   bookings: {
     where: { deleted_at: null },
@@ -71,6 +88,15 @@ function enrichWithRating(boats) {
       .filter((bk) => BLOCKING_BOOKING_STATUSES.includes(bk.status))
       .map((bk) => ({ start_date: bk.start_date, end_date: bk.end_date }));
     const { bookings, ...boat } = b;
+    for (const internalField of [
+      'id_user',
+      'registration',
+      'created_at',
+      'updated_at',
+      'deleted_at',
+    ]) {
+      delete boat[internalField];
+    }
     return {
       ...boat,
       avg_rating: avg,
@@ -93,7 +119,7 @@ export async function getBoats(req, res) {
         owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
         port: { deleted_at: null },
       },
-      include: BOAT_INCLUDE,
+      select: BOAT_SELECT,
       orderBy: { id_boat: 'asc' },
       skip,
       take,
@@ -107,7 +133,6 @@ export async function getBoats(req, res) {
 
 export async function getBoatsByType(req, res) {
   try {
-    const { skip, take } = parsePagination(req.query, PUBLIC_BOAT_PAGE_SIZE);
     const boats = await prisma.boat.findMany({
       where: {
         is_published: true,
@@ -116,10 +141,12 @@ export async function getBoatsByType(req, res) {
         owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
         port: { deleted_at: null },
       },
-      include: BOAT_INCLUDE,
+      select: BOAT_SELECT,
       orderBy: { id_boat: 'asc' },
-      skip,
-      take,
+      // Ce catalogue historique n'est pas pagine dans son contrat public :
+      // lire toutes les lignes utiles, avec la borne globale anti-abus.
+      skip: 0,
+      take: MAX_LIST_ITEMS,
     });
 
     const enriched = enrichWithRating(boats);

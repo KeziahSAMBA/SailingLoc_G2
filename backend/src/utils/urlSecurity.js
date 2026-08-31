@@ -1,7 +1,10 @@
-import { initConfig, getRuntimeEnvironment } from '../config/appConfig.js';
-
-const PRODUCTION_LIKE_ENVS = new Set(['production', 'staging']);
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+import {
+  initConfig,
+  getRuntimeEnvironment,
+  isLocalHost,
+  parsePublicApiUrl,
+  PRODUCTION_LIKE_ENVS,
+} from '../config/appConfig.js';
 
 function trimBasePath(pathname) {
   const value = String(pathname || '').replace(/\/+$/g, '');
@@ -22,7 +25,7 @@ function parseCanonicalAppUrl(appUrl, environment = getRuntimeEnvironment()) {
   const env = String(environment || '')
     .trim()
     .toLowerCase();
-  const local = LOCAL_HOSTS.has(parsed.hostname.toLowerCase());
+  const local = isLocalHost(parsed.hostname);
   const secureRequired = PRODUCTION_LIKE_ENVS.has(env);
   if (!['http:', 'https:'].includes(parsed.protocol)) {
     throw new Error('APP_URL doit utiliser HTTP ou HTTPS.');
@@ -46,8 +49,16 @@ export function canonicalAppUrl(appUrl, environment) {
   return parseCanonicalAppUrl(config.APP_URL, environment).toString().replace(/\/$/, '');
 }
 
-export function buildAppUrl(pathname = '', query = undefined) {
-  const base = new URL(`${canonicalAppUrl()}/`);
+// Return the configured backend origin used for public assets. This is kept
+// separate from APP_URL (the frontend origin used for browser links and
+// emails), and never derives a value from request headers.
+export function canonicalApiUrl(apiUrl, environment) {
+  const config = apiUrl === undefined ? initConfig() : { PUBLIC_API_URL: apiUrl };
+  return parsePublicApiUrl(config.PUBLIC_API_URL, environment).toString().replace(/\/$/, '');
+}
+
+function buildUrlFromBase(baseUrl, pathname = '', query = undefined) {
+  const base = new URL(`${baseUrl}/`);
   const rawPath = String(pathname || '');
   if (/^[a-z][a-z\d+.-]*:/i.test(rawPath) || rawPath.includes('\\') || rawPath.includes('\0')) {
     throw new Error('Chemin d’URL invalide.');
@@ -64,11 +75,18 @@ export function buildAppUrl(pathname = '', query = undefined) {
   return target.toString();
 }
 
+export function buildAppUrl(pathname = '', query = undefined) {
+  return buildUrlFromBase(canonicalAppUrl(), pathname, query);
+}
+
 export function publicAssetUrl(kind, filename) {
   if (!['boats', 'avatars'].includes(kind)) throw new Error('Type de ressource publique invalide.');
   const safeFilename = String(filename || '');
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}$/.test(safeFilename)) {
     throw new Error('Nom de ressource publique invalide.');
   }
-  return buildAppUrl(`/uploads/${kind}/${encodeURIComponent(safeFilename)}`);
+  return buildUrlFromBase(
+    canonicalApiUrl(),
+    `/uploads/${kind}/${encodeURIComponent(safeFilename)}`
+  );
 }

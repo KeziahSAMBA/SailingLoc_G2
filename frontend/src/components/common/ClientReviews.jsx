@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FaStar, FaRegStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import api from '../../services/api.js';
 import { nameToAvatarUrl } from '../../utils/avatar.js';
+import { fetchBoundedPublicPages } from '../../services/publicPagination.js';
 
 function getRoleLabels(t) {
   return {
@@ -28,17 +29,25 @@ function getRoleFilters(t) {
   ];
 }
 
-// Données statiques côté API : un seul fetch pour toute la session,
-// partagé entre tous les montages du composant sur les différentes pages.
+// Données statiques côté API : les pages bornées sont agrégées pour conserver
+// l'ensemble des avis publics sans demander au serveur une réponse illimitée.
 function fetchReviews(boatId) {
-  return api
-    .get('/reviews/public', { params: boatId == null ? undefined : { id_boat: boatId } })
-    .then(({ data }) =>
-      data.map((review) => ({
-        ...review,
-        avatar: review.avatar ?? nameToAvatarUrl(review.name),
-      }))
-    );
+  return fetchBoundedPublicPages(
+    ({ page, pageSize }) =>
+      api.get('/reviews/public', {
+        params: {
+          ...(boatId == null ? {} : { id_boat: boatId }),
+          page,
+          pageSize,
+        },
+      }),
+    { getItemId: (review) => review?.id }
+  ).then(({ data }) =>
+    data.map((review) => ({
+      ...review,
+      avatar: review.avatar ?? nameToAvatarUrl(review.name),
+    }))
+  );
 }
 
 // Après édition d'un avis : `fetchReviews` refait toujours un appel réseau (pas

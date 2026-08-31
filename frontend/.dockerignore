@@ -1,6 +1,7 @@
 # Dependencies and generated output are not part of the build context.
 node_modules
 dist
+.generated
 coverage
 .nyc_output
 

@@ -3,13 +3,14 @@ import { parsePagination, parsePositiveId } from '../utils/inputSecurity.js';
 
 const RATING_MIN = 1;
 const RATING_MAX = 5;
+const PUBLIC_AVATAR_TYPES = { in: ['profil', 'avatar'] };
 
 // Avatar de profil de l'auteur (même relation que getPublicReviews).
 const AUTHOR_SELECT = {
   first_name: true,
   last_name: true,
   images: {
-    where: { type: 'profil', deleted_at: null },
+    where: { type: PUBLIC_AVATAR_TYPES, deleted_at: null },
     select: { url: true },
     take: 1,
     orderBy: { order: 'asc' },
@@ -139,7 +140,7 @@ export async function listBoatReviews(id_boat, viewer = null, query = {}) {
       deleted_at: null,
       OR: ownPending ? [validatedForPublishedBoat, ownPending] : [validatedForPublishedBoat],
     },
-    orderBy: { created_at: 'desc' },
+    orderBy: [{ created_at: 'desc' }, { id_review: 'desc' }],
     skip,
     take,
     select: {

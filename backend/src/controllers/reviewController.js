@@ -3,6 +3,8 @@ import { listBoatReviews } from '../services/reviewService.js';
 import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 import { parsePositiveId, parsePagination } from '../utils/inputSecurity.js';
 
+const PUBLIC_AVATAR_TYPES = { in: ['profil', 'avatar'] };
+
 export async function getBoatReviews(req, res) {
   try {
     const reviews = await listBoatReviews(req.params.id_boat, req.user, req.query);
@@ -29,7 +31,7 @@ export async function getPublicReviews(req, res) {
           boat: { deleted_at: null, is_published: true, status: 'published' },
         },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: [{ created_at: 'desc' }, { id_review: 'desc' }],
       skip,
       take,
       select: {
@@ -49,7 +51,7 @@ export async function getPublicReviews(req, res) {
             last_name: true,
             role: true,
             images: {
-              where: { type: 'profil', deleted_at: null },
+              where: { type: PUBLIC_AVATAR_TYPES, deleted_at: null },
               select: { url: true },
               take: 1,
               orderBy: { order: 'asc' },
