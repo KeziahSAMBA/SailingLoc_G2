@@ -13,6 +13,7 @@ import {
 import { nameToAvatarUrl } from '../../utils/avatar.js';
 import PasswordField from '../auth/PasswordField.jsx';
 import DangerZone from './DangerZone.jsx';
+import SafeImage from '../common/SafeImage.jsx';
 
 const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
@@ -260,8 +261,10 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                 ref={avatarMenuRef}
                 className="relative col-start-1 row-start-1 h-20 w-20 shrink-0"
               >
-                <img
-                  src={user?.avatar || nameToAvatarUrl(displayName || 'SailingLoc')}
+                <SafeImage
+                  src={user?.avatar}
+                  fallbackSrc={nameToAvatarUrl(displayName || 'SailingLoc')}
+                  fallback={null}
                   alt={t('accountForm.avatar.alt')}
                   className="h-20 w-20 rounded-full border-2 border-white/30 object-cover"
                 />
@@ -325,8 +328,10 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                 )}
               </div>
             ) : (
-              <img
-                src={user?.avatar || nameToAvatarUrl(displayName || 'SailingLoc')}
+              <SafeImage
+                src={user?.avatar}
+                fallbackSrc={nameToAvatarUrl(displayName || 'SailingLoc')}
+                fallback={null}
                 alt={t('accountForm.avatar.alt')}
                 className="h-20 w-20 rounded-full border-2 border-white/30 object-cover"
               />

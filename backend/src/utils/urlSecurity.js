@@ -90,3 +90,52 @@ export function publicAssetUrl(kind, filename) {
     `/uploads/${kind}/${encodeURIComponent(safeFilename)}`
   );
 }
+
+// Les ports peuvent référencer une photo hébergée par un fournisseur externe
+// (les fixtures utilisent notamment une query string Unsplash). Cette valeur
+// est seulement rendue par le navigateur : elle ne doit donc jamais être
+// traitée comme une URL de redirection ou récupérée par le serveur. On accepte
+// HTTP(S) avec chemin et query string, mais jamais les identifiants, fragments,
+// schémas actifs ou hôtes locaux dans un environnement déployé.
+export function validatePublicImageUrl(value, environment = getRuntimeEnvironment()) {
+  const invalidImageUrl = () => Object.assign(new Error('URL d’image invalide.'), { status: 400 });
+  const insecureImageUrl = () =>
+    Object.assign(new Error('URL d’image HTTPS publique obligatoire.'), { status: 400 });
+
+  if (value == null || String(value).trim() === '') return null;
+  if (typeof value !== 'string') throw invalidImageUrl();
+
+  const raw = value.trim();
+  // eslint-disable-next-line no-control-regex -- reject control characters before persisting a URL
+  if (raw.length > 500 || /[\u0000-\u001f\u007f]/.test(raw)) {
+    throw invalidImageUrl();
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw invalidImageUrl();
+  }
+
+  const env = String(environment || '')
+    .trim()
+    .toLowerCase();
+  if (
+    !['http:', 'https:'].includes(parsed.protocol) ||
+    !parsed.hostname ||
+    parsed.username ||
+    parsed.password ||
+    parsed.hash
+  ) {
+    throw invalidImageUrl();
+  }
+  if (
+    PRODUCTION_LIKE_ENVS.has(env) &&
+    (parsed.protocol !== 'https:' || isLocalHost(parsed.hostname))
+  ) {
+    throw insecureImageUrl();
+  }
+
+  return raw;
+}

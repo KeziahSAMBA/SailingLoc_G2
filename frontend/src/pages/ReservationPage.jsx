@@ -13,6 +13,7 @@ import {
   clearReservationResume,
 } from '../utils/reservationResume.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
+import SafeImage from '../components/common/SafeImage.jsx';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -400,13 +401,12 @@ function ReservationPage() {
                   <h2 className="text-lg font-semibold text-white">
                     {t('reservation.recap.title')}
                   </h2>
-                  {boat.images?.[0]?.url && (
-                    <img
-                      src={boat.images[0].url}
-                      alt={boat.name}
-                      className="h-44 w-full rounded-xl object-cover"
-                    />
-                  )}
+                  <SafeImage
+                    src={boat.images?.[0]?.url}
+                    alt={boat.name}
+                    className="h-44 w-full rounded-xl object-cover"
+                    fallbackClassName="flex h-44 w-full items-center justify-center rounded-xl bg-slate-800 text-4xl"
+                  />
                   <dl className="flex flex-col gap-2 text-sm">
                     <div className="flex justify-between gap-4">
                       <dt className="text-white/70">{t('reservation.recap.dates')}</dt>

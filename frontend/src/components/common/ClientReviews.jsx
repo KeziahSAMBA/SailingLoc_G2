@@ -4,6 +4,7 @@ import { FaStar, FaRegStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa
 import api from '../../services/api.js';
 import { nameToAvatarUrl } from '../../utils/avatar.js';
 import { fetchBoundedPublicPages } from '../../services/publicPagination.js';
+import SafeImage from './SafeImage.jsx';
 
 function getRoleLabels(t) {
   return {
@@ -99,9 +100,11 @@ const ReviewCard = memo(function ReviewCard({
       }
     >
       <div className="flex items-center gap-2">
-        <img
+        <SafeImage
           src={avatar}
           alt={name}
+          fallbackSrc={nameToAvatarUrl(name)}
+          fallback={null}
           width={36}
           height={36}
           loading="lazy"

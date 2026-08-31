@@ -536,7 +536,7 @@ export async function listDisputes({ status } = {}) {
       },
       opener: { select: { id_user: true, first_name: true, last_name: true, email: true } },
       images: {
-        where: { deleted_at: null },
+        where: { type: 'dispute', deleted_at: null },
         orderBy: { order: 'asc' },
         select: { id_image: true },
       },

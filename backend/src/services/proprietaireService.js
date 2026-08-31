@@ -370,7 +370,12 @@ export async function getDashboardStats(id_user) {
           type: true,
           daily_price: true,
           port: { select: { name: true, city: true } },
-          images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+          images: {
+            where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
+            orderBy: { order: 'asc' },
+            take: 1,
+            select: { url: true },
+          },
         },
       }),
     ]);
@@ -425,7 +430,12 @@ export async function listBookings(id_user) {
           name: true,
           type: true,
           port: { select: { name: true, city: true } },
-          images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+          images: {
+            where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
+            orderBy: { order: 'asc' },
+            take: 1,
+            select: { url: true },
+          },
         },
       },
     },
@@ -532,7 +542,12 @@ export async function listBoats(id_user) {
       status: true,
       created_at: true,
       port: { select: { name: true, city: true } },
-      images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+      images: {
+        where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
+        orderBy: { order: 'asc' },
+        take: 1,
+        select: { url: true },
+      },
       _count: {
         select: {
           bookings: { where: { deleted_at: null, status: 'pending' } },
@@ -955,7 +970,7 @@ export async function getBoat(id_user, id_boat) {
     include: {
       port: { select: { id_port: true, name: true, city: true } },
       images: {
-        where: { deleted_at: null },
+        where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
         orderBy: { order: 'asc' },
         select: { id_image: true, url: true },
       },
@@ -1023,7 +1038,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
     where: { id_boat: id },
     include: {
       images: {
-        where: { deleted_at: null },
+        where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
         orderBy: { order: 'asc' },
         select: { id_image: true, url: true },
       },

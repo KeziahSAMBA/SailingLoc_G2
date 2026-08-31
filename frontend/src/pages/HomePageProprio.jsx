@@ -12,6 +12,7 @@ import { MdAdd } from 'react-icons/md';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
 import { getBoats } from '../services/proprietaireService.js';
 import { usePageSlideTransition } from '../hooks/usePageTransition.js';
+import SafeImage from '../components/common/SafeImage.jsx';
 import {
   PAGE_SLIDE_CSS,
   NAV_ENTER_TOTAL,
@@ -95,11 +96,12 @@ function OwnerBoatCard({ boat, t }) {
     >
       <div className="relative h-36 w-full shrink-0 bg-white/10">
         {boat.image ? (
-          <img
+          <SafeImage
             src={boat.image}
             alt={t('proprietaireBoats.boatAlt', { name: boat.name })}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fallbackClassName="flex h-full w-full items-center justify-center text-3xl text-white/40"
           />
         ) : (
           <span

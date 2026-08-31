@@ -26,6 +26,7 @@ import PanelLink from './shared/PanelLink.jsx';
 import { LANGUAGES } from './shared/languages.js';
 import { getAboutNavigationItems } from './shared/aboutNavigation.js';
 import { getContactNavigationItems } from './shared/contactNavigation.js';
+import SafeImage from '../SafeImage.jsx';
 
 /**
  * Header shared by every authenticated role (admin, propriétaire, locataire).
@@ -415,9 +416,11 @@ function DashboardHeader({
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
           >
-            <img
+            <SafeImage
               src={user?.avatar ?? nameToAvatarUrl(displayName)}
               alt={displayName}
+              fallbackSrc={nameToAvatarUrl(displayName)}
+              fallback={null}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>

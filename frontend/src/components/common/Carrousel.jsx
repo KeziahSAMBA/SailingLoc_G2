@@ -17,6 +17,7 @@ import { fetchPorts } from '../../services/portService';
 import { useFavorites } from '../../hooks/useFavorites.js';
 import { useCategoryNavigate, useProductNavigate } from '../../hooks/useCategoryTransition.js';
 import FavoriteButton from './FavoriteButton.jsx';
+import SafeImage from './SafeImage.jsx';
 
 // Clic "navigation simple" : laisse le navigateur gérer les ouvertures en
 // nouvel onglet (ctrl/cmd/shift/clic molette) sans intercepter le lien.
@@ -155,10 +156,11 @@ const PortCarousel = memo(
                       className={`relative rounded-[8px] overflow-hidden w-full border ${imgBorder}`}
                       style={{ aspectRatio }}
                     >
-                      <img
+                      <SafeImage
                         src={slide.img}
                         alt={slide.label}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
                         loading="lazy"
                       />
                       {slide.available ? (
@@ -231,10 +233,11 @@ const PortCarousel = memo(
                     className={`relative rounded-[8px] overflow-hidden w-full border ${imgBorder}`}
                     style={{ aspectRatio }}
                   >
-                    <img
+                    <SafeImage
                       src={slide.img}
                       alt={slide.label}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fallback={null}
                       loading="lazy"
                     />
                     {slide.available ? (
@@ -288,10 +291,11 @@ const PortCarousel = memo(
                       className={`relative rounded-[8px] overflow-hidden w-full border ${imgBorder}`}
                       style={{ aspectRatio }}
                     >
-                      <img
+                      <SafeImage
                         src={slide.img}
                         alt={slide.label}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
                         loading="lazy"
                       />
                       {!slide.available && (
@@ -454,10 +458,11 @@ const SlideItem = memo(function SlideItem({
       onClick={() => onSlideClick?.(slide)}
     >
       <div className="block w-full h-full">
-        <img
+        <SafeImage
           src={slide.img}
           alt={slide.label}
           className="w-full h-full object-cover"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
           loading={priority ? 'eager' : 'lazy'}
           fetchpriority={priority ? 'high' : 'low'}
           draggable={false}

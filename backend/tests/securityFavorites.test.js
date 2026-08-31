@@ -130,6 +130,11 @@ describe('favorite visibility and authorization', () => {
     expect(mockFavoriteFindMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id_user: 7, boat: publicBoatWhere } })
     );
+    const favoriteQuery = mockFavoriteFindMany.mock.calls[0][0];
+    expect(favoriteQuery.select.boat.select.images.where).toEqual({
+      deleted_at: null,
+      type: { in: ['boat', 'bateau'] },
+    });
   });
 
   it('keeps dashboard counts and previews limited to public boats', async () => {
@@ -151,5 +156,10 @@ describe('favorite visibility and authorization', () => {
     expect(mockFavoriteFindMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id_user: 7, boat: publicBoatWhere } })
     );
+    const previewQuery = mockFavoriteFindMany.mock.calls[0][0];
+    expect(previewQuery.select.boat.select.images.where).toEqual({
+      deleted_at: null,
+      type: { in: ['boat', 'bateau'] },
+    });
   });
 });

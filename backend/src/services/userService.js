@@ -32,6 +32,7 @@ export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const EMAIL_VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const SET_PASSWORD_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24h pour définir son mdp après création
 const DUMMY_HASH = '$2a$12$CwTycUXWue0Thq9StjUM0uJ8eVCD7vYz3uTtbpcLzqAOJBT5VnYf6';
+const AVATAR_TYPES = Object.freeze(['avatar', 'profil']);
 
 function publicUser(user) {
   return {
@@ -605,13 +606,13 @@ export async function updateAvatar(id_user, file) {
   }
 
   const previous = await prisma.image.findMany({
-    where: { id_user, type: 'avatar' },
+    where: { id_user, type: { in: AVATAR_TYPES } },
     select: { id_image: true, url: true },
   });
   let references;
   try {
     references = await prisma.image.findMany({
-      where: { type: 'avatar' },
+      where: { type: { in: AVATAR_TYPES } },
       select: { id_image: true, url: true },
     });
   } catch {
@@ -619,7 +620,7 @@ export async function updateAvatar(id_user, file) {
     // no physical object is safe to unlink. A later cleanup pass can retry.
     references = null;
   }
-  await prisma.image.deleteMany({ where: { id_user, type: 'avatar' } });
+  await prisma.image.deleteMany({ where: { id_user, type: { in: AVATAR_TYPES } } });
   if (references) {
     await removeUnreferencedFiles(
       previous.map((img) => ({ id: img.id_image, value: img.url })),
@@ -646,13 +647,13 @@ export async function updateAvatar(id_user, file) {
 // Supprime la photo de profil (retour à l'avatar généré).
 export async function removeAvatar(id_user) {
   const previous = await prisma.image.findMany({
-    where: { id_user, type: 'avatar' },
+    where: { id_user, type: { in: AVATAR_TYPES } },
     select: { id_image: true, url: true },
   });
   let references;
   try {
     references = await prisma.image.findMany({
-      where: { type: 'avatar' },
+      where: { type: { in: AVATAR_TYPES } },
       select: { id_image: true, url: true },
     });
   } catch {
@@ -660,7 +661,7 @@ export async function removeAvatar(id_user) {
     // avatar when rows happen to share a legacy path.
     references = null;
   }
-  await prisma.image.deleteMany({ where: { id_user, type: 'avatar' } });
+  await prisma.image.deleteMany({ where: { id_user, type: { in: AVATAR_TYPES } } });
   if (references) {
     await removeUnreferencedFiles(
       previous.map((img) => ({ id: img.id_image, value: img.url })),

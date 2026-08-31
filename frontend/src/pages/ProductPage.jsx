@@ -25,6 +25,7 @@ import GhostButton from '../components/common/GhostButton.jsx';
 import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import ShareButton from '../components/common/ShareButton.jsx';
 import DateRangePicker from '../components/common/DateRangePicker.jsx';
+import SafeImage from '../components/common/SafeImage.jsx';
 import {
   MdLocationOn,
   MdVerified,
@@ -579,7 +580,10 @@ function ProductPage() {
   const images = boat?.images ?? [];
   // Galerie : image principale + jusqu'à 4 secondaires, agencées par
   // layoutGalleryRows selon leur ratio réel (cf. plus bas).
-  const galleryImages = useMemo(() => images.slice(0, 5), [images]);
+  const galleryImages = useMemo(
+    () => (images.length ? images.slice(0, 5) : [{ key: 'boat-fallback', url: '' }]),
+    [images]
+  );
 
   // Ratio (largeur/hauteur naturelle) de chaque photo, connu une fois chargée
   // — persistant en ref (pas d'état par url) pour ne provoquer qu'un seul
@@ -1052,13 +1056,14 @@ function ProductPage() {
                         style={{ gap: GALLERY_GAP }}
                       >
                         {row.items.map((item) => (
-                          <img
+                          <SafeImage
                             key={item.key}
                             src={item.url}
                             alt={boat.name}
                             loading={rowIndex === 0 ? undefined : 'lazy'}
                             decoding="async"
                             className="rounded-2xl object-cover"
+                            fallbackClassName="flex items-center justify-center rounded-2xl bg-slate-800 text-4xl"
                             style={{
                               height: `${row.height}px`,
                               width: `${row.height * item.ratio}px`,

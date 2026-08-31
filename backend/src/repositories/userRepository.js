@@ -1,9 +1,10 @@
 import prisma from '../config/db.js';
 
-// Avatar de l'utilisateur : image la plus récente de type 'avatar'.
-const AVATAR_INCLUDE = {
+// Avatar de l'utilisateur : image active la plus récente des types historiques
+// « profil » ou actuels « avatar ».
+export const AVATAR_INCLUDE = {
   images: {
-    where: { type: 'avatar', deleted_at: null },
+    where: { type: { in: ['avatar', 'profil'] }, deleted_at: null },
     orderBy: { created_at: 'desc' },
     take: 1,
     select: { url: true },

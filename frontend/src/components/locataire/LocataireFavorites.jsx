@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
 import { getFavorites, removeFavorite } from '../../services/locataireService.js';
+import SafeImage from '../common/SafeImage.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -112,11 +113,12 @@ function FavoriteCard({ favorite, onRemove, removing }) {
     <article className="group h-36 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
       <div className="flex h-full">
         {boat?.image ? (
-          <img
+          <SafeImage
             src={boat.image}
             alt={`Bateau ${boat?.name}`}
             loading="lazy"
             className="w-28 self-stretch object-cover transition-transform duration-500 md:w-36 motion-safe:group-hover:scale-105"
+            fallbackClassName="flex w-28 shrink-0 items-center justify-center self-stretch bg-white/5 text-3xl md:w-36"
           />
         ) : (
           <span

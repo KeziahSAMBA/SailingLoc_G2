@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { getBoats, deleteBoat } from '../../services/proprietaireService.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
+import SafeImage from '../common/SafeImage.jsx';
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -120,11 +121,12 @@ function BoatCard({ boat, busy, onDelete }) {
   return (
     <article className="group flex h-full min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:shadow-xl hover:shadow-sky-500/10">
       {boat.image ? (
-        <img
+        <SafeImage
           src={boat.image}
           alt={t('proprietaireBoats.boatAlt', { name: boat.name })}
           loading="lazy"
           className="h-36 w-full shrink-0 object-cover transition-transform duration-500 motion-safe:group-hover:scale-105"
+          fallbackClassName="flex h-36 w-full shrink-0 items-center justify-center bg-white/5 text-3xl text-white/50"
         />
       ) : (
         <div

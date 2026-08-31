@@ -26,6 +26,7 @@ import Carrousel from '../components/common/Carrousel.jsx';
 import Breadcrumb from '../components/common/FilAriane.jsx';
 import GhostButton from '../components/common/GhostButton.jsx';
 import FavoriteButton from '../components/common/FavoriteButton.jsx';
+import SafeImage from '../components/common/SafeImage.jsx';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { fetchBoats } from '../services/boatService.js';
 import { fetchPorts } from '../services/portService.js';
@@ -197,10 +198,11 @@ const BoatListingCard = memo(function BoatListingCard({
       className={`relative rounded-3xl overflow-hidden border hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-white/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] ${highlighted ? 'border-sky-400 ring-4 ring-sky-400/60' : 'border-white/50'}`}
     >
       <div className="relative overflow-hidden" style={{ aspectRatio: '7/5' }}>
-        <img
+        <SafeImage
           src={image}
           alt={name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
           loading="lazy"
           decoding="async"
         />
@@ -415,10 +417,11 @@ const CurrentAnnouncementsCarousel = memo(function CurrentAnnouncementsCarousel(
               className="group relative aspect-[16/10] min-w-0 flex-[0_0_100%] snap-start cursor-pointer overflow-hidden rounded-2xl border border-white/20 bg-white/5 p-4 shadow-lg backdrop-blur-md md:flex-[0_0_calc((100%-1rem)/2)] xl:flex-[0_0_calc((100%-2rem)/3)]"
             >
               <div className="relative h-full overflow-hidden rounded-xl border border-white/20">
-                <img
+                <SafeImage
                   src={boat.image}
                   alt={boat.name}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
                   loading="lazy"
                   decoding="async"
                   draggable={false}

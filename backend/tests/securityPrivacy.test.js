@@ -16,6 +16,7 @@ import {
   canonicalApiUrl,
   canonicalAppUrl,
   publicAssetUrl,
+  validatePublicImageUrl,
 } from '../src/utils/urlSecurity.js';
 
 describe('privacy and diagnostic safeguards', () => {
@@ -162,5 +163,22 @@ describe('privacy and diagnostic safeguards', () => {
       if (previousPublicApiUrl === undefined) delete process.env.PUBLIC_API_URL;
       else process.env.PUBLIC_API_URL = previousPublicApiUrl;
     }
+  });
+
+  it('valide les URL de photos de ports sans casser les query strings des fixtures', () => {
+    const unsplash =
+      'https://images.unsplash.com/photo-1496309838698-63bfac391248?auto=format&fit=crop&w=800&q=80';
+    expect(validatePublicImageUrl(`  ${unsplash}  `, 'production')).toBe(unsplash);
+    expect(validatePublicImageUrl('', 'production')).toBeNull();
+    expect(validatePublicImageUrl(null, 'production')).toBeNull();
+
+    expect(() => validatePublicImageUrl('javascript:alert(1)', 'development')).toThrow();
+    expect(() =>
+      validatePublicImageUrl('https://images.example/photo.jpg#fragment', 'production')
+    ).toThrow();
+    expect(() => validatePublicImageUrl('http://localhost:4000/photo.jpg', 'production')).toThrow(
+      /HTTPS/
+    );
+    expect(() => validatePublicImageUrl(`https://${'a'.repeat(501)}`, 'production')).toThrow();
   });
 });

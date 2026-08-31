@@ -6,6 +6,7 @@ import { fetchPorts } from '../../services/portService.js';
 import { getMyDocuments } from '../../services/documentService.js';
 import { loadPortCatalog } from '../../utils/portCatalog.js';
 import { useToast } from '../../hooks/useToast.jsx';
+import SafeImage from '../common/SafeImage.jsx';
 
 const BOAT_TYPES = [
   'voilier',
@@ -656,10 +657,11 @@ function ProprietaireBoatForm() {
           <div className="flex flex-wrap gap-3">
             {photos.map((p, i) => (
               <div key={p.preview} className="relative">
-                <img
+                <SafeImage
                   src={p.preview}
                   alt={`Photo ${i + 1}${i === 0 ? ' (principale)' : ''}`}
                   className="h-24 w-32 rounded-lg object-cover"
+                  fallbackClassName="flex h-24 w-32 items-center justify-center rounded-lg bg-white/5 text-3xl text-white/40"
                 />
                 {i === 0 && (
                   <span className="absolute bottom-1 left-1 rounded bg-slate-950/80 px-1.5 py-0.5 text-[0.625rem] font-semibold text-white">
