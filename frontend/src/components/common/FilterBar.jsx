@@ -193,16 +193,19 @@ function FilterBar({
   const headerContent = (
     <>
       <div className="flex flex-shrink-0 items-center gap-2">
-        <FaSliders className={light ? 'text-white/80' : 'text-black/70'} size={13} />
+        <FaSliders
+          className={compact ? 'text-[#0A527A]' : light ? 'text-white/80' : 'text-black/70'}
+          size={13}
+        />
         <span
-          className={`whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide ${light ? 'text-white' : 'text-black'}`}
+          className={`hidden whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:inline ${compact ? 'text-[#0A527A]' : light ? 'text-white' : 'text-black'}`}
         >
           {t('filterBar.label')}
         </span>
       </div>
 
       {activeChips.length > 0 && (
-        <>
+        <div className="hidden sm:contents">
           <div className={`h-3 w-px flex-shrink-0 ${light ? 'bg-white/30' : 'bg-black/20'}`} />
           <div className="flex flex-shrink-0 items-center gap-1.5">
             {activeChips.slice(0, 2).map((chip) => (
@@ -216,7 +219,7 @@ function FilterBar({
               </span>
             )}
           </div>
-        </>
+        </div>
       )}
 
       <div className="flex flex-shrink-0 items-center gap-3 ml-auto">
@@ -225,14 +228,20 @@ function FilterBar({
             e.stopPropagation();
             onReset();
           }}
-          className={`whitespace-nowrap text-[10px] font-medium transition-colors uppercase tracking-wide ${light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
+          className={`whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-[#0A527A] hover:text-sky-800' : light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
         >
           {t('filterBar.reset')}
         </button>
         {filterOpen ? (
-          <FaChevronUp size={9} className={light ? 'text-white/70' : 'text-black/50'} />
+          <FaChevronUp
+            size={9}
+            className={compact ? 'text-[#0A527A]' : light ? 'text-white/70' : 'text-black/50'}
+          />
         ) : (
-          <FaChevronDown size={9} className={light ? 'text-white/70' : 'text-black/50'} />
+          <FaChevronDown
+            size={9}
+            className={compact ? 'text-[#0A527A]' : light ? 'text-white/70' : 'text-black/50'}
+          />
         )}
       </div>
     </>
@@ -246,28 +255,28 @@ function FilterBar({
       <div
         ref={ghostRef}
         aria-hidden="true"
-        className="pointer-events-none invisible absolute left-0 top-0 flex w-max flex-nowrap items-center gap-2 rounded-2xl border px-3 py-2 sm:gap-3 sm:rounded-full sm:px-4 lg:py-3"
+        className="pointer-events-none invisible absolute left-0 top-0 flex w-max flex-nowrap items-center gap-1.5 rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3"
       >
         {headerContent}
       </div>
 
       {/* Header — always visible */}
       <div
-        className={`flex cursor-pointer select-none flex-nowrap items-center gap-2 overflow-hidden rounded-2xl border px-3 py-2 sm:gap-3 sm:rounded-full sm:px-4 lg:py-3 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className={`flex cursor-pointer select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
         style={{
           width: headerWidth != null ? `${headerWidth}px` : undefined,
           backgroundColor: compact
-            ? 'rgba(0,0,0,0.45)'
+            ? 'transparent'
             : light
               ? 'rgba(255,255,255,0.1)'
               : 'rgba(0,0,0,0.05)',
           borderColor: compact
-            ? 'rgba(255,255,255,0.15)'
+            ? 'transparent'
             : light
               ? 'rgba(255,255,255,0.3)'
               : 'rgba(0,0,0,0.1)',
-          backdropFilter: compact ? 'blur(5px)' : 'blur(40px)',
-          WebkitBackdropFilter: compact ? 'blur(14px)' : 'blur(40px)',
+          backdropFilter: compact ? 'none' : 'blur(40px)',
+          WebkitBackdropFilter: compact ? 'none' : 'blur(40px)',
           transition:
             'width 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease',
         }}
@@ -279,15 +288,18 @@ function FilterBar({
       {/* Expanded filter panel */}
       {filterOpen && (
         <div
-          className="relative z-30 mb-6 mt-2 w-full overflow-visible rounded-xl p-4 sm:p-6 lg:absolute lg:left-16 lg:right-16 lg:top-full lg:mb-0 lg:w-auto xl:left-28 xl:right-28"
+          className="fixed inset-x-4 z-30 max-h-[70vh] overflow-y-auto rounded-xl p-4 sm:inset-x-8 sm:p-6 lg:absolute lg:inset-x-auto lg:left-16 lg:right-16 lg:!top-full lg:mt-2 lg:max-h-none lg:w-auto lg:overflow-visible xl:left-28 xl:right-28"
           style={{
+            top: compact
+              ? 'calc(var(--category-header-height) + 0.5rem)'
+              : 'calc(var(--category-header-height) + 1.25rem)',
             backgroundColor: 'rgba(255,255,255,0.98)',
             boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
           }}
         >
-          <div className="grid grid-cols-1 gap-6 divide-y divide-gray-100 sm:grid-cols-2 sm:divide-x-0 sm:divide-y-0 xl:flex xl:gap-0 xl:divide-x">
+          <div className="grid grid-cols-2 gap-6 xl:flex xl:gap-0 xl:divide-x xl:divide-gray-100">
             {/* Type de bateau */}
-            <div className="pb-6 sm:pb-0 sm:pr-6 xl:pr-10">
+            <div className="xl:pr-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 {t('filterBar.boatType.title')}
               </p>
@@ -306,7 +318,7 @@ function FilterBar({
             </div>
 
             {/* Permis */}
-            <div className="py-6 sm:px-6 sm:py-0 xl:px-10">
+            <div className="xl:px-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 {t('filterBar.license.title')}
               </p>
@@ -335,7 +347,7 @@ function FilterBar({
             </div>
 
             {/* Prix par jour */}
-            <div className="py-6 sm:px-6 sm:py-0 xl:px-10">
+            <div className="xl:px-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 {t('filterBar.price.title')}
               </p>
@@ -361,7 +373,7 @@ function FilterBar({
             </div>
 
             {/* Trier par */}
-            <div className="pt-6 sm:pl-6 sm:pt-0 xl:pl-10">
+            <div className="xl:pl-10">
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                 {t('filterBar.sort.title')}
               </p>

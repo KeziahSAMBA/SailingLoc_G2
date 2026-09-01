@@ -142,22 +142,22 @@ function getSteps(t) {
 function getValueCards(t) {
   return [
     {
-      icon: <MdAnchor className="text-3xl text-sky-500" />,
+      icon: <MdAnchor className="text-2xl text-sky-500 sm:text-3xl" />,
       title: t('home.values.fleet.title'),
       text: t('home.values.fleet.text'),
     },
     {
-      icon: <FaShieldAlt className="text-3xl text-sky-500" />,
+      icon: <FaShieldAlt className="text-2xl text-sky-500 sm:text-3xl" />,
       title: t('home.values.payment.title'),
       text: t('home.values.payment.text'),
     },
     {
-      icon: <FaHandshake className="text-3xl text-sky-500" />,
+      icon: <FaHandshake className="text-2xl text-sky-500 sm:text-3xl" />,
       title: t('home.values.owners.title'),
       text: t('home.values.owners.text'),
     },
     {
-      icon: <MdVerified className="text-3xl text-sky-500" />,
+      icon: <MdVerified className="text-2xl text-sky-500 sm:text-3xl" />,
       title: t('home.values.support.title'),
       text: t('home.values.support.text'),
     },
@@ -205,6 +205,12 @@ function HomePage() {
   const [arrivalActive, setArrivalActive] = useState(
     () => Boolean(homeArrival) || (location.key !== 'default' && !prefersReducedMotion())
   );
+  // En dessous de md, la SearchBar de /categorie et /product/:id est repliée
+  // (fixed, pastille + bouton loupe) : sa forme n'a plus rien à voir avec
+  // celle du hero, donc un FLIP entre les deux donnerait un mouvement/
+  // redimensionnement incohérent. Sur mobile elle sort/rentre alors comme les
+  // autres blocs du hero, par la marge droite (cf. heroSlideStyle plus bas).
+  const [isMobileSearchBar] = useState(() => window.matchMedia('(max-width: 767px)').matches);
   // Intro de première visite : machine à phases 'black' → 'video' → 'welcome'
   // → 'reveal' → null (terminée ou pas d'intro).
   const [introPhase, setIntroPhase] = useState(() => (shouldPlayIntro() ? 'black' : null));
@@ -278,7 +284,7 @@ function HomePage() {
   useLayoutEffect(() => {
     const from = homeArrival?.searchBarRect;
     const el = searchBarWrapRef.current;
-    if (!from || !el) return undefined;
+    if (!from || !el || isMobileSearchBar) return undefined;
     const to = el.getBoundingClientRect();
     el.style.transformOrigin = 'top left';
     el.style.willChange = 'transform';
@@ -316,7 +322,7 @@ function HomePage() {
       // position naturelle et non celle déplacée par la première.
       resetStyles();
     };
-  }, [homeArrival]);
+  }, [homeArrival, isMobileSearchBar]);
   const STEPS = useMemo(() => getSteps(t), [t]);
   const VALUE_CARDS = useMemo(() => getValueCards(t), [t]);
 
@@ -548,7 +554,7 @@ function HomePage() {
           />
         )}
 
-        <div className="relative flex flex-1 flex-col items-center justify-center gap-8 py-8 text-center sm:gap-12 lg:gap-20">
+        <div className="relative grid flex-1 grid-rows-[1fr_auto_1fr] items-center justify-items-center py-8 text-center sm:flex sm:flex-col sm:justify-center sm:gap-12 lg:gap-20">
           <div className="relative w-full min-w-0" style={introLogoBlockStyle}>
             {introActive && (
               <p
@@ -586,9 +592,13 @@ function HomePage() {
             style={
               introActive
                 ? introFromBelowStyle
-                : (exiting && exitIsGeneric) || (arrivalActive && !homeArrival?.searchBarRect)
-                  ? heroSlideStyle('right')
-                  : undefined
+                : exiting
+                  ? exitIsGeneric || isMobileSearchBar
+                    ? heroSlideStyle('right')
+                    : undefined
+                  : arrivalActive && (!homeArrival?.searchBarRect || isMobileSearchBar)
+                    ? heroSlideStyle('right')
+                    : undefined
             }
           >
             <SearchBar light />
@@ -636,30 +646,30 @@ function HomePage() {
 
           <div
             id="tutoriel"
-            className="mx-4 border-t border-gray-200 scroll-mt-[115px] sm:mx-8 lg:mx-[168px]"
+            className="mx-4 border-t border-gray-200 scroll-mt-[60px] sm:mx-8 sm:scroll-mt-[115px] lg:mx-[168px]"
           />
 
           {/* Section 3 — Tuto */}
-          <section className="flex w-full flex-col items-center gap-0 bg-white px-4 py-8 sm:px-8 lg:px-16 xl:px-28">
-            <div className="flex w-full max-w-7xl flex-col items-center py-8 sm:px-4 lg:px-16 lg:py-10">
-              <div className="text-center mb-10">
+          <section className="flex w-full flex-col items-center justify-center gap-0 bg-white px-4 py-0 max-sm:min-h-[100svh] sm:px-8 sm:py-8 lg:px-16 xl:px-28">
+            <div className="flex w-full max-w-7xl flex-col items-center py-0 sm:px-4 sm:py-8 lg:px-16 lg:py-10">
+              <div className="text-center mb-4 sm:mb-10">
                 <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
                   {t('home.steps.kicker')}
                 </p>
-                <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl">
+                <h2 className="text-lg font-semibold text-gray-900 sm:text-3xl md:text-4xl">
                   {t('home.steps.title')}
                 </h2>
               </div>
 
               <div
                 ref={stepsRef}
-                className="mb-10 flex w-full flex-col items-stretch gap-8 md:flex-row md:items-start md:gap-0"
+                className="mb-4 flex w-full flex-col items-stretch gap-3 sm:mb-10 sm:gap-8 md:flex-row md:items-start md:gap-0"
               >
                 {STEPS.map(({ num, icon, title, text }, i) => (
                   <Fragment key={num}>
                     <div className="flex flex-1 flex-col items-center px-2 text-center sm:px-4">
                       <div
-                        className="w-14 h-14 rounded-full bg-white border border-sky-500 flex items-center justify-center text-sky-500 text-xl font-semibold mb-4"
+                        className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-sky-500 bg-white text-sm font-semibold text-sky-500 sm:mb-4 sm:h-14 sm:w-14 sm:text-xl"
                         style={{ boxShadow: '0 2px 8px rgba(14,165,233,0.3)' }}
                       >
                         {num}
@@ -698,7 +708,7 @@ function HomePage() {
           {/* Section 4 — Proposition de valeur */}
           <section
             id="proposition-valeur"
-            className="flex w-full flex-col items-center gap-0 bg-white px-4 py-8 scroll-mt-[130px] sm:px-8 lg:px-16 xl:px-28"
+            className="flex w-full flex-col items-center justify-center gap-0 bg-white px-4 py-0 max-sm:min-h-[100svh] scroll-mt-[40px] sm:scroll-mt-[130px] sm:px-8 sm:py-8 lg:px-16 xl:px-28"
           >
             <div className="text-center mb-10">
               <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
@@ -709,11 +719,11 @@ function HomePage() {
               </h2>
             </div>
 
-            <div className="mb-10 grid w-full max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4">
+            <div className="mb-10 grid w-full max-w-7xl grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-4">
               {VALUE_CARDS.map(({ icon, title, text }) => (
                 <div
                   key={title}
-                  className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] sm:p-8"
+                  className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] sm:gap-3 sm:p-8"
                 >
                   <span>{icon}</span>
                   <h3 className="text-sm font-semibold text-gray-800">{title}</h3>

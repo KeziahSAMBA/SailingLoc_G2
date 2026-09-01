@@ -22,7 +22,7 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
 
   return (
     <nav
-      className={`inline-flex items-center gap-1.5 py-0.5 px-2 rounded-full text-xs border ${light ? 'text-white' : 'text-black'}`}
+      className={`inline-flex items-center gap-1.5 py-3 px-3 rounded-full text-xs font-semibold border sm:py-0.5 sm:px-2 ${compact ? 'text-[#0A527A]' : light ? 'text-white' : 'text-black'}`}
       style={{
         backgroundColor: compact ? 'transparent' : 'rgba(255,255,255,0.1)',
         borderColor: compact ? 'transparent' : 'rgba(255,255,255,0.3)',
@@ -40,7 +40,7 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
           goHome();
         }}
         className={
-          light ? 'hover:text-white/70 transition-colors' : 'hover:text-sky-600 transition-colors'
+          light ? 'hover:text-white/70 transition-colors' : 'hover:text-sky-700 transition-colors'
         }
       >
         {t('breadcrumb.home')}
@@ -49,14 +49,29 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
         const isLast = i === crumbs.length - 1;
         return (
           <span key={to ?? label} className="flex items-center gap-2">
-            <span className={light ? 'text-white/60' : 'text-gray-900'}>/</span>
+            <span
+              className={compact ? 'text-[#0A527A]/60' : light ? 'text-white/60' : 'text-gray-900'}
+            >
+              /
+            </span>
             {isLast ? (
-              <span
-                className="font-semibold"
-                style={{ color: compact ? '#0A3172' : 'rgba(14,165,233,0.95)' }}
-              >
-                {label}
-              </span>
+              to === '/categorie' ? (
+                <button
+                  type="button"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="border-0 bg-transparent p-0 font-semibold underline underline-offset-2 cursor-pointer"
+                  style={{ color: compact ? '#0A3172' : 'rgba(14,165,233,0.95)' }}
+                >
+                  {label}
+                </button>
+              ) : (
+                <span
+                  className="font-semibold underline underline-offset-2"
+                  style={{ color: compact ? '#0A3172' : 'rgba(14,165,233,0.95)' }}
+                >
+                  {label}
+                </span>
+              )
             ) : (
               <Link
                 to={to}
@@ -68,7 +83,7 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
                   e.preventDefault();
                   goToCategory(to);
                 }}
-                className="hover:text-sky-600 transition-colors"
+                className="hover:text-sky-700 transition-colors"
               >
                 {label}
               </Link>

@@ -247,7 +247,7 @@ export default function BoatReviews({
     return (
       <section
         id={id}
-        className={`flex w-full flex-col items-start px-28 ${className}`}
+        className={`flex w-full flex-col items-start px-4 sm:px-8 lg:px-16 xl:px-28 ${className}`}
         style={style}
       >
         {editingReview ? (
@@ -290,11 +290,11 @@ export default function BoatReviews({
   return (
     <section
       id={id}
-      className={`flex w-full flex-col items-start pl-28 pr-24 ${className}`}
+      className={`flex w-full flex-col items-start px-4 sm:px-8 lg:px-16 xl:pl-28 xl:pr-24 ${className}`}
       style={style}
     >
       <div
-        className="flex w-full max-w-[919.9px] flex-col gap-5 rounded-2xl border px-10 py-8"
+        className="flex w-full max-w-[919.9px] flex-col gap-5 rounded-2xl border px-4 py-6 sm:px-8 lg:px-10 lg:py-8"
         style={GLASS_STYLE}
       >
         <h2 className="text-2xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">

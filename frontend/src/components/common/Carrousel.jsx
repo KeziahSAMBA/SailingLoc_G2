@@ -101,6 +101,25 @@ const PortCarousel = memo(
     const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
     const next = useCallback(() => setIndex((i) => Math.min(maxIndex, i + 1)), [maxIndex]);
 
+    // Swipe tactile : suit le doigt sans re-render (juste des refs), ne
+    // déclenche prev/next qu'au relâché si le geste dépasse le seuil.
+    const touchStartX = useRef(null);
+    const touchDeltaX = useRef(0);
+    const handleTouchStart = useCallback((e) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchDeltaX.current = 0;
+    }, []);
+    const handleTouchMove = useCallback((e) => {
+      if (touchStartX.current === null) return;
+      touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+    }, []);
+    const handleTouchEnd = useCallback(() => {
+      if (touchDeltaX.current < -40) next();
+      else if (touchDeltaX.current > 40) prev();
+      touchStartX.current = null;
+      touchDeltaX.current = 0;
+    }, [next, prev]);
+
     useLayoutEffect(() => {
       const element = carouselRef.current;
       if (!element) return undefined;
@@ -125,15 +144,20 @@ const PortCarousel = memo(
         {index > 0 && (
           <button
             onClick={prev}
-            className={`absolute left-0 z-20 rounded-full p-1 shadow-lg transition-colors ${arrowBtn}`}
+            className={`absolute left-0 z-20 rounded-full p-2.5 shadow-lg transition-colors ${arrowBtn}`}
             style={{ transform: 'translate(-50%, 0)', top: '40%' }}
             aria-label={t('carrousel.prev')}
           >
-            <FaChevronLeft size={12} />
+            <FaChevronLeft size={16} />
           </button>
         )}
 
-        <div className="overflow-hidden rounded-xl">
+        <div
+          className="overflow-hidden rounded-xl"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div
             className="flex"
             style={{
@@ -347,11 +371,11 @@ const PortCarousel = memo(
         {index < maxIndex && (
           <button
             onClick={next}
-            className={`absolute right-0 z-20 rounded-full p-1 shadow-lg transition-colors ${arrowBtn}`}
+            className={`absolute right-0 z-20 rounded-full p-2.5 shadow-lg transition-colors ${arrowBtn}`}
             style={{ transform: 'translate(50%, 0)', top: '40%' }}
             aria-label={t('carrousel.next')}
           >
-            <FaChevronRight size={12} />
+            <FaChevronRight size={16} />
           </button>
         )}
       </div>
@@ -600,6 +624,24 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
     setPosition((p) => Math.min(itemsForRender.length - 1, p + 1));
   }, [isAnimating, itemsForRender.length]);
 
+  // Swipe tactile : même logique de seuil que PortCarousel, sur goPrev/goNext.
+  const touchStartX = useRef(null);
+  const touchDeltaX = useRef(0);
+  const handleTouchStart = useCallback((e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+  }, []);
+  const handleTouchMove = useCallback((e) => {
+    if (touchStartX.current === null) return;
+    touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+  }, []);
+  const handleTouchEnd = useCallback(() => {
+    if (touchDeltaX.current < -40) goNext();
+    else if (touchDeltaX.current > 40) goPrev();
+    touchStartX.current = null;
+    touchDeltaX.current = 0;
+  }, [goNext, goPrev]);
+
   const activeIndex = (position - 1 + slides.length) % slides.length;
   const transition = isJumping ? { duration: 0 } : SPRING;
 
@@ -617,14 +659,17 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <button
           onClick={goPrev}
-          className="absolute left-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-1 shadow-lg transition-colors"
+          className="absolute left-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-2.5 shadow-lg transition-colors"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
           aria-label={t('carrousel.prev')}
         >
-          <FaChevronLeft size={12} className="text-white" />
+          <FaChevronLeft size={16} className="text-white" />
         </button>
         {itemWidth > 0 && (
           <motion.div
@@ -660,11 +705,11 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
         )}
         <button
           onClick={goNext}
-          className="absolute right-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-1 shadow-lg transition-colors"
+          className="absolute right-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-2.5 shadow-lg transition-colors"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
           aria-label={t('carrousel.next')}
         >
-          <FaChevronRight size={12} className="text-white" />
+          <FaChevronRight size={16} className="text-white" />
         </button>
       </div>
 
@@ -923,17 +968,21 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
         <div className="flex flex-col gap-4 lg:flex-row">
           {boatTypeSections
             .filter((s) => s.slides.length > 0)
-            .map(({ slides, title, initialSlide, interval }) => (
-              <BoatTypeCarousel
+            .map(({ slides, title, initialSlide, interval }, i) => (
+              <div
                 key={title}
-                slides={slides}
-                initialSlide={initialSlide}
-                interval={interval}
-                theme={theme}
-                favoriteIds={favoriteIds}
-                onToggleFavorite={toggleFavorite}
-                onSlideClick={handleBoatClick}
-              />
+                className={i === 0 ? 'w-full lg:flex-1' : 'hidden w-full lg:block lg:flex-1'}
+              >
+                <BoatTypeCarousel
+                  slides={slides}
+                  initialSlide={initialSlide}
+                  interval={interval}
+                  theme={theme}
+                  favoriteIds={favoriteIds}
+                  onToggleFavorite={toggleFavorite}
+                  onSlideClick={handleBoatClick}
+                />
+              </div>
             ))}
         </div>
       </div>
