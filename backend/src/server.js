@@ -19,6 +19,7 @@ import { safeErrorResponses, secureErrorHandler } from './middlewares/errorSecur
 import { logSanitizedError } from './utils/privacy.js';
 import { allowedCorsOrigins, normalizeRequestOrigin } from './utils/corsSecurity.js';
 import { securityHeaders } from './middlewares/securityHeaders.js';
+import { createCsrfProtection } from './middlewares/csrfMiddleware.js';
 
 const { PORT, APP_URL, CORS_ORIGINS, NODE_ENV } = initConfig();
 const corsOrigins = allowedCorsOrigins({
@@ -29,6 +30,19 @@ const corsOrigins = allowedCorsOrigins({
 
 const app = express();
 app.disable('x-powered-by');
+
+// Filet global pour toutes les routes API, y compris les endpoints publics et
+// le webhook Stripe. Les limiteurs spécialisés montés plus bas restent plus
+// stricts pour les actions sensibles ; ce limiteur n'est installé qu'une fois
+// afin de ne pas compter deux fois le même budget général.
+const apiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 1000,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+  message: { message: 'Trop de requêtes. Réessayez dans quelques minutes.' },
+});
 
 // Error responses are normalized before any route can accidentally serialize
 // an SDK/ORM message.  Detailed diagnostics stay in the internal log sink.
@@ -55,18 +69,32 @@ app.use(
       return callback(Object.assign(new Error('Origine non autorisée.'), { status: 403 }));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Accept', 'Content-Type', 'Authorization'],
-    exposedHeaders: ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Accept', 'Content-Type', 'Authorization', 'X-CSRF-Token'],
+    exposedHeaders: [
+      'Retry-After',
+      'RateLimit',
+      'RateLimit-Limit',
+      'RateLimit-Remaining',
+      'RateLimit-Reset',
+      'X-CSRF-Token',
+    ],
     maxAge: 600,
     optionsSuccessStatus: 204,
   })
 );
+// Le limiteur doit précéder le webhook brut : il couvre aussi les requêtes
+// qui n'atteignent jamais un routeur métier, sans parser leur payload.
+app.use('/api', apiRateLimiter);
 // Avant express.json : la vérification de signature Stripe exige le corps brut.
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
+// Le cookie CSRF doit être lu après cookieParser et avant tous les routeurs ;
+// le webhook déjà déclaré ci-dessus ne porte pas de cookie de session et reste
+// donc compatible avec la vérification de signature Stripe.
+app.use('/api', createCsrfProtection({ environment: NODE_ENV, allowedOrigins: corsOrigins }));
 // Seuls les avatars et photos de bateaux sont publics.  Les preuves de litige
 // et documents résident sous storage/ et ne sont jamais exposés par le serveur
 // statique ; ils passent par des routes protégées qui déchiffrent à la volée.

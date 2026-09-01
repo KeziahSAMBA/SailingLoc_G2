@@ -30,6 +30,28 @@ const api = axios.create({
   },
 });
 
+const CSRF_HEADER_NAME = 'X-CSRF-Token';
+const CSRF_RESPONSE_HEADER = 'x-csrf-token';
+const CSRF_TOKEN_REQUIRED_CODE = 'CSRF_TOKEN_REQUIRED';
+const CSRF_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/**
+ * Le cookie CSRF reste HttpOnly sur le domaine API. Le frontend ne conserve
+ * que la copie transmise par un en-tête CORS autorisé, en mémoire de module :
+ * aucun stockage persistant ni accès direct aux cookies n'est nécessaire.
+ */
+let csrfToken = null;
+
+export function captureCsrfToken(response) {
+  const headers = response?.headers;
+  const value = headers?.get?.(CSRF_HEADER_NAME) ?? headers?.[CSRF_RESPONSE_HEADER];
+  if (typeof value === 'string' && CSRF_TOKEN_PATTERN.test(value)) {
+    csrfToken = value;
+  }
+  return csrfToken;
+}
+
 let accessToken = null;
 let refreshPromise = null;
 let onAuthFailure = null;
@@ -47,8 +69,12 @@ export function setOnAuthFailure(fn) {
 }
 
 api.interceptors.request.use((config) => {
+  config.headers = config.headers || {};
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  if (MUTATING_METHODS.has(String(config.method || 'get').toUpperCase())) {
+    if (csrfToken) config.headers[CSRF_HEADER_NAME] = csrfToken;
   }
   return config;
 });
@@ -103,12 +129,14 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => {
+    captureCsrfToken(response);
     pendingCount = Math.max(0, pendingCount - 1);
     if (pendingCount === 0) oldestPendingAt = null;
     notifyActivity();
     return response;
   },
   (error) => {
+    captureCsrfToken(error.response);
     pendingCount = Math.max(0, pendingCount - 1);
     if (pendingCount === 0) oldestPendingAt = null;
     if (!error.response && error.config?.__generation === currentGeneration) {
@@ -124,6 +152,23 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
     const status = error.response?.status;
+
+    // Lors du premier appel d'une session créée avant le déploiement CSRF (ou
+    // après un rechargement qui a vidé la mémoire), le serveur renvoie ce code
+    // précis et le jeton dans un en-tête CORS. Une seule reprise est autorisée.
+    if (
+      status === 403 &&
+      error.response?.data?.code === CSRF_TOKEN_REQUIRED_CODE &&
+      original &&
+      !original._csrfRetry
+    ) {
+      captureCsrfToken(error.response);
+      if (!csrfToken) return Promise.reject(error);
+      original._csrfRetry = true;
+      original.headers = original.headers || {};
+      original.headers[CSRF_HEADER_NAME] = csrfToken;
+      return api(original);
+    }
 
     if (
       status !== 401 ||
