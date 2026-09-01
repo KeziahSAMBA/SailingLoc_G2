@@ -7,10 +7,20 @@
 // Usage (depuis le conteneur/dossier backend) : node prisma/addMissingReviews.js
 import { PrismaClient } from '@prisma/client';
 import { seedBoatReviews } from './reviewSeedData.js';
+import { enforceSeedPolicy } from './seedPolicy.js';
 
-const prisma = new PrismaClient();
+let prisma;
 
 async function main() {
+  const seedPolicy = enforceSeedPolicy();
+  if (!seedPolicy.allowed) {
+    console.log(
+      `[seed:reviews] Ignoré en environnement ${seedPolicy.environment || 'déploiement'}.`
+    );
+    return;
+  }
+  prisma = new PrismaClient();
+
   const reviewers = await prisma.user.findMany({
     where: { role: 'locataire' },
     select: { id_user: true },
@@ -42,4 +52,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => prisma?.$disconnect());

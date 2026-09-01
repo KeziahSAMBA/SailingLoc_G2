@@ -1,13 +1,14 @@
+import {
+  isProtectedDeployment,
+  protectedDeploymentLabel,
+} from '../src/config/deploymentProtection.js';
+
 /**
  * Decide whether the demonstration seed may run. Kept independent from
  * Prisma so deployment checks can be tested without connecting to a database.
  */
 export function getSeedEnvironment(env = process.env) {
-  return String(
-    env.NODE_ENV || env.RAILWAY_ENVIRONMENT_NAME || env.RAILWAY_ENVIRONMENT || 'development'
-  )
-    .trim()
-    .toLowerCase();
+  return protectedDeploymentLabel(env);
 }
 
 export function isSeedForced(env = process.env) {
@@ -21,8 +22,7 @@ export function isSeedForced(env = process.env) {
 export function enforceSeedPolicy(env = process.env) {
   const environment = getSeedEnvironment(env);
   const force = isSeedForced(env);
-  const isDeployment =
-    environment === 'production' || environment === 'staging' || Boolean(env.RAILWAY_PROJECT_ID);
+  const isDeployment = isProtectedDeployment(env);
 
   if (isDeployment) {
     if (force) {

@@ -11,6 +11,7 @@ const { createTransporter } = await import('../src/services/emailService.js');
 const originalEnvironment = { ...process.env };
 const CONFIG_KEYS = [
   'NODE_ENV',
+  'DEPLOYMENT_ENV',
   'DATABASE_URL',
   'JWT_SECRET',
   'FILE_ENCRYPTION_KEY',
@@ -44,6 +45,7 @@ function restoreEnvironment() {
 
 const stagingEnvironment = {
   NODE_ENV: 'staging',
+  DEPLOYMENT_ENV: 'staging',
   DATABASE_URL: 'postgresql://db.internal/sailingloc',
   JWT_SECRET: 'v3ry-long-random-staging-secret-value-123',
   FILE_ENCRYPTION_KEY: 'a'.repeat(64),
@@ -89,6 +91,7 @@ describe('SMTP transport security', () => {
     configureEnvironment({
       ...stagingEnvironment,
       NODE_ENV: 'production',
+      DEPLOYMENT_ENV: 'production',
       APP_URL: 'https://app.sailingloc.example',
       STRIPE_SECRET_KEY: 'sk_live_51productionKey123',
       STRIPE_WEBHOOK_SECRET: 'whsec_productionWebhook123',

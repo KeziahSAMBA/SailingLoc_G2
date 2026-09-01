@@ -15,6 +15,7 @@
 // création sentinelle, le seul champ que l'anonymisation ne touche pas.
 
 import prisma from '../src/config/db.js';
+import { enforceSeedPolicy } from './seedPolicy.js';
 
 const DAY_MS = 86400000;
 const HOUR_MS = 3600000;
@@ -473,9 +474,18 @@ async function seed() {
   console.log('les chiffres « à purger » doivent correspondre à la colonne Traités.');
 }
 
-const mode = process.argv.includes('--clean') ? clean : seed;
+async function main() {
+  const seedPolicy = enforceSeedPolicy();
+  if (!seedPolicy.allowed) {
+    console.log(`[seed:cron] Ignoré en environnement ${seedPolicy.environment || 'déploiement'}.`);
+    return;
+  }
 
-mode()
+  const mode = process.argv.includes('--clean') ? clean : seed;
+  await mode();
+}
+
+main()
   .catch((err) => {
     console.error(err.message);
     process.exitCode = 1;
