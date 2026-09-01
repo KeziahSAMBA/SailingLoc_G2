@@ -173,10 +173,21 @@ cp .env.example .env
 
 > **En Docker**, c'est le `.env` **racine** qui compte (copié depuis `.env.example` racine) : Docker Compose y lit toutes les variables et elles ont priorité sur les `.env` locaux.
 
-En production, le backend refuse de démarrer si `JWT_SECRET`, `DATABASE_URL`,
-`FILE_ENCRYPTION_KEY`, `APP_URL` HTTPS, `PUBLIC_API_URL` HTTPS, les deux secrets
-Stripe live et une configuration email valide ne sont pas fournis. Le seed de démonstration est
-réservé aux environnements de développement et de test.
+En runtime de déploiement (`NODE_ENV=production`), le backend refuse de démarrer si
+`DEPLOYMENT_ENV` (`staging` ou `production`), `JWT_SECRET`, `DATABASE_URL`,
+`FILE_ENCRYPTION_KEY`, `APP_URL` HTTPS et `PUBLIC_API_URL` HTTPS ne sont pas
+fournis. Une cible `production` exige des secrets Stripe live et une
+configuration email valide ; une cible `staging` accepte uniquement une clé
+Stripe test (facultative pour conserver le paiement simulé). Le seed de
+démonstration est réservé aux environnements de développement et de test.
+
+`NODE_ENV` décrit le runtime et ne doit pas servir à choisir le compte Stripe.
+Pour Railway, définissez explicitement `NODE_ENV=production` et
+`DEPLOYMENT_ENV=staging` sur l'environnement de test, ou
+`DEPLOYMENT_ENV=production` sur l'environnement réel. Pendant la migration,
+`RAILWAY_ENVIRONMENT_NAME`/`RAILWAY_ENVIRONMENT` n'est accepté comme secours
+que si sa valeur est exactement `staging` ou `production`, et un conflit avec
+`DEPLOYMENT_ENV` bloque le démarrage.
 
 `CORS_ORIGINS` est optionnelle : elle contient, séparées par des virgules, les
 origines frontend supplémentaires autorisées à envoyer les cookies de session.
@@ -192,6 +203,7 @@ Variables backend à renseigner dans `backend/.env` :
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/sailingloc
 JWT_SECRET=                         # générer une valeur aléatoire locale (32 caractères minimum)
+DEPLOYMENT_ENV=                     # staging ou production en deployment, vide en local
 STRIPE_SECRET_KEY=sk_test_...        # voir section Paiements Stripe
 STRIPE_WEBHOOK_SECRET=whsec_...      # voir section Paiements Stripe
 FILE_ENCRYPTION_KEY=                 # openssl rand -hex 32
@@ -229,9 +241,13 @@ Le backend utilise séparément `PUBLIC_API_URL` (par exemple
 `https://api.sailingloc.fr`, sans chemin) pour construire les URL des photos et
 avatars qu'il sert sous `/uploads`. Cette valeur est obligatoire en
 staging/production et ne doit jamais être déduite de l'en-tête `Host`.
-Dans Railway, configurez le service frontend avec le root directory
-`/frontend`, le fichier de configuration `/frontend/railway.json`, et cette
-variable dans le service avant le premier déploiement. Les variables publiques
+Dans Railway, le root directory du service frontend doit rester `/` (racine du
+dépôt) : ne le remplacez pas par `/frontend`. Sélectionnez le fichier de
+configuration `/frontend/railway.json` et
+conservez le builder Dockerfile configuré par ce fichier. Le chemin explicite
+`frontend/Dockerfile` permet à Railway de retrouver le Dockerfile dans ce
+contexte racine. Définissez cette variable dans le service avant le premier
+déploiement. Les variables publiques
 `VITE_MATOMO_URL` et `VITE_STRIPE_PUBLISHABLE_KEY` doivent également être
 définies avant le build si ces intégrations sont activées.
 

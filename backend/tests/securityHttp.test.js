@@ -199,12 +199,22 @@ describe('deployment container boundaries', () => {
     );
 
     expect(railway.build.builder).toBe('DOCKERFILE');
-    expect(railway.build.dockerfilePath).toBe('Dockerfile');
+    expect(railway.build.dockerfilePath).toBe('frontend/Dockerfile');
     expect(railway.deploy.startCommand).toBeUndefined();
     expect(dockerfile).toContain('ARG VITE_API_BASE_URL');
     expect(dockerfile).toContain('VITE_API_BASE_URL=$VITE_API_BASE_URL');
-    expect(dockerfile).toContain('/app/.generated/default.conf');
+    expect(dockerfile).toContain('WORKDIR /app/frontend');
+    expect(dockerfile).toContain('COPY frontend/package*.json ./');
+    expect(dockerfile).toContain('RUN npm run build');
+    expect(dockerfile).toContain('/app/frontend/.generated/default.conf');
     expect(dockerfile).not.toContain('COPY nginx.conf /etc/nginx/conf.d/default.conf');
+
+    for (const composePath of ['../../docker-compose.yml', '../../docker-compose.staging.yml']) {
+      const compose = fs.readFileSync(new URL(composePath, import.meta.url), 'utf8');
+      expect(compose).toMatch(
+        /frontend:\s+build:\s+(?:#.*\r?\n\s+)*context: \.\s+dockerfile: frontend\/Dockerfile/s
+      );
+    }
   });
 
   it('keeps production and staging backend ports on loopback only', () => {

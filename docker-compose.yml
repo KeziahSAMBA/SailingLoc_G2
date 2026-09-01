@@ -38,6 +38,7 @@ services:
       - no-new-privileges:true
     environment:
       NODE_ENV: production
+      DEPLOYMENT_ENV: production
       PORT: 4000
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
@@ -91,8 +92,11 @@ services:
   # Frontend React App
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      # Keep local production builds identical to Railway's repository-root
+      # context, so COPY paths and the generated Nginx policy are exercised in
+      # the same way before deployment.
+      context: .
+      dockerfile: frontend/Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:?VITE_API_BASE_URL must be set to the public HTTPS API URL}
         VITE_MATOMO_URL: ${VITE_MATOMO_URL:-}
