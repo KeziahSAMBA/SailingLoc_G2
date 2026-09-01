@@ -231,13 +231,14 @@ describe('ordre des protections du serveur', () => {
     const limiterPosition = source.indexOf("app.use('/api', apiRateLimiter)");
     const webhookPosition = source.indexOf("app.post('/api/webhooks/stripe'");
     const parserPosition = source.indexOf('app.use(cookieParser())');
-    const csrfPosition = source.indexOf('createCsrfProtection({ environment: NODE_ENV');
+    const csrfPosition = source.indexOf("app.use('/api', csrfProtection)");
 
     expect(limiterPosition).toBeGreaterThan(-1);
     expect(webhookPosition).toBeGreaterThan(limiterPosition);
     expect(csrfPosition).toBeGreaterThan(parserPosition);
     expect(source).toContain("'X-CSRF-Token'");
     expect(source).toContain('allowedOrigins: corsOrigins');
+    expect(source).toContain('configureCsrfProtection({ environment: NODE_ENV');
   });
 
   it('limite le rejeu Axios au code de transition CSRF et à une seule tentative', () => {

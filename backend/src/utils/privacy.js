@@ -204,10 +204,17 @@ export function serializeSanitizedLog(value) {
 export function logSanitizedError(label, error, level = 'error') {
   const safeLabel = sanitizeLogText(label, 100) || 'error';
   const payload = redactSensitive(error, { maxDepth: 4, maxEntries: 40 });
-  const writer = level === 'warn' ? console.warn : console.error;
   // JSON.stringify may preserve U+2028/U+2029 and object keys are not covered
   // by the recursive value sanitizer. Sanitize the complete line immediately
   // before handing it to the writer so one diagnostic can never forge records.
+  // JSON.stringify is also applied to the label before restoring the historic
+  // `[label] payload` format. The serialized value is the only label fragment
+  // interpolated into the record, so static analysis can verify the barrier.
+  const safeLabelJson = JSON.stringify(safeLabel);
+  const safeLabelText = safeLabelJson.slice(1, -1);
   const safeJson = serializeSanitizedLog({ error: payload });
-  writer(`[${safeLabel}] ${safeJson}`);
+  const safeLine =
+    sanitizeLogText(`[${safeLabelText}] ${safeJson}`, MAX_STRING_LENGTH * 5) || 'null';
+  if (level === 'warn') console.warn(safeLine);
+  else console.error(safeLine);
 }

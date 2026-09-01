@@ -19,7 +19,7 @@ import { safeErrorResponses, secureErrorHandler } from './middlewares/errorSecur
 import { logSanitizedError } from './utils/privacy.js';
 import { allowedCorsOrigins, normalizeRequestOrigin } from './utils/corsSecurity.js';
 import { securityHeaders } from './middlewares/securityHeaders.js';
-import { createCsrfProtection } from './middlewares/csrfMiddleware.js';
+import { configureCsrfProtection, csrfProtection } from './middlewares/csrfMiddleware.js';
 
 const { PORT, APP_URL, CORS_ORIGINS, NODE_ENV } = initConfig();
 const corsOrigins = allowedCorsOrigins({
@@ -94,7 +94,8 @@ app.use(cookieParser());
 // Le cookie CSRF doit être lu après cookieParser et avant tous les routeurs ;
 // le webhook déjà déclaré ci-dessus ne porte pas de cookie de session et reste
 // donc compatible avec la vérification de signature Stripe.
-app.use('/api', createCsrfProtection({ environment: NODE_ENV, allowedOrigins: corsOrigins }));
+configureCsrfProtection({ environment: NODE_ENV, allowedOrigins: corsOrigins });
+app.use('/api', csrfProtection);
 // Seuls les avatars et photos de bateaux sont publics.  Les preuves de litige
 // et documents résident sous storage/ et ne sont jamais exposés par le serveur
 // statique ; ils passent par des routes protégées qui déchiffrent à la volée.

@@ -10,6 +10,20 @@ const CSRF_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const CSRF_COOKIE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Le serveur principal utilise le middleware exporté ci-dessous directement.
+// La fabrique reste disponible pour les applications/tests qui ont besoin de
+// leur propre configuration sans partager l'état du serveur principal.
+let runtimeEnvironment = getRuntimeEnvironment();
+let runtimeAllowedOrigins = new Set();
+
+export function configureCsrfProtection({
+  environment = getRuntimeEnvironment(),
+  allowedOrigins = new Set(),
+} = {}) {
+  runtimeEnvironment = environment;
+  runtimeAllowedOrigins = new Set(allowedOrigins);
+}
+
 function isProductionLike(environment) {
   return ['production', 'staging'].includes(
     String(environment || getRuntimeEnvironment())
@@ -53,6 +67,49 @@ export function csrfTokensMatch(expected, received) {
     Buffer.from(expectedToken, 'utf8'),
     Buffer.from(receivedToken, 'utf8')
   );
+}
+
+/**
+ * Middleware CSRF de l'application Express principale.
+ *
+ * Cette fonction est volontairement exportée et passée directement à
+ * `app.use`: les outils d'analyse peuvent ainsi vérifier le lien entre la
+ * lecture du cookie, son renouvellement et la validation du jeton. Le
+ * comportement est identique à celui de la fabrique située plus bas.
+ */
+export function csrfProtection(req, res, next) {
+  const incomingToken = safeToken(req.cookies?.[CSRF_COOKIE_NAME]);
+  const csrfToken = incomingToken || createCsrfToken();
+  const requestOrigin = normalizeRequestOrigin(req.get('origin'));
+  const exposeToken = Boolean(requestOrigin && runtimeAllowedOrigins.has(requestOrigin));
+
+  if (!incomingToken) {
+    res.cookie(CSRF_COOKIE_NAME, csrfToken, csrfCookieOptions(runtimeEnvironment));
+  }
+  if (exposeToken) {
+    res.setHeader(CSRF_HEADER_NAME, csrfToken);
+  }
+
+  if (SAFE_METHODS.has(req.method) || !req.cookies?.sl_refresh) {
+    return next();
+  }
+
+  const submittedToken = req.get(CSRF_HEADER_NAME);
+  if (!incomingToken || !submittedToken) {
+    return res.status(403).json({
+      message: 'Jeton CSRF requis.',
+      code: CSRF_TOKEN_REQUIRED_CODE,
+    });
+  }
+
+  if (!csrfTokensMatch(csrfToken, submittedToken)) {
+    return res.status(403).json({
+      message: 'Jeton CSRF invalide.',
+      code: CSRF_TOKEN_INVALID_CODE,
+    });
+  }
+
+  return next();
 }
 
 /**
