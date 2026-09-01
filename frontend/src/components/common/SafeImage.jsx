@@ -4,11 +4,10 @@ import { normalizeImageSource, selectImageSource } from '../../utils/imageSource
 const DEFAULT_BOAT_FALLBACK = '⛵';
 
 /**
- * Render an API-provided image without ever emitting an empty src attribute.
- * A failed primary source is tried once against fallbackSrc. The fallback
- * image deliberately has no onError handler, so a broken fallback cannot loop.
- * When no fallback source is available, fallback is rendered as the existing
- * React placeholder (or null for media such as ports without a photo).
+ * Render an API-provided image without ever emitting an empty or unsafe src
+ * attribute. A failed primary source is tried once against fallbackSrc. The
+ * fallback image deliberately has no onError handler, so a broken fallback
+ * cannot loop.
  */
 export default function SafeImage({
   src,
@@ -19,21 +18,33 @@ export default function SafeImage({
   fallbackSrc = null,
   fallbackClassName,
   onError,
-  ...imageProps
+  loading,
+  decoding,
+  width,
+  height,
+  fetchPriority,
+  fetchpriority,
+  draggable,
 }) {
   const source = normalizeImageSource(src);
   const fallbackSource = normalizeImageSource(fallbackSrc);
   const [failedSource, setFailedSource] = useState(null);
   const selected = selectImageSource({ source, fallbackSource, failedSource });
+  const priority = fetchPriority ?? fetchpriority;
 
   if (selected.kind === 'primary') {
     return (
       <img
-        {...imageProps}
         src={selected.src}
         alt={alt}
         className={className}
         style={style}
+        loading={loading}
+        decoding={decoding}
+        width={width}
+        height={height}
+        fetchPriority={priority}
+        draggable={draggable}
         onError={(event) => {
           setFailedSource(selected.src);
           onError?.(event);
@@ -43,7 +54,20 @@ export default function SafeImage({
   }
 
   if (selected.kind === 'fallback') {
-    return <img {...imageProps} src={selected.src} alt={alt} className={className} style={style} />;
+    return (
+      <img
+        src={selected.src}
+        alt={alt}
+        className={className}
+        style={style}
+        loading={loading}
+        decoding={decoding}
+        width={width}
+        height={height}
+        fetchPriority={priority}
+        draggable={draggable}
+      />
+    );
   }
 
   if (fallback === null || fallback === false) return null;
