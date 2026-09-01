@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { normalizeImageSource, selectImageSource } from '../../utils/imageSource.js';
+import {
+  normalizeImageSource,
+  selectImageSource,
+  toRenderableImageSource,
+} from '../../utils/imageSource.js';
 
 const DEFAULT_BOAT_FALLBACK = '⛵';
 
@@ -31,11 +35,12 @@ export default function SafeImage({
   const [failedSource, setFailedSource] = useState(null);
   const selected = selectImageSource({ source, fallbackSource, failedSource });
   const priority = fetchPriority ?? fetchpriority;
+  const renderableSource = toRenderableImageSource(selected.src);
 
-  if (selected.kind === 'primary') {
+  if (selected.kind === 'primary' && renderableSource) {
     return (
       <img
-        src={selected.src}
+        src={renderableSource}
         alt={alt}
         className={className}
         style={style}
@@ -53,10 +58,10 @@ export default function SafeImage({
     );
   }
 
-  if (selected.kind === 'fallback') {
+  if (selected.kind === 'fallback' && renderableSource) {
     return (
       <img
-        src={selected.src}
+        src={renderableSource}
         alt={alt}
         className={className}
         style={style}

@@ -23,6 +23,8 @@ const guestHeroText = await page
   .locator('#hero')
   .innerText()
   .catch(() => '(no #hero)');
+log('guest search bar present', guestHasSearchBar);
+log('guest hero text captured', guestHeroText);
 log('guest #hero present', await page.locator('#hero').count());
 await page.screenshot({ path: 'verify_guest_home.png' });
 

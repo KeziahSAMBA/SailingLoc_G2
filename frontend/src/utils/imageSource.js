@@ -21,6 +21,7 @@ const GENERATED_AVATAR_SVG = new RegExp(
     ')</text></svg>$',
   'u'
 );
+const ENCODED_PERCENT_ESCAPE = /%25([0-9a-f]{2})/giu;
 
 function hasControlCharacters(value) {
   for (const character of String(value)) {
@@ -261,6 +262,26 @@ export function normalizeImageSource(value, options = {}) {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return isAllowedImageSource(normalized, options) ? normalized : null;
+}
+
+/**
+ * Prepare an already validated source for a URL-valued DOM attribute.
+ *
+ * encodeURI is intentionally applied at the last boundary before React
+ * renders the value. It is a sanitizer understood by CodeQL and keeps any
+ * remaining URL metacharacters from being reinterpreted by the DOM. Existing
+ * percent escapes are restored afterwards because encodeURI would otherwise
+ * turn `%20` into `%2520` (and similarly for generated avatar SVGs).
+ */
+export function toRenderableImageSource(value, options = {}) {
+  const normalized = normalizeImageSource(value, options);
+  if (normalized === null) return null;
+
+  try {
+    return encodeURI(normalized).replace(ENCODED_PERCENT_ESCAPE, '%$1');
+  } catch {
+    return null;
+  }
 }
 
 export function isSafeImageSource(value, options = {}) {

@@ -7,6 +7,7 @@ import {
   isSafeImageSource,
   normalizeImageSource,
   selectImageSource,
+  toRenderableImageSource,
 } from '../../frontend/src/utils/imageSource.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -150,6 +151,20 @@ describe('normalisation des sources d’images frontend', () => {
     expect(normalizeImageSource(maliciousSvg)).toBeNull();
   });
 
+  it('prépare la source pour le DOM sans modifier les URL déjà encodées', () => {
+    const generatedAvatar = nameToAvatarUrl('AB');
+    for (const safe of [
+      '/uploads/boats/Le%20Mistral.jpg',
+      'https://images.example/boats/Le%20Mistral.jpg?preview=1#cover',
+      generatedAvatar,
+    ]) {
+      expect(toRenderableImageSource(safe)).toBe(safe);
+    }
+
+    expect(toRenderableImageSource('')).toBeNull();
+    expect(toRenderableImageSource('javascript:alert(1)')).toBeNull();
+  });
+
   it('sélectionne un fallback sans réessayer une source déjà défaillante', () => {
     expect(
       selectImageSource({ source: '', fallbackSource: 'https://cdn.example/avatar.svg' })
@@ -196,5 +211,7 @@ describe('normalisation des sources d’images frontend', () => {
     );
     expect(safeImage).not.toContain('...imageProps');
     expect(safeImage).not.toContain('dangerouslySetInnerHTML');
+    expect(safeImage).toContain('toRenderableImageSource');
+    expect(safeImage).not.toMatch(/src=\{selected\.src\}/u);
   });
 });
