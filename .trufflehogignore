@@ -12,3 +12,10 @@ fde6afe984cb3f422bb94568606db94c648ef36e:Postgres:docker-compose.dev.yml:35
 fde6afe984cb3f422bb94568606db94c648ef36e:Postgres:docker-compose.yml:36
 e89d1516c364525b2ce4b1fe93583d85d2bfefd0:URI:backend/tests/securityHttp.test.js:148
 e89d1516c364525b2ce4b1fe93583d85d2bfefd0:URI:backend/tests/securitySecrets.test.js:74
+# Fixtures synthétiques des tests de validation des sources d’image et des
+# URL du mode spectateur ; emplacements exacts uniquement, sans valeur secrète.
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:backend/tests/frontendImageSource.test.js:41
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:backend/tests/frontendImageSource.test.js:45
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:backend/tests/frontendImageSource.test.js:82
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:backend/tests/frontendImageSource.test.js:86
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:frontend/tests/spectatorUrl.test.js:18
