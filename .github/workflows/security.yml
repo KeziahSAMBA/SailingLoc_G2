@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20.19.4'
+  NODE_VERSION: '22.23.2'
   # Official Trivy v0.57.1 linux/amd64 manifest, pinned by immutable digest.
   TRIVY_IMAGE: docker.io/aquasec/trivy@sha256:1e38a70ab0eb572048713e88214aa27e8639747a60bcda4774fc9a31e219c65f
   # Official TruffleHog v3.97.1 linux/amd64 image, pinned by immutable digest.
