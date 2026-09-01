@@ -18,7 +18,7 @@ import {
 
 const VALID_TOKEN = 'a'.repeat(64);
 const FRONTEND_ORIGIN = 'http://localhost:5173';
-const COOKIE_SIGNING_SECRET = deriveCsrfCookieSigningSecret(crypto.randomBytes(32).toString('hex'));
+const COOKIE_SIGNING_KEY = deriveCsrfCookieSigningSecret(crypto.randomBytes(32).toString('hex'));
 
 function cookiePair(response, name = 'sl_csrf') {
   return response.headers['set-cookie']
@@ -28,7 +28,7 @@ function cookiePair(response, name = 'sl_csrf') {
 
 function buildCsrfApp({ allowedOrigins = new Set([FRONTEND_ORIGIN]) } = {}) {
   const app = express();
-  app.use(cookieParser(COOKIE_SIGNING_SECRET));
+  app.use(cookieParser(COOKIE_SIGNING_KEY));
   app.use('/api', createCsrfProtection({ environment: 'development' }));
   app.use('/api', createCsrfTokenExposure({ allowedOrigins }));
   app.use('/api', createCsrfErrorHandler({ allowedOrigins }));
@@ -264,7 +264,7 @@ describe('ordre des protections du serveur', () => {
     const source = fs.readFileSync(new URL('../src/server.js', import.meta.url), 'utf8');
     const limiterPosition = source.indexOf("app.use('/api', apiRateLimiter)");
     const webhookPosition = source.indexOf("app.post('/api/webhooks/stripe'");
-    const parserPosition = source.indexOf('app.use(cookieParser(csrfCookieSigningSecret))');
+    const parserPosition = source.indexOf('app.use(cookieParser(csrfCookieKey))');
     const csrfPosition = source.indexOf("app.use('/api', csrfProtection)");
 
     expect(limiterPosition).toBeGreaterThan(-1);
