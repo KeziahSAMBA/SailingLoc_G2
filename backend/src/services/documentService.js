@@ -2,7 +2,6 @@ import {
   inspectUploadedFile,
   mimeTypeForFileName,
   resolveExistingPrivateFile,
-  resolveStoredFilePath,
   safeDisplayName,
   storagePath,
 } from '../utils/fileSecurity.js';
@@ -100,7 +99,7 @@ export async function uploadDocument(requester, type, file) {
             file.safeOriginalName || safeDisplayName(file.originalname, file.detectedMimeType),
         }
       : await inspectUploadedFile(file, 'document');
-    const safePath = resolveStoredFilePath(file.path, 'document');
+    const safePath = await resolveExistingPrivateFile(file.path, 'document', { lexical: true });
     await encryptFileInPlace(safePath);
   } catch (err) {
     await removeFileQuiet(file.path);

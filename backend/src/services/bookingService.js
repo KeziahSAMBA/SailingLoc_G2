@@ -4,7 +4,11 @@ import { DOCUMENT_TYPES } from './documentService.js';
 import * as stripeConfig from '../config/stripe.js';
 import { sendBookingCancelledByLocataireEmail } from './emailService.js';
 import { encryptFileInPlace } from '../utils/fileCrypto.js';
-import { inspectUploadedFile, resolveStoredFilePath, storagePath } from '../utils/fileSecurity.js';
+import {
+  inspectUploadedFile,
+  resolveExistingPrivateFile,
+  storagePath,
+} from '../utils/fileSecurity.js';
 import { boundedString, parseDateOnly, requirePositiveId } from '../utils/inputSecurity.js';
 import { logSanitizedError } from '../utils/privacy.js';
 import {
@@ -1251,7 +1255,7 @@ export async function payBooking(id_user, id_booking) {
       );
       throw bad('Cette réservation ne peut plus être payée.', 409);
     }
-    if (!payment || payment.status !== 'pending') {
+    if (payment.status !== 'pending') {
       await compensateStripeIntent(
         transaction_ref,
         reservation.idempotency_key || reservation.payment.idempotency_key
@@ -1402,7 +1406,7 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
         } else {
           if (stripe) providerAttempted = true;
           if ([PAYMENT_STATES.CAPTURING, PAYMENT_STATES.RELEASING].includes(p.payment_state)) {
-            throw bad('Le paiement est dÃ©jÃ  en cours de traitement.', 409);
+            throw bad('Le paiement est déjà en cours de traitement.', 409);
           }
           if (stripe && !isStripeRef(p.transaction_ref)) {
             throw bad('Le paiement capturé ne possède pas de référence Stripe.', 409);
@@ -1471,13 +1475,10 @@ export async function cancelOwnBooking(id_user, id_booking, reason) {
         }
       }
     }
-    throw Object.assign(
-      new Error('Le paiement Stripe doit Ãªtre rÃ©conciliÃ© avant la dÃ©cision.'),
-      {
-        status: 503,
-        cause: error,
-      }
-    );
+    throw Object.assign(new Error('Le paiement Stripe doit être réconcilié avant la décision.'), {
+      status: 503,
+      cause: error,
+    });
   }
 
   // Notifications non bloquantes : le propriétaire apprend que le créneau se
@@ -1582,7 +1583,7 @@ async function preparePrivateDisputePhoto(file) {
   const metadata = file.detectedMimeType
     ? { mimeType: file.detectedMimeType }
     : await inspectUploadedFile(file, 'dispute');
-  const absolutePath = resolveStoredFilePath(file.path, 'dispute');
+  const absolutePath = await resolveExistingPrivateFile(file.path, 'dispute', { lexical: true });
   await encryptFileInPlace(absolutePath);
   return { storedPath: storagePath(absolutePath), mimeType: metadata.mimeType };
 }
@@ -1630,8 +1631,9 @@ export async function reportDispute({ id_user, id_booking, reason, asOwner = fal
     await Promise.all(
       files.map((file) => {
         try {
-          const filePath = resolveStoredFilePath(file.path, 'dispute');
-          return fs.promises.unlink(filePath).catch(() => {});
+          return resolveExistingPrivateFile(file.path, 'dispute', { lexical: true })
+            .then((filePath) => fs.promises.unlink(filePath))
+            .catch(() => {});
         } catch {
           return Promise.resolve();
         }
@@ -1663,7 +1665,11 @@ export async function reportDispute({ id_user, id_booking, reason, asOwner = fal
     });
   } catch (err) {
     await Promise.all(
-      preparedFiles.map((file) => fs.promises.unlink(file.storedPath).catch(() => {}))
+      preparedFiles.map((file) =>
+        resolveExistingPrivateFile(file.storedPath, 'dispute', { lexical: true })
+          .then((filePath) => fs.promises.unlink(filePath))
+          .catch(() => {})
+      )
     );
     if (isUniqueViolation(err)) {
       throw bad('Un litige est déjà en cours pour cette réservation.', 409);

@@ -4,10 +4,13 @@ import path from 'path';
 const mockUnlink = jest.fn();
 const mockRealpath = jest.fn();
 const mockStat = jest.fn();
+const mockLstat = jest.fn();
 
 jest.unstable_mockModule('fs', () => ({
-  default: { promises: { unlink: mockUnlink, realpath: mockRealpath, stat: mockStat } },
-  promises: { unlink: mockUnlink, realpath: mockRealpath, stat: mockStat },
+  default: {
+    promises: { unlink: mockUnlink, realpath: mockRealpath, stat: mockStat, lstat: mockLstat },
+  },
+  promises: { unlink: mockUnlink, realpath: mockRealpath, stat: mockStat, lstat: mockLstat },
 }));
 
 const db = {
@@ -40,6 +43,7 @@ beforeEach(() => {
   mockUnlink.mockResolvedValue(undefined);
   mockRealpath.mockImplementation(async (value) => value);
   mockStat.mockResolvedValue({ isFile: () => true });
+  mockLstat.mockResolvedValue({ isFile: () => true, isSymbolicLink: () => false });
   db.$transaction.mockImplementation((fn) => fn(db));
   db.user.findUnique.mockResolvedValue({ id_user: 7, role: 'locataire' });
   db.user.findMany.mockResolvedValue([]);

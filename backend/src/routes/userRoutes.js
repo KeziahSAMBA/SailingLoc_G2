@@ -8,6 +8,7 @@ import {
   generatedFileName,
   inspectUploadedFile,
   privateDirectory,
+  resolveExistingUploadedFile,
 } from '../utils/fileSecurity.js';
 import {
   register,
@@ -76,6 +77,17 @@ const avatarStorage = multer.diskStorage({
 });
 
 const AVATAR_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+
+async function removeUploadedFile(file, kind) {
+  if (!file) return;
+  try {
+    const safePath = await resolveExistingUploadedFile(file, kind);
+    await fs.promises.unlink(safePath);
+  } catch {
+    // Best-effort cleanup must not change the response contract.
+  }
+}
+
 const avatarUpload = multer({
   storage: avatarStorage,
   limits: {
@@ -115,10 +127,9 @@ function uploadAvatar(req, res, next) {
         : err.status || 500;
       const message =
         err.code === 'LIMIT_FILE_SIZE' ? 'Image trop volumineuse (max 3 Mo).' : err.message;
-      return fs.promises
-        .unlink(req.file?.path)
-        .catch(() => {})
-        .finally(() => sendError(res, Object.assign(err, { status }), { message }));
+      return removeUploadedFile(req.file, 'avatar').finally(() =>
+        sendError(res, Object.assign(err, { status }), { message })
+      );
     }
     next();
   });
@@ -132,7 +143,7 @@ async function validateAvatarFile(req, res, next) {
     req.file.safeOriginalName = metadata.safeName;
     return next();
   } catch (err) {
-    await fs.promises.unlink(req.file.path).catch(() => {});
+    await removeUploadedFile(req.file, 'avatar');
     return sendError(res, err.status ? err : Object.assign(err, { status: 400 }));
   }
 }
@@ -189,9 +200,9 @@ function uploadDisputePhotos(req, res, next) {
             ? '5 photos maximum.'
             : err.message;
       const files = req.files || [];
-      return Promise.all(
-        files.map((file) => fs.promises.unlink(file.path).catch(() => {}))
-      ).finally(() => sendError(res, Object.assign(err, { status }), { message }));
+      return Promise.all(files.map((file) => removeUploadedFile(file, 'dispute'))).finally(() =>
+        sendError(res, Object.assign(err, { status }), { message })
+      );
     }
     next();
   });
@@ -207,7 +218,7 @@ async function validateDisputePhotos(req, res, next) {
     }
     return next();
   } catch (err) {
-    await Promise.all(files.map((file) => fs.promises.unlink(file.path).catch(() => {})));
+    await Promise.all(files.map((file) => removeUploadedFile(file, 'dispute')));
     return sendError(res, err.status ? err : Object.assign(err, { status: 400 }));
   }
 }

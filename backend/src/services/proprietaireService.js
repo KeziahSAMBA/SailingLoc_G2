@@ -6,7 +6,7 @@ import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js'
 import { encryptFileInPlace } from '../utils/fileCrypto.js';
 import {
   inspectUploadedFile,
-  resolveStoredFilePath,
+  resolveExistingPrivateFile,
   safeDisplayName,
   storagePath,
 } from '../utils/fileSecurity.js';
@@ -297,7 +297,7 @@ async function preparePrivateDocument(file) {
           file.safeOriginalName || safeDisplayName(file.originalname, file.detectedMimeType),
       }
     : await inspectUploadedFile(file, 'document');
-  const absolutePath = resolveStoredFilePath(file.path, 'document');
+  const absolutePath = await resolveExistingPrivateFile(file.path, 'document', { lexical: true });
   await encryptFileInPlace(absolutePath);
   return {
     ...file,

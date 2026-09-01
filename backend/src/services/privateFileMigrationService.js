@@ -127,22 +127,55 @@ async function lstatIfPresent(filePath) {
   }
 }
 
+const MAX_MIGRATION_FILE_SIZE = 5 * 1024 * 1024;
+
 async function readExisting(filePath) {
-  const stat = await fs.promises.stat(filePath);
-  if (!stat.isFile()) throw new Error('Le chemin ne désigne pas un fichier.');
-  // Upload validation caps these formats at 5 MiB. Refuse unexpectedly huge
-  // legacy objects instead of allowing an operator command to become a memory
-  // exhaustion primitive.
-  if (stat.size > 5 * 1024 * 1024) throw new Error('Fichier privé trop volumineux.');
-  return fs.promises.readFile(filePath);
+  let handle;
+  try {
+    const flags =
+      fs.constants.O_RDONLY |
+      (typeof fs.constants.O_NOFOLLOW === 'number' ? fs.constants.O_NOFOLLOW : 0);
+    handle = await fs.promises.open(filePath, flags);
+    const stat = await handle.stat();
+    if (!stat.isFile()) throw new Error('Le chemin ne désigne pas un fichier.');
+    // Upload validation caps these formats at 5 MiB. Refuse unexpectedly huge
+    // legacy objects instead of allowing an operator command to become a memory
+    // exhaustion primitive.
+    if (stat.size > MAX_MIGRATION_FILE_SIZE) throw new Error('Fichier privé trop volumineux.');
+
+    const bytes = Buffer.alloc(stat.size);
+    let offset = 0;
+    while (offset < bytes.length) {
+      const { bytesRead } = await handle.read(bytes, offset, bytes.length - offset, offset);
+      if (bytesRead === 0) break;
+      offset += bytesRead;
+    }
+    return offset === bytes.length ? bytes : bytes.subarray(0, offset);
+  } finally {
+    if (handle) await handle.close().catch(() => {});
+  }
 }
 
-async function writeTarget(target, bytes) {
+async function assertSafeTargetRoot(kind, target) {
+  const root = privateDirectory(kind);
+  if (!isWithin(root, target)) throw new Error('Destination de migration hors stockage.');
+  await fs.promises.mkdir(root, { recursive: true, mode: 0o700 });
+  const rootStat = await fs.promises.lstat(root);
+  if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) {
+    throw new Error('Racine de migration symbolique ou invalide.');
+  }
+  const realRoot = await fs.promises.realpath(root);
+  if (path.resolve(realRoot) !== path.resolve(root)) {
+    throw new Error('Racine de migration redirigée.');
+  }
+}
+
+async function writeTarget(kind, target, bytes) {
+  await assertSafeTargetRoot(kind, target);
   const existing = await lstatIfPresent(target);
   if (existing?.isSymbolicLink()) throw new Error('Destination de migration symbolique.');
   if (existing && !existing.isFile()) throw new Error('Destination de migration invalide.');
 
-  await fs.promises.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
   const tmp = `${target}.tmp-${crypto.randomBytes(8).toString('hex')}`;
   try {
     await fs.promises.writeFile(tmp, bytes, { mode: 0o600, flag: 'wx' });
@@ -152,7 +185,8 @@ async function writeTarget(target, bytes) {
   }
 }
 
-async function ensureEncryptedTarget(target, sourceBytes, sourceWasEncrypted) {
+async function ensureEncryptedTarget(kind, target, sourceBytes, sourceWasEncrypted) {
+  await assertSafeTargetRoot(kind, target);
   const existing = await lstatIfPresent(target);
   if (existing?.isSymbolicLink()) throw new Error('Destination de migration symbolique.');
 
@@ -160,7 +194,14 @@ async function ensureEncryptedTarget(target, sourceBytes, sourceWasEncrypted) {
     if (!existing.isFile()) throw new Error('Destination de migration invalide.');
     const targetBytes = await readExisting(target);
     if (!isEncrypted(targetBytes)) {
-      await writeTarget(target, encryptBuffer(sourceBytes));
+      // A source already protected by AES-GCM must be copied byte-for-byte.
+      // Encrypting its ciphertext would make the migrated file decrypt to the
+      // former ciphertext instead of the original document.
+      await writeTarget(
+        kind,
+        target,
+        sourceWasEncrypted ? sourceBytes : encryptBuffer(sourceBytes)
+      );
       return;
     }
     // A deterministic destination makes retries safe. If an operator points
@@ -179,7 +220,7 @@ async function ensureEncryptedTarget(target, sourceBytes, sourceWasEncrypted) {
     return;
   }
 
-  await writeTarget(target, sourceWasEncrypted ? sourceBytes : encryptBuffer(sourceBytes));
+  await writeTarget(kind, target, sourceWasEncrypted ? sourceBytes : encryptBuffer(sourceBytes));
 }
 
 async function updateReference(kind, row, storedPath) {
@@ -237,7 +278,7 @@ async function migrateRow(kind, row, { dryRun, logger, result }) {
   const target = destinationPath(kind, lexicalPath);
   let existingPath = null;
   try {
-    existingPath = await resolveExistingPrivateFile(rawValue, kind);
+    existingPath = await resolveExistingPrivateFile(rawValue, kind, { lexical: true });
   } catch {
     // A prior run can have removed the legacy source after writing the target
     // but before updating the row. A deterministic destination makes that
@@ -275,13 +316,13 @@ async function migrateRow(kind, row, { dryRun, logger, result }) {
     return;
   }
 
-  await ensureEncryptedTarget(target, sourceBytes, sourceEncrypted);
+  await ensureEncryptedTarget(kind, target, sourceBytes, sourceEncrypted);
 
   // Remove the cleartext/legacy source before changing the DB reference. If
   // the process dies between these steps, the deterministic target above lets
   // the next invocation repair the row without serving cleartext.
   if (path.resolve(existingPath) !== path.resolve(target)) {
-    const safeSource = await resolveExistingPrivateFile(existingPath, kind);
+    const safeSource = await resolveExistingPrivateFile(existingPath, kind, { lexical: true });
     await fs.promises.unlink(safeSource);
   }
 
@@ -311,23 +352,30 @@ export async function scanPrivateFiles({ limit = PRIVATE_FILE_MIGRATION_BATCH } 
     if (!raw) continue;
     let source;
     try {
-      source = await resolveExistingPrivateFile(raw, item.kind);
+      source = await resolveExistingPrivateFile(raw, item.kind, { lexical: true });
     } catch {
       // Include a recoverable interrupted row when its deterministic target is
       // present; migrateRow will distinguish that from a genuinely broken row.
       try {
         const lexical = resolveStoredFilePath(raw, item.kind);
         const target = destinationPath(item.kind, lexical);
-        const stat = await lstatIfPresent(target);
-        if (stat?.isFile() && !stat.isSymbolicLink()) targets.push(item);
+        await lstatIfPresent(target);
       } catch {
-        // Invalid paths are reported by the actual migration run, not exposed
-        // with their values in this scan result.
+        // migrateRow distinguishes invalid paths from interrupted migrations.
       }
+      // Keep invalid, symbolic and inaccessible rows in the bounded batch so
+      // the run reports a failure without exposing their path in its result.
+      targets.push(item);
       continue;
     }
-    const bytes = await readExisting(source);
-    if (!isEncrypted(bytes) || !isCurrentPath(item.kind, source)) targets.push(item);
+    try {
+      const bytes = await readExisting(source);
+      if (!isEncrypted(bytes) || !isCurrentPath(item.kind, source)) targets.push(item);
+    } catch {
+      // A too-large file or a symlink rejected by O_NOFOLLOW is still a
+      // migration target: migrateRow records it as failed and continues.
+      targets.push(item);
+    }
   }
   return targets;
 }

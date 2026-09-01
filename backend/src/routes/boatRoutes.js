@@ -11,6 +11,7 @@ import {
   generatedFileName,
   inspectUploadedFile,
   privateDirectory,
+  resolveExistingUploadedFile,
 } from '../utils/fileSecurity.js';
 import {
   uploadBoat,
@@ -76,7 +77,17 @@ const upload = multer({
 // Exécute multer et transforme ses erreurs en réponses JSON propres.
 async function removeUploadedFiles(req) {
   const files = Object.values(req.files || {}).flat();
-  await Promise.all(files.map((file) => fs.promises.unlink(file.path).catch(() => {})));
+  await Promise.all(
+    files.map(async (file) => {
+      const kind = file.fieldname === 'acte_francisation' ? 'document' : 'image';
+      try {
+        const safePath = await resolveExistingUploadedFile(file, kind);
+        await fs.promises.unlink(safePath);
+      } catch {
+        // Best-effort cleanup must not change the response contract.
+      }
+    })
+  );
 }
 
 async function validateBoatFiles(req, res, next) {

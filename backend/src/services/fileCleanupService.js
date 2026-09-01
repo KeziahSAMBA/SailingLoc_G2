@@ -89,7 +89,7 @@ export async function removeUnreferencedFiles(
 
     try {
       const resolveExisting = await existingResolverFor(isPublic);
-      const safePath = await resolveExisting(value, kind);
+      const safePath = await resolveExisting(value, kind, { lexical: true });
       await fs.promises.unlink(safePath);
       count += 1;
       for (const identity of identities) deletedIdentities.add(identity);

@@ -10,6 +10,7 @@ import {
   generatedFileName,
   inspectUploadedFile,
   privateDirectory,
+  resolveExistingUploadedFile,
 } from '../utils/fileSecurity.js';
 import {
   listMyDocuments,
@@ -79,7 +80,16 @@ function uploadSingle(req, res, next) {
 async function removeUploadedFiles(req) {
   const files = req.file ? [req.file] : [];
   if (req.files) files.push(...Object.values(req.files).flat());
-  await Promise.all(files.map((file) => fs.promises.unlink(file.path).catch(() => {})));
+  await Promise.all(
+    files.map(async (file) => {
+      try {
+        const safePath = await resolveExistingUploadedFile(file, 'document');
+        await fs.promises.unlink(safePath);
+      } catch {
+        // Best-effort cleanup must not change the response contract.
+      }
+    })
+  );
 }
 
 // A MIME header is user-controlled.  Inspect the bytes after multer has

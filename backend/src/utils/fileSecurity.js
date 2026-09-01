@@ -34,7 +34,14 @@ const IMAGE_KEYS = Object.freeze(['jpeg', 'png', 'webp']);
 
 function allowedKeys(kind) {
   if (kind === 'document') return DOCUMENT_KEYS;
-  if (kind === 'image' || kind === 'avatar' || kind === 'dispute') return IMAGE_KEYS;
+  if (
+    kind === 'image' ||
+    kind === 'boat' ||
+    kind === 'boats' ||
+    kind === 'avatar' ||
+    kind === 'dispute'
+  )
+    return IMAGE_KEYS;
   throw new Error(`Type de fichier inconnu : ${kind}`);
 }
 
@@ -82,9 +89,18 @@ function rootCandidates(kind) {
 }
 
 function publicRootFor(kind) {
-  if (kind === 'boat' || kind === 'boats') return path.join(uploadsRoot(), 'boats');
+  if (kind === 'boat' || kind === 'boats' || kind === 'image')
+    return path.join(uploadsRoot(), 'boats');
   if (kind === 'avatar' || kind === 'avatars') return path.join(uploadsRoot(), 'avatars');
   throw new Error(`Type public inconnu : ${kind}`);
+}
+
+function uploadRootFor(kind) {
+  if (kind === 'document') return documentsRoot();
+  if (kind === 'dispute') return disputesRoot();
+  if (kind === 'boat' || kind === 'boats' || kind === 'image') return publicRootFor('boat');
+  if (kind === 'avatar' || kind === 'avatars') return publicRootFor('avatar');
+  throw new Error(`Type de téléversement inconnu : ${kind}`);
 }
 
 function extensionForKey(key) {
@@ -135,8 +151,13 @@ function badFile(message) {
 
 // Read only the bytes required to identify the supported formats.  Keeping the
 // probe small avoids accepting a large untrusted upload merely to inspect it.
-async function readHeader(filePath) {
-  const handle = await fs.promises.open(filePath, 'r');
+const noFollowReadFlags = () =>
+  fs.constants.O_RDONLY |
+  (typeof fs.constants.O_NOFOLLOW === 'number' ? fs.constants.O_NOFOLLOW : 0);
+
+async function readHeader(file, kind) {
+  const filePath = await resolveExistingUploadedFile(file, kind);
+  const handle = await fs.promises.open(filePath, noFollowReadFlags());
   try {
     const header = Buffer.alloc(16);
     const { bytesRead } = await handle.read(header, 0, header.length, 0);
@@ -225,7 +246,7 @@ export async function inspectUploadedFile(file, kind) {
 
   let header;
   try {
-    header = await readHeader(file.path);
+    header = await readHeader(file, kind);
   } catch {
     throw badFile('Fichier illisible.');
   }
@@ -247,6 +268,93 @@ export async function inspectUploadedFile(file, kind) {
 // in inspectUploadedFile and is therefore mandatory.
 export function acceptsMulterMetadata(file, kind) {
   return Boolean(keyForMetadata(file?.originalname, file?.mimetype, kind));
+}
+
+function invalidUploadPath(message = 'Chemin de fichier téléversé invalide.') {
+  return new Error(message);
+}
+
+function safeUploadName(rawName) {
+  const raw = String(rawName || '').trim();
+  const normalized = raw.replace(/\\/g, '/');
+  if (!normalized || normalized.includes('\0')) throw invalidUploadPath();
+  if (path.posix.isAbsolute(normalized) || path.win32.isAbsolute(raw)) {
+    throw invalidUploadPath();
+  }
+  const name = path.posix.basename(normalized);
+  if (!name || name === '.' || name === '..' || name !== normalized) {
+    throw invalidUploadPath();
+  }
+  return name;
+}
+
+function lexicalUploadPath(file, kind) {
+  const root = path.resolve(uploadRootFor(kind));
+  const isObject = file && typeof file === 'object';
+  const suppliedPath = isObject ? file.path : null;
+  const suppliedName = isObject && file.filename ? file.filename : file;
+
+  let name;
+  if (isObject && !file.filename && suppliedPath) {
+    const rawPath = String(suppliedPath).trim();
+    const normalizedPath = rawPath.replace(/\\/g, '/');
+    if (!normalizedPath || normalizedPath.includes('\0')) throw invalidUploadPath();
+    if (normalizedPath.split('/').includes('..')) throw invalidUploadPath();
+    const pathCandidate = path.resolve(suppliedPath);
+    if (
+      (path.posix.isAbsolute(normalizedPath) || path.win32.isAbsolute(rawPath)) &&
+      !isWithin(root, pathCandidate)
+    ) {
+      throw invalidUploadPath();
+    }
+    name = safeUploadName(path.posix.basename(normalizedPath));
+    const candidateFromPath = path.resolve(pathCandidate);
+    const candidate = path.resolve(root, name);
+    if (!isWithin(root, candidateFromPath) || candidateFromPath !== candidate) {
+      throw invalidUploadPath();
+    }
+  } else {
+    name = safeUploadName(suppliedName);
+    if (isObject && suppliedPath) {
+      const pathCandidate = path.resolve(suppliedPath);
+      const candidate = path.resolve(root, name);
+      if (pathCandidate !== candidate || !isWithin(root, pathCandidate)) {
+        throw invalidUploadPath();
+      }
+    }
+  }
+
+  const extension = path.extname(name).toLowerCase();
+  if (!allowedKeys(kind).some((key) => TYPES[key].extensions.includes(extension))) {
+    throw invalidUploadPath('Extension de fichier téléversé non autorisée.');
+  }
+  const candidate = path.resolve(root, name);
+  if (!isWithin(root, candidate)) throw invalidUploadPath();
+  return candidate;
+}
+
+// Multer exposes both `path` and the generated `filename`. Never use the
+// caller-provided path as-is: rebuild it under the one directory assigned to
+// this upload kind and verify that the two representations agree.
+export function resolveUploadedFilePath(file, kind) {
+  return lexicalUploadPath(file, kind);
+}
+
+export async function resolveExistingUploadedFile(file, kind) {
+  const candidate = resolveUploadedFilePath(file, kind);
+  let stat;
+  try {
+    stat = await fs.promises.lstat(candidate);
+  } catch (error) {
+    throw invalidUploadPath(error?.code === 'ENOENT' ? 'Fichier téléversé absent.' : undefined);
+  }
+  if (stat.isSymbolicLink()) throw invalidUploadPath('Fichier téléversé symbolique.');
+  if (!stat.isFile()) throw invalidUploadPath('Le chemin ne désigne pas un fichier.');
+  const realPath = await fs.promises.realpath(candidate);
+  if (!isWithin(path.resolve(uploadRootFor(kind)), realPath)) {
+    throw invalidUploadPath('Fichier téléversé hors du stockage.');
+  }
+  return candidate;
 }
 
 function candidateFromStoredValue(storedValue, kind) {
@@ -309,15 +417,20 @@ export function resolveStoredFilePath(storedValue, kind) {
   return candidateFromStoredValue(storedValue, kind);
 }
 
-export async function resolveExistingPrivateFile(storedValue, kind) {
+export async function resolveExistingPrivateFile(storedValue, kind, { lexical = false } = {}) {
   const candidate = resolveStoredFilePath(storedValue, kind);
+  const lexicalStat = await fs.promises.lstat(candidate);
+  if (lexicalStat.isSymbolicLink()) {
+    throw new Error('Le chemin privé est un lien symbolique.');
+  }
+  if (!lexicalStat.isFile()) throw new Error('Le chemin ne désigne pas un fichier.');
   const realPath = await fs.promises.realpath(candidate);
   if (!rootCandidates(kind).some((root) => isWithin(root, realPath))) {
     throw new Error('Le fichier réel est hors du stockage privé.');
   }
   const stat = await fs.promises.stat(realPath);
   if (!stat.isFile()) throw new Error('Le chemin ne désigne pas un fichier.');
-  return realPath;
+  return lexical ? candidate : realPath;
 }
 
 function candidateFromPublicStoredValue(storedValue, kind) {
@@ -373,8 +486,13 @@ export function resolveStoredPublicFilePath(storedValue, kind) {
   return candidateFromPublicStoredValue(storedValue, kind);
 }
 
-export async function resolveExistingPublicFile(storedValue, kind) {
+export async function resolveExistingPublicFile(storedValue, kind, { lexical = false } = {}) {
   const candidate = resolveStoredPublicFilePath(storedValue, kind);
+  const lexicalStat = await fs.promises.lstat(candidate);
+  if (lexicalStat.isSymbolicLink()) {
+    throw new Error('Le chemin public est un lien symbolique.');
+  }
+  if (!lexicalStat.isFile()) throw new Error('Le chemin ne désigne pas un fichier.');
   const realPath = await fs.promises.realpath(candidate);
   const root = publicRootFor(kind);
   if (!isWithin(root, realPath)) {
@@ -382,7 +500,30 @@ export async function resolveExistingPublicFile(storedValue, kind) {
   }
   const stat = await fs.promises.stat(realPath);
   if (!stat.isFile()) throw new Error('Le chemin ne désigne pas un fichier.');
-  return realPath;
+  return lexical ? candidate : realPath;
+}
+
+export async function inspectImagePurgeFile(storedValue, kind) {
+  const normalizedKind = String(kind || '').replace(/s$/, '');
+  if (!['boat', 'avatar', 'dispute'].includes(normalizedKind)) {
+    throw new Error("Type d'image invalide.");
+  }
+  const root = normalizedKind === 'dispute' ? legacyDisputesRoot() : publicRootFor(normalizedKind);
+  const raw = String(storedValue || '')
+    .trim()
+    .replace(/\\/g, '/');
+  if (!raw || raw.includes('/') || raw === '.' || raw === '..' || raw.includes('\0')) {
+    throw new Error("Nom d'image invalide.");
+  }
+  const candidate = path.resolve(root, raw);
+  if (!isWithin(root, candidate)) throw new Error("Chemin d'image hors stockage.");
+  const lexicalStat = await fs.promises.lstat(candidate);
+  if (lexicalStat.isSymbolicLink() || !lexicalStat.isFile()) {
+    throw new Error('Image invalide ou lien symbolique.');
+  }
+  const realPath = await fs.promises.realpath(candidate);
+  if (!isWithin(root, realPath)) throw new Error('Image réelle hors stockage.');
+  return { path: candidate, stat: lexicalStat };
 }
 
 export function privateDirectory(kind) {
