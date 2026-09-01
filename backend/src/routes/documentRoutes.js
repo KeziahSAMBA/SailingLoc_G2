@@ -1,9 +1,17 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'path';
 import fs from 'fs';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
+import { uploadLimiter } from '../middlewares/abuseProtection.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
+import {
+  acceptsMulterMetadata,
+  generatedFileName,
+  inspectUploadedFile,
+  privateDirectory,
+  resolveExistingUploadedFile,
+} from '../utils/fileSecurity.js';
 import {
   listMyDocuments,
   uploadMyDocument,
@@ -13,23 +21,29 @@ import {
 
 // Hors du dossier servi en statique (/uploads) : les documents ne sont accessibles
 // que via la route protégée GET /:id/file.
-const UPLOAD_DIR = process.env.DOCUMENTS_DIR || 'storage/documents';
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+const UPLOAD_DIR = privateDirectory('document');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true, mode: 0o700 });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  },
+  filename: (req, file, cb) => cb(null, generatedFileName(file.originalname, 'document')),
 });
 
 const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png'];
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 Mo
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1,
+    fields: 4,
+    fieldSize: 16 * 1024,
+    parts: 6,
+    headerPairs: 100,
+  }, // 5 Mo
   fileFilter: (req, file, cb) => {
-    if (ALLOWED_MIME.includes(file.mimetype)) return cb(null, true);
+    if (ALLOWED_MIME.includes(file.mimetype) && acceptsMulterMetadata(file, 'document')) {
+      return cb(null, true);
+    }
     cb(
       Object.assign(new Error('Format non supporté. Formats acceptés : PDF, JPG, PNG.'), {
         status: 400,
@@ -42,13 +56,56 @@ const upload = multer({
 function uploadSingle(req, res, next) {
   upload.single('file')(req, res, (err) => {
     if (err) {
-      const status = err.code === 'LIMIT_FILE_SIZE' ? 400 : err.status || 500;
+      const status = [
+        'LIMIT_FILE_SIZE',
+        'LIMIT_FILE_COUNT',
+        'LIMIT_FIELD_SIZE',
+        'LIMIT_FIELD_COUNT',
+        'LIMIT_PART_COUNT',
+        'LIMIT_HEADER_COUNT',
+        'LIMIT_UNEXPECTED_FILE',
+      ].includes(err.code)
+        ? 400
+        : err.status || 500;
       const message =
         err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop volumineux (max 5 Mo).' : err.message;
-      return res.status(status).json({ message });
+      return removeUploadedFiles(req).finally(() =>
+        sendError(res, Object.assign(err, { status }), { message })
+      );
     }
     next();
   });
+}
+
+async function removeUploadedFiles(req) {
+  const files = req.file ? [req.file] : [];
+  if (req.files) files.push(...Object.values(req.files).flat());
+  await Promise.all(
+    files.map(async (file) => {
+      try {
+        const safePath = await resolveExistingUploadedFile(file, 'document');
+        await fs.promises.unlink(safePath);
+      } catch {
+        // Best-effort cleanup must not change the response contract.
+      }
+    })
+  );
+}
+
+// A MIME header is user-controlled.  Inspect the bytes after multer has
+// finished writing, then attach a safe display name and detected MIME to the
+// file object consumed by the service.
+async function validateDocumentFile(req, res, next) {
+  try {
+    if (!req.file) return next();
+    const metadata = await inspectUploadedFile(req.file, 'document');
+    req.file.detectedMimeType = metadata.mimeType;
+    req.file.safeOriginalName = metadata.safeName;
+    return next();
+  } catch (err) {
+    await removeUploadedFiles(req);
+    return sendError(res, err.status ? err : Object.assign(err, { status: 400 }));
+  }
 }
 
 const router = Router();
@@ -58,7 +115,9 @@ router.post(
   '/',
   protect,
   requireRole('locataire', 'proprietaire'),
+  uploadLimiter,
   uploadSingle,
+  validateDocumentFile,
   audit('document.upload', { meta: (req) => ({ type: req.body?.type }) }),
   uploadMyDocument
 );

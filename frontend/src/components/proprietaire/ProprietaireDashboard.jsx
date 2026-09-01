@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { getDashboard } from '../../services/proprietaireService.js';
 import { formatDate } from '../../utils/formatDate.js';
+import SafeImage from '../common/SafeImage.jsx';
 
 const NUMBER = new Intl.NumberFormat('fr-FR');
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -148,11 +149,12 @@ function BoatsPreview({ boats }) {
               >
                 <figure className="m-0">
                   {boat.image ? (
-                    <img
+                    <SafeImage
                       src={boat.image}
                       alt={t('proprietaireDashboard.boatAlt', { name: boat.name })}
                       loading="lazy"
                       className="aspect-[4/3] w-full bg-white/10 object-cover"
+                      fallbackClassName="flex aspect-[4/3] w-full items-center justify-center bg-white/10 text-white/40"
                     />
                   ) : (
                     <span

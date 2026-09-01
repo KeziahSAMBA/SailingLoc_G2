@@ -1,28 +1,39 @@
 import prisma from '../config/db.js';
 import { listBoatReviews } from '../services/reviewService.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
+import { parsePositiveId, parsePagination } from '../utils/inputSecurity.js';
+
+const PUBLIC_AVATAR_TYPES = { in: ['profil', 'avatar'] };
 
 export async function getBoatReviews(req, res) {
   try {
-    const reviews = await listBoatReviews(req.params.id_boat);
+    const reviews = await listBoatReviews(req.params.id_boat, req.user, req.query);
     res.json({ reviews });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
 export async function getPublicReviews(req, res) {
   try {
-    const idBoat = req.query.id_boat === undefined ? null : Number(req.query.id_boat);
-    if (idBoat !== null && (!Number.isInteger(idBoat) || idBoat <= 0)) {
+    const idBoat = req.query.id_boat === undefined ? null : parsePositiveId(req.query.id_boat);
+    if (idBoat === null && req.query.id_boat !== undefined) {
       return res.status(400).json({ message: 'Identifiant de bateau invalide.' });
     }
+    const { skip, take } = parsePagination(req.query);
     const reviews = await prisma.review.findMany({
       where: {
         status: 'validated',
         deleted_at: null,
-        ...(idBoat !== null ? { booking: { id_boat: idBoat } } : {}),
+        booking: {
+          ...(idBoat !== null ? { id_boat: idBoat } : {}),
+          deleted_at: null,
+          boat: { deleted_at: null, is_published: true, status: 'published' },
+        },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: [{ created_at: 'desc' }, { id_review: 'desc' }],
+      skip,
+      take,
       select: {
         id_review: true,
         // Auteur exposé pour que celui-ci retrouve son avis et puisse l'éditer.
@@ -40,7 +51,7 @@ export async function getPublicReviews(req, res) {
             last_name: true,
             role: true,
             images: {
-              where: { type: 'profil', deleted_at: null },
+              where: { type: PUBLIC_AVATAR_TYPES, deleted_at: null },
               select: { url: true },
               take: 1,
               orderBy: { order: 'asc' },
@@ -70,7 +81,6 @@ export async function getPublicReviews(req, res) {
 
     res.json(formatted);
   } catch (err) {
-    console.error('[reviewController] getPublicReviews:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
+    return sendError(res, err);
   }
 }

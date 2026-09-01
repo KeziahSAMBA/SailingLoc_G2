@@ -1,5 +1,6 @@
 import { getInvoiceFor } from '../services/invoiceService.js';
 import { renderInvoice, invoiceFileName } from '../services/invoicePdf.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 
 export async function getBookingInvoice(req, res) {
   try {
@@ -14,6 +15,6 @@ export async function getBookingInvoice(req, res) {
     pdf.on('error', () => res.destroy());
     pdf.pipe(res);
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }

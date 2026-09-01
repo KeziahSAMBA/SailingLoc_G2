@@ -1,13 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 import prisma from '../../config/db.js';
+import { inspectImagePurgeFile } from '../../utils/fileSecurity.js';
 
 const HOUR_MS = 3600000;
 const MAX_BATCH = 5000;
 
 // Jamais « documents » : ces fichiers vivent dans Document.file_url, pas dans
 // Image. Les balayer contre les lignes Image les supprimerait tous.
-const SWEPT_DIRS = ['boats', 'disputes', 'avatars'];
+const SWEPT_DIRS = [
+  { dir: 'boats', kind: 'boat' },
+  { dir: 'disputes', kind: 'dispute' },
+  { dir: 'avatars', kind: 'avatar' },
+];
 
 const clampHours = (value) => {
   const hours = Number(value);
@@ -15,18 +20,24 @@ const clampHours = (value) => {
 };
 
 const uploadsRoot = () => process.env.UPLOADS_DIR || 'uploads';
+const portablePath = (value) => String(value).replace(/\\/g, '/');
 
 // Le seul critère est l'absence de ligne Image : un fichier référencé est
 // épargné quel que soit son âge. L'ancienneté ne fait entrer personne, elle
 // écarte seulement les envois dont la ligne n'est pas encore commitée.
-export async function findOrphanFiles(params = {}, now = new Date()) {
+async function findOrphanTargets(params = {}, now = new Date()) {
   const newestAllowed = now.getTime() - clampHours(params.minAgeHours) * HOUR_MS;
   const rows = await prisma.image.findMany({ select: { url: true } });
-  const referenced = new Set(rows.map((row) => path.basename(row.url)));
+  const referenced = new Set(
+    rows.map((row) => path.posix.basename(String(row.url || '').replace(/\\/g, '/')))
+  );
 
   const orphans = [];
-  for (const dir of SWEPT_DIRS) {
-    const base = path.join(uploadsRoot(), dir);
+  for (const { dir, kind } of SWEPT_DIRS) {
+    // Cron targets are persisted in logs and displayed by the admin UI. Keep
+    // them portable across Windows workers and POSIX containers; Node accepts
+    // forward slashes for filesystem operations on both platforms.
+    const base = portablePath(path.join(uploadsRoot(), dir));
     let entries;
     try {
       entries = await fs.promises.readdir(base);
@@ -36,17 +47,22 @@ export async function findOrphanFiles(params = {}, now = new Date()) {
 
     for (const name of entries) {
       if (referenced.has(name)) continue;
-      const full = path.join(base, name);
       try {
-        const stat = await fs.promises.stat(full);
-        if (stat.isFile() && stat.mtimeMs <= newestAllowed) orphans.push(full);
+        const inspected = await inspectImagePurgeFile(name, kind);
+        if (inspected.stat.mtimeMs <= newestAllowed) {
+          orphans.push({ displayPath: portablePath(path.join(base, name)), name, kind });
+        }
       } catch {
         continue;
       }
     }
   }
 
-  return orphans.sort();
+  return orphans.sort((a, b) => a.displayPath.localeCompare(b.displayPath));
+}
+
+export async function findOrphanFiles(params = {}, now = new Date()) {
+  return (await findOrphanTargets(params, now)).map(({ displayPath }) => displayPath);
 }
 
 export default {
@@ -69,12 +85,15 @@ export default {
   targets: async ({ params, now, take }) => (await findOrphanFiles(params, now)).slice(0, take),
 
   async run({ params, now }) {
-    const orphans = await findOrphanFiles(params, now);
+    const orphans = await findOrphanTargets(params, now);
     let removed = 0;
 
     for (const file of orphans.slice(0, MAX_BATCH)) {
       try {
-        await fs.promises.unlink(file);
+        // Revalidate immediately before unlinking so a path swapped for a
+        // symlink between discovery and deletion is rejected.
+        const inspected = await inspectImagePurgeFile(file.name, file.kind);
+        await fs.promises.unlink(inspected.path);
         removed += 1;
       } catch {
         continue;

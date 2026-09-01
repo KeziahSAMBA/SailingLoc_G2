@@ -111,7 +111,13 @@ describe('users.paused.purge — exécution', () => {
     });
     expect(db.user.update).toHaveBeenCalledWith({
       where: { id_user: 42 },
-      data: { is_active: false, deactivated_at: null, deleted_at: NOW, updated_at: NOW },
+      data: {
+        is_active: false,
+        deactivated_at: null,
+        deleted_at: NOW,
+        auth_version: { increment: 1 },
+        updated_at: NOW,
+      },
     });
   });
 

@@ -5,6 +5,7 @@ import {
   sendAccountDeletionEmail,
   sendPauseNoticeEmail,
 } from './emailService.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 export const DELETION_RETENTION_DAYS = 30;
 // Durée de la pause avant suppression automatique : sans rapport avec la
@@ -115,7 +116,7 @@ async function assertClosable(user, password) {
   }
 }
 
-const sendQuiet = (promise, label) => promise.catch((err) => console.error(label, err.message));
+const sendQuiet = (promise, label) => promise.catch((err) => logSanitizedError(label, err));
 
 export async function deactivateOwnAccount(id_user, { password } = {}) {
   const user = await loadClosableUser(id_user);
@@ -133,7 +134,12 @@ export async function deactivateOwnAccount(id_user, { password } = {}) {
     });
     await tx.user.update({
       where: { id_user },
-      data: { is_active: false, deactivated_at: now, updated_at: now },
+      data: {
+        is_active: false,
+        deactivated_at: now,
+        auth_version: { increment: 1 },
+        updated_at: now,
+      },
     });
   });
 
@@ -170,7 +176,13 @@ export async function deleteOwnAccount(id_user, { password, confirmation } = {})
     });
     await tx.user.update({
       where: { id_user },
-      data: { is_active: false, deactivated_at: null, deleted_at: now, updated_at: now },
+      data: {
+        is_active: false,
+        deactivated_at: null,
+        deleted_at: now,
+        auth_version: { increment: 1 },
+        updated_at: now,
+      },
     });
   });
 
@@ -253,7 +265,7 @@ export async function notifyPausedUser(user, params = {}, now = new Date()) {
     await sendPauseNoticeEmail(user.email, { firstName: user.first_name, days: notice });
   } catch (err) {
     // L'horodatage n'est pas posé : la relance sera retentée la nuit suivante.
-    console.error('[cron] relance pause :', err.message);
+    logSanitizedError('cron: relance pause', err);
     return false;
   }
 
@@ -275,7 +287,13 @@ export async function closePausedAccount(id_user, now = new Date()) {
     });
     await tx.user.update({
       where: { id_user },
-      data: { is_active: false, deactivated_at: null, deleted_at: now, updated_at: now },
+      data: {
+        is_active: false,
+        deactivated_at: null,
+        deleted_at: now,
+        auth_version: { increment: 1 },
+        updated_at: now,
+      },
     });
   });
 }

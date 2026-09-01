@@ -1,0 +1,304 @@
+name: Security gates
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - staging
+      - feature/security-audit
+  pull_request:
+    branches:
+      - master
+      - develop
+      - staging
+      - feature/security-audit
+  workflow_dispatch:
+
+# No write-capable token is exposed to ordinary build, audit, or scanner jobs.
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20.19.4'
+  # Official Trivy v0.57.1 linux/amd64 manifest, pinned by immutable digest.
+  TRIVY_IMAGE: docker.io/aquasec/trivy@sha256:1e38a70ab0eb572048713e88214aa27e8639747a60bcda4774fc9a31e219c65f
+  # Official TruffleHog v3.97.1 linux/amd64 image, pinned by immutable digest.
+  TRUFFLEHOG_IMAGE: ghcr.io/trufflesecurity/trufflehog:3.97.1@sha256:da3365e98ab735336733fc90cc22af8413a6d9fc1e6da5412e781daeb2d14663
+
+jobs:
+  dependency-audit:
+    name: npm audit and SBOM (${{ matrix.workspace.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace:
+          - name: root
+            path: .
+            lockfile: package-lock.json
+          - name: backend
+            path: backend
+            lockfile: backend/package-lock.json
+          - name: frontend
+            path: frontend
+            lockfile: frontend/package-lock.json
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace.lockfile }}
+      - name: Install locked dependencies without lifecycle scripts
+        working-directory: ${{ matrix.workspace.path }}
+        run: npm ci --ignore-scripts
+      - name: Generate SBOMs
+        working-directory: ${{ matrix.workspace.path }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sbom"
+          workspace_args=()
+          if [[ "${{ matrix.workspace.name }}" == "root" ]]; then
+            workspace_args+=(--workspaces)
+          fi
+          npm sbom --package-lock-only --sbom-format cyclonedx "${workspace_args[@]}" > "$RUNNER_TEMP/sbom/${{ matrix.workspace.name }}-development.cdx.json"
+          npm sbom --package-lock-only --sbom-format cyclonedx --omit=dev "${workspace_args[@]}" > "$RUNNER_TEMP/sbom/${{ matrix.workspace.name }}-production.cdx.json"
+      - name: Upload SBOMs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: npm-sbom-${{ github.sha }}-${{ matrix.workspace.name }}
+          path: ${{ runner.temp }}/sbom/*.cdx.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Audit production dependencies
+        working-directory: ${{ matrix.workspace.path }}
+        run: |
+          set -euo pipefail
+          workspace_args=()
+          if [[ "${{ matrix.workspace.name }}" == "root" ]]; then
+            workspace_args+=(--workspaces)
+          fi
+          npm audit --audit-level=high --omit=dev "${workspace_args[@]}"
+      - name: Audit production and development dependencies
+        working-directory: ${{ matrix.workspace.path }}
+        run: |
+          set -euo pipefail
+          workspace_args=()
+          if [[ "${{ matrix.workspace.name }}" == "root" ]]; then
+            workspace_args+=(--workspaces)
+          fi
+          npm audit --audit-level=high "${workspace_args[@]}"
+
+  dependency-review:
+    name: Dependency review (pull requests)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@ce3cf9537a52e8119d91fd484ab5b8a807627bf8 # v4.6.0
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime,development
+          license-check: false
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 60
+
+  secret-scan:
+    name: Current-tree secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out current tree
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify secret scanner policy fixtures
+        shell: bash
+        run: bash .github/scripts/secret-scan.sh --self-test
+      - name: Scan current tracked tree
+        shell: bash
+        run: bash .github/scripts/secret-scan.sh --tree-only
+
+  secret-scan-history:
+    name: TruffleHog full-history secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify complete Git history is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse --is-inside-work-tree)" = true
+          test -n "$(git rev-list --all -1)"
+      - name: Pull pinned TruffleHog scanner
+        run: docker pull "$TRUFFLEHOG_IMAGE"
+      - name: Verify exact history ignore policy
+        shell: bash
+        run: bash .github/scripts/trufflehog-history-scan.sh --self-test
+      - name: Scan complete Git history with TruffleHog
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/trufflehog-output.json"
+          scanner_log="$RUNNER_TEMP/trufflehog-stderr.log"
+          trap 'rm -f -- "$report" "$scanner_log"' EXIT
+          if docker run --rm \
+            --network none \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev \
+            --tmpfs /root:rw,noexec,nosuid,nodev \
+            --env HOME=/root \
+            --mount "type=bind,source=${GITHUB_WORKSPACE},target=/repo,readonly" \
+            --workdir /repo \
+            "$TRUFFLEHOG_IMAGE" \
+            git file:///repo \
+            --results=verified,unknown \
+            --fail \
+            --fail-on-scan-errors \
+            --no-update \
+            --no-color \
+            --json >"$report" 2>"$scanner_log"; then
+            status=0
+          else
+            status=$?
+          fi
+          bash .github/scripts/trufflehog-history-scan.sh \
+            --report "$report" \
+            --status "$status" \
+            --ignore-file "$GITHUB_WORKSPACE/.trufflehogignore"
+
+  codeql:
+    name: CodeQL (JavaScript and TypeScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@60168efe1c415ce0f5521ea06d5c2062adbeed1b # v3.28.17
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-and-quality
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@60168efe1c415ce0f5521ea06d5c2062adbeed1b # v3.28.17
+        with:
+          category: /language:javascript-typescript
+          # Fork pull requests cannot receive security-events: write. Still
+          # run the analysis there, but do not attempt a SARIF upload.
+          upload: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'never' || 'always' }}
+
+  container-scan:
+    name: Container build and scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Build application images without secrets
+        run: |
+          set -euo pipefail
+          docker build --pull --tag sailingloc-backend:ci ./backend
+          docker build --pull \
+            --build-arg VITE_API_BASE_URL=https://api.sailingloc.fr/api \
+            --build-arg VITE_BUILD_ENV=production \
+            --tag sailingloc-frontend:ci ./frontend
+          mkdir -p "$RUNNER_TEMP/container-images"
+          docker save --output "$RUNNER_TEMP/container-images/backend.tar" sailingloc-backend:ci
+          docker save --output "$RUNNER_TEMP/container-images/frontend.tar" sailingloc-frontend:ci
+      - name: Pull pinned Trivy scanner
+        run: docker pull "$TRIVY_IMAGE"
+      - name: Scan images for embedded secrets
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p "$RUNNER_TEMP/trivy-cache"
+          status=0
+          for target in backend frontend; do
+            if ! docker run --rm \
+              -v "$RUNNER_TEMP/trivy-cache:/root/.cache" \
+              -v "$RUNNER_TEMP/container-images:/images:ro" \
+              "$TRIVY_IMAGE" image \
+              --input "/images/${target}.tar" \
+              --scanners secret \
+              --exit-code 1 \
+              --no-progress \
+              --format json \
+              --output "/tmp/${target}-secrets.json"; then
+              printf 'Trivy detected a possible embedded secret in %s; report content was not printed.\n' "$target"
+              status=1
+            fi
+          done
+          exit "$status"
+      - name: Scan image vulnerabilities
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p "$RUNNER_TEMP/trivy-cache" "$RUNNER_TEMP/trivy-reports"
+          status=0
+          for target in backend frontend; do
+            if ! docker run --rm \
+              -v "$RUNNER_TEMP/trivy-cache:/root/.cache" \
+              -v "$RUNNER_TEMP/container-images:/images:ro" \
+              -v "$RUNNER_TEMP/trivy-reports:/reports" \
+              "$TRIVY_IMAGE" image \
+              --input "/images/${target}.tar" \
+              --scanners vuln \
+              --ignore-unfixed \
+              --severity HIGH,CRITICAL \
+              --exit-code 1 \
+              --no-progress \
+              --format json \
+              --output "/reports/${target}-vulnerabilities.json"; then
+              status=1
+            fi
+          done
+          critical_count="$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' "$RUNNER_TEMP/trivy-reports"/*-vulnerabilities.json | awk '{ total += $1 } END { print total + 0 }')"
+          high_count="$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' "$RUNNER_TEMP/trivy-reports"/*-vulnerabilities.json | awk '{ total += $1 } END { print total + 0 }')"
+          printf 'Trivy image findings: %s critical, %s high (unfixed findings excluded).\n' "$critical_count" "$high_count"
+          if ((status != 0 || critical_count > 0 || high_count > 0)); then
+            printf 'Container scan blocked by one or more high or critical vulnerabilities, or a scanner error.\n'
+            exit 1
+          fi
+      - name: Upload vulnerability reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trivy-reports-${{ github.sha }}
+          path: ${{ runner.temp }}/trivy-reports/*-vulnerabilities.json
+          if-no-files-found: error
+          retention-days: 7

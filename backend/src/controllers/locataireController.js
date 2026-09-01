@@ -18,13 +18,15 @@ import {
   deleteBookingReview,
   getReviewEligibility,
 } from '../services/reviewService.js';
+import { requirePositiveId } from '../utils/inputSecurity.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 
 export async function getDashboard(req, res) {
   try {
     const stats = await getDashboardStats(req.user.id_user);
     res.json({ stats });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -36,7 +38,7 @@ export async function payMyBooking(req, res) {
     const result = await payBooking(req.user.id_user, req.params.id_booking);
     res.status(201).json(result);
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -45,7 +47,7 @@ export async function getMyBookings(req, res) {
     const bookings = await listBookings(req.user.id_user);
     res.json({ bookings });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -53,7 +55,7 @@ export async function getMyPayments(req, res) {
   try {
     res.json(await listPayments(req.user.id_user));
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -68,7 +70,7 @@ export async function cancelMyBooking(req, res) {
     );
     res.json({ booking });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -81,7 +83,7 @@ export async function postMyBookingReview(req, res) {
     );
     res.status(201).json({ review });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -90,7 +92,7 @@ export async function patchMyReview(req, res) {
     const review = await updateBookingReview(req.user.id_user, req.params.id_review, req.body);
     res.json({ review });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -99,7 +101,7 @@ export async function deleteMyReview(req, res) {
     await deleteBookingReview(req.user.id_user, req.params.id_review);
     res.status(204).end();
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -108,7 +110,7 @@ export async function getMyBoatReviewEligibility(req, res) {
     const eligibility = await getReviewEligibility(req.user.id_user, req.params.id_boat);
     res.json(eligibility);
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -119,11 +121,10 @@ export async function reportMyDispute(req, res) {
       id_booking: req.params.id_booking,
       reason: req.body?.reason,
       files: req.files || [],
-      origin: `${req.protocol}://${req.get('host')}`,
     });
     res.status(201).json({ dispute });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -133,7 +134,7 @@ export async function requestMyRefund(req, res) {
     const dispute = await requestRefund(req.user.id_user, req.params.id_booking, req.body?.reason);
     res.status(201).json({ dispute });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -142,32 +143,26 @@ export async function getMyFavorites(req, res) {
     const favorites = await listFavorites(req.user.id_user);
     res.json({ favorites });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
 export async function postFavorite(req, res) {
   try {
-    const id_boat = Number(req.params.id_boat);
-    if (!Number.isInteger(id_boat)) {
-      return res.status(400).json({ message: 'Identifiant de bateau invalide.' });
-    }
+    const id_boat = requirePositiveId(req.params.id_boat, 'Identifiant de bateau');
     await addFavorite(req.user.id_user, id_boat);
     res.status(201).json({ success: true });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
 export async function deleteFavorite(req, res) {
   try {
-    const id_boat = Number(req.params.id_boat);
-    if (!Number.isInteger(id_boat)) {
-      return res.status(400).json({ message: 'Identifiant de bateau invalide.' });
-    }
+    const id_boat = requirePositiveId(req.params.id_boat, 'Identifiant de bateau');
     await removeFavorite(req.user.id_user, id_boat);
     res.json({ success: true });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }

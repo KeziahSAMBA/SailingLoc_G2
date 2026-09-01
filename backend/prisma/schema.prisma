@@ -19,8 +19,12 @@ model User {
   is_active                  Boolean    @default(true)
   email_verified             Boolean    @default(false)
   email_verification_token   String?    @db.VarChar(255)
+  email_verification_token_expires_at DateTime?
   reset_token                String?    @db.VarChar(255)
   reset_token_expires_at     DateTime?
+  // Incrémenté lors d'un changement de mot de passe, rôle ou état du compte.
+  // Les access tokens portant une version antérieure sont immédiatement rejetés.
+  auth_version               Int        @default(0)
   // Compte Stripe Connect du propriétaire (acct_…) : l'IBAN reste chez Stripe.
   stripe_account_id          String?    @db.VarChar(255)
   created_at                 DateTime   @default(now())
@@ -225,7 +229,20 @@ model Payment {
   payment_date     DateTime
   payment_method   String        @db.VarChar(50)
   status           PaymentStatus @default(pending)
+  // Internal lifecycle marker used to recover an interrupted Stripe request.
+  // It is deliberately separate from the public payment status: a row can be
+  // pending while a PaymentIntent is being created or captured.
+  payment_state    String        @default("legacy") @db.VarChar(40)
+  // Internal marker used when the provider outcome is unknown or conflicts
+  // with the booking decision. These fields are never part of the public API.
+  reconciliation_error String?   @db.VarChar(500)
+  reconciliation_at    DateTime?
   transaction_ref  String?       @unique @db.VarChar(255)
+  // Clé stable de réservation/essai : elle est également envoyée à Stripe
+  // comme clé d'idempotence lors de la création du PaymentIntent. Les lignes
+  // historiques restent nulles et sont donc compatibles avec l'index unique.
+  idempotency_key   String?       @unique @db.VarChar(255)
+  attempt           Int           @default(1)
   created_at       DateTime      @default(now())
 
   // Remboursement (partiel ou total). refunded_amount inclut la commission
@@ -241,6 +258,25 @@ model Payment {
   @@index([id_booking])
   @@index([id_dispute])
   @@map("payment")
+}
+
+// Événements Stripe traités. L'identifiant fourni par Stripe est unique :
+// l'insertion est le verrou distribué qui empêche deux livraisons concurrentes
+// de modifier deux fois un paiement ou une réservation.
+model StripeWebhookEvent {
+  id_event     Int       @id @default(autoincrement())
+  event_id     String    @unique @db.VarChar(255)
+  event_type   String    @db.VarChar(100)
+  status       String    @default("processing") @db.VarChar(20)
+  payload_hash String?   @db.VarChar(128)
+  error        String?   @db.VarChar(500)
+  processed_at DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime?
+
+  @@index([status, created_at])
+  @@index([created_at])
+  @@map("stripe_webhook_event")
 }
 
 model Invoice {
@@ -292,6 +328,7 @@ model Document {
   type          String         @db.VarChar(50)
   file_name     String         @db.VarChar(255)
   file_url      String         @db.VarChar(500)
+  mime_type     String?        @db.VarChar(100)
   upload_date   DateTime
   status        DocumentStatus @default(pending)
   created_at    DateTime       @default(now())
@@ -360,6 +397,7 @@ model Image {
   id_dispute  Int?
   url         String   @db.VarChar(500)
   type        String   @db.VarChar(50)
+  mime_type   String?  @db.VarChar(100)
   order       Int      @default(0) @map("order")
   created_at  DateTime @default(now())
   updated_at  DateTime?

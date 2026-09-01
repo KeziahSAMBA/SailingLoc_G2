@@ -1,5 +1,9 @@
 import prisma from '../../config/db.js';
-import { cancelExpiredBookings, expiredPendingWhere } from '../../services/bookingService.js';
+import {
+  cancelExpiredBookings,
+  expiredPendingWhere,
+  refuseExpiredPendingBookings,
+} from '../../services/bookingService.js';
 
 const HOUR_MS = 3600 * 1000;
 
@@ -38,6 +42,10 @@ export default {
 
   async run({ params }) {
     const cancelled = await cancelExpiredBookings(clampHours(params.expiryHours) * HOUR_MS);
-    return { affected: cancelled, detail: { bookingsCancelled: cancelled } };
+    const refused = await refuseExpiredPendingBookings();
+    return {
+      affected: cancelled + refused,
+      detail: { bookingsCancelled: cancelled, bookingsRefused: refused },
+    };
   },
 };

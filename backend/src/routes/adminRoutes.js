@@ -18,6 +18,7 @@ import {
   adminCancelBooking,
   adminListDisputes,
   adminSetDisputeStatus,
+  adminDownloadDisputeImage,
 } from '../controllers/bookingAdminController.js';
 import {
   adminListReviews,
@@ -85,6 +86,9 @@ router.patch(
   adminCancelBooking
 );
 router.get('/disputes', protect, requireAdmin, adminListDisputes);
+// Les preuves de litige sont privées : seul un administrateur authentifié peut
+// les télécharger, après vérification du rattachement litige/image dans le service.
+router.get('/disputes/:id/images/:imageId', protect, requireAdmin, adminDownloadDisputeImage);
 router.patch(
   '/disputes/:id',
   protect,

@@ -1,0 +1,21 @@
+# Exact TruffleHog v3.97.1 metadata fingerprints for intentional synthetic
+# URI fixtures. Format: <commit>:<detector>:<path>:<line>.
+# These entries identify locations only; no secret value is allow-listed.
+# Provenance: securityPrivacy.test.js sanitization regression fixture, original
+# English commit and its French message-only rewrite, line 113, detector URI.
+be5d8fc653091116a33bd8e8b1488eb255a9c781:URI:backend/tests/securityPrivacy.test.js:113
+b112b43a56863b1bdd323f462355a4dc44cdcb4f:URI:backend/tests/securityPrivacy.test.js:113
+# Fixture documentaire historique vérifiée ; emplacement uniquement, sans secret.
+0a8fcb3fd1ad2feee7cb56a62d2c60bd940d6767:URI:README.md:67
+fde6afe984cb3f422bb94568606db94c648ef36e:Postgres:docker-compose.dev.yml:35
+74e2396e6967ebf8901e82cc707bf0b7e7ae91e8:Postgres:docker-compose.staging.yml:33
+fde6afe984cb3f422bb94568606db94c648ef36e:Postgres:docker-compose.yml:36
+e89d1516c364525b2ce4b1fe93583d85d2bfefd0:URI:backend/tests/securityHttp.test.js:148
+e89d1516c364525b2ce4b1fe93583d85d2bfefd0:URI:backend/tests/securitySecrets.test.js:74
+# Fixtures synthétiques des tests de validation des sources d’image et des
+# URL du mode spectateur ; emplacements exacts uniquement, sans valeur secrète.
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:backend/tests/frontendImageSource.test.js:41
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:backend/tests/frontendImageSource.test.js:45
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:backend/tests/frontendImageSource.test.js:82
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:backend/tests/frontendImageSource.test.js:86
+5c04a7d55ade69b7cb9a1cde3f994edff0576d60:URI:frontend/tests/spectatorUrl.test.js:18

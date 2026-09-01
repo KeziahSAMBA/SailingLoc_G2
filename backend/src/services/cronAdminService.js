@@ -2,6 +2,7 @@ import prisma from '../config/db.js';
 import { getJobDefinition, resolveParams } from '../jobs/registry.js';
 import { computeNextRun, isValidSchedule, runJob, CRON_TZ } from './cronService.js';
 import { reloadScheduler } from '../scheduler.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 const MAX_PAGE_SIZE = 100;
 const RUN_STATUSES = ['running', 'success', 'failed', 'skipped'];
@@ -119,9 +120,9 @@ export async function triggerJob(key, { actorId = null, actorEmail = null } = {}
   });
   if (busy) throw bad('Cette tâche est déjà en cours d’exécution.', 409);
 
-  runJob(key, { trigger: 'manual', actorId, actorEmail }).catch((err) =>
-    console.error(`[cron] déclenchement manuel ${key} :`, err.message)
-  );
+  runJob(key, { trigger: 'manual', actorId, actorEmail }).catch((err) => {
+    logSanitizedError(`cron: déclenchement manuel ${key}`, err);
+  });
 
   return { key, started: true, dry_run: job.dry_run };
 }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { getDashboard } from '../../services/locataireService.js';
 import { formatDate } from '../../utils/formatDate.js';
+import SafeImage from '../common/SafeImage.jsx';
 
 const NUMBER = new Intl.NumberFormat('fr-FR');
 const EURO = new Intl.NumberFormat('fr-FR', {
@@ -216,11 +217,12 @@ function FavoritesPreview({ favorites }) {
               >
                 <figure className="m-0">
                   {f.boat?.image ? (
-                    <img
+                    <SafeImage
                       src={f.boat.image}
                       alt={`Bateau ${f.boat?.name}`}
                       loading="lazy"
                       className="aspect-[4/3] w-full bg-slate-800 object-cover"
+                      fallbackClassName="flex aspect-[4/3] w-full items-center justify-center bg-slate-800 text-slate-600"
                     />
                   ) : (
                     <span

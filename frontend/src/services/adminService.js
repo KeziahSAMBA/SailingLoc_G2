@@ -52,6 +52,15 @@ export function listDisputes(status) {
   return api.get('/admin/disputes', { params: status ? { status } : {} });
 }
 
+// Les preuves de litige sont privées : le chemin renvoyé par l'API n'est
+// jamais utilisé comme URL de navigateur. Axios ajoute le Bearer et retourne
+// un blob à afficher via une URL objet temporaire.
+export function fetchDisputeImage(idDispute, idImage) {
+  return api.get(`/admin/disputes/${idDispute}/images/${idImage}`, {
+    responseType: 'blob',
+  });
+}
+
 export function setDisputeStatus(id, status, resolution, refund) {
   // `refund` est optionnel : { percent: 25|50|75|100|number, commission: boolean }.
   // Le backend ne déclenche un remboursement que si status === 'resolved'

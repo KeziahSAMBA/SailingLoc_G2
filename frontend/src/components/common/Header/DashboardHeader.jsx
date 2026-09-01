@@ -28,6 +28,7 @@ import PanelLink from './shared/PanelLink.jsx';
 import SettingsMenu from './shared/SettingsMenu.jsx';
 import { getAboutNavigationItems } from './shared/aboutNavigation.js';
 import { getContactNavigationItems } from './shared/contactNavigation.js';
+import SafeImage from '../SafeImage.jsx';
 
 const roundIconHover = hoverBackground('rgba(255,255,255,0.25)', 'rgba(255,255,255,0.1)');
 
@@ -316,9 +317,11 @@ function DashboardHeader({
             }}
             {...roundIconHover}
           >
-            <img
+            <SafeImage
               src={user?.avatar ?? nameToAvatarUrl(displayName)}
               alt={displayName}
+              fallbackSrc={nameToAvatarUrl(displayName)}
+              fallback={null}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>

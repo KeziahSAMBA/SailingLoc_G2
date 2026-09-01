@@ -5,12 +5,15 @@ services:
     image: postgres:16-alpine
     container_name: sailingloc_postgres_staging
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - '5434:5432'
+    # PostgreSQL is reachable only by the backend on the private network.
+    expose:
+      - '5432'
     volumes:
       - postgres_staging_data:/var/lib/postgresql/data
     networks:
@@ -27,21 +30,48 @@ services:
       dockerfile: Dockerfile
     container_name: sailingloc_backend_staging
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       NODE_ENV: staging
       PORT: 4000
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
+      FILE_ENCRYPTION_KEY: ${FILE_ENCRYPTION_KEY}
+      APP_URL: ${APP_URL}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:?PUBLIC_API_URL must be set to the public HTTPS API origin}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       EMAIL_HOST: ${EMAIL_HOST}
       EMAIL_PORT: ${EMAIL_PORT}
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_IGNORE_TLS: ${EMAIL_IGNORE_TLS:-false}
+      SEED_FORCE: 'false'
+    # Keep only a loopback maintenance/reverse-proxy binding. Service-to-
+    # service traffic continues over backend:4000 on the private network.
     ports:
-      - '4100:4000'
+      - '127.0.0.1:4100:4000'
+    expose:
+      - '4000'
+    volumes:
+      - uploads_staging_data:/app/uploads
+      - documents_staging_data:/app/storage/documents
+      - disputes_staging_data:/app/storage/disputes
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      # Keep staging aligned with the production image's built-in check.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - sailingloc_network
 
@@ -49,12 +79,17 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?VITE_API_BASE_URL must be set to the public HTTPS API URL}
+        VITE_MATOMO_URL: ${VITE_MATOMO_URL:-}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-}
+        VITE_BUILD_ENV: staging
     container_name: sailingloc_frontend_staging
     restart: unless-stopped
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - '5174:80'
+      - '5174:8080'
     depends_on:
       - backend
     networks:
@@ -66,3 +101,6 @@ networks:
 
 volumes:
   postgres_staging_data:
+  uploads_staging_data:
+  documents_staging_data:
+  disputes_staging_data:

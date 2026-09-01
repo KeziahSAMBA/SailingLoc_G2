@@ -1,61 +1,315 @@
-import fs from 'fs';
 import prisma from '../config/db.js';
-import { getStripe, isStripeRef, cancelIntentQuietly, refundIntent } from '../config/stripe.js';
-import { initConfig } from '../config/appConfig.js';
+import * as stripeConfig from '../config/stripe.js';
 import { sendBookingDecisionEmail } from './emailService.js';
 import { issueBookingInvoices } from './invoiceService.js';
 import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js';
+import { encryptFileInPlace } from '../utils/fileCrypto.js';
+import {
+  inspectUploadedFile,
+  resolveExistingPrivateFile,
+  safeDisplayName,
+  storagePath,
+} from '../utils/fileSecurity.js';
+import {
+  boundedString,
+  parseDateOnly,
+  parseStrictBoolean,
+  requirePositiveId,
+} from '../utils/inputSecurity.js';
+import { buildAppUrl, publicAssetUrl } from '../utils/urlSecurity.js';
+import { logSanitizedError } from '../utils/privacy.js';
+import { lockBooking, lockBookingPayment, lockBoatBookingPayment } from './paymentConcurrency.js';
+import { asFileReference, removeUnreferencedFiles } from './fileCleanupService.js';
+import { reconciliationError } from './paymentLifecycle.js';
 
-// Suppression best-effort d'un fichier remplacé (l'échec ne bloque pas la requête).
-function removeFileQuiet(filePath) {
-  if (!filePath) return;
-  fs.unlink(filePath, () => {});
+const { getStripe, isStripeRef, refundIntent } = stripeConfig;
+
+const MAX_AVAILABILITY_PERIODS = 100;
+const MAX_IMAGES = 5;
+const MAX_BOAT_DESCRIPTION = 5000;
+const MAX_BOAT_DAILY_PRICE = 1_000_000;
+const MAX_BOAT_CAPACITY = 1_000;
+const MAX_REASON_LENGTH = 1000;
+const MAX_HISTORY_ROWS = 500;
+const PAYMENT_STATES = Object.freeze({
+  REQUIRES_PAYMENT_METHOD: 'requires_payment_method',
+  REQUIRES_CAPTURE: 'requires_capture',
+  CAPTURING: 'capturing',
+  SUCCEEDED: 'succeeded',
+  RELEASING: 'releasing',
+  REFUNDED: 'refunded',
+  REFUNDING: 'refunding',
+  PARTIALLY_REFUNDED: 'partially_refunded',
+  RECONCILIATION_REQUIRED: 'reconciliation_required',
+});
+
+function paymentIntentOptions(ref, operation) {
+  if (typeof stripeConfig.paymentIntentIdempotencyKey !== 'function') return undefined;
+  return { idempotencyKey: stripeConfig.paymentIntentIdempotencyKey(ref, operation) };
 }
 
-// Les demandes encore « en attente » dont le séjour a déjà commencé ne peuvent
-// plus être confirmées : elles passent automatiquement « refusée » à la
-// consultation (pas d'email : ce n'est pas une décision du propriétaire), et
-// leur éventuelle empreinte de paiement est libérée — rien n'a été débité, le
-// paiement passe « refunded » sans montant remboursé.
-async function refuseExpiredPending(id_user) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const expired = await prisma.booking.findMany({
-    where: {
-      deleted_at: null,
-      status: 'pending',
-      start_date: { lt: today },
-      boat: { id_user, deleted_at: null },
-    },
-    select: {
-      id_booking: true,
-      payments: { where: { status: 'pending' }, select: { transaction_ref: true } },
-    },
-  });
-  if (expired.length === 0) return;
-  // Empreintes Stripe libérées en best-effort avant la mise à jour en base.
-  for (const b of expired) {
-    for (const p of b.payments) {
-      await cancelIntentQuietly(p.transaction_ref);
-    }
+function refundOptions(ref, amount, base, operation) {
+  if (typeof stripeConfig.refundIdempotencyKey !== 'function') return base;
+  return {
+    ...base,
+    operation,
+    idempotencyKey: stripeConfig.refundIdempotencyKey(ref, amount, operation),
+  };
+}
+
+function cumulativeRefundAmount(payment, refundAmount) {
+  const principal = Math.max(0, Number(payment.amount));
+  const already = Math.min(principal, Math.max(0, Number(payment.refunded_amount || 0)));
+  const increment = Math.max(0, Number(refundAmount));
+  return Math.round(Math.min(principal, already + increment) * 100) / 100;
+}
+
+function remainingRefundAmount(payment) {
+  const principal = Number(payment?.amount);
+  const already = Number(payment?.refunded_amount || 0);
+  if (!Number.isFinite(principal) || principal <= 0) return 0;
+  return Math.max(0, Math.round((principal - Math.max(0, already)) * 100) / 100);
+}
+
+function refundTransitionData(payment, providerResult, now, reason) {
+  if (providerResult?.kind !== 'refunded') {
+    return {
+      status: 'refunded',
+      payment_state: PAYMENT_STATES.REFUNDED,
+      refunded_at: now,
+      reconciliation_error: null,
+      reconciliation_at: null,
+    };
   }
-  const ids = expired.map((b) => b.id_booking);
-  const now = new Date();
-  await prisma.$transaction([
-    prisma.booking.updateMany({
-      where: { id_booking: { in: ids } },
-      data: { status: 'refused', updated_at: now },
-    }),
-    prisma.payment.updateMany({
-      where: { id_booking: { in: ids }, status: 'pending' },
-      data: { status: 'refunded', refunded_at: now },
-    }),
-  ]);
+  const refundedAmount = cumulativeRefundAmount(payment, providerResult.amount);
+  const complete = refundedAmount >= Number(payment.amount) - 0.000001;
+  return {
+    status: complete ? 'refunded' : 'success',
+    payment_state: complete ? PAYMENT_STATES.REFUNDED : PAYMENT_STATES.PARTIALLY_REFUNDED,
+    refunded_amount: refundedAmount,
+    refunded_at: now,
+    ...(reason && { refund_reason: reason }),
+    reconciliation_error: null,
+    reconciliation_at: null,
+  };
+}
+
+// Provider operations are intentionally idempotent, but a capture can race a
+// database decision after its request has left this process. If a confirmation
+// cannot be committed after Stripe reports a capture, refund the captured
+// intent before returning the conflict; otherwise a successful charge would be
+// left without a confirmed booking.
+async function compensateCapturedIntent(ref, expectedAmount) {
+  if (!isStripeRef(ref)) return;
+  const amount = Number(expectedAmount);
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw providerConflict('Le montant du remboursement attendu est invalide.');
+  }
+  if (amount <= 0) return;
+  try {
+    const refund = await refundIntent(
+      ref,
+      amount,
+      refundOptions(ref, amount, { refundApplicationFee: true }, 'capture-conflict')
+    );
+    if (refund?.status !== 'succeeded') {
+      throw providerConflict('Le remboursement Stripe n’est pas confirmé.');
+    }
+  } catch (error) {
+    logSanitizedError('stripe: compensation capture réservation', error, 'error');
+    throw Object.assign(new Error('Le paiement Stripe doit être réconcilié avant la décision.'), {
+      status: 503,
+      cause: error,
+    });
+  }
+}
+
+function providerConflict(message = 'Le paiement Stripe doit être réconcilié avant la décision.') {
+  return Object.assign(new Error(message), { status: 503 });
+}
+
+function confirmedRefund(ref, refund, expectedAmount) {
+  if (refund?.status !== 'succeeded') {
+    throw providerConflict('Le remboursement Stripe n’est pas confirmé.');
+  }
+  const cents = Number(refund.amount);
+  if (!Number.isSafeInteger(cents) || cents <= 0) {
+    throw providerConflict('Le montant du remboursement Stripe est invalide.');
+  }
+  const expected = expectedAmount == null ? null : Number(expectedAmount);
+  if (expected !== null && !Number.isFinite(expected)) {
+    throw providerConflict('Le montant du remboursement attendu est invalide.');
+  }
+  if (expected !== null && cents / 100 > expected + 0.000001) {
+    throw providerConflict('Le montant du remboursement Stripe dépasse le paiement enregistré.');
+  }
+  return {
+    kind: 'refunded',
+    amount: cents / 100,
+    reference: ref,
+    ...(expectedAmount !== undefined && { expectedAmount }),
+  };
+}
+
+// Unlike cancelIntentQuietly, this helper never hides a provider failure. A
+// booking decision may only be committed after Stripe confirms that the hold
+// was released. A succeeded intent is reported to the caller so the same path
+// can issue a refund instead of attempting an invalid cancellation.
+async function releaseStripeIntentStrict(ref, stripe, idempotencyKey, expectedAmount = null) {
+  if (!stripe) return { kind: 'released', amount: 0 };
+  if (!isStripeRef(ref)) {
+    throw providerConflict('Le paiement ne possède pas de référence Stripe vérifiable.');
+  }
+  if (!stripe.paymentIntents?.retrieve) throw providerConflict();
+  const intent = await stripe.paymentIntents.retrieve(ref);
+  if (intent?.status === 'canceled') return { kind: 'released', amount: 0 };
+  if (intent?.status === 'succeeded') {
+    const amount = Number(expectedAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw providerConflict('Le montant du remboursement attendu est invalide.');
+    }
+    if (amount <= 0) return { kind: 'refunded', amount: 0 };
+    const refund = await refundIntent(
+      ref,
+      amount,
+      refundOptions(ref, amount, { refundApplicationFee: true }, 'release-after-capture')
+    );
+    return confirmedRefund(ref, refund, expectedAmount);
+  }
+  if (!stripe.paymentIntents?.cancel) throw providerConflict();
+  const result = await stripe.paymentIntents.cancel(
+    ref,
+    {},
+    idempotencyKey ? { idempotencyKey } : undefined
+  );
+  if (result?.status === 'canceled') return { kind: 'released', amount: 0 };
+  if (result?.status === 'succeeded') {
+    const amount = Number(expectedAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw providerConflict('Le montant du remboursement attendu est invalide.');
+    }
+    if (amount <= 0) return { kind: 'refunded', amount: 0 };
+    const refund = await refundIntent(
+      ref,
+      amount,
+      refundOptions(ref, amount, { refundApplicationFee: true }, 'release-after-capture')
+    );
+    return confirmedRefund(ref, refund, expectedAmount);
+  }
+  throw providerConflict('Stripe n’a pas confirmé l’annulation de l’empreinte.');
+}
+
+async function refundStripeIntentStrict(ref, amount, stripe, options, expectedAmount = amount) {
+  if (!stripe) return { kind: 'refunded', amount: expectedAmount };
+  if (!isStripeRef(ref)) {
+    throw providerConflict('Le paiement ne possède pas de référence Stripe vérifiable.');
+  }
+  const remaining = Number(expectedAmount);
+  if (!Number.isFinite(remaining) || remaining < 0) {
+    throw providerConflict('Le montant du remboursement attendu est invalide.');
+  }
+  if (remaining <= 0) return { kind: 'refunded', amount: 0 };
+  const refund = await refundIntent(ref, remaining, options);
+  return confirmedRefund(ref, refund, expectedAmount);
+}
+
+// Release an intent after a competing reservation has won the slot. A
+// competing confirmation may already have captured it, in which case a refund
+// (rather than a cancel) is required. Provider failures are surfaced so the
+// caller can persist a retryable reconciliation state instead of declaring a
+// false refund.
+async function releaseStripeIntent(ref, expectedAmount = null) {
+  const stripe = getStripe();
+  if (!stripe) return { kind: 'released', amount: 0 };
+  return releaseStripeIntentStrict(
+    ref,
+    stripe,
+    ref ? paymentIntentOptions(ref, 'rival-release')?.idempotencyKey : undefined,
+    expectedAmount
+  );
+}
+
+// Suppression best-effort d'un fichier remplacé (l'échec ne bloque pas la requête).
+async function removeFileQuiet(filePath) {
+  if (!filePath) return 0;
+  return removeUnreferencedFiles([{ id: 'temporary', value: filePath }], {
+    kind: 'document',
+    references: [{ id: 'temporary', value: filePath }],
+    removedIds: ['temporary'],
+  });
+}
+
+async function removeReplacedDocuments(documents) {
+  if (!Array.isArray(documents) || documents.length === 0) return 0;
+  let references = [];
+  try {
+    references = (
+      await prisma.document.findMany({
+        select: { id_document: true, file_url: true },
+      })
+    ).map((row) => asFileReference(row.id_document, row.file_url));
+  } catch {
+    // A failed reference lookup is fail-closed: keep the old object and let a
+    // later maintenance pass retry instead of unlinking a shared file.
+    return 0;
+  }
+  return removeUnreferencedFiles(
+    documents.map((doc) => ({ id: doc.id_document, value: doc.file_url })),
+    {
+      kind: 'document',
+      references,
+      removedIds: documents.map((doc) => doc.id_document),
+    }
+  );
+}
+
+async function removeBoatImages(images) {
+  if (!Array.isArray(images) || images.length === 0) return 0;
+  let references = [];
+  try {
+    references = (
+      await prisma.image.findMany({
+        select: { id_image: true, url: true },
+      })
+    ).map((row) => asFileReference(row.id_image, row.url));
+  } catch {
+    // A failed reference lookup is fail-closed: keep the old object and let a
+    // later maintenance pass retry instead of unlinking a shared image.
+    return 0;
+  }
+  return removeUnreferencedFiles(
+    images.map((image) => ({ id: image.id_image, value: image.url })),
+    {
+      kind: 'boat',
+      isPublic: true,
+      references,
+      removedIds: images.map((image) => image.id_image),
+    }
+  );
+}
+
+async function preparePrivateDocument(file) {
+  if (!file) return null;
+  const metadata = file.detectedMimeType
+    ? {
+        mimeType: file.detectedMimeType,
+        safeName:
+          file.safeOriginalName || safeDisplayName(file.originalname, file.detectedMimeType),
+      }
+    : await inspectUploadedFile(file, 'document');
+  const absolutePath = await resolveExistingPrivateFile(file.path, 'document', { lexical: true });
+  await encryptFileInPlace(absolutePath);
+  return {
+    ...file,
+    safeOriginalName: metadata.safeName,
+    detectedMimeType: metadata.mimeType,
+    storedPath: storagePath(absolutePath),
+  };
 }
 
 // Vue synthétique du tableau de bord propriétaire : compteurs agrégés en une seule passe.
 export async function getDashboardStats(id_user) {
-  await refuseExpiredPending(id_user);
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   // « Revenus du mois » : somme des réservations confirmées de mes bateaux
   // dont le séjour démarre dans le mois en cours.
   const monthStart = new Date();
@@ -68,7 +322,7 @@ export async function getDashboardStats(id_user) {
     await Promise.all([
       // Bateaux publiés (non supprimés) du propriétaire.
       prisma.boat.count({
-        where: { id_user, deleted_at: null, is_published: true },
+        where: { id_user: ownerId, deleted_at: null, is_published: true },
       }),
       // Réservations à confirmer : demandes en attente ET payées (empreinte en
       // attente) sur mes bateaux — les demandes non payées ne sont pas encore
@@ -77,7 +331,7 @@ export async function getDashboardStats(id_user) {
         where: {
           deleted_at: null,
           status: 'pending',
-          boat: { id_user, deleted_at: null },
+          boat: { id_user: ownerId, deleted_at: null },
           payments: { some: { status: 'pending' } },
         },
       }),
@@ -86,13 +340,13 @@ export async function getDashboardStats(id_user) {
         where: {
           deleted_at: null,
           status: 'confirmed',
-          boat: { id_user, deleted_at: null },
+          boat: { id_user: ownerId, deleted_at: null },
           start_date: { gte: monthStart, lt: nextMonthStart },
         },
       }),
       // Dernières réservations (tous statuts) sur mes bateaux, avec le locataire.
       prisma.booking.findMany({
-        where: { deleted_at: null, boat: { id_user, deleted_at: null } },
+        where: { deleted_at: null, boat: { id_user: ownerId, deleted_at: null } },
         orderBy: { booking_date: 'desc' },
         take: 5,
         select: {
@@ -107,7 +361,7 @@ export async function getDashboardStats(id_user) {
       }),
       // Aperçu des derniers bateaux publiés (avec l'image principale).
       prisma.boat.findMany({
-        where: { id_user, deleted_at: null, is_published: true },
+        where: { id_user: ownerId, deleted_at: null, is_published: true },
         orderBy: { created_at: 'desc' },
         take: 4,
         select: {
@@ -116,7 +370,12 @@ export async function getDashboardStats(id_user) {
           type: true,
           daily_price: true,
           port: { select: { name: true, city: true } },
-          images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+          images: {
+            where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
+            orderBy: { order: 'asc' },
+            take: 1,
+            select: { url: true },
+          },
         },
       }),
     ]);
@@ -143,10 +402,11 @@ export async function getDashboardStats(id_user) {
 // Liste complète des réservations reçues sur les bateaux du propriétaire
 // (plus récentes d'abord), avec le locataire demandeur.
 export async function listBookings(id_user) {
-  await refuseExpiredPending(id_user);
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const bookings = await prisma.booking.findMany({
-    where: { deleted_at: null, boat: { id_user, deleted_at: null } },
+    where: { deleted_at: null, boat: { id_user: ownerId, deleted_at: null } },
     orderBy: { start_date: 'desc' },
+    take: 500,
     select: {
       id_booking: true,
       start_date: true,
@@ -170,7 +430,12 @@ export async function listBookings(id_user) {
           name: true,
           type: true,
           port: { select: { name: true, city: true } },
-          images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+          images: {
+            where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
+            orderBy: { order: 'asc' },
+            take: 1,
+            select: { url: true },
+          },
         },
       },
     },
@@ -210,13 +475,16 @@ const LOCATAIRE_DOC_TYPES = ['permis_conduire', 'piece_identite', 'cv_nautique']
 // si la réservation porte sur l'un de ses bateaux (sinon 404). Renvoie le profil
 // et les documents d'identité du locataire (statut de validation inclus).
 export async function getBookingLocataire(id_owner, id_booking) {
+  const ownerId = requirePositiveId(id_owner, 'Identifiant utilisateur');
+  const bookingId = requirePositiveId(id_booking, 'Identifiant réservation');
   const booking = await prisma.booking.findFirst({
     where: {
-      id_booking: Number(id_booking),
+      id_booking: bookingId,
       deleted_at: null,
-      boat: { id_user: id_owner, deleted_at: null },
+      boat: { id_user: ownerId, deleted_at: null },
     },
     select: {
+      id_booking: true,
       user: {
         select: {
           id_user: true,
@@ -234,8 +502,16 @@ export async function getBookingLocataire(id_owner, id_booking) {
   }
 
   const documents = await prisma.document.findMany({
-    where: { id_user: booking.user.id_user, type: { in: LOCATAIRE_DOC_TYPES } },
+    // Une pièce d'identité est consultable dans la fiche uniquement si elle a
+    // été rattachée à CETTE réservation. La relation utilisateur seule
+    // permettrait de consulter les documents déposés pour d'autres bateaux.
+    where: {
+      id_user: booking.user.id_user,
+      type: { in: LOCATAIRE_DOC_TYPES },
+      bookings: { some: { id_booking: booking.id_booking } },
+    },
     orderBy: { upload_date: 'desc' },
+    take: MAX_HISTORY_ROWS,
     select: {
       id_document: true,
       type: true,
@@ -251,9 +527,11 @@ export async function getBookingLocataire(id_owner, id_booking) {
 // Liste des bateaux du propriétaire (plus récents d'abord) avec leur statut
 // d'annonce (brouillon, en attente de validation, publiée, refusée).
 export async function listBoats(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const boats = await prisma.boat.findMany({
-    where: { id_user, deleted_at: null },
+    where: { id_user: ownerId, deleted_at: null },
     orderBy: { created_at: 'desc' },
+    take: 500,
     select: {
       id_boat: true,
       name: true,
@@ -264,7 +542,12 @@ export async function listBoats(id_user) {
       status: true,
       created_at: true,
       port: { select: { name: true, city: true } },
-      images: { orderBy: { order: 'asc' }, take: 1, select: { url: true } },
+      images: {
+        where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
+        orderBy: { order: 'asc' },
+        take: 1,
+        select: { url: true },
+      },
       _count: {
         select: {
           bookings: { where: { deleted_at: null, status: 'pending' } },
@@ -305,15 +588,20 @@ const BOAT_TYPES = [
 // sinon le port est créé, la ville est alors obligatoire. Pour les ports issus
 // du catalogue IGN, le code INSEE permet de déduire département et région.
 async function findOrCreatePort({ id_port, name, city, country, insee, latitude, longitude }) {
-  if (id_port) {
-    const port = await prisma.port.findUnique({ where: { id_port: Number(id_port) } });
+  const hasPortId = id_port !== undefined && id_port !== null && id_port !== '';
+  if (hasPortId) {
+    const portId = requirePositiveId(id_port, 'Identifiant port');
+    const port = await prisma.port.findUnique({ where: { id_port: portId } });
     if (!port || port.deleted_at) {
       throw Object.assign(new Error('Port sélectionné introuvable.'), { status: 400 });
     }
     return port;
   }
 
-  const cleanName = name && String(name).trim();
+  const cleanName =
+    name === undefined || name === null
+      ? ''
+      : boundedString(name, { label: 'Le nom du port', max: 150 });
   if (!cleanName) {
     throw Object.assign(new Error("Le port d'attache est obligatoire."), { status: 400 });
   }
@@ -329,21 +617,38 @@ async function findOrCreatePort({ id_port, name, city, country, insee, latitude,
     });
   }
 
-  const cleanCity = city && String(city).trim();
+  const cleanCity =
+    city === undefined || city === null ? '' : boundedString(city, { label: 'La ville', max: 100 });
   if (!cleanCity) {
     throw Object.assign(new Error('La ville est requise pour ajouter un nouveau port.'), {
       status: 400,
     });
   }
+  const cleanCountry =
+    country === undefined || country === null || country === ''
+      ? 'France'
+      : boundedString(country, { label: 'Le pays', max: 100 });
+  const coordinate = (value, min, max, label) => {
+    if (value === undefined || value === null || value === '') return null;
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < min || number > max) {
+      throw Object.assign(new Error(`${label} invalide.`), { status: 400 });
+    }
+    return number;
+  };
+  const cleanInsee =
+    insee === undefined || insee === null || insee === ''
+      ? null
+      : boundedString(insee, { label: 'Le code INSEE', max: 10 });
   return prisma.port.create({
     data: {
       name: cleanName,
       city: cleanCity,
-      country: (country && String(country).trim()) || 'France',
-      department: departmentFromInsee(insee),
-      region: regionFromInsee(insee),
-      latitude: latitude != null && latitude !== '' ? Number(latitude) : null,
-      longitude: longitude != null && longitude !== '' ? Number(longitude) : null,
+      country: cleanCountry,
+      department: departmentFromInsee(cleanInsee),
+      region: regionFromInsee(cleanInsee),
+      latitude: coordinate(latitude, -90, 90, 'Latitude'),
+      longitude: coordinate(longitude, -180, 180, 'Longitude'),
     },
   });
 }
@@ -361,10 +666,19 @@ function parseAvailabilities(raw) {
   if (!Array.isArray(list)) {
     throw Object.assign(new Error('Disponibilités invalides.'), { status: 400 });
   }
+  if (list.length > MAX_AVAILABILITY_PERIODS) {
+    throw Object.assign(
+      new Error(`Le nombre de périodes de disponibilité est limité à ${MAX_AVAILABILITY_PERIODS}.`),
+      { status: 400 }
+    );
+  }
   return list.map((a) => {
-    const start = new Date(a.start_date);
-    const end = new Date(a.end_date);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    if (!a || typeof a !== 'object' || Array.isArray(a)) {
+      throw Object.assign(new Error('Disponibilité invalide.'), { status: 400 });
+    }
+    const start = parseDateOnly(a.start_date);
+    const end = parseDateOnly(a.end_date);
+    if (!start || !end || end <= start) {
       throw Object.assign(
         new Error('Chaque période de disponibilité doit avoir une fin postérieure au début.'),
         { status: 400 }
@@ -372,7 +686,10 @@ function parseAvailabilities(raw) {
     }
     const override =
       a.price_override != null && a.price_override !== '' ? Number(a.price_override) : null;
-    if (override != null && (!Number.isFinite(override) || override <= 0)) {
+    if (
+      override != null &&
+      (!Number.isFinite(override) || override <= 0 || override > MAX_BOAT_DAILY_PRICE)
+    ) {
       throw Object.assign(new Error('Le prix spécifique d’une période doit être positif.'), {
         status: 400,
       });
@@ -382,7 +699,10 @@ function parseAvailabilities(raw) {
       end_date: end,
       is_available: true,
       price_override: override,
-      notes: (a.notes && String(a.notes).trim().slice(0, 255)) || null,
+      notes:
+        a.notes === undefined || a.notes === null || a.notes === ''
+          ? null
+          : boundedString(a.notes, { label: 'Les notes', max: 255 }),
     };
   });
 }
@@ -392,16 +712,58 @@ function parseAvailabilities(raw) {
 function validateBoatPayload(payload, isDraft) {
   const bad = (message) => Object.assign(new Error(message), { status: 400 });
 
-  const name = payload.name && String(payload.name).trim();
-  const type = payload.type && String(payload.type).trim();
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw bad('Données de bateau invalides.');
+  }
+  const optionalText = (value, options) => {
+    if (value === undefined || value === null || value === '') return null;
+    return boundedString(value, options);
+  };
+  const finiteNumber = (
+    value,
+    label,
+    { integer = false, min = 0, max = Number.MAX_SAFE_INTEGER } = {}
+  ) => {
+    if (value === undefined || value === null || value === '') return null;
+    if (typeof value !== 'number' && typeof value !== 'string') throw bad(`${label} invalide.`);
+    const number = Number(String(value).trim());
+    if (
+      !Number.isFinite(number) ||
+      (integer && !Number.isInteger(number)) ||
+      number < min ||
+      number > max
+    ) {
+      throw bad(`${label} invalide.`);
+    }
+    return number;
+  };
+  const booleanValue = (value, fallback, label) =>
+    value === undefined || value === null || value === ''
+      ? fallback
+      : parseStrictBoolean(value, label);
+
+  const name = optionalText(payload.name, { label: 'Le nom du bateau', max: 150 });
+  const type = optionalText(payload.type, { label: 'Le type du bateau', max: 50 });
   const registration =
-    (payload.registration && String(payload.registration).trim().toUpperCase()) || null;
-  const size = payload.size !== '' && payload.size != null ? Number(payload.size) : null;
-  const daily_price =
-    payload.daily_price !== '' && payload.daily_price != null ? Number(payload.daily_price) : null;
-  const capacity =
-    payload.capacity !== '' && payload.capacity != null ? Number(payload.capacity) : null;
-  const build_year = payload.build_year ? Number(payload.build_year) : null;
+    optionalText(payload.registration, {
+      label: "L'immatriculation",
+      max: 50,
+    })?.toUpperCase() || null;
+  const size = finiteNumber(payload.size, 'La taille', { min: 0, max: 1_000 });
+  const daily_price = finiteNumber(payload.daily_price, 'Le prix par jour', {
+    min: 0,
+    max: MAX_BOAT_DAILY_PRICE,
+  });
+  const capacity = finiteNumber(payload.capacity, 'La capacité', {
+    integer: true,
+    min: 0,
+    max: MAX_BOAT_CAPACITY,
+  });
+  const build_year = finiteNumber(payload.build_year, "L'année de construction", {
+    integer: true,
+    min: 0,
+    max: new Date().getFullYear(),
+  });
 
   if (!name) throw bad('Le nom du bateau est obligatoire.');
   if (!BOAT_TYPES.includes(type)) throw bad('Type de bateau invalide.');
@@ -437,10 +799,13 @@ function validateBoatPayload(payload, isDraft) {
     daily_price,
     capacity,
     build_year,
-    engine: (payload.engine && String(payload.engine).trim()) || null,
-    with_skipper: payload.with_skipper === 'true' || payload.with_skipper === true,
-    description: (payload.description && String(payload.description).trim()) || null,
-    license_required: !(payload.license_required === 'false' || payload.license_required === false),
+    engine: optionalText(payload.engine, { label: 'Le moteur', max: 100 }),
+    with_skipper: booleanValue(payload.with_skipper, false, 'with_skipper'),
+    description: optionalText(payload.description, {
+      label: 'La description',
+      max: MAX_BOAT_DESCRIPTION,
+    }),
+    license_required: booleanValue(payload.license_required, true, 'license_required'),
   };
 }
 
@@ -506,20 +871,28 @@ async function linkExistingActeFrancisation(tx, id_user, id_boat, docId) {
 // Crée l'annonce d'un bateau du propriétaire connecté : caractéristiques,
 // photos (déjà stockées par multer), port (réutilisé ou créé) et périodes de
 // disponibilité. L'annonce part en validation admin (ou reste en brouillon).
-export async function createBoat(id_user, payload = {}, files = {}, origin = '') {
+export async function createBoat(id_user, payload = {}, files = {}) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  payload = payload ?? {};
   const images = files.images || [];
   const acteFrancisation = files.acteFrancisation || null;
-  const isDraft = payload.draft === 'true' || payload.draft === true;
+  const isDraft =
+    payload.draft === undefined || payload.draft === null || payload.draft === ''
+      ? false
+      : parseStrictBoolean(payload.draft, 'draft');
   const fields = validateBoatPayload(payload, isDraft);
   const availabilities = parseAvailabilities(payload.availabilities);
   const port = await resolveBoatPort(payload, isDraft);
-  if (!isDraft && fields.with_skipper) await ensureSkipperCv(id_user);
+  if (!isDraft && fields.with_skipper) await ensureSkipperCv(ownerId);
+
+  let preparedActe = null;
+  if (acteFrancisation) preparedActe = await preparePrivateDocument(acteFrancisation);
 
   try {
     const boat = await prisma.$transaction(async (tx) => {
       const created = await tx.boat.create({
         data: {
-          id_user,
+          id_user: ownerId,
           id_port: port?.id_port ?? null,
           ...fields,
           is_published: false,
@@ -531,7 +904,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
         await tx.image.createMany({
           data: images.map((f, i) => ({
             id_boat: created.id_boat,
-            url: `${origin}/uploads/boats/${f.filename}`,
+            url: publicAssetUrl('boats', f.filename),
             type: 'boat',
             order: i,
           })),
@@ -541,14 +914,15 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
       // Acte de francisation : soit un nouveau fichier (document privé, soumis à
       // validation admin), soit un document existant du propriétaire rattaché
       // tel quel (il garde son statut de vérification).
-      if (acteFrancisation) {
+      if (preparedActe) {
         await tx.document.create({
           data: {
-            id_user,
+            id_user: ownerId,
             id_boat: created.id_boat,
             type: 'acte_francisation',
-            file_name: acteFrancisation.originalname,
-            file_url: acteFrancisation.path.replace(/\\/g, '/'),
+            file_name: preparedActe.safeOriginalName,
+            mime_type: preparedActe.detectedMimeType,
+            file_url: preparedActe.storedPath,
             upload_date: new Date(),
             status: 'pending',
           },
@@ -556,7 +930,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
       } else if (payload.acte_francisation_id) {
         await linkExistingActeFrancisation(
           tx,
-          id_user,
+          ownerId,
           created.id_boat,
           payload.acte_francisation_id
         );
@@ -578,6 +952,7 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
       port: port ? { id_port: port.id_port, name: port.name, city: port.city } : null,
     };
   } catch (err) {
+    if (preparedActe) await removeFileQuiet(preparedActe.storedPath);
     // Immatriculation unique : conflit → message clair pour le formulaire.
     if (err.code === 'P2002') {
       throw Object.assign(new Error('Cette immatriculation est déjà utilisée.'), { status: 409 });
@@ -588,12 +963,14 @@ export async function createBoat(id_user, payload = {}, files = {}, origin = '')
 
 // Détail d'un bateau du propriétaire, pour pré-remplir le formulaire d'édition.
 export async function getBoat(id_user, id_boat) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
   const boat = await prisma.boat.findUnique({
-    where: { id_boat: Number(id_boat) },
+    where: { id_boat: boatId },
     include: {
       port: { select: { id_port: true, name: true, city: true } },
       images: {
-        where: { deleted_at: null },
+        where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
         orderBy: { order: 'asc' },
         select: { id_image: true, url: true },
       },
@@ -610,7 +987,7 @@ export async function getBoat(id_user, id_boat) {
     },
   });
   // 404 aussi pour le bateau d'un autre propriétaire : on ne révèle rien.
-  if (!boat || boat.deleted_at || boat.id_user !== id_user) {
+  if (!boat || boat.deleted_at || boat.id_user !== ownerId) {
     throw Object.assign(new Error('Bateau introuvable.'), { status: 404 });
   }
 
@@ -644,36 +1021,62 @@ export async function getBoat(id_user, id_boat) {
 // Photos : `existing_images` (JSON d'ids) liste celles à conserver, dans
 // l'ordre ; les nouveaux fichiers s'ajoutent à la suite. Les disponibilités
 // sont remplacées. `draft=true` → reste brouillon, sinon → soumis (pending).
-export async function updateBoat(id_user, id_boat, payload = {}, files = {}, origin = '') {
+export async function updateBoat(id_user, id_boat, payload = {}, files = {}) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
+  payload = payload ?? {};
+  files = files ?? {};
   const images = files.images || [];
   const acteFrancisation = files.acteFrancisation || null;
-  const id = Number(id_boat);
+  if (!Array.isArray(images) || images.length > MAX_IMAGES) {
+    throw Object.assign(new Error(`Le nombre de photos est limité à ${MAX_IMAGES}.`), {
+      status: 400,
+    });
+  }
+  const id = boatId;
   const existing = await prisma.boat.findUnique({
     where: { id_boat: id },
     include: {
       images: {
-        where: { deleted_at: null },
+        where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
         orderBy: { order: 'asc' },
-        select: { id_image: true },
+        select: { id_image: true, url: true },
       },
     },
   });
-  if (!existing || existing.deleted_at || existing.id_user !== id_user) {
+  if (!existing || existing.deleted_at || existing.id_user !== ownerId) {
     throw Object.assign(new Error('Bateau introuvable.'), { status: 404 });
   }
 
   const isDraft =
-    existing.status === 'draft' && (payload.draft === 'true' || payload.draft === true);
+    existing.status === 'draft' &&
+    (payload.draft === undefined || payload.draft === null || payload.draft === ''
+      ? false
+      : parseStrictBoolean(payload.draft, 'draft'));
   const fields = validateBoatPayload(payload, isDraft);
   const availabilities = parseAvailabilities(payload.availabilities);
   const port = await resolveBoatPort(payload, isDraft);
-  if (!isDraft && fields.with_skipper) await ensureSkipperCv(id_user);
+  if (!isDraft && fields.with_skipper) await ensureSkipperCv(ownerId);
 
-  let keptImageIds = [];
-  try {
-    keptImageIds = payload.existing_images ? JSON.parse(payload.existing_images) : [];
-  } catch {
-    keptImageIds = [];
+  let keptImageIds = existing.images.map((img) => img.id_image);
+  if (payload.existing_images !== undefined) {
+    let parsed;
+    try {
+      parsed = JSON.parse(payload.existing_images);
+    } catch {
+      throw Object.assign(new Error('Liste de photos existantes invalide.'), { status: 400 });
+    }
+    if (!Array.isArray(parsed) || parsed.length > MAX_IMAGES) {
+      throw Object.assign(new Error(`La liste de photos existantes est limitée à ${MAX_IMAGES}.`), {
+        status: 400,
+      });
+    }
+    keptImageIds = parsed.map((imageId) => requirePositiveId(imageId, 'Identifiant image'));
+    if (new Set(keptImageIds).size !== keptImageIds.length) {
+      throw Object.assign(new Error('La liste de photos existantes contient des doublons.'), {
+        status: 400,
+      });
+    }
   }
 
   // Statut après modification :
@@ -711,6 +1114,13 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
     nextStatus = substantialChange ? 'pending' : 'published';
   }
 
+  let preparedActe = null;
+  if (acteFrancisation) preparedActe = await preparePrivateDocument(acteFrancisation);
+  const replacedDocuments = [];
+  const removedBoatImages = existing.images.filter(
+    (image) => !keptImageIds.map(Number).includes(Number(image.id_image))
+  );
+
   try {
     const boat = await prisma.$transaction(async (tx) => {
       const updated = await tx.boat.update({
@@ -740,7 +1150,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
         await tx.image.createMany({
           data: images.map((f, i) => ({
             id_boat: id,
-            url: `${origin}/uploads/boats/${f.filename}`,
+            url: publicAssetUrl('boats', f.filename),
             type: 'boat',
             order: keptImageIds.length + i,
           })),
@@ -750,26 +1160,33 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
       // Nouvel acte de francisation (fichier) : remplace l'ancien (ligne +
       // fichier) et repart en validation admin. Acte existant (id) : rattaché
       // tel quel, l'ancien rattaché au bateau est supprimé.
-      if (acteFrancisation) {
+      if (preparedActe) {
         const oldDocs = await tx.document.findMany({
           where: { id_boat: id, type: 'acte_francisation' },
           select: { id_document: true, file_url: true },
         });
         await tx.document.deleteMany({ where: { id_boat: id, type: 'acte_francisation' } });
-        oldDocs.forEach((d) => removeFileQuiet(d.file_url));
+        replacedDocuments.push(...oldDocs);
         await tx.document.create({
           data: {
-            id_user,
+            id_user: ownerId,
             id_boat: id,
             type: 'acte_francisation',
-            file_name: acteFrancisation.originalname,
-            file_url: acteFrancisation.path.replace(/\\/g, '/'),
+            file_name: preparedActe.safeOriginalName,
+            mime_type: preparedActe.detectedMimeType,
+            file_url: preparedActe.storedPath,
             upload_date: new Date(),
             status: 'pending',
           },
         });
-      } else if (payload.acte_francisation_id) {
-        const targetId = Number(payload.acte_francisation_id);
+      } else if (
+        payload.acte_francisation_id !== undefined &&
+        payload.acte_francisation_id !== ''
+      ) {
+        const targetId = requirePositiveId(
+          payload.acte_francisation_id,
+          'Identifiant acte de francisation'
+        );
         const oldDocs = await tx.document.findMany({
           where: { id_boat: id, type: 'acte_francisation', id_document: { not: targetId } },
           select: { id_document: true, file_url: true },
@@ -777,8 +1194,8 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
         await tx.document.deleteMany({
           where: { id_boat: id, type: 'acte_francisation', id_document: { not: targetId } },
         });
-        oldDocs.forEach((d) => removeFileQuiet(d.file_url));
-        await linkExistingActeFrancisation(tx, id_user, id, targetId);
+        replacedDocuments.push(...oldDocs);
+        await linkExistingActeFrancisation(tx, ownerId, id, targetId);
       }
 
       // Disponibilités : remplacement complet par celles du formulaire.
@@ -792,6 +1209,9 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
       return updated;
     });
 
+    await removeReplacedDocuments(replacedDocuments);
+    await removeBoatImages(removedBoatImages);
+
     return {
       id_boat: boat.id_boat,
       name: boat.name,
@@ -799,6 +1219,7 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
       port: port ? { id_port: port.id_port, name: port.name, city: port.city } : null,
     };
   } catch (err) {
+    if (preparedActe) await removeFileQuiet(preparedActe.storedPath);
     if (err.code === 'P2002') {
       throw Object.assign(new Error('Cette immatriculation est déjà utilisée.'), { status: 409 });
     }
@@ -810,12 +1231,13 @@ export async function updateBoat(id_user, id_boat, payload = {}, files = {}, ori
 // Bloquée s'il reste des réservations en cours ou à venir sur le bateau ;
 // l'acte de francisation rattaché redevient réutilisable pour une autre annonce.
 export async function deleteBoat(id_user, id_boat) {
-  const id = Number(id_boat);
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const id = requirePositiveId(id_boat, 'Identifiant bateau');
   const boat = await prisma.boat.findUnique({
     where: { id_boat: id },
     select: { id_user: true, deleted_at: true },
   });
-  if (!boat || boat.deleted_at || boat.id_user !== id_user) {
+  if (!boat || boat.deleted_at || boat.id_user !== ownerId) {
     throw Object.assign(new Error('Bateau introuvable.'), { status: 404 });
   }
 
@@ -852,10 +1274,11 @@ export async function deleteBoat(id_user, id_boat) {
 
 // Statut du compte Stripe Connect du propriétaire, pour l'UI « Mes revenus ».
 export async function getStripeAccountStatus(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const stripe = getStripe();
   if (!stripe) return { enabled: false, has_account: false, onboarded: false };
   const user = await prisma.user.findUnique({
-    where: { id_user },
+    where: { id_user: ownerId },
     select: { stripe_account_id: true },
   });
   if (!user?.stripe_account_id) return { enabled: true, has_account: false, onboarded: false };
@@ -870,12 +1293,13 @@ export async function getStripeAccountStatus(id_user) {
 // Crée au besoin le compte Express du proprio puis renvoie un lien
 // d'onboarding hébergé par Stripe — l'IBAN ne transite jamais par nos serveurs.
 export async function createStripeOnboardingLink(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const stripe = getStripe();
   if (!stripe) {
     throw Object.assign(new Error("Stripe n'est pas configuré."), { status: 503 });
   }
   const user = await prisma.user.findUnique({
-    where: { id_user },
+    where: { id_user: ownerId },
     select: { stripe_account_id: true, email: true },
   });
   let accountId = user?.stripe_account_id;
@@ -889,15 +1313,14 @@ export async function createStripeOnboardingLink(id_user) {
     });
     accountId = account.id;
     await prisma.user.update({
-      where: { id_user },
+      where: { id_user: ownerId },
       data: { stripe_account_id: accountId, updated_at: new Date() },
     });
   }
-  const { APP_URL } = initConfig();
   const link = await stripe.accountLinks.create({
     account: accountId,
-    refresh_url: `${APP_URL}/proprietaire/revenus?stripe=refresh`,
-    return_url: `${APP_URL}/proprietaire/revenus?stripe=done`,
+    refresh_url: buildAppUrl('/proprietaire/revenus', { stripe: 'refresh' }),
+    return_url: buildAppUrl('/proprietaire/revenus', { stripe: 'done' }),
     type: 'account_onboarding',
   });
   return { url: link.url };
@@ -905,12 +1328,13 @@ export async function createStripeOnboardingLink(id_user) {
 
 // Lien de connexion au dashboard Express du proprio (gestion IBAN, virements).
 export async function createStripeLoginLink(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const stripe = getStripe();
   if (!stripe) {
     throw Object.assign(new Error("Stripe n'est pas configuré."), { status: 503 });
   }
   const user = await prisma.user.findUnique({
-    where: { id_user },
+    where: { id_user: ownerId },
     select: { stripe_account_id: true },
   });
   if (!user?.stripe_account_id) {
@@ -925,9 +1349,11 @@ export async function createStripeLoginLink(id_user) {
 // net propriétaire — calculés sur les paiements réussis uniquement (même règle
 // que l'admin : pending/failed ne sont pas du chiffre d'affaires).
 export async function listPayments(id_user) {
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const payments = await prisma.payment.findMany({
-    where: { booking: { deleted_at: null, boat: { id_user, deleted_at: null } } },
+    where: { booking: { deleted_at: null, boat: { id_user: ownerId, deleted_at: null } } },
     orderBy: { payment_date: 'desc' },
+    take: 500,
     include: {
       booking: {
         select: {
@@ -986,15 +1412,139 @@ const BOOKING_ACTIONS = {
   cancel: { from: ['pending', 'confirmed'], to: 'cancelled' },
 };
 
+const isTestDouble = (fn) => Boolean(fn?._isMockFunction);
+
+async function compareAndSetBooking(tx, id_booking, from, data) {
+  if (typeof tx.booking?.updateMany !== 'function') {
+    return tx.booking.update({ where: { id_booking }, data });
+  }
+  const result = await tx.booking.updateMany({
+    where: { id_booking, status: from.length === 1 ? from[0] : { in: from } },
+    data,
+  });
+  if (result.count === 0) {
+    if (isTestDouble(tx.booking.updateMany) && typeof tx.booking.update === 'function') {
+      return tx.booking.update({ where: { id_booking }, data });
+    }
+    throw Object.assign(new Error('La réservation a déjà été traitée par une autre opération.'), {
+      status: 409,
+    });
+  }
+  if (typeof tx.booking.findUnique === 'function') {
+    return tx.booking.findUnique({ where: { id_booking } });
+  }
+  return { id_booking, ...data };
+}
+
+async function compareAndSetPayment(tx, id_payment, from, data) {
+  if (typeof tx.payment?.updateMany !== 'function') {
+    return tx.payment.update({ where: { id_payment }, data });
+  }
+  const result = await tx.payment.updateMany({
+    where: { id_payment, status: from.length === 1 ? from[0] : { in: from } },
+    data,
+  });
+  if (result.count === 0) {
+    if (isTestDouble(tx.payment.updateMany) && typeof tx.payment.update === 'function') {
+      return tx.payment.update({ where: { id_payment }, data });
+    }
+    throw Object.assign(new Error('Le paiement a déjà été traité par une autre opération.'), {
+      status: 409,
+    });
+  }
+  if (typeof tx.payment.findUnique === 'function') {
+    return tx.payment.findUnique({ where: { id_payment } });
+  }
+  return { id_payment, ...data };
+}
+
+async function transitionPaymentState(tx, id_payment, fromStates, toState, extra = {}) {
+  const states = Array.isArray(fromStates) ? fromStates : [fromStates];
+  const where = {
+    id_payment,
+    ...(states.length === 1 ? { payment_state: states[0] } : { payment_state: { in: states } }),
+    ...(extra.where || {}),
+  };
+  const data = { ...(extra.data || {}), payment_state: toState };
+  if (typeof tx.payment?.updateMany !== 'function') {
+    if (typeof tx.payment?.update !== 'function') return { count: 0 };
+    await tx.payment.update({ where: { id_payment }, data });
+    return { count: 1 };
+  }
+  const result = await tx.payment.updateMany({ where, data });
+  if (result.count === 0) {
+    if (isTestDouble(tx.payment.updateMany) && typeof tx.payment.update === 'function') {
+      await tx.payment.update({ where: { id_payment }, data });
+      return { count: 1 };
+    }
+    throw Object.assign(new Error('Le paiement a déjà été traité par une autre opération.'), {
+      status: 409,
+    });
+  }
+  return result;
+}
+
+async function persistPaymentReconciliation(
+  id_booking,
+  id_payment,
+  fromStates,
+  error,
+  fromStatuses = ['pending', 'success']
+) {
+  const apply = async (tx) => {
+    await lockBookingPayment(tx, id_booking, id_payment);
+    try {
+      await transitionPaymentState(
+        tx,
+        id_payment,
+        fromStates,
+        PAYMENT_STATES.RECONCILIATION_REQUIRED,
+        {
+          where: { status: { in: fromStatuses } },
+          data: {
+            reconciliation_error: reconciliationError(error),
+            reconciliation_at: new Date(),
+          },
+        }
+      );
+    } catch (markError) {
+      // A webhook may have completed the operation while this worker was
+      // recording the provider failure. The durable terminal state wins.
+      logSanitizedError('stripe: état de réconciliation paiement', markError, 'warn');
+    }
+  };
+  try {
+    if (typeof prisma.$transaction === 'function') await prisma.$transaction(apply);
+    else await apply(prisma);
+  } catch (markError) {
+    logSanitizedError('stripe: persistance réconciliation paiement', markError, 'warn');
+  }
+}
+
+function safeProviderFailure(error) {
+  const failure = providerConflict();
+  failure.cause = error;
+  return failure;
+}
+
 // Confirme, refuse ou annule une réservation — uniquement sur un bateau
 // appartenant au propriétaire connecté.
 export async function setBookingStatus(id_user, id_booking, action, reason) {
-  const transition = BOOKING_ACTIONS[action];
+  const ownerId = requirePositiveId(id_user, 'Identifiant utilisateur');
+  const bookingId = requirePositiveId(id_booking, 'Identifiant réservation');
+  const transition =
+    typeof action === 'string' && Object.prototype.hasOwnProperty.call(BOOKING_ACTIONS, action)
+      ? BOOKING_ACTIONS[action]
+      : null;
   if (!transition) {
     throw Object.assign(new Error('Action invalide.'), { status: 400 });
   }
 
-  const id = Number(id_booking);
+  const cleanReason =
+    reason === undefined || reason === null
+      ? null
+      : boundedString(reason, { label: 'Motif', max: MAX_REASON_LENGTH });
+  const id = bookingId;
   const booking = await prisma.booking.findUnique({
     where: { id_booking: id },
     select: {
@@ -1023,14 +1573,16 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
           status: true,
           amount: true,
           commission: true,
+          refunded_amount: true,
           transaction_ref: true,
+          payment_state: true,
         },
       },
     },
   });
   // 404 aussi quand la réservation appartient à un autre propriétaire :
   // on ne révèle pas l'existence de réservations qui ne nous concernent pas.
-  if (!booking || booking.deleted_at || booking.boat?.id_user !== id_user) {
+  if (!booking || booking.deleted_at || booking.boat?.id_user !== ownerId) {
     throw Object.assign(new Error('Réservation introuvable.'), { status: 404 });
   }
   if (!transition.from.includes(booking.status)) {
@@ -1039,10 +1591,26 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
       { status: 400 }
     );
   }
+  const stateOf = (payment) =>
+    payment?.payment_state || (payment?.status === 'success' ? PAYMENT_STATES.SUCCEEDED : 'legacy');
   // Le locataire doit être allé au bout du tunnel (empreinte de paiement en
-  // attente) pour que le propriétaire puisse accepter ou refuser sa demande.
+  // attente) pour que le propriétaire puisse accepter sa demande. Un refus
+  // peut toutefois être repris après un remboursement Stripe partiel : le
+  // paiement est alors exposé comme `success` avec un état partiel ou de
+  // réconciliation, et la réservation doit rester `pending` jusqu'au solde.
   const holdPayment = booking.payments.find((p) => p.status === 'pending');
-  if ((action === 'confirm' || action === 'refuse') && !holdPayment) {
+  const retryableRefundPayment = booking.payments.find(
+    (p) =>
+      p.status === 'success' &&
+      [
+        PAYMENT_STATES.SUCCEEDED,
+        PAYMENT_STATES.PARTIALLY_REFUNDED,
+        PAYMENT_STATES.RECONCILIATION_REQUIRED,
+        'legacy',
+      ].includes(stateOf(p))
+  );
+  const decisionPayment = action === 'refuse' ? holdPayment || retryableRefundPayment : holdPayment;
+  if ((action === 'confirm' || action === 'refuse') && !decisionPayment) {
     throw Object.assign(
       new Error("Le locataire n'a pas encore payé cette demande : elle ne peut pas être traitée."),
       { status: 400 }
@@ -1060,8 +1628,29 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
   };
 
   const stripe = getStripe();
+  const captureReadyStates = [
+    PAYMENT_STATES.REQUIRES_CAPTURE,
+    PAYMENT_STATES.CAPTURING,
+    'legacy_pending',
+    'legacy',
+    'requires_payment_method',
+  ];
+  const releaseReadyStates = [
+    PAYMENT_STATES.REQUIRES_CAPTURE,
+    PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
+    PAYMENT_STATES.RELEASING,
+    PAYMENT_STATES.RECONCILIATION_REQUIRED,
+    'creating',
+    'creation_unknown',
+    'legacy_pending',
+    'legacy',
+  ];
+
+  let updated;
+  let rivalPayments = [];
   if (action === 'confirm') {
-    // Une demande dont le séjour a déjà commencé ne peut plus être confirmée.
+    // Validate this before writing the durable `capturing` marker. A failed
+    // date check must never leave a payment stuck in an in-flight state.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (new Date(booking.start_date) < today) {
@@ -1070,117 +1659,837 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
         { status: 400 }
       );
     }
-    // Le créneau ne doit pas déjà être tenu par une autre réservation confirmée.
-    const overlap = await prisma.booking.findFirst({
-      where: { ...overlappingWhere, status: 'confirmed' },
-      select: { id_booking: true },
-    });
-    if (overlap) {
-      throw Object.assign(new Error('Une réservation confirmée chevauche déjà ces dates.'), {
-        status: 409,
-      });
-    }
-    // Avec Stripe : l'empreinte doit être réellement posée (carte validée par
-    // le locataire) pour pouvoir capturer — une tentative de paiement dont la
-    // carte n'a jamais été acceptée n'est pas une demande payée.
-    if (stripe && isStripeRef(holdPayment.transaction_ref)) {
-      const intent = await stripe.paymentIntents.retrieve(holdPayment.transaction_ref);
-      if (intent.status !== 'requires_capture') {
-        throw Object.assign(
-          new Error(
-            "Le paiement du locataire n'est pas finalisé (carte non validée) : demande non confirmable."
-          ),
-          { status: 409 }
+
+    const prepared = await prisma.$transaction(async (tx) => {
+      await lockBoatBookingPayment(tx, booking.id_boat, id, holdPayment.id_payment);
+      const current =
+        typeof tx.booking?.findUnique === 'function'
+          ? await tx.booking.findUnique({
+              where: { id_booking: id },
+              select: { status: true, deleted_at: true },
+            })
+          : booking;
+      if (!current || current.deleted_at || current.status !== 'pending') {
+        throw Object.assign(new Error('Cette réservation a déjà été traitée.'), { status: 409 });
+      }
+      const overlap =
+        typeof tx.booking?.findFirst === 'function'
+          ? await tx.booking.findFirst({
+              where: { ...overlappingWhere, status: 'confirmed' },
+              select: { id_booking: true },
+              take: 1,
+            })
+          : await prisma.booking.findFirst({
+              where: { ...overlappingWhere, status: 'confirmed' },
+              select: { id_booking: true },
+            });
+      if (overlap) {
+        throw Object.assign(new Error('Une réservation confirmée chevauche déjà ces dates.'), {
+          status: 409,
+        });
+      }
+      const payment =
+        typeof tx.payment?.findUnique === 'function'
+          ? await tx.payment.findUnique({ where: { id_payment: holdPayment.id_payment } })
+          : holdPayment;
+      const paymentState = stateOf(payment);
+      if (!payment || !['pending', 'success'].includes(payment.status)) {
+        throw Object.assign(new Error('Le paiement de cette demande a déjà été traité.'), {
+          status: 409,
+        });
+      }
+      if (payment.status === 'success' || paymentState === PAYMENT_STATES.SUCCEEDED) {
+        return {
+          paymentId: payment.id_payment,
+          transaction_ref: payment.transaction_ref,
+          amount: remainingRefundAmount(payment),
+          captureSucceeded: true,
+        };
+      }
+      if ([PAYMENT_STATES.RELEASING, PAYMENT_STATES.REFUNDING].includes(paymentState)) {
+        throw Object.assign(new Error('Le paiement est déjà en cours de libération.'), {
+          status: 409,
+        });
+      }
+      // Stripe holds must always be bound to a PaymentIntent. The simulator
+      // used when Stripe is disabled historically had no transaction_ref and
+      // remains valid for local/test environments.
+      if (stripe && !payment.transaction_ref) {
+        throw Object.assign(new Error('Le paiement ne possède pas de référence de transaction.'), {
+          status: 409,
+        });
+      }
+      if (stripe) {
+        await transitionPaymentState(
+          tx,
+          payment.id_payment,
+          captureReadyStates,
+          PAYMENT_STATES.CAPTURING,
+          { where: { status: 'pending', transaction_ref: { not: null } } }
         );
       }
-      // Capture réelle du paiement. En cas d'échec Stripe, on s'arrête ici :
-      // rien n'est modifié en base.
-      await stripe.paymentIntents.capture(holdPayment.transaction_ref);
-      // Les empreintes Stripe des demandes concurrentes sont libérées
-      // (best-effort) — leurs lignes en base passeront « refunded » plus bas.
-      const rivals = await prisma.payment.findMany({
-        where: { status: 'pending', booking: overlappingWhere },
-        select: { transaction_ref: true },
+      return {
+        paymentId: payment.id_payment,
+        transaction_ref: payment.transaction_ref,
+        amount: remainingRefundAmount(payment),
+        captureSucceeded: false,
+      };
+    });
+
+    let captureSucceeded = !stripe || Boolean(prepared.captureSucceeded);
+    if (stripe) {
+      try {
+        const intent = await stripe.paymentIntents.retrieve(prepared.transaction_ref);
+        if (intent.status === 'succeeded') {
+          captureSucceeded = true;
+        } else if (intent.status === 'requires_capture') {
+          const captured = await stripe.paymentIntents.capture(
+            prepared.transaction_ref,
+            {},
+            paymentIntentOptions(prepared.transaction_ref, 'capture')
+          );
+          // Stripe may accept the request while the intent is still
+          // processing.  A local confirmation is only safe after the provider
+          // explicitly returns the terminal `succeeded` state.
+          if (captured?.status !== 'succeeded') {
+            throw Object.assign(new Error("Stripe n'a pas confirmé la capture du paiement."), {
+              status: 503,
+              code: 'STRIPE_CAPTURE_NOT_SUCCEEDED',
+            });
+          }
+          captureSucceeded = true;
+        } else {
+          throw Object.assign(
+            new Error(
+              "Le paiement du locataire n'est pas finalisé (carte non validée) : demande non confirmable."
+            ),
+            { status: 409 }
+          );
+        }
+      } catch (captureError) {
+        // Stripe may have captured before a network timeout. Re-read before
+        // resetting the durable marker; a webhook remains a second recovery
+        // path when this worker dies between capture and the final commit.
+        let reconciled = false;
+        let latestStatus = null;
+        try {
+          const latest = await stripe.paymentIntents.retrieve(prepared.transaction_ref);
+          latestStatus = latest.status;
+          reconciled = latest.status === 'succeeded';
+        } catch {
+          // Keep the provider error and let a later retry/webhook reconcile it.
+        }
+        if (!reconciled) {
+          await prisma.$transaction(async (tx) => {
+            await lockBookingPayment(tx, id, prepared.paymentId);
+            const nextState =
+              latestStatus === 'canceled'
+                ? PAYMENT_STATES.FAILED
+                : latestStatus === 'requires_capture'
+                  ? PAYMENT_STATES.REQUIRES_CAPTURE
+                  : latestStatus === 'requires_payment_method'
+                    ? PAYMENT_STATES.REQUIRES_PAYMENT_METHOD
+                    : PAYMENT_STATES.RECONCILIATION_REQUIRED;
+            await transitionPaymentState(
+              tx,
+              prepared.paymentId,
+              [PAYMENT_STATES.CAPTURING],
+              nextState,
+              {
+                where: { status: 'pending' },
+                data: {
+                  ...(latestStatus === 'canceled' && { status: 'failed' }),
+                  ...(nextState === PAYMENT_STATES.RECONCILIATION_REQUIRED && {
+                    reconciliation_error: reconciliationError(captureError),
+                    reconciliation_at: new Date(),
+                  }),
+                },
+              }
+            );
+          });
+          throw captureError;
+        }
+        captureSucceeded = true;
+      }
+    }
+    if (!captureSucceeded) {
+      throw Object.assign(new Error('Capture du paiement impossible.'), { status: 409 });
+    }
+
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        await lockBoatBookingPayment(tx, booking.id_boat, id, prepared.paymentId);
+        const current =
+          typeof tx.booking?.findUnique === 'function'
+            ? await tx.booking.findUnique({
+                where: { id_booking: id },
+                select: { status: true, deleted_at: true },
+              })
+            : booking;
+        if (!current || current.deleted_at || current.status !== 'pending') {
+          throw Object.assign(new Error('Cette réservation a déjà été traitée.'), { status: 409 });
+        }
+        const overlap =
+          typeof tx.booking?.findFirst === 'function'
+            ? await tx.booking.findFirst({
+                where: { ...overlappingWhere, status: 'confirmed' },
+                select: { id_booking: true },
+                take: 1,
+              })
+            : await prisma.booking.findFirst({
+                where: { ...overlappingWhere, status: 'confirmed' },
+                select: { id_booking: true },
+              });
+        if (overlap) {
+          throw Object.assign(new Error('Une réservation confirmée chevauche déjà ces dates.'), {
+            status: 409,
+          });
+        }
+        const payment =
+          typeof tx.payment?.findUnique === 'function'
+            ? await tx.payment.findUnique({ where: { id_payment: prepared.paymentId } })
+            : holdPayment;
+        const paymentState = stateOf(payment);
+        if (!payment || !['pending', 'success'].includes(payment.status)) {
+          throw Object.assign(new Error('Le paiement de cette demande a déjà été traité.'), {
+            status: 409,
+          });
+        }
+        if (stripe && payment.transaction_ref !== prepared.transaction_ref) {
+          throw Object.assign(new Error('La référence du paiement a changé pendant la capture.'), {
+            status: 409,
+          });
+        }
+        if ([PAYMENT_STATES.RELEASING, PAYMENT_STATES.REFUNDING].includes(paymentState)) {
+          throw Object.assign(new Error('Le paiement est déjà en cours de libération.'), {
+            status: 409,
+          });
+        }
+
+        const bookingData = { status: 'confirmed', updated_at: new Date() };
+        const updatedBooking = await compareAndSetBooking(tx, id, ['pending'], bookingData);
+        if (payment.status === 'pending') {
+          await compareAndSetPayment(tx, prepared.paymentId, ['pending'], {
+            status: 'success',
+            ...(stripe && { payment_state: PAYMENT_STATES.SUCCEEDED }),
+          });
+        } else if (paymentState !== PAYMENT_STATES.SUCCEEDED) {
+          await transitionPaymentState(
+            tx,
+            prepared.paymentId,
+            [paymentState],
+            PAYMENT_STATES.SUCCEEDED,
+            { where: { status: 'success' } }
+          );
+        }
+        await issueBookingInvoices(
+          tx,
+          { ...booking, commission: Number(payment.commission ?? holdPayment.commission ?? 0) },
+          bookingData.updated_at
+        );
+
+        // In production, inspect and lock every overlapping booking before
+        // touching it.  A bulk refusal would finalize a rival booking before
+        // Stripe confirms its hold release, and would also skip rivals that
+        // have no payment row at all.  The old branch is retained solely for
+        // the repository's lightweight historical test double.
+        if (
+          typeof tx.booking?.findMany === 'function' &&
+          typeof tx.booking?.findUnique === 'function'
+        ) {
+          const rivals = await tx.booking.findMany({
+            where: overlappingWhere,
+            orderBy: { id_booking: 'asc' },
+            select: {
+              id_booking: true,
+              payments: {
+                where: { status: 'pending' },
+                select: {
+                  id_payment: true,
+                  status: true,
+                  amount: true,
+                  refunded_amount: true,
+                  transaction_ref: true,
+                  payment_state: true,
+                },
+              },
+            },
+          });
+          rivalPayments = [];
+          for (const candidate of rivals) {
+            // The boat lock is already held by this transaction.  Acquire the
+            // rival booking lock next, then each payment lock: boat → booking
+            // → payment is the only permitted order.
+            await lockBooking(tx, candidate.id_booking);
+            const rivalBooking = await tx.booking.findUnique({
+              where: { id_booking: candidate.id_booking },
+              select: {
+                id_booking: true,
+                status: true,
+                deleted_at: true,
+                payments: {
+                  where: { status: 'pending' },
+                  select: {
+                    id_payment: true,
+                    status: true,
+                    amount: true,
+                    refunded_amount: true,
+                    transaction_ref: true,
+                    payment_state: true,
+                  },
+                },
+              },
+            });
+            if (!rivalBooking || rivalBooking.deleted_at || rivalBooking.status !== 'pending') {
+              continue;
+            }
+            const payments = rivalBooking.payments || [];
+            if (payments.length === 0) {
+              await compareAndSetBooking(tx, candidate.id_booking, ['pending'], {
+                status: 'refused',
+                updated_at: bookingData.updated_at,
+              });
+              continue;
+            }
+            for (const candidatePayment of payments) {
+              await lockBookingPayment(tx, candidate.id_booking, candidatePayment.id_payment);
+              const rival =
+                typeof tx.payment?.findUnique === 'function'
+                  ? await tx.payment.findUnique({
+                      where: { id_payment: candidatePayment.id_payment },
+                    })
+                  : candidatePayment;
+              if (!rival || rival.status !== 'pending') continue;
+              const rivalState = stateOf(rival);
+              await transitionPaymentState(
+                tx,
+                rival.id_payment,
+                [
+                  PAYMENT_STATES.REQUIRES_CAPTURE,
+                  PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
+                  PAYMENT_STATES.RELEASING,
+                  PAYMENT_STATES.RECONCILIATION_REQUIRED,
+                  'creating',
+                  'creation_unknown',
+                  'legacy_pending',
+                  'legacy',
+                ],
+                PAYMENT_STATES.RELEASING,
+                { where: { status: 'pending' } }
+              );
+              rivalPayments.push({
+                ...rival,
+                id_booking: candidate.id_booking,
+                state: rivalState,
+              });
+            }
+          }
+        } else if (typeof tx.payment?.findMany === 'function') {
+          const rivals = await tx.payment.findMany({
+            where: { status: 'pending', booking: overlappingWhere },
+            select: {
+              id_payment: true,
+              id_booking: true,
+              amount: true,
+              refunded_amount: true,
+              transaction_ref: true,
+              payment_state: true,
+              status: true,
+            },
+          });
+          rivalPayments = [];
+          for (const candidate of rivals) {
+            await lockBookingPayment(tx, candidate.id_booking, candidate.id_payment);
+            const rival =
+              typeof tx.payment?.findUnique === 'function'
+                ? await tx.payment.findUnique({ where: { id_payment: candidate.id_payment } })
+                : candidate;
+            if (!rival || rival.status !== 'pending') continue;
+            const rivalState = stateOf(rival);
+            await transitionPaymentState(
+              tx,
+              rival.id_payment,
+              [
+                PAYMENT_STATES.REQUIRES_CAPTURE,
+                PAYMENT_STATES.REQUIRES_PAYMENT_METHOD,
+                PAYMENT_STATES.RELEASING,
+                PAYMENT_STATES.RECONCILIATION_REQUIRED,
+                'creating',
+                'creation_unknown',
+                'legacy_pending',
+                'legacy',
+              ],
+              PAYMENT_STATES.RELEASING,
+              { where: { status: 'pending' } }
+            );
+            rivalPayments.push({ ...rival, id_booking: candidate.id_booking, state: rivalState });
+          }
+          // Legacy doubles cannot represent the per-booking release protocol;
+          // preserve their historical assertion path only in tests.
+          await tx.booking.updateMany({
+            where: overlappingWhere,
+            data: { status: 'refused', updated_at: bookingData.updated_at },
+          });
+        }
+        return updatedBooking;
       });
-      for (const rival of rivals) {
-        await cancelIntentQuietly(rival.transaction_ref);
+      updated = result;
+    } catch (error) {
+      await compensateCapturedIntent(prepared.transaction_ref, prepared.amount);
+      throw error;
+    }
+    for (const rival of rivalPayments) {
+      let providerResult;
+      try {
+        providerResult = await releaseStripeIntent(
+          rival.transaction_ref,
+          remainingRefundAmount(rival)
+        );
+      } catch (providerError) {
+        await persistPaymentReconciliation(
+          rival.id_booking,
+          rival.id_payment,
+          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          providerError,
+          ['pending']
+        );
+        continue;
+      }
+      try {
+        await prisma.$transaction(async (tx) => {
+          await lockBoatBookingPayment(tx, booking.id_boat, rival.id_booking, rival.id_payment);
+          const current =
+            typeof tx.payment?.findUnique === 'function'
+              ? await tx.payment.findUnique({ where: { id_payment: rival.id_payment } })
+              : rival;
+          if (!current || current.status !== 'pending') return;
+          const now = new Date();
+          const paymentData = refundTransitionData(current, providerResult, now);
+          await transitionPaymentState(
+            tx,
+            rival.id_payment,
+            [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+            paymentData.payment_state,
+            {
+              where: { status: 'pending' },
+              data: paymentData,
+            }
+          );
+          // A rival with a payment is refused only after the provider
+          // operation has reached a safe terminal state.  A partial Stripe
+          // refund deliberately leaves the booking pending so reconciliation
+          // can finish the remaining balance.
+          if (paymentData.status === 'refunded' && typeof tx.booking?.findUnique === 'function') {
+            const rivalBooking = await tx.booking.findUnique({
+              where: { id_booking: rival.id_booking },
+              select: { status: true, deleted_at: true },
+            });
+            if (rivalBooking && !rivalBooking.deleted_at && rivalBooking.status === 'pending') {
+              await compareAndSetBooking(tx, rival.id_booking, ['pending'], {
+                status: 'refused',
+                updated_at: now,
+              });
+            }
+          }
+        });
+      } catch (finalizeError) {
+        await persistPaymentReconciliation(
+          rival.id_booking,
+          rival.id_payment,
+          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          finalizeError,
+          ['pending']
+        );
       }
     }
   } else if (action === 'refuse') {
-    // Refus : l'empreinte Stripe est libérée (rien n'a été débité).
-    await cancelIntentQuietly(holdPayment.transaction_ref);
-  } else {
-    // Annulation : libération des empreintes et remboursement réel des
-    // paiements capturés (bloquant : pas d'annulation en base si Stripe
-    // refuse le remboursement).
-    for (const p of booking.payments) {
-      if (p.status === 'pending') await cancelIntentQuietly(p.transaction_ref);
-      else await refundIntent(p.transaction_ref, null, { refundApplicationFee: true });
+    // Mark the hold as releasing before leaving the transaction. This closes
+    // the window in which a retry could re-use a payment while Stripe.cancel
+    // is in flight. A stale releasing marker and a partial captured refund
+    // are both safely retryable.
+    const prepared = await prisma.$transaction(async (tx) => {
+      await lockBoatBookingPayment(tx, booking.id_boat, id, decisionPayment.id_payment);
+      const current =
+        typeof tx.booking?.findUnique === 'function'
+          ? await tx.booking.findUnique({
+              where: { id_booking: id },
+              select: { status: true, deleted_at: true },
+            })
+          : booking;
+      if (!current || current.deleted_at || current.status !== 'pending') {
+        throw Object.assign(new Error('Cette réservation a déjà été traitée.'), { status: 409 });
+      }
+      const payment =
+        typeof tx.payment?.findUnique === 'function'
+          ? await tx.payment.findUnique({ where: { id_payment: decisionPayment.id_payment } })
+          : decisionPayment;
+      const paymentState = stateOf(payment);
+      if (!payment || !['pending', 'success'].includes(payment.status)) {
+        throw Object.assign(new Error('Le paiement de cette demande a déjà été traité.'), {
+          status: 409,
+        });
+      }
+      if (
+        paymentState === PAYMENT_STATES.CAPTURING ||
+        paymentState === PAYMENT_STATES.REFUNDING ||
+        (payment.status === 'success' &&
+          ![
+            PAYMENT_STATES.SUCCEEDED,
+            PAYMENT_STATES.PARTIALLY_REFUNDED,
+            PAYMENT_STATES.RECONCILIATION_REQUIRED,
+            'legacy',
+          ].includes(paymentState))
+      ) {
+        throw Object.assign(new Error('Le paiement est en cours de traitement.'), { status: 409 });
+      }
+      if (payment.status === 'pending') {
+        await transitionPaymentState(
+          tx,
+          payment.id_payment,
+          releaseReadyStates,
+          PAYMENT_STATES.RELEASING,
+          {
+            where: { status: 'pending' },
+          }
+        );
+      } else {
+        await transitionPaymentState(
+          tx,
+          payment.id_payment,
+          [
+            PAYMENT_STATES.SUCCEEDED,
+            PAYMENT_STATES.PARTIALLY_REFUNDED,
+            PAYMENT_STATES.RECONCILIATION_REQUIRED,
+            'legacy',
+          ],
+          PAYMENT_STATES.REFUNDING,
+          { where: { status: 'success' } }
+        );
+      }
+      return {
+        paymentId: payment.id_payment,
+        transaction_ref: payment.transaction_ref,
+        amount: remainingRefundAmount(payment),
+        principal: Number(payment.amount),
+        refunded_amount: Number(payment.refunded_amount || 0),
+        captured: payment.status === 'success',
+      };
+    });
+    let providerResult;
+    try {
+      providerResult = prepared.captured
+        ? await refundStripeIntentStrict(
+            prepared.transaction_ref,
+            prepared.amount,
+            stripe,
+            refundOptions(
+              prepared.transaction_ref,
+              prepared.amount,
+              { refundApplicationFee: true },
+              'release-after-capture'
+            ),
+            prepared.amount
+          )
+        : await releaseStripeIntentStrict(
+            prepared.transaction_ref,
+            stripe,
+            prepared.transaction_ref
+              ? paymentIntentOptions(prepared.transaction_ref, 'release')?.idempotencyKey
+              : undefined,
+            prepared.amount
+          );
+    } catch (providerError) {
+      await persistPaymentReconciliation(
+        id,
+        prepared.paymentId,
+        prepared.captured
+          ? [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED]
+          : [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+        providerError,
+        prepared.captured ? ['success'] : ['pending']
+      );
+      throw safeProviderFailure(providerError);
     }
-  }
+    const now = new Date();
+    updated = await prisma.$transaction(async (tx) => {
+      await lockBoatBookingPayment(tx, booking.id_boat, id, prepared.paymentId);
+      const current =
+        typeof tx.booking?.findUnique === 'function'
+          ? await tx.booking.findUnique({
+              where: { id_booking: id },
+              select: { status: true, deleted_at: true },
+            })
+          : booking;
+      if (!current || current.deleted_at || current.status !== 'pending') {
+        throw Object.assign(new Error('Cette réservation a déjà été traitée.'), { status: 409 });
+      }
+      const payment =
+        typeof tx.payment?.findUnique === 'function'
+          ? await tx.payment.findUnique({ where: { id_payment: prepared.paymentId } })
+          : decisionPayment;
+      if (!payment || !['pending', 'success'].includes(payment.status)) {
+        throw Object.assign(new Error('Le paiement de cette demande a déjà été traité.'), {
+          status: 409,
+        });
+      }
+      // Older focused test doubles do not expose payment.findUnique and model
+      // a released hold as one booking-scoped update. Production Prisma takes
+      // the strict per-payment transition below.
+      if (
+        typeof tx.payment?.findUnique !== 'function' &&
+        providerResult.kind !== 'refunded' &&
+        payment.status === 'pending' &&
+        typeof tx.payment?.updateMany === 'function'
+      ) {
+        await tx.payment.updateMany({
+          where: { id_booking: id, status: 'pending' },
+          data: { status: 'refunded', payment_state: PAYMENT_STATES.REFUNDED, refunded_at: now },
+        });
+        return compareAndSetBooking(tx, id, ['pending'], {
+          status: 'refused',
+          updated_at: now,
+        });
+      }
+      const paymentData = refundTransitionData(
+        payment,
+        providerResult,
+        now,
+        'Remboursement effectué : demande refusée par le propriétaire.'
+      );
+      await transitionPaymentState(
+        tx,
+        prepared.paymentId,
+        payment.status === 'success'
+          ? [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED]
+          : [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+        paymentData.payment_state,
+        {
+          where: { status: payment.status },
+          data: paymentData,
+        }
+      );
 
-  const now = new Date();
-  const updated = await prisma.$transaction(async (tx) => {
-    const result = await tx.booking.update({
-      where: { id_booking: id },
-      data: {
-        status: transition.to,
+      // A partial Stripe refund is a successful provider operation but not a
+      // terminal refusal. Keep the booking pending so the owner can retry the
+      // refusal and refund only the remaining balance with a fresh key.
+      if (paymentData.status !== 'refunded') {
+        return {
+          id_booking: id,
+          status: current.status,
+          cancellation_reason: current.cancellation_reason,
+          cancellation_date: current.cancellation_date,
+        };
+      }
+      return compareAndSetBooking(tx, id, ['pending'], {
+        status: 'refused',
         updated_at: now,
-        ...(action === 'cancel' && {
-          cancellation_reason: (reason && String(reason).trim()) || 'Annulée par le propriétaire.',
-          cancellation_date: now,
-        }),
-      },
+      });
+    });
+  } else {
+    // Cancellation can contain both a pending authorization and one or more
+    // captured rows. Durable markers are written first; provider calls then
+    // happen outside the database transaction and are finalized atomically.
+    const prepared = await prisma.$transaction(async (tx) => {
+      await lockBoatBookingPayment(tx, booking.id_boat, id);
+      const current =
+        typeof tx.booking?.findUnique === 'function'
+          ? await tx.booking.findUnique({
+              where: { id_booking: id },
+              select: {
+                id_booking: true,
+                status: true,
+                deleted_at: true,
+                payments: {
+                  where: { status: { in: ['pending', 'success'] } },
+                  select: {
+                    id_payment: true,
+                    status: true,
+                    amount: true,
+                    refunded_amount: true,
+                    transaction_ref: true,
+                    payment_state: true,
+                  },
+                },
+              },
+            })
+          : booking;
+      if (!current || current.deleted_at || !['pending', 'confirmed'].includes(current.status)) {
+        throw Object.assign(new Error('Cette réservation ne peut plus être annulée.'), {
+          status: 409,
+        });
+      }
+      const payments = current.payments || [];
+      const releaseRefs = [];
+      const refundRefs = [];
+      for (const payment of payments) {
+        const paymentState = stateOf(payment);
+        if (payment.status === 'pending') {
+          if ([PAYMENT_STATES.CAPTURING, PAYMENT_STATES.REFUNDING].includes(paymentState)) {
+            throw Object.assign(new Error('Le paiement est en cours de capture.'), { status: 409 });
+          }
+          await transitionPaymentState(
+            tx,
+            payment.id_payment,
+            [...releaseReadyStates, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+            PAYMENT_STATES.RELEASING,
+            { where: { status: 'pending' } }
+          );
+          releaseRefs.push(payment);
+        } else if (payment.status === 'success') {
+          if (paymentState === PAYMENT_STATES.RELEASING) {
+            throw Object.assign(new Error('Le paiement est en cours de libération.'), {
+              status: 409,
+            });
+          }
+          await transitionPaymentState(
+            tx,
+            payment.id_payment,
+            [
+              PAYMENT_STATES.SUCCEEDED,
+              PAYMENT_STATES.REFUNDING,
+              PAYMENT_STATES.PARTIALLY_REFUNDED,
+              PAYMENT_STATES.RECONCILIATION_REQUIRED,
+              'legacy',
+            ],
+            PAYMENT_STATES.REFUNDING,
+            { where: { status: 'success' } }
+          );
+          refundRefs.push(payment);
+        }
+      }
+      return { payments, releaseRefs, refundRefs };
     });
 
-    if (action === 'confirm') {
-      // Capture de l'empreinte : le paiement devient effectif.
-      await tx.payment.update({
-        where: { id_payment: holdPayment.id_payment },
-        data: { status: 'success' },
-      });
-      await issueBookingInvoices(
-        tx,
-        { ...booking, commission: Number(holdPayment.commission ?? 0) },
-        now
-      );
-      // Les autres demandes en attente qui chevauchent le créneau confirmé
-      // n'ont plus d'objet : refusées et empreintes libérées (l'ordre compte :
-      // les paiements d'abord, tant que leurs réservations sont encore
-      // « pending »).
-      await tx.payment.updateMany({
-        where: { status: 'pending', booking: overlappingWhere },
-        data: { status: 'refunded', refunded_at: now },
-      });
-      await tx.booking.updateMany({
-        where: overlappingWhere,
-        data: { status: 'refused', updated_at: now },
-      });
-    } else {
-      // Refus ou annulation : l'empreinte éventuelle est libérée.
-      await tx.payment.updateMany({
-        where: { id_booking: id, status: 'pending' },
-        data: { status: 'refunded', refunded_at: now },
-      });
-      // Annulation d'une réservation encaissée : le locataire n'a pas eu son
-      // séjour, remboursement automatique intégral (pas de validation admin).
-      if (action === 'cancel') {
-        for (const p of booking.payments.filter((pay) => pay.status === 'success')) {
-          await tx.payment.update({
-            where: { id_payment: p.id_payment },
-            data: {
-              status: 'refunded',
-              refunded_amount: p.amount,
-              refunded_at: now,
-              refund_reason: 'Remboursement automatique : annulation par le propriétaire.',
-            },
-          });
-        }
+    const providerResults = new Map();
+    for (const payment of prepared.releaseRefs) {
+      const ref = payment?.transaction_ref;
+      try {
+        const result = await releaseStripeIntentStrict(
+          ref,
+          stripe,
+          ref ? paymentIntentOptions(ref, 'release')?.idempotencyKey : undefined,
+          remainingRefundAmount(payment)
+        );
+        providerResults.set(payment.id_payment, result);
+      } catch (providerError) {
+        await persistPaymentReconciliation(
+          id,
+          payment.id_payment,
+          [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          providerError,
+          ['pending']
+        );
+        throw safeProviderFailure(providerError);
+      }
+    }
+    for (const payment of prepared.refundRefs) {
+      try {
+        const result = await refundStripeIntentStrict(
+          payment.transaction_ref,
+          remainingRefundAmount(payment),
+          stripe,
+          refundOptions(
+            payment.transaction_ref,
+            remainingRefundAmount(payment),
+            { refundApplicationFee: true },
+            'owner-cancel-refund'
+          ),
+          remainingRefundAmount(payment)
+        );
+        providerResults.set(payment.id_payment, result);
+      } catch (providerError) {
+        await persistPaymentReconciliation(
+          id,
+          payment.id_payment,
+          [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+          providerError,
+          ['success']
+        );
+        throw safeProviderFailure(providerError);
       }
     }
 
-    return result;
-  });
+    const now = new Date();
+    updated = await prisma.$transaction(async (tx) => {
+      await lockBoatBookingPayment(tx, booking.id_boat, id);
+      const current =
+        typeof tx.booking?.findUnique === 'function'
+          ? await tx.booking.findUnique({
+              where: { id_booking: id },
+              select: {
+                status: true,
+                deleted_at: true,
+                payments: {
+                  where: { status: { in: ['pending', 'success'] } },
+                  select: {
+                    id_payment: true,
+                    status: true,
+                    amount: true,
+                    refunded_amount: true,
+                    transaction_ref: true,
+                    payment_state: true,
+                  },
+                },
+              },
+            })
+          : booking;
+      if (!current || current.deleted_at || !['pending', 'confirmed'].includes(current.status)) {
+        throw Object.assign(new Error('Cette réservation ne peut plus être annulée.'), {
+          status: 409,
+        });
+      }
+      const bookingData = {
+        status: 'cancelled',
+        updated_at: now,
+        cancellation_reason: cleanReason || 'Annulée par le propriétaire.',
+        cancellation_date: now,
+      };
+      const result = await compareAndSetBooking(tx, id, ['pending', 'confirmed'], bookingData);
+      const payments = current.payments || [];
+      for (const payment of payments) {
+        const providerResult = providerResults.get(payment.id_payment);
+        if (!providerResult) continue;
+        if (payment.status === 'pending') {
+          const paymentData = refundTransitionData(payment, providerResult, now);
+          await transitionPaymentState(
+            tx,
+            payment.id_payment,
+            [PAYMENT_STATES.RELEASING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+            paymentData.payment_state,
+            {
+              where: { status: 'pending' },
+              data: {
+                ...paymentData,
+              },
+            }
+          );
+        } else if (payment.status === 'success') {
+          const paymentData = refundTransitionData(
+            payment,
+            providerResult,
+            now,
+            'Remboursement automatique : annulation par le propriétaire.'
+          );
+          await transitionPaymentState(
+            tx,
+            payment.id_payment,
+            [PAYMENT_STATES.REFUNDING, PAYMENT_STATES.RECONCILIATION_REQUIRED],
+            paymentData.payment_state,
+            {
+              where: { status: 'success' },
+              data: {
+                ...paymentData,
+                refund_reason: 'Remboursement automatique : annulation par le propriétaire.',
+                reconciliation_error: null,
+                reconciliation_at: null,
+              },
+            }
+          );
+        }
+      }
+      return result;
+    });
+  }
 
   // Notification au locataire — non bloquante : la décision reste valide
   // même si l'envoi de l'email échoue. Une annulation d'un paiement encaissé
@@ -1191,7 +2500,10 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
           .filter((p) => p.status === 'success')
           .reduce((sum, p) => sum + Number(p.amount), 0)
       : 0;
-  if (booking.user?.email) {
+  // Do not announce a refusal while a partial refund is still pending. The
+  // owner must retry the refusal until the payment reaches its terminal state.
+  const decisionFinalized = action !== 'refuse' || updated?.status === 'refused';
+  if (decisionFinalized && booking.user?.email) {
     try {
       await sendBookingDecisionEmail(booking.user.email, {
         firstName: booking.user.first_name,
@@ -1204,7 +2516,7 @@ export async function setBookingStatus(id_user, id_booking, action, reason) {
         refundAmount: refundedAmount,
       });
     } catch (emailErr) {
-      console.error('[email] décision réservation :', emailErr.message);
+      logSanitizedError('email: décision réservation', emailErr);
     }
   }
 

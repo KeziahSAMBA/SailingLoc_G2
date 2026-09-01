@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { departmentFromInsee, regionFromInsee } from '../utils/frenchRegions.js';
+import { validatePublicImageUrl } from '../utils/urlSecurity.js';
 
 function publicPort(p) {
   return {
@@ -11,6 +12,7 @@ function publicPort(p) {
     region: p.region,
     latitude: p.latitude != null ? Number(p.latitude) : null,
     longitude: p.longitude != null ? Number(p.longitude) : null,
+    image_url: p.image_url ?? null,
     created_at: p.created_at,
     boats_count: p._count ? p._count.boats : undefined,
   };
@@ -34,7 +36,9 @@ export async function listPorts({ search, region } = {}) {
   return ports.map(publicPort);
 }
 
-export async function createPort({ name, city, country, latitude, longitude, insee, region }) {
+export async function createPort(input = {}) {
+  const payload = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+  const { name, city, country, latitude, longitude, insee, region, image_url } = payload;
   const cleanName = name && String(name).trim();
   const cleanCity = city && String(city).trim();
   if (!cleanName || !cleanCity) {
@@ -42,6 +46,10 @@ export async function createPort({ name, city, country, latitude, longitude, ins
       status: 400,
     });
   }
+
+  const hasImageUrl =
+    Object.prototype.hasOwnProperty.call(payload, 'image_url') && image_url !== undefined;
+  const cleanImageUrl = hasImageUrl ? validatePublicImageUrl(image_url) : null;
 
   // La région est déduite du code INSEE de la commune (fourni par le catalogue) ;
   // on accepte aussi une valeur explicite en repli.
@@ -53,6 +61,7 @@ export async function createPort({ name, city, country, latitude, longitude, ins
     region: regionFromInsee(insee) || (region && String(region).trim()) || null,
     latitude: latitude != null && latitude !== '' ? Number(latitude) : null,
     longitude: longitude != null && longitude !== '' ? Number(longitude) : null,
+    image_url: cleanImageUrl,
   };
 
   // name est unique : un port supprimé garde sa ligne. On le réactive plutôt
@@ -64,7 +73,14 @@ export async function createPort({ name, city, country, latitude, longitude, ins
     }
     const revived = await prisma.port.update({
       where: { id_port: existing.id_port },
-      data: { ...data, deleted_at: null, updated_at: new Date() },
+      data: {
+        ...data,
+        // Une réactivation issue de l'ancien catalogue ne fournit pas toujours
+        // de photo : dans ce cas, conserver celle déjà enregistrée.
+        image_url: hasImageUrl ? cleanImageUrl : (existing.image_url ?? null),
+        deleted_at: null,
+        updated_at: new Date(),
+      },
       include: { _count: { select: { boats: { where: { deleted_at: null } } } } },
     });
     return publicPort(revived);

@@ -5,6 +5,7 @@ import {
   listBookings,
   cancelBooking,
   listDisputes,
+  fetchDisputeImage,
   setDisputeStatus,
 } from '../../services/adminService.js';
 import { formatDate } from '../../utils/formatDate.js';
@@ -67,6 +68,7 @@ function AdminBookingsPage() {
   const [disputes, setDisputes] = useState([]);
   const [disputesLoading, setDisputesLoading] = useState(true);
   const [disputeStatus, setDisputeStatusFilter] = useState('open');
+  const [disputePhotoUrls, setDisputePhotoUrls] = useState({});
 
   // Modal de décision sur un litige
   const [decision, setDecision] = useState(null); // { dispute, status }
@@ -116,6 +118,60 @@ function AdminBookingsPage() {
   useEffect(() => {
     if (tab === 'disputes') loadDisputes();
   }, [tab, loadDisputes]);
+
+  // Les preuves sont servies par une route protégée : un <img src="/api/...">
+  // ne transmettrait pas le Bearer. On les récupère avec Axios puis on ne
+  // conserve dans le DOM qu'une URL objet locale, révoquée au changement de
+  // liste ou au démontage du composant.
+  useEffect(() => {
+    const photoPaths = [
+      ...new Set(
+        disputes.flatMap((dispute) =>
+          Array.isArray(dispute.photos)
+            ? dispute.photos.filter((photo) => typeof photo === 'string')
+            : []
+        )
+      ),
+    ];
+    const createdUrls = [];
+    let cancelled = false;
+
+    if (photoPaths.length === 0) {
+      setDisputePhotoUrls({});
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const loadPhotos = async () => {
+      const resolved = await Promise.all(
+        photoPaths.map(async (photoPath) => {
+          const match = /^\/admin\/disputes\/(\d+)\/images\/(\d+)$/.exec(photoPath);
+          if (!match) return [photoPath, null];
+          try {
+            const response = await fetchDisputeImage(Number(match[1]), Number(match[2]));
+            const objectUrl = URL.createObjectURL(response.data);
+            createdUrls.push(objectUrl);
+            return [photoPath, objectUrl];
+          } catch {
+            return [photoPath, null];
+          }
+        })
+      );
+
+      if (cancelled) {
+        createdUrls.forEach((url) => URL.revokeObjectURL(url));
+        return;
+      }
+      setDisputePhotoUrls(Object.fromEntries(resolved.filter(([, objectUrl]) => objectUrl)));
+    };
+
+    loadPhotos();
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [disputes]);
 
   const {
     page: bookingsPage,
@@ -475,16 +531,25 @@ function AdminBookingsPage() {
                         {d.reason}
                         {d.photos?.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
-                            {d.photos.map((url) => (
-                              <a key={url} href={url} target="_blank" rel="noreferrer">
-                                <img
-                                  src={url}
-                                  alt={t('adminBookings.photoAlt')}
-                                  loading="lazy"
-                                  className="h-10 w-10 rounded border border-white/30 object-cover transition hover:border-[#5AB4EC]"
-                                />
-                              </a>
-                            ))}
+                            {d.photos.map((url) => {
+                              const imageUrl = disputePhotoUrls[url];
+                              if (!imageUrl) return null;
+                              return (
+                                <a
+                                  key={url}
+                                  href={imageUrl}
+                                  target="_blank"
+                                  rel="noreferrer noopener"
+                                >
+                                  <img
+                                    src={imageUrl}
+                                    alt={t('adminBookings.photoAlt')}
+                                    loading="lazy"
+                                    className="h-10 w-10 rounded border border-white/30 object-cover transition hover:border-[#5AB4EC]"
+                                  />
+                                </a>
+                              );
+                            })}
                           </div>
                         )}
                         {d.resolution && (
@@ -558,16 +623,20 @@ function AdminBookingsPage() {
 
                   {d.photos?.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {d.photos.map((url) => (
-                        <a key={url} href={url} target="_blank" rel="noreferrer">
-                          <img
-                            src={url}
-                            alt={t('adminBookings.photoAlt')}
-                            loading="lazy"
-                            className="h-12 w-12 rounded border border-white/30 object-cover transition hover:border-[#5AB4EC]"
-                          />
-                        </a>
-                      ))}
+                      {d.photos.map((url) => {
+                        const imageUrl = disputePhotoUrls[url];
+                        if (!imageUrl) return null;
+                        return (
+                          <a key={url} href={imageUrl} target="_blank" rel="noreferrer noopener">
+                            <img
+                              src={imageUrl}
+                              alt={t('adminBookings.photoAlt')}
+                              loading="lazy"
+                              className="h-12 w-12 rounded border border-white/30 object-cover transition hover:border-[#5AB4EC]"
+                            />
+                          </a>
+                        );
+                      })}
                     </div>
                   )}
 

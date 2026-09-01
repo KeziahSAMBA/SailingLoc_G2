@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import csrf from 'csurf';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import boatRoutes from './routes/boatRoutes.js';
 import portRoutes from './routes/portRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -14,32 +16,117 @@ import { stripeWebhook } from './controllers/webhookController.js';
 import { startScheduler, stopScheduler } from './scheduler.js';
 import { initConfig } from './config/appConfig.js';
 import prisma from './config/db.js';
+import { safeErrorResponses, secureErrorHandler } from './middlewares/errorSecurityMiddleware.js';
+import { logSanitizedError } from './utils/privacy.js';
+import { allowedCorsOrigins, normalizeRequestOrigin } from './utils/corsSecurity.js';
+import { securityHeaders } from './middlewares/securityHeaders.js';
+import {
+  CSRF_SAFE_METHODS,
+  createCsrfErrorHandler,
+  createCsrfTokenExposure,
+  csrfCookieOptions,
+  csrfRequestToken,
+  deriveCsrfCookieSigningSecret,
+  ignoreRequestWithoutRefreshCookie,
+} from './middlewares/csrfMiddleware.js';
 
-const { PORT, APP_URL } = initConfig();
+const { PORT, APP_URL, CORS_ORIGINS, NODE_ENV, JWT_SECRET } = initConfig();
+const corsOrigins = allowedCorsOrigins({
+  appUrl: APP_URL,
+  configuredOrigins: CORS_ORIGINS,
+  environment: NODE_ENV,
+});
+const csrfCookieKey = deriveCsrfCookieSigningSecret(JWT_SECRET);
+// `csurf` resolves to the actively maintained @dr.pogodin/csurf fork through
+// an npm alias. The recognized import also lets CodeQL prove the API is guarded.
+const csrfProtection = csrf({
+  cookie: csrfCookieOptions(NODE_ENV),
+  ignoreMethods: CSRF_SAFE_METHODS,
+  ignoreRequest: ignoreRequestWithoutRefreshCookie,
+  value: csrfRequestToken,
+});
+const exposeCsrfHeader = createCsrfTokenExposure({ allowedOrigins: corsOrigins });
+const handleCsrfError = createCsrfErrorHandler({ allowedOrigins: corsOrigins });
 
 const app = express();
+app.disable('x-powered-by');
 
-// Derrière un proxy en production (Railway, etc.) : permet à Express de reconnaître
+// Filet global pour toutes les routes API, y compris les endpoints publics et
+// le webhook Stripe. Les limiteurs spécialisés montés plus bas restent plus
+// stricts pour les actions sensibles ; ce limiteur n'est installé qu'une fois
+// afin de ne pas compter deux fois le même budget général.
+const apiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 1000,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+  message: { message: 'Trop de requêtes. Réessayez dans quelques minutes.' },
+});
+
+// Error responses are normalized before any route can accidentally serialize
+// an SDK/ORM message.  Detailed diagnostics stay in the internal log sink.
+app.use(safeErrorResponses);
+
+// Derrière un proxy en production/staging (Railway, etc.) : permet à Express de reconnaître
 // HTTPS (X-Forwarded-Proto) et la vraie IP cliente (cookies Secure, rate-limit).
-if (process.env.NODE_ENV === 'production') {
+if (['production', 'staging'].includes(NODE_ENV)) {
   app.set('trust proxy', 1);
 }
 
+// All API responses carry the same defensive browser/container headers. The
+// frontend has a separate, resource-specific CSP in its nginx container.
+app.use('/api', securityHeaders({ environment: NODE_ENV }));
 app.use(
   cors({
-    origin: APP_URL,
+    origin: (requestOrigin, callback) => {
+      // Same-origin/non-browser requests have no Origin header and should be
+      // able to use health checks and server-to-server integrations without
+      // receiving credentialed CORS headers.
+      if (!requestOrigin) return callback(null, true);
+      const normalized = normalizeRequestOrigin(requestOrigin);
+      if (normalized && corsOrigins.has(normalized)) return callback(null, true);
+      return callback(Object.assign(new Error('Origine non autorisée.'), { status: 403 }));
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    exposedHeaders: ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Accept', 'Content-Type', 'Authorization', 'X-CSRF-Token'],
+    exposedHeaders: [
+      'Retry-After',
+      'RateLimit',
+      'RateLimit-Limit',
+      'RateLimit-Remaining',
+      'RateLimit-Reset',
+      'X-CSRF-Token',
+    ],
+    maxAge: 600,
+    optionsSuccessStatus: 204,
   })
 );
+// Le limiteur doit précéder le webhook brut : il couvre aussi les requêtes
+// qui n'atteignent jamais un routeur métier, sans parser leur payload.
+app.use('/api', apiRateLimiter);
 // Avant express.json : la vérification de signature Stripe exige le corps brut.
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
 
 app.use(express.json({ limit: '10kb' }));
-app.use(cookieParser());
-// UPLOADS_DIR : chemin disque configurable (volume Railway) ; l'URL /uploads ne change pas.
-app.use('/uploads', express.static(process.env.UPLOADS_DIR || 'uploads'));
+app.use(cookieParser(csrfCookieKey));
+// Le cookie CSRF doit être lu après cookieParser et avant tous les routeurs ;
+// le webhook déjà déclaré ci-dessus ne porte pas de cookie de session et reste
+// donc compatible avec la vérification de signature Stripe.
+app.use('/api', csrfProtection);
+app.use('/api', exposeCsrfHeader);
+app.use('/api', handleCsrfError);
+// Seuls les avatars et photos de bateaux sont publics.  Les preuves de litige
+// et documents résident sous storage/ et ne sont jamais exposés par le serveur
+// statique ; ils passent par des routes protégées qui déchiffrent à la volée.
+const publicUploads = path.resolve(process.env.UPLOADS_DIR || 'uploads');
+const publicStaticOptions = { dotfiles: 'deny', index: false, fallthrough: true };
+app.use('/uploads/boats', express.static(path.join(publicUploads, 'boats'), publicStaticOptions));
+app.use(
+  '/uploads/avatars',
+  express.static(path.join(publicUploads, 'avatars'), publicStaticOptions)
+);
 
 const registerLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
@@ -115,17 +202,24 @@ app.use('/api/messages', messageRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Keep unknown API routes JSON-shaped and avoid Express' default HTML error
+// page, which may include a stack trace outside development.
+app.use((req, _res, next) => {
+  next(Object.assign(new Error('Route introuvable.'), { status: 404 }));
+});
+app.use(secureErrorHandler);
+
 process.on('unhandledRejection', (reason) => {
-  console.error('[server] unhandledRejection:', reason);
+  logSanitizedError('server: unhandledRejection', reason);
 });
 process.on('uncaughtException', (err) => {
-  console.error('[server] uncaughtException:', err);
+  logSanitizedError('server: uncaughtException', err);
 });
 
 // Tâches planifiées (dont l'expiration des réservations non payées, qui tournait
 // auparavant via un setInterval local) : le registre et l'historique vivent en
 // base, cf. src/scheduler.js.
-startScheduler().catch((err) => console.error('[cron] démarrage:', err));
+startScheduler().catch((err) => logSanitizedError('cron: démarrage', err));
 
 const server = app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
@@ -146,7 +240,7 @@ function shutdown(signal) {
   server.closeIdleConnections?.();
   server.close(async () => {
     clearTimeout(forceExit);
-    await prisma.$disconnect().catch((err) => console.error('[server] prisma disconnect:', err));
+    await prisma.$disconnect().catch((err) => logSanitizedError('server: prisma disconnect', err));
     console.log('[server] arrêt terminé.');
     process.exit(0);
   });

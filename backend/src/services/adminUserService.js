@@ -1,4 +1,5 @@
 import prisma from '../config/db.js';
+import { parseStrictBoolean } from '../utils/inputSecurity.js';
 
 const ROLES = ['admin', 'proprietaire', 'locataire'];
 const SORTABLE = ['created_at', 'last_name', 'first_name', 'email', 'role'];
@@ -23,8 +24,9 @@ function publicUser(u) {
 export async function listUsers({ role, active, search, sort, order } = {}) {
   const where = { deleted_at: null };
   if (role && ROLES.includes(role)) where.role = role;
-  if (active === 'true') where.is_active = true;
-  if (active === 'false') where.is_active = false;
+  if (active !== undefined && active !== null && active !== '') {
+    where.is_active = parseStrictBoolean(active, 'Le filtre actif');
+  }
   if (search && String(search).trim()) {
     const s = String(search).trim();
     where.OR = [
@@ -43,6 +45,8 @@ export async function listUsers({ role, active, search, sort, order } = {}) {
 
 export async function updateUserByAdmin(id_user, requesterId, payload = {}) {
   const { first_name, last_name, email, phone, role, is_active } = payload;
+  const parsedActive =
+    is_active === undefined ? undefined : parseStrictBoolean(is_active, 'Le statut actif');
   const id = Number(id_user);
   const user = await prisma.user.findUnique({ where: { id_user: id } });
   if (!user || user.deleted_at) {
@@ -110,21 +114,38 @@ export async function updateUserByAdmin(id_user, requesterId, payload = {}) {
   }
 
   if (is_active !== undefined) {
-    if (id === requesterId && is_active === false) {
+    if (id === requesterId && parsedActive === false) {
       throw Object.assign(new Error('Vous ne pouvez pas désactiver votre propre compte.'), {
         status: 400,
       });
     }
-    data.is_active = Boolean(is_active);
+    data.is_active = parsedActive;
     data.deactivated_at = null;
   }
+
+  // Un changement de rôle ou d'état rend immédiatement caducs les JWT et
+  // sessions émis avant l'opération. Les informations de profil seules ne
+  // nécessitent pas de rotation.
+  const authStateChanged =
+    (role !== undefined && role !== user.role) ||
+    (is_active !== undefined && parsedActive !== user.is_active);
+  if (authStateChanged) data.auth_version = { increment: 1 };
 
   if (Object.keys(data).length === 0) {
     throw Object.assign(new Error('Aucune modification à appliquer.'), { status: 400 });
   }
 
   data.updated_at = new Date();
-  const updated = await prisma.user.update({ where: { id_user: id }, data });
+  const updated = await prisma.$transaction(async (tx) => {
+    const next = await tx.user.update({ where: { id_user: id }, data });
+    if (authStateChanged) {
+      await tx.refreshToken.updateMany({
+        where: { id_user: id, revoked_at: null },
+        data: { revoked_at: new Date() },
+      });
+    }
+    return next;
+  });
   return publicUser(updated);
 }
 
@@ -140,8 +161,21 @@ export async function deleteUserByAdmin(id_user, requesterId) {
     throw Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
   }
   // Soft delete : préserve l'intégrité (réservations, paiements, avis…).
-  await prisma.user.update({
-    where: { id_user: id },
-    data: { is_active: false, deactivated_at: null, deleted_at: new Date() },
+  const now = new Date();
+  await prisma.$transaction(async (tx) => {
+    await tx.refreshToken.updateMany({
+      where: { id_user: id, revoked_at: null },
+      data: { revoked_at: now },
+    });
+    await tx.user.update({
+      where: { id_user: id },
+      data: {
+        is_active: false,
+        deactivated_at: null,
+        deleted_at: now,
+        auth_version: { increment: 1 },
+        updated_at: now,
+      },
+    });
   });
 }

@@ -173,11 +173,25 @@ cp .env.example .env
 
 > **En Docker**, c'est le `.env` **racine** qui compte (copié depuis `.env.example` racine) : Docker Compose y lit toutes les variables et elles ont priorité sur les `.env` locaux.
 
+En production, le backend refuse de démarrer si `JWT_SECRET`, `DATABASE_URL`,
+`FILE_ENCRYPTION_KEY`, `APP_URL` HTTPS, `PUBLIC_API_URL` HTTPS, les deux secrets
+Stripe live et une configuration email valide ne sont pas fournis. Le seed de démonstration est
+réservé aux environnements de développement et de test.
+
+`CORS_ORIGINS` est optionnelle : elle contient, séparées par des virgules, les
+origines frontend supplémentaires autorisées à envoyer les cookies de session.
+`APP_URL` est toujours autorisée et les origines staging/production doivent
+être en HTTPS. PostgreSQL et Redis ne sont pas publiés par les compose de
+staging/production ; le Redis de production exige `REDIS_PASSWORD` (il échoue
+volontairement au démarrage si elle est absente). Les volumes privés
+`storage/documents` et `storage/disputes` sont persistants et ne sont jamais
+servis par nginx.
+
 Variables backend à renseigner dans `backend/.env` :
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/sailingloc
-JWT_SECRET=votre_secret_jwt
+JWT_SECRET=                         # générer une valeur aléatoire locale (32 caractères minimum)
 STRIPE_SECRET_KEY=sk_test_...        # voir section Paiements Stripe
 STRIPE_WEBHOOK_SECRET=whsec_...      # voir section Paiements Stripe
 FILE_ENCRYPTION_KEY=                 # openssl rand -hex 32
@@ -186,6 +200,7 @@ EMAIL_PORT=1025
 EMAIL_USER=
 EMAIL_PASS=
 PORT=4000
+PUBLIC_API_URL=http://localhost:4000  # origine qui sert les fichiers publics
 ```
 
 Variable frontend à renseigner dans `frontend/.env` :
@@ -197,6 +212,28 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...   # voir section Paiements Stripe
 # Sans cette variable, le tracking est simplement désactivé : le site fonctionne normalement.
 # VITE_MATOMO_URL=http://localhost:8081
 ```
+
+L'image frontend de staging/production écoute sur le port interne `8080` avec
+un utilisateur nginx non privilégié (les compose publient respectivement
+`5174:8080` et `3000:8080`). Le déploiement Railway utilise cette image Docker
+et nginx afin que les headers de sécurité soient réellement appliqués. Le CSP
+autorise uniquement les services réellement utilisés : Stripe, Google Fonts,
+les tuiles Carto/Leaflet, Nominatim, les images seed Unsplash/Pexels/RandomUser
+et l'instance Matomo déclarée `analytics.sailingloc.fr`.
+
+`VITE_API_BASE_URL` est une variable publique, mais elle est figée dans le
+bundle Vite au moment du build. Elle est donc obligatoire pour les builds
+Docker/Railway de staging et de production et doit être une URL API HTTPS
+publique (par exemple `https://api.sailingloc.fr/api`), jamais `localhost`.
+Le backend utilise séparément `PUBLIC_API_URL` (par exemple
+`https://api.sailingloc.fr`, sans chemin) pour construire les URL des photos et
+avatars qu'il sert sous `/uploads`. Cette valeur est obligatoire en
+staging/production et ne doit jamais être déduite de l'en-tête `Host`.
+Dans Railway, configurez le service frontend avec le root directory
+`/frontend`, le fichier de configuration `/frontend/railway.json`, et cette
+variable dans le service avant le premier déploiement. Les variables publiques
+`VITE_MATOMO_URL` et `VITE_STRIPE_PUBLISHABLE_KEY` doivent également être
+définies avant le build si ces intégrations sont activées.
 
 > **Matomo sans Docker ?** Matomo (PHP + MariaDB) n'est pas fourni en méthode locale — l'installer à la main est lourd et inutile pour développer. Deux options : ne rien faire (recommandé — sans `VITE_MATOMO_URL`, le code de tracking est un no-op silencieux), ou lancer uniquement les deux conteneurs Matomo si Docker est disponible : `docker compose -f docker-compose.dev.yml up -d matomo matomo_db`.
 
@@ -243,9 +280,9 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 ### Compte Administrateur
 
-| Email                 | Mot de passe   |
-| --------------------- | -------------- |
-| `admin@sailingloc.fr` | `Admin@123456` |
+| Email                 | Mot de passe                    |
+| --------------------- | ------------------------------- |
+| `admin@sailingloc.fr` | configuré localement uniquement |
 
 > **Connexion admin :** la page de login administrateur est séparée de celle des utilisateurs.
 > URL : [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
@@ -253,17 +290,17 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 ### Compte Locataire
 
-| Email                     | Mot de passe           |
-| ------------------------- | ---------------------- |
-| `thomas.bernard@email.fr` | `Locataire@2025Secure` |
+| Email                     | Mot de passe                    |
+| ------------------------- | ------------------------------- |
+| `thomas.bernard@email.fr` | configuré localement uniquement |
 
 ### Compte Propriétaire
 
-| Email                 | Mot de passe              |
-| --------------------- | ------------------------- |
-| `luc.martin@email.fr` | `Proprietaire@2025Secure` |
+| Email                 | Mot de passe                    |
+| --------------------- | ------------------------------- |
+| `luc.martin@email.fr` | configuré localement uniquement |
 
-> **Note :** Tous les mots de passe sont hachés avec bcrypt. Les données de test incluent 13 utilisateurs, 8 bateaux, 8 ports et 14 réservations pour un environnement de développement complet.
+> **Note :** Ces comptes sont uniquement créés par le seed de développement. Aucun mot de passe de démonstration n'est publié dans le dépôt ; ne lancez jamais le seed sur une base de staging ou de production.
 
 ---
 

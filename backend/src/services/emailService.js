@@ -3,13 +3,15 @@ import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import { initConfig } from '../config/appConfig.js';
 import { mailgunApiTransport } from '../utils/mailgunTransport.js';
+import { buildAppUrl } from '../utils/urlSecurity.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOGO_PATH = path.resolve(__dirname, '../assets/email/logo.png');
 const LOGO_CID = 'sailingloc-logo';
 
-function createTransporter() {
+export function createTransporter() {
   const {
+    NODE_ENV,
     EMAIL_HOST,
     EMAIL_PORT,
     EMAIL_USER,
@@ -26,13 +28,31 @@ function createTransporter() {
     );
   }
   const port = Number(EMAIL_PORT);
+  const productionLike = ['staging', 'production'].includes(
+    String(NODE_ENV || '')
+      .trim()
+      .toLowerCase()
+  );
+  // Production-like SMTP must negotiate TLS. Port 465 uses implicit TLS;
+  // every other supported port uses STARTTLS, enforced by requireTLS.
+  const secure = productionLike ? port === 465 : EMAIL_SECURE || port === 465;
   return nodemailer.createTransport({
     host: EMAIL_HOST,
     port,
     // TLS implicite sur le port 465, ou si EMAIL_SECURE=true.
-    secure: EMAIL_SECURE || port === 465,
+    secure,
     // TLS conservé par défaut (STARTTLS sur 587) ; désactivé seulement pour MailDev.
-    ignoreTLS: EMAIL_IGNORE_TLS,
+    ...(productionLike
+      ? {
+          // Fail closed if the server does not advertise STARTTLS. Nodemailer
+          // ignores requireTLS for implicit TLS (465), where secure is true.
+          requireTLS: true,
+          ignoreTLS: false,
+        }
+      : {
+          // MailDev remains available for local development and tests.
+          ignoreTLS: EMAIL_IGNORE_TLS,
+        }),
     ...(EMAIL_USER && EMAIL_PASS ? { auth: { user: EMAIL_USER, pass: EMAIL_PASS } } : {}),
   });
 }
@@ -332,8 +352,7 @@ Si vous n'attendiez pas la création de ce compte, ignorez simplement cet email.
 }
 
 export async function sendAccountCreatedEmail(to, token, firstName) {
-  const { APP_URL } = initConfig();
-  const link = `${APP_URL}/reset-password?token=${token}`;
+  const link = buildAppUrl('/reset-password', { token });
   const { html, text } = buildAccountCreatedEmail({ link, firstName, email: to });
 
   await createTransporter().sendMail({
@@ -979,11 +998,10 @@ Vos réservations passées seront conservées de façon anonyme pour répondre �
 }
 
 export async function sendInactivityNoticeEmail(to, { firstName, days }) {
-  const { APP_URL } = initConfig();
   const { html, text } = buildInactivityNoticeEmail({
     firstName,
     days,
-    link: `${APP_URL}/login`,
+    link: buildAppUrl('/login'),
   });
   await createTransporter().sendMail({
     from: '"SailingLoc" <noreply@sailingloc.fr>',
@@ -1176,10 +1194,9 @@ Les factures et écritures comptables liées à vos réservations passées sont 
 }
 
 export async function sendAccountDeactivatedEmail(to, { firstName, days }) {
-  const { APP_URL } = initConfig();
   const { html, text } = buildAccountDeactivatedEmail({
     firstName,
-    link: `${APP_URL}/login`,
+    link: buildAppUrl('/login'),
     days,
   });
   await createTransporter().sendMail({
@@ -1200,8 +1217,11 @@ export async function sendAccountDeactivatedEmail(to, { firstName, days }) {
 }
 
 export async function sendPauseNoticeEmail(to, { firstName, days }) {
-  const { APP_URL } = initConfig();
-  const { html, text } = buildPauseNoticeEmail({ firstName, link: `${APP_URL}/login`, days });
+  const { html, text } = buildPauseNoticeEmail({
+    firstName,
+    link: buildAppUrl('/login'),
+    days,
+  });
   await createTransporter().sendMail({
     from: '"SailingLoc" <noreply@sailingloc.fr>',
     to,
@@ -1239,8 +1259,7 @@ export async function sendAccountDeletionEmail(to, { firstName, days }) {
 }
 
 export async function sendPasswordResetEmail(to, token, firstName) {
-  const { APP_URL } = initConfig();
-  const link = `${APP_URL}/reset-password?token=${token}`;
+  const link = buildAppUrl('/reset-password', { token });
   const { html, text } = buildResetEmail({ link, firstName, email: to });
 
   await createTransporter().sendMail({
@@ -1261,8 +1280,7 @@ export async function sendPasswordResetEmail(to, token, firstName) {
 }
 
 export async function sendVerificationEmail(to, token, firstName) {
-  const { APP_URL } = initConfig();
-  const link = `${APP_URL}/verify-email?token=${token}`;
+  const link = buildAppUrl('/verify-email', { token });
   const { html, text } = buildVerificationEmail({ link, firstName, email: to });
 
   await createTransporter().sendMail({

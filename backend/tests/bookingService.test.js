@@ -5,6 +5,7 @@ const mockBookingCreate = jest.fn();
 const mockBookingFindFirst = jest.fn();
 const mockBookingUpdate = jest.fn();
 const mockBookingUpdateMany = jest.fn();
+const mockExecuteRaw = jest.fn().mockResolvedValue(0);
 const mockDocumentFindMany = jest.fn();
 const mockPaymentCreate = jest.fn();
 const mockPaymentUpdate = jest.fn();
@@ -25,6 +26,7 @@ const db = {
   image: { createMany: mockImageCreateMany },
 };
 db.$transaction = jest.fn((arg) => (typeof arg === 'function' ? arg(db) : Promise.all(arg)));
+db.$executeRaw = mockExecuteRaw;
 jest.unstable_mockModule('../src/config/db.js', () => ({ default: db }));
 
 const mockSendCancelledEmail = jest.fn().mockResolvedValue();
@@ -42,6 +44,7 @@ jest.unstable_mockModule('../src/config/stripe.js', () => ({
 
 const {
   createBooking,
+  MAX_BOOKING_DAYS,
   payBooking,
   cancelExpiredBookings,
   cancelOwnBooking,
@@ -76,6 +79,8 @@ describe('createBooking', () => {
   beforeEach(() => {
     mockBoatFindFirst.mockReset();
     mockBookingCreate.mockReset();
+    mockBookingFindFirst.mockReset();
+    mockExecuteRaw.mockClear();
     mockBookingUpdateMany.mockReset().mockResolvedValue({ count: 0 });
   });
 
@@ -113,6 +118,30 @@ describe('createBooking', () => {
     await expect(
       createBooking({ id_user: 1, id_boat: 1, start_date: day(-2), end_date: day(3) })
     ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('borne la durée d’une réservation (400)', async () => {
+    await expect(
+      createBooking({
+        id_user: 1,
+        id_boat: 1,
+        start_date: day(1),
+        end_date: day(MAX_BOOKING_DAYS + 1),
+      })
+    ).rejects.toMatchObject({ status: 400 });
+    expect(mockBoatFindFirst).not.toHaveBeenCalled();
+  });
+
+  it('rejette les identifiants non décimaux avant toute requête (400)', async () => {
+    await expect(
+      createBooking({
+        id_user: 1,
+        id_boat: '1e2',
+        start_date: day(1),
+        end_date: day(3),
+      })
+    ).rejects.toMatchObject({ status: 400 });
+    expect(mockBoatFindFirst).not.toHaveBeenCalled();
   });
 
   it('renvoie 404 si le bateau est introuvable ou non publié', async () => {
@@ -165,6 +194,24 @@ describe('createBooking', () => {
     });
     expect(booking.id_booking).toBe(42);
     expect(booking.total_amount).toBe(300);
+    expect(mockExecuteRaw).toHaveBeenCalled();
+  });
+
+  it('rechecks duplicate requests under the boat lock before INSERT', async () => {
+    mockBoatFindFirst.mockResolvedValue(publishedBoat());
+    mockBookingFindFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({ id_booking: 99 });
+
+    await expect(
+      createBooking({
+        id_user: 1,
+        id_boat: 1,
+        start_date: day(1),
+        end_date: day(3),
+      })
+    ).rejects.toMatchObject({ status: 409 });
+
+    expect(mockExecuteRaw).toHaveBeenCalled();
+    expect(mockBookingCreate).not.toHaveBeenCalled();
   });
 });
 

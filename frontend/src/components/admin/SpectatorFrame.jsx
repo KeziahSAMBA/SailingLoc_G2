@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { normalizeSpectatorPath, withSpectatorMode } from '../../utils/spectatorUrl.js';
 
 // Raccourcis vers les pages publiques utiles à inspecter en mode spectateur.
 const QUICK_LINKS = [
@@ -8,25 +9,21 @@ const QUICK_LINKS = [
   { labelKey: 'spectatorFrame.linkRegister', path: '/register' },
 ];
 
-function normalizePath(value) {
-  const v = String(value || '').trim();
+function normalizePath(value, origin) {
+  const v = String(value || '');
   if (!v) return '/';
   // Refuse les URLs externes (protocol-relative ou avec schéma) pour empêcher
   // de charger un site tiers dans l'iframe admin (phishing / contenu non maîtrisé).
   if (v.startsWith('//') || /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(v)) return '/';
-  return v.startsWith('/') ? v : `/${v}`;
+  return normalizeSpectatorPath(v, origin);
 }
 
 // Force le mode spectateur dans l'iframe : ajoute ?spectator=<mode> (ou
 // &spectator=<mode> si l'admin a déjà tapé des query params). AuthContext lit
 // ce flag au boot pour ne pas restaurer la session admin dans l'iframe (et
 // afficher un faux compte de démo si le mode correspond à un rôle).
-function withSpectator(p, mode) {
-  if (!p) return `/?spectator=${mode}`;
-  const [pathPart, queryPart = ''] = p.split('?');
-  const params = new URLSearchParams(queryPart);
-  params.set('spectator', mode);
-  return `${pathPart}?${params.toString()}`;
+function withSpectator(p, mode, origin) {
+  return withSpectatorMode(p, mode, origin);
 }
 
 /**
@@ -43,9 +40,10 @@ function SpectatorFrame({ mode, title, description, banner }) {
   const [src, setSrc] = useState('/');
   const [fullscreen, setFullscreen] = useState(false);
   const iframeRef = useRef(null);
+  const currentOrigin = window.location.origin;
 
   function go(newPath) {
-    const clean = normalizePath(newPath);
+    const clean = normalizePath(newPath, currentOrigin);
     setPath(clean);
     setSrc(clean);
   }
@@ -59,13 +57,13 @@ function SpectatorFrame({ mode, title, description, banner }) {
     // Forcer un reload même si la même URL est demandée : on remet src à vide
     // puis on le repose au prochain tick.
     setSrc('');
-    setTimeout(() => setSrc(normalizePath(path)), 0);
+    setTimeout(() => setSrc(normalizePath(path, currentOrigin)), 0);
   }
 
   // URL réellement injectée dans l'iframe (toujours en mode spectateur : le
   // login depuis l'iframe est bloqué par AuthContext pour ne pas écraser la
   // session admin du parent).
-  const iframeSrc = src ? withSpectator(src, mode) : '';
+  const iframeSrc = src ? withSpectator(src, mode, currentOrigin) : '';
 
   // ESC pour sortir du plein écran.
   useEffect(() => {
@@ -93,7 +91,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
       </button>
       <div className="flex min-w-0 sm:flex-1">
         <span className="hidden max-w-[45%] truncate rounded-l-lg border border-r-0 border-white/30 bg-white/10 px-3 py-2 text-xs text-white/60 md:block">
-          {window.location.origin}
+          {currentOrigin}
         </span>
         <input
           type="text"
@@ -152,6 +150,11 @@ function SpectatorFrame({ mode, title, description, banner }) {
               key={iframeSrc}
               src={iframeSrc}
               title={t('spectatorFrame.iframeTitle')}
+              // La vue spectateur est un document embarqué : elle conserve
+              // son origine pour charger les assets locaux, mais ne peut pas
+              // naviguer le contexte admin ni accéder à ses fenêtres.
+              sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+              referrerPolicy="no-referrer"
               className="block h-full w-full"
             />
           ) : (
@@ -195,6 +198,8 @@ function SpectatorFrame({ mode, title, description, banner }) {
             key={iframeSrc}
             src={iframeSrc}
             title={t('spectatorFrame.iframeTitle')}
+            sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+            referrerPolicy="no-referrer"
             className="block h-[calc(100svh-20rem)] min-h-96 w-full sm:min-h-[37.5rem]"
           />
         ) : (

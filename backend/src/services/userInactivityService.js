@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { sendInactivityNoticeEmail } from './emailService.js';
+import { logSanitizedError } from '../utils/privacy.js';
 
 const DAY_MS = 86400000;
 
@@ -54,7 +55,7 @@ export async function notifyInactiveUser(user, params = {}, now = new Date()) {
     await sendInactivityNoticeEmail(user.email, { firstName: user.first_name, days: notice });
   } catch (err) {
     // L'horodatage n'est pas posé : la relance sera retentée la nuit suivante.
-    console.error('[cron] relance inactivité :', err.message);
+    logSanitizedError('cron: relance inactivité', err);
     return false;
   }
 

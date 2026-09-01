@@ -1,6 +1,9 @@
 import prisma from '../config/db.js';
+import { boundedString, requirePositiveId } from '../utils/inputSecurity.js';
 
 const MAX_CONTENT_LENGTH = 2000;
+const MAX_CONVERSATIONS = 500;
+const MAX_THREAD_MESSAGES = 500;
 
 function publicUser(u) {
   return u
@@ -17,9 +20,9 @@ async function canMessage(sender, id_receiver) {
 
   const receiver = await prisma.user.findUnique({
     where: { id_user: id_receiver },
-    select: { role: true },
+    select: { role: true, is_active: true, deleted_at: true },
   });
-  if (!receiver) return false;
+  if (!receiver || !receiver.is_active || receiver.deleted_at) return false;
   if (receiver.role === 'admin') return true;
 
   const [existing, bookingLink] = await Promise.all([
@@ -53,17 +56,18 @@ async function canMessage(sender, id_receiver) {
 // supprimés pour tout le monde restent listés (placeholder) mais ne comptent
 // pas dans les non-lus.
 export async function listConversations(id_user) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const rows = await prisma.$queryRaw`
     WITH mine AS (
       SELECT
-        CASE WHEN m.id_sender = ${id_user} THEN m.id_receiver ELSE m.id_sender END AS other_id,
+        CASE WHEN m.id_sender = ${userId} THEN m.id_receiver ELSE m.id_sender END AS other_id,
         m.content,
         m.sent_at,
         m.deleted_at,
-        (m.id_sender = ${id_user}) AS from_me
+        (m.id_sender = ${userId}) AS from_me
       FROM message m
-      WHERE (m.id_sender = ${id_user} AND m.sender_deleted_at IS NULL)
-         OR (m.id_receiver = ${id_user} AND m.receiver_deleted_at IS NULL)
+      WHERE (m.id_sender = ${userId} AND m.sender_deleted_at IS NULL)
+         OR (m.id_receiver = ${userId} AND m.receiver_deleted_at IS NULL)
     ),
     last_msg AS (
       SELECT DISTINCT ON (other_id) * FROM mine ORDER BY other_id, sent_at DESC
@@ -80,14 +84,17 @@ export async function listConversations(id_user) {
       (
         SELECT COUNT(*)::int FROM message x
         WHERE x.id_sender = l.other_id
-          AND x.id_receiver = ${id_user}
+          AND x.id_receiver = ${userId}
           AND x.is_read = FALSE
           AND x.deleted_at IS NULL
           AND x.receiver_deleted_at IS NULL
       ) AS unread
     FROM last_msg l
     JOIN "user" u ON u.id_user = l.other_id
+      AND u.is_active = TRUE
+      AND u.deleted_at IS NULL
     ORDER BY l.sent_at DESC
+    LIMIT ${MAX_CONVERSATIONS}
   `;
 
   return rows.map((r) => ({
@@ -112,10 +119,11 @@ export async function listConversations(id_user) {
 // (canMessage) : sans lien avec cet utilisateur, on ne révèle ni son
 // existence ni ses informations (anti-énumération).
 export async function getThread(me, id_other) {
-  const otherId = Number(id_other);
+  const meId = requirePositiveId(me?.id_user, 'Identifiant utilisateur');
+  const otherId = requirePositiveId(id_other, 'Identifiant utilisateur');
   const notFound = () => Object.assign(new Error('Utilisateur introuvable.'), { status: 404 });
-  if (!Number.isInteger(otherId) || otherId === me.id_user) throw notFound();
-  if (!(await canMessage(me, otherId))) throw notFound();
+  if (otherId === meId) throw notFound();
+  if (!(await canMessage({ ...me, id_user: meId }, otherId))) throw notFound();
 
   const other = await prisma.user.findUnique({
     where: { id_user: otherId },
@@ -128,11 +136,12 @@ export async function getThread(me, id_other) {
     // « Message supprimé ») ; ceux supprimés « pour moi » n'apparaissent pas.
     where: {
       OR: [
-        { id_sender: me.id_user, id_receiver: otherId, sender_deleted_at: null },
-        { id_sender: otherId, id_receiver: me.id_user, receiver_deleted_at: null },
+        { id_sender: meId, id_receiver: otherId, sender_deleted_at: null },
+        { id_sender: otherId, id_receiver: meId, receiver_deleted_at: null },
       ],
     },
-    orderBy: { sent_at: 'asc' },
+    orderBy: [{ sent_at: 'desc' }, { id_message: 'desc' }],
+    take: MAX_THREAD_MESSAGES,
     select: {
       id_message: true,
       id_sender: true,
@@ -150,7 +159,7 @@ export async function getThread(me, id_other) {
     // fausse pas l'accusé de lecture côté expéditeur.
     where: {
       id_sender: otherId,
-      id_receiver: me.id_user,
+      id_receiver: meId,
       is_read: false,
       deleted_at: null,
       receiver_deleted_at: null,
@@ -161,14 +170,14 @@ export async function getThread(me, id_other) {
 
   return {
     user: publicUser(other),
-    messages: messages.map((m) => ({
+    messages: messages.reverse().map((m) => ({
       id_message: m.id_message,
       // Le contenu d'un message supprimé n'est jamais renvoyé.
       content: m.deleted_at ? null : m.content,
       deleted: Boolean(m.deleted_at),
       type: m.type,
       sent_at: m.sent_at,
-      from_me: m.id_sender === me.id_user,
+      from_me: m.id_sender === meId,
       // Accusé de lecture, seulement pertinent pour mes propres messages.
       read: m.is_read,
       edited: !m.deleted_at && Boolean(m.updated_at),
@@ -178,25 +187,31 @@ export async function getThread(me, id_other) {
 
 // Nombre total de messages non lus (badge de l'icône messagerie du header).
 export async function countUnread(id_user) {
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
   return prisma.message.count({
-    where: { id_receiver: id_user, is_read: false, deleted_at: null, receiver_deleted_at: null },
+    where: { id_receiver: userId, is_read: false, deleted_at: null, receiver_deleted_at: null },
   });
 }
 
 // Envoie un message, si l'expéditeur a le droit d'écrire à ce destinataire.
 export async function sendMessage(sender, id_receiver, content) {
-  const receiverId = Number(id_receiver);
-  const clean = content && String(content).trim();
+  const senderId = requirePositiveId(sender?.id_user, 'Identifiant utilisateur');
+  const receiverId = requirePositiveId(id_receiver, 'Identifiant destinataire');
+  const clean = boundedString(content, {
+    label: 'Le message',
+    max: MAX_CONTENT_LENGTH,
+  });
   if (!clean) {
     throw Object.assign(new Error('Le message est vide.'), { status: 400 });
   }
   if (clean.length > MAX_CONTENT_LENGTH) {
     throw Object.assign(new Error('Message trop long (2000 caractères max).'), { status: 400 });
   }
-  if (!Number.isInteger(receiverId) || receiverId === sender.id_user) {
+  if (receiverId === senderId) {
     throw Object.assign(new Error('Destinataire invalide.'), { status: 400 });
   }
-  if (!(await canMessage(sender, receiverId))) {
+  const senderWithId = sender.id_user === senderId ? sender : { ...sender, id_user: senderId };
+  if (!(await canMessage(senderWithId, receiverId))) {
     throw Object.assign(
       new Error('Vous ne pouvez écrire qu’aux personnes liées à vos réservations ou au support.'),
       { status: 403 }
@@ -205,7 +220,7 @@ export async function sendMessage(sender, id_receiver, content) {
 
   const message = await prisma.message.create({
     data: {
-      id_sender: sender.id_user,
+      id_sender: senderId,
       id_receiver: receiverId,
       content: clean,
       sent_at: new Date(),
@@ -223,7 +238,8 @@ export async function sendMessage(sender, id_receiver, content) {
 // propriétaires. Le serveur résout lui-même le propriétaire du bateau publié
 // et crée un message de contexte lors du tout premier contact.
 export async function contactBoatOwner(me, id_boat) {
-  const boatId = Number(id_boat);
+  const senderId = requirePositiveId(me?.id_user, 'Identifiant utilisateur');
+  const boatId = requirePositiveId(id_boat, 'Identifiant bateau');
   const notFound = () =>
     Object.assign(new Error('Bateau introuvable ou indisponible.'), { status: 404 });
 
@@ -249,8 +265,8 @@ export async function contactBoatOwner(me, id_boat) {
     where: {
       deleted_at: null,
       OR: [
-        { id_sender: me.id_user, id_receiver: boat.owner.id_user },
-        { id_sender: boat.owner.id_user, id_receiver: me.id_user },
+        { id_sender: senderId, id_receiver: boat.owner.id_user },
+        { id_sender: boat.owner.id_user, id_receiver: senderId },
       ],
     },
   });
@@ -258,7 +274,7 @@ export async function contactBoatOwner(me, id_boat) {
   if (existing === 0) {
     await prisma.message.create({
       data: {
-        id_sender: me.id_user,
+        id_sender: senderId,
         id_receiver: boat.owner.id_user,
         content: `Conversation ouverte au sujet du bateau « ${boat.name} ».`,
         type: 'boat_contact',
@@ -272,7 +288,9 @@ export async function contactBoatOwner(me, id_boat) {
 
 // Modifie le contenu d'un de mes messages (non supprimé).
 export async function updateMessage(me, id_message, content) {
-  const clean = content && String(content).trim();
+  const senderId = requirePositiveId(me?.id_user, 'Identifiant utilisateur');
+  const messageId = requirePositiveId(id_message, 'Identifiant message');
+  const clean = boundedString(content, { label: 'Le message', max: MAX_CONTENT_LENGTH });
   if (!clean) {
     throw Object.assign(new Error('Le message est vide.'), { status: 400 });
   }
@@ -281,7 +299,7 @@ export async function updateMessage(me, id_message, content) {
   }
 
   const message = await prisma.message.findUnique({
-    where: { id_message: Number(id_message) },
+    where: { id_message: messageId },
     select: { id_message: true, id_sender: true, deleted_at: true, sender_deleted_at: true },
   });
   // 404 aussi pour le message d'un autre : on ne révèle rien.
@@ -289,7 +307,7 @@ export async function updateMessage(me, id_message, content) {
     !message ||
     message.deleted_at ||
     message.sender_deleted_at ||
-    message.id_sender !== me.id_user
+    message.id_sender !== senderId
   ) {
     throw Object.assign(new Error('Message introuvable.'), { status: 404 });
   }
@@ -311,18 +329,22 @@ export async function updateMessage(me, id_message, content) {
 // Supprime un message : « pour tout le monde » (expéditeur uniquement) ou
 // « pour moi » (chaque côté masque le message chez lui).
 export async function deleteMessage(me, id_message, scope) {
+  const userId = requirePositiveId(me?.id_user, 'Identifiant utilisateur');
+  const messageId = requirePositiveId(id_message, 'Identifiant message');
+  if (scope !== 'all' && scope !== 'me') {
+    throw Object.assign(new Error('Portée de suppression invalide.'), { status: 400 });
+  }
   const message = await prisma.message.findUnique({
-    where: { id_message: Number(id_message) },
+    where: { id_message: messageId },
     select: { id_message: true, id_sender: true, id_receiver: true, deleted_at: true },
   });
-  const involved =
-    message && (message.id_sender === me.id_user || message.id_receiver === me.id_user);
+  const involved = message && (message.id_sender === userId || message.id_receiver === userId);
   if (!message || !involved || (message.deleted_at && scope === 'all')) {
     throw Object.assign(new Error('Message introuvable.'), { status: 404 });
   }
 
   if (scope === 'all') {
-    if (message.id_sender !== me.id_user) {
+    if (message.id_sender !== userId) {
       throw Object.assign(
         new Error('Seul l’expéditeur peut supprimer un message pour tout le monde.'),
         { status: 403 }
@@ -339,7 +361,7 @@ export async function deleteMessage(me, id_message, scope) {
   await prisma.message.update({
     where: { id_message: message.id_message },
     data:
-      message.id_sender === me.id_user
+      message.id_sender === userId
         ? { sender_deleted_at: new Date() }
         : { receiver_deleted_at: new Date() },
   });
@@ -359,11 +381,12 @@ const SUPPORT_WELCOME =
 // - Demande précédente marquée traitée : nouveau problème → le même admin
 //   renvoie l'accueil.
 export async function contactSupport(me) {
+  const userId = requirePositiveId(me?.id_user, 'Identifiant utilisateur');
   const last = await prisma.message.findFirst({
     where: {
       OR: [
-        { id_sender: me.id_user, receiver: { role: 'admin' } },
-        { id_receiver: me.id_user, sender: { role: 'admin' } },
+        { id_sender: userId, receiver: { role: 'admin' } },
+        { id_receiver: userId, sender: { role: 'admin' } },
       ],
     },
     orderBy: { sent_at: 'desc' },
@@ -378,14 +401,14 @@ export async function contactSupport(me) {
     admin = last.sender.role === 'admin' ? last.sender : last.receiver;
 
     const lastWelcome = await prisma.message.findFirst({
-      where: { id_receiver: me.id_user, type: 'support_welcome' },
+      where: { id_receiver: userId, type: 'support_welcome' },
       orderBy: { sent_at: 'desc' },
       select: { sent_at: true },
     });
     if (lastWelcome) {
       const resolved = await prisma.message.count({
         where: {
-          id_receiver: me.id_user,
+          id_receiver: userId,
           type: 'support_resolved',
           sent_at: { gt: lastWelcome.sent_at },
         },
@@ -400,6 +423,7 @@ export async function contactSupport(me) {
   } else {
     const admins = await prisma.user.findMany({
       where: { role: 'admin', is_active: true },
+      take: 100,
       select: { id_user: true, first_name: true, last_name: true, role: true },
     });
     if (admins.length === 0) {
@@ -413,7 +437,7 @@ export async function contactSupport(me) {
   await prisma.message.create({
     data: {
       id_sender: admin.id_user,
-      id_receiver: me.id_user,
+      id_receiver: userId,
       content: SUPPORT_WELCOME,
       type: 'support_welcome',
       sent_at: new Date(),
@@ -426,7 +450,8 @@ export async function contactSupport(me) {
 // marqueur système est ajouté au fil, et le prochain passage par la page
 // Contact rouvrira une nouvelle demande (nouvel accueil).
 export async function resolveSupport(admin, id_user) {
-  const userId = Number(id_user);
+  const adminId = requirePositiveId(admin?.id_user, 'Identifiant utilisateur');
+  const userId = requirePositiveId(id_user, 'Identifiant utilisateur');
   const target = await prisma.user.findUnique({
     where: { id_user: userId },
     select: { id_user: true, role: true },
@@ -437,7 +462,7 @@ export async function resolveSupport(admin, id_user) {
 
   const message = await prisma.message.create({
     data: {
-      id_sender: admin.id_user,
+      id_sender: adminId,
       id_receiver: userId,
       content:
         'Votre demande a été marquée comme traitée. Besoin d’autre chose ? Repassez par la page Contact.',

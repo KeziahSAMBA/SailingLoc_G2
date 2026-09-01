@@ -1,22 +1,69 @@
 import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
 import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
+import { MAX_LIST_ITEMS, parsePagination } from '../utils/inputSecurity.js';
 
-const BOAT_INCLUDE = {
-  port: true,
-  images: { orderBy: { order: 'asc' } },
-  equipment: true,
+const PUBLIC_BOAT_PAGE_SIZE = 25;
+const PUBLIC_RELATION_LIMIT = 500;
+
+const BOAT_SELECT = {
+  // Les clés publiques utiles à la vitrine sont explicites : id_user, les
+  // timestamps internes et deleted_at ne sortent jamais de cette projection.
+  id_boat: true,
+  id_port: true,
+  name: true,
+  type: true,
+  size: true,
+  engine: true,
+  with_skipper: true,
+  daily_price: true,
+  capacity: true,
+  build_year: true,
+  description: true,
+  is_published: true,
+  status: true,
+  license_required: true,
+  port: {
+    select: {
+      id_port: true,
+      name: true,
+      city: true,
+      country: true,
+      department: true,
+      region: true,
+      latitude: true,
+      longitude: true,
+    },
+  },
+  images: {
+    // Les annonces historiques utilisent « bateau », tandis que les uploads
+    // récents utilisent « boat ». Ces deux valeurs sont explicitement limitées
+    // aux photos de bateaux ; avatars, litiges et documents restent exclus.
+    where: { deleted_at: null, type: { in: ['boat', 'bateau'] } },
+    orderBy: { order: 'asc' },
+    select: { url: true },
+    take: 20,
+  },
+  equipment: { select: { id_equipment: true, category: true, name: true }, take: 100 },
   availabilities: {
     where: { is_available: true },
     orderBy: { start_date: 'asc' },
+    take: PUBLIC_RELATION_LIMIT,
+    select: { start_date: true, end_date: true },
   },
   bookings: {
+    where: { deleted_at: null },
+    orderBy: { id_booking: 'desc' },
+    take: PUBLIC_RELATION_LIMIT,
     select: {
       status: true,
       start_date: true,
       end_date: true,
       reviews: {
         where: { status: 'validated', deleted_at: null },
+        orderBy: { id_review: 'desc' },
+        take: 1,
         select: { rating: true, comment: true },
       },
     },
@@ -41,6 +88,15 @@ function enrichWithRating(boats) {
       .filter((bk) => BLOCKING_BOOKING_STATUSES.includes(bk.status))
       .map((bk) => ({ start_date: bk.start_date, end_date: bk.end_date }));
     const { bookings, ...boat } = b;
+    for (const internalField of [
+      'id_user',
+      'registration',
+      'created_at',
+      'updated_at',
+      'deleted_at',
+    ]) {
+      delete boat[internalField];
+    }
     return {
       ...boat,
       avg_rating: avg,
@@ -53,35 +109,63 @@ function enrichWithRating(boats) {
 }
 
 export async function getBoats(req, res) {
-  const boats = await prisma.boat.findMany({
-    where: { is_published: true },
-    include: BOAT_INCLUDE,
-  });
+  try {
+    const { skip, take } = parsePagination(req.query, PUBLIC_BOAT_PAGE_SIZE);
+    const boats = await prisma.boat.findMany({
+      where: {
+        is_published: true,
+        status: 'published',
+        deleted_at: null,
+        owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
+        port: { deleted_at: null },
+      },
+      select: BOAT_SELECT,
+      orderBy: { id_boat: 'asc' },
+      skip,
+      take,
+    });
 
-  res.json(enrichWithRating(boats));
+    res.json(enrichWithRating(boats));
+  } catch (err) {
+    return sendError(res, err);
+  }
 }
 
 export async function getBoatsByType(req, res) {
-  const boats = await prisma.boat.findMany({
-    where: { is_published: true },
-    include: BOAT_INCLUDE,
-    orderBy: { id_boat: 'asc' },
-  });
+  try {
+    const boats = await prisma.boat.findMany({
+      where: {
+        is_published: true,
+        status: 'published',
+        deleted_at: null,
+        owner: { is_active: true, deleted_at: null, role: 'proprietaire' },
+        port: { deleted_at: null },
+      },
+      select: BOAT_SELECT,
+      orderBy: { id_boat: 'asc' },
+      // Ce catalogue historique n'est pas pagine dans son contrat public :
+      // lire toutes les lignes utiles, avec la borne globale anti-abus.
+      skip: 0,
+      take: MAX_LIST_ITEMS,
+    });
 
-  const enriched = enrichWithRating(boats);
+    const enriched = enrichWithRating(boats);
 
-  // Group by type, keep at most 3 boats per type
-  const groups = {};
-  for (const boat of enriched) {
-    if (!groups[boat.type]) groups[boat.type] = [];
-    if (groups[boat.type].length < 3) groups[boat.type].push(boat);
+    // Group by type, keep at most 3 boats per type
+    const groups = {};
+    for (const boat of enriched) {
+      if (!groups[boat.type]) groups[boat.type] = [];
+      if (groups[boat.type].length < 3) groups[boat.type].push(boat);
+    }
+
+    const sections = Object.entries(groups)
+      .filter(([, list]) => list.length > 0)
+      .map(([type, list]) => ({ type, boats: list }));
+
+    res.json(sections);
+  } catch (err) {
+    return sendError(res, err);
   }
-
-  const sections = Object.entries(groups)
-    .filter(([, list]) => list.length > 0)
-    .map(([type, list]) => ({ type, boats: list }));
-
-  res.json(sections);
 }
 
 // Fichiers reçus par upload.fields : photos publiques + acte de francisation privé.
@@ -95,17 +179,10 @@ function boatFiles(req) {
 // Mise à jour d'un brouillon d'annonce par son propriétaire.
 export async function putBoat(req, res) {
   try {
-    const origin = `${req.protocol}://${req.get('host')}`;
-    const boat = await updateBoat(
-      req.user.id_user,
-      req.params.id_boat,
-      req.body,
-      boatFiles(req),
-      origin
-    );
+    const boat = await updateBoat(req.user.id_user, req.params.id_boat, req.body, boatFiles(req));
     res.json({ boat });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -115,7 +192,7 @@ export async function removeBoat(req, res) {
     await deleteBoat(req.user.id_user, req.params.id_boat);
     res.json({ deleted: true });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -123,14 +200,11 @@ export async function removeBoat(req, res) {
 // acte de francisation + port (réutilisé s'il existe, créé sinon) + disponibilités.
 export async function uploadBoat(req, res) {
   try {
-    // Origine publique du backend pour construire les URLs des photos servies
-    // en statique (/uploads).
-    const origin = `${req.protocol}://${req.get('host')}`;
-    const boat = await createBoat(req.user.id_user, req.body, boatFiles(req), origin);
+    const boat = await createBoat(req.user.id_user, req.body, boatFiles(req));
     res.locals.auditTargetId = String(boat.id_boat);
     res.status(201).json({ boat });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }
 
@@ -140,13 +214,13 @@ export async function createBookingController(req, res) {
   try {
     const booking = await createBooking({
       id_user: req.user.id_user,
-      id_boat: Number(req.params.id_boat),
+      id_boat: req.params.id_boat,
       start_date: req.body.start_date,
       end_date: req.body.end_date,
     });
     res.locals.auditTargetId = String(booking.id_booking);
     res.status(201).json({ booking });
   } catch (err) {
-    res.status(err.status || 500).json({ message: err.message });
+    return sendError(res, err);
   }
 }

@@ -1,7 +1,15 @@
 import { Router } from 'express';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
+import {
+  acceptsMulterMetadata,
+  generatedFileName,
+  inspectUploadedFile,
+  privateDirectory,
+  resolveExistingUploadedFile,
+} from '../utils/fileSecurity.js';
 import {
   register,
   login,
@@ -23,6 +31,8 @@ import {
 } from '../controllers/userController.js';
 import { protect, requireRole } from '../middlewares/authMiddleware.js';
 import { audit } from '../middlewares/auditMiddleware.js';
+import { bookingActionLimiter, uploadLimiter } from '../middlewares/abuseProtection.js';
+import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 import {
   getDashboard,
   getMyBookings,
@@ -58,23 +68,40 @@ import { getBookingInvoice } from '../controllers/invoiceController.js';
 
 // Photos de profil : servies en statique via /uploads (visibles dans le header
 // et la messagerie), extension conservée pour le bon type MIME.
-const AVATARS_DIR = path.join(process.env.UPLOADS_DIR || 'uploads', 'avatars');
-fs.mkdirSync(AVATARS_DIR, { recursive: true });
+const AVATARS_DIR = path.resolve(process.env.UPLOADS_DIR || 'uploads', 'avatars');
+fs.mkdirSync(AVATARS_DIR, { recursive: true, mode: 0o755 });
 
 const avatarStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, AVATARS_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  },
+  filename: (req, file, cb) => cb(null, generatedFileName(file.originalname, 'avatar')),
 });
 
 const AVATAR_MIME = ['image/jpeg', 'image/png', 'image/webp'];
+
+async function removeUploadedFile(file, kind) {
+  if (!file) return;
+  try {
+    const safePath = await resolveExistingUploadedFile(file, kind);
+    await fs.promises.unlink(safePath);
+  } catch {
+    // Best-effort cleanup must not change the response contract.
+  }
+}
+
 const avatarUpload = multer({
   storage: avatarStorage,
-  limits: { fileSize: 3 * 1024 * 1024 }, // 3 Mo
+  limits: {
+    fileSize: 3 * 1024 * 1024,
+    files: 1,
+    fields: 1,
+    fieldSize: 8 * 1024,
+    parts: 2,
+    headerPairs: 100,
+  }, // 3 Mo
   fileFilter: (req, file, cb) => {
-    if (AVATAR_MIME.includes(file.mimetype)) return cb(null, true);
+    if (AVATAR_MIME.includes(file.mimetype) && acceptsMulterMetadata(file, 'avatar')) {
+      return cb(null, true);
+    }
     cb(
       Object.assign(new Error('Format non supporté. Formats acceptés : JPG, PNG, WebP.'), {
         status: 400,
@@ -87,30 +114,63 @@ const avatarUpload = multer({
 function uploadAvatar(req, res, next) {
   avatarUpload.single('avatar')(req, res, (err) => {
     if (err) {
-      const status = err.code === 'LIMIT_FILE_SIZE' ? 400 : err.status || 500;
+      const status = [
+        'LIMIT_FILE_SIZE',
+        'LIMIT_FILE_COUNT',
+        'LIMIT_FIELD_SIZE',
+        'LIMIT_FIELD_COUNT',
+        'LIMIT_PART_COUNT',
+        'LIMIT_HEADER_COUNT',
+        'LIMIT_UNEXPECTED_FILE',
+      ].includes(err.code)
+        ? 400
+        : err.status || 500;
       const message =
         err.code === 'LIMIT_FILE_SIZE' ? 'Image trop volumineuse (max 3 Mo).' : err.message;
-      return res.status(status).json({ message });
+      return removeUploadedFile(req.file, 'avatar').finally(() =>
+        sendError(res, Object.assign(err, { status }), { message })
+      );
     }
     next();
   });
 }
 
+async function validateAvatarFile(req, res, next) {
+  if (!req.file) return next();
+  try {
+    const metadata = await inspectUploadedFile(req.file, 'avatar');
+    req.file.detectedMimeType = metadata.mimeType;
+    req.file.safeOriginalName = metadata.safeName;
+    return next();
+  } catch (err) {
+    await removeUploadedFile(req.file, 'avatar');
+    return sendError(res, err.status ? err : Object.assign(err, { status: 400 }));
+  }
+}
+
 // Photos jointes à un litige : statiques via /uploads, comme les photos de bateaux.
-const DISPUTES_DIR = path.join(process.env.UPLOADS_DIR || 'uploads', 'disputes');
-fs.mkdirSync(DISPUTES_DIR, { recursive: true });
+const DISPUTES_DIR = privateDirectory('dispute');
+fs.mkdirSync(DISPUTES_DIR, { recursive: true, mode: 0o700 });
 
 const disputeUpload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => cb(null, DISPUTES_DIR),
     filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+      cb(null, generatedFileName(file.originalname, 'dispute'));
     },
   }),
-  limits: { fileSize: 5 * 1024 * 1024, files: 5 },
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 5,
+    fields: 3,
+    fieldSize: 16 * 1024,
+    parts: 10,
+    headerPairs: 150,
+  },
   fileFilter: (req, file, cb) => {
-    if (AVATAR_MIME.includes(file.mimetype)) return cb(null, true);
+    if (AVATAR_MIME.includes(file.mimetype) && acceptsMulterMetadata(file, 'dispute')) {
+      return cb(null, true);
+    }
     cb(
       Object.assign(new Error('Format non supporté. Formats acceptés : JPG, PNG, WebP.'), {
         status: 400,
@@ -122,9 +182,15 @@ const disputeUpload = multer({
 function uploadDisputePhotos(req, res, next) {
   disputeUpload.array('photos', 5)(req, res, (err) => {
     if (err) {
-      const status = ['LIMIT_FILE_SIZE', 'LIMIT_FILE_COUNT', 'LIMIT_UNEXPECTED_FILE'].includes(
-        err.code
-      )
+      const status = [
+        'LIMIT_FILE_SIZE',
+        'LIMIT_FILE_COUNT',
+        'LIMIT_UNEXPECTED_FILE',
+        'LIMIT_FIELD_SIZE',
+        'LIMIT_FIELD_COUNT',
+        'LIMIT_PART_COUNT',
+        'LIMIT_HEADER_COUNT',
+      ].includes(err.code)
         ? 400
         : err.status || 500;
       const message =
@@ -133,27 +199,63 @@ function uploadDisputePhotos(req, res, next) {
           : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
             ? '5 photos maximum.'
             : err.message;
-      return res.status(status).json({ message });
+      const files = req.files || [];
+      return Promise.all(files.map((file) => removeUploadedFile(file, 'dispute'))).finally(() =>
+        sendError(res, Object.assign(err, { status }), { message })
+      );
     }
     next();
   });
 }
 
+async function validateDisputePhotos(req, res, next) {
+  const files = req.files || [];
+  try {
+    for (const file of files) {
+      const metadata = await inspectUploadedFile(file, 'dispute');
+      file.detectedMimeType = metadata.mimeType;
+      file.safeOriginalName = metadata.safeName;
+    }
+    return next();
+  } catch (err) {
+    await Promise.all(files.map((file) => removeUploadedFile(file, 'dispute')));
+    return sendError(res, err.status ? err : Object.assign(err, { status: 400 }));
+  }
+}
+
 const router = Router();
+
+// Les endpoints de session et de jetons restent publics, mais ne doivent pas
+// pouvoir être utilisés comme oracle ou comme boucle de rejeu à grande
+// vitesse. Les limites sont par IP et n'affectent pas les routes métier.
+const sessionActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+});
+const verificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+});
 
 router.post('/register', register);
 router.post('/login', login);
-router.post('/refresh', refresh);
-router.post('/logout', logout);
+router.post('/refresh', sessionActionLimiter, refresh);
+router.post('/logout', sessionActionLimiter, logout);
 router.post('/resend-verification', resend);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.get('/reset-password/:token', verifyResetToken);
-router.get('/verify-email/:token', confirmEmail);
+router.get('/verify-email/:token', verificationLimiter, confirmEmail);
 router.get('/me', protect, me);
 router.patch('/me', protect, updateMe);
 router.patch('/me/password', protect, changeMyPassword);
-router.patch('/me/avatar', protect, uploadAvatar, patchMyAvatar);
+router.patch('/me/avatar', protect, uploadLimiter, uploadAvatar, validateAvatarFile, patchMyAvatar);
 router.delete('/me/avatar', protect, deleteMyAvatar);
 router.get('/me/closure', protect, requireRole('locataire', 'proprietaire'), getMyClosureStatus);
 router.post(
@@ -208,6 +310,7 @@ router.patch(
   '/me/proprietaire/bookings/:id_booking',
   protect,
   requireRole('proprietaire'),
+  bookingActionLimiter,
   audit('booking.decide', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   patchProprietaireBooking
 );
@@ -215,7 +318,10 @@ router.post(
   '/me/proprietaire/bookings/:id_booking/dispute',
   protect,
   requireRole('proprietaire'),
+  bookingActionLimiter,
+  uploadLimiter,
   uploadDisputePhotos,
+  validateDisputePhotos,
   audit('dispute.open', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   reportProprietaireDispute
 );
@@ -280,6 +386,7 @@ router.post(
   '/me/bookings/:id_booking/pay',
   protect,
   requireRole('locataire'),
+  bookingActionLimiter,
   audit('booking.pay', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   payMyBooking
 );
@@ -287,6 +394,7 @@ router.post(
   '/me/bookings/:id_booking/cancel',
   protect,
   requireRole('locataire'),
+  bookingActionLimiter,
   audit('booking.cancel_guest', {
     targetType: 'booking',
     targetId: (req) => req.params.id_booking,
@@ -297,6 +405,7 @@ router.post(
   '/me/bookings/:id_booking/refund-request',
   protect,
   requireRole('locataire'),
+  bookingActionLimiter,
   audit('booking.refund_request', {
     targetType: 'booking',
     targetId: (req) => req.params.id_booking,
@@ -307,7 +416,10 @@ router.post(
   '/me/bookings/:id_booking/dispute',
   protect,
   requireRole('locataire'),
+  bookingActionLimiter,
+  uploadLimiter,
   uploadDisputePhotos,
+  validateDisputePhotos,
   audit('dispute.open', { targetType: 'booking', targetId: (req) => req.params.id_booking }),
   reportMyDispute
 );

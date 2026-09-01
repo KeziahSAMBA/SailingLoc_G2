@@ -1,10 +1,16 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import path from 'path';
 
 const mockUnlink = jest.fn();
+const mockRealpath = jest.fn();
+const mockStat = jest.fn();
+const mockLstat = jest.fn();
 
 jest.unstable_mockModule('fs', () => ({
-  default: { promises: { unlink: mockUnlink } },
-  promises: { unlink: mockUnlink },
+  default: {
+    promises: { unlink: mockUnlink, realpath: mockRealpath, stat: mockStat, lstat: mockLstat },
+  },
+  promises: { unlink: mockUnlink, realpath: mockRealpath, stat: mockStat, lstat: mockLstat },
 }));
 
 const db = {
@@ -35,6 +41,9 @@ const dataOf = (mock) => mock.mock.calls[0][0].data;
 beforeEach(() => {
   jest.clearAllMocks();
   mockUnlink.mockResolvedValue(undefined);
+  mockRealpath.mockImplementation(async (value) => value);
+  mockStat.mockResolvedValue({ isFile: () => true });
+  mockLstat.mockResolvedValue({ isFile: () => true, isSymbolicLink: () => false });
   db.$transaction.mockImplementation((fn) => fn(db));
   db.user.findUnique.mockResolvedValue({ id_user: 7, role: 'locataire' });
   db.user.findMany.mockResolvedValue([]);
@@ -145,7 +154,7 @@ describe('users.purge — anonymisation', () => {
     expect(db.bookingDocument.deleteMany).toHaveBeenCalledWith({
       where: { id_document: { in: [1, 2] } },
     });
-    expect(mockUnlink).toHaveBeenCalledWith('storage/documents/a.pdf');
+    expect(mockUnlink).toHaveBeenCalledWith(path.resolve('storage/documents/a.pdf'));
     expect(outcome.files).toBe(2);
   });
 
@@ -156,7 +165,7 @@ describe('users.purge — anonymisation', () => {
 
     await anonymizeUser(7, NOW);
 
-    expect(mockUnlink).toHaveBeenCalledWith('uploads/avatars/moi.png');
+    expect(mockUnlink).toHaveBeenCalledWith(path.resolve('uploads/avatars/moi.png'));
   });
 });
 
@@ -213,7 +222,9 @@ describe('users.purge — exécution', () => {
 
   it('additionne le détail sur plusieurs comptes', async () => {
     db.user.findMany.mockResolvedValue([{ id_user: 7 }, { id_user: 8 }]);
-    db.document.findMany.mockResolvedValue([{ id_document: 1, file_url: 'storage/a.pdf' }]);
+    db.document.findMany.mockResolvedValue([
+      { id_document: 1, file_url: 'storage/documents/a.pdf' },
+    ]);
     db.document.deleteMany.mockResolvedValue({ count: 1 });
 
     const outcome = await usersPurge.run({ params: {}, now: NOW });

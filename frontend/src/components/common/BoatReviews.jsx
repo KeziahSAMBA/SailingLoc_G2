@@ -14,6 +14,7 @@ import { formatDate } from '../../utils/formatDate.js';
 import { filterAndSortReviews } from '../../utils/reviewSort.js';
 import ReviewFilterBar from './ReviewFilterBar.jsx';
 import ReviewPagination from './ReviewPagination.jsx';
+import SafeImage from './SafeImage.jsx';
 
 const DATE_OPTS = { day: 'numeric', month: 'long', year: 'numeric' };
 const PAGE_SIZE = 5;
@@ -335,9 +336,11 @@ export default function BoatReviews({
               ) : (
                 <li key={r.id_review} className="rounded-xl border border-white/15 bg-white/5 p-4">
                   <div className="flex items-center gap-2">
-                    <img
+                    <SafeImage
                       src={r.avatar || nameToAvatarUrl(r.author)}
                       alt={r.author}
+                      fallbackSrc={nameToAvatarUrl(r.author)}
+                      fallback={null}
                       width={36}
                       height={36}
                       loading="lazy"

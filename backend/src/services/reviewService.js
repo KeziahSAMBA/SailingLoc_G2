@@ -1,14 +1,16 @@
 import prisma from '../config/db.js';
+import { parsePagination, parsePositiveId } from '../utils/inputSecurity.js';
 
 const RATING_MIN = 1;
 const RATING_MAX = 5;
+const PUBLIC_AVATAR_TYPES = { in: ['profil', 'avatar'] };
 
 // Avatar de profil de l'auteur (même relation que getPublicReviews).
 const AUTHOR_SELECT = {
   first_name: true,
   last_name: true,
   images: {
-    where: { type: 'profil', deleted_at: null },
+    where: { type: PUBLIC_AVATAR_TYPES, deleted_at: null },
     select: { url: true },
     take: 1,
     orderBy: { order: 'asc' },
@@ -42,7 +44,12 @@ export async function createBookingReview(id_user, id_booking, { rating, comment
   }
 
   const booking = await prisma.booking.findFirst({
-    where: { id_booking: Number(id_booking), id_user, deleted_at: null },
+    where: {
+      id_booking: Number(id_booking),
+      id_user,
+      deleted_at: null,
+      boat: { deleted_at: null },
+    },
     select: {
       id_booking: true,
       status: true,
@@ -91,6 +98,7 @@ export async function getReviewEligibility(id_user, id_boat) {
       id_boat: Number(id_boat),
       status: 'confirmed',
       deleted_at: null,
+      boat: { deleted_at: null },
       end_date: { lt: startOfToday() },
     },
     orderBy: { end_date: 'desc' },
@@ -102,14 +110,39 @@ export async function getReviewEligibility(id_user, id_boat) {
 // Avis d'un bateau pour la page publique : validés ET en attente de modération
 // (les refusés restent masqués). Le statut est renvoyé pour n'afficher le badge
 // « vérifié » que sur les avis validés.
-export async function listBoatReviews(id_boat) {
+export async function listBoatReviews(id_boat, viewer = null, query = {}) {
+  const boatId = parsePositiveId(id_boat);
+  if (boatId === null) {
+    throw Object.assign(new Error('Identifiant de bateau invalide.'), { status: 400 });
+  }
+  const { skip, take } = parsePagination(query);
+
+  // Les avis en attente restent consultables uniquement par leur auteur afin
+  // qu'il puisse les corriger. Ils ne doivent jamais devenir du contenu public
+  // avant validation ; les avis supprimés sont exclus dans tous les cas.
+  const validatedForPublishedBoat = {
+    status: 'validated',
+    booking: {
+      id_boat: boatId,
+      deleted_at: null,
+      boat: { deleted_at: null, is_published: true, status: 'published' },
+    },
+  };
+  const ownPending = viewer?.id_user
+    ? {
+        status: 'pending',
+        id_user: viewer.id_user,
+        booking: { id_boat: boatId, deleted_at: null, boat: { deleted_at: null } },
+      }
+    : null;
   const reviews = await prisma.review.findMany({
     where: {
-      status: { in: ['validated', 'pending'] },
       deleted_at: null,
-      booking: { id_boat: Number(id_boat), deleted_at: null },
+      OR: ownPending ? [validatedForPublishedBoat, ownPending] : [validatedForPublishedBoat],
     },
-    orderBy: { created_at: 'desc' },
+    orderBy: [{ created_at: 'desc' }, { id_review: 'desc' }],
+    skip,
+    take,
     select: {
       id_review: true,
       id_user: true,
@@ -133,8 +166,8 @@ export async function listBoatReviews(id_boat) {
     created_at: r.created_at,
     author: authorName(r.user),
     avatar: r.user.images[0]?.url ?? null,
-    owner_reply: r.owner_reply,
-    owner_reply_at: r.owner_reply_at,
+    owner_reply: r.status === 'validated' ? r.owner_reply : null,
+    owner_reply_at: r.status === 'validated' ? r.owner_reply_at : null,
   }));
 }
 

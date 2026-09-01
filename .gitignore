@@ -10,10 +10,12 @@ dist
 frontend/node_modules
 backend/node_modules
 frontend/dist
+frontend/.generated
 frontend/_tmp*.mjs
 frontend/verify-searchbar-toggle.mjs
 backend/uploads
 backend/storage/documents
+backend/storage/disputes
 
 # Docker
 docker-compose.override.yml

@@ -6,8 +6,6 @@
       "Host": "postgres",
       "Port": 5432,
       "MaintenanceDB": "sailingloc_dev",
-      "Username": "sailingloc_user",
-      "Password": "sailingloc_password",
       "SSLMode": "prefer"
     }
   }
