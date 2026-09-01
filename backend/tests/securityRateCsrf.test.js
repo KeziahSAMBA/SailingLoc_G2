@@ -1,31 +1,37 @@
 import { describe, expect, it } from '@jest/globals';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import request from 'supertest';
 import {
   createCsrfProtection,
+  createCsrfErrorHandler,
+  createCsrfTokenExposure,
   csrfCookieOptions,
-  csrfTokensMatch,
+  deriveCsrfCookieSigningSecret,
   CSRF_TOKEN_INVALID_CODE,
   CSRF_TOKEN_REQUIRED_CODE,
 } from '../src/middlewares/csrfMiddleware.js';
 
 const VALID_TOKEN = 'a'.repeat(64);
 const FRONTEND_ORIGIN = 'http://localhost:5173';
+const COOKIE_SIGNING_SECRET = deriveCsrfCookieSigningSecret(crypto.randomBytes(32).toString('hex'));
 
-function buildCsrfApp() {
+function cookiePair(response, name = 'sl_csrf') {
+  return response.headers['set-cookie']
+    ?.find((cookie) => cookie.startsWith(`${name}=`))
+    ?.split(';')[0];
+}
+
+function buildCsrfApp({ allowedOrigins = new Set([FRONTEND_ORIGIN]) } = {}) {
   const app = express();
-  app.use(cookieParser());
-  app.use(
-    '/api',
-    createCsrfProtection({
-      environment: 'development',
-      allowedOrigins: new Set([FRONTEND_ORIGIN]),
-    })
-  );
+  app.use(cookieParser(COOKIE_SIGNING_SECRET));
+  app.use('/api', createCsrfProtection({ environment: 'development' }));
+  app.use('/api', createCsrfTokenExposure({ allowedOrigins }));
+  app.use('/api', createCsrfErrorHandler({ allowedOrigins }));
   app.get('/api/public', (_req, res) => res.sendStatus(204));
   app.post('/api/public', (_req, res) => res.sendStatus(204));
   return app;
@@ -39,14 +45,17 @@ describe('limiteur API et protection CSRF', () => {
 
     expect(response.status).toBe(204);
     expect(response.headers['set-cookie']).toHaveLength(1);
-    expect(response.headers['set-cookie'][0]).toMatch(
-      /^sl_csrf=[a-f0-9]{64}; Max-Age=604800; Path=\/api; Expires=/i
-    );
+    expect(response.headers['set-cookie'][0]).toMatch(/^sl_csrf=s%3A/i);
+    expect(response.headers['set-cookie'][0]).toMatch(/Max-Age=604800/i);
+    expect(response.headers['set-cookie'][0]).toMatch(/Path=\/api/i);
     expect(response.headers['set-cookie'][0]).toMatch(/SameSite=Lax/i);
     expect(response.headers['set-cookie'][0]).toMatch(/HttpOnly/i);
-    const cookieToken = /^sl_csrf=([a-f0-9]{64});/i.exec(response.headers['set-cookie'][0])?.[1];
-    expect(response.headers['x-csrf-token']).toBe(cookieToken);
+    expect(response.headers['x-csrf-token']).toEqual(expect.any(String));
+    expect(response.headers['x-csrf-token'].length).toBeGreaterThan(20);
+    expect(response.headers['x-csrf-token']).not.toBe(cookiePair(response)?.split('=')[1]);
     expect(csrfCookieOptions('production')).toMatchObject({
+      key: 'sl_csrf',
+      signed: true,
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
@@ -64,6 +73,28 @@ describe('limiteur API et protection CSRF', () => {
       message: 'Jeton CSRF requis.',
       code: CSRF_TOKEN_REQUIRED_CODE,
     });
+    expect(cookiePair(response)).toMatch(/^sl_csrf=s%3A/i);
+  });
+
+  it('migre un ancien cookie non signé avec un unique rejeu sécurisé', async () => {
+    const app = buildCsrfApp();
+    const migration = await request(app)
+      .post('/api/public')
+      .set('Origin', FRONTEND_ORIGIN)
+      .set('Cookie', [`sl_refresh=refresh-token`, `sl_csrf=${VALID_TOKEN}`])
+      .set('X-CSRF-Token', VALID_TOKEN);
+
+    expect(migration.status).toBe(403);
+    expect(migration.body.code).toBe(CSRF_TOKEN_REQUIRED_CODE);
+    expect(cookiePair(migration)).toMatch(/^sl_csrf=s%3A/i);
+    expect(migration.headers['x-csrf-token']).not.toBe(VALID_TOKEN);
+
+    const retry = await request(app)
+      .post('/api/public')
+      .set('Origin', FRONTEND_ORIGIN)
+      .set('Cookie', ['sl_refresh=refresh-token', cookiePair(migration)])
+      .set('X-CSRF-Token', migration.headers['x-csrf-token']);
+    expect(retry.status).toBe(204);
   });
 
   it('initialise une ancienne session puis autorise son unique rejeu avec le nouveau jeton', async () => {
@@ -79,54 +110,57 @@ describe('limiteur API et protection CSRF', () => {
       code: CSRF_TOKEN_REQUIRED_CODE,
     });
     const csrfCookie = firstAttempt.headers['set-cookie'][0];
-    const issuedToken = /^sl_csrf=([a-f0-9]{64});/i.exec(csrfCookie)?.[1];
-    expect(issuedToken).toHaveLength(64);
+    const issuedToken = firstAttempt.headers['x-csrf-token'];
+    expect(csrfCookie).toMatch(/^sl_csrf=s%3A/i);
+    expect(issuedToken.length).toBeGreaterThan(20);
     expect(firstAttempt.headers['x-csrf-token']).toBe(issuedToken);
 
     const retry = await request(app)
       .post('/api/public')
       .set('Origin', FRONTEND_ORIGIN)
-      .set('Cookie', ['sl_refresh=legacy-refresh-token', `sl_csrf=${issuedToken}`])
+      .set('Cookie', ['sl_refresh=legacy-refresh-token', cookiePair(firstAttempt)])
       .set('X-CSRF-Token', issuedToken);
     expect(retry.status).toBe(204);
   });
 
   it('réamorce la mémoire après rechargement sans renouveler le cookie existant', async () => {
     const app = buildCsrfApp();
+    const initial = await request(app).get('/api/public').set('Origin', FRONTEND_ORIGIN);
+    const signedCookie = cookiePair(initial);
     const bootstrap = await request(app)
       .post('/api/public')
       .set('Origin', FRONTEND_ORIGIN)
-      .set('Cookie', [`sl_refresh=refresh-token`, `sl_csrf=${VALID_TOKEN}`]);
+      .set('Cookie', [`sl_refresh=refresh-token`, signedCookie]);
 
     expect(bootstrap.status).toBe(403);
     expect(bootstrap.body.code).toBe(CSRF_TOKEN_REQUIRED_CODE);
-    expect(bootstrap.headers['x-csrf-token']).toBe(VALID_TOKEN);
+    expect(bootstrap.headers['x-csrf-token'].length).toBeGreaterThan(20);
     expect(bootstrap.headers).not.toHaveProperty('set-cookie');
 
     const retry = await request(app)
       .post('/api/public')
       .set('Origin', FRONTEND_ORIGIN)
-      .set('Cookie', [`sl_refresh=refresh-token`, `sl_csrf=${VALID_TOKEN}`])
+      .set('Cookie', [`sl_refresh=refresh-token`, signedCookie])
       .set('X-CSRF-Token', bootstrap.headers['x-csrf-token']);
     expect(retry.status).toBe(204);
   });
 
   it('accepte uniquement le même jeton CSRF en temps constant', async () => {
     const app = buildCsrfApp();
+    const bootstrap = await request(app).get('/api/public').set('Origin', FRONTEND_ORIGIN);
+    const signedCookie = cookiePair(bootstrap);
     const valid = await request(app)
       .post('/api/public')
-      .set('Cookie', [`sl_refresh=refresh-token`, `sl_csrf=${VALID_TOKEN}`])
-      .set('X-CSRF-Token', VALID_TOKEN);
+      .set('Cookie', [`sl_refresh=refresh-token`, signedCookie])
+      .set('X-CSRF-Token', bootstrap.headers['x-csrf-token']);
     const invalid = await request(app)
       .post('/api/public')
-      .set('Cookie', [`sl_refresh=refresh-token`, `sl_csrf=${VALID_TOKEN}`])
-      .set('X-CSRF-Token', `${'b'.repeat(64)}`);
+      .set('Cookie', [`sl_refresh=refresh-token`, signedCookie])
+      .set('X-CSRF-Token', VALID_TOKEN);
 
     expect(valid.status).toBe(204);
     expect(invalid.status).toBe(403);
     expect(invalid.body.code).toBe(CSRF_TOKEN_INVALID_CODE);
-    expect(csrfTokensMatch(VALID_TOKEN, VALID_TOKEN)).toBe(true);
-    expect(csrfTokensMatch(VALID_TOKEN, 'short')).toBe(false);
   });
 
   it('conserve les mutations publiques et Bearer sans cookie de session', async () => {
@@ -230,15 +264,17 @@ describe('ordre des protections du serveur', () => {
     const source = fs.readFileSync(new URL('../src/server.js', import.meta.url), 'utf8');
     const limiterPosition = source.indexOf("app.use('/api', apiRateLimiter)");
     const webhookPosition = source.indexOf("app.post('/api/webhooks/stripe'");
-    const parserPosition = source.indexOf('app.use(cookieParser())');
+    const parserPosition = source.indexOf('app.use(cookieParser(csrfCookieSigningSecret))');
     const csrfPosition = source.indexOf("app.use('/api', csrfProtection)");
 
     expect(limiterPosition).toBeGreaterThan(-1);
     expect(webhookPosition).toBeGreaterThan(limiterPosition);
     expect(csrfPosition).toBeGreaterThan(parserPosition);
+    expect(source).toContain("import csrf from 'csurf'");
+    expect(source).toContain('const csrfProtection = csrf({');
     expect(source).toContain("'X-CSRF-Token'");
     expect(source).toContain('allowedOrigins: corsOrigins');
-    expect(source).toContain('configureCsrfProtection({ environment: NODE_ENV');
+    expect(source).toContain("app.use('/api', handleCsrfError)");
   });
 
   it('limite le rejeu Axios au code de transition CSRF et à une seule tentative', () => {

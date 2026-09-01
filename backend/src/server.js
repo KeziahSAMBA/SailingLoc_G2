@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import csrf from 'csurf';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import boatRoutes from './routes/boatRoutes.js';
@@ -19,14 +20,33 @@ import { safeErrorResponses, secureErrorHandler } from './middlewares/errorSecur
 import { logSanitizedError } from './utils/privacy.js';
 import { allowedCorsOrigins, normalizeRequestOrigin } from './utils/corsSecurity.js';
 import { securityHeaders } from './middlewares/securityHeaders.js';
-import { configureCsrfProtection, csrfProtection } from './middlewares/csrfMiddleware.js';
+import {
+  CSRF_SAFE_METHODS,
+  createCsrfErrorHandler,
+  createCsrfTokenExposure,
+  csrfCookieOptions,
+  csrfRequestToken,
+  deriveCsrfCookieSigningSecret,
+  ignoreRequestWithoutRefreshCookie,
+} from './middlewares/csrfMiddleware.js';
 
-const { PORT, APP_URL, CORS_ORIGINS, NODE_ENV } = initConfig();
+const { PORT, APP_URL, CORS_ORIGINS, NODE_ENV, JWT_SECRET } = initConfig();
 const corsOrigins = allowedCorsOrigins({
   appUrl: APP_URL,
   configuredOrigins: CORS_ORIGINS,
   environment: NODE_ENV,
 });
+const csrfCookieSigningSecret = deriveCsrfCookieSigningSecret(JWT_SECRET);
+// `csurf` resolves to the actively maintained @dr.pogodin/csurf fork through
+// an npm alias. The recognized import also lets CodeQL prove the API is guarded.
+const csrfProtection = csrf({
+  cookie: csrfCookieOptions(NODE_ENV),
+  ignoreMethods: CSRF_SAFE_METHODS,
+  ignoreRequest: ignoreRequestWithoutRefreshCookie,
+  value: csrfRequestToken,
+});
+const exposeCsrfToken = createCsrfTokenExposure({ allowedOrigins: corsOrigins });
+const handleCsrfError = createCsrfErrorHandler({ allowedOrigins: corsOrigins });
 
 const app = express();
 app.disable('x-powered-by');
@@ -90,12 +110,13 @@ app.use('/api', apiRateLimiter);
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
 
 app.use(express.json({ limit: '10kb' }));
-app.use(cookieParser());
+app.use(cookieParser(csrfCookieSigningSecret));
 // Le cookie CSRF doit être lu après cookieParser et avant tous les routeurs ;
 // le webhook déjà déclaré ci-dessus ne porte pas de cookie de session et reste
 // donc compatible avec la vérification de signature Stripe.
-configureCsrfProtection({ environment: NODE_ENV, allowedOrigins: corsOrigins });
 app.use('/api', csrfProtection);
+app.use('/api', exposeCsrfToken);
+app.use('/api', handleCsrfError);
 // Seuls les avatars et photos de bateaux sont publics.  Les preuves de litige
 // et documents résident sous storage/ et ne sont jamais exposés par le serveur
 // statique ; ils passent par des routes protégées qui déchiffrent à la volée.
