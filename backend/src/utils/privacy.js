@@ -37,7 +37,7 @@ export function sanitizeLogText(value, maxLength = MAX_STRING_LENGTH) {
   if (value === undefined || value === null) return null;
   let text = String(value);
   // eslint-disable-next-line no-control-regex -- deliberately strip C0 controls from untrusted log text
-  text = text.replace(/[\u0000-\u001f\u007f]/g, ' ');
+  text = text.replace(/[\u0000-\u001f\u007f\u2028\u2029]/g, ' ');
 
   // Secrets can occur inside an SDK error string instead of under a named
   // object key.  Redact the common header/query/assignment forms as well.
@@ -181,6 +181,22 @@ export function sanitizeAuditIp(ip) {
   return sanitizeLogText(ip, 64);
 }
 
+export function serializeSanitizedLog(value) {
+  let serialized;
+  try {
+    const redacted = redactSensitive(value, {
+      maxDepth: 6,
+      maxEntries: 100,
+      maxArrayItems: 50,
+    });
+    serialized = JSON.stringify(redacted);
+  } catch {
+    serialized = JSON.stringify({ error: '[UNSERIALIZABLE]' });
+  }
+  const text = String(serialized || 'null');
+  return sanitizeLogText(text, text.length) || 'null';
+}
+
 // Background jobs and best-effort integrations do not have an Express
 // request context, but their errors still come from external systems or
 // untrusted input. Keep those diagnostics on the same bounded, redacted path
@@ -189,5 +205,9 @@ export function logSanitizedError(label, error, level = 'error') {
   const safeLabel = sanitizeLogText(label, 100) || 'error';
   const payload = redactSensitive(error, { maxDepth: 4, maxEntries: 40 });
   const writer = level === 'warn' ? console.warn : console.error;
-  writer(`[${safeLabel}] ${JSON.stringify({ error: payload })}`);
+  // JSON.stringify may preserve U+2028/U+2029 and object keys are not covered
+  // by the recursive value sanitizer. Sanitize the complete line immediately
+  // before handing it to the writer so one diagnostic can never forge records.
+  const safeJson = serializeSanitizedLog({ error: payload });
+  writer(`[${safeLabel}] ${safeJson}`);
 }

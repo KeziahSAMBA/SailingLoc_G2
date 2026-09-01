@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import {
   REDACTED_VALUE,
+  logSanitizedError,
   redactSensitive,
   sanitizeAuditMetadata,
   sanitizeLogText,
@@ -95,6 +96,49 @@ describe('privacy and diagnostic safeguards', () => {
     expect(line).not.toContain('secret');
     expect(line).not.toContain('hidden');
     expect(line).not.toMatch(/[\r\n]/);
+  });
+
+  it('assainit aussi la ligne JSON finale des erreurs de requête', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const error = {
+      message: 'token=secret\u2028forged',
+      authorization: 'Bearer hidden',
+    };
+    const context = { password: 'private', note: 'line\r\nbreak\u2029next' };
+    error.circular = error;
+    context.circular = context;
+
+    logInternalError({ method: 'POST\r\nforge', path: '/api/test\u2028next' }, error, context);
+
+    const line = errorSpy.mock.calls[0][0];
+    // eslint-disable-next-line no-control-regex -- assert that log separators are removed
+    expect(line).not.toMatch(/[\r\n\u2028\u2029]/);
+    expect(line).not.toContain('secret');
+    expect(line).not.toContain('hidden');
+    expect(line).not.toContain('private');
+    expect(line).toContain('[CIRCULAR]');
+    const payload = JSON.parse(line.slice(line.indexOf('] ') + 2));
+    expect(payload.error.authorization).toBe(REDACTED_VALUE);
+    expect(payload.context.password).toBe(REDACTED_VALUE);
+  });
+
+  it('écrit une seule ligne JSON même avec secrets, Unicode de contrôle et cycle', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const error = {
+      message: 'password=secret\u2028forged\u2029line',
+      authorization: 'Bearer hidden',
+    };
+    error.circular = error;
+
+    logSanitizedError('diagnostic\r\nforge', error);
+
+    const line = errorSpy.mock.calls[0][0];
+    // eslint-disable-next-line no-control-regex -- assert that log separators are removed
+    expect(line).not.toMatch(/[\r\n\u2028\u2029]/);
+    expect(line).not.toContain('secret');
+    expect(line).not.toContain('hidden');
+    expect(line).toContain('[CIRCULAR]');
+    expect(() => JSON.parse(line.slice(line.indexOf('] ') + 2))).not.toThrow();
   });
 
   it('normalizes error responses through the adapter', () => {

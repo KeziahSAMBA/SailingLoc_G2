@@ -1,4 +1,9 @@
-import { redactSensitive, sanitizeLogText, sanitizePublicBody } from '../utils/privacy.js';
+import {
+  redactSensitive,
+  sanitizeLogText,
+  sanitizePublicBody,
+  serializeSanitizedLog,
+} from '../utils/privacy.js';
 
 export const GENERIC_SERVER_MESSAGE = 'Une erreur interne est survenue.';
 
@@ -40,7 +45,7 @@ export function logInternalError(req, error, context = undefined) {
   };
   // One sanitized line prevents CR/LF log injection while retaining the stack
   // and structured fields for operators in the internal log sink.
-  console.error(`[request-error] ${JSON.stringify(details)}`);
+  console.error(`[request-error] ${serializeSanitizedLog(details)}`);
 }
 
 export function publicError(error, options = {}) {
