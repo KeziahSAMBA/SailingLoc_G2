@@ -1899,6 +1899,10 @@ export const TEXTS = {
       en: 'Search (renter, boat)…',
     },
     loading: { fr: 'Chargement…', en: 'Loading…' },
+    truncated: {
+      fr: 'Les {{shown}} réservations les plus récentes sur {{total}} sont affichées. Affinez la recherche ou le statut pour atteindre les autres.',
+      en: 'Showing the {{shown}} most recent bookings out of {{total}}. Narrow the search or status to reach the others.',
+    },
     emptyBookings: { fr: 'Aucune réservation.', en: 'No booking.' },
     emptyDisputes: { fr: 'Aucun litige.', en: 'No dispute.' },
     loadError: { fr: 'Erreur de chargement.', en: 'Failed to load.' },

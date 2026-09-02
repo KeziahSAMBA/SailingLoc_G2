@@ -1,11 +1,19 @@
 import prisma from '../config/db.js';
 import { refundIntent } from '../config/stripe.js';
 import { sendDisputeDecisionEmail } from './emailService.js';
+import { parsePagination } from '../utils/inputSecurity.js';
 
 const BOOKING_STATUSES = ['pending', 'confirmed', 'refused', 'cancelled'];
 const DISPUTE_STATUSES = ['open', 'resolved', 'rejected'];
 
-export async function listBookings({ status, search } = {}) {
+// La liste alimente un tableau d'administration paginé côté navigateur : sans
+// borne, elle renvoyait l'intégralité des réservations en une réponse — 7,6 Mo
+// mesurés en recette. Le total accompagne la page pour que l'écran puisse
+// signaler ce qu'il ne montre pas.
+const ADMIN_BOOKINGS_PAGE_SIZE = 100;
+
+export async function listBookings({ status, search, page, pageSize } = {}) {
+  const pagination = parsePagination({ page, pageSize }, ADMIN_BOOKINGS_PAGE_SIZE);
   const where = { deleted_at: null };
   if (status && BOOKING_STATUSES.includes(status)) where.status = status;
   if (search && String(search).trim()) {
@@ -18,17 +26,25 @@ export async function listBookings({ status, search } = {}) {
     ];
   }
 
-  const bookings = await prisma.booking.findMany({
-    where,
-    include: {
-      user: { select: { id_user: true, first_name: true, last_name: true, email: true } },
-      boat: { select: { id_boat: true, name: true } },
-      _count: { select: { disputes: { where: { status: 'open' } } } },
-    },
-    orderBy: { booking_date: 'desc' },
-  });
+  const [total, bookings] = await Promise.all([
+    prisma.booking.count({ where }),
+    prisma.booking.findMany({
+      where,
+      include: {
+        user: { select: { id_user: true, first_name: true, last_name: true, email: true } },
+        boat: { select: { id_boat: true, name: true } },
+        _count: { select: { disputes: { where: { status: 'open' } } } },
+      },
+      // booking_date seule ne départage pas deux réservations enregistrées à la
+      // même date : le tri secondaire sur la clé primaire rend l'ordre total,
+      // sans quoi deux pages voisines pourraient répéter ou omettre une ligne.
+      orderBy: [{ booking_date: 'desc' }, { id_booking: 'desc' }],
+      skip: pagination.skip,
+      take: pagination.take,
+    }),
+  ]);
 
-  return bookings.map((b) => ({
+  const lignes = bookings.map((b) => ({
     id_booking: b.id_booking,
     start_date: b.start_date,
     end_date: b.end_date,
@@ -47,6 +63,8 @@ export async function listBookings({ status, search } = {}) {
     boat: b.boat ? { id_boat: b.boat.id_boat, name: b.boat.name } : null,
     open_disputes: b._count.disputes,
   }));
+
+  return { bookings: lignes, total };
 }
 
 export async function cancelBooking(id_booking, reason) {

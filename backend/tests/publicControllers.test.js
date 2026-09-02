@@ -313,6 +313,39 @@ describe('avis publics', () => {
     expect(db.review.findMany.mock.calls[0][0].where.booking).toEqual({ id_boat: 4 });
   });
 
+  // Sans borne, cet endpoint public renvoyait l'intégralité des avis du site en
+  // une seule réponse — 800 Ko mesurés en recette.
+  it('borne la première page à 25 avis', async () => {
+    await reviewCtrl.getPublicReviews(makeReq(), res);
+
+    expect(db.review.findMany.mock.calls[0][0]).toMatchObject({ skip: 0, take: 25 });
+  });
+
+  it('décale selon la page demandée', async () => {
+    await reviewCtrl.getPublicReviews(makeReq({ query: { page: '3', pageSize: '10' } }), res);
+
+    expect(db.review.findMany.mock.calls[0][0]).toMatchObject({ skip: 20, take: 10 });
+  });
+
+  // created_at seul ne départage pas deux avis publiés la même seconde : deux
+  // pages voisines pourraient alors répéter ou omettre un avis.
+  it('trie sur un ordre total pour que les pages ne se recouvrent pas', async () => {
+    await reviewCtrl.getPublicReviews(makeReq(), res);
+
+    expect(db.review.findMany.mock.calls[0][0].orderBy).toEqual([
+      { created_at: 'desc' },
+      { id_review: 'desc' },
+    ]);
+  });
+
+  it('refuse une pagination invalide par un 400, pas par un 500', async () => {
+    await reviewCtrl.getPublicReviews(makeReq({ query: { page: 'abc' } }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Pagination invalide.' });
+    expect(db.review.findMany).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['non numérique', 'abc'],
     ['décimal', '4.5'],

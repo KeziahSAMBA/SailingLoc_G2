@@ -1,6 +1,9 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 
-const db = { boat: { findMany: jest.fn() }, review: { findMany: jest.fn() } };
+const db = {
+  boat: { findMany: jest.fn(), groupBy: jest.fn() },
+  review: { findMany: jest.fn() },
+};
 jest.unstable_mockModule('../src/config/db.js', () => ({ default: db }));
 
 const mockCreateBooking = jest.fn();
@@ -68,6 +71,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   res = makeRes();
   db.boat.findMany.mockResolvedValue([]);
+  db.boat.groupBy.mockResolvedValue([]);
   db.review.findMany.mockResolvedValue([]);
   proprietaire.createBoat.mockResolvedValue({ id_boat: 1, name: 'Pen Duick' });
   proprietaire.updateBoat.mockResolvedValue({ id_boat: 1, name: 'Pen Duick' });
@@ -305,14 +309,25 @@ describe('getBoats — pagination', () => {
 });
 
 describe('getBoatsByType', () => {
+  // La vitrine groupée interroge un type à la fois : le mock répond selon le
+  // where.type reçu, comme le ferait la base.
+  const parType = (catalogue) => {
+    db.boat.groupBy.mockResolvedValue(
+      Object.entries(catalogue).map(([type, boats]) => ({
+        type,
+        _min: { id_boat: Math.min(...boats.map((b) => b.id_boat)) },
+      }))
+    );
+    db.boat.findMany.mockImplementation(({ where, take }) =>
+      Promise.resolve((catalogue[where.type] || []).slice(0, take))
+    );
+  };
+
   it('regroupe par type et plafonne à 3 bateaux par section', async () => {
-    db.boat.findMany.mockResolvedValue([
-      rawBoat({ id_boat: 1, type: 'voilier' }),
-      rawBoat({ id_boat: 2, type: 'voilier' }),
-      rawBoat({ id_boat: 3, type: 'voilier' }),
-      rawBoat({ id_boat: 4, type: 'voilier' }),
-      rawBoat({ id_boat: 5, type: 'catamaran' }),
-    ]);
+    parType({
+      voilier: [1, 2, 3, 4].map((id) => rawBoat({ id_boat: id, type: 'voilier' })),
+      catamaran: [rawBoat({ id_boat: 5, type: 'catamaran' })],
+    });
 
     await controller.getBoatsByType(makeReq(), res);
 
@@ -326,20 +341,56 @@ describe('getBoatsByType', () => {
     await controller.getBoatsByType(makeReq(), res);
 
     expect(res.json).toHaveBeenCalledWith([]);
+    expect(db.boat.findMany).not.toHaveBeenCalled();
   });
 
-  // Ce catalogue groupé garde son contrat non paginé, mais pas au prix d'un
-  // balayage sans limite si le catalogue grossit.
-  it('reste borné à 500 annonces malgré l’absence de pagination', async () => {
+  // Le cœur de la correction : ne plus charger tout le catalogue pour n'en
+  // afficher que trois par type.
+  it('ne demande que trois annonces par type, et une requête par type', async () => {
+    parType({
+      voilier: [1, 2, 3, 4].map((id) => rawBoat({ id_boat: id, type: 'voilier' })),
+      catamaran: [rawBoat({ id_boat: 5, type: 'catamaran' })],
+    });
+
     await controller.getBoatsByType(makeReq(), res);
 
-    const appel = db.boat.findMany.mock.calls[0][0];
-    expect(appel.take).toBe(500);
-    expect(appel).not.toHaveProperty('skip');
+    expect(db.boat.findMany).toHaveBeenCalledTimes(2);
+    for (const [appel] of db.boat.findMany.mock.calls) {
+      expect(appel.take).toBe(3);
+      expect(appel.where).toHaveProperty('type');
+      expect(appel).not.toHaveProperty('skip');
+    }
+  });
+
+  // L'ancien code balayait le catalogue trié sur id_boat : chaque type
+  // apparaissait à la position de sa plus petite annonce. Cet ordre doit
+  // survivre au découpage en requêtes séparées.
+  it('conserve l’ordre des sections de l’ancien balayage', async () => {
+    parType({
+      catamaran: [rawBoat({ id_boat: 9, type: 'catamaran' })],
+      voilier: [rawBoat({ id_boat: 2, type: 'voilier' })],
+      peniche: [rawBoat({ id_boat: 5, type: 'peniche' })],
+    });
+
+    await controller.getBoatsByType(makeReq(), res);
+
+    expect(res.json.mock.calls[0][0].map((s) => s.type)).toEqual([
+      'voilier',
+      'peniche',
+      'catamaran',
+    ]);
+  });
+
+  it('n’expose pas le rang interne ayant servi au tri', async () => {
+    parType({ voilier: [rawBoat({ id_boat: 1, type: 'voilier' })] });
+
+    await controller.getBoatsByType(makeReq(), res);
+
+    expect(Object.keys(res.json.mock.calls[0][0][0]).sort()).toEqual(['boats', 'type']);
   });
 
   it('enrichit aussi les bateaux groupés', async () => {
-    db.boat.findMany.mockResolvedValue([rawBoat()]);
+    parType({ voilier: [rawBoat({ id_boat: 1, type: 'voilier' })] });
     db.review.findMany.mockResolvedValue([reviewOf(1, 5, 'Top')]);
 
     await controller.getBoatsByType(makeReq(), res);

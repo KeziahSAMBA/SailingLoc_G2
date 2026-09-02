@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { listBoatReviews } from '../services/reviewService.js';
+import { parsePagination } from '../utils/inputSecurity.js';
 
 export async function getBoatReviews(req, res) {
   try {
@@ -16,13 +17,22 @@ export async function getPublicReviews(req, res) {
     if (idBoat !== null && (!Number.isInteger(idBoat) || idBoat <= 0)) {
       return res.status(400).json({ message: 'Identifiant de bateau invalide.' });
     }
+    // Sans borne, cet endpoint public renvoyait l'intégralité des avis du site
+    // en une réponse — 800 Ko et le poste le plus lourd de la fiche produit.
+    const { skip, take } = parsePagination(req.query);
+
     const reviews = await prisma.review.findMany({
       where: {
         status: 'validated',
         deleted_at: null,
         ...(idBoat !== null ? { booking: { id_boat: idBoat } } : {}),
       },
-      orderBy: { created_at: 'desc' },
+      // created_at seul ne départage pas deux avis de la même seconde : le tri
+      // secondaire sur la clé primaire rend l'ordre total, faute de quoi deux
+      // pages voisines pourraient répéter ou omettre un avis.
+      orderBy: [{ created_at: 'desc' }, { id_review: 'desc' }],
+      skip,
+      take,
       select: {
         id_review: true,
         // Auteur exposé pour que celui-ci retrouve son avis et puisse l'éditer.
@@ -70,6 +80,10 @@ export async function getPublicReviews(req, res) {
 
     res.json(formatted);
   } catch (err) {
+    // parsePagination porte son statut sur l'erreur. Le relayer évite de
+    // répondre « Erreur serveur » à ce qui est une faute de la requête, et de
+    // polluer les journaux d'une pile pour un paramètre mal formé.
+    if (err.status) return res.status(err.status).json({ message: err.message });
     console.error('[reviewController] getPublicReviews:', err);
     res.status(500).json({ message: 'Erreur serveur' });
   }

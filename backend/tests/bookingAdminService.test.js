@@ -1,7 +1,7 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 
 const db = {
-  booking: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+  booking: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), count: jest.fn() },
   dispute: { findMany: jest.fn() },
 };
 jest.unstable_mockModule('../src/config/db.js', () => ({ default: db }));
@@ -55,6 +55,7 @@ const storedDispute = (overrides = {}) => ({
 beforeEach(() => {
   jest.clearAllMocks();
   db.booking.findMany.mockResolvedValue([]);
+  db.booking.count.mockResolvedValue(0);
   db.booking.findUnique.mockResolvedValue(storedBooking());
   db.booking.update.mockImplementation(async ({ data }) => storedBooking(data));
   db.dispute.findMany.mockResolvedValue([]);
@@ -102,7 +103,8 @@ describe('listBookings', () => {
   it('met à plat la réservation avec son nombre de litiges ouverts', async () => {
     db.booking.findMany.mockResolvedValue([storedBooking({ _count: { disputes: 2 } })]);
 
-    const [booking] = await listBookings();
+    const { bookings } = await listBookings();
+    const [booking] = bookings;
 
     expect(booking).toMatchObject({
       id_booking: 5,
@@ -116,7 +118,8 @@ describe('listBookings', () => {
   it('accepte un montant total absent', async () => {
     db.booking.findMany.mockResolvedValue([storedBooking({ total_amount: null })]);
 
-    const [booking] = await listBookings();
+    const { bookings } = await listBookings();
+    const [booking] = bookings;
 
     expect(booking.total_amount).toBeNull();
   });
@@ -124,9 +127,51 @@ describe('listBookings', () => {
   it('tolère une réservation sans locataire ni bateau', async () => {
     db.booking.findMany.mockResolvedValue([storedBooking({ user: null, boat: null })]);
 
-    const [booking] = await listBookings();
+    const { bookings } = await listBookings();
+    const [booking] = bookings;
 
     expect(booking).toMatchObject({ user: null, boat: null });
+  });
+
+  // Sans borne, cette liste renvoyait toutes les réservations en une réponse —
+  // 7,6 Mo mesurés en recette sur le jeu de charge.
+  it('borne la première page à 100 réservations', async () => {
+    await listBookings();
+
+    expect(db.booking.findMany.mock.calls[0][0]).toMatchObject({ skip: 0, take: 100 });
+  });
+
+  it('décale selon la page demandée', async () => {
+    await listBookings({ page: '3', pageSize: '20' });
+
+    expect(db.booking.findMany.mock.calls[0][0]).toMatchObject({ skip: 40, take: 20 });
+  });
+
+  // booking_date seule ne départage pas deux réservations du même jour : deux
+  // pages voisines pourraient alors répéter ou omettre une ligne.
+  it('trie sur un ordre total pour que les pages ne se recouvrent pas', async () => {
+    await listBookings();
+
+    expect(db.booking.findMany.mock.calls[0][0].orderBy).toEqual([
+      { booking_date: 'desc' },
+      { id_booking: 'desc' },
+    ]);
+  });
+
+  it('compte les réservations du même filtre que la page', async () => {
+    db.booking.count.mockResolvedValue(1742);
+
+    const { total } = await listBookings({ status: 'confirmed' });
+
+    expect(total).toBe(1742);
+    expect(db.booking.count.mock.calls[0][0].where).toEqual(
+      db.booking.findMany.mock.calls[0][0].where
+    );
+  });
+
+  it('refuse une pagination invalide', async () => {
+    await expect(listBookings({ page: 'abc' })).rejects.toThrow('Pagination invalide.');
+    expect(db.booking.findMany).not.toHaveBeenCalled();
   });
 });
 

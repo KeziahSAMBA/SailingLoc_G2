@@ -1,9 +1,11 @@
 import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
 import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
-import { MAX_LIST_ITEMS, parsePagination } from '../utils/inputSecurity.js';
+import { parsePagination } from '../utils/inputSecurity.js';
 
 const PUBLIC_BOAT_PAGE_SIZE = 25;
+// Nombre d'annonces mises en avant par type sur la vitrine groupée.
+const BOATS_PAR_TYPE = 3;
 
 // Seules les réservations confirmées (payées) bloquent les dates du calendrier :
 // une demande « pending » en cours de tunnel ne réserve pas le créneau, le
@@ -19,8 +21,6 @@ function startOfToday() {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
-// Construit à chaque appel, et non figé au chargement du module : la borne
-// « aujourd'hui » resterait sinon celle du démarrage du serveur.
 // Colonnes du bateau qu'aucun écran ne lit et qui n'ont donc rien à faire sur
 // un endpoint public : id_user désigne le propriétaire, registration est
 // l'immatriculation officielle du navire, et les horodatages renseignent sur la
@@ -41,6 +41,8 @@ const PORT_SELECT = {
   longitude: true,
 };
 
+// Construit à chaque appel, et non figé au chargement du module : la borne
+// « aujourd'hui » resterait sinon celle du démarrage du serveur.
 function boatInclude() {
   return {
     port: { select: PORT_SELECT },
@@ -150,29 +152,44 @@ export async function getBoats(req, res) {
 }
 
 export async function getBoatsByType(req, res) {
-  const boats = await prisma.boat.findMany({
+  // Cette vitrine n'affiche que trois annonces par type. Les charger toutes pour
+  // n'en garder qu'une poignée faisait travailler la base vingt fois pour rien :
+  // on demande d'abord les types présents, puis les trois premières de chacun.
+  const types = await prisma.boat.groupBy({
+    by: ['type'],
     where: { is_published: true },
-    include: boatInclude(),
-    orderBy: { id_boat: 'asc' },
-    // Ce catalogue groupé n'est pas paginé dans son contrat public — il ne
-    // retient que trois bateaux par type. La borne globale l'empêche malgré tout
-    // de balayer une table sans limite si le catalogue grossit.
-    take: MAX_LIST_ITEMS,
+    _min: { id_boat: true },
   });
 
+  // Les types sont indépendants : les interroger en parallèle évite d'empiler
+  // autant d'allers-retours que de sections.
+  const parType = await Promise.all(
+    types.map((t) =>
+      prisma.boat.findMany({
+        where: { is_published: true, type: t.type },
+        include: boatInclude(),
+        orderBy: { id_boat: 'asc' },
+        take: BOATS_PAR_TYPE,
+      })
+    )
+  );
+
+  const boats = parType.flat();
   const reviewStats = await reviewStatsByBoat(boats.map((b) => b.id_boat));
-  const enriched = enrichWithRating(boats, reviewStats);
+  const enrichis = new Map(enrichWithRating(boats, reviewStats).map((b) => [b.id_boat, b]));
 
-  // Group by type, keep at most 3 boats per type
-  const groups = {};
-  for (const boat of enriched) {
-    if (!groups[boat.type]) groups[boat.type] = [];
-    if (groups[boat.type].length < 3) groups[boat.type].push(boat);
-  }
-
-  const sections = Object.entries(groups)
-    .filter(([, list]) => list.length > 0)
-    .map(([type, list]) => ({ type, boats: list }));
+  // L'ordre des sections suivait celui d'un balayage trié sur id_boat : chaque
+  // type apparaissait à la position de sa plus petite annonce. Le tri sur _min
+  // reproduit exactement cet ordre.
+  const sections = types
+    .map((t, i) => ({
+      type: t.type,
+      rang: t._min.id_boat,
+      boats: parType[i].map((b) => enrichis.get(b.id_boat)),
+    }))
+    .filter((s) => s.boats.length > 0)
+    .sort((a, b) => a.rang - b.rang)
+    .map(({ type, boats: liste }) => ({ type, boats: liste }));
 
   res.json(sections);
 }

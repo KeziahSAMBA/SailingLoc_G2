@@ -7,8 +7,10 @@ import {
 
 export async function adminListBookings(req, res) {
   try {
-    const bookings = await listBookings(req.query);
-    res.json({ bookings });
+    // `total` accompagne la page pour que l'écran sache combien de réservations
+    // répondent au filtre, et puisse le dire quand il n'en montre qu'une partie.
+    const { bookings, total } = await listBookings(req.query);
+    res.json({ bookings, total });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }

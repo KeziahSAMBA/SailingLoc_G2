@@ -51,12 +51,17 @@ const selectClass =
   'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
 
 const PAGE_SIZE = 10;
+// L'API borne sa réponse ; sans plafond explicite elle n'en renverrait que
+// cent. On demande le maximum qu'elle accepte, et l'écran signale ce qui
+// dépasse plutôt que de laisser croire à une liste complète.
+const FETCH_LIMIT = 500;
 
 function AdminBookingsPage() {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const fmtDate = (d) => (d ? formatDate(d, DATE_OPTS) : '—');
   const [tab, setTab] = useState('bookings');
+  const [bookingsTotal, setBookingsTotal] = useState(0);
   const [busyId, setBusyId] = useState(null);
 
   const [bookings, setBookings] = useState([]);
@@ -85,8 +90,9 @@ function AdminBookingsPage() {
       const params = {};
       if (status) params.status = status;
       if (search.trim()) params.search = search.trim();
-      const res = await listBookings(params);
+      const res = await listBookings({ ...params, pageSize: FETCH_LIMIT });
       setBookings(res.data.bookings);
+      setBookingsTotal(res.data.total ?? res.data.bookings.length);
     } catch (err) {
       showToast(err.response?.data?.message || t('adminBookings.loadError'), 'error');
     } finally {
@@ -398,6 +404,18 @@ function AdminBookingsPage() {
               ))
             )}
           </ul>
+
+          {bookingsTotal > bookings.length && (
+            <p
+              role="status"
+              className="mt-4 rounded-lg border border-amber-300/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-100"
+            >
+              {t('adminBookings.truncated', {
+                shown: bookings.length,
+                total: bookingsTotal,
+              })}
+            </p>
+          )}
 
           <Pagination
             page={bookingsPage}
