@@ -68,7 +68,9 @@ PORT=4000
 `NODE_ENV` décrit le runtime Node.js. En staging et en production, utilisez
 `NODE_ENV=production` pour conserver les validations fortes et définissez
 explicitement `DEPLOYMENT_ENV`. Une cible staging accepte uniquement une clé
-Stripe `sk_test_` ; une cible production exige une clé `sk_live_`. Les noms
+Stripe `sk_test_` ; une cible production accepte une clé `sk_live_` ou
+`sk_test_`, le déploiement de démonstration tournant en runtime production
+sans encaisser de paiement réel. Les noms
 Railway `RAILWAY_ENVIRONMENT_NAME` et `RAILWAY_ENVIRONMENT` ne servent que de
 secours de migration lorsqu'ils valent exactement `staging` ou `production`.
 Un nom inconnu, une valeur absente en runtime strict ou un conflit bloque le
