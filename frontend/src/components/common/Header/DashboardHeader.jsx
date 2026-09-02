@@ -319,7 +319,7 @@ function DashboardHeader({
           >
             <SafeImage
               src={user?.avatar ?? nameToAvatarUrl(displayName)}
-              alt={displayName}
+              alt={t('accessibility.profileImageAlt', { name: displayName })}
               fallbackSrc={nameToAvatarUrl(displayName)}
               fallback={null}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}

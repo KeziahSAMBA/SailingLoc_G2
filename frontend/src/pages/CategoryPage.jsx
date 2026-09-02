@@ -210,7 +210,7 @@ const BoatListingCard = memo(function BoatListingCard({
       <div className="relative overflow-hidden" style={{ aspectRatio: '7/5' }}>
         <SafeImage
           src={image}
-          alt={name}
+          alt={t('carrousel.boatImageAlt', { name })}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
           loading="lazy"
@@ -429,7 +429,7 @@ const CurrentAnnouncementsCarousel = memo(function CurrentAnnouncementsCarousel(
               <div className="relative h-full overflow-hidden rounded-xl border border-white/20">
                 <SafeImage
                   src={boat.image}
-                  alt={boat.name}
+                  alt={t('carrousel.boatImageAlt', { name: boat.name })}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
                   loading="lazy"
@@ -1189,9 +1189,9 @@ function CategoryPage() {
                     <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-sky-500">
                       {t('category.results.kicker')}
                     </p>
-                    <h2 className="text-xl font-bold uppercase tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-2xl">
+                    <h1 className="text-xl font-bold uppercase tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-2xl">
                       {t('category.results.title')}
-                    </h2>
+                    </h1>
                   </div>
                   <span className="text-sm text-white/80 font-medium" style={titleFadeStyle}>
                     {t('category.results.count', { count: filteredBoats.length })}

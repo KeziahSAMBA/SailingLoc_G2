@@ -181,7 +181,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
       >
         <SafeImage
           src={booking.boat?.image}
-          alt={`Bateau ${booking.boat?.name}`}
+          alt={t('carrousel.boatImageAlt', { name: booking.boat?.name })}
           loading="lazy"
           className="aspect-video w-full object-cover transition-transform duration-500 sm:aspect-auto sm:w-28 sm:self-stretch md:w-36 motion-safe:group-hover:scale-105"
           fallbackClassName="flex aspect-video w-full items-center justify-center bg-white/5 text-3xl sm:aspect-auto sm:w-28 sm:self-stretch md:w-36"

@@ -102,7 +102,7 @@ const ReviewCard = memo(function ReviewCard({
       <div className="flex items-center gap-2">
         <SafeImage
           src={avatar}
-          alt={name}
+          alt={t('accessibility.profileImageAlt', { name })}
           fallbackSrc={nameToAvatarUrl(name)}
           fallback={null}
           width={36}

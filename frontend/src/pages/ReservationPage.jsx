@@ -403,7 +403,7 @@ function ReservationPage() {
                   </h2>
                   <SafeImage
                     src={boat.images?.[0]?.url}
-                    alt={boat.name}
+                    alt={t('carrousel.boatImageAlt', { name: boat.name })}
                     className="h-44 w-full rounded-xl object-cover"
                     fallbackClassName="flex h-44 w-full items-center justify-center rounded-xl bg-slate-800 text-4xl"
                   />

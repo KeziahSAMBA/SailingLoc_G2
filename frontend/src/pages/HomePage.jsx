@@ -580,12 +580,12 @@ function HomePage() {
               className="mx-auto mb-4 h-12 max-w-[82vw] object-contain sm:h-16 lg:h-20"
               style={heroSlideStyle('right')}
             />
-            <p
+            <h1
               className="mx-auto max-w-3xl px-2 text-base leading-relaxed text-gray-300 sm:text-lg lg:text-xl"
               style={{ ...heroSlideStyle('left'), ...introTaglineStyle }}
             >
               {t('home.hero.tagline')}
-            </p>
+            </h1>
           </div>
           <div
             ref={searchBarWrapRef}

@@ -219,7 +219,7 @@ function FavoritesPreview({ favorites }) {
                   {f.boat?.image ? (
                     <SafeImage
                       src={f.boat.image}
-                      alt={`Bateau ${f.boat?.name}`}
+                      alt={t('carrousel.boatImageAlt', { name: f.boat?.name })}
                       loading="lazy"
                       className="aspect-[4/3] w-full bg-slate-800 object-cover"
                       fallbackClassName="flex aspect-[4/3] w-full items-center justify-center bg-slate-800 text-slate-600"

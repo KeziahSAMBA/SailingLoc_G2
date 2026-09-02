@@ -56,6 +56,13 @@ export const TEXTS = {
     messagesAria: { fr: 'Messagerie', en: 'Messages' },
   },
 
+  accessibility: {
+    profileImageAlt: {
+      fr: 'Photo de profil de {{name}}',
+      en: 'Profile photo of {{name}}',
+    },
+  },
+
   headerLocataire: {
     nav: {
       search: { fr: 'Chercher une location', en: 'Find a rental' },
@@ -847,6 +854,8 @@ export const TEXTS = {
   },
 
   carrousel: {
+    boatImageAlt: { fr: 'Photo du bateau {{name}}', en: 'Photo of {{name}}' },
+    portImageAlt: { fr: 'Port de {{city}}', en: '{{city}} marina' },
     soon: { fr: 'Bientôt disponible', en: 'Coming soon' },
     prev: { fr: 'Précédent', en: 'Previous' },
     next: { fr: 'Suivant', en: 'Next' },

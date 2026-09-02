@@ -29,6 +29,7 @@ function isPlainLeftClick(e) {
 
 const portToSlide = (port) => ({
   id: port.id_port,
+  kind: 'port',
   label: port.city,
   description: [port.name, port.region, port.country].filter(Boolean).join(' · '),
   img: port.image_url ?? '',
@@ -53,6 +54,7 @@ const boatToSlide = (boat, t) => {
       : null;
   return {
     id: boat.id_boat,
+    kind: 'boat',
     label: boat.name,
     city: boat.port?.city ?? null,
     dateStr,
@@ -97,6 +99,12 @@ const PortCarousel = memo(
     const captionTitle = theme === 'dark' ? 'text-white' : 'text-black';
     const captionMeta = theme === 'dark' ? 'text-white/70' : 'text-gray-600';
     const captionSubtle = theme === 'dark' ? 'text-white/60' : 'text-gray-500';
+    const getImageAlt = (slide) =>
+      slide.kind === 'port'
+        ? t('carrousel.portImageAlt', { city: slide.label })
+        : slide.kind === 'boat'
+          ? t('carrousel.boatImageAlt', { name: slide.label })
+          : slide.label || '';
 
     const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
     const next = useCallback(() => setIndex((i) => Math.min(maxIndex, i + 1)), [maxIndex]);
@@ -182,7 +190,7 @@ const PortCarousel = memo(
                     >
                       <SafeImage
                         src={slide.img}
-                        alt={slide.label}
+                        alt={getImageAlt(slide)}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
                         loading="lazy"
@@ -259,7 +267,7 @@ const PortCarousel = memo(
                   >
                     <SafeImage
                       src={slide.img}
-                      alt={slide.label}
+                      alt={getImageAlt(slide)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       fallback={null}
                       loading="lazy"
@@ -317,7 +325,7 @@ const PortCarousel = memo(
                     >
                       <SafeImage
                         src={slide.img}
-                        alt={slide.label}
+                        alt={getImageAlt(slide)}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
                         loading="lazy"
@@ -484,7 +492,7 @@ const SlideItem = memo(function SlideItem({
       <div className="block w-full h-full">
         <SafeImage
           src={slide.img}
-          alt={slide.label}
+          alt={slide.alt || slide.label || ''}
           className="w-full h-full object-cover"
           fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
           loading={priority ? 'eager' : 'lazy'}
@@ -798,6 +806,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
 
       return {
         id: boat.id_boat,
+        kind: 'boat',
         label: boat.name,
         subtitle: [
           boat.port?.city,
@@ -809,6 +818,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
           .join(' · '),
         description: [shortDesc, ratingStr].filter(Boolean).join(' · '),
         img: boat.images?.[0]?.url ?? '',
+        alt: t('carrousel.boatImageAlt', { name: boat.name }),
         available: boat.is_published !== false,
       };
     };
