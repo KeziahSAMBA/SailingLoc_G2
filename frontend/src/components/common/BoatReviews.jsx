@@ -338,7 +338,7 @@ export default function BoatReviews({
                   <div className="flex items-center gap-2">
                     <SafeImage
                       src={r.avatar || nameToAvatarUrl(r.author)}
-                      alt={r.author}
+                      alt={t('accessibility.profileImageAlt', { name: r.author })}
                       fallbackSrc={nameToAvatarUrl(r.author)}
                       fallback={null}
                       width={36}

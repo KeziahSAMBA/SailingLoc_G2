@@ -1061,7 +1061,7 @@ function ProductPage() {
                           <SafeImage
                             key={item.key}
                             src={item.url}
-                            alt={boat.name}
+                            alt={t('carrousel.boatImageAlt', { name: boat.name })}
                             loading={rowIndex === 0 ? undefined : 'lazy'}
                             decoding="async"
                             className="rounded-2xl object-cover"
@@ -1190,9 +1190,9 @@ function ProductPage() {
                   {/* Nom + type de bateau, favoris aligné à droite */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-baseline gap-1.5 flex-wrap">
-                      <h2 className="text-lg font-bold text-white tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                      <h1 className="text-lg font-bold text-white tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                         {boat.name}
-                      </h2>
+                      </h1>
                       <span className="text-white/50">-</span>
                       <span className="text-xs font-bold tracking-widest text-sky-500 uppercase">
                         {typeLabel}

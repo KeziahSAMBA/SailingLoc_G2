@@ -115,7 +115,7 @@ function FavoriteCard({ favorite, onRemove, removing }) {
         {boat?.image ? (
           <SafeImage
             src={boat.image}
-            alt={`Bateau ${boat?.name}`}
+            alt={t('carrousel.boatImageAlt', { name: boat?.name })}
             loading="lazy"
             className="w-28 self-stretch object-cover transition-transform duration-500 md:w-36 motion-safe:group-hover:scale-105"
             fallbackClassName="flex w-28 shrink-0 items-center justify-center self-stretch bg-white/5 text-3xl md:w-36"
