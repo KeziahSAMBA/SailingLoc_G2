@@ -9,8 +9,8 @@ import usePagination from '../../hooks/usePagination.js';
 const PAGE_SIZE = 10;
 
 const STATUS_CLS = {
-  new: 'bg-warning-base/15 text-warning-soft',
-  processed: 'bg-success-base/15 text-success-soft',
+  new: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  processed: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
 };
 
 const FILTERS = [
@@ -126,7 +126,9 @@ function AdminContactPage() {
       ) : (
         <ul className="space-y-4">
           {pageRequests.map((r) => {
-            const statusCls = STATUS_CLS[r.status] || 'bg-neutral/15 text-on-dark/80';
+            const statusCls =
+              STATUS_CLS[r.status] ||
+              'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
             return (
               <li
                 key={r.id_request}

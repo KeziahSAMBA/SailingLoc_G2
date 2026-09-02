@@ -232,7 +232,7 @@ function LocataireFavorites() {
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>

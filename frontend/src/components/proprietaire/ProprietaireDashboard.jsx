@@ -19,10 +19,10 @@ const DATE_SHORT_OPTS = {
 };
 
 const BOOKING_STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  confirmed: 'bg-success-base/15 text-success-soft',
-  refused: 'bg-danger-base/15 text-danger-soft',
-  cancelled: 'bg-neutral/15 text-on-dark/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  confirmed: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  cancelled: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
 };
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
@@ -60,7 +60,9 @@ function StatCard({ label, value, accent, to, loading, format = NUMBER, classNam
 
 function StatusBadge({ status }) {
   const { t } = useTranslation();
-  const cls = BOOKING_STATUS_CLS[status] || 'bg-neutral/15 text-on-dark/80';
+  const cls =
+    BOOKING_STATUS_CLS[status] ||
+    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${cls}`}>
       {t(`bookingStatus.${status}`, { defaultValue: status })}
@@ -218,7 +220,7 @@ function ProprietaireDashboard() {
       {error && (
         <div
           role="alert"
-          className="mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>

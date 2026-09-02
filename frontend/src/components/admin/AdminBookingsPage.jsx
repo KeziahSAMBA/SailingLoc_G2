@@ -21,10 +21,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const BOOKING_STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  confirmed: 'bg-success-base/15 text-success-soft',
-  refused: 'bg-danger-base/15 text-danger-soft',
-  cancelled: 'bg-neutral/15 text-on-dark/70',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  confirmed: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  cancelled: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70',
 };
 const BOOKING_FILTERS = [
   { value: '', labelKey: 'all' },
@@ -35,9 +35,9 @@ const BOOKING_FILTERS = [
 ];
 
 const DISPUTE_STATUS_CLS = {
-  open: 'bg-warning-base/15 text-warning-soft',
-  resolved: 'bg-success-base/15 text-success-soft',
-  rejected: 'bg-neutral/15 text-on-dark/70',
+  open: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  resolved: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  rejected: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70',
 };
 const DISPUTE_FILTERS = [
   { value: 'open', labelKey: 'open' },
@@ -260,7 +260,7 @@ function AdminBookingsPage() {
     }`;
   const badge = (cls) =>
     `inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-      cls || 'bg-neutral/15 text-on-dark/70'
+      cls || 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
     }`;
 
   return (
@@ -369,7 +369,7 @@ function AdminBookingsPage() {
                       </td>
                       <td className="px-4 py-3">
                         {b.open_disputes > 0 ? (
-                          <span className="inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
+                          <span className="status-indicator status-indicator--danger inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
                             {t('adminBookings.openDisputes', { count: b.open_disputes })}
                           </span>
                         ) : (
@@ -434,7 +434,7 @@ function AdminBookingsPage() {
 
                   {b.open_disputes > 0 && (
                     <p className="mt-2">
-                      <span className="inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
+                      <span className="status-indicator status-indicator--danger inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
                         {t('adminBookings.openDisputes', { count: b.open_disputes })}
                       </span>
                     </p>

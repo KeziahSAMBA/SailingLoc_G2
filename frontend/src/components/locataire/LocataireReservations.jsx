@@ -25,10 +25,22 @@ const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
 
 function getBookingStatus(t) {
   return {
-    pending: { label: t('bookingStatus.pending'), cls: 'bg-warning-base/15 text-warning-soft' },
-    confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-success-base/15 text-success-soft' },
-    refused: { label: t('bookingStatus.refused'), cls: 'bg-danger-base/15 text-danger-soft' },
-    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-neutral/15 text-on-dark/80' },
+    pending: {
+      label: t('bookingStatus.pending'),
+      cls: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+    },
+    confirmed: {
+      label: t('bookingStatus.confirmed'),
+      cls: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+    },
+    refused: {
+      label: t('bookingStatus.refused'),
+      cls: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+    },
+    cancelled: {
+      label: t('bookingStatus.cancelled'),
+      cls: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
+    },
   };
 }
 
@@ -177,7 +189,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
   const boatLink = booking.boat?.id_boat != null ? `/product/${booking.boat.id_boat}` : '/product';
   const meta = getBookingStatus(t)[booking.status] || {
     label: booking.status,
-    cls: 'bg-neutral/15 text-on-dark/80',
+    cls: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
   };
   const port = booking.boat?.port;
 
@@ -186,17 +198,17 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
     booking.status === 'pending' && booking.payment?.status === 'pending'
       ? {
           label: t('locataireReservations.paymentBadge.paid'),
-          cls: 'bg-action/15 text-action-soft',
+          cls: 'status-indicator status-indicator--info bg-action/15 text-action-soft',
         }
       : booking.refund_requested
         ? {
             label: t('locataireReservations.paymentBadge.disputeOpen'),
-            cls: 'bg-warning-base/15 text-warning-soft',
+            cls: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
           }
         : booking.payment?.status === 'refunded' && booking.payment?.refunded_amount != null
           ? {
               label: t('locataireReservations.paymentBadge.refunded'),
-              cls: 'bg-success-base/15 text-success-soft',
+              cls: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
             }
           : null;
 
@@ -562,7 +574,7 @@ function LocataireReservations() {
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>

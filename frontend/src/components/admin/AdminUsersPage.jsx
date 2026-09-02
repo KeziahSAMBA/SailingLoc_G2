@@ -394,10 +394,10 @@ function AdminUsersPage() {
                   <td className="px-4 py-3 text-on-dark/70">{u.phone || '—'}</td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      className={`status-indicator rounded-full px-2.5 py-1 text-xs font-semibold ${
                         u.is_active
-                          ? 'bg-success-base/15 text-success-soft'
-                          : 'bg-neutral/15 text-on-dark/70'
+                          ? 'status-indicator--success bg-success-base/15 text-success-soft'
+                          : 'status-indicator--neutral bg-neutral/15 text-on-dark/70'
                       }`}
                     >
                       {u.is_active ? t('adminUsers.statusActive') : t('adminUsers.statusInactive')}
@@ -455,10 +455,10 @@ function AdminUsersPage() {
                   {u.first_name} {u.last_name}
                 </p>
                 <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  className={`status-indicator shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
                     u.is_active
-                      ? 'bg-success-base/15 text-success-soft'
-                      : 'bg-neutral/15 text-on-dark/70'
+                      ? 'status-indicator--success bg-success-base/15 text-success-soft'
+                      : 'status-indicator--neutral bg-neutral/15 text-on-dark/70'
                   }`}
                 >
                   {u.is_active ? t('adminUsers.statusActive') : t('adminUsers.statusInactive')}

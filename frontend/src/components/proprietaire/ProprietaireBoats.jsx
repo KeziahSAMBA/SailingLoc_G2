@@ -13,10 +13,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const BOAT_STATUS_CLS = {
-  draft: 'bg-neutral/15 text-on-dark/80',
-  pending: 'bg-warning-base/15 text-warning-soft',
-  published: 'bg-success-base/15 text-success-soft',
-  refused: 'bg-danger-base/15 text-danger-soft',
+  draft: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  published: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 const FILTER_KEYS = ['all', 'draft', 'pending', 'published', 'refused'];
@@ -116,7 +116,9 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
 
 function BoatCard({ boat, busy, onDelete }) {
   const { t } = useTranslation();
-  const statusCls = BOAT_STATUS_CLS[boat.status] || 'bg-neutral/15 text-on-dark/80';
+  const statusCls =
+    BOAT_STATUS_CLS[boat.status] ||
+    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
 
   return (
     <article className="group flex h-full min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand/60 hover:shadow-xl hover:shadow-action/10">
@@ -304,7 +306,7 @@ function ProprietaireBoats() {
       {error && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>

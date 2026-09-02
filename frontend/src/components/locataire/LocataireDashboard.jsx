@@ -21,10 +21,22 @@ const DATE_SHORT_OPTS = {
 
 function getBookingStatus(t) {
   return {
-    pending: { label: t('bookingStatus.pending'), cls: 'bg-warning-base/15 text-warning-soft' },
-    confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-success-base/15 text-success-soft' },
-    refused: { label: t('bookingStatus.refused'), cls: 'bg-danger-base/15 text-danger-soft' },
-    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-neutral/15 text-on-dark/80' },
+    pending: {
+      label: t('bookingStatus.pending'),
+      cls: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+    },
+    confirmed: {
+      label: t('bookingStatus.confirmed'),
+      cls: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+    },
+    refused: {
+      label: t('bookingStatus.refused'),
+      cls: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+    },
+    cancelled: {
+      label: t('bookingStatus.cancelled'),
+      cls: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
+    },
   };
 }
 
@@ -126,7 +138,7 @@ function StatusBadge({ status }) {
   const { t } = useTranslation();
   const meta = getBookingStatus(t)[status] || {
     label: status,
-    cls: 'bg-neutral/15 text-on-dark/80',
+    cls: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
   };
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
@@ -299,7 +311,7 @@ function LocataireDashboard() {
       {error && (
         <div
           role="alert"
-          className="mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -310,7 +322,7 @@ function LocataireDashboard() {
         <Link
           to="/locataire/documents"
           role="alert"
-          className={`mt-6 flex items-center gap-3 rounded-lg border border-warning-base/40 bg-warning-base/10 px-4 py-3 text-sm text-warning-pale transition hover:bg-warning-base/20 ${FOCUS_RING}`}
+          className={`status-indicator status-indicator--warning mt-6 flex items-center gap-3 rounded-lg border border-warning-base/40 bg-warning-base/10 px-4 py-3 text-sm text-warning-pale transition hover:bg-warning-base/20 ${FOCUS_RING}`}
         >
           <span aria-hidden="true" className="text-lg">
             ⚠️

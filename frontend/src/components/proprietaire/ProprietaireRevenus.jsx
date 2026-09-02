@@ -30,10 +30,10 @@ const CHART_BLUE = 'rgb(var(--sl-chart-primary))';
 const CHART_BLUE_HOVER = 'rgb(var(--sl-chart-hover))';
 
 const PAYMENT_STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  success: 'bg-success-base/15 text-success-soft',
-  failed: 'bg-danger-base/15 text-danger-soft',
-  refunded: 'bg-neutral/15 text-on-dark/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  success: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  failed: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  refunded: 'status-indicator status-indicator--info bg-neutral/15 text-on-dark/80',
 };
 
 const STATUS_KEYS = ['all', 'success', 'pending', 'refunded', 'failed'];
@@ -187,12 +187,35 @@ function MonthlyChart({ months }) {
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
         role="img"
+        aria-labelledby="monthly-revenue-chart-title"
+        aria-describedby="monthly-revenue-chart-description"
         aria-label={t('proprietaireRevenus.chartAria', {
           series: months.map((m) => `${m.fullLabel} ${EURO_ROUND.format(m.net)}`).join(', '),
         })}
       >
+        <title id="monthly-revenue-chart-title">{t('proprietaireRevenus.chartMonths')}</title>
+        <desc id="monthly-revenue-chart-description">
+          {t('proprietaireRevenus.chartAria', {
+            series: months.map((m) => `${m.fullLabel} ${EURO_ROUND.format(m.net)}`).join(', '),
+          })}
+        </desc>
+        <defs>
+          <pattern
+            id="monthly-revenue-stripes"
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(0)"
+          >
+            <path
+              d="M-1 1 1-1M0 6 6 0M5 7 7 5"
+              stroke="rgb(var(--sl-on-dark) / 0.3)"
+              strokeWidth="1"
+            />
+          </pattern>
+        </defs>
         {/* Grille : traits fins et discrets, valeurs arrondies */}
-        {ticks.map((t) => (
+        {ticks.map((t, tickIndex) => (
           <g key={t}>
             <line
               x1={PAD.left}
@@ -201,6 +224,7 @@ function MonthlyChart({ months }) {
               y2={y(t)}
               stroke="rgb(var(--sl-glass) / 0.15)"
               strokeWidth="1"
+              strokeDasharray={tickIndex % 2 === 0 ? undefined : '3 3'}
             />
             <text
               x={PAD.left - 8}
@@ -221,10 +245,20 @@ function MonthlyChart({ months }) {
           return (
             <g key={m.key}>
               {h > 0 && (
-                <path
-                  d={roundedTopRect(cx - barW / 2, top, barW, h)}
-                  fill={active ? CHART_BLUE_HOVER : CHART_BLUE}
-                />
+                <>
+                  <path
+                    d={roundedTopRect(cx - barW / 2, top, barW, h)}
+                    fill={active ? CHART_BLUE_HOVER : CHART_BLUE}
+                    stroke="rgb(var(--sl-on-dark) / 0.55)"
+                    strokeWidth="1"
+                    strokeDasharray={active ? undefined : '4 2'}
+                  />
+                  <path
+                    d={roundedTopRect(cx - barW / 2, top, barW, h)}
+                    fill="url(#monthly-revenue-stripes)"
+                    pointerEvents="none"
+                  />
+                </>
               )}
               {/* Valeur au sommet, seulement quand il y a peu de colonnes */}
               {months.length <= 8 && m.net > 0 && (
@@ -331,7 +365,9 @@ function TotalCard({ label, value, accent = 'text-on-dark', hint }) {
 
 function TransactionCard({ payment }) {
   const { t } = useTranslation();
-  const statusCls = PAYMENT_STATUS_CLS[payment.status] || 'bg-neutral/15 text-on-dark/80';
+  const statusCls =
+    PAYMENT_STATUS_CLS[payment.status] ||
+    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
 
   return (
     <article className="px-4 py-4">
@@ -560,7 +596,7 @@ function ProprietaireRevenus() {
       {error && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -796,7 +832,8 @@ function ProprietaireRevenus() {
                     <tbody className="divide-y divide-glass/15">
                       {pageRows.map((p) => {
                         const statusCls =
-                          PAYMENT_STATUS_CLS[p.status] || 'bg-neutral/15 text-on-dark/80';
+                          PAYMENT_STATUS_CLS[p.status] ||
+                          'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
                         return (
                           <tr key={p.id_payment}>
                             <td className="whitespace-nowrap px-5 py-3 text-on-dark/80">

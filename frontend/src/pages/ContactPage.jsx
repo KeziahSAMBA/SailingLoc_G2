@@ -313,7 +313,7 @@ function ContactPage() {
             {formSent ? (
               <div
                 role="status"
-                className="mx-auto w-3/4 rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
+                className="status-indicator status-indicator--success mx-auto w-3/4 rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
               >
                 <p className="text-lg font-semibold text-emerald-200">
                   {t('contactPage.form.sent.title')}
@@ -337,7 +337,7 @@ function ContactPage() {
                 {formError && (
                   <div
                     role="alert"
-                    className="mb-4 rounded-lg border border-red-300/50 bg-red-400/15 px-4 py-2 text-sm text-red-100"
+                    className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-300/50 bg-red-400/15 px-4 py-2 text-sm text-red-100"
                   >
                     {formError}
                   </div>

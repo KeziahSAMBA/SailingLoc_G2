@@ -203,13 +203,17 @@ function DateRangePicker({
               const inRange = startDate && endDate && day > startDate && day < endDate;
 
               let cellClass = 'text-calendar-disabled cursor-not-allowed';
+              let calendarState = 'disabled';
               if (isStart || isEnd) {
                 cellClass = 'bg-calendar-selected text-on-dark font-semibold';
+                calendarState = 'selected';
               } else if (inRange) {
                 cellClass = 'bg-calendar-range text-calendar-range-text';
+                calendarState = 'range';
               } else if (!disabled) {
                 cellClass =
                   'bg-calendar-available text-calendar-available-text hover:bg-calendar-available-hover cursor-pointer';
+                calendarState = 'available';
               }
 
               return (
@@ -217,8 +221,15 @@ function DateRangePicker({
                   key={toISO(day)}
                   type="button"
                   disabled={disabled}
+                  aria-disabled={disabled}
+                  aria-selected={Boolean(isStart || isEnd || inRange)}
+                  aria-current={isSameDay(day, today) ? 'date' : undefined}
+                  aria-label={`${dateFormatter.format(day)} — ${
+                    disabled ? t('product.booking.unavailable') : t('searchBar.datesAvailable')
+                  }`}
+                  data-calendar-state={calendarState}
                   onClick={() => handleDayClick(day)}
-                  className={`w-8 h-8 mx-auto flex items-center justify-center rounded-full text-xs transition-colors ${cellClass}`}
+                  className={`calendar-day calendar-day--${calendarState} w-8 h-8 mx-auto flex items-center justify-center rounded-full text-xs transition-colors ${cellClass}`}
                 >
                   {day.getDate()}
                 </button>

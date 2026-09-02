@@ -21,9 +21,9 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const REPORT_STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  resolved: 'bg-success-base/15 text-success-soft',
-  dismissed: 'bg-neutral/15 text-on-dark/70',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  resolved: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  dismissed: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70',
 };
 
 const REPORT_FILTERS = [
@@ -264,8 +264,8 @@ function AdminPublicationPage() {
                         <span
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                             b.is_published
-                              ? 'bg-success-base/15 text-success-soft'
-                              : 'bg-neutral/15 text-on-dark/70'
+                              ? 'status-indicator status-indicator--success bg-success-base/15 text-success-soft'
+                              : 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                           }`}
                         >
                           {b.is_published
@@ -275,7 +275,7 @@ function AdminPublicationPage() {
                       </td>
                       <td className="px-4 py-3">
                         {b.pending_reports > 0 ? (
-                          <span className="inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
+                          <span className="status-indicator status-indicator--danger inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
                             {t('adminPublication.pendingReports', { count: b.pending_reports })}
                           </span>
                         ) : (
@@ -332,8 +332,8 @@ function AdminPublicationPage() {
                     <span
                       className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                         b.is_published
-                          ? 'bg-success-base/15 text-success-soft'
-                          : 'bg-neutral/15 text-on-dark/70'
+                          ? 'status-indicator status-indicator--success bg-success-base/15 text-success-soft'
+                          : 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                       }`}
                     >
                       {b.is_published
@@ -349,7 +349,7 @@ function AdminPublicationPage() {
 
                   {b.pending_reports > 0 && (
                     <p className="mt-2">
-                      <span className="inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
+                      <span className="status-indicator status-indicator--danger inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
                         {t('adminPublication.pendingReports', { count: b.pending_reports })}
                       </span>
                     </p>
@@ -470,7 +470,8 @@ function AdminPublicationPage() {
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            REPORT_STATUS_CLS[r.status] || 'bg-neutral/15 text-on-dark/70'
+                            REPORT_STATUS_CLS[r.status] ||
+                            'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                           }`}
                         >
                           {t(`adminPublication.reportStatus.${r.status}`, {
@@ -550,7 +551,8 @@ function AdminPublicationPage() {
                     </div>
                     <span
                       className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        REPORT_STATUS_CLS[r.status] || 'bg-neutral/15 text-on-dark/70'
+                        REPORT_STATUS_CLS[r.status] ||
+                        'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                       }`}
                     >
                       {t(`adminPublication.reportStatus.${r.status}`, { defaultValue: r.status })}

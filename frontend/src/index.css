@@ -4,6 +4,89 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Redondance non colorimétrique des états : les badges conservent leurs
+ * couleurs existantes, mais leur contour donne aussi une information
+ * indépendante de la perception des couleurs. Les classes sont ajoutées aux
+ * indicateurs de statut uniquement ; les dimensions externes restent
+ * inchangées grâce à box-sizing: border-box (défini plus bas).
+ */
+@layer components {
+  .status-indicator {
+    border-color: currentColor;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .status-indicator.status-indicator--success {
+    border-style: solid;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--warning {
+    border-style: dashed;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--danger {
+    border-style: double;
+    border-width: 3px;
+  }
+
+  .status-indicator.status-indicator--info {
+    border-style: dotted;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--neutral {
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  /* Certains indicateurs disposent déjà d'une icône SVG dédiée. */
+  .status-indicator--has-icon {
+    border-color: currentColor;
+  }
+
+  /* États du calendrier : la forme reste lisible sans distinguer les teintes. */
+  .calendar-day {
+    border-color: transparent;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--selected {
+    border-color: currentColor;
+    border-style: double;
+    border-width: 3px;
+  }
+
+  .calendar-day.calendar-day--available {
+    border-color: currentColor;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--range {
+    border-color: currentColor;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--disabled {
+    border-color: currentColor;
+    border-style: dashed;
+    border-width: 1px;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent 0,
+      transparent 3px,
+      rgb(var(--sl-calendar-disabled) / 0.35) 3px,
+      rgb(var(--sl-calendar-disabled) / 0.35) 4px
+    );
+  }
+}
+
 /* Couleurs contextuelles du rendu clair historique. Les sélecteurs des futurs
    modes héritent volontairement de ces mêmes valeurs sur la branche commune. */
 :root,
@@ -53,11 +136,26 @@
   --sl-danger-soft: 252 165 165;
   --sl-danger-pale: 254 202 202;
   --sl-info: 2 132 199;
+  --sl-success-surface: rgb(220 252 231);
+  --sl-success-text: 22 101 52;
+  --sl-warning-surface: rgb(254 243 199);
+  --sl-warning-text: 146 64 14;
+  --sl-danger-surface: rgb(254 226 226);
+  --sl-danger-text: 153 27 27;
+  --sl-info-surface: rgb(224 242 254);
+  --sl-info-text: 7 89 133;
+  --sl-neutral-surface: rgb(241 245 249);
+  --sl-neutral-text: 51 65 85;
   --sl-map-available: 10 49 114;
   --sl-map-unavailable: 148 163 184;
   --sl-chart-primary: 62 151 214;
   --sl-chart-hover: 90 180 236;
   --sl-chart-violet: 167 139 250;
+  --sl-chart-1: 62 151 214;
+  --sl-chart-2: 217 119 6;
+  --sl-chart-3: 167 139 250;
+  --sl-chart-4: 22 163 74;
+  --sl-chart-5: 100 116 139;
   --sl-calendar-border: 243 244 246;
   --sl-calendar-title: 55 65 81;
   --sl-calendar-muted: 107 114 128;
@@ -70,6 +168,7 @@
   --sl-calendar-selected: 2 132 199;
   --sl-calendar-range: 224 242 254;
   --sl-calendar-range-text: 7 89 133;
+  --sl-calendar-reserved: 220 38 38;
 }
 
 /* Palette du mode nuit. Les composants utilisent les mêmes tokens que le
@@ -127,11 +226,26 @@ html[data-sailingloc-theme='dark'] {
   --sl-danger-soft: 248 113 113;
   --sl-danger-pale: 248 113 113;
   --sl-info: 56 189 248;
+  --sl-success-surface: rgb(74 222 128 / 0.15);
+  --sl-success-text: 74 222 128;
+  --sl-warning-surface: rgb(251 191 36 / 0.15);
+  --sl-warning-text: 251 191 36;
+  --sl-danger-surface: rgb(248 113 113 / 0.15);
+  --sl-danger-text: 248 113 113;
+  --sl-info-surface: rgb(56 189 248 / 0.15);
+  --sl-info-text: 56 189 248;
+  --sl-neutral-surface: rgb(148 163 184 / 0.16);
+  --sl-neutral-text: 203 213 225;
   --sl-map-available: 125 211 252;
   --sl-map-unavailable: 148 163 184;
   --sl-chart-primary: 56 189 248;
   --sl-chart-hover: 125 211 252;
   --sl-chart-violet: 196 181 253;
+  --sl-chart-1: 56 189 248;
+  --sl-chart-2: 251 191 36;
+  --sl-chart-3: 196 181 253;
+  --sl-chart-4: 74 222 128;
+  --sl-chart-5: 148 163 184;
   --sl-calendar-border: 51 65 85;
   --sl-calendar-title: 248 250 252;
   --sl-calendar-muted: 203 213 225;
@@ -144,10 +258,222 @@ html[data-sailingloc-theme='dark'] {
   --sl-calendar-selected: 2 132 199;
   --sl-calendar-range: 12 74 110;
   --sl-calendar-range-text: 224 242 254;
+  --sl-calendar-reserved: 248 113 113;
 
   /* Sans imposer une largeur, ces couleurs s'appliquent aux barres natives
      des navigateurs qui les exposent. */
   scrollbar-color: rgb(var(--sl-border-light)) rgb(var(--sl-page));
+}
+
+/* Les profils de vision des couleurs ne remplacent que les signaux
+   sémantiques. Les surfaces structurelles et les médias restent inchangés. */
+html[data-sailingloc-theme='light'][data-sailingloc-color-vision='protanopia'] {
+  --sl-success: 0 122 158;
+  --sl-success-surface: rgb(232 247 250);
+  --sl-success-text: 0 90 117;
+  --sl-warning: 184 107 0;
+  --sl-warning-surface: rgb(255 245 223);
+  --sl-warning-text: 122 69 0;
+  --sl-danger: 167 55 121;
+  --sl-danger-surface: rgb(252 234 244);
+  --sl-danger-text: 118 33 81;
+  --sl-info: 78 95 210;
+  --sl-info-surface: rgb(238 240 255);
+  --sl-info-text: 55 63 155;
+  --sl-neutral: 100 116 139;
+  --sl-neutral-surface: rgb(241 245 249);
+  --sl-neutral-text: 51 65 85;
+  --sl-chart-1: 0 114 178;
+  --sl-chart-2: 230 159 0;
+  --sl-chart-3: 204 121 167;
+  --sl-chart-4: 0 158 115;
+  --sl-chart-5: 111 76 155;
+  --sl-map-available: 0 122 158;
+  --sl-map-unavailable: 118 33 81;
+  --sl-calendar-available: 0 122 158;
+  --sl-calendar-available-text: 0 90 117;
+  --sl-calendar-selected: 78 95 210;
+  --sl-calendar-range: 238 240 255;
+  --sl-calendar-range-text: 55 63 155;
+  --sl-calendar-disabled: 241 245 249;
+  --sl-calendar-reserved: 167 55 121;
+}
+
+html[data-sailingloc-theme='dark'][data-sailingloc-color-vision='protanopia'] {
+  --sl-success: 94 208 242;
+  --sl-success-surface: rgb(94 208 242 / 0.15);
+  --sl-success-text: 94 208 242;
+  --sl-warning: 255 193 90;
+  --sl-warning-surface: rgb(255 193 90 / 0.15);
+  --sl-warning-text: 255 193 90;
+  --sl-danger: 240 138 194;
+  --sl-danger-surface: rgb(240 138 194 / 0.15);
+  --sl-danger-text: 240 138 194;
+  --sl-info: 156 168 255;
+  --sl-info-surface: rgb(156 168 255 / 0.15);
+  --sl-info-text: 156 168 255;
+  --sl-neutral: 148 163 184;
+  --sl-neutral-surface: rgb(148 163 184 / 0.16);
+  --sl-neutral-text: 203 213 225;
+  --sl-chart-1: 86 180 233;
+  --sl-chart-2: 255 193 90;
+  --sl-chart-3: 240 138 194;
+  --sl-chart-4: 94 208 179;
+  --sl-chart-5: 185 160 232;
+  --sl-map-available: 94 208 242;
+  --sl-map-unavailable: 240 138 194;
+  --sl-calendar-available: 94 208 242;
+  --sl-calendar-available-text: 94 208 242;
+  --sl-calendar-selected: 156 168 255;
+  --sl-calendar-range: 156 168 255;
+  --sl-calendar-range-text: 156 168 255;
+  --sl-calendar-disabled: 148 163 184;
+  --sl-calendar-reserved: 240 138 194;
+}
+
+html[data-sailingloc-theme='light'][data-sailingloc-color-vision='deuteranopia'] {
+  --sl-success: 0 107 182;
+  --sl-success-surface: rgb(232 243 252);
+  --sl-success-text: 0 81 143;
+  --sl-warning: 166 106 0;
+  --sl-warning-surface: rgb(255 246 222);
+  --sl-warning-text: 112 69 0;
+  --sl-danger: 166 62 120;
+  --sl-danger-surface: rgb(252 234 244);
+  --sl-danger-text: 119 32 79;
+  --sl-info: 102 89 199;
+  --sl-info-surface: rgb(240 238 255);
+  --sl-info-text: 68 53 143;
+  --sl-neutral: 100 116 139;
+  --sl-neutral-surface: rgb(241 245 249);
+  --sl-neutral-text: 51 65 85;
+  --sl-chart-1: 68 119 170;
+  --sl-chart-2: 204 187 68;
+  --sl-chart-3: 170 51 119;
+  --sl-chart-4: 34 136 51;
+  --sl-chart-5: 102 102 102;
+  --sl-map-available: 0 107 182;
+  --sl-map-unavailable: 166 62 120;
+  --sl-calendar-available: 0 107 182;
+  --sl-calendar-available-text: 0 81 143;
+  --sl-calendar-selected: 102 89 199;
+  --sl-calendar-range: 240 238 255;
+  --sl-calendar-range-text: 68 53 143;
+  --sl-calendar-disabled: 241 245 249;
+  --sl-calendar-reserved: 166 62 120;
+}
+
+html[data-sailingloc-theme='dark'][data-sailingloc-color-vision='deuteranopia'] {
+  --sl-success: 103 183 255;
+  --sl-success-surface: rgb(103 183 255 / 0.15);
+  --sl-success-text: 103 183 255;
+  --sl-warning: 255 196 91;
+  --sl-warning-surface: rgb(255 196 91 / 0.15);
+  --sl-warning-text: 255 196 91;
+  --sl-danger: 229 138 188;
+  --sl-danger-surface: rgb(229 138 188 / 0.15);
+  --sl-danger-text: 229 138 188;
+  --sl-info: 175 161 255;
+  --sl-info-surface: rgb(175 161 255 / 0.15);
+  --sl-info-text: 175 161 255;
+  --sl-neutral: 148 163 184;
+  --sl-neutral-surface: rgb(148 163 184 / 0.16);
+  --sl-neutral-text: 203 213 225;
+  --sl-chart-1: 119 170 221;
+  --sl-chart-2: 232 212 91;
+  --sl-chart-3: 238 153 187;
+  --sl-chart-4: 102 204 153;
+  --sl-chart-5: 187 187 187;
+  --sl-map-available: 103 183 255;
+  --sl-map-unavailable: 229 138 188;
+  --sl-calendar-available: 103 183 255;
+  --sl-calendar-available-text: 103 183 255;
+  --sl-calendar-selected: 175 161 255;
+  --sl-calendar-range: 175 161 255;
+  --sl-calendar-range-text: 175 161 255;
+  --sl-calendar-disabled: 148 163 184;
+  --sl-calendar-reserved: 229 138 188;
+}
+
+html[data-sailingloc-theme='light'][data-sailingloc-color-vision='tritanopia'] {
+  --sl-success: 11 123 89;
+  --sl-success-surface: rgb(232 248 241);
+  --sl-success-text: 8 96 68;
+  --sl-warning: 181 74 0;
+  --sl-warning-surface: rgb(255 240 230);
+  --sl-warning-text: 132 53 0;
+  --sl-danger: 180 35 60;
+  --sl-danger-surface: rgb(253 236 239);
+  --sl-danger-text: 143 25 48;
+  --sl-info: 118 73 168;
+  --sl-info-surface: rgb(244 237 252);
+  --sl-info-text: 87 48 128;
+  --sl-neutral: 100 116 139;
+  --sl-neutral-surface: rgb(241 245 249);
+  --sl-neutral-text: 51 65 85;
+  --sl-chart-1: 0 158 115;
+  --sl-chart-2: 213 94 0;
+  --sl-chart-3: 204 121 167;
+  --sl-chart-4: 122 62 157;
+  --sl-chart-5: 85 85 85;
+  --sl-map-available: 8 127 91;
+  --sl-map-unavailable: 180 35 60;
+  --sl-calendar-available: 11 123 89;
+  --sl-calendar-available-text: 8 96 68;
+  --sl-calendar-selected: 118 73 168;
+  --sl-calendar-range: 244 237 252;
+  --sl-calendar-range-text: 87 48 128;
+  --sl-calendar-disabled: 241 245 249;
+  --sl-calendar-reserved: 180 35 60;
+}
+
+html[data-sailingloc-theme='dark'][data-sailingloc-color-vision='tritanopia'] {
+  --sl-success: 82 214 162;
+  --sl-success-surface: rgb(82 214 162 / 0.15);
+  --sl-success-text: 82 214 162;
+  --sl-warning: 255 154 98;
+  --sl-warning-surface: rgb(255 154 98 / 0.15);
+  --sl-warning-text: 255 154 98;
+  --sl-danger: 255 135 149;
+  --sl-danger-surface: rgb(255 135 149 / 0.15);
+  --sl-danger-text: 255 135 149;
+  --sl-info: 201 160 255;
+  --sl-info-surface: rgb(201 160 255 / 0.15);
+  --sl-info-text: 201 160 255;
+  --sl-neutral: 148 163 184;
+  --sl-neutral-surface: rgb(148 163 184 / 0.16);
+  --sl-neutral-text: 203 213 225;
+  --sl-chart-1: 82 214 162;
+  --sl-chart-2: 255 154 98;
+  --sl-chart-3: 240 138 194;
+  --sl-chart-4: 201 160 255;
+  --sl-chart-5: 199 203 209;
+  --sl-map-available: 82 214 162;
+  --sl-map-unavailable: 255 135 149;
+  --sl-calendar-available: 82 214 162;
+  --sl-calendar-available-text: 82 214 162;
+  --sl-calendar-selected: 201 160 255;
+  --sl-calendar-range: 201 160 255;
+  --sl-calendar-range-text: 201 160 255;
+  --sl-calendar-disabled: 148 163 184;
+  --sl-calendar-reserved: 255 135 149;
+}
+
+html[data-sailingloc-color-vision='protanopia'],
+html[data-sailingloc-color-vision='deuteranopia'],
+html[data-sailingloc-color-vision='tritanopia'] {
+  --sl-success-base: var(--sl-success);
+  --sl-success-bright: var(--sl-success);
+  --sl-success-soft: var(--sl-success-text);
+  --sl-success-deep: var(--sl-success-text);
+  --sl-warning-base: var(--sl-warning);
+  --sl-warning-bright: var(--sl-warning);
+  --sl-warning-soft: var(--sl-warning-text);
+  --sl-warning-pale: var(--sl-warning-text);
+  --sl-danger-base: var(--sl-danger);
+  --sl-danger-bright: var(--sl-danger);
+  --sl-danger-soft: var(--sl-danger-text);
+  --sl-danger-pale: var(--sl-danger-text);
 }
 
 html[data-sailingloc-theme='dark'] body,

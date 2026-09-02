@@ -115,10 +115,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 const DATE_OPTS = { day: 'numeric', month: 'long', year: 'numeric' };
 
 const STATUS_CLS = {
-  pending: 'bg-action/15 text-action-soft',
-  success: 'bg-success-base/15 text-success-soft',
-  refunded: 'bg-warning-base/15 text-warning-soft',
-  failed: 'bg-neutral/15 text-on-dark/70',
+  pending: 'status-indicator status-indicator--warning bg-action/15 text-action-soft',
+  success: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refunded: 'status-indicator status-indicator--info bg-warning-base/15 text-warning-soft',
+  failed: 'status-indicator status-indicator--danger bg-neutral/15 text-on-dark/70',
 };
 
 const STATUS_ICON = {
@@ -184,7 +184,7 @@ function LocataireDepenses() {
       {error && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -284,7 +284,7 @@ function LocataireDepenses() {
                     <article className="flex h-32 items-center gap-4 rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl transition hover:border-brand/60 hover:bg-surface/15">
                       <span
                         aria-hidden
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl ${cls}`}
+                        className={`status-indicator--has-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl ${cls}`}
                       >
                         <Icon />
                       </span>

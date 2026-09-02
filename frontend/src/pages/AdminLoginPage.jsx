@@ -120,7 +120,7 @@ function AdminLoginPage() {
             {serverError && (
               <div
                 role="alert"
-                className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+                className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
               >
                 {serverError}
                 {isBlocked && (

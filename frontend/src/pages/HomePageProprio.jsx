@@ -77,10 +77,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 
 // Même palette de statuts que ProprietaireBoats.jsx / ProprietaireDashboard.jsx.
 const BOAT_STATUS_CLS = {
-  draft: 'bg-page0/15 text-on-dark/80',
-  pending: 'bg-amber-500/15 text-amber-300',
-  published: 'bg-emerald-500/15 text-emerald-300',
-  refused: 'bg-red-500/15 text-red-300',
+  draft: 'status-indicator status-indicator--neutral bg-page0/15 text-on-dark/80',
+  pending: 'status-indicator status-indicator--warning bg-amber-500/15 text-amber-300',
+  published: 'status-indicator status-indicator--success bg-emerald-500/15 text-emerald-300',
+  refused: 'status-indicator status-indicator--danger bg-red-500/15 text-red-300',
 };
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
@@ -88,7 +88,9 @@ const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 function OwnerBoatCard({ boat, t }) {
-  const statusCls = BOAT_STATUS_CLS[boat.status] || 'bg-page0/15 text-on-dark/80';
+  const statusCls =
+    BOAT_STATUS_CLS[boat.status] ||
+    'status-indicator status-indicator--neutral bg-page0/15 text-on-dark/80';
   return (
     <Link
       to={`/proprietaire/bateaux/${boat.id_boat}/modifier`}

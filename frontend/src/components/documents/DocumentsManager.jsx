@@ -58,12 +58,18 @@ function getDocTypesByRole(t) {
 
 function getStatus(t) {
   return {
-    pending: { label: t('documentsManager.status.pending'), cls: 'bg-amber-500/15 text-amber-300' },
+    pending: {
+      label: t('documentsManager.status.pending'),
+      cls: 'status-indicator status-indicator--warning bg-amber-500/15 text-amber-300',
+    },
     validated: {
       label: t('documentsManager.status.validated'),
-      cls: 'bg-emerald-500/15 text-emerald-300',
+      cls: 'status-indicator status-indicator--success bg-emerald-500/15 text-emerald-300',
     },
-    refused: { label: t('documentsManager.status.refused'), cls: 'bg-red-500/15 text-red-300' },
+    refused: {
+      label: t('documentsManager.status.refused'),
+      cls: 'status-indicator status-indicator--danger bg-red-500/15 text-red-300',
+    },
   };
 }
 
@@ -135,7 +141,7 @@ function DocumentRow({
     ? hasDocs
       ? {
           label: t('documentsManager.filesCount', { count: docs.length }),
-          cls: 'bg-page0/15 text-on-dark/80',
+          cls: 'status-indicator status-indicator--neutral bg-page0/15 text-on-dark/80',
         }
       : null
     : hasDocs
@@ -154,7 +160,9 @@ function DocumentRow({
         {statusBadgeTopRight && (
           <span
             className={`self-end shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-              headerBadge ? headerBadge.cls : 'bg-surface/10 text-on-dark/70'
+              headerBadge
+                ? headerBadge.cls
+                : 'status-indicator status-indicator--neutral bg-surface/10 text-on-dark/70'
             }`}
           >
             {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
@@ -167,7 +175,9 @@ function DocumentRow({
         {!statusBadgeTopRight && (
           <span
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-              headerBadge ? headerBadge.cls : 'bg-surface/10 text-on-dark/70'
+              headerBadge
+                ? headerBadge.cls
+                : 'status-indicator status-indicator--neutral bg-surface/10 text-on-dark/70'
             }`}
           >
             {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
