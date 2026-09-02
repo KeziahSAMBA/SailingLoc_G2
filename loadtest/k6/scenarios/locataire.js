@@ -12,7 +12,7 @@ export function locataireJourney(data) {
 
   const dashboard = http.get(`${BASE_URL}/api/users/me/dashboard`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/dashboard' },
+    tags: { groupe: 'dashboard', name: 'GET /me/dashboard' },
   });
   check(dashboard, {
     'dashboard locataire 200': (r) => r.status === 200,
@@ -30,19 +30,19 @@ export function locataireJourney(data) {
 
   const bookings = http.get(`${BASE_URL}/api/users/me/bookings`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/bookings' },
+    tags: { groupe: 'dashboard', name: 'GET /me/bookings' },
   });
   check(bookings, { 'réservations 200': (r) => r.status === 200 });
 
   const payments = http.get(`${BASE_URL}/api/users/me/payments`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/payments' },
+    tags: { groupe: 'dashboard', name: 'GET /me/payments' },
   });
   check(payments, { 'paiements 200': (r) => r.status === 200 });
 
   const favorites = http.get(`${BASE_URL}/api/users/me/favorites`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/favorites' },
+    tags: { groupe: 'dashboard', name: 'GET /me/favorites' },
   });
   check(favorites, { 'favoris 200': (r) => r.status === 200 });
 
@@ -54,14 +54,14 @@ export function locataireJourney(data) {
   if (boatId) {
     const ajout = http.post(`${BASE_URL}/api/users/me/favorites/${boatId}`, null, {
       ...auth,
-      tags: { groupe: 'ecriture', endpoint: 'POST /me/favorites/:id' },
+      tags: { groupe: 'ecriture', name: 'POST /me/favorites/:id' },
     });
     check(ajout, { 'ajout favori 201': (r) => r.status === 201 });
     if (ajout.status === 429) rateLimited.add(1);
 
     const retrait = http.del(`${BASE_URL}/api/users/me/favorites/${boatId}`, null, {
       ...auth,
-      tags: { groupe: 'ecriture', endpoint: 'DELETE /me/favorites/:id' },
+      tags: { groupe: 'ecriture', name: 'DELETE /me/favorites/:id' },
     });
     check(retrait, { 'retrait favori 200': (r) => r.status === 200 });
   }

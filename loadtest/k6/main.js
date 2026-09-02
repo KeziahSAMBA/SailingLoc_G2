@@ -49,7 +49,7 @@ function login(email, password, role) {
   const payload = role === 'admin' ? { email, password } : { email, password, role };
   const res = http.post(url, JSON.stringify(payload), {
     headers: { 'Content-Type': 'application/json' },
-    tags: { groupe: 'login', endpoint: 'POST login (setup)' },
+    tags: { groupe: 'login', name: 'POST login (setup)' },
   });
   if (res.status === 429) {
     fail(

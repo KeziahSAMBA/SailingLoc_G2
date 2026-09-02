@@ -10,7 +10,7 @@ export function adminJourney(data) {
 
   const stats = http.get(`${BASE_URL}/api/admin/stats`, {
     ...auth,
-    tags: { groupe: 'stats_admin', endpoint: 'GET /admin/stats' },
+    tags: { groupe: 'stats_admin', name: 'GET /admin/stats' },
   });
   check(stats, {
     'stats admin 200': (r) => r.status === 200,
@@ -28,13 +28,13 @@ export function adminJourney(data) {
 
   const users = http.get(`${BASE_URL}/api/admin/users`, {
     ...auth,
-    tags: { groupe: 'stats_admin', endpoint: 'GET /admin/users' },
+    tags: { groupe: 'stats_admin', name: 'GET /admin/users' },
   });
   check(users, { 'liste utilisateurs 200': (r) => r.status === 200 });
 
   const bookings = http.get(`${BASE_URL}/api/admin/bookings`, {
     ...auth,
-    tags: { groupe: 'stats_admin', endpoint: 'GET /admin/bookings' },
+    tags: { groupe: 'stats_admin', name: 'GET /admin/bookings' },
   });
   check(bookings, { 'liste réservations 200': (r) => r.status === 200 });
 
@@ -42,13 +42,13 @@ export function adminJourney(data) {
 
   const payments = http.get(`${BASE_URL}/api/admin/payments/stats`, {
     ...auth,
-    tags: { groupe: 'stats_admin', endpoint: 'GET /admin/payments/stats' },
+    tags: { groupe: 'stats_admin', name: 'GET /admin/payments/stats' },
   });
   check(payments, { 'agrégats paiements 200': (r) => r.status === 200 });
 
   const logs = http.get(`${BASE_URL}/api/admin/logs?pageSize=25`, {
     ...auth,
-    tags: { groupe: 'stats_admin', endpoint: 'GET /admin/logs' },
+    tags: { groupe: 'stats_admin', name: 'GET /admin/logs' },
   });
   check(logs, { 'journal 200': (r) => r.status === 200 });
 

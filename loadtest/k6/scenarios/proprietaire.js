@@ -11,7 +11,7 @@ export function proprietaireJourney(data) {
 
   const dashboard = http.get(`${BASE_URL}/api/users/me/proprietaire/dashboard`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/proprietaire/dashboard' },
+    tags: { groupe: 'dashboard', name: 'GET /me/proprietaire/dashboard' },
   });
   check(dashboard, { 'dashboard proprio 200': (r) => r.status === 200 });
   if (dashboard.status === 429) rateLimited.add(1);
@@ -20,13 +20,13 @@ export function proprietaireJourney(data) {
 
   const boats = http.get(`${BASE_URL}/api/users/me/proprietaire/boats`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/proprietaire/boats' },
+    tags: { groupe: 'dashboard', name: 'GET /me/proprietaire/boats' },
   });
   check(boats, { 'mes bateaux 200': (r) => r.status === 200 });
 
   const bookings = http.get(`${BASE_URL}/api/users/me/proprietaire/bookings`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/proprietaire/bookings' },
+    tags: { groupe: 'dashboard', name: 'GET /me/proprietaire/bookings' },
   });
   check(bookings, { 'réservations reçues 200': (r) => r.status === 200 });
 
@@ -34,13 +34,13 @@ export function proprietaireJourney(data) {
 
   const payments = http.get(`${BASE_URL}/api/users/me/proprietaire/payments`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/proprietaire/payments' },
+    tags: { groupe: 'dashboard', name: 'GET /me/proprietaire/payments' },
   });
   check(payments, { 'revenus 200': (r) => r.status === 200 });
 
   const reviews = http.get(`${BASE_URL}/api/users/me/proprietaire/reviews`, {
     ...auth,
-    tags: { groupe: 'dashboard', endpoint: 'GET /me/proprietaire/reviews' },
+    tags: { groupe: 'dashboard', name: 'GET /me/proprietaire/reviews' },
   });
   check(reviews, { 'avis reçus 200': (r) => r.status === 200 });
 

@@ -6,7 +6,7 @@ import { BASE_URL, rateLimited, sample } from '../config.js';
 // marketplace, et le seul qui soit intégralement en lecture.
 export function visitorJourney(data) {
   const catalogue = http.get(`${BASE_URL}/api/boats`, {
-    tags: { groupe: 'catalogue', endpoint: 'GET /api/boats' },
+    tags: { groupe: 'catalogue', name: 'GET /api/boats' },
   });
   check(catalogue, {
     'catalogue 200': (r) => r.status === 200,
@@ -23,13 +23,13 @@ export function visitorJourney(data) {
   sleep(1 + Math.random());
 
   const parType = http.get(`${BASE_URL}/api/boats/by-type`, {
-    tags: { groupe: 'catalogue', endpoint: 'GET /api/boats/by-type' },
+    tags: { groupe: 'catalogue', name: 'GET /api/boats/by-type' },
   });
   check(parType, { 'sections par type 200': (r) => r.status === 200 });
   if (parType.status === 429) rateLimited.add(1);
 
   const ports = http.get(`${BASE_URL}/api/ports`, {
-    tags: { groupe: 'catalogue', endpoint: 'GET /api/ports' },
+    tags: { groupe: 'catalogue', name: 'GET /api/ports' },
   });
   check(ports, { 'ports 200': (r) => r.status === 200 });
 
@@ -40,19 +40,19 @@ export function visitorJourney(data) {
   const boatId = data.boatIds.length ? sample(data.boatIds) : null;
   if (boatId) {
     const avisBateau = http.get(`${BASE_URL}/api/boats/${boatId}/reviews`, {
-      tags: { groupe: 'detail_bateau', endpoint: 'GET /api/boats/:id/reviews' },
+      tags: { groupe: 'detail_bateau', name: 'GET /api/boats/:id/reviews' },
     });
     check(avisBateau, { 'avis du bateau 200': (r) => r.status === 200 });
     if (avisBateau.status === 429) rateLimited.add(1);
 
     const avisFiltres = http.get(`${BASE_URL}/api/reviews/public?id_boat=${boatId}`, {
-      tags: { groupe: 'detail_bateau', endpoint: 'GET /api/reviews/public?id_boat' },
+      tags: { groupe: 'detail_bateau', name: 'GET /api/reviews/public?id_boat' },
     });
     check(avisFiltres, { 'avis filtrés 200': (r) => r.status === 200 });
   }
 
   const tousAvis = http.get(`${BASE_URL}/api/reviews/public`, {
-    tags: { groupe: 'detail_bateau', endpoint: 'GET /api/reviews/public (tous)' },
+    tags: { groupe: 'detail_bateau', name: 'GET /api/reviews/public (tous)' },
   });
   check(tousAvis, { 'avis publics 200': (r) => r.status === 200 });
 
