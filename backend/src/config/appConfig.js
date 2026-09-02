@@ -5,20 +5,50 @@ import { allowedCorsOrigins } from '../utils/corsSecurity.js';
 const envPath = path.resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
 
-/**
- * Return the deployment environment without logging environment values.
- * Railway does not consistently set NODE_ENV, so its environment marker is a
- * safe fallback for deployments there.
- */
-export function getRuntimeEnvironment() {
-  return String(
-    process.env.NODE_ENV ||
-      process.env.RAILWAY_ENVIRONMENT_NAME ||
-      process.env.RAILWAY_ENVIRONMENT ||
-      'development'
-  )
+function normalizeEnvironment(value) {
+  return String(value || '')
     .trim()
     .toLowerCase();
+}
+
+/**
+ * Return the Node runtime environment. NODE_ENV remains the source of truth
+ * for runtime behaviour (security middleware, cookies and TLS safeguards).
+ *
+ * The Railway fallback is kept only for existing deployments that have not
+ * yet declared NODE_ENV. It accepts the exact Railway environment names and
+ * therefore cannot silently turn an arbitrary name into development mode.
+ */
+export function getRuntimeEnvironment() {
+  const declared = normalizeEnvironment(process.env.NODE_ENV);
+  if (declared) return declared;
+
+  const railwayEnvironment = normalizeEnvironment(
+    process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT
+  );
+  return railwayEnvironment || 'development';
+}
+
+export const DEPLOYMENT_ENVIRONMENTS = new Set(['staging', 'production']);
+
+/**
+ * Resolve the payment/deployment target independently from NODE_ENV.
+ *
+ * DEPLOYMENT_ENV is the supported setting. RAILWAY_ENVIRONMENT_NAME (and its
+ * older alias RAILWAY_ENVIRONMENT) is accepted only as a migration fallback;
+ * callers must still validate the resolved value. Exact values are required
+ * so a service/environment label such as "sailingloc-staging" is rejected
+ * instead of being guessed.
+ */
+export function getDeploymentEnvironment({
+  deploymentEnvironment = process.env.DEPLOYMENT_ENV,
+  railwayEnvironmentName = process.env.RAILWAY_ENVIRONMENT_NAME,
+  railwayEnvironment = process.env.RAILWAY_ENVIRONMENT,
+} = {}) {
+  const explicit = normalizeEnvironment(deploymentEnvironment);
+  if (explicit) return explicit;
+
+  return normalizeEnvironment(railwayEnvironmentName || railwayEnvironment);
 }
 
 // Load the mode-specific file after the base file. This also honours a
@@ -183,13 +213,74 @@ export function parsePublicApiUrl(apiUrl, environment = getRuntimeEnvironment())
  * of silently falling back to insecure defaults.
  */
 export function validateConfig(config, environment = getRuntimeEnvironment()) {
-  const env = String(environment || '')
-    .trim()
-    .toLowerCase();
+  const env = normalizeEnvironment(environment);
   const errors = [];
   const required = (name, currentValue) => {
     if (!currentValue) errors.push(`${name} est obligatoire`);
   };
+
+  // NODE_ENV controls runtime hardening. DEPLOYMENT_ENV controls which
+  // external payment account is allowed, so staging can run with
+  // NODE_ENV=production without accepting live credentials.
+  const hasDeploymentEnvironment = Object.prototype.hasOwnProperty.call(config, 'DEPLOYMENT_ENV');
+  const hasRailwayEnvironmentName = Object.prototype.hasOwnProperty.call(
+    config,
+    'RAILWAY_ENVIRONMENT_NAME'
+  );
+  const hasRailwayEnvironment = Object.prototype.hasOwnProperty.call(config, 'RAILWAY_ENVIRONMENT');
+  const deploymentEnvironment = getDeploymentEnvironment({
+    deploymentEnvironment: hasDeploymentEnvironment
+      ? config.DEPLOYMENT_ENV
+      : process.env.DEPLOYMENT_ENV,
+    railwayEnvironmentName: hasRailwayEnvironmentName
+      ? config.RAILWAY_ENVIRONMENT_NAME
+      : process.env.RAILWAY_ENVIRONMENT_NAME,
+    railwayEnvironment: hasRailwayEnvironment
+      ? config.RAILWAY_ENVIRONMENT
+      : process.env.RAILWAY_ENVIRONMENT,
+  });
+  const railwayEnvironmentName = normalizeEnvironment(
+    hasRailwayEnvironmentName
+      ? config.RAILWAY_ENVIRONMENT_NAME
+      : process.env.RAILWAY_ENVIRONMENT_NAME
+  );
+  const legacyRailwayEnvironment = normalizeEnvironment(
+    hasRailwayEnvironment ? config.RAILWAY_ENVIRONMENT : process.env.RAILWAY_ENVIRONMENT
+  );
+  const railwayEnvironment = railwayEnvironmentName || legacyRailwayEnvironment;
+
+  if (deploymentEnvironment && !DEPLOYMENT_ENVIRONMENTS.has(deploymentEnvironment)) {
+    errors.push('DEPLOYMENT_ENV doit être staging ou production');
+  }
+  if (
+    railwayEnvironmentName &&
+    legacyRailwayEnvironment &&
+    railwayEnvironmentName !== legacyRailwayEnvironment
+  ) {
+    errors.push('RAILWAY_ENVIRONMENT_NAME et RAILWAY_ENVIRONMENT sont contradictoires');
+  }
+  if (
+    deploymentEnvironment &&
+    railwayEnvironment &&
+    DEPLOYMENT_ENVIRONMENTS.has(deploymentEnvironment) &&
+    DEPLOYMENT_ENVIRONMENTS.has(railwayEnvironment) &&
+    deploymentEnvironment !== railwayEnvironment
+  ) {
+    errors.push('DEPLOYMENT_ENV ne correspond pas à l’environnement Railway validé');
+  }
+  if (PRODUCTION_LIKE_ENVS.has(env) && !deploymentEnvironment) {
+    errors.push('DEPLOYMENT_ENV est obligatoire pour un runtime de déploiement');
+  }
+  if (
+    deploymentEnvironment &&
+    DEPLOYMENT_ENVIRONMENTS.has(deploymentEnvironment) &&
+    !PRODUCTION_LIKE_ENVS.has(env)
+  ) {
+    errors.push('NODE_ENV doit être staging ou production pour un déploiement strict');
+  }
+  if (env === 'staging' && deploymentEnvironment === 'production') {
+    errors.push('NODE_ENV=staging est incompatible avec DEPLOYMENT_ENV=production');
+  }
 
   if (!SUPPORTED_RUNTIME_ENVIRONMENTS.has(env)) {
     errors.push(
@@ -198,9 +289,7 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
       )}`
     );
   }
-  const declaredEnvironment = String(config.NODE_ENV || '')
-    .trim()
-    .toLowerCase();
+  const declaredEnvironment = normalizeEnvironment(config.NODE_ENV);
   if (declaredEnvironment && !SUPPORTED_RUNTIME_ENVIRONMENTS.has(declaredEnvironment)) {
     errors.push('NODE_ENV configuré est inconnu');
   } else if (declaredEnvironment && declaredEnvironment !== env) {
@@ -228,12 +317,19 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
     if (config.APP_URL && !isValidHttpsAppUrl(config.APP_URL)) {
       errors.push('APP_URL doit être une URL HTTPS publique sans identifiants');
     }
-
-    required('STRIPE_SECRET_KEY', config.STRIPE_SECRET_KEY);
-    if (config.STRIPE_SECRET_KEY && !/^sk_live_[A-Za-z0-9]+$/.test(config.STRIPE_SECRET_KEY)) {
-      errors.push('STRIPE_SECRET_KEY doit être une clé Stripe live');
+  } else if (PRODUCTION_LIKE_ENVS.has(env)) {
+    required('APP_URL', config.APP_URL);
+    if (config.APP_URL && !isValidHttpsAppUrl(config.APP_URL)) {
+      errors.push('APP_URL doit être une URL HTTPS publique sans identifiants');
     }
+  } else if (config.APP_URL && !isValidDevelopmentAppUrl(config.APP_URL)) {
+    errors.push('APP_URL doit être une URL HTTP(S) valide sans identifiants');
+  }
 
+  // Keep the production runtime's remaining integration checks intact. The
+  // deployment target changes only the Stripe account mode; it must not turn
+  // off webhook or email safeguards when NODE_ENV=production.
+  if (env === 'production' || deploymentEnvironment === 'production') {
     required('STRIPE_WEBHOOK_SECRET', config.STRIPE_WEBHOOK_SECRET);
     if (
       config.STRIPE_WEBHOOK_SECRET &&
@@ -250,13 +346,17 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
     if (!hasMailgunKey && !config.EMAIL_HOST) {
       errors.push('Une configuration Mailgun complète ou EMAIL_HOST est obligatoire');
     }
-  } else if (PRODUCTION_LIKE_ENVS.has(env)) {
-    required('APP_URL', config.APP_URL);
-    if (config.APP_URL && !isValidHttpsAppUrl(config.APP_URL)) {
-      errors.push('APP_URL doit être une URL HTTPS publique sans identifiants');
+  }
+
+  if (deploymentEnvironment === 'production') {
+    required('STRIPE_SECRET_KEY', config.STRIPE_SECRET_KEY);
+    if (config.STRIPE_SECRET_KEY && !/^sk_live_[A-Za-z0-9]+$/.test(config.STRIPE_SECRET_KEY)) {
+      errors.push('STRIPE_SECRET_KEY doit être une clé Stripe live');
     }
-  } else if (config.APP_URL && !isValidDevelopmentAppUrl(config.APP_URL)) {
-    errors.push('APP_URL doit être une URL HTTP(S) valide sans identifiants');
+  } else if (deploymentEnvironment === 'staging' && config.STRIPE_SECRET_KEY) {
+    if (!/^sk_test_[A-Za-z0-9]+$/.test(config.STRIPE_SECRET_KEY)) {
+      errors.push('STRIPE_SECRET_KEY doit être une clé Stripe test en staging');
+    }
   }
 
   // Les fichiers publics sont servis par le backend, pas par le frontend.
@@ -303,6 +403,10 @@ export function initConfig() {
   const environment = getRuntimeEnvironment();
   const config = {
     NODE_ENV: environment,
+    // Stripe mode is tied to the deployment target, not the Node runtime.
+    // Keep the legacy Railway marker in the resolver only as a migration
+    // fallback; new deployments must set DEPLOYMENT_ENV explicitly.
+    DEPLOYMENT_ENV: getDeploymentEnvironment(),
     PORT: value('PORT') || 4000,
     DATABASE_URL: value('DATABASE_URL'),
     JWT_SECRET: value('JWT_SECRET'),

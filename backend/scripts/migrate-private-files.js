@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import prisma from '../src/config/db.js';
+import { isProtectedDeployment } from '../src/config/deploymentProtection.js';
 import {
   migratePrivateFiles,
   PRIVATE_FILE_MIGRATION_BATCH,
@@ -64,24 +65,11 @@ function parseArgs(argv) {
   return { dryRun, limit, confirmProduction };
 }
 
-const environment = String(
-  process.env.NODE_ENV ||
-    process.env.RAILWAY_ENVIRONMENT_NAME ||
-    process.env.RAILWAY_ENVIRONMENT ||
-    ''
-)
-  .trim()
-  .toLowerCase();
-
 let options;
 try {
   options = parseArgs(process.argv.slice(2));
   if (!options) process.exitCode = 0;
-  else if (
-    !options.dryRun &&
-    ['production', 'staging'].includes(environment) &&
-    !options.confirmProduction
-  ) {
+  else if (!options.dryRun && isProtectedDeployment(process.env) && !options.confirmProduction) {
     throw new Error(
       'Migration staging/production bloquée : exécutez d’abord un dry-run puis ajoutez --confirm-production après sauvegarde vérifiée.'
     );

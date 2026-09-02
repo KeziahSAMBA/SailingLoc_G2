@@ -1,5 +1,6 @@
-# Use Node.js 20 Alpine for smaller image size
-FROM node:20.19.4-alpine3.21
+# Node 22 is required by @dr.pogodin/csurf. Pin both Node and Alpine so the
+# builder/runtime toolchain stays reproducible across Railway deployments.
+FROM node:22.23.2-alpine3.24
 
 # Install OpenSSL for Prisma, then apply the latest security updates available
 # from the pinned Alpine repository.

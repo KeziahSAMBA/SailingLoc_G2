@@ -1,9 +1,14 @@
-# Multi-stage build for React/Vite application
+# Multi-stage build for React/Vite application.
+#
+# The Railway service uses the repository root (/) as its build context. Keep
+# every source path explicit so `frontend/railway.json` works without requiring
+# a mutable service-level root-directory override. Local production/staging
+# Compose builds use the same root context and Dockerfile path.
 
 # Build stage
 FROM node:20.19.4-alpine3.21 AS builder
 
-WORKDIR /app
+WORKDIR /app/frontend
 
 # Vite inlines public configuration into the browser bundle. Railway exposes
 # service variables during the Docker build; declaring them as ARGs makes that
@@ -18,14 +23,19 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY \
     VITE_BUILD_ENV=$VITE_BUILD_ENV
 
-# Copy package files
-COPY package*.json ./
+# Copy the frontend workspace manifest before installing so Docker can cache
+# dependencies independently from application source changes. The frontend has
+# its own lockfile, so the static image does not need to install backend
+# dependencies merely because Railway sends the monorepo root as its context.
+COPY frontend/package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install the locked workspace graph. Lifecycle scripts are not needed to build
+# the frontend and can execute backend tooling during an image build, so keep
+# this layer deterministic and side-effect free.
+RUN npm ci --ignore-scripts --no-audit --no-fund
 
-# Copy source code
-COPY . .
+# Copy the frontend source only; the backend is not part of the static image.
+COPY frontend/ ./
 
 # Build the application
 RUN npm run build
@@ -39,11 +49,11 @@ USER root
 RUN apk upgrade --no-cache
 
 # Copy built assets from builder stage
-COPY --from=builder --chown=nginx:nginx /app/dist /usr/share/nginx/html
+COPY --from=builder --chown=nginx:nginx /app/frontend/dist /usr/share/nginx/html
 
 # Copy the policy rendered by the validated build step. The runtime image never
 # interpolates environment values and cannot fall back to an unrendered template.
-COPY --from=builder --chown=root:root /app/.generated/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder --chown=root:root /app/frontend/.generated/default.conf /etc/nginx/conf.d/default.conf
 
 # Nginx runs as the unprivileged `nginx` user and therefore listens above 1024.
 EXPOSE 8080

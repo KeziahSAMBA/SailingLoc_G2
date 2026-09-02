@@ -64,7 +64,7 @@ describe('fileCrypto', () => {
     expect((await readDecrypted(legacy)).equals(plain)).toBe(true);
   });
 
-  it.each(['staging', 'production'])(
+  it.each(['staging', 'production', 'qa'])(
     'refuse toujours le cleartext en %s, même avec le secours explicitement activé',
     async (environment) => {
       const legacy = path.join(tmpDir, `legacy-${environment}.pdf`);
@@ -80,6 +80,33 @@ describe('fileCrypto', () => {
         });
       } finally {
         process.env.NODE_ENV = previousEnvironment;
+        if (previousSwitch === undefined) delete process.env.ALLOW_LEGACY_CLEAR_FILE_READ;
+        else process.env.ALLOW_LEGACY_CLEAR_FILE_READ = previousSwitch;
+      }
+    }
+  );
+
+  it.each(['staging', 'production'])(
+    'refuse le cleartext lorsque DEPLOYMENT_ENV=%s même avec NODE_ENV=development',
+    async (deploymentEnvironment) => {
+      const legacy = path.join(tmpDir, `legacy-deployment-${deploymentEnvironment}.pdf`);
+      fs.writeFileSync(legacy, plain);
+      const previousNodeEnvironment = process.env.NODE_ENV;
+      const previousDeploymentEnvironment = process.env.DEPLOYMENT_ENV;
+      const previousSwitch = process.env.ALLOW_LEGACY_CLEAR_FILE_READ;
+      process.env.NODE_ENV = 'development';
+      process.env.DEPLOYMENT_ENV = deploymentEnvironment;
+      process.env.ALLOW_LEGACY_CLEAR_FILE_READ = 'true';
+      try {
+        await expect(readDecrypted(legacy)).rejects.toMatchObject({
+          code: 'LEGACY_CLEAR_FILE',
+          status: 503,
+        });
+      } finally {
+        if (previousNodeEnvironment === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = previousNodeEnvironment;
+        if (previousDeploymentEnvironment === undefined) delete process.env.DEPLOYMENT_ENV;
+        else process.env.DEPLOYMENT_ENV = previousDeploymentEnvironment;
         if (previousSwitch === undefined) delete process.env.ALLOW_LEGACY_CLEAR_FILE_READ;
         else process.env.ALLOW_LEGACY_CLEAR_FILE_READ = previousSwitch;
       }

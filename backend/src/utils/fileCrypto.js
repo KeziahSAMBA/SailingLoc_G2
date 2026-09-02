@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { isProtectedDeployment } from '../config/deploymentProtection.js';
 
 // Chiffrement au repos des documents sensibles (justificatifs, actes de
 // francisation) en AES-256-GCM — chiffrement authentifié : un fichier altéré
@@ -60,19 +61,6 @@ export function isEncrypted(stored) {
   );
 }
 
-function isProductionLike() {
-  return ['production', 'staging'].includes(
-    String(
-      process.env.NODE_ENV ||
-        process.env.RAILWAY_ENVIRONMENT_NAME ||
-        process.env.RAILWAY_ENVIRONMENT ||
-        ''
-    )
-      .trim()
-      .toLowerCase()
-  );
-}
-
 // Cleartext compatibility is intentionally opt-in outside development. The
 // migration command reads the bytes directly and therefore never needs this
 // escape hatch. `ALLOW_LEGACY_CLEAR_FILE_READ=true` is a short-lived rollback
@@ -80,7 +68,7 @@ function isProductionLike() {
 export function allowLegacyCleartextRead() {
   // Production-like deployments must remain fail-closed even if a caller
   // bypasses initConfig() or mutates the process environment after startup.
-  if (isProductionLike()) return false;
+  if (isProtectedDeployment(process.env)) return false;
 
   const configured = String(process.env.ALLOW_LEGACY_CLEAR_FILE_READ || '')
     .trim()

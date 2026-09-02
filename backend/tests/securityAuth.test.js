@@ -39,11 +39,17 @@ jest.unstable_mockModule('../src/services/emailService.js', () => ({
   sendAccountCreatedEmail: jest.fn().mockResolvedValue(undefined),
 }));
 jest.unstable_mockModule('../src/services/accountClosureService.js', () => ({
+  getClosureStatus: jest.fn(),
+  deactivateOwnAccount: jest.fn(),
+  deleteOwnAccount: jest.fn(),
   reactivateOwnAccount: jest.fn().mockResolvedValue(undefined),
+  DELETION_RETENTION_DAYS: 30,
+  PAUSE_RETENTION_DAYS: 30,
 }));
 
-const { login, refreshSession, create, verifyEmail } =
+const { login, adminLogin, refreshSession, create, verifyEmail } =
   await import('../src/services/userService.js');
+const { login: publicLogin } = await import('../src/controllers/userController.js');
 const { protect } = await import('../src/middlewares/authMiddleware.js');
 const { JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER } = await import('../src/config/auth.js');
 
@@ -104,6 +110,44 @@ describe('access-token claims and account state', () => {
     });
 
     expect(payload).toMatchObject({ id_user: 7, sub: '7', role: USER.role, auth_version: 4 });
+  });
+
+  it('rejects an administrator account through the public login policy', async () => {
+    repo.findUserByEmailAndRole.mockResolvedValue({ ...USER, role: 'admin' });
+
+    await expect(
+      login(
+        { email: USER.email, password: 'Valid-password!', role: 'admin' },
+        { userAgent: 'test' }
+      )
+    ).rejects.toMatchObject({ status: 401 });
+
+    expect(repo.createRefreshToken).not.toHaveBeenCalled();
+  });
+
+  it('pins the administrator role in the back-office login service', async () => {
+    repo.findUserByEmailAndRole.mockResolvedValue({ ...USER, role: 'admin' });
+
+    await adminLogin({ email: USER.email, password: 'Valid-password!' }, { userAgent: 'test' });
+
+    expect(repo.findUserByEmailAndRole).toHaveBeenCalledWith(USER.email, 'admin');
+  });
+
+  it('cannot bypass the public login policy by submitting the administrator role', async () => {
+    repo.findUserByEmailAndRole.mockResolvedValue({ ...USER, role: 'admin' });
+    const req = {
+      body: { email: USER.email, password: 'Valid-password!', role: 'admin' },
+      headers: { 'user-agent': 'test' },
+      ip: '127.0.0.1',
+    };
+    const res = response();
+    res.cookie = jest.fn();
+
+    await publicLogin(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Identifiants invalides.' });
+    expect(res.cookie).not.toHaveBeenCalled();
   });
 
   it('rejects a validly signed token whose account version is stale', async () => {

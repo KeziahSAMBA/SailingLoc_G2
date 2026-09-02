@@ -1,9 +1,12 @@
 import { describe, expect, it } from '@jest/globals';
+import fs from 'fs';
 import { validateConfig } from '../src/config/appConfig.js';
+import { isProtectedDeployment } from '../src/config/deploymentProtection.js';
 import { enforceSeedPolicy } from '../prisma/seedPolicy.js';
 
 const validProductionConfig = {
   NODE_ENV: 'production',
+  DEPLOYMENT_ENV: 'production',
   DATABASE_URL: 'postgresql://db.internal/sailingloc',
   JWT_SECRET: 'v3ry-long-random-production-secret-value-123',
   FILE_ENCRYPTION_KEY: 'a'.repeat(64),
@@ -46,6 +49,35 @@ describe('production configuration', () => {
         'production'
       )
     ).toThrow(/Stripe live|64 caractères hexadécimaux/);
+  });
+
+  it('accepts a test Stripe key for a staging deployment running the production runtime', () => {
+    const stagingConfig = {
+      ...validProductionConfig,
+      DEPLOYMENT_ENV: 'staging',
+      STRIPE_SECRET_KEY: 'sk_test_51stagingKey123',
+    };
+
+    expect(validateConfig(stagingConfig, 'production')).toBe(stagingConfig);
+  });
+
+  it('rejects a live Stripe key for a staging deployment', () => {
+    expect(() =>
+      validateConfig({ ...validProductionConfig, DEPLOYMENT_ENV: 'staging' }, 'production')
+    ).toThrow(/Stripe test/);
+  });
+
+  it('accepts a live Stripe key for a production deployment', () => {
+    expect(validateConfig(validProductionConfig, 'production')).toBe(validProductionConfig);
+  });
+
+  it('rejects a test Stripe key for a production deployment', () => {
+    expect(() =>
+      validateConfig(
+        { ...validProductionConfig, STRIPE_SECRET_KEY: 'sk_test_51stagingKey123' },
+        'production'
+      )
+    ).toThrow(/Stripe live/);
   });
 
   it('requires a separate public backend origin for uploaded assets', () => {
@@ -93,12 +125,76 @@ describe('deployment configuration boundaries', () => {
     expect(() => validateConfig(validProductionConfig, 'qa')).toThrow(/NODE_ENV/);
   });
 
+  it('requires an explicit deployment target in a strict runtime', () => {
+    const { DEPLOYMENT_ENV: _deploymentEnvironment, ...withoutDeployment } = validProductionConfig;
+    expect(() => validateConfig(withoutDeployment, 'production')).toThrow(/DEPLOYMENT_ENV/);
+  });
+
+  it('rejects an unknown deployment target in a strict runtime', () => {
+    expect(() =>
+      validateConfig({ ...validProductionConfig, DEPLOYMENT_ENV: 'qa' }, 'production')
+    ).toThrow(/DEPLOYMENT_ENV.*staging.*production/);
+  });
+
+  it('accepts the exact Railway environment name as a migration fallback', () => {
+    const { DEPLOYMENT_ENV: _deploymentEnvironment, ...legacyRailwayConfig } = {
+      ...validProductionConfig,
+      STRIPE_SECRET_KEY: 'sk_test_51stagingKey123',
+      RAILWAY_ENVIRONMENT_NAME: 'staging',
+    };
+
+    expect(validateConfig(legacyRailwayConfig, 'production')).toBe(legacyRailwayConfig);
+  });
+
+  it('rejects conflicting explicit and Railway deployment targets', () => {
+    expect(() =>
+      validateConfig(
+        {
+          ...validProductionConfig,
+          DEPLOYMENT_ENV: 'staging',
+          STRIPE_SECRET_KEY: 'sk_test_51stagingKey123',
+          RAILWAY_ENVIRONMENT_NAME: 'production',
+        },
+        'production'
+      )
+    ).toThrow(/Railway/);
+  });
+
+  it('rejects a production deployment target with the legacy staging runtime', () => {
+    expect(() =>
+      validateConfig(
+        {
+          ...validProductionConfig,
+          NODE_ENV: 'staging',
+          DEPLOYMENT_ENV: 'production',
+        },
+        'staging'
+      )
+    ).toThrow(/NODE_ENV=staging.*DEPLOYMENT_ENV=production/);
+  });
+
+  it('rejects contradictory Railway fallback variables', () => {
+    expect(() =>
+      validateConfig(
+        {
+          ...validProductionConfig,
+          DEPLOYMENT_ENV: 'staging',
+          STRIPE_SECRET_KEY: 'sk_test_51stagingKey123',
+          RAILWAY_ENVIRONMENT_NAME: 'staging',
+          RAILWAY_ENVIRONMENT: 'production',
+        },
+        'production'
+      )
+    ).toThrow(/RAILWAY_ENVIRONMENT_NAME.*RAILWAY_ENVIRONMENT.*contradictoires/);
+  });
+
   it('rejects disabled email TLS in staging as well as production', () => {
     expect(() =>
       validateConfig(
         {
           ...validProductionConfig,
           NODE_ENV: 'staging',
+          DEPLOYMENT_ENV: 'staging',
           STRIPE_SECRET_KEY: 'sk_test_stagingKey123',
           EMAIL_IGNORE_TLS: true,
         },
@@ -128,6 +224,7 @@ describe('deployment configuration boundaries', () => {
         {
           ...validProductionConfig,
           NODE_ENV: environment,
+          DEPLOYMENT_ENV: undefined,
           ALLOW_LEGACY_CLEAR_FILE_READ: 'true',
         },
         environment
@@ -155,5 +252,50 @@ describe('demonstration seed policy', () => {
       environment: 'development',
     });
     expect(() => enforceSeedPolicy({ NODE_ENV: 'qa', SEED_FORCE: 'true' })).toThrow(/SEED_FORCE/);
+  });
+
+  it.each(['staging', 'production'])(
+    'blocks the seed when DEPLOYMENT_ENV=%s even if NODE_ENV is development',
+    (deploymentEnvironment) => {
+      expect(
+        enforceSeedPolicy({
+          NODE_ENV: 'development',
+          DEPLOYMENT_ENV: deploymentEnvironment,
+          SEED_FORCE: 'false',
+        })
+      ).toMatchObject({ allowed: false, environment: deploymentEnvironment });
+    }
+  );
+
+  it('fails closed for an unknown explicit deployment target outside initConfig', () => {
+    expect(
+      enforceSeedPolicy({ NODE_ENV: 'development', DEPLOYMENT_ENV: 'qa', SEED_FORCE: 'false' })
+    ).toMatchObject({ allowed: false, environment: 'qa' });
+  });
+
+  it.each([
+    ['NODE_ENV=qa', { NODE_ENV: 'qa' }],
+    ['RAILWAY_ENVIRONMENT_NAME=qa', { NODE_ENV: 'development', RAILWAY_ENVIRONMENT_NAME: 'qa' }],
+    ['DEPLOYMENT_ENV=qa', { NODE_ENV: 'development', DEPLOYMENT_ENV: 'qa' }],
+  ])('fails closed for the ambiguous marker %s', (_label, environment) => {
+    expect(isProtectedDeployment(environment)).toBe(true);
+    expect(enforceSeedPolicy({ ...environment, SEED_FORCE: 'false' })).toMatchObject({
+      allowed: false,
+    });
+  });
+
+  it('allows an unmarked local runtime only in explicit development or test mode', () => {
+    expect(isProtectedDeployment({})).toBe(false);
+    expect(isProtectedDeployment({ NODE_ENV: 'development' })).toBe(false);
+    expect(isProtectedDeployment({ NODE_ENV: 'test' })).toBe(false);
+  });
+
+  it('guards every auxiliary demonstration-data script with the shared seed policy', () => {
+    for (const scriptPath of ['../prisma/addMissingReviews.js', '../prisma/seedCronTestData.js']) {
+      const source = fs.readFileSync(new URL(scriptPath, import.meta.url), 'utf8');
+      expect(source).toContain("import { enforceSeedPolicy } from './seedPolicy.js';");
+      expect(source).toContain('const seedPolicy = enforceSeedPolicy();');
+      expect(source).toContain('if (!seedPolicy.allowed)');
+    }
   });
 });

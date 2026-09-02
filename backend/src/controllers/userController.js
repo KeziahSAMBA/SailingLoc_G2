@@ -6,6 +6,7 @@ import {
   verifyEmail,
   resendVerification,
   login as loginService,
+  adminLogin as adminLoginService,
   refreshSession,
   logoutSession,
   getCurrentUser,
@@ -73,10 +74,6 @@ export async function adminCreateUser(req, res) {
 
 export async function login(req, res) {
   try {
-    // Endpoint public : refuse explicitement le rôle admin pour forcer le passage par /admin/login.
-    if (req.body?.role === 'admin') {
-      return res.status(401).json({ message: 'Identifiants invalides.' });
-    }
     const { accessToken, refreshToken, user, reactivated } = await loginService(req.body, {
       userAgent: req.headers['user-agent'],
     });
@@ -102,8 +99,8 @@ export async function login(req, res) {
 export async function adminLogin(req, res) {
   try {
     const { email, password } = req.body || {};
-    const { accessToken, refreshToken, user } = await loginService(
-      { email, password, role: 'admin' },
+    const { accessToken, refreshToken, user } = await adminLoginService(
+      { email, password },
       { userAgent: req.headers['user-agent'] }
     );
     setRefreshCookie(res, refreshToken);
