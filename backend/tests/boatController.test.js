@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 
-const db = { boat: { findMany: jest.fn() } };
+const db = { boat: { findMany: jest.fn() }, review: { findMany: jest.fn() } };
 jest.unstable_mockModule('../src/config/db.js', () => ({ default: db }));
 
 const mockCreateBooking = jest.fn();
@@ -37,21 +37,29 @@ function makeReq(overrides = {}) {
 
 const httpError = (status, message) => Object.assign(new Error(message), { status });
 
-// Bateau tel que renvoyé par Prisma, avec ses réservations et leurs avis.
+// Bateau tel que renvoyé par Prisma. Les réservations remontées sont déjà
+// filtrées par la base — confirmées et non échues — et réduites à leurs dates ;
+// le compte de popularité arrive dans _count.
 const rawBoat = (overrides = {}) => ({
   id_boat: 1,
   name: 'Pen Duick',
   type: 'voilier',
   bookings: [],
+  _count: { bookings: 0 },
   ...overrides,
 });
 
-const bookingWith = (status, reviews = [], dates = {}) => ({
-  status,
-  start_date: dates.start ?? new Date('2026-07-01'),
-  end_date: dates.end ?? new Date('2026-07-08'),
-  reviews,
+const range = (start, end) => ({ start_date: new Date(start), end_date: new Date(end) });
+
+// Avis tel que le renvoie la requête dédiée, rattaché à son bateau par la
+// réservation dont il dépend.
+const reviewOf = (id_boat, rating, comment = null) => ({
+  rating,
+  comment,
+  booking: { id_boat },
 });
+
+const bookingsWhere = () => db.boat.findMany.mock.calls[0][0].include.bookings.where;
 
 let res;
 
@@ -59,6 +67,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   res = makeRes();
   db.boat.findMany.mockResolvedValue([]);
+  db.review.findMany.mockResolvedValue([]);
   proprietaire.createBoat.mockResolvedValue({ id_boat: 1, name: 'Pen Duick' });
   proprietaire.updateBoat.mockResolvedValue({ id_boat: 1, name: 'Pen Duick' });
   proprietaire.deleteBoat.mockResolvedValue(undefined);
@@ -73,16 +82,11 @@ describe('getBoats — enrichissement des annonces', () => {
   });
 
   it('calcule la note moyenne arrondie au dixième', async () => {
-    db.boat.findMany.mockResolvedValue([
-      rawBoat({
-        bookings: [
-          bookingWith('confirmed', [
-            { rating: 5, comment: 'Super' },
-            { rating: 4, comment: null },
-          ]),
-          bookingWith('confirmed', [{ rating: 4, comment: '  ' }]),
-        ],
-      }),
+    db.boat.findMany.mockResolvedValue([rawBoat()]);
+    db.review.findMany.mockResolvedValue([
+      reviewOf(1, 5, 'Super'),
+      reviewOf(1, 4, null),
+      reviewOf(1, 4, '  '),
     ]);
 
     await controller.getBoats(makeReq(), res);
@@ -93,16 +97,11 @@ describe('getBoats — enrichissement des annonces', () => {
   });
 
   it('ne compte comme commentaires que les avis au texte non vide', async () => {
-    db.boat.findMany.mockResolvedValue([
-      rawBoat({
-        bookings: [
-          bookingWith('confirmed', [
-            { rating: 5, comment: 'Super' },
-            { rating: 4, comment: '   ' },
-            { rating: 3, comment: null },
-          ]),
-        ],
-      }),
+    db.boat.findMany.mockResolvedValue([rawBoat()]);
+    db.review.findMany.mockResolvedValue([
+      reviewOf(1, 5, 'Super'),
+      reviewOf(1, 4, '   '),
+      reviewOf(1, 3, null),
     ]);
 
     await controller.getBoats(makeReq(), res);
@@ -111,60 +110,111 @@ describe('getBoats — enrichissement des annonces', () => {
   });
 
   it('renvoie une note nulle en l’absence d’avis', async () => {
-    db.boat.findMany.mockResolvedValue([rawBoat({ bookings: [bookingWith('confirmed')] })]);
+    db.boat.findMany.mockResolvedValue([rawBoat()]);
 
     await controller.getBoats(makeReq(), res);
 
     expect(res.json.mock.calls[0][0][0]).toMatchObject({ avg_rating: null, review_count: 0 });
   });
 
-  it('ne compte que les réservations confirmées', async () => {
-    db.boat.findMany.mockResolvedValue([
-      rawBoat({
-        bookings: [
-          bookingWith('confirmed'),
-          bookingWith('pending'),
-          bookingWith('cancelled'),
-          bookingWith('refused'),
-        ],
-      }),
-    ]);
+  it('rattache chaque avis au bateau dont il dépend', async () => {
+    db.boat.findMany.mockResolvedValue([rawBoat({ id_boat: 1 }), rawBoat({ id_boat: 2 })]);
+    db.review.findMany.mockResolvedValue([reviewOf(1, 5, 'Top'), reviewOf(2, 3, null)]);
 
     await controller.getBoats(makeReq(), res);
 
-    expect(res.json.mock.calls[0][0][0].booking_count).toBe(1);
+    const [premier, second] = res.json.mock.calls[0][0];
+    expect(premier).toMatchObject({ avg_rating: 5, review_count: 1, comment_count: 1 });
+    expect(second).toMatchObject({ avg_rating: 3, review_count: 1, comment_count: 0 });
   });
 
-  it('ne bloque le calendrier que sur les réservations confirmées', async () => {
+  it('n’interroge les avis que des annonces listées', async () => {
+    db.boat.findMany.mockResolvedValue([rawBoat({ id_boat: 4 }), rawBoat({ id_boat: 9 })]);
+
+    await controller.getBoats(makeReq(), res);
+
+    expect(db.review.findMany.mock.calls[0][0].where).toEqual({
+      status: 'validated',
+      deleted_at: null,
+      booking: { id_boat: { in: [4, 9] } },
+    });
+  });
+
+  it('n’interroge pas les avis sans annonce à enrichir', async () => {
+    await controller.getBoats(makeReq(), res);
+
+    expect(db.review.findMany).not.toHaveBeenCalled();
+  });
+
+  it('laisse la base compter les réservations confirmées', async () => {
+    db.boat.findMany.mockResolvedValue([rawBoat({ _count: { bookings: 3 } })]);
+
+    await controller.getBoats(makeReq(), res);
+
+    const { _count } = db.boat.findMany.mock.calls[0][0].include;
+    expect(_count.select.bookings.where).toEqual({ status: { in: ['confirmed'] } });
+    expect(res.json.mock.calls[0][0][0].booking_count).toBe(3);
+  });
+
+  it('ne demande que les réservations confirmées non échues', async () => {
+    await controller.getBoats(makeReq(), res);
+
+    const where = bookingsWhere();
+    expect(where.status).toEqual({ in: ['confirmed'] });
+    expect(where.end_date.gte).toBeInstanceOf(Date);
+  });
+
+  // Les colonnes de dates sont des DATE, restituées à minuit UTC : une borne
+  // prise à minuit local exclurait les réservations s'achevant aujourd'hui sur
+  // tout serveur situé à l'ouest de Greenwich.
+  it('borne les créneaux à minuit UTC du jour courant', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-01T23:30:00Z'));
+
+    await controller.getBoats(makeReq(), res);
+
+    expect(bookingsWhere().end_date.gte.toISOString()).toBe('2026-03-01T00:00:00.000Z');
+    jest.useRealTimers();
+  });
+
+  // La borne était figée si l'include restait une constante de module : le
+  // serveur aurait gardé la date de son démarrage jusqu'au redéploiement.
+  it('recalcule la borne du jour à chaque appel', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-01T12:00:00Z'));
+    await controller.getBoats(makeReq(), res);
+
+    jest.setSystemTime(new Date('2026-06-15T12:00:00Z'));
+    await controller.getBoats(makeReq(), res);
+
+    const [premier, second] = db.boat.findMany.mock.calls.map(
+      (call) => call[0].include.bookings.where.end_date.gte
+    );
+    expect(premier.toISOString()).toBe('2026-03-01T00:00:00.000Z');
+    expect(second.toISOString()).toBe('2026-06-15T00:00:00.000Z');
+    jest.useRealTimers();
+  });
+
+  it('projette les créneaux renvoyés par la base', async () => {
     db.boat.findMany.mockResolvedValue([
-      rawBoat({
-        bookings: [
-          bookingWith('confirmed', [], {
-            start: new Date('2026-07-01'),
-            end: new Date('2026-07-08'),
-          }),
-          bookingWith('pending', [], {
-            start: new Date('2026-08-01'),
-            end: new Date('2026-08-08'),
-          }),
-        ],
-      }),
+      rawBoat({ bookings: [range('2026-07-01', '2026-07-08')] }),
     ]);
 
     await controller.getBoats(makeReq(), res);
 
-    const [boat] = res.json.mock.calls[0][0];
-    expect(boat.booked_ranges).toEqual([
+    expect(res.json.mock.calls[0][0][0].booked_ranges).toEqual([
       { start_date: new Date('2026-07-01'), end_date: new Date('2026-07-08') },
     ]);
   });
 
   it('retire le détail brut des réservations de la réponse', async () => {
-    db.boat.findMany.mockResolvedValue([rawBoat({ bookings: [bookingWith('confirmed')] })]);
+    db.boat.findMany.mockResolvedValue([
+      rawBoat({ bookings: [range('2026-07-01', '2026-07-08')], _count: { bookings: 1 } }),
+    ]);
 
     await controller.getBoats(makeReq(), res);
 
-    expect(res.json.mock.calls[0][0][0]).not.toHaveProperty('bookings');
+    const [boat] = res.json.mock.calls[0][0];
+    expect(boat).not.toHaveProperty('bookings');
+    expect(boat).not.toHaveProperty('_count');
   });
 
   it('renvoie une liste vide sans annonce publiée', async () => {
@@ -199,9 +249,8 @@ describe('getBoatsByType', () => {
   });
 
   it('enrichit aussi les bateaux groupés', async () => {
-    db.boat.findMany.mockResolvedValue([
-      rawBoat({ bookings: [bookingWith('confirmed', [{ rating: 5, comment: 'Top' }])] }),
-    ]);
+    db.boat.findMany.mockResolvedValue([rawBoat()]);
+    db.review.findMany.mockResolvedValue([reviewOf(1, 5, 'Top')]);
 
     await controller.getBoatsByType(makeReq(), res);
 

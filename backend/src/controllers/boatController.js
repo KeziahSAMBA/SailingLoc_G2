@@ -2,52 +2,96 @@ import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
 import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
 
-const BOAT_INCLUDE = {
-  port: true,
-  images: { orderBy: { order: 'asc' } },
-  equipment: true,
-  availabilities: {
-    where: { is_available: true },
-    orderBy: { start_date: 'asc' },
-  },
-  bookings: {
-    select: {
-      status: true,
-      start_date: true,
-      end_date: true,
-      reviews: {
-        where: { status: 'validated', deleted_at: null },
-        select: { rating: true, comment: true },
-      },
-    },
-  },
-};
-
 // Seules les réservations confirmées (payées) bloquent les dates du calendrier :
 // une demande « pending » en cours de tunnel ne réserve pas le créneau, le
 // premier locataire qui paie l'emporte.
 const BLOCKING_BOOKING_STATUSES = ['confirmed'];
 
-function enrichWithRating(boats) {
+// Les colonnes start_date / end_date sont des DATE : Prisma les restitue à
+// minuit UTC. Prendre ici minuit UTC plutôt que minuit local évite qu'une
+// réservation s'achevant aujourd'hui disparaisse du calendrier des serveurs
+// situés à l'ouest de Greenwich.
+function startOfToday() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+// Construit à chaque appel, et non figé au chargement du module : la borne
+// « aujourd'hui » resterait sinon celle du démarrage du serveur.
+function boatInclude() {
+  return {
+    port: true,
+    images: { orderBy: { order: 'asc' } },
+    equipment: true,
+    availabilities: {
+      where: { is_available: true },
+      orderBy: { start_date: 'asc' },
+    },
+    // Le calendrier n'a besoin que des créneaux qu'il doit griser : les
+    // réservations confirmées non encore échues. Une réservation passée ne peut
+    // bloquer aucune date sélectionnable, le sélecteur refusant les jours
+    // antérieurs à aujourd'hui — la remonter alourdirait la réponse sans rien
+    // changer à l'affichage.
+    bookings: {
+      where: {
+        status: { in: BLOCKING_BOOKING_STATUSES },
+        end_date: { gte: startOfToday() },
+      },
+      orderBy: { start_date: 'asc' },
+      select: { start_date: true, end_date: true },
+    },
+    // Le compte des réservations est un indicateur de popularité portant sur
+    // tout l'historique : PostgreSQL le calcule, au lieu de rapatrier les
+    // lignes pour les dénombrer en mémoire.
+    _count: {
+      select: { bookings: { where: { status: { in: BLOCKING_BOOKING_STATUSES } } } },
+    },
+  };
+}
+
+// Les avis sont rattachés au bateau par leur réservation. Les agréger dans une
+// requête dédiée évite de traverser tout l'historique des réservations pour les
+// atteindre : seules les lignes d'avis sont lues, et l'index sur booking.id_boat
+// porte la jointure.
+async function reviewStatsByBoat(boatIds) {
+  const stats = new Map();
+  if (boatIds.length === 0) return stats;
+
+  const reviews = await prisma.review.findMany({
+    where: {
+      status: 'validated',
+      deleted_at: null,
+      booking: { id_boat: { in: boatIds } },
+    },
+    select: { rating: true, comment: true, booking: { select: { id_boat: true } } },
+  });
+
+  for (const review of reviews) {
+    const id = review.booking.id_boat;
+    const entry = stats.get(id) || { sum: 0, count: 0, comment_count: 0 };
+    entry.sum += review.rating;
+    entry.count += 1;
+    if (review.comment?.trim()) entry.comment_count += 1;
+    stats.set(id, entry);
+  }
+
+  return stats;
+}
+
+function enrichWithRating(boats, reviewStats) {
   return boats.map((b) => {
-    const allReviews = b.bookings.flatMap((bk) => bk.reviews);
-    const avg =
-      allReviews.length > 0
-        ? Math.round((allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length) * 10) / 10
-        : null;
-    const comment_count = allReviews.filter((r) => r.comment?.trim()).length;
-    const booking_count = b.bookings.filter((bk) => bk.status === 'confirmed').length;
-    const booked_ranges = b.bookings
-      .filter((bk) => BLOCKING_BOOKING_STATUSES.includes(bk.status))
-      .map((bk) => ({ start_date: bk.start_date, end_date: bk.end_date }));
-    const { bookings, ...boat } = b;
+    const stats = reviewStats.get(b.id_boat) || { sum: 0, count: 0, comment_count: 0 };
+    const avg = stats.count > 0 ? Math.round((stats.sum / stats.count) * 10) / 10 : null;
+    // Les réservations remontées sont déjà les seules bloquantes : le filtrage
+    // est fait par la base, il ne reste qu'à projeter les dates.
+    const { bookings, _count, ...boat } = b;
     return {
       ...boat,
       avg_rating: avg,
-      review_count: allReviews.length,
-      comment_count,
-      booking_count,
-      booked_ranges,
+      review_count: stats.count,
+      comment_count: stats.comment_count,
+      booking_count: _count.bookings,
+      booked_ranges: bookings.map((bk) => ({ start_date: bk.start_date, end_date: bk.end_date })),
     };
   });
 }
@@ -55,20 +99,23 @@ function enrichWithRating(boats) {
 export async function getBoats(req, res) {
   const boats = await prisma.boat.findMany({
     where: { is_published: true },
-    include: BOAT_INCLUDE,
+    include: boatInclude(),
   });
 
-  res.json(enrichWithRating(boats));
+  const reviewStats = await reviewStatsByBoat(boats.map((b) => b.id_boat));
+
+  res.json(enrichWithRating(boats, reviewStats));
 }
 
 export async function getBoatsByType(req, res) {
   const boats = await prisma.boat.findMany({
     where: { is_published: true },
-    include: BOAT_INCLUDE,
+    include: boatInclude(),
     orderBy: { id_boat: 'asc' },
   });
 
-  const enriched = enrichWithRating(boats);
+  const reviewStats = await reviewStatsByBoat(boats.map((b) => b.id_boat));
+  const enriched = enrichWithRating(boats, reviewStats);
 
   // Group by type, keep at most 3 boats per type
   const groups = {};
