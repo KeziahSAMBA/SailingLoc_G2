@@ -38,17 +38,10 @@ describe('production configuration', () => {
     ).toThrow(/JWT_SECRET/);
   });
 
-  it('rejects development Stripe keys and invalid encryption keys in production', () => {
+  it('rejects invalid encryption keys in production', () => {
     expect(() =>
-      validateConfig(
-        {
-          ...validProductionConfig,
-          STRIPE_SECRET_KEY: 'sk_test_only',
-          FILE_ENCRYPTION_KEY: 'not-a-key',
-        },
-        'production'
-      )
-    ).toThrow(/Stripe live|64 caractères hexadécimaux/);
+      validateConfig({ ...validProductionConfig, FILE_ENCRYPTION_KEY: 'not-a-key' }, 'production')
+    ).toThrow(/64 caractères hexadécimaux/);
   });
 
   it('accepts a test Stripe key for a staging deployment running the production runtime', () => {
@@ -71,13 +64,22 @@ describe('production configuration', () => {
     expect(validateConfig(validProductionConfig, 'production')).toBe(validProductionConfig);
   });
 
-  it('rejects a test Stripe key for a production deployment', () => {
+  it('accepts a test Stripe key for a production deployment', () => {
+    const demoConfig = {
+      ...validProductionConfig,
+      STRIPE_SECRET_KEY: 'sk_test_51stagingKey123',
+    };
+
+    expect(validateConfig(demoConfig, 'production')).toBe(demoConfig);
+  });
+
+  it('rejects a malformed Stripe key for a production deployment', () => {
     expect(() =>
       validateConfig(
-        { ...validProductionConfig, STRIPE_SECRET_KEY: 'sk_test_51stagingKey123' },
+        { ...validProductionConfig, STRIPE_SECRET_KEY: 'pk_test_51stagingKey123' },
         'production'
       )
-    ).toThrow(/Stripe live/);
+    ).toThrow(/sk_live_ ou sk_test_/);
   });
 
   it('requires a separate public backend origin for uploaded assets', () => {

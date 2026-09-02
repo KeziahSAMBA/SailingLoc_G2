@@ -350,8 +350,13 @@ export function validateConfig(config, environment = getRuntimeEnvironment()) {
 
   if (deploymentEnvironment === 'production') {
     required('STRIPE_SECRET_KEY', config.STRIPE_SECRET_KEY);
-    if (config.STRIPE_SECRET_KEY && !/^sk_live_[A-Za-z0-9]+$/.test(config.STRIPE_SECRET_KEY)) {
-      errors.push('STRIPE_SECRET_KEY doit être une clé Stripe live');
+    // La cible production accepte les deux comptes Stripe : le déploiement de
+    // démonstration tourne en runtime production avec une clé de test.
+    if (
+      config.STRIPE_SECRET_KEY &&
+      !/^sk_(?:live|test)_[A-Za-z0-9]+$/.test(config.STRIPE_SECRET_KEY)
+    ) {
+      errors.push('STRIPE_SECRET_KEY doit être une clé Stripe sk_live_ ou sk_test_');
     }
   } else if (deploymentEnvironment === 'staging' && config.STRIPE_SECRET_KEY) {
     if (!/^sk_test_[A-Za-z0-9]+$/.test(config.STRIPE_SECRET_KEY)) {
