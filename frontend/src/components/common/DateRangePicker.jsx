@@ -164,7 +164,7 @@ function DateRangePicker({
 
       {open && (
         <div
-          className={`absolute w-[min(18rem,calc(100vw-2rem))] rounded-xl bg-surface shadow-xl border border-gray-100 p-3 z-50 text-left max-sm:left-1/2 max-sm:right-auto max-sm:-translate-x-1/2 ${
+          className={`absolute w-[min(18rem,calc(100vw-2rem))] rounded-xl bg-surface shadow-xl border border-calendar-border p-3 z-50 text-left max-sm:left-1/2 max-sm:right-auto max-sm:-translate-x-1/2 ${
             panelPlacement === 'top-right' ? 'right-0 bottom-full mb-2' : 'left-0 top-full mt-2'
           }`}
         >
@@ -173,17 +173,17 @@ function DateRangePicker({
               type="button"
               disabled={!canGoPrev}
               onClick={() => setMonth((m) => addMonths(m, -1))}
-              className="w-6 h-6 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-6 h-6 flex items-center justify-center rounded-full text-calendar-muted hover:bg-calendar-hover disabled:opacity-30 disabled:cursor-not-allowed"
             >
               ‹
             </button>
-            <span className="text-xs font-semibold text-gray-700 capitalize">
+            <span className="text-xs font-semibold text-calendar-title capitalize">
               {monthFormatter.format(month)}
             </span>
             <button
               type="button"
               onClick={() => setMonth((m) => addMonths(m, 1))}
-              className="w-6 h-6 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
+              className="w-6 h-6 flex items-center justify-center rounded-full text-calendar-muted hover:bg-calendar-hover"
             >
               ›
             </button>
@@ -191,7 +191,7 @@ function DateRangePicker({
 
           <div className="grid grid-cols-7 gap-y-1 text-center">
             {weekdays.map((wd) => (
-              <span key={wd} className="text-[10px] uppercase text-gray-400">
+              <span key={wd} className="text-[10px] uppercase text-calendar-weekday">
                 {wd}
               </span>
             ))}
@@ -202,13 +202,14 @@ function DateRangePicker({
               const isEnd = isSameDay(day, endDate);
               const inRange = startDate && endDate && day > startDate && day < endDate;
 
-              let cellClass = 'text-gray-300 cursor-not-allowed';
+              let cellClass = 'text-calendar-disabled cursor-not-allowed';
               if (isStart || isEnd) {
-                cellClass = 'bg-sky-600 text-on-dark font-semibold';
+                cellClass = 'bg-calendar-selected text-on-dark font-semibold';
               } else if (inRange) {
-                cellClass = 'bg-sky-100 text-sky-800';
+                cellClass = 'bg-calendar-range text-calendar-range-text';
               } else if (!disabled) {
-                cellClass = 'bg-green-200 text-green-800 hover:bg-green-300 cursor-pointer';
+                cellClass =
+                  'bg-calendar-available text-calendar-available-text hover:bg-calendar-available-hover cursor-pointer';
               }
 
               return (
@@ -225,8 +226,8 @@ function DateRangePicker({
             })}
           </div>
 
-          <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-500">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-200 border border-green-400 inline-block" />
+          <div className="flex items-center gap-1 mt-2 text-[10px] text-calendar-muted">
+            <span className="w-2.5 h-2.5 rounded-full bg-calendar-available border border-success inline-block" />
             {t('searchBar.datesAvailable')}
           </div>
         </div>

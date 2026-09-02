@@ -58,6 +58,116 @@
   --sl-chart-primary: 62 151 214;
   --sl-chart-hover: 90 180 236;
   --sl-chart-violet: 167 139 250;
+  --sl-calendar-border: 243 244 246;
+  --sl-calendar-title: 55 65 81;
+  --sl-calendar-muted: 107 114 128;
+  --sl-calendar-weekday: 156 163 175;
+  --sl-calendar-disabled: 209 213 219;
+  --sl-calendar-hover: 243 244 246;
+  --sl-calendar-available: 187 247 208;
+  --sl-calendar-available-text: 22 101 52;
+  --sl-calendar-available-hover: 134 239 172;
+  --sl-calendar-selected: 2 132 199;
+  --sl-calendar-range: 224 242 254;
+  --sl-calendar-range-text: 7 89 133;
+}
+
+/* Palette du mode nuit. Les composants utilisent les mêmes tokens que le
+   rendu clair : seul l'attribut posé sur <html> change leurs valeurs, ce qui
+   conserve la structure, les dimensions et les interactions existantes. */
+html[data-sailingloc-theme='dark'] {
+  color-scheme: dark;
+
+  --sl-page: 2 6 23;
+  --sl-surface: 15 23 42;
+  --sl-content: 248 250 252;
+  --sl-content-muted: 203 213 225;
+  --sl-on-dark: 248 250 252;
+  --sl-on-light: 15 23 42;
+  --sl-brand: 90 180 236;
+  --sl-brand-soft: 125 211 252;
+  --sl-brand-hover: 125 211 252;
+  --sl-brand-navy: 15 23 42;
+  --sl-brand-focus: 125 211 252;
+  --sl-brand-text: 125 211 252;
+  --sl-action: 2 132 199;
+  --sl-action-hover: 3 105 161;
+  --sl-action-pale: 186 230 253;
+  --sl-action-soft: 125 211 252;
+  --sl-action-bright: 56 189 248;
+  --sl-action-deep: 3 105 161;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 15 23 42;
+  --sl-dark-elevated: 30 41 59;
+  --sl-dark-muted: 51 65 85;
+  --sl-dark-strong: 2 6 23;
+  --sl-content-soft: 203 213 225;
+  --sl-content-subtle: 148 163 184;
+  --sl-border-light: 100 116 139;
+  --sl-neutral: 148 163 184;
+
+  /* Les variantes utilisées en surface / texte gardent une couleur de
+     statut unique pour que les opacités Tailwind (/15 et /18) restent
+     déterministes dans tous les espaces. Les variantes « deep » servent aux
+     boutons pleins qui conservent du texte clair. */
+  --sl-success: 74 222 128;
+  --sl-success-base: 74 222 128;
+  --sl-success-bright: 74 222 128;
+  --sl-success-soft: 74 222 128;
+  --sl-success-deep: 22 163 74;
+  --sl-warning: 251 191 36;
+  --sl-warning-base: 251 191 36;
+  --sl-warning-bright: 251 191 36;
+  --sl-warning-soft: 251 191 36;
+  --sl-warning-pale: 251 191 36;
+  --sl-danger: 248 113 113;
+  --sl-danger-base: 248 113 113;
+  --sl-danger-bright: 248 113 113;
+  --sl-danger-soft: 248 113 113;
+  --sl-danger-pale: 248 113 113;
+  --sl-info: 56 189 248;
+  --sl-map-available: 125 211 252;
+  --sl-map-unavailable: 148 163 184;
+  --sl-chart-primary: 56 189 248;
+  --sl-chart-hover: 125 211 252;
+  --sl-chart-violet: 196 181 253;
+  --sl-calendar-border: 51 65 85;
+  --sl-calendar-title: 248 250 252;
+  --sl-calendar-muted: 203 213 225;
+  --sl-calendar-weekday: 148 163 184;
+  --sl-calendar-disabled: 100 116 139;
+  --sl-calendar-hover: 51 65 85;
+  --sl-calendar-available: 22 101 52;
+  --sl-calendar-available-text: 220 252 231;
+  --sl-calendar-available-hover: 21 128 61;
+  --sl-calendar-selected: 2 132 199;
+  --sl-calendar-range: 12 74 110;
+  --sl-calendar-range-text: 224 242 254;
+
+  /* Sans imposer une largeur, ces couleurs s'appliquent aux barres natives
+     des navigateurs qui les exposent. */
+  scrollbar-color: rgb(var(--sl-border-light)) rgb(var(--sl-page));
+}
+
+html[data-sailingloc-theme='dark'] body,
+html[data-sailingloc-theme='dark'] #root {
+  background-color: rgb(var(--sl-page));
+  color: rgb(var(--sl-content));
+}
+
+html[data-sailingloc-theme='dark']::-webkit-scrollbar-track {
+  background-color: rgb(var(--sl-page));
+}
+
+html[data-sailingloc-theme='dark']::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--sl-border-light));
+  border: 3px solid rgb(var(--sl-page));
+  border-radius: 999px;
+}
+
+html[data-sailingloc-theme='dark'] :where(input, select, textarea) {
+  accent-color: rgb(var(--sl-brand-hover));
 }
 
 html {
@@ -91,6 +201,10 @@ body {
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
+}
+
+html[data-sailingloc-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 
 /* Transition du panneau d'auth lors du passage Connexion <-> Inscription. */
@@ -141,6 +255,16 @@ textarea:-webkit-autofill {
   -webkit-text-fill-color: rgb(var(--sl-on-dark));
   caret-color: rgb(var(--sl-on-dark));
   transition: background-color 9999999s ease-in-out 0s;
+}
+
+html[data-sailingloc-theme='dark'] input:-webkit-autofill,
+html[data-sailingloc-theme='dark'] input:-webkit-autofill:hover,
+html[data-sailingloc-theme='dark'] input:-webkit-autofill:focus,
+html[data-sailingloc-theme='dark'] select:-webkit-autofill,
+html[data-sailingloc-theme='dark'] textarea:-webkit-autofill {
+  -webkit-text-fill-color: rgb(var(--sl-content));
+  caret-color: rgb(var(--sl-content));
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--sl-surface)) inset;
 }
 
 /* Apparition douce des cartes au changement de filtre (dashboards). En grille
@@ -228,4 +352,21 @@ textarea:-webkit-autofill {
 .select-glass option:hover {
   background-color: rgb(var(--sl-brand-text));
   color: rgb(var(--sl-on-dark));
+}
+
+html[data-sailingloc-theme='dark'] .select-glass option {
+  background-color: rgb(var(--sl-dark-elevated));
+  color: rgb(var(--sl-content));
+}
+
+html[data-sailingloc-theme='dark'] .select-glass option:checked,
+html[data-sailingloc-theme='dark'] .select-glass option:hover {
+  background-color: rgb(var(--sl-brand-hover));
+  color: rgb(var(--sl-on-light));
+}
+
+html[data-sailingloc-theme='dark'] .sailingloc-popup .leaflet-popup-content-wrapper,
+html[data-sailingloc-theme='dark'] .sailingloc-popup .leaflet-popup-tip {
+  background-color: rgb(var(--sl-surface));
+  color: rgb(var(--sl-content));
 }

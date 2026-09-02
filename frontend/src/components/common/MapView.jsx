@@ -33,14 +33,14 @@ function createPortIcon({ available, badge, city }) {
     className: '',
     html: `
       <div style="position:relative;">
-        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;align-items:center;gap:4px;padding:3px 8px 3px 3px;${showBadge ? 'padding-right:14px;' : ''}border-radius:9999px;background:rgba(255,255,255,0.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(2,44,74,0.25);white-space:nowrap;">
+        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;align-items:center;gap:4px;padding:3px 8px 3px 3px;${showBadge ? 'padding-right:14px;' : ''}border-radius:9999px;background:rgb(var(--sl-surface) / 0.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgb(var(--sl-glass) / 0.5);box-shadow:0 2px 8px rgba(2,44,74,0.25);white-space:nowrap;">
           <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="${color}"/>
           </svg>
           <span style="font-size:10px;font-weight:700;color:${color};">${escapeHtml(city ?? '')}</span>
           ${
             showBadge
-              ? `<span style="position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;padding:0 3px;border-radius:9999px;background:#ef4444;color:#fff;font-size:8px;font-weight:700;line-height:15px;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(2,44,74,0.35);">${badge}</span>`
+              ? `<span style="position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;padding:0 3px;border-radius:9999px;background:rgb(var(--sl-danger-base));color:rgb(var(--sl-on-dark));font-size:8px;font-weight:700;line-height:15px;text-align:center;border:2px solid rgb(var(--sl-surface));box-shadow:0 1px 3px rgba(2,44,74,0.35);">${badge}</span>`
               : ''
           }
         </div>
@@ -136,11 +136,16 @@ function FlyToBoat({ boat, zoom = BOAT_FOCUS_ZOOM }) {
 // par défaut de Leaflet.
 const MAP_STYLE_CSS = `
 .sailingloc-popup .leaflet-popup-content-wrapper {
+  background: rgb(var(--sl-surface));
+  color: rgb(var(--sl-content));
   border-radius: 14px;
-  border: 1px solid rgba(14,165,233,0.25);
+  border: 1px solid rgb(var(--sl-action) / 0.25);
   box-shadow: 0 8px 24px rgba(2,44,74,0.18);
 }
-.sailingloc-popup .leaflet-popup-tip { box-shadow: none; }
+.sailingloc-popup .leaflet-popup-tip {
+  background: rgb(var(--sl-surface));
+  box-shadow: none;
+}
 `;
 
 // Zoom sur un port au clic, sans dépasser le niveau de zoom déjà atteint par l'utilisateur.
