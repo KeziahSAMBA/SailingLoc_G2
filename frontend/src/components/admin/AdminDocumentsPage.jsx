@@ -12,9 +12,9 @@ import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 const PAGE_SIZE = 10;
 
 const STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  validated: 'bg-success-base/15 text-success-soft',
-  refused: 'bg-danger-base/15 text-danger-soft',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  validated: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 const FILTERS = [
@@ -246,7 +246,8 @@ function AdminDocumentsPage() {
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        STATUS_CLS[d.status] || 'bg-neutral/15 text-on-dark/70'
+                        STATUS_CLS[d.status] ||
+                        'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                       }`}
                     >
                       {t(`adminDocuments.status.${d.status}`, { defaultValue: d.status })}
@@ -297,7 +298,8 @@ function AdminDocumentsPage() {
                 </p>
                 <span
                   className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    STATUS_CLS[d.status] || 'bg-neutral/15 text-on-dark/70'
+                    STATUS_CLS[d.status] ||
+                    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                   }`}
                 >
                   {t(`adminDocuments.status.${d.status}`, { defaultValue: d.status })}

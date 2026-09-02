@@ -125,7 +125,7 @@ function DangerZone() {
         {blocked && (
           <div
             role="alert"
-            className="mb-5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200"
+            className="status-indicator status-indicator--warning mb-5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200"
           >
             <p className="font-semibold">{t('accountForm.dangerZone.blocked.title')}</p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -234,7 +234,7 @@ function DangerZone() {
             {error && (
               <div
                 role="alert"
-                className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+                className="status-indicator status-indicator--danger mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
               >
                 {error}
               </div>

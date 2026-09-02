@@ -23,16 +23,16 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
 
 const BOOKING_STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  confirmed: 'bg-success-base/15 text-success-soft',
-  refused: 'bg-danger-base/15 text-danger-soft',
-  cancelled: 'bg-neutral/15 text-on-dark/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  confirmed: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  cancelled: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
 };
 
 const DOC_STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  validated: 'bg-success-base/15 text-success-soft',
-  refused: 'bg-danger-base/15 text-danger-soft',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  validated: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 const FILTER_KEYS = ['all', 'pending', 'confirmed', 'cancelled', 'refused'];
@@ -160,7 +160,9 @@ function matchesPeriod(booking, period) {
 
 function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
   const { t } = useTranslation();
-  const statusCls = BOOKING_STATUS_CLS[booking.status] || 'bg-neutral/15 text-on-dark/80';
+  const statusCls =
+    BOOKING_STATUS_CLS[booking.status] ||
+    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
   const port = booking.boat?.port;
   const locataire = booking.locataire;
   // Une demande n'est actionnable qu'une fois payée par le locataire
@@ -200,14 +202,16 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
             {/* Badges toujours sous le nom, jamais à côté. */}
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {booking.has_open_dispute && (
-                <span className="rounded-full bg-warning-base/15 px-2 py-0.5 text-[0.6875rem] font-semibold text-warning-soft">
+                <span className="status-indicator status-indicator--warning rounded-full bg-warning-base/15 px-2 py-0.5 text-[0.6875rem] font-semibold text-warning-soft">
                   {t('proprietaireReservations.openDispute')}
                 </span>
               )}
               {booking.status === 'pending' && (
                 <span
                   className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-                    isPaid ? 'bg-action/15 text-action-soft' : 'bg-neutral/15 text-on-dark/70'
+                    isPaid
+                      ? 'status-indicator status-indicator--info bg-action/15 text-action-soft'
+                      : 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                   }`}
                 >
                   {isPaid
@@ -537,7 +541,7 @@ function ProprietaireReservations() {
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -870,7 +874,8 @@ function ProprietaireReservations() {
                           </p>
                           <span
                             className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-                              DOC_STATUS_CLS[doc.status] || 'bg-neutral/15 text-on-dark/70'
+                              DOC_STATUS_CLS[doc.status] ||
+                              'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                             }`}
                           >
                             {t(`documentsManager.status.${doc.status}`, {

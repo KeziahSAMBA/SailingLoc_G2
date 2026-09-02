@@ -16,8 +16,8 @@ const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 const STATUS_CLS = {
-  validated: 'bg-success-base/15 text-success-soft',
-  pending: 'bg-warning-base/15 text-warning-soft',
+  validated: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
 };
 
 function Stars({ rating }) {
@@ -76,7 +76,8 @@ function ReviewCard({ review, onReplied }) {
         <span className="min-w-0 break-words text-xs text-on-dark/70">{review.author}</span>
         <span
           className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-            STATUS_CLS[review.status] || 'bg-neutral/15 text-on-dark/70'
+            STATUS_CLS[review.status] ||
+            'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
           }`}
         >
           {t(`proprietaireReviews.status.${review.status}`, { defaultValue: review.status })}
@@ -209,7 +210,7 @@ function ProprietaireReviews() {
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>

@@ -96,7 +96,7 @@ function AdminCreateUserPage() {
         {success && (
           <div
             role="status"
-            className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
+            className="status-indicator status-indicator--success mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
           >
             Compte créé pour <span className="font-semibold">{success.email}</span> ({success.role}
             ). Un email vient de lui être envoyé pour définir son mot de passe.
@@ -106,7 +106,7 @@ function AdminCreateUserPage() {
         {serverError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+            className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
           >
             {serverError}
           </div>

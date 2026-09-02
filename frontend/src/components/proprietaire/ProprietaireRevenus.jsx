@@ -30,10 +30,10 @@ const CHART_BLUE = 'rgb(var(--sl-chart-primary))';
 const CHART_BLUE_HOVER = 'rgb(var(--sl-chart-hover))';
 
 const PAYMENT_STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  success: 'bg-success-base/15 text-success-soft',
-  failed: 'bg-danger-base/15 text-danger-soft',
-  refunded: 'bg-neutral/15 text-on-dark/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  success: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  failed: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  refunded: 'status-indicator status-indicator--info bg-neutral/15 text-on-dark/80',
 };
 
 const STATUS_KEYS = ['all', 'success', 'pending', 'refunded', 'failed'];
@@ -331,7 +331,9 @@ function TotalCard({ label, value, accent = 'text-on-dark', hint }) {
 
 function TransactionCard({ payment }) {
   const { t } = useTranslation();
-  const statusCls = PAYMENT_STATUS_CLS[payment.status] || 'bg-neutral/15 text-on-dark/80';
+  const statusCls =
+    PAYMENT_STATUS_CLS[payment.status] ||
+    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
 
   return (
     <article className="px-4 py-4">
@@ -560,7 +562,7 @@ function ProprietaireRevenus() {
       {error && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -796,7 +798,8 @@ function ProprietaireRevenus() {
                     <tbody className="divide-y divide-glass/15">
                       {pageRows.map((p) => {
                         const statusCls =
-                          PAYMENT_STATUS_CLS[p.status] || 'bg-neutral/15 text-on-dark/80';
+                          PAYMENT_STATUS_CLS[p.status] ||
+                          'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
                         return (
                           <tr key={p.id_payment}>
                             <td className="whitespace-nowrap px-5 py-3 text-on-dark/80">

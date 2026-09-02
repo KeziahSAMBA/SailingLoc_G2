@@ -117,7 +117,10 @@ function Stepper({ step }) {
 function ErrorNote({ children }) {
   if (!children) return null;
   return (
-    <p role="alert" className="rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-200">
+    <p
+      role="alert"
+      className="status-indicator status-indicator--danger rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-200"
+    >
       {children}
     </p>
   );

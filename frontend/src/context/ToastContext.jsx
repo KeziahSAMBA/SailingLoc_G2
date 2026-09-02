@@ -84,6 +84,13 @@ const ICON_COLORS = {
   warning: 'text-orange-600',
 };
 
+const STATUS_INDICATOR_CLASSES = {
+  success: 'status-indicator--success',
+  error: 'status-indicator--danger',
+  info: 'status-indicator--info',
+  warning: 'status-indicator--warning',
+};
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
@@ -122,7 +129,9 @@ function ToastItem({ toast, onDismiss }) {
   return (
     <div
       role="status"
-      className={`flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg ring-1 ring-black/5 ${COLORS[toast.type]}`}
+      className={`status-indicator status-indicator--has-icon ${
+        STATUS_INDICATOR_CLASSES[toast.type] || 'status-indicator--neutral'
+      } flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg ring-1 ring-black/5 ${COLORS[toast.type]}`}
     >
       <span className={`mt-0.5 flex-shrink-0 ${ICON_COLORS[toast.type]}`}>{ICONS[toast.type]}</span>
       <p className="flex-1 text-sm font-medium">{toast.message}</p>

@@ -16,10 +16,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  success: 'bg-success-base/15 text-success-soft',
-  failed: 'bg-danger-base/15 text-danger-soft',
-  refunded: 'bg-action/15 text-action-soft',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  success: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  failed: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  refunded: 'status-indicator status-indicator--info bg-action/15 text-action-soft',
 };
 const STATUS_FILTERS = [
   { value: '', labelKey: 'all' },
@@ -153,7 +153,7 @@ function AdminTransactionsPage() {
     }`;
   const badge = (cls) =>
     `inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-      cls || 'bg-neutral/15 text-on-dark/70'
+      cls || 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
     }`;
 
   return (

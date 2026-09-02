@@ -9,9 +9,9 @@ import Pagination from '../common/Pagination.jsx';
 const PAGE_SIZE = 10;
 
 const LEVEL_CLS = {
-  info: 'bg-action/15 text-action-soft',
-  warning: 'bg-warning-base/15 text-warning-soft',
-  error: 'bg-danger-base/15 text-danger-soft',
+  info: 'status-indicator status-indicator--info bg-action/15 text-action-soft',
+  warning: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  error: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 const DATE_OPTS = {
@@ -343,7 +343,8 @@ function AdminLogsPage() {
                   <td className="px-3 py-3">
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                        LEVEL_CLS[log.level] || 'bg-neutral/15 text-on-dark/80'
+                        LEVEL_CLS[log.level] ||
+                        'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80'
                       }`}
                     >
                       {actionLabel(log.action)}
@@ -394,7 +395,8 @@ function AdminLogsPage() {
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    LEVEL_CLS[log.level] || 'bg-neutral/15 text-on-dark/80'
+                    LEVEL_CLS[log.level] ||
+                    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80'
                   }`}
                 >
                   {actionLabel(log.action)}

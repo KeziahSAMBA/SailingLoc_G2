@@ -9,10 +9,10 @@ import { buildCron, describeCron, parseCron, WEEKDAYS } from '../../utils/cronEx
 const POLL_MS = 5000;
 
 const STATUS_CLS = {
-  running: 'bg-action/15 text-action-soft',
-  success: 'bg-success-base/15 text-success-soft',
-  failed: 'bg-danger-base/15 text-danger-soft',
-  skipped: 'bg-warning-base/15 text-warning-soft',
+  running: 'status-indicator status-indicator--info bg-action/15 text-action-soft',
+  success: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  failed: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  skipped: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
 };
 
 const DATE_OPTS = {
@@ -153,7 +153,7 @@ function AdminCronJobsPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-base font-semibold text-on-dark">{jobLabel(job.key)}</h2>
                     {job.running && (
-                      <span className="flex items-center gap-1.5 rounded-full bg-action/15 px-2.5 py-0.5 text-xs font-semibold text-action-soft">
+                      <span className="status-indicator status-indicator--info flex items-center gap-1.5 rounded-full bg-action/15 px-2.5 py-0.5 text-xs font-semibold text-action-soft">
                         <span
                           aria-hidden="true"
                           className="h-2 w-2 animate-pulse rounded-full bg-action-bright"
@@ -162,12 +162,12 @@ function AdminCronJobsPage() {
                       </span>
                     )}
                     {job.dry_run && (
-                      <span className="rounded-full bg-warning-base/15 px-2.5 py-0.5 text-xs font-semibold text-warning-soft">
+                      <span className="status-indicator status-indicator--warning rounded-full bg-warning-base/15 px-2.5 py-0.5 text-xs font-semibold text-warning-soft">
                         {t('adminCron.dryRun')}
                       </span>
                     )}
                     {job.orphan && (
-                      <span className="rounded-full bg-danger-base/15 px-2.5 py-0.5 text-xs font-semibold text-danger-soft">
+                      <span className="status-indicator status-indicator--danger rounded-full bg-danger-base/15 px-2.5 py-0.5 text-xs font-semibold text-danger-soft">
                         {t('adminCron.orphan')}
                       </span>
                     )}
@@ -220,7 +220,8 @@ function AdminCronJobsPage() {
                     <dd className="mt-1">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                          STATUS_CLS[job.last_status] || 'bg-neutral/15 text-on-dark/80'
+                          STATUS_CLS[job.last_status] ||
+                          'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80'
                         }`}
                       >
                         {t(`adminCronRuns.statuses.${job.last_status}`, {

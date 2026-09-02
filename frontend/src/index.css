@@ -4,6 +4,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Redondance non colorimétrique des états : les badges conservent leurs
+ * couleurs existantes, mais leur contour donne aussi une information
+ * indépendante de la perception des couleurs. Les classes sont ajoutées aux
+ * indicateurs de statut uniquement ; les dimensions externes restent
+ * inchangées grâce à box-sizing: border-box (défini plus bas).
+ */
+@layer components {
+  .status-indicator {
+    border-color: currentColor;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .status-indicator.status-indicator--success {
+    border-style: solid;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--warning {
+    border-style: dashed;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--danger {
+    border-style: double;
+    border-width: 3px;
+  }
+
+  .status-indicator.status-indicator--info {
+    border-style: dotted;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--neutral {
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  /* Certains indicateurs disposent déjà d'une icône SVG dédiée. */
+  .status-indicator--has-icon {
+    border-color: currentColor;
+  }
+}
+
 /* Couleurs contextuelles du rendu clair historique. Les sélecteurs des futurs
    modes héritent volontairement de ces mêmes valeurs sur la branche commune. */
 :root,

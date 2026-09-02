@@ -370,7 +370,7 @@ function ProprietaireBoatForm() {
       {serverError && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+          className="status-indicator status-indicator--danger mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {serverError}
         </div>
@@ -710,10 +710,10 @@ function ProprietaireBoatForm() {
               <span
                 className={`rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
                   existingActe.status === 'validated'
-                    ? 'bg-success-base/15 text-success-soft'
+                    ? 'status-indicator status-indicator--success bg-success-base/15 text-success-soft'
                     : existingActe.status === 'refused'
-                      ? 'bg-danger-base/15 text-danger-soft'
-                      : 'bg-warning-base/15 text-warning-soft'
+                      ? 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft'
+                      : 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft'
                 }`}
               >
                 {existingActe.status === 'validated'

@@ -12,10 +12,10 @@ const PAGE_SIZE = 10;
 const POLL_MS = 5000;
 
 const STATUS_CLS = {
-  running: 'bg-action/15 text-action-soft',
-  success: 'bg-success-base/15 text-success-soft',
-  failed: 'bg-danger-base/15 text-danger-soft',
-  skipped: 'bg-warning-base/15 text-warning-soft',
+  running: 'status-indicator status-indicator--info bg-action/15 text-action-soft',
+  success: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  failed: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  skipped: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
 };
 
 const DATE_OPTS = {
@@ -190,7 +190,7 @@ function AdminCronRunsPage() {
                 </span>
                 <span className="text-xs text-on-dark/60">{triggerLabel(run.trigger)}</span>
                 {run.dry_run && (
-                  <span className="rounded-full bg-warning-base/15 px-2 py-0.5 text-xs font-semibold text-warning-soft">
+                  <span className="status-indicator status-indicator--warning rounded-full bg-warning-base/15 px-2 py-0.5 text-xs font-semibold text-warning-soft">
                     {t('adminCron.dryRun')}
                   </span>
                 )}
@@ -294,7 +294,8 @@ function AdminCronRunsPage() {
                   <td className="px-3 py-3">
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                        STATUS_CLS[run.status] || 'bg-neutral/15 text-on-dark/80'
+                        STATUS_CLS[run.status] ||
+                        'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80'
                       }`}
                     >
                       {statusLabel(run.status)}
@@ -338,7 +339,8 @@ function AdminCronRunsPage() {
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    STATUS_CLS[run.status] || 'bg-neutral/15 text-on-dark/80'
+                    STATUS_CLS[run.status] ||
+                    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80'
                   }`}
                 >
                   {statusLabel(run.status)}
