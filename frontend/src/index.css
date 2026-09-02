@@ -696,3 +696,110 @@ html[data-sailingloc-theme='dark'] .sailingloc-popup .leaflet-popup-tip {
   background-color: rgb(var(--sl-surface));
   color: rgb(var(--sl-content));
 }
+
+/* Préférence système de contraste : l'aspect clair standard reste inchangé,
+   mais le focus est plus facile à repérer lorsque l'utilisateur demande un
+   contraste renforcé. */
+@media (prefers-contrast: more) {
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid rgb(var(--sl-brand-focus)) !important;
+    outline-offset: 2px;
+  }
+}
+
+/* Couleurs forcées : le navigateur reprend sa palette système (Canvas,
+   ButtonText, Highlight, …). Les formes et les motifs restent les signaux
+   non colorimétriques des états, sans imposer de couleur d'auteur. */
+@media (forced-colors: active) {
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 2px;
+  }
+
+  .status-indicator {
+    forced-color-adjust: auto;
+    border-color: ButtonText !important;
+  }
+
+  .calendar-day {
+    forced-color-adjust: auto;
+    border-color: ButtonText !important;
+    background-image: none !important;
+  }
+
+  .calendar-day.calendar-day--selected {
+    border-color: Highlight !important;
+    color: HighlightText !important;
+  }
+
+  .calendar-day.calendar-day--available,
+  .calendar-day.calendar-day--range {
+    border-color: ButtonText !important;
+  }
+
+  .calendar-day.calendar-day--disabled {
+    border-color: GrayText !important;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent 0,
+      transparent 3px,
+      GrayText 3px,
+      GrayText 4px
+    ) !important;
+  }
+
+  .select-glass {
+    appearance: auto;
+    -webkit-appearance: auto;
+    background-image: none !important;
+  }
+
+  [data-marker-availability] {
+    forced-color-adjust: auto;
+    color: ButtonText !important;
+  }
+
+  [data-marker-availability] > div {
+    background-color: Canvas !important;
+    border-color: ButtonText !important;
+    color: ButtonText !important;
+  }
+
+  [data-marker-availability] svg path[fill='none'] {
+    fill: none !important;
+    stroke: ButtonText !important;
+  }
+
+  [data-marker-availability] svg path:not([fill='none']) {
+    fill: ButtonText !important;
+    stroke: none !important;
+  }
+
+  .monthly-revenue-chart {
+    forced-color-adjust: auto;
+  }
+
+  .sailingloc-popup .leaflet-popup-content-wrapper,
+  .sailingloc-popup .leaflet-popup-tip {
+    forced-color-adjust: auto;
+    background: Canvas !important;
+    color: CanvasText !important;
+    border-color: ButtonText !important;
+  }
+}
+
+/* Toutes les animations et transitions auteur respectent la préférence de
+   réduction des mouvements, y compris celles ajoutées ultérieurement. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -185,7 +185,7 @@ function MonthlyChart({ months }) {
     <div className="relative">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
+        className="monthly-revenue-chart w-full"
         role="img"
         aria-labelledby="monthly-revenue-chart-title"
         aria-describedby="monthly-revenue-chart-description"
