@@ -28,6 +28,7 @@ function makeReq(overrides = {}) {
   return {
     body: {},
     params: {},
+    query: {},
     user: { id_user: 7 },
     protocol: 'https',
     get: () => 'api.sailingloc.fr',
@@ -205,6 +206,48 @@ describe('getBoats — enrichissement des annonces', () => {
     ]);
   });
 
+  // L'endpoint est public et non authentifié : id_user désigne le propriétaire
+  // et registration l'immatriculation officielle du navire.
+  it('n’expose aucune colonne interne du bateau', async () => {
+    db.boat.findMany.mockResolvedValue([
+      rawBoat({
+        id_user: 42,
+        registration: 'FR-123456',
+        created_at: new Date('2026-01-01'),
+        updated_at: new Date('2026-02-01'),
+        deleted_at: null,
+      }),
+    ]);
+
+    await controller.getBoats(makeReq(), res);
+
+    const [boat] = res.json.mock.calls[0][0];
+    for (const champ of ['id_user', 'registration', 'created_at', 'updated_at', 'deleted_at']) {
+      expect(boat).not.toHaveProperty(champ);
+    }
+    expect(boat.name).toBe('Pen Duick');
+  });
+
+  it('ne projette du port que les colonnes affichées', async () => {
+    await controller.getBoats(makeReq(), res);
+
+    const { select } = db.boat.findMany.mock.calls[0][0].include.port;
+    expect(Object.keys(select).sort()).toEqual([
+      'city',
+      'country',
+      'id_port',
+      'image_url',
+      'latitude',
+      'longitude',
+      'name',
+      'region',
+    ]);
+    // La fiche produit situe le port sur une carte : les retirer casserait
+    // ProductPage.
+    expect(select.latitude).toBe(true);
+    expect(select.longitude).toBe(true);
+  });
+
   it('retire le détail brut des réservations de la réponse', async () => {
     db.boat.findMany.mockResolvedValue([
       rawBoat({ bookings: [range('2026-07-01', '2026-07-08')], _count: { bookings: 1 } }),
@@ -221,6 +264,43 @@ describe('getBoats — enrichissement des annonces', () => {
     await controller.getBoats(makeReq(), res);
 
     expect(res.json).toHaveBeenCalledWith([]);
+  });
+});
+
+describe('getBoats — pagination', () => {
+  it('borne la première page à 25 annonces par défaut', async () => {
+    await controller.getBoats(makeReq(), res);
+
+    expect(db.boat.findMany.mock.calls[0][0]).toMatchObject({ skip: 0, take: 25 });
+  });
+
+  it('décale selon la page demandée', async () => {
+    await controller.getBoats(makeReq({ query: { page: '3', pageSize: '10' } }), res);
+
+    expect(db.boat.findMany.mock.calls[0][0]).toMatchObject({ skip: 20, take: 10 });
+  });
+
+  it('plafonne une taille de page démesurée', async () => {
+    await controller.getBoats(makeReq({ query: { pageSize: '99999' } }), res);
+
+    expect(db.boat.findMany.mock.calls[0][0].take).toBe(500);
+  });
+
+  // Sans tri explicite, PostgreSQL peut renvoyer les lignes dans un ordre
+  // variable : deux pages successives se recouvriraient ou sauteraient des
+  // annonces, sans que rien ne le signale.
+  it('trie explicitement pour que les pages ne se recouvrent pas', async () => {
+    await controller.getBoats(makeReq(), res);
+
+    expect(db.boat.findMany.mock.calls[0][0].orderBy).toEqual({ id_boat: 'asc' });
+  });
+
+  it('refuse une pagination invalide par un 400 plutôt qu’en laissant pendre', async () => {
+    await controller.getBoats(makeReq({ query: { page: 'abc' } }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Pagination invalide.' });
+    expect(db.boat.findMany).not.toHaveBeenCalled();
   });
 });
 
@@ -246,6 +326,16 @@ describe('getBoatsByType', () => {
     await controller.getBoatsByType(makeReq(), res);
 
     expect(res.json).toHaveBeenCalledWith([]);
+  });
+
+  // Ce catalogue groupé garde son contrat non paginé, mais pas au prix d'un
+  // balayage sans limite si le catalogue grossit.
+  it('reste borné à 500 annonces malgré l’absence de pagination', async () => {
+    await controller.getBoatsByType(makeReq(), res);
+
+    const appel = db.boat.findMany.mock.calls[0][0];
+    expect(appel.take).toBe(500);
+    expect(appel).not.toHaveProperty('skip');
   });
 
   it('enrichit aussi les bateaux groupés', async () => {

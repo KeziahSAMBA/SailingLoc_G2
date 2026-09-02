@@ -1,6 +1,9 @@
 import prisma from '../config/db.js';
 import { createBooking } from '../services/bookingService.js';
 import { createBoat, updateBoat, deleteBoat } from '../services/proprietaireService.js';
+import { MAX_LIST_ITEMS, parsePagination } from '../utils/inputSecurity.js';
+
+const PUBLIC_BOAT_PAGE_SIZE = 25;
 
 // Seules les réservations confirmées (payées) bloquent les dates du calendrier :
 // une demande « pending » en cours de tunnel ne réserve pas le créneau, le
@@ -18,9 +21,29 @@ function startOfToday() {
 
 // Construit à chaque appel, et non figé au chargement du module : la borne
 // « aujourd'hui » resterait sinon celle du démarrage du serveur.
+// Colonnes du bateau qu'aucun écran ne lit et qui n'ont donc rien à faire sur
+// un endpoint public : id_user désigne le propriétaire, registration est
+// l'immatriculation officielle du navire, et les horodatages renseignent sur la
+// vie interne des données — deleted_at révélant jusqu'aux annonces retirées.
+const CHAMPS_INTERNES = ['id_user', 'registration', 'created_at', 'updated_at', 'deleted_at'];
+
+// Les onze ports du catalogue sont recopiés dans chacun des bateaux : autant ne
+// projeter que les colonnes réellement affichées. latitude et longitude en font
+// partie, la fiche produit s'en servant pour situer le port sur la carte.
+const PORT_SELECT = {
+  id_port: true,
+  name: true,
+  city: true,
+  country: true,
+  region: true,
+  image_url: true,
+  latitude: true,
+  longitude: true,
+};
+
 function boatInclude() {
   return {
-    port: true,
+    port: { select: PORT_SELECT },
     images: { orderBy: { order: 'asc' } },
     equipment: true,
     availabilities: {
@@ -85,6 +108,7 @@ function enrichWithRating(boats, reviewStats) {
     // Les réservations remontées sont déjà les seules bloquantes : le filtrage
     // est fait par la base, il ne reste qu'à projeter les dates.
     const { bookings, _count, ...boat } = b;
+    for (const champ of CHAMPS_INTERNES) delete boat[champ];
     return {
       ...boat,
       avg_rating: avg,
@@ -97,9 +121,27 @@ function enrichWithRating(boats, reviewStats) {
 }
 
 export async function getBoats(req, res) {
+  let pagination;
+  try {
+    pagination = parsePagination(req.query, PUBLIC_BOAT_PAGE_SIZE);
+  } catch (err) {
+    // Express 4 ne rattrape pas les rejets asynchrones et cette branche n'a pas
+    // de gestionnaire d'erreur global : sans ce catch, un « ?page=abc » laisserait
+    // la requête pendre jusqu'au délai d'expiration du client. Le bloc surveillé
+    // se limite volontairement à l'analyse des paramètres, dont la seule erreur
+    // possible est un 400.
+    return res.status(400).json({ message: err.message });
+  }
+
   const boats = await prisma.boat.findMany({
     where: { is_published: true },
     include: boatInclude(),
+    // Un tri explicite n'est pas décoratif ici : sans lui, PostgreSQL est libre
+    // de renvoyer les lignes dans un ordre variable d'une requête à l'autre, et
+    // deux pages successives pourraient se recouvrir ou sauter des annonces.
+    orderBy: { id_boat: 'asc' },
+    skip: pagination.skip,
+    take: pagination.take,
   });
 
   const reviewStats = await reviewStatsByBoat(boats.map((b) => b.id_boat));
@@ -112,6 +154,10 @@ export async function getBoatsByType(req, res) {
     where: { is_published: true },
     include: boatInclude(),
     orderBy: { id_boat: 'asc' },
+    // Ce catalogue groupé n'est pas paginé dans son contrat public — il ne
+    // retient que trois bateaux par type. La borne globale l'empêche malgré tout
+    // de balayer une table sans limite si le catalogue grossit.
+    take: MAX_LIST_ITEMS,
   });
 
   const reviewStats = await reviewStatsByBoat(boats.map((b) => b.id_boat));
