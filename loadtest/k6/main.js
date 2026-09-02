@@ -32,6 +32,14 @@ export const options = {
   // défaut du compte — le tir fonctionne quand même.
   cloud: {
     name: `SailingLoc — ${PROFILE}`,
+    // Le backend est servi depuis Paris (en-tête « x-railway-edge: cdg1 »).
+    // Sans cette clé, Grafana tire depuis Columbus (Ohio) : chaque requête
+    // paierait ~95 ms de traversée de l'Atlantique, et le corps de 1,8 Mo du
+    // catalogue bien davantage, TCP montant en débit un aller-retour à la fois.
+    // On mesurerait la distance autant que l'application.
+    distribution: {
+      paris: { loadZone: __ENV.LOAD_ZONE || 'amazon:fr:paris', percent: 100 },
+    },
     ...(__ENV.K6_CLOUD_PROJECT_ID ? { projectID: Number(__ENV.K6_CLOUD_PROJECT_ID) } : {}),
   },
 };
