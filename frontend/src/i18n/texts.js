@@ -39,7 +39,15 @@ export const TEXTS = {
       language: { fr: 'Langue', en: 'Language' },
       mode: { fr: 'Mode', en: 'Mode' },
       darkMode: { fr: 'Mode sombre', en: 'Dark mode' },
+      lightMode: { fr: 'Mode clair', en: 'Light mode' },
       colorblindMode: { fr: 'Mode daltonien', en: 'Colorblind mode' },
+      colorVisionOptions: {
+        fr: 'Profils de vision des couleurs',
+        en: 'Color vision profiles',
+      },
+      protanopia: { fr: 'Protanopie', en: 'Protanopia' },
+      deuteranopia: { fr: 'Deutéranopie', en: 'Deuteranopia' },
+      tritanopia: { fr: 'Tritanopie', en: 'Tritanopia' },
     },
     auth: {
       login: { fr: "Se connecter / S'inscrire", en: 'Log in / Sign up' },
