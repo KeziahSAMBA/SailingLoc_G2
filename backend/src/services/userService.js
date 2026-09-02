@@ -33,6 +33,13 @@ const EMAIL_VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const SET_PASSWORD_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24h pour définir son mdp après création
 const DUMMY_HASH = '$2a$12$CwTycUXWue0Thq9StjUM0uJ8eVCD7vYz3uTtbpcLzqAOJBT5VnYf6';
 const AVATAR_TYPES = Object.freeze(['avatar', 'profil']);
+// La route publique et la route d'administration ont chacune une politique
+// de rôle immuable. Le rôle transmis dans le formulaire ne peut donc jamais
+// choisir la politique d'autorisation ; il sert uniquement à retrouver le
+// compte candidat, dont le rôle est ensuite relu et contrôlé côté serveur.
+const LOGIN_ROLES = Object.freeze(['proprietaire', 'locataire', 'admin']);
+const PUBLIC_LOGIN_ROLES = Object.freeze(['proprietaire', 'locataire']);
+const ADMIN_LOGIN_ROLES = Object.freeze(['admin']);
 
 function publicUser(user) {
   return {
@@ -278,11 +285,11 @@ export async function resendVerification({ email, role }) {
   }
 }
 
-export async function login({ email, password, role }, { userAgent } = {}) {
+async function authenticate({ email, password, role } = {}, { userAgent, allowedRoles }) {
   const genericInvalid = Object.assign(new Error('Identifiants invalides.'), { status: 401 });
 
   if (!email || !password || !role) throw genericInvalid;
-  if (!['proprietaire', 'locataire', 'admin'].includes(role)) throw genericInvalid;
+  if (!LOGIN_ROLES.includes(role)) throw genericInvalid;
 
   const normalizedEmail = String(email).trim().toLowerCase();
   const user = await findUserByEmailAndRole(normalizedEmail, role);
@@ -290,7 +297,10 @@ export async function login({ email, password, role }, { userAgent } = {}) {
   const hashToCompare = user ? user.password : DUMMY_HASH;
   const passwordOk = await bcrypt.compare(password, hashToCompare);
 
-  if (!user || !passwordOk) throw genericInvalid;
+  // Cette vérification porte sur le rôle relu en base, jamais sur une valeur
+  // directement fournie par la requête. Les wrappers ci-dessous fournissent
+  // les listes immuables propres à chaque route.
+  if (!user || !passwordOk || !allowedRoles.includes(user.role)) throw genericInvalid;
 
   if (user.deleted_at) throw genericInvalid;
 
@@ -321,6 +331,22 @@ export async function login({ email, password, role }, { userAgent } = {}) {
   });
 
   return { accessToken, refreshToken, user: publicUser(user), reactivated };
+}
+
+// Connexion des comptes applicatifs depuis /api/users/login. Le client peut
+// choisir entre les deux rôles métier dans son formulaire, mais ne peut pas
+// transformer cette route en point d'entrée administrateur.
+export async function login(credentials, { userAgent } = {}) {
+  return authenticate(credentials, { userAgent, allowedRoles: PUBLIC_LOGIN_ROLES });
+}
+
+// Connexion du back-office depuis /api/admin/login. Le rôle est fixé ici,
+// indépendamment de tout champ transmis par le formulaire.
+export async function adminLogin({ email, password } = {}, { userAgent } = {}) {
+  return authenticate(
+    { email, password, role: 'admin' },
+    { userAgent, allowedRoles: ADMIN_LOGIN_ROLES }
+  );
 }
 
 export async function refreshSession(rawRefreshToken, { userAgent } = {}) {

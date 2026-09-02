@@ -211,9 +211,12 @@ describe('deployment container boundaries', () => {
 
     for (const composePath of ['../../docker-compose.yml', '../../docker-compose.staging.yml']) {
       const compose = fs.readFileSync(new URL(composePath, import.meta.url), 'utf8');
-      expect(compose).toMatch(
-        /frontend:\s+build:\s+(?:#.*\r?\n\s+)*context: \.\s+dockerfile: frontend\/Dockerfile/s
-      );
+      const lines = compose.split(/\r?\n/);
+      const frontendStart = lines.indexOf('  frontend:');
+      const frontendBuild = lines.slice(frontendStart, frontendStart + 10);
+      expect(frontendBuild).toContain('    build:');
+      expect(frontendBuild).toContain('      context: .');
+      expect(frontendBuild).toContain('      dockerfile: frontend/Dockerfile');
     }
   });
 
