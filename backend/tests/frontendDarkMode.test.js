@@ -48,6 +48,9 @@ describe('palette du mode nuit', () => {
     const css = source('frontend/src/index.css');
     const dark = darkThemeBlock(css);
 
+    expect(css).toMatch(/:root\s*\{/u);
+    expect(css).not.toMatch(/:root\[data-sailingloc-(?:theme|color-vision)\]/u);
+
     expect(dark).toContain('color-scheme: dark');
     expect(css.match(/color-scheme:\s*dark/gu)).toHaveLength(1);
 

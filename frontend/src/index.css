@@ -89,9 +89,7 @@
 
 /* Couleurs contextuelles du rendu clair historique. Les sélecteurs des futurs
    modes héritent volontairement de ces mêmes valeurs sur la branche commune. */
-:root,
-:root[data-sailingloc-theme],
-:root[data-sailingloc-color-vision] {
+:root {
   --sl-page: 248 250 252;
   --sl-surface: 255 255 255;
   --sl-content: 15 23 42;
