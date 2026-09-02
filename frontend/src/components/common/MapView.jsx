@@ -29,13 +29,20 @@ function escapeHtml(str) {
 function createPortIcon({ available, badge, city }) {
   const color = available ? PIN_COLOR_AVAILABLE : PIN_COLOR_UNAVAILABLE;
   const showBadge = available && Number(badge) > 0;
+  const availabilityLabel = available ? 'Disponible' : 'Bientôt disponible';
+  const markerLabel = `${city ?? ''} — ${availabilityLabel}`;
+  const pinShape = available
+    ? `<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="${color}"/>
+          <path d="m8.8 9.2 2.1 2.1 4.3-4.3" fill="none" stroke="rgb(var(--sl-on-dark))" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`
+    : `<path d="m12 2 9 10-9 10-9-10 9-10z" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="3 2" stroke-linejoin="round"/>
+          <path d="m9 9 6 6m0-6-6 6" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`;
   return L.divIcon({
     className: '',
     html: `
-      <div style="position:relative;">
+      <div role="img" aria-label="${escapeHtml(markerLabel)}" data-marker-availability="${available ? 'available' : 'unavailable'}" style="position:relative;">
         <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;align-items:center;gap:4px;padding:3px 8px 3px 3px;${showBadge ? 'padding-right:14px;' : ''}border-radius:9999px;background:rgb(var(--sl-surface) / 0.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgb(var(--sl-glass) / 0.5);box-shadow:0 2px 8px rgba(2,44,74,0.25);white-space:nowrap;">
-          <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="${color}"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="flex-shrink:0;">
+            ${pinShape}
           </svg>
           <span style="font-size:10px;font-weight:700;color:${color};">${escapeHtml(city ?? '')}</span>
           ${
@@ -55,11 +62,12 @@ function createPortIcon({ available, badge, city }) {
 // Pastille prix (style Airbnb) pour les pins bateaux individuels affichés au fort
 // zoom. iconSize [0,0] + transform CSS : la pastille s'auto-dimensionne au texte
 // (le prix a une largeur variable) tout en restant centrée/ancrée sur le point GPS.
-function createPriceIcon(price) {
+function createPriceIcon(price, label) {
+  const markerLabel = label || `${price}€ / jour`;
   return L.divIcon({
     className: '',
     html: `
-      <div style="position:relative;">
+      <div role="img" aria-label="${escapeHtml(markerLabel)}" data-marker-availability="available" style="position:relative;">
         <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);padding:4px 9px;border-radius:9999px;background:rgb(var(--sl-surface));border:1.5px solid rgb(var(--sl-map-available));color:rgb(var(--sl-map-available));font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(2,44,74,0.35);">
           ${price}€
         </div>
@@ -169,7 +177,13 @@ function ZoomableMarker({ marker }) {
       }}
     >
       <Popup className="sailingloc-popup">
-        <div className="text-sm">
+        <div
+          className="text-sm"
+          role="group"
+          aria-label={`${marker.title} — ${
+            marker.available === false ? 'Bientôt disponible' : 'Disponible'
+          }`}
+        >
           <div className="font-semibold">{marker.title}</div>
           {marker.subtitle && <div className="text-slate-500">{marker.subtitle}</div>}
           {marker.available === false && (
@@ -190,11 +204,18 @@ function BoatMarker({ boat, onSelect }) {
   return (
     <Marker
       position={[boat.lat, boat.lng]}
-      icon={createPriceIcon(boat.price)}
+      icon={createPriceIcon(
+        boat.price,
+        `${boat.name}${boat.city ? ` — ${boat.city}` : ''} — ${boat.price}€ / jour`
+      )}
       eventHandlers={{ click: () => onSelect?.(boat) }}
     >
       <Popup className="sailingloc-popup">
-        <div className="text-sm">
+        <div
+          className="text-sm"
+          role="group"
+          aria-label={`${boat.name}${boat.city ? ` — ${boat.city}` : ''} — ${boat.price}€ / jour`}
+        >
           <div className="font-semibold">{boat.name}</div>
           {boat.city && <div className="text-slate-500">{boat.city}</div>}
           <div className="mt-1 font-medium text-info">{boat.price}€ / jour</div>

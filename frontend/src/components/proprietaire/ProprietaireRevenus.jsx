@@ -187,12 +187,35 @@ function MonthlyChart({ months }) {
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
         role="img"
+        aria-labelledby="monthly-revenue-chart-title"
+        aria-describedby="monthly-revenue-chart-description"
         aria-label={t('proprietaireRevenus.chartAria', {
           series: months.map((m) => `${m.fullLabel} ${EURO_ROUND.format(m.net)}`).join(', '),
         })}
       >
+        <title id="monthly-revenue-chart-title">{t('proprietaireRevenus.chartMonths')}</title>
+        <desc id="monthly-revenue-chart-description">
+          {t('proprietaireRevenus.chartAria', {
+            series: months.map((m) => `${m.fullLabel} ${EURO_ROUND.format(m.net)}`).join(', '),
+          })}
+        </desc>
+        <defs>
+          <pattern
+            id="monthly-revenue-stripes"
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(0)"
+          >
+            <path
+              d="M-1 1 1-1M0 6 6 0M5 7 7 5"
+              stroke="rgb(var(--sl-on-dark) / 0.3)"
+              strokeWidth="1"
+            />
+          </pattern>
+        </defs>
         {/* Grille : traits fins et discrets, valeurs arrondies */}
-        {ticks.map((t) => (
+        {ticks.map((t, tickIndex) => (
           <g key={t}>
             <line
               x1={PAD.left}
@@ -201,6 +224,7 @@ function MonthlyChart({ months }) {
               y2={y(t)}
               stroke="rgb(var(--sl-glass) / 0.15)"
               strokeWidth="1"
+              strokeDasharray={tickIndex % 2 === 0 ? undefined : '3 3'}
             />
             <text
               x={PAD.left - 8}
@@ -221,10 +245,20 @@ function MonthlyChart({ months }) {
           return (
             <g key={m.key}>
               {h > 0 && (
-                <path
-                  d={roundedTopRect(cx - barW / 2, top, barW, h)}
-                  fill={active ? CHART_BLUE_HOVER : CHART_BLUE}
-                />
+                <>
+                  <path
+                    d={roundedTopRect(cx - barW / 2, top, barW, h)}
+                    fill={active ? CHART_BLUE_HOVER : CHART_BLUE}
+                    stroke="rgb(var(--sl-on-dark) / 0.55)"
+                    strokeWidth="1"
+                    strokeDasharray={active ? undefined : '4 2'}
+                  />
+                  <path
+                    d={roundedTopRect(cx - barW / 2, top, barW, h)}
+                    fill="url(#monthly-revenue-stripes)"
+                    pointerEvents="none"
+                  />
+                </>
               )}
               {/* Valeur au sommet, seulement quand il y a peu de colonnes */}
               {months.length <= 8 && m.net > 0 && (

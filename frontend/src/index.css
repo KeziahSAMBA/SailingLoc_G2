@@ -47,6 +47,44 @@
   .status-indicator--has-icon {
     border-color: currentColor;
   }
+
+  /* États du calendrier : la forme reste lisible sans distinguer les teintes. */
+  .calendar-day {
+    border-color: transparent;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--selected {
+    border-color: currentColor;
+    border-style: double;
+    border-width: 3px;
+  }
+
+  .calendar-day.calendar-day--available {
+    border-color: currentColor;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--range {
+    border-color: currentColor;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--disabled {
+    border-color: currentColor;
+    border-style: dashed;
+    border-width: 1px;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent 0,
+      transparent 3px,
+      rgb(var(--sl-calendar-disabled) / 0.35) 3px,
+      rgb(var(--sl-calendar-disabled) / 0.35) 4px
+    );
+  }
 }
 
 /* Couleurs contextuelles du rendu clair historique. Les sélecteurs des futurs
