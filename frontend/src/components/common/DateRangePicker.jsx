@@ -49,15 +49,15 @@ function DateField({ label, displayValue, placeholder, onClick, light }) {
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`mx-0.5 flex w-full flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors cursor-pointer sm:w-auto sm:rounded-full sm:px-5 sm:py-0.5 max-sm:mx-0 max-sm:flex-1 max-sm:min-w-0 max-sm:rounded-full max-sm:px-1.5 max-sm:py-1 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+      className={`mx-0.5 flex w-full flex-col justify-center rounded-xl px-3 py-2 text-center transition-colors cursor-pointer sm:w-auto sm:rounded-full sm:px-5 sm:py-0.5 max-sm:mx-0 max-sm:flex-1 max-sm:min-w-0 max-sm:rounded-full max-sm:px-1.5 max-sm:py-1 ${light ? 'hover:bg-surface/10' : 'hover:bg-overlay/10'}`}
     >
       <span
-        className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 max-sm:whitespace-nowrap ${light ? 'text-white' : 'text-black'}`}
+        className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 max-sm:whitespace-nowrap ${light ? 'text-on-dark' : 'text-on-light'}`}
       >
         {label}
       </span>
       <span
-        className={`text-xs whitespace-nowrap max-sm:block max-sm:max-w-full max-sm:truncate ${light ? (displayValue ? 'text-white/80' : 'text-white/50') : displayValue ? 'text-black/80' : 'text-black/50'}`}
+        className={`text-xs whitespace-nowrap max-sm:block max-sm:max-w-full max-sm:truncate ${light ? (displayValue ? 'text-on-dark/80' : 'text-on-dark/50') : displayValue ? 'text-on-light/80' : 'text-on-light/50'}`}
       >
         {displayValue || placeholder}
       </span>
@@ -156,7 +156,7 @@ function DateRangePicker({
             onChangeEnd('');
           }}
           title={t('searchBar.resetDatesTitle')}
-          className={`flex items-center justify-center w-5 h-5 rounded-full transition-colors self-center mr-1.5 ${light ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-black/50 hover:text-black hover:bg-black/10'}`}
+          className={`flex items-center justify-center w-5 h-5 rounded-full transition-colors self-center mr-1.5 ${light ? 'text-on-dark/60 hover:text-on-dark hover:bg-surface/10' : 'text-on-light/50 hover:text-on-light hover:bg-overlay/10'}`}
         >
           <FiX size={12} />
         </button>
@@ -164,7 +164,7 @@ function DateRangePicker({
 
       {open && (
         <div
-          className={`absolute w-[min(18rem,calc(100vw-2rem))] rounded-xl bg-white shadow-xl border border-gray-100 p-3 z-50 text-left max-sm:left-1/2 max-sm:right-auto max-sm:-translate-x-1/2 ${
+          className={`absolute w-[min(18rem,calc(100vw-2rem))] rounded-xl bg-surface shadow-xl border border-gray-100 p-3 z-50 text-left max-sm:left-1/2 max-sm:right-auto max-sm:-translate-x-1/2 ${
             panelPlacement === 'top-right' ? 'right-0 bottom-full mb-2' : 'left-0 top-full mt-2'
           }`}
         >
@@ -204,7 +204,7 @@ function DateRangePicker({
 
               let cellClass = 'text-gray-300 cursor-not-allowed';
               if (isStart || isEnd) {
-                cellClass = 'bg-sky-600 text-white font-semibold';
+                cellClass = 'bg-sky-600 text-on-dark font-semibold';
               } else if (inRange) {
                 cellClass = 'bg-sky-100 text-sky-800';
               } else if (!disabled) {

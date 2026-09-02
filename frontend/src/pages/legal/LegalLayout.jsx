@@ -81,7 +81,7 @@ function LegalLayout({ title, pageTitle, updated, children }) {
   }, [pageTitle]);
 
   return (
-    <main className="relative w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
+    <main className="relative w-full overflow-x-clip text-on-dark" style={PHOTO_BG_STYLE}>
       <style>{PAGE_SLIDE_CSS}</style>
       {/* Crossfade vers le fond de la destination pendant la sortie : se pose
           derrière les blocs (qui glissent hors écran par-dessus) et atterrit
@@ -102,8 +102,8 @@ function LegalLayout({ title, pageTitle, updated, children }) {
       {/* Titre, directement sur la photo comme les hero contact/à propos */}
       <section className="relative flex min-h-[32vh] w-full flex-col items-center justify-center px-4 pt-[96px]">
         <div className="text-center" style={slide(0, 'left')}>
-          <h1 className="text-3xl font-semibold text-white md:text-4xl">{title}</h1>
-          <p className="mt-3 text-sm text-white/70">
+          <h1 className="text-3xl font-semibold text-on-dark md:text-4xl">{title}</h1>
+          <p className="mt-3 text-sm text-on-dark/70">
             {t('legalLayout.updatedLabel', { date: updated })}
           </p>
         </div>
@@ -112,7 +112,7 @@ function LegalLayout({ title, pageTitle, updated, children }) {
       {/* Encadré glassmorphism : onglets + avertissement + document */}
       <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-6">
         <div
-          className="rounded-2xl border border-white/20 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] sm:p-8"
+          className="rounded-2xl border border-glass/20 bg-surface/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] sm:p-8"
           style={slide(1, 'right')}
         >
           {/* Navigation entre documents légaux, toujours sur une seule ligne */}
@@ -129,8 +129,8 @@ function LegalLayout({ title, pageTitle, updated, children }) {
                     className={({ isActive }) =>
                       `inline-block whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition ${FOCUS_LIGHT} ${
                         isActive
-                          ? 'bg-[#0A3172] text-white shadow'
-                          : 'border border-white/30 text-white/75 hover:bg-white/10 hover:text-white'
+                          ? 'bg-[#0A3172] text-on-dark shadow'
+                          : 'border border-glass/30 text-on-dark/75 hover:bg-surface/10 hover:text-on-dark'
                       }`
                     }
                   >
@@ -155,8 +155,8 @@ function LegalLayout({ title, pageTitle, updated, children }) {
 export function LegalSection({ title, children }) {
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold text-white">{title}</h2>
-      <div className="mt-2 space-y-2 text-sm leading-relaxed text-white/70">{children}</div>
+      <h2 className="text-lg font-semibold text-on-dark">{title}</h2>
+      <div className="mt-2 space-y-2 text-sm leading-relaxed text-on-dark/70">{children}</div>
     </section>
   );
 }

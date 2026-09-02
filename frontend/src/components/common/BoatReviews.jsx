@@ -33,7 +33,7 @@ const CARD_GLASS_STYLE = {
 };
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 function Stars({ rating }) {
   return (
@@ -61,7 +61,7 @@ function StarInput({ value, onChange, label }) {
           aria-checked={value === n}
           aria-label={String(n)}
           onClick={() => onChange(n)}
-          className={`rounded text-2xl text-[#5AB4EC] transition hover:scale-110 ${FOCUS_RING}`}
+          className={`rounded text-2xl text-brand transition hover:scale-110 ${FOCUS_RING}`}
         >
           {n <= value ? <FaStar aria-hidden /> : <FaRegStar aria-hidden />}
         </button>
@@ -112,13 +112,13 @@ function ReviewForm({ idBooking, review, onDone, onCancel, style, className = ''
   return (
     <form
       onSubmit={submit}
-      className={`rounded-xl border border-white/15 bg-white/5 p-4 ${className}`}
+      className={`rounded-xl border border-glass/15 bg-surface/5 p-4 ${className}`}
       style={style}
     >
-      <p className="text-sm font-semibold text-white">
+      <p className="text-sm font-semibold text-on-dark">
         {editing ? t('boatReviews.editTitle') : t('boatReviews.formTitle')}
       </p>
-      <span className="mb-1 mt-3 block text-xs font-medium text-white/70">
+      <span className="mb-1 mt-3 block text-xs font-medium text-on-dark/70">
         {t('locataireReservations.reviewModal.ratingLabel')}
       </span>
       <StarInput
@@ -129,7 +129,7 @@ function ReviewForm({ idBooking, review, onDone, onCancel, style, className = ''
         }}
         label={t('locataireReservations.reviewModal.ratingLabel')}
       />
-      <label htmlFor={fieldId} className="mb-1 mt-3 block text-xs font-medium text-white/70">
+      <label htmlFor={fieldId} className="mb-1 mt-3 block text-xs font-medium text-on-dark/70">
         {t('locataireReservations.reviewModal.commentLabel')}
       </label>
       <textarea
@@ -139,7 +139,7 @@ function ReviewForm({ idBooking, review, onDone, onCancel, style, className = ''
         onChange={(e) => setComment(e.target.value)}
         maxLength={1000}
         placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
-        className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+        className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
       />
       {error && (
         <p role="alert" className="mt-1 text-xs text-red-400">
@@ -152,7 +152,7 @@ function ReviewForm({ idBooking, review, onDone, onCancel, style, className = ''
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className={`rounded-full border border-white/40 px-4 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/10 disabled:opacity-50 ${FOCUS_RING}`}
+            className={`rounded-full border border-glass/40 px-4 py-1.5 text-xs font-semibold text-on-dark/80 transition hover:bg-surface/10 disabled:opacity-50 ${FOCUS_RING}`}
           >
             {t('boatReviews.cancel')}
           </button>
@@ -160,7 +160,7 @@ function ReviewForm({ idBooking, review, onDone, onCancel, style, className = ''
         <button
           type="submit"
           disabled={busy}
-          className={`shrink-0 rounded-full bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+          className={`shrink-0 rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
         >
           {busy
             ? t('proprietaireReviews.sending')
@@ -297,7 +297,7 @@ export default function BoatReviews({
         className="flex w-full max-w-[919.9px] flex-col gap-5 rounded-2xl border px-4 py-6 sm:px-8 lg:px-10 lg:py-8"
         style={GLASS_STYLE}
       >
-        <h2 className="text-2xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+        <h2 className="text-2xl font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
           {t('boatReviews.title')}
         </h2>
 
@@ -316,7 +316,7 @@ export default function BoatReviews({
         )}
 
         {reviews.length > 0 && visible.length === 0 && (
-          <p className="text-sm text-white/60">{t('reviewFilters.noMatch')}</p>
+          <p className="text-sm text-on-dark/60">{t('reviewFilters.noMatch')}</p>
         )}
 
         {visible.length > 0 && (
@@ -334,7 +334,10 @@ export default function BoatReviews({
                   />
                 </li>
               ) : (
-                <li key={r.id_review} className="rounded-xl border border-white/15 bg-white/5 p-4">
+                <li
+                  key={r.id_review}
+                  className="rounded-xl border border-glass/15 bg-surface/5 p-4"
+                >
                   <div className="flex items-center gap-2">
                     <SafeImage
                       src={r.avatar || nameToAvatarUrl(r.author)}
@@ -348,7 +351,7 @@ export default function BoatReviews({
                       className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
                     />
                     <div className="flex min-w-0 flex-col">
-                      <span className="flex items-center gap-1 text-sm font-semibold leading-tight text-white">
+                      <span className="flex items-center gap-1 text-sm font-semibold leading-tight text-on-dark">
                         {r.author}
                         {r.status === 'validated' && (
                           <MdVerified
@@ -358,7 +361,7 @@ export default function BoatReviews({
                           />
                         )}
                       </span>
-                      <span className="text-xs text-white/50">
+                      <span className="text-xs text-on-dark/50">
                         {formatDate(r.created_at, DATE_OPTS)}
                       </span>
                     </div>
@@ -368,17 +371,17 @@ export default function BoatReviews({
                   </div>
 
                   {r.comment && (
-                    <p className="mt-2 break-words text-sm leading-relaxed text-white/80">
+                    <p className="mt-2 break-words text-sm leading-relaxed text-on-dark/80">
                       {r.comment}
                     </p>
                   )}
 
                   {r.owner_reply && (
-                    <div className="mt-3 rounded-lg border-l-2 border-sky-400/60 bg-white/5 px-3 py-2">
+                    <div className="mt-3 rounded-lg border-l-2 border-sky-400/60 bg-surface/5 px-3 py-2">
                       <p className="text-xs font-semibold text-sky-300">
                         {t('boatReviews.ownerReply')}
                       </p>
-                      <p className="mt-0.5 break-words text-sm leading-relaxed text-white/80">
+                      <p className="mt-0.5 break-words text-sm leading-relaxed text-on-dark/80">
                         {r.owner_reply}
                       </p>
                     </div>

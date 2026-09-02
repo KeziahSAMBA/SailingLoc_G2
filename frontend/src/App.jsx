@@ -81,7 +81,7 @@ function AppContent() {
   return (
     <>
       {renderHeader()}
-      <div className="bg-slate-50 text-slate-900">
+      <div className="bg-page text-content">
         <AppRouter key={routerKey} location={routesLocation} />
       </div>
       <SeoMetadata />

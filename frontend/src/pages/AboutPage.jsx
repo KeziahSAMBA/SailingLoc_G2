@@ -30,12 +30,12 @@ const FOCUS_LIGHT =
 
 // Cartes glassmorphism, comme les sections de la page d'accueil.
 const cardClass =
-  'rounded-2xl border border-white/20 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px]';
+  'rounded-2xl border border-glass/20 bg-surface/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px]';
 
 // Taille et format des cartes Valeurs : même modèle que la Section 4
 // (proposition de valeur) de l'accueil, en gardant les couleurs glassmorphism.
 const valueCardClass =
-  'flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/5 p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-8';
+  'flex flex-col items-center gap-3 rounded-2xl border border-glass/20 bg-surface/5 p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-8';
 
 const PHOTO_BG_STYLE = {
   backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${aboutBg})`,
@@ -96,7 +96,7 @@ function AboutPage() {
   }, [t]);
 
   return (
-    <main className="relative w-full overflow-x-clip text-white" style={PHOTO_BG_STYLE}>
+    <main className="relative w-full overflow-x-clip text-on-dark" style={PHOTO_BG_STYLE}>
       <style>{PAGE_SLIDE_CSS}</style>
       {/* Crossfade vers le fond de la catégorie ou du contact pendant la
           sortie : se pose derrière les blocs (qui glissent hors écran
@@ -121,13 +121,13 @@ function AboutPage() {
       >
         <div className="relative text-center">
           <h1
-            className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl"
+            className="text-2xl font-semibold text-on-dark sm:text-3xl md:text-4xl"
             style={slide(0)}
           >
             {t('aboutPage.hero.title')}
           </h1>
           <p
-            className="mx-auto mt-3 max-w-2xl text-sm text-white/75 sm:text-base"
+            className="mx-auto mt-3 max-w-2xl text-sm text-on-dark/75 sm:text-base"
             style={slide(1, 'right')}
           >
             {t('aboutPage.hero.tagline')}
@@ -146,19 +146,19 @@ function AboutPage() {
               </p>
               <h2
                 id="story-title"
-                className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl"
+                className="text-2xl font-semibold text-on-dark sm:text-3xl md:text-4xl"
               >
                 {t('aboutPage.story.title')}
               </h2>
-              <p className="mt-6 leading-relaxed text-white/70">{t('aboutPage.story.p1')}</p>
-              <p className="mt-4 leading-relaxed text-white/70">{t('aboutPage.story.p2')}</p>
+              <p className="mt-6 leading-relaxed text-on-dark/70">{t('aboutPage.story.p1')}</p>
+              <p className="mt-4 leading-relaxed text-on-dark/70">{t('aboutPage.story.p2')}</p>
             </div>
 
             <ul className="grid grid-cols-2 gap-4 sm:gap-6" style={slide(3, 'right')}>
               {STATS.map(({ value, label }) => (
                 <li key={label} className={`${cardClass} text-center`}>
                   <p className="text-3xl font-bold text-sky-300">{value}</p>
-                  <p className="mt-1 text-sm text-white/65">{label}</p>
+                  <p className="mt-1 text-sm text-on-dark/65">{label}</p>
                 </li>
               ))}
             </ul>
@@ -166,7 +166,7 @@ function AboutPage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-4xl border-t border-white/15" />
+      <div className="mx-auto max-w-4xl border-t border-glass/15" />
 
       {/* Valeurs */}
       <section
@@ -182,7 +182,7 @@ function AboutPage() {
             </p>
             <h2
               id="values-title"
-              className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl"
+              className="text-2xl font-semibold text-on-dark sm:text-3xl md:text-4xl"
             >
               {t('aboutPage.values.title')}
             </h2>
@@ -192,15 +192,15 @@ function AboutPage() {
             {VALUES.map(({ icon, title, text }) => (
               <li key={title} className={valueCardClass}>
                 <span>{icon}</span>
-                <h3 className="text-sm font-semibold text-white">{title}</h3>
-                <p className="text-xs leading-relaxed text-white/65">{text}</p>
+                <h3 className="text-sm font-semibold text-on-dark">{title}</h3>
+                <p className="text-xs leading-relaxed text-on-dark/65">{text}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <div className="mx-auto max-w-4xl border-t border-white/15" />
+      <div className="mx-auto max-w-4xl border-t border-glass/15" />
 
       {/* Destinations */}
       <section
@@ -215,7 +215,7 @@ function AboutPage() {
           </p>
           <h2
             id="destinations-title"
-            className="text-2xl font-semibold text-white sm:text-3xl md:text-4xl"
+            className="text-2xl font-semibold text-on-dark sm:text-3xl md:text-4xl"
           >
             {t('aboutPage.destinations.title')}
           </h2>
@@ -232,17 +232,17 @@ function AboutPage() {
         style={slide(6, 'right')}
       >
         <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-3 text-center">
-          <h2 id="cta-title" className="text-base font-semibold text-white sm:text-lg">
+          <h2 id="cta-title" className="text-base font-semibold text-on-dark sm:text-lg">
             {t('aboutPage.cta.title')}
           </h2>
-          <p className="text-sm text-white/70">{t('aboutPage.cta.text')}</p>
+          <p className="text-sm text-on-dark/70">{t('aboutPage.cta.text')}</p>
           <a
             href="/categorie"
             onClick={(e) => {
               e.preventDefault();
               pageExitNavigate('/categorie');
             }}
-            className={`mt-1 flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur-2xl transition hover:bg-white/20 ${FOCUS_LIGHT}`}
+            className={`mt-1 flex items-center gap-2 rounded-full border border-glass/30 bg-surface/10 px-6 py-2.5 text-sm font-semibold text-on-dark backdrop-blur-2xl transition hover:bg-surface/20 ${FOCUS_LIGHT}`}
           >
             {t('aboutPage.cta.browse')} <MdAnchor className="text-base" />
           </a>

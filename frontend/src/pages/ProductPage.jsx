@@ -899,7 +899,7 @@ function ProductPage() {
     // overflow-x-clip (et non hidden : hidden créerait un conteneur de scroll
     // qui casserait les sticky) évite l'ascenseur horizontal pendant l'entrée
     // des blocs depuis la marge droite (translateX(110vw)).
-    <main className="w-full min-h-[100svh] pt-[clamp(4rem,6vw,5rem)] bg-white overflow-x-clip">
+    <main className="w-full min-h-[100svh] pt-[clamp(4rem,6vw,5rem)] bg-surface overflow-x-clip">
       <SeoMetadata product={boat} productMode />
       <style>{`${PAGE_SLIDE_CSS}\n${PRODUCT_RESPONSIVE_CSS}`}</style>
       <div>
@@ -973,7 +973,7 @@ function ProductPage() {
                   aria-label={
                     mobileSearchExpanded ? t('cookieConsent.prefs.close') : t('searchBar.search')
                   }
-                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-white shadow-lg transition-colors hover:bg-sky-800 md:hidden"
+                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-on-dark shadow-lg transition-colors hover:bg-sky-800 md:hidden"
                 >
                   {mobileSearchExpanded ? (
                     <MdClose className="text-lg" aria-hidden="true" />
@@ -1026,10 +1026,10 @@ function ProductPage() {
               className="flex flex-col items-center gap-4 px-4 py-24 text-center sm:px-8 lg:px-20"
               style={slideInStyleLate('notFound', 1)}
             >
-              <h1 className="text-2xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+              <h1 className="text-2xl font-bold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                 {t('product.notFound.title')}
               </h1>
-              <p className="text-sm text-white/80">{t('product.notFound.text')}</p>
+              <p className="text-sm text-on-dark/80">{t('product.notFound.text')}</p>
               <GhostButton onClick={() => goToCategory()}>{t('product.notFound.cta')}</GhostButton>
             </div>
           )}
@@ -1114,10 +1114,10 @@ function ProductPage() {
                           <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
                             {t('product.specs.kicker')}
                           </p>
-                          <h2 className="text-2xl font-semibold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
+                          <h2 className="text-2xl font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
                             {t('product.specs.title')}
                           </h2>
-                          <p className="text-sm text-white/70 mt-4">
+                          <p className="text-sm text-on-dark/70 mt-4">
                             {t('product.specs.subtitle')}
                           </p>
                         </div>
@@ -1125,19 +1125,19 @@ function ProductPage() {
                           {specRows.map(([label, value]) => (
                             <div
                               key={label}
-                              className="flex items-start justify-between gap-4 border-b border-white/15 py-3 sm:items-baseline"
+                              className="flex items-start justify-between gap-4 border-b border-glass/15 py-3 sm:items-baseline"
                             >
-                              <span className="text-xs font-semibold tracking-widest uppercase text-white/60">
+                              <span className="text-xs font-semibold tracking-widest uppercase text-on-dark/60">
                                 {label}
                               </span>
-                              <span className="text-sm font-semibold text-white text-right">
+                              <span className="text-sm font-semibold text-on-dark text-right">
                                 {value}
                               </span>
                             </div>
                           ))}
                         </div>
                         {boat.equipment?.length > 0 && (
-                          <div className="w-full flex flex-col items-center gap-4 pt-2 border-t border-white/15">
+                          <div className="w-full flex flex-col items-center gap-4 pt-2 border-t border-glass/15">
                             <p className="text-xs font-bold tracking-widest uppercase text-sky-500">
                               {t('product.specs.equipment')}
                             </p>
@@ -1190,10 +1190,10 @@ function ProductPage() {
                   {/* Nom + type de bateau, favoris aligné à droite */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-baseline gap-1.5 flex-wrap">
-                      <h1 className="text-lg font-bold text-white tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+                      <h1 className="text-lg font-bold text-on-dark tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                         {boat.name}
                       </h1>
-                      <span className="text-white/50">-</span>
+                      <span className="text-on-dark/50">-</span>
                       <span className="text-xs font-bold tracking-widest text-sky-500 uppercase">
                         {typeLabel}
                       </span>
@@ -1244,7 +1244,7 @@ function ProductPage() {
                       .map(({ icon: Icon, label }) => (
                         <span
                           key={label}
-                          className="flex items-center gap-1 text-[11px] font-medium text-white px-1.5 py-0.5 rounded-full backdrop-blur-md"
+                          className="flex items-center gap-1 text-[11px] font-medium text-on-dark px-1.5 py-0.5 rounded-full backdrop-blur-md"
                           style={{
                             backgroundColor: 'rgba(14,165,233,0.15)',
                             border: '1px solid rgba(255,255,255,0.3)',
@@ -1258,18 +1258,18 @@ function ProductPage() {
 
                   {/* Description */}
                   {boat.description && (
-                    <p className="text-xs text-white/80 leading-snug">{boat.description}</p>
+                    <p className="text-xs text-on-dark/80 leading-snug">{boat.description}</p>
                   )}
 
                   {/* Rating + nombre de commentaires */}
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-on-dark">
                     {boat.review_count > 0 ? (
                       <>
                         <span className="text-amber-400">★</span> {boat.avg_rating}
-                        <span className="text-white/70">
+                        <span className="text-on-dark/70">
                           {' '}
                           ({t('product.header.ratings', { count: boat.review_count })}) ·{' '}
-                          <a href="#avis" className="underline transition hover:text-white">
+                          <a href="#avis" className="underline transition hover:text-on-dark">
                             {t('product.header.comments', { count: boat.comment_count })}
                           </a>
                         </span>
@@ -1292,12 +1292,12 @@ function ProductPage() {
                       <p className="text-xs font-bold uppercase tracking-widest text-sky-400">
                         {t('locataireReservations.reviewModal.title')}
                       </p>
-                      <p className="mt-1 text-xs text-white/70">
+                      <p className="mt-1 text-xs text-on-dark/70">
                         {t('locataireReservations.reviewModal.moderationHint')}
                       </p>
                     </div>
                     <fieldset>
-                      <legend className="mb-1 text-xs font-medium text-white/70">
+                      <legend className="mb-1 text-xs font-medium text-on-dark/70">
                         {t('locataireReservations.reviewModal.ratingLabel')}
                       </legend>
                       <div className="flex gap-1.5" role="radiogroup">
@@ -1315,7 +1315,7 @@ function ProductPage() {
                               setReviewError('');
                             }}
                             className={`text-2xl leading-none transition hover:scale-110 ${
-                              value <= reviewRating ? 'text-amber-300' : 'text-white/30'
+                              value <= reviewRating ? 'text-amber-300' : 'text-on-dark/30'
                             }`}
                           >
                             ★
@@ -1325,7 +1325,7 @@ function ProductPage() {
                     </fieldset>
                     <label
                       htmlFor="product-review-comment"
-                      className="text-xs font-medium text-white/70"
+                      className="text-xs font-medium text-on-dark/70"
                     >
                       {t('locataireReservations.reviewModal.commentLabel')}
                     </label>
@@ -1339,10 +1339,10 @@ function ProductPage() {
                         setReviewError('');
                       }}
                       placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
-                      className="w-full resize-y rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-sky-400"
+                      className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-sky-400"
                     />
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-white/50">{reviewComment.length}/1000</span>
+                      <span className="text-xs text-on-dark/50">{reviewComment.length}/1000</span>
                       <button
                         type="submit"
                         disabled={reviewSaving}
@@ -1374,8 +1374,8 @@ function ProductPage() {
                     style={GLASS_STYLE}
                   >
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-bold text-white">{price} €</span>
-                      <span className="text-xs text-white/70">
+                      <span className="text-2xl font-bold text-on-dark">{price} €</span>
+                      <span className="text-xs text-on-dark/70">
                         {t('category.card.perDay')} · {t('product.booking.taxIncluded')}
                       </span>
                     </div>
@@ -1420,19 +1420,19 @@ function ProductPage() {
                     </div>
 
                     {dayCount > 0 && (
-                      <div className="flex flex-col gap-2 border-t border-white/20 pt-3">
-                        <div className="flex justify-between text-xs text-white/80">
+                      <div className="flex flex-col gap-2 border-t border-glass/20 pt-3">
+                        <div className="flex justify-between text-xs text-on-dark/80">
                           <span>{t('product.booking.days', { count: dayCount, price })}</span>
                           <span>{total} €</span>
                         </div>
                         {boat.with_skipper && (
-                          <div className="flex justify-between text-xs text-white/80">
+                          <div className="flex justify-between text-xs text-on-dark/80">
                             <span>{t('product.booking.skipperService')}</span>
                             <span>{t('product.booking.free')}</span>
                           </div>
                         )}
-                        <div className="flex justify-between items-baseline border-t border-white/20 pt-2">
-                          <span className="text-sm font-semibold text-white">
+                        <div className="flex justify-between items-baseline border-t border-glass/20 pt-2">
+                          <span className="text-sm font-semibold text-on-dark">
                             {t('product.booking.total')}
                           </span>
                           <span className="text-xl font-bold text-sky-400">{total} €</span>
@@ -1443,7 +1443,7 @@ function ProductPage() {
                     <button
                       type="button"
                       onClick={handleBook}
-                      className="self-center text-white text-sm font-semibold px-6 py-2 rounded-full transition-all backdrop-blur-md border border-white/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(10,49,114,0.95)] hover:border-white/20"
+                      className="self-center text-on-dark text-sm font-semibold px-6 py-2 rounded-full transition-all backdrop-blur-md border border-glass/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(10,49,114,0.95)] hover:border-glass/20"
                     >
                       {t('product.booking.book')}
                     </button>
@@ -1452,20 +1452,22 @@ function ProductPage() {
                         {bookingHint}
                       </p>
                     )}
-                    <p className="text-[10px] text-white/60 text-center uppercase tracking-wide">
+                    <p className="text-[10px] text-on-dark/60 text-center uppercase tracking-wide">
                       {t('product.booking.noCharge')}
                     </p>
-                    <p className="flex items-center justify-center gap-1.5 text-xs text-white/80">
+                    <p className="flex items-center justify-center gap-1.5 text-xs text-on-dark/80">
                       <MdVerified className="text-sky-400" style={{ fontSize: '14px' }} />
                       {t('product.booking.secure')}
                     </p>
-                    <div className="border-t border-white/20 pt-3 text-center">
-                      <p className="mb-2 text-xs text-white/70">{t('product.ownerContact.text')}</p>
+                    <div className="border-t border-glass/20 pt-3 text-center">
+                      <p className="mb-2 text-xs text-on-dark/70">
+                        {t('product.ownerContact.text')}
+                      </p>
                       <button
                         type="button"
                         onClick={handleContactOwner}
                         disabled={contactBusy}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 bg-white/10 px-5 py-2 text-sm font-semibold text-white transition hover:border-sky-300 hover:bg-sky-500/25 disabled:cursor-wait disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-glass/40 bg-surface/10 px-5 py-2 text-sm font-semibold text-on-dark transition hover:border-sky-300 hover:bg-action/25 disabled:cursor-wait disabled:opacity-60"
                       >
                         <MdChatBubbleOutline aria-hidden="true" className="text-lg text-sky-300" />
                         {contactBusy
@@ -1488,10 +1490,10 @@ function ProductPage() {
                 >
                   <MdInfoOutline className="text-sky-400 flex-shrink-0 mt-0.5 text-lg" />
                   <div className="flex flex-col gap-1">
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-on-dark">
                       {t('product.booking.help.title')}
                     </p>
-                    <p className="text-xs text-white/70 leading-relaxed">
+                    <p className="text-xs text-on-dark/70 leading-relaxed">
                       {t('product.booking.help.text')}
                     </p>
                     <Link
@@ -1556,13 +1558,13 @@ function ProductPage() {
             >
               <div className="w-full max-w-[919.9px] flex items-baseline gap-3">
                 <h2
-                  className="font-semibold text-white"
+                  className="font-semibold text-on-dark"
                   style={{ fontSize: '20px', lineHeight: '22px' }}
                 >
                   {t('product.location.title')}
                 </h2>
                 {portLabel && (
-                  <span className="text-white/70 ml-4" style={{ fontSize: '16px' }}>
+                  <span className="text-on-dark/70 ml-4" style={{ fontSize: '16px' }}>
                     {portLabel}
                   </span>
                 )}

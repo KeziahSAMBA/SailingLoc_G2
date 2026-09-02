@@ -506,7 +506,7 @@ function HomePage() {
           preload="none"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-overlay/50" />
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-b from-transparent to-[rgb(0,78,87)]" />
 
         {/* Crossfade façon diaporama : le fond de la page cible (même image +
@@ -546,7 +546,7 @@ function HomePage() {
             que le "ease" standard qui démarre trop brusquement. */}
         {introActive && (
           <div
-            className="absolute inset-0 bg-black pointer-events-none"
+            className="absolute inset-0 bg-overlay pointer-events-none"
             style={{
               opacity: introPhase === 'black' ? 1 : 0,
               transition: `opacity ${HERO_EXIT_DURATION}ms ${INTRO_SOFT_EASING}`,
@@ -605,7 +605,7 @@ function HomePage() {
           </div>
           <div className="text-center" style={introFromBelowStyle}>
             <p
-              className="text-white/70 text-xs mb-2 tracking-widest uppercase"
+              className="text-on-dark/70 text-xs mb-2 tracking-widest uppercase"
               style={heroSlideStyle('right')}
             >
               {t('home.hero.mobileApp')}
@@ -617,7 +617,7 @@ function HomePage() {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-xs font-medium border border-white/40 hover:bg-white/15 hover:border-white transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-on-dark text-xs font-medium border border-glass/40 hover:bg-surface/15 hover:border-glass transition-colors"
                 >
                   <span className="text-sm">{icon}</span>
                   {label}
@@ -650,7 +650,7 @@ function HomePage() {
           />
 
           {/* Section 3 — Tuto */}
-          <section className="flex w-full flex-col items-center justify-center gap-0 bg-white px-4 py-0 max-sm:min-h-[100svh] sm:px-8 sm:py-8 lg:px-16 xl:px-28">
+          <section className="flex w-full flex-col items-center justify-center gap-0 bg-surface px-4 py-0 max-sm:min-h-[100svh] sm:px-8 sm:py-8 lg:px-16 xl:px-28">
             <div className="flex w-full max-w-7xl flex-col items-center py-0 sm:px-4 sm:py-8 lg:px-16 lg:py-10">
               <div className="text-center mb-4 sm:mb-10">
                 <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
@@ -669,7 +669,7 @@ function HomePage() {
                   <Fragment key={num}>
                     <div className="flex flex-1 flex-col items-center px-2 text-center sm:px-4">
                       <div
-                        className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-sky-500 bg-white text-sm font-semibold text-sky-500 sm:mb-4 sm:h-14 sm:w-14 sm:text-xl"
+                        className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-sky-500 bg-surface text-sm font-semibold text-sky-500 sm:mb-4 sm:h-14 sm:w-14 sm:text-xl"
                         style={{ boxShadow: '0 2px 8px rgba(14,165,233,0.3)' }}
                       >
                         {num}
@@ -708,7 +708,7 @@ function HomePage() {
           {/* Section 4 — Proposition de valeur */}
           <section
             id="proposition-valeur"
-            className="flex w-full flex-col items-center justify-center gap-0 bg-white px-4 py-0 max-sm:min-h-[100svh] scroll-mt-[40px] sm:scroll-mt-[130px] sm:px-8 sm:py-8 lg:px-16 xl:px-28"
+            className="flex w-full flex-col items-center justify-center gap-0 bg-surface px-4 py-0 max-sm:min-h-[100svh] scroll-mt-[40px] sm:scroll-mt-[130px] sm:px-8 sm:py-8 lg:px-16 xl:px-28"
           >
             <div className="text-center mb-10">
               <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
@@ -723,7 +723,7 @@ function HomePage() {
               {VALUE_CARDS.map(({ icon, title, text }) => (
                 <div
                   key={title}
-                  className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] sm:gap-3 sm:p-8"
+                  className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-surface p-4 text-center shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] sm:gap-3 sm:p-8"
                 >
                   <span>{icon}</span>
                   <h3 className="text-sm font-semibold text-gray-800">{title}</h3>

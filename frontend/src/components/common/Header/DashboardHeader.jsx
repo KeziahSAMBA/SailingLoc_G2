@@ -343,7 +343,7 @@ function DashboardHeader({
             {unread > 0 && (
               <span
                 aria-hidden="true"
-                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#5AB4EC] px-1 text-[10px] font-bold text-slate-950"
+                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-slate-950"
               >
                 {unread > 9 ? '9+' : unread}
               </span>

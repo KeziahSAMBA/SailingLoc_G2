@@ -5,8 +5,8 @@ import PasswordField from './PasswordField.jsx';
 import { loadReservationResume } from '../../utils/reservationResume.js';
 
 const inputClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 
 function formatCountdown(seconds) {
   const m = Math.floor(seconds / 60);
@@ -78,8 +78,8 @@ function LoginForm({ onSwitchToRegister }) {
   return (
     <>
       <header className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-[#5AB4EC]">Bon retour parmi nous</h2>
-        <p className="mt-2 text-sm text-white/70">
+        <h2 className="text-2xl font-bold text-brand">Bon retour parmi nous</h2>
+        <p className="mt-2 text-sm text-on-dark/70">
           Connectez-vous pour accéder à votre compte SailingLoc.
         </p>
       </header>
@@ -121,7 +121,7 @@ function LoginForm({ onSwitchToRegister }) {
             <label htmlFor="login-password" className={labelClass}>
               Mot de passe
             </label>
-            <Link to="/forgot-password" className="text-xs text-[#5AB4EC] hover:underline">
+            <Link to="/forgot-password" className="text-xs text-brand hover:underline">
               Mot de passe oublié&nbsp;?
             </Link>
           </div>
@@ -149,8 +149,8 @@ function LoginForm({ onSwitchToRegister }) {
                   key={value}
                   className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
                     checked
-                      ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
-                      : 'border-white/30 bg-white/5 text-white/80 hover:bg-white/10'
+                      ? 'border-brand bg-brand/15 text-brand-soft'
+                      : 'border-glass/30 bg-surface/5 text-on-dark/80 hover:bg-surface/10'
                   }`}
                 >
                   <input
@@ -171,7 +171,7 @@ function LoginForm({ onSwitchToRegister }) {
         <button
           type="submit"
           disabled={loading || isBlocked}
-          className="mt-2 w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isBlocked
             ? `Réessayez dans ${formatCountdown(retryAfter)}`
@@ -181,12 +181,12 @@ function LoginForm({ onSwitchToRegister }) {
         </button>
       </form>
 
-      <footer className="mt-6 text-center text-sm text-white/70">
+      <footer className="mt-6 text-center text-sm text-on-dark/70">
         Pas encore de compte&nbsp;?{' '}
         <button
           type="button"
           onClick={onSwitchToRegister}
-          className="font-semibold text-[#5AB4EC] hover:underline"
+          className="font-semibold text-brand hover:underline"
         >
           Inscrivez-vous
         </button>

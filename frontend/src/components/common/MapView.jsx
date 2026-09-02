@@ -6,8 +6,8 @@ import 'leaflet/dist/leaflet.css';
 
 // Navy — couleur "sérieuse" de la marque (déjà utilisée pour le header scrollé et le
 // fil d'ariane), plus lisible sur les tuiles claires que le sky ou le blanc.
-const PIN_COLOR_AVAILABLE = '#0A3172';
-const PIN_COLOR_UNAVAILABLE = '#94a3b8';
+const PIN_COLOR_AVAILABLE = 'rgb(var(--sl-map-available))';
+const PIN_COLOR_UNAVAILABLE = 'rgb(var(--sl-map-unavailable))';
 
 function escapeHtml(str) {
   return String(str).replace(
@@ -60,7 +60,7 @@ function createPriceIcon(price) {
     className: '',
     html: `
       <div style="position:relative;">
-        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);padding:4px 9px;border-radius:9999px;background:#fff;border:1.5px solid #0A3172;color:#0A3172;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(2,44,74,0.35);">
+        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);padding:4px 9px;border-radius:9999px;background:rgb(var(--sl-surface));border:1.5px solid rgb(var(--sl-map-available));color:rgb(var(--sl-map-available));font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(2,44,74,0.35);">
           ${price}€
         </div>
       </div>
@@ -171,7 +171,7 @@ function ZoomableMarker({ marker }) {
             <div className="mt-1 text-slate-400 italic">Bientôt disponible</div>
           )}
           {marker.badge != null && (
-            <div className="mt-1 font-medium text-sky-600">
+            <div className="mt-1 font-medium text-info">
               {marker.badge} bateau{marker.badge === 1 ? '' : 'x'}
             </div>
           )}
@@ -192,7 +192,7 @@ function BoatMarker({ boat, onSelect }) {
         <div className="text-sm">
           <div className="font-semibold">{boat.name}</div>
           {boat.city && <div className="text-slate-500">{boat.city}</div>}
-          <div className="mt-1 font-medium text-sky-600">{boat.price}€ / jour</div>
+          <div className="mt-1 font-medium text-info">{boat.price}€ / jour</div>
         </div>
       </Popup>
     </Marker>
@@ -271,7 +271,7 @@ function MapView({
         onClick={handleResetView}
         title="Réinitialiser la carte"
         aria-label="Réinitialiser la carte"
-        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-white text-slate-700 shadow-md hover:bg-slate-100 transition-colors"
+        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-surface text-slate-700 shadow-md hover:bg-slate-100 transition-colors"
       >
         <FiRefreshCw size={15} />
       </button>

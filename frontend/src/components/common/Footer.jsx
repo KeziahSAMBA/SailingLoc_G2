@@ -35,7 +35,7 @@ const SOCIAL_LINKS = [
     icon: <FaXTwitter />,
     label: 'X / Twitter',
     href: 'https://x.com',
-    hoverClass: 'hover:text-white',
+    hoverClass: 'hover:text-on-dark',
   },
   {
     icon: <FaFacebook />,
@@ -120,7 +120,7 @@ const Footer = () => {
           <img src={logoLong} alt="SailingLoc logo" className="w-32 sm:w-36" />
         </div>
         <div className="hidden lg:block" />
-        <div className="order-2 flex min-w-0 flex-row items-center gap-2 border-b border-white/20 pb-6 sm:gap-4 lg:order-none lg:border-0 lg:pb-0">
+        <div className="order-2 flex min-w-0 flex-row items-center gap-2 border-b border-glass/20 pb-6 sm:gap-4 lg:order-none lg:border-0 lg:pb-0">
           <div className="flex w-fit min-w-0 flex-wrap gap-1 sm:gap-2">
             {APP_LINKS.map(({ icon, label, href }) => (
               <a
@@ -163,13 +163,13 @@ const Footer = () => {
         </div>
 
         {/* Ligne B — titres */}
-        <h3 className="order-3 mt-3 text-lg font-semibold text-white lg:order-none lg:mt-0">
+        <h3 className="order-3 mt-3 text-lg font-semibold text-on-dark lg:order-none lg:mt-0">
           {t('footer.contact')}
         </h3>
-        <h3 className="order-5 mt-4 border-t border-white/15 pt-6 text-lg font-semibold text-white lg:order-none lg:mt-0 lg:border-0 lg:pt-0">
+        <h3 className="order-5 mt-4 border-t border-glass/15 pt-6 text-lg font-semibold text-on-dark lg:order-none lg:mt-0 lg:border-0 lg:pt-0">
           {t('footer.help')}
         </h3>
-        <h3 className="order-7 mt-4 border-t border-white/15 pt-6 text-lg font-semibold text-white lg:order-none lg:mt-0 lg:border-0 lg:pt-0">
+        <h3 className="order-7 mt-4 border-t border-glass/15 pt-6 text-lg font-semibold text-on-dark lg:order-none lg:mt-0 lg:border-0 lg:pt-0">
           {t('footer.info')}
         </h3>
 
@@ -183,7 +183,7 @@ const Footer = () => {
             <FaEnvelope className="mt-0.5 shrink-0 text-blue-400" />
             <a
               href="mailto:contact@sailingloc.fr"
-              className="min-w-0 break-all transition-colors hover:text-white"
+              className="min-w-0 break-all transition-colors hover:text-on-dark"
             >
               contact@sailingloc.fr
             </a>
@@ -195,7 +195,7 @@ const Footer = () => {
                 type="button"
                 onClick={openSupportChat}
                 disabled={chatBusy}
-                className="text-left transition-colors hover:text-white disabled:opacity-60"
+                className="text-left transition-colors hover:text-on-dark disabled:opacity-60"
               >
                 {chatBusy ? 'Ouverture…' : t('footer.chat')}
               </button>
@@ -206,7 +206,7 @@ const Footer = () => {
                   e.preventDefault();
                   pageExitNavigate('/login');
                 }}
-                className="hover:text-white transition-colors"
+                className="hover:text-on-dark transition-colors"
               >
                 {t('footer.chat')}
               </a>
@@ -223,20 +223,20 @@ const Footer = () => {
                   e.preventDefault();
                   pageExitNavigate('/contact');
                 }}
-                className="break-words transition-colors hover:text-white"
+                className="break-words transition-colors hover:text-on-dark"
               >
                 {text}
               </a>
             </li>
           ))}
-          <li className="border-t border-white/20 pt-3">
+          <li className="border-t border-glass/20 pt-3">
             <a
               href="/a-propos"
               onClick={(e) => {
                 e.preventDefault();
                 pageExitNavigate('/a-propos');
               }}
-              className="flex items-start gap-2 transition-colors hover:text-white"
+              className="flex items-start gap-2 transition-colors hover:text-on-dark"
             >
               <FaCircleInfo className="mt-0.5 shrink-0 text-blue-400" />
               <span className="break-words">{t('footer.moreInfo')}</span>
@@ -258,7 +258,7 @@ const Footer = () => {
                   e.preventDefault();
                   pageExitNavigate(href);
                 }}
-                className="break-words transition-colors hover:text-white"
+                className="break-words transition-colors hover:text-on-dark"
               >
                 {label}
               </a>
@@ -270,7 +270,7 @@ const Footer = () => {
             <button
               type="button"
               onClick={openPreferences}
-              className="hover:text-white transition-colors"
+              className="hover:text-on-dark transition-colors"
             >
               {t('footer.manageCookies')}
             </button>
@@ -279,11 +279,11 @@ const Footer = () => {
       </div>
 
       {/* Copyright */}
-      <div className="mt-6 w-full border-t border-white/20 pb-6 pt-4 lg:mt-8">
-        <p className="flex flex-wrap items-start gap-x-1 gap-y-1 text-xs leading-relaxed text-white/60">
+      <div className="mt-6 w-full border-t border-glass/20 pb-6 pt-4 lg:mt-8">
+        <p className="flex flex-wrap items-start gap-x-1 gap-y-1 text-xs leading-relaxed text-on-dark/60">
           <span>{t('footer.copyright')}</span>
           <FaTriangleExclamation className="mt-0.5 shrink-0 text-yellow-400/70" />
-          <span className="min-w-0 break-words text-white/40">{t('footer.disclaimer')}</span>
+          <span className="min-w-0 break-words text-on-dark/40">{t('footer.disclaimer')}</span>
         </p>
       </div>
     </footer>

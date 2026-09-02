@@ -8,11 +8,11 @@ const INITIAL_RESEND_COOLDOWN = 30;
 const POST_CLICK_COOLDOWN = 60;
 
 const inputClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 const errorClass = 'mt-1 block text-xs text-red-300';
 const requiredMark = (
-  <span aria-hidden="true" className="ml-0.5 text-[#5AB4EC]">
+  <span aria-hidden="true" className="ml-0.5 text-brand">
     *
   </span>
 );
@@ -158,20 +158,20 @@ function RegisterForm({ onSwitchToLogin }) {
   if (success) {
     return (
       <div role="status" aria-live="polite" className="text-center">
-        <h2 className="text-2xl font-bold text-[#5AB4EC]">Inscription réussie !</h2>
-        <p className="mt-3 text-white/80">
+        <h2 className="text-2xl font-bold text-brand">Inscription réussie !</h2>
+        <p className="mt-3 text-on-dark/80">
           Un email de confirmation a été envoyé à{' '}
-          <span className="font-semibold text-[#5AB4EC]">{form.email}</span>. Vérifiez votre boîte
-          mail pour activer votre compte.
+          <span className="font-semibold text-brand">{form.email}</span>. Vérifiez votre boîte mail
+          pour activer votre compte.
         </p>
 
-        <div className="mt-6 rounded-lg border border-white/20 bg-white/10 p-4 text-sm">
-          <p className="text-white/70">Vous n&apos;avez pas reçu l&apos;email ?</p>
+        <div className="mt-6 rounded-lg border border-glass/20 bg-surface/10 p-4 text-sm">
+          <p className="text-on-dark/70">Vous n&apos;avez pas reçu l&apos;email ?</p>
           <button
             type="button"
             onClick={handleResend}
             disabled={!canResend}
-            className="mt-3 w-full rounded-full border border-[#5AB4EC] bg-transparent px-5 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-3 w-full rounded-full border border-brand bg-transparent px-5 py-2 text-sm font-semibold text-brand transition hover:bg-brand/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {resendLoading
               ? 'Envoi en cours…'
@@ -180,18 +180,18 @@ function RegisterForm({ onSwitchToLogin }) {
                 : "Renvoyer l'email"}
           </button>
           {resendNotice && (
-            <p className="mt-3 text-xs text-white/80" role="status">
+            <p className="mt-3 text-xs text-on-dark/80" role="status">
               {resendNotice}
             </p>
           )}
         </div>
 
-        <p className="mt-6 text-sm text-white/70">
+        <p className="mt-6 text-sm text-on-dark/70">
           Déjà confirmé ?{' '}
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="font-semibold text-[#5AB4EC] hover:underline"
+            className="font-semibold text-brand hover:underline"
           >
             Connectez-vous
           </button>
@@ -203,12 +203,12 @@ function RegisterForm({ onSwitchToLogin }) {
   return (
     <>
       <header className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-[#5AB4EC]">Créer un compte</h2>
-        <p className="mt-2 text-sm text-white/70">
+        <h2 className="text-2xl font-bold text-brand">Créer un compte</h2>
+        <p className="mt-2 text-sm text-on-dark/70">
           Rejoignez SailingLoc pour réserver ou proposer un bateau.
         </p>
-        <p className="mt-1 text-xs text-white/60">
-          Les champs marqués d&apos;un <span className="text-[#5AB4EC]">*</span> sont obligatoires.
+        <p className="mt-1 text-xs text-on-dark/60">
+          Les champs marqués d&apos;un <span className="text-brand">*</span> sont obligatoires.
         </p>
       </header>
 
@@ -304,7 +304,7 @@ function RegisterForm({ onSwitchToLogin }) {
 
         <div>
           <label htmlFor="phone" className={labelClass}>
-            Téléphone <span className="font-normal text-white/50">(facultatif)</span>
+            Téléphone <span className="font-normal text-on-dark/50">(facultatif)</span>
           </label>
           <input
             id="phone"
@@ -338,8 +338,8 @@ function RegisterForm({ onSwitchToLogin }) {
                   key={value}
                   className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
                     checked
-                      ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
-                      : 'border-white/30 bg-white/5 text-white/80 hover:bg-white/10'
+                      ? 'border-brand bg-brand/15 text-brand-soft'
+                      : 'border-glass/30 bg-surface/5 text-on-dark/80 hover:bg-surface/10'
                   }`}
                 >
                   <input
@@ -372,7 +372,7 @@ function RegisterForm({ onSwitchToLogin }) {
             ariaInvalid={Boolean(errors.password)}
             ariaDescribedBy="password-hint password-error"
           />
-          <small id="password-hint" className="mt-1 block text-xs text-white/60">
+          <small id="password-hint" className="mt-1 block text-xs text-on-dark/60">
             12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
           </small>
           {errors.password && (
@@ -407,7 +407,7 @@ function RegisterForm({ onSwitchToLogin }) {
         <button
           type="submit"
           disabled={loading || isBlocked}
-          className="mt-2 w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isBlocked
             ? `Réessayez dans ${formatCountdown(retryAfter)}`

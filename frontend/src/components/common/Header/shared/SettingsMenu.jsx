@@ -85,7 +85,7 @@ function SettingsMenu({ scrolled }) {
             : 'grid-rows-[0fr] opacity-0 pointer-events-none'
         }`}
       >
-        <div className="min-h-0 overflow-hidden rounded-xl border border-white/20 bg-slate-900/95 shadow-xl">
+        <div className="min-h-0 overflow-hidden rounded-xl border border-glass/20 bg-slate-900/95 shadow-xl">
           <div className="flex flex-col py-1">
             {COLOR_VISION_PROFILES.map(({ value, labelKey }) => {
               const selected = colorVision === value;
@@ -97,7 +97,7 @@ function SettingsMenu({ scrolled }) {
                   aria-pressed={selected}
                   tabIndex={colorVisionOpen ? 0 : -1}
                   onClick={() => handleColorVisionChange(value)}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-xs font-medium text-white transition-colors hover:bg-white/10"
+                  className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-xs font-medium text-on-dark transition-colors hover:bg-surface/10"
                 >
                   <span>{t(labelKey)}</span>
                   {selected && <FiCheck size={14} aria-hidden="true" />}
@@ -153,7 +153,7 @@ function SettingsMenu({ scrolled }) {
           title={t(theme === 'dark' ? 'header.settings.lightMode' : 'header.settings.darkMode')}
           aria-pressed={theme === 'dark'}
           tabIndex={controlTabIndex}
-          className="flex h-11 w-11 shrink-0 items-center justify-center text-white opacity-60 drop-shadow-md"
+          className="flex h-11 w-11 shrink-0 items-center justify-center text-on-dark opacity-60 drop-shadow-md"
         >
           {theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}
         </button>
@@ -169,7 +169,7 @@ function SettingsMenu({ scrolled }) {
             aria-haspopup="true"
             aria-controls={colorVisionMenuId}
             tabIndex={controlTabIndex}
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-white opacity-60 drop-shadow-md"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-on-dark opacity-60 drop-shadow-md"
           >
             <FaGlasses size={20} />
           </button>
@@ -192,7 +192,7 @@ function SettingsMenu({ scrolled }) {
         title={t('header.settings.label')}
         aria-expanded={open}
         aria-haspopup="true"
-        className="flex items-center justify-center rounded-full p-3 text-white transition-colors hover:bg-white/10"
+        className="flex items-center justify-center rounded-full p-3 text-on-dark transition-colors hover:bg-surface/10"
       >
         <FiSettings size={scrolled ? 18 : 20} />
       </button>
@@ -212,7 +212,7 @@ function SettingsMenu({ scrolled }) {
       {/* Mobile : glissement horizontal vers la gauche, fond glassmorphism. */}
       <div
         aria-hidden={!open}
-        className={`absolute right-full top-1/2 mr-2 flex -translate-y-1/2 items-center gap-2.5 rounded-2xl border border-white/15 p-2 shadow-xl transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] sm:hidden ${
+        className={`absolute right-full top-1/2 mr-2 flex -translate-y-1/2 items-center gap-2.5 rounded-2xl border border-glass/15 p-2 shadow-xl transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] sm:hidden ${
           open
             ? 'translate-x-0 opacity-100 pointer-events-auto'
             : 'translate-x-3 opacity-0 pointer-events-none'

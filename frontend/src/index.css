@@ -4,6 +4,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Couleurs contextuelles du rendu clair historique. Les sélecteurs des futurs
+   modes héritent volontairement de ces mêmes valeurs sur la branche commune. */
+:root,
+:root[data-sailingloc-theme],
+:root[data-sailingloc-color-vision] {
+  --sl-page: 248 250 252;
+  --sl-surface: 255 255 255;
+  --sl-content: 15 23 42;
+  --sl-content-muted: 71 85 105;
+  --sl-on-dark: 255 255 255;
+  --sl-on-light: 0 0 0;
+  --sl-brand: 90 180 236;
+  --sl-brand-soft: 171 212 255;
+  --sl-brand-navy: 10 49 114;
+  --sl-brand-focus: 10 82 122;
+  --sl-brand-text: 36 112 172;
+  --sl-action: 14 165 233;
+  --sl-action-hover: 2 132 199;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 15 23 42;
+  --sl-dark-elevated: 30 41 59;
+  --sl-border-light: 226 232 240;
+  --sl-neutral: 100 116 139;
+  --sl-success: 22 163 74;
+  --sl-warning: 217 119 6;
+  --sl-danger: 220 38 38;
+  --sl-info: 2 132 199;
+  --sl-map-available: 10 49 114;
+  --sl-map-unavailable: 148 163 184;
+  --sl-chart-primary: 62 151 214;
+  --sl-chart-hover: 90 180 236;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -25,7 +59,7 @@ html {
 
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-page text-content antialiased;
 }
 
 * {
@@ -82,8 +116,8 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 select:-webkit-autofill,
 textarea:-webkit-autofill {
-  -webkit-text-fill-color: #fff;
-  caret-color: #fff;
+  -webkit-text-fill-color: rgb(var(--sl-on-dark));
+  caret-color: rgb(var(--sl-on-dark));
   transition: background-color 9999999s ease-in-out 0s;
 }
 
@@ -163,13 +197,13 @@ textarea:-webkit-autofill {
    Bleu marine repris de la teinte de l'accent #5AB4EC, et accent lui-même
    sur le choix sélectionné, pour rester dans la palette du site. */
 .select-glass option {
-  background-color: #16324a;
-  color: #fff;
+  background-color: rgb(22 50 74);
+  color: rgb(var(--sl-on-dark));
 }
 
 /* Accent assombri : #5AB4EC ne donne que 3,2:1 avec du blanc, sous le seuil AA. */
 .select-glass option:checked,
 .select-glass option:hover {
-  background-color: #2470ac;
-  color: #fff;
+  background-color: rgb(var(--sl-brand-text));
+  color: rgb(var(--sl-on-dark));
 }

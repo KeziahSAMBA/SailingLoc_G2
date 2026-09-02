@@ -19,10 +19,10 @@ const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 
 const inputClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
 const readonlyClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white/60 cursor-not-allowed';
-const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark/60 cursor-not-allowed';
+const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 const errorClass = 'mt-1 block text-xs text-red-400';
 
 const EMPTY_PASSWORD_FORM = {
@@ -230,7 +230,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
   return (
     <>
       {/* Informations personnelles */}
-      <article className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-xl">
+      <article className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-8 shadow-xl">
         <div
           className={
             compactMobile
@@ -241,8 +241,8 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
           <h2
             className={
               compactMobile
-                ? 'col-start-2 row-start-1 min-w-0 whitespace-nowrap text-right text-[0.625rem] font-semibold tracking-tight text-white min-[350px]:text-xs min-[375px]:text-sm min-[430px]:text-base sm:text-lg sm:tracking-normal lg:mb-5 lg:whitespace-normal lg:text-left'
-                : 'mb-5 text-lg font-semibold text-white'
+                ? 'col-start-2 row-start-1 min-w-0 whitespace-nowrap text-right text-[0.625rem] font-semibold tracking-tight text-on-dark min-[350px]:text-xs min-[375px]:text-sm min-[430px]:text-base sm:text-lg sm:tracking-normal lg:mb-5 lg:whitespace-normal lg:text-left'
+                : 'mb-5 text-lg font-semibold text-on-dark'
             }
           >
             {t('accountForm.personalInfo.title')}
@@ -266,7 +266,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                   fallbackSrc={nameToAvatarUrl(displayName || 'SailingLoc')}
                   fallback={null}
                   alt={t('accountForm.avatar.alt')}
-                  className="h-20 w-20 rounded-full border-2 border-white/30 object-cover"
+                  className="h-20 w-20 rounded-full border-2 border-glass/30 object-cover"
                 />
                 <button
                   ref={avatarMenuButtonRef}
@@ -277,7 +277,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                   aria-controls="locataire-avatar-actions-menu"
                   onClick={() => setAvatarMenuOpen((open) => !open)}
                   disabled={avatarBusy}
-                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white/50 bg-sky-500 text-white shadow-lg transition hover:bg-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
+                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-glass/50 bg-action text-on-dark shadow-lg transition hover:bg-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
                 >
                   <MdEdit aria-hidden="true" className="h-4 w-4" />
                 </button>
@@ -294,7 +294,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                     id="locataire-avatar-actions-menu"
                     role="menu"
                     aria-label={t('accountForm.avatar.manage')}
-                    className="absolute left-0 top-full z-30 mt-2 w-48 overflow-hidden rounded-xl border border-white/20 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden"
+                    className="absolute left-0 top-full z-30 mt-2 w-48 overflow-hidden rounded-xl border border-glass/20 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden"
                   >
                     <button
                       type="button"
@@ -304,7 +304,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                         avatarFileInputRef.current?.click();
                       }}
                       disabled={avatarBusy}
-                      className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50"
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50"
                     >
                       {avatarBusy
                         ? t('accountForm.avatar.sending')
@@ -333,7 +333,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                 fallbackSrc={nameToAvatarUrl(displayName || 'SailingLoc')}
                 fallback={null}
                 alt={t('accountForm.avatar.alt')}
-                className="h-20 w-20 rounded-full border-2 border-white/30 object-cover"
+                className="h-20 w-20 rounded-full border-2 border-glass/30 object-cover"
               />
             )}
             <div
@@ -342,7 +342,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
               }
             >
               <label
-                className={`cursor-pointer rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
+                className={`cursor-pointer rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark ${avatarBusy ? 'pointer-events-none opacity-50' : ''}`}
               >
                 {avatarBusy ? t('accountForm.avatar.sending') : t('accountForm.avatar.change')}
                 <input
@@ -365,7 +365,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
               )}
             </div>
             <p
-              className={`w-full text-xs text-white/60 ${compactMobile ? 'col-span-2 row-start-2' : ''}`}
+              className={`w-full text-xs text-on-dark/60 ${compactMobile ? 'col-span-2 row-start-2' : ''}`}
             >
               {t('accountForm.avatar.hint')}
             </p>
@@ -425,7 +425,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
           <div>
             <label htmlFor="email" className={labelClass}>
               {t('accountForm.personalInfo.email')}{' '}
-              <span className="font-normal text-white/70">
+              <span className="font-normal text-on-dark/70">
                 {t('accountForm.personalInfo.emailReadonly')}
               </span>
             </label>
@@ -442,7 +442,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
           <div>
             <label htmlFor="phone" className={labelClass}>
               {t('accountForm.personalInfo.phone')}{' '}
-              <span className="font-normal text-white/70">
+              <span className="font-normal text-on-dark/70">
                 {t('accountForm.personalInfo.phoneOptional')}
               </span>
             </label>
@@ -465,14 +465,14 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
               type="button"
               onClick={handleCancel}
               disabled={!dirty || saving}
-              className={`w-fit rounded-full border border-white/40 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${compactMobile ? `px-4 py-2.5 ${restoreDesktopActions ? 'lg:px-6 lg:py-3' : ''}` : 'px-6 py-3'}`}
+              className={`w-fit rounded-full border border-glass/40 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 ${compactMobile ? `px-4 py-2.5 ${restoreDesktopActions ? 'lg:px-6 lg:py-3' : ''}` : 'px-6 py-3'}`}
             >
               {t('accountForm.personalInfo.cancel')}
             </button>
             <button
               type="submit"
               disabled={!dirty || saving}
-              className={`rounded-full bg-sky-500 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit flex-none px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-auto lg:flex-1 lg:px-6 lg:py-3' : ''}` : 'flex-1 px-6 py-3'}`}
+              className={`rounded-full bg-action text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit flex-none px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-auto lg:flex-1 lg:px-6 lg:py-3' : ''}` : 'flex-1 px-6 py-3'}`}
             >
               {saving ? (
                 t('accountForm.personalInfo.saving')
@@ -494,9 +494,11 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
       </article>
 
       {/* Mot de passe */}
-      <article className="mt-6 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-8 shadow-xl">
-        <h2 className="mb-1 text-lg font-semibold text-white">{t('accountForm.password.title')}</h2>
-        <p className="mb-5 text-sm text-white/70">{t('accountForm.password.subtitle')}</p>
+      <article className="mt-6 rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-8 shadow-xl">
+        <h2 className="mb-1 text-lg font-semibold text-on-dark">
+          {t('accountForm.password.title')}
+        </h2>
+        <p className="mb-5 text-sm text-on-dark/70">{t('accountForm.password.subtitle')}</p>
 
         {pwdServerError && (
           <div
@@ -540,7 +542,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
               ariaInvalid={Boolean(pwdErrors.newPassword)}
               ariaDescribedBy="newPassword-hint"
             />
-            <small id="newPassword-hint" className="mt-1 block text-xs text-white/60">
+            <small id="newPassword-hint" className="mt-1 block text-xs text-on-dark/60">
               {t('accountForm.password.hint')}
             </small>
             {pwdErrors.newPassword && <span className={errorClass}>{pwdErrors.newPassword}</span>}
@@ -568,7 +570,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
             <button
               type="submit"
               disabled={pwdSaving}
-              className={`rounded-full bg-sky-500 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit whitespace-nowrap px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-full lg:px-6 lg:py-3' : ''}` : 'w-full px-6 py-3'}`}
+              className={`rounded-full bg-action text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit whitespace-nowrap px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-full lg:px-6 lg:py-3' : ''}` : 'w-full px-6 py-3'}`}
             >
               {pwdSaving ? t('accountForm.password.updating') : t('accountForm.password.submit')}
             </button>

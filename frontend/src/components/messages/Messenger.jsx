@@ -21,7 +21,7 @@ const TIME_OPTS = {
 };
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
 
 function fmtTime(value) {
   return formatDate(value, TIME_OPTS);
@@ -37,7 +37,7 @@ function ReadReceipt({ read }) {
       role="img"
       aria-label={label}
       title={label}
-      className={`ml-1 inline-flex ${read ? 'text-white' : 'text-white/50'}`}
+      className={`ml-1 inline-flex ${read ? 'text-on-dark' : 'text-on-dark/50'}`}
     >
       <svg width="14" height="10" viewBox="0 0 18 12" fill="none" aria-hidden="true">
         <path
@@ -272,14 +272,14 @@ function Messenger({
         <button
           type="button"
           onClick={() => setListOpen(true)}
-          className={`flex w-fit items-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-xl px-4 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 lg:hidden ${
+          className={`flex w-fit items-center gap-2 rounded-full border border-glass/30 bg-surface/10 backdrop-blur-xl px-4 py-2 text-sm font-semibold text-on-dark/90 transition hover:bg-surface/10 lg:hidden ${
             tabletConversationDropdown ? 'md:hidden' : ''
           } ${FOCUS_RING}`}
         >
           ← {t('messenger.conversations')}
           {totalUnread > 0 && (
             <span
-              className={`rounded-full bg-[#5AB4EC] px-1.5 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+              className={`rounded-full bg-brand px-1.5 py-0.5 font-bold text-slate-950 ${microTextClass}`}
             >
               {totalUnread}
             </span>
@@ -293,20 +293,20 @@ function Messenger({
           aria-expanded={tabletListOpen}
           aria-controls="messenger-tablet-conversations"
           onClick={() => setTabletListOpen((open) => !open)}
-          className={`hidden w-full items-center justify-between gap-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-left text-white backdrop-blur-xl transition hover:bg-white/15 md:flex lg:hidden ${FOCUS_RING}`}
+          className={`hidden w-full items-center justify-between gap-4 rounded-2xl border border-glass/20 bg-surface/10 px-4 py-3 text-left text-on-dark backdrop-blur-xl transition hover:bg-surface/15 md:flex lg:hidden ${FOCUS_RING}`}
         >
           <span className="min-w-0">
-            <span className="block text-xs font-semibold uppercase tracking-wide text-white/60">
+            <span className="block text-xs font-semibold uppercase tracking-wide text-on-dark/60">
               {t('messenger.conversations')}
             </span>
-            <span className="mt-0.5 block truncate text-sm font-semibold text-white">
+            <span className="mt-0.5 block truncate text-sm font-semibold text-on-dark">
               {selected ? displayName(selected) : t('messenger.selectConversation')}
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-2">
             {totalUnread > 0 && (
               <span
-                className={`rounded-full bg-[#5AB4EC] px-2 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+                className={`rounded-full bg-brand px-2 py-0.5 font-bold text-slate-950 ${microTextClass}`}
               >
                 {totalUnread}
               </span>
@@ -315,7 +315,7 @@ function Messenger({
               aria-hidden="true"
               viewBox="0 0 20 20"
               fill="none"
-              className={`h-5 w-5 text-white/70 transition-transform duration-200 ${
+              className={`h-5 w-5 text-on-dark/70 transition-transform duration-200 ${
                 tabletListOpen ? 'rotate-180' : ''
               }`}
             >
@@ -338,10 +338,10 @@ function Messenger({
         aria-label={t('messenger.conversations')}
         className={`${listOpen ? 'flex' : 'hidden'} ${
           tabletConversationDropdown ? (tabletListOpen ? 'md:flex' : 'md:hidden') : ''
-        } min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex lg:h-[70vh] ${desktopPanelBoundsClass}`}
+        } min-w-0 flex-col rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl lg:flex lg:h-[70vh] ${desktopPanelBoundsClass}`}
       >
         <h2
-          className={`border-b border-white/20 px-4 py-3 text-sm font-semibold text-white/90 ${
+          className={`border-b border-glass/20 px-4 py-3 text-sm font-semibold text-on-dark/90 ${
             tabletConversationDropdown ? 'md:hidden lg:block' : ''
           }`}
         >
@@ -350,7 +350,7 @@ function Messenger({
         {loading ? (
           <Spinner label={t('messenger.loading')} />
         ) : conversations.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-white/70">{t('messenger.noConversations')}</p>
+          <p className="px-4 py-6 text-sm text-on-dark/70">{t('messenger.noConversations')}</p>
         ) : (
           <ul
             className={`max-h-[60vh] divide-y divide-white/15 overflow-y-auto ${
@@ -371,19 +371,19 @@ function Messenger({
                     }}
                     aria-current={active || undefined}
                     className={`block w-full px-4 py-3 text-left transition ${FOCUS_RING} ${
-                      active ? 'bg-[#5AB4EC]/20' : 'hover:bg-white/10'
+                      active ? 'bg-brand/20' : 'hover:bg-surface/10'
                     }`}
                   >
                     <span className="flex items-baseline justify-between gap-2">
-                      <span className="min-w-0 truncate text-sm font-semibold text-white">
+                      <span className="min-w-0 truncate text-sm font-semibold text-on-dark">
                         {displayName(c.user)}
                       </span>
-                      <span className={`shrink-0 text-white/60 ${microTextClass}`}>
+                      <span className={`shrink-0 text-on-dark/60 ${microTextClass}`}>
                         {fmtTime(c.last_message?.sent_at)}
                       </span>
                     </span>
                     <span className="mt-0.5 flex items-center justify-between gap-2">
-                      <span className="min-w-0 truncate text-xs text-white/70">
+                      <span className="min-w-0 truncate text-xs text-on-dark/70">
                         {c.last_message?.from_me ? t('messenger.you') : ''}
                         {c.last_message?.deleted ? (
                           <span className="italic">{t('messenger.deletedMessage')}</span>
@@ -393,14 +393,14 @@ function Messenger({
                       </span>
                       {c.unread > 0 && (
                         <span
-                          className={`shrink-0 rounded-full bg-[#5AB4EC] px-1.5 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+                          className={`shrink-0 rounded-full bg-brand px-1.5 py-0.5 font-bold text-slate-950 ${microTextClass}`}
                         >
                           {c.unread}
                         </span>
                       )}
                     </span>
                     <span
-                      className={`mt-0.5 block uppercase tracking-wide text-white/60 ${microTextClass}`}
+                      className={`mt-0.5 block uppercase tracking-wide text-on-dark/60 ${microTextClass}`}
                     >
                       {roleLabel(c.user.role)}
                     </span>
@@ -417,18 +417,18 @@ function Messenger({
         aria-label={t('messenger.threadAria')}
         className={`${listOpen ? 'hidden' : 'flex'} ${
           tabletConversationDropdown ? 'md:flex' : ''
-        } h-[70vh] min-w-0 flex-col rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl lg:flex ${panelBoundsClass}`}
+        } h-[70vh] min-w-0 flex-col rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl lg:flex ${panelBoundsClass}`}
       >
         {!selected ? (
-          <p className="m-auto px-6 text-center text-sm text-white/70">
+          <p className="m-auto px-6 text-center text-sm text-on-dark/70">
             {t('messenger.selectConversation')}
           </p>
         ) : (
           <>
-            <header className="flex items-center justify-between gap-3 border-b border-white/20 px-4 py-3">
+            <header className="flex items-center justify-between gap-3 border-b border-glass/20 px-4 py-3">
               <div>
-                <p className="text-sm font-semibold text-white">{displayName(selected)}</p>
-                <p className="text-xs text-white/60">{roleLabel(selected.role)}</p>
+                <p className="text-sm font-semibold text-on-dark">{displayName(selected)}</p>
+                <p className="text-xs text-on-dark/60">{roleLabel(selected.role)}</p>
               </div>
               {me?.role === 'admin' && selected.role !== 'admin' && (
                 <button
@@ -446,7 +446,7 @@ function Messenger({
               {threadLoading ? (
                 <Spinner label={t('messenger.loading')} />
               ) : messages.length === 0 ? (
-                <p className="text-sm text-white/70">{t('messenger.noMessages')}</p>
+                <p className="text-sm text-on-dark/70">{t('messenger.noMessages')}</p>
               ) : (
                 messages.map((m) =>
                   m.type === 'support_resolved' ? (
@@ -466,8 +466,8 @@ function Messenger({
                       <div
                         className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
                           m.from_me
-                            ? 'rounded-br-sm bg-sky-500 text-white'
-                            : 'rounded-bl-sm bg-white/10 text-white'
+                            ? 'rounded-br-sm bg-action text-on-dark'
+                            : 'rounded-bl-sm bg-surface/10 text-on-dark'
                         }`}
                       >
                         {editing?.id_message === m.id_message ? (
@@ -483,12 +483,12 @@ function Messenger({
                               onChange={(e) => setEditing({ ...editing, value: e.target.value })}
                               maxLength={2000}
                               autoFocus
-                              className="w-56 rounded-lg border border-white/40 bg-white/10 px-2 py-1 text-sm text-white outline-none focus:border-[#5AB4EC]"
+                              className="w-56 rounded-lg border border-glass/40 bg-surface/10 px-2 py-1 text-sm text-on-dark outline-none focus:border-brand"
                             />
                             <button
                               type="submit"
                               aria-label={t('messenger.saveEdit')}
-                              className="text-[#5AB4EC] hover:text-white"
+                              className="text-brand hover:text-on-dark"
                             >
                               ✓
                             </button>
@@ -496,26 +496,26 @@ function Messenger({
                               type="button"
                               aria-label={t('messenger.cancelEdit')}
                               onClick={() => setEditing(null)}
-                              className="text-white/80 hover:text-white"
+                              className="text-on-dark/80 hover:text-on-dark"
                             >
                               ✕
                             </button>
                           </form>
                         ) : m.deleted ? (
-                          <p className="italic text-white/70">{t('messenger.deletedMessage')}</p>
+                          <p className="italic text-on-dark/70">{t('messenger.deletedMessage')}</p>
                         ) : (
                           <p className="whitespace-pre-wrap break-words">{m.content}</p>
                         )}
                         <p
                           className={`mt-1 flex items-center justify-end gap-0.5 text-right ${microTextClass} ${
-                            m.from_me ? 'text-white/70' : 'text-white/60'
+                            m.from_me ? 'text-on-dark/70' : 'text-on-dark/60'
                           }`}
                         >
                           {m.edited && <span className="mr-1 italic">{t('messenger.edited')}</span>}
                           {fmtTime(m.sent_at)}
                           {m.from_me && !m.deleted && <ReadReceipt read={m.read} />}
                           {m.from_me && !m.deleted && m.id_message === lastMineId && (
-                            <span className={m.read ? 'font-semibold text-white' : undefined}>
+                            <span className={m.read ? 'font-semibold text-on-dark' : undefined}>
                               {m.read ? t('messenger.read') : t('messenger.sent')}
                             </span>
                           )}
@@ -533,14 +533,14 @@ function Messenger({
                             setMenuFor(menuFor === m.id_message ? null : m.id_message);
                             setConfirmKey(null);
                           }}
-                          className={`rounded-full px-1.5 py-0.5 text-white/60 opacity-60 transition hover:bg-white/10 hover:text-white/90 group-hover:opacity-100 ${FOCUS_RING}`}
+                          className={`rounded-full px-1.5 py-0.5 text-on-dark/60 opacity-60 transition hover:bg-surface/10 hover:text-on-dark/90 group-hover:opacity-100 ${FOCUS_RING}`}
                         >
                           ⋯
                         </button>
                         {menuFor === m.id_message && (
                           <div
                             role="menu"
-                            className={`absolute z-20 mt-1 w-56 overflow-hidden rounded-lg border border-white/30 bg-white/10 text-sm shadow-xl ${
+                            className={`absolute z-20 mt-1 w-56 overflow-hidden rounded-lg border border-glass/30 bg-surface/10 text-sm shadow-xl ${
                               m.from_me ? 'right-0' : 'left-0'
                             }`}
                           >
@@ -553,7 +553,7 @@ function Messenger({
                                     setEditing({ id_message: m.id_message, value: m.content });
                                     setMenuFor(null);
                                   }}
-                                  className="block w-full px-3 py-2 text-left text-white transition hover:bg-white/10"
+                                  className="block w-full px-3 py-2 text-left text-on-dark transition hover:bg-surface/10"
                                 >
                                   {t('messenger.edit')}
                                 </button>
@@ -561,7 +561,7 @@ function Messenger({
                                   type="button"
                                   role="menuitem"
                                   onClick={() => handleDelete(m.id_message, 'all')}
-                                  className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-white/10"
+                                  className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-surface/10"
                                 >
                                   {confirmKey === `${m.id_message}:all`
                                     ? t('messenger.confirmDelete')
@@ -573,7 +573,7 @@ function Messenger({
                               type="button"
                               role="menuitem"
                               onClick={() => handleDelete(m.id_message, 'me')}
-                              className="block w-full px-3 py-2 text-left text-white/80 transition hover:bg-white/10"
+                              className="block w-full px-3 py-2 text-left text-on-dark/80 transition hover:bg-surface/10"
                             >
                               {confirmKey === `${m.id_message}:me`
                                 ? t('messenger.confirmDelete')
@@ -589,7 +589,7 @@ function Messenger({
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={handleSend} className="flex gap-2 border-t border-white/20 p-3">
+            <form onSubmit={handleSend} className="flex gap-2 border-t border-glass/20 p-3">
               <label htmlFor="message-draft" className="sr-only">
                 {t('messenger.yourMessage')}
               </label>
@@ -600,12 +600,12 @@ function Messenger({
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={2000}
                 placeholder={t('messenger.placeholder')}
-                className="w-full rounded-full border border-white/30 bg-white/10 px-4 py-2.5 text-sm text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC]"
+                className="w-full rounded-full border border-glass/30 bg-surface/10 px-4 py-2.5 text-sm text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand"
               />
               <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                className={`shrink-0 rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                className={`shrink-0 rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
               >
                 {sending ? t('messenger.sending') : t('messenger.send')}
               </button>

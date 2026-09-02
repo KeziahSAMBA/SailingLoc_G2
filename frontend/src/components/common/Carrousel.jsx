@@ -91,14 +91,14 @@ const PortCarousel = memo(
     const slideWidthPct = 100 / slides.length;
     const trackWidthPct = (slides.length / effectiveVisibleCount) * 100;
     const aspectRatio = imageSize === 'small' ? '4 / 3' : '1 / 1';
-    const imgBorder = theme === 'dark' ? 'border-white/20' : 'border-black/40';
+    const imgBorder = theme === 'dark' ? 'border-glass/20' : 'border-black/40';
     const arrowBtn =
       theme === 'dark'
-        ? 'bg-white/10 hover:bg-white/25 text-white'
-        : 'bg-black/10 hover:bg-gray-300 text-gray-700';
-    const captionTitle = theme === 'dark' ? 'text-white' : 'text-black';
-    const captionMeta = theme === 'dark' ? 'text-white/70' : 'text-gray-600';
-    const captionSubtle = theme === 'dark' ? 'text-white/60' : 'text-gray-500';
+        ? 'bg-surface/10 hover:bg-surface/25 text-on-dark'
+        : 'bg-overlay/10 hover:bg-gray-300 text-gray-700';
+    const captionTitle = theme === 'dark' ? 'text-on-dark' : 'text-on-light';
+    const captionMeta = theme === 'dark' ? 'text-on-dark/70' : 'text-gray-600';
+    const captionSubtle = theme === 'dark' ? 'text-on-dark/60' : 'text-gray-500';
     const getImageAlt = (slide) =>
       slide.kind === 'port'
         ? t('carrousel.portImageAlt', { city: slide.label })
@@ -196,13 +196,13 @@ const PortCarousel = memo(
                         loading="lazy"
                       />
                       {slide.available ? (
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-black/30" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-overlay/5 to-overlay/30" />
                       ) : (
                         <>
-                          <div className="absolute inset-0 bg-black/60" />
+                          <div className="absolute inset-0 bg-overlay/60" />
                           <div className="absolute inset-0 flex items-center justify-center">
                             <span
-                              className="text-white font-semibold text-center px-2"
+                              className="text-on-dark font-semibold text-center px-2"
                               style={{
                                 fontSize: '13px',
                                 lineHeight: '14px',
@@ -274,10 +274,10 @@ const PortCarousel = memo(
                     />
                     {slide.available ? (
                       <>
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/80" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-overlay/10 to-overlay/80" />
                         <div className="absolute inset-0 flex items-center justify-center px-3">
                           <span
-                            className="text-white font-semibold text-center"
+                            className="text-on-dark font-semibold text-center"
                             style={{ fontSize: '15px', lineHeight: '19px' }}
                           >
                             {slide.label}
@@ -285,7 +285,7 @@ const PortCarousel = memo(
                         </div>
                         {slide.description && (
                           <div
-                            className="absolute bottom-3 left-3 right-3 text-white/75 text-center"
+                            className="absolute bottom-3 left-3 right-3 text-on-dark/75 text-center"
                             style={{ fontSize: '11px', lineHeight: '14px' }}
                           >
                             {slide.description}
@@ -294,16 +294,16 @@ const PortCarousel = memo(
                       </>
                     ) : (
                       <>
-                        <div className="absolute inset-0 bg-black/60" />
+                        <div className="absolute inset-0 bg-overlay/60" />
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-2">
                           <span
-                            className="text-white font-semibold text-center"
+                            className="text-on-dark font-semibold text-center"
                             style={{ fontSize: '15px', lineHeight: '19px' }}
                           >
                             {slide.label}
                           </span>
                           <span
-                            className="text-white/70 text-center"
+                            className="text-on-dark/70 text-center"
                             style={{
                               fontSize: '11px',
                               lineHeight: '14px',
@@ -332,10 +332,10 @@ const PortCarousel = memo(
                       />
                       {!slide.available && (
                         <>
-                          <div className="absolute inset-0 bg-black/60" />
+                          <div className="absolute inset-0 bg-overlay/60" />
                           <div className="absolute inset-0 flex items-center justify-center">
                             <span
-                              className="text-white font-semibold text-center px-2"
+                              className="text-on-dark font-semibold text-center px-2"
                               style={{
                                 fontSize: '13px',
                                 lineHeight: '14px',
@@ -412,15 +412,15 @@ const CarouselSection = ({
   const titleColor =
     theme === 'dark'
       ? isResponsivePortHeader
-        ? 'text-gray-900 lg:text-white'
-        : 'text-white'
-      : 'text-black';
+        ? 'text-gray-900 lg:text-on-dark'
+        : 'text-on-dark'
+      : 'text-on-light';
   const linkColor =
     theme === 'dark'
       ? isResponsivePortHeader
-        ? 'text-gray-600 hover:text-black lg:text-white/70 lg:hover:text-white'
-        : 'text-white/70 hover:text-white'
-      : 'text-gray-600 hover:text-black';
+        ? 'text-gray-600 hover:text-on-light lg:text-on-dark/70 lg:hover:text-on-dark'
+        : 'text-on-dark/70 hover:text-on-dark'
+      : 'text-gray-600 hover:text-on-light';
   return (
     <div className="relative w-full">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -485,7 +485,7 @@ const SlideItem = memo(function SlideItem({
 
   return (
     <motion.div
-      className="relative shrink-0 rounded-[8px] overflow-hidden border border-white/20 cursor-pointer"
+      className="relative shrink-0 rounded-[8px] overflow-hidden border border-glass/20 cursor-pointer"
       style={{ width: itemWidth, height: 220, rotateY, willChange: 'transform' }}
       onClick={() => onSlideClick?.(slide)}
     >
@@ -499,7 +499,7 @@ const SlideItem = memo(function SlideItem({
           fetchpriority={priority ? 'high' : 'low'}
           draggable={false}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-overlay/10 to-overlay/90" />
         <FavoriteButton
           isFavorite={isFavorite}
           onToggle={() => onToggleFavorite(slide.id)}
@@ -507,7 +507,7 @@ const SlideItem = memo(function SlideItem({
           className="absolute top-3 right-3 z-10"
         />
         <div
-          className="absolute top-3 left-3 text-white font-semibold"
+          className="absolute top-3 left-3 text-on-dark font-semibold"
           style={{ fontSize: '15px' }}
         >
           {slide.label}
@@ -515,7 +515,7 @@ const SlideItem = memo(function SlideItem({
         <div className="absolute bottom-3 left-3 right-3">
           {slide.subtitle && (
             <div
-              className="text-white/70 font-semibold"
+              className="text-on-dark/70 font-semibold"
               style={{ fontSize: '11px', lineHeight: '14px' }}
             >
               {slide.subtitle}
@@ -523,7 +523,7 @@ const SlideItem = memo(function SlideItem({
           )}
           {slide.description && (
             <div
-              className="text-white/80"
+              className="text-on-dark/80"
               style={{ fontSize: '11px', lineHeight: '14px', marginTop: '2px' }}
             >
               {slide.description}
@@ -659,7 +659,7 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
     <div className="relative flex-1 flex flex-col items-center">
       <div
         ref={outerRef}
-        className={`relative overflow-hidden rounded-[12px] p-4 flex justify-center ${theme === 'light' ? 'border border-black/10 bg-black/[0.03]' : 'border border-white/15 bg-white/5'}`}
+        className={`relative overflow-hidden rounded-[12px] p-4 flex justify-center ${theme === 'light' ? 'border border-black/10 bg-overlay/[0.03]' : 'border border-glass/15 bg-surface/5'}`}
         style={{
           width: '100%',
           backdropFilter: 'blur(10px)',
@@ -673,11 +673,11 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
       >
         <button
           onClick={goPrev}
-          className="absolute left-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-2.5 shadow-lg transition-colors"
+          className="absolute left-0 z-20 bg-overlay/20 hover:bg-overlay/40 rounded-full p-2.5 shadow-lg transition-colors"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
           aria-label={t('carrousel.prev')}
         >
-          <FaChevronLeft size={16} className="text-white" />
+          <FaChevronLeft size={16} className="text-on-dark" />
         </button>
         {itemWidth > 0 && (
           <motion.div
@@ -713,11 +713,11 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
         )}
         <button
           onClick={goNext}
-          className="absolute right-0 z-20 bg-black/20 hover:bg-black/40 rounded-full p-2.5 shadow-lg transition-colors"
+          className="absolute right-0 z-20 bg-overlay/20 hover:bg-overlay/40 rounded-full p-2.5 shadow-lg transition-colors"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
           aria-label={t('carrousel.next')}
         >
-          <FaChevronRight size={16} className="text-white" />
+          <FaChevronRight size={16} className="text-on-dark" />
         </button>
       </div>
 
@@ -914,9 +914,9 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
     return [...related, ...fillers].slice(0, 6).map((boat) => boatToSlide(boat, t));
   }, [boats, similarTo, t]);
 
-  const headerTitle = theme === 'light' ? 'text-black' : 'text-white';
+  const headerTitle = theme === 'light' ? 'text-on-light' : 'text-on-dark';
   const headerLink =
-    theme === 'light' ? 'text-gray-600 hover:text-black' : 'text-white/70 hover:text-white';
+    theme === 'light' ? 'text-gray-600 hover:text-on-light' : 'text-on-dark/70 hover:text-on-dark';
 
   if (portsOnly) {
     const section = carouselSections[0];

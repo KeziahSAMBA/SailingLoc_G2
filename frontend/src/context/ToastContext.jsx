@@ -80,7 +80,7 @@ const COLORS = {
 const ICON_COLORS = {
   success: 'text-emerald-600',
   error: 'text-red-600',
-  info: 'text-sky-600',
+  info: 'text-info',
   warning: 'text-orange-600',
 };
 

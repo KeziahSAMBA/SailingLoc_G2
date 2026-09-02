@@ -26,7 +26,7 @@ function getSortLabels(t) {
 function FilterChip({ label, onRemove }) {
   return (
     <span
-      className="flex flex-shrink-0 items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
+      className="flex flex-shrink-0 items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold text-on-dark"
       style={{ backgroundColor: 'rgba(14,165,233,0.95)' }}
     >
       {label}
@@ -194,11 +194,11 @@ function FilterBar({
     <>
       <div className="flex flex-shrink-0 items-center gap-2">
         <FaSliders
-          className={compact ? 'text-[#0A527A]' : light ? 'text-white/80' : 'text-black/70'}
+          className={compact ? 'text-[#0A527A]' : light ? 'text-on-dark/80' : 'text-on-light/70'}
           size={13}
         />
         <span
-          className={`hidden whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:inline ${compact ? 'text-[#0A527A]' : light ? 'text-white' : 'text-black'}`}
+          className={`hidden whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:inline ${compact ? 'text-[#0A527A]' : light ? 'text-on-dark' : 'text-on-light'}`}
         >
           {t('filterBar.label')}
         </span>
@@ -206,14 +206,14 @@ function FilterBar({
 
       {activeChips.length > 0 && (
         <div className="hidden sm:contents">
-          <div className={`h-3 w-px flex-shrink-0 ${light ? 'bg-white/30' : 'bg-black/20'}`} />
+          <div className={`h-3 w-px flex-shrink-0 ${light ? 'bg-surface/30' : 'bg-overlay/20'}`} />
           <div className="flex flex-shrink-0 items-center gap-1.5">
             {activeChips.slice(0, 2).map((chip) => (
               <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
             ))}
             {activeChips.length > 2 && (
               <span
-                className={`whitespace-nowrap text-[10px] font-semibold ${light ? 'text-white/70' : 'text-black/50'}`}
+                className={`whitespace-nowrap text-[10px] font-semibold ${light ? 'text-on-dark/70' : 'text-on-light/50'}`}
               >
                 ...
               </span>
@@ -228,19 +228,19 @@ function FilterBar({
             e.stopPropagation();
             onReset();
           }}
-          className={`whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-[#0A527A] hover:text-sky-800' : light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
+          className={`whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-[#0A527A] hover:text-sky-800' : light ? 'text-on-dark/70 hover:text-on-dark' : 'text-on-light/60 hover:text-on-light'}`}
         >
           {t('filterBar.reset')}
         </button>
         {filterOpen ? (
           <FaChevronUp
             size={9}
-            className={compact ? 'text-[#0A527A]' : light ? 'text-white/70' : 'text-black/50'}
+            className={compact ? 'text-[#0A527A]' : light ? 'text-on-dark/70' : 'text-on-light/50'}
           />
         ) : (
           <FaChevronDown
             size={9}
-            className={compact ? 'text-[#0A527A]' : light ? 'text-white/70' : 'text-black/50'}
+            className={compact ? 'text-[#0A527A]' : light ? 'text-on-dark/70' : 'text-on-light/50'}
           />
         )}
       </div>
@@ -262,7 +262,7 @@ function FilterBar({
 
       {/* Header — always visible */}
       <div
-        className={`flex cursor-pointer select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className={`flex cursor-pointer select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-surface/10' : 'hover:bg-overlay/10'}`}
         style={{
           width: headerWidth != null ? `${headerWidth}px` : undefined,
           backgroundColor: compact

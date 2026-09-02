@@ -22,7 +22,7 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
 
   return (
     <nav
-      className={`inline-flex items-center gap-1.5 py-3 px-3 rounded-full text-xs font-semibold border sm:py-0.5 sm:px-2 ${compact ? 'text-[#0A527A]' : light ? 'text-white' : 'text-black'}`}
+      className={`inline-flex items-center gap-1.5 py-3 px-3 rounded-full text-xs font-semibold border sm:py-0.5 sm:px-2 ${compact ? 'text-[#0A527A]' : light ? 'text-on-dark' : 'text-on-light'}`}
       style={{
         backgroundColor: compact ? 'transparent' : 'rgba(255,255,255,0.1)',
         borderColor: compact ? 'transparent' : 'rgba(255,255,255,0.3)',
@@ -40,7 +40,7 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
           goHome();
         }}
         className={
-          light ? 'hover:text-white/70 transition-colors' : 'hover:text-sky-700 transition-colors'
+          light ? 'hover:text-on-dark/70 transition-colors' : 'hover:text-sky-700 transition-colors'
         }
       >
         {t('breadcrumb.home')}
@@ -50,7 +50,9 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
         return (
           <span key={to ?? label} className="flex items-center gap-2">
             <span
-              className={compact ? 'text-[#0A527A]/60' : light ? 'text-white/60' : 'text-gray-900'}
+              className={
+                compact ? 'text-[#0A527A]/60' : light ? 'text-on-dark/60' : 'text-gray-900'
+              }
             >
               /
             </span>

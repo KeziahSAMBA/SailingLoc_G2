@@ -2,7 +2,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 // Au-delà de 7 pages, les numéros sont repliés (1 … 4 5 6 … 12) pour que la
 // barre tienne sur une ligne en mobile. La fenêtre s'élargit près des bords
@@ -83,7 +83,7 @@ function Pagination({
       className={`${navLayout} ${className}`}
     >
       <p
-        className={`text-xs text-white/60 ${isCompactWindow ? 'text-center sm:text-left' : ''}`}
+        className={`text-xs text-on-dark/60 ${isCompactWindow ? 'text-center sm:text-left' : ''}`}
         aria-live="polite"
       >
         {t('pagination.range', { label, first, last, total })}
@@ -93,7 +93,7 @@ function Pagination({
           type="button"
           onClick={() => onChange(page - 1)}
           disabled={page === 1}
-          className={`rounded-full font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${directionSize} ${FOCUS_RING}`}
+          className={`rounded-full font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${directionSize} ${FOCUS_RING}`}
         >
           {t('pagination.previous')}
         </button>
@@ -102,7 +102,7 @@ function Pagination({
             <span
               key={`gap-${i}`}
               aria-hidden="true"
-              className={`text-white/40 ${
+              className={`text-on-dark/40 ${
                 isCompactWindow
                   ? 'shrink-0 px-0.5 text-xs min-[375px]:px-1 min-[375px]:text-sm'
                   : 'px-1 text-sm'
@@ -119,8 +119,8 @@ function Pagination({
               aria-label={t('pagination.page', { n: item })}
               className={`rounded-full font-medium transition ${pageSizeClass} ${FOCUS_RING} ${
                 item === page
-                  ? 'bg-sky-500 text-white'
-                  : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  ? 'bg-action text-on-dark'
+                  : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
               }`}
             >
               {item}
@@ -131,7 +131,7 @@ function Pagination({
           type="button"
           onClick={() => onChange(page + 1)}
           disabled={page === pageCount}
-          className={`rounded-full font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${directionSize} ${FOCUS_RING}`}
+          className={`rounded-full font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${directionSize} ${FOCUS_RING}`}
         >
           {t('pagination.next')}
         </button>

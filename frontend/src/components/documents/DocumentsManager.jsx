@@ -135,7 +135,7 @@ function DocumentRow({
     ? hasDocs
       ? {
           label: t('documentsManager.filesCount', { count: docs.length }),
-          cls: 'bg-slate-500/15 text-white/80',
+          cls: 'bg-page0/15 text-on-dark/80',
         }
       : null
     : hasDocs
@@ -143,7 +143,7 @@ function DocumentRow({
       : null;
 
   return (
-    <article className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-6">
+    <article className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-6">
       <div
         className={
           statusBadgeTopRight
@@ -154,20 +154,20 @@ function DocumentRow({
         {statusBadgeTopRight && (
           <span
             className={`self-end shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-              headerBadge ? headerBadge.cls : 'bg-white/10 text-white/70'
+              headerBadge ? headerBadge.cls : 'bg-surface/10 text-on-dark/70'
             }`}
           >
             {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
           </span>
         )}
         <div>
-          <h2 className="text-base font-semibold text-white">{config.label}</h2>
-          <p className="mt-1 text-sm text-white/70">{config.desc}</p>
+          <h2 className="text-base font-semibold text-on-dark">{config.label}</h2>
+          <p className="mt-1 text-sm text-on-dark/70">{config.desc}</p>
         </div>
         {!statusBadgeTopRight && (
           <span
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-              headerBadge ? headerBadge.cls : 'bg-white/10 text-white/70'
+              headerBadge ? headerBadge.cls : 'bg-surface/10 text-on-dark/70'
             }`}
           >
             {headerBadge ? headerBadge.label : t('documentsManager.notProvided')}
@@ -182,7 +182,7 @@ function DocumentRow({
             <button
               type="button"
               onClick={() => handleView(doc)}
-              className="text-xs font-semibold text-[#5AB4EC] hover:underline"
+              className="text-xs font-semibold text-brand hover:underline"
             >
               {t('documentsManager.view')}
             </button>
@@ -200,9 +200,9 @@ function DocumentRow({
         return (
           <div
             key={doc.id_document}
-            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-white/10 px-4 py-3"
+            className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-surface/10 px-4 py-3"
           >
-            <span className="truncate text-sm font-medium text-white/90">{doc.file_name}</span>
+            <span className="truncate text-sm font-medium text-on-dark/90">{doc.file_name}</span>
             {st && !(hideRepeatedValidatedStatus && doc.status === 'validated') && (
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>
                 {st.label}
@@ -227,12 +227,12 @@ function DocumentRow({
         <label
           className={
             stackFilePickerOnMobile
-              ? 'flex w-full min-w-0 flex-col items-start gap-2 text-sm text-white/70 sm:max-w-xs sm:flex-1 sm:flex-row sm:items-center sm:gap-3'
-              : 'flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-white/70'
+              ? 'flex w-full min-w-0 flex-col items-start gap-2 text-sm text-on-dark/70 sm:max-w-xs sm:flex-1 sm:flex-row sm:items-center sm:gap-3'
+              : 'flex min-w-0 max-w-xs flex-1 items-center gap-3 text-sm text-on-dark/70'
           }
         >
           <span
-            className={`shrink-0 cursor-pointer rounded-full border-0 bg-[#5AB4EC]/15 px-4 py-2 text-sm font-semibold text-[#5AB4EC] transition hover:bg-[#5AB4EC]/25 ${
+            className={`shrink-0 cursor-pointer rounded-full border-0 bg-brand/15 px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brand/25 ${
               stackFilePickerOnMobile ? 'self-start whitespace-nowrap text-center sm:self-auto' : ''
             }`}
           >
@@ -260,7 +260,7 @@ function DocumentRow({
           type="button"
           onClick={handleUpload}
           disabled={busy || !file}
-          className={`rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-on-dark shadow transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${
             stackFilePickerOnMobile ? 'w-fit self-start whitespace-nowrap sm:self-auto' : ''
           }`}
         >
@@ -274,7 +274,7 @@ function DocumentRow({
         </button>
       </div>
 
-      <p className="mt-2 text-xs text-white/70">{t('documentsManager.acceptedFormats')}</p>
+      <p className="mt-2 text-xs text-on-dark/70">{t('documentsManager.acceptedFormats')}</p>
 
       {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
     </article>

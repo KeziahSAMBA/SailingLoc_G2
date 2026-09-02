@@ -205,7 +205,7 @@ const BoatListingCard = memo(function BoatListingCard({
     <article
       id={`boat-${id}`}
       onClick={() => onSelect?.(id)}
-      className={`relative rounded-3xl overflow-hidden border hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-white/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] ${highlighted ? 'border-sky-400 ring-4 ring-sky-400/60' : 'border-white/50'}`}
+      className={`relative rounded-3xl overflow-hidden border hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-glass/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] ${highlighted ? 'border-sky-400 ring-4 ring-sky-400/60' : 'border-glass/50'}`}
     >
       <div className="relative overflow-hidden" style={{ aspectRatio: '7/5' }}>
         <SafeImage
@@ -216,10 +216,10 @@ const BoatListingCard = memo(function BoatListingCard({
           loading="lazy"
           decoding="async"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-overlay/15 via-transparent to-transparent" />
         {badge && (
           <div
-            className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/30 px-2.5 py-1 text-[0.5625rem] font-bold uppercase tracking-wider text-white backdrop-blur-sm"
+            className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-glass/30 px-2.5 py-1 text-[0.5625rem] font-bold uppercase tracking-wider text-on-dark backdrop-blur-sm"
             style={{
               backgroundColor: 'rgba(14,165,233,0.8)',
               boxShadow: '0 2px 8px rgba(14,165,233,0.5)',
@@ -249,19 +249,19 @@ const BoatListingCard = memo(function BoatListingCard({
         {/* Nom + type */}
         <div className="mb-2 flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
           <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-1">
-            <h3 className="max-w-full truncate text-[0.9375rem] font-bold leading-tight text-white">
+            <h3 className="max-w-full truncate text-[0.9375rem] font-bold leading-tight text-on-dark">
               {name}
             </h3>
-            <span className="text-white/50 flex-shrink-0">-</span>
+            <span className="text-on-dark/50 flex-shrink-0">-</span>
             <span className="flex-shrink-0 text-[0.625rem] font-bold uppercase tracking-widest text-sky-500">
               {type}
             </span>
           </div>
-          <span className="text-xs font-semibold text-white flex-shrink-0">
+          <span className="text-xs font-semibold text-on-dark flex-shrink-0">
             {rating != null ? (
               <>
                 <span className="text-amber-400">★</span> {rating}
-                {reviewCount > 0 && <span className="text-white/70"> ({reviewCount})</span>}
+                {reviewCount > 0 && <span className="text-on-dark/70"> ({reviewCount})</span>}
               </>
             ) : (
               t('category.card.new')
@@ -270,8 +270,8 @@ const BoatListingCard = memo(function BoatListingCard({
         </div>
 
         {/* Lieu + dates */}
-        <div className="mb-2 flex flex-col items-start gap-2 border-b border-white/40 pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-1">
-          <span className="text-xs text-white/80 flex items-center gap-1 min-w-0">
+        <div className="mb-2 flex flex-col items-start gap-2 border-b border-glass/40 pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-1">
+          <span className="text-xs text-on-dark/80 flex items-center gap-1 min-w-0">
             <MdLocationOn
               className="flex-shrink-0 text-sky-500"
               style={{ fontSize: '0.8125rem' }}
@@ -303,7 +303,7 @@ const BoatListingCard = memo(function BoatListingCard({
 
         {/* Personnes + badges skipper/permis */}
         <div className="mb-2 flex flex-col items-start gap-2 2xl:flex-row 2xl:items-center 2xl:justify-between">
-          <span className="flex items-center gap-1 text-xs text-white/70 flex-shrink-0">
+          <span className="flex items-center gap-1 text-xs text-on-dark/70 flex-shrink-0">
             <MdPeople className="text-sky-500" style={{ fontSize: '0.875rem' }} />
             {t('category.card.persons', { count: capacity })}
           </span>
@@ -336,13 +336,13 @@ const BoatListingCard = memo(function BoatListingCard({
         {/* Prix + Réserver */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 items-baseline gap-1">
-            <span className="text-[0.9375rem] font-bold text-white">{price} €</span>
-            <span className="text-xs text-white/70">{t('category.card.perDay')}</span>
+            <span className="text-[0.9375rem] font-bold text-on-dark">{price} €</span>
+            <span className="text-xs text-on-dark/70">{t('category.card.perDay')}</span>
           </div>
           <button
             type="button"
             onClick={(e) => e.stopPropagation()}
-            className="flex min-h-10 items-center rounded-full border border-white/40 bg-[rgba(14,165,233,0.55)] px-3 py-1 text-[0.6875rem] font-semibold text-white shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition-all hover:border-white/20 hover:bg-[rgba(10,49,114,0.95)] sm:min-h-0"
+            className="flex min-h-10 items-center rounded-full border border-glass/40 bg-[rgba(14,165,233,0.55)] px-3 py-1 text-[0.6875rem] font-semibold text-on-dark shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition-all hover:border-glass/20 hover:bg-[rgba(10,49,114,0.95)] sm:min-h-0"
           >
             {t('category.card.book')}
           </button>
@@ -403,12 +403,12 @@ const CurrentAnnouncementsCarousel = memo(function CurrentAnnouncementsCarousel(
   return (
     <div className="relative w-full">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="text-xl font-semibold leading-tight text-white">
+        <h2 className="text-xl font-semibold leading-tight text-on-dark">
           {t('carrousel.sections.current')}
         </h2>
         <Link
           to="/categorie"
-          className="text-base text-white/70 transition-colors hover:text-white sm:ml-4"
+          className="text-base text-on-dark/70 transition-colors hover:text-on-dark sm:ml-4"
         >
           {t('carrousel.sections.currentLink')} →
         </Link>
@@ -424,9 +424,9 @@ const CurrentAnnouncementsCarousel = memo(function CurrentAnnouncementsCarousel(
             <article
               key={boat.id}
               onClick={() => onSelect(boat.id)}
-              className="group relative aspect-[16/10] min-w-0 flex-[0_0_100%] snap-start cursor-pointer overflow-hidden rounded-2xl border border-white/20 bg-white/5 p-4 shadow-lg backdrop-blur-md md:flex-[0_0_calc((100%-1rem)/2)] xl:flex-[0_0_calc((100%-2rem)/3)]"
+              className="group relative aspect-[16/10] min-w-0 flex-[0_0_100%] snap-start cursor-pointer overflow-hidden rounded-2xl border border-glass/20 bg-surface/5 p-4 shadow-lg backdrop-blur-md md:flex-[0_0_calc((100%-1rem)/2)] xl:flex-[0_0_calc((100%-2rem)/3)]"
             >
-              <div className="relative h-full overflow-hidden rounded-xl border border-white/20">
+              <div className="relative h-full overflow-hidden rounded-xl border border-glass/20">
                 <SafeImage
                   src={boat.image}
                   alt={t('carrousel.boatImageAlt', { name: boat.name })}
@@ -436,21 +436,21 @@ const CurrentAnnouncementsCarousel = memo(function CurrentAnnouncementsCarousel(
                   decoding="async"
                   draggable={false}
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/10 to-black/90" />
+                <div className="absolute inset-0 bg-gradient-to-b from-overlay/10 via-overlay/10 to-overlay/90" />
                 <FavoriteButton
                   isFavorite={favoriteIds.has(boat.id)}
                   onToggle={() => onToggleFavorite(boat.id)}
                   size={26}
                   className="absolute right-3 top-3 z-10"
                 />
-                <div className="absolute inset-x-0 bottom-0 min-w-0 p-3 text-white">
+                <div className="absolute inset-x-0 bottom-0 min-w-0 p-3 text-on-dark">
                   <h3 className="truncate text-sm font-bold sm:text-base">{boat.name}</h3>
-                  <p className="mt-1 truncate text-xs font-semibold text-white/80">
+                  <p className="mt-1 truncate text-xs font-semibold text-on-dark/80">
                     {[boat.location, `${boat.capacity} pers.`, `${boat.price} €/j`]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
-                  <p className="mt-1 truncate text-xs text-white/70">
+                  <p className="mt-1 truncate text-xs text-on-dark/70">
                     {boat.rating != null
                       ? `★ ${boat.rating}${boat.reviewCount > 0 ? ` (${boat.reviewCount})` : ''}`
                       : t('category.card.new')}
@@ -466,7 +466,7 @@ const CurrentAnnouncementsCarousel = memo(function CurrentAnnouncementsCarousel(
           onClick={() => scrollOneCard(-1)}
           disabled={!navigation.canPrev}
           aria-label={t('carrousel.prev')}
-          className="absolute left-1 top-1/2 z-20 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white shadow-lg backdrop-blur-md transition disabled:pointer-events-none disabled:opacity-0"
+          className="absolute left-1 top-1/2 z-20 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full border border-glass/30 bg-overlay/50 text-on-dark shadow-lg backdrop-blur-md transition disabled:pointer-events-none disabled:opacity-0"
         >
           <FaChevronLeft className="block text-sm" aria-hidden="true" />
         </button>
@@ -475,7 +475,7 @@ const CurrentAnnouncementsCarousel = memo(function CurrentAnnouncementsCarousel(
           onClick={() => scrollOneCard(1)}
           disabled={!navigation.canNext}
           aria-label={t('carrousel.next')}
-          className="absolute right-1 top-1/2 z-20 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white shadow-lg backdrop-blur-md transition disabled:pointer-events-none disabled:opacity-0"
+          className="absolute right-1 top-1/2 z-20 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full border border-glass/30 bg-overlay/50 text-on-dark shadow-lg backdrop-blur-md transition disabled:pointer-events-none disabled:opacity-0"
         >
           <FaChevronRight className="block text-sm" aria-hidden="true" />
         </button>
@@ -1038,7 +1038,7 @@ function CategoryPage() {
     // qui casserait les sticky) évite l'ascenseur horizontal pendant l'entrée
     // des blocs depuis la marge droite (translateX(110vw)).
     <main
-      className="min-h-[100svh] w-full overflow-x-clip bg-white pt-[clamp(4rem,6vw,5rem)]"
+      className="min-h-[100svh] w-full overflow-x-clip bg-surface pt-[clamp(4rem,6vw,5rem)]"
       style={{
         '--category-header-height': categoryHeaderHeight,
         '--category-map-top': categoryMapTop,
@@ -1139,7 +1139,7 @@ function CategoryPage() {
                   aria-label={
                     mobileSearchExpanded ? t('cookieConsent.prefs.close') : t('searchBar.search')
                   }
-                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-white shadow-lg transition-colors hover:bg-sky-800 md:hidden"
+                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-on-dark shadow-lg transition-colors hover:bg-sky-800 md:hidden"
                 >
                   {mobileSearchExpanded ? (
                     <MdClose className="text-lg" aria-hidden="true" />
@@ -1182,25 +1182,25 @@ function CategoryPage() {
               grille retrouve la repartition desktop 55/45. */}
           <div className="flex flex-col px-4 py-5 sm:px-8 lg:px-16 xl:grid xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)] xl:items-start xl:gap-6 xl:px-28">
             {/* Listings */}
-            <div className="relative order-2 z-10 -mt-[clamp(4rem,12svh,7rem)] flex min-w-0 flex-col gap-5 rounded-[2rem] border-t border-white/50 bg-white/10 p-4 shadow-[0_-1.5rem_3rem_rgba(0,0,0,0.28)] backdrop-blur-[40px] sm:p-6 lg:p-8 xl:order-1 xl:col-start-1 xl:mt-0 xl:rounded-none xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none xl:backdrop-blur-none">
+            <div className="relative order-2 z-10 -mt-[clamp(4rem,12svh,7rem)] flex min-w-0 flex-col gap-5 rounded-[2rem] border-t border-glass/50 bg-surface/10 p-4 shadow-[0_-1.5rem_3rem_rgba(0,0,0,0.28)] backdrop-blur-[40px] sm:p-6 lg:p-8 xl:order-1 xl:col-start-1 xl:mt-0 xl:rounded-none xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none xl:backdrop-blur-none">
               <div className="relative z-10 flex flex-col gap-5">
                 <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
                     <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-sky-500">
                       {t('category.results.kicker')}
                     </p>
-                    <h1 className="text-xl font-bold uppercase tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-2xl">
+                    <h1 className="text-xl font-bold uppercase tracking-tight text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-2xl">
                       {t('category.results.title')}
                     </h1>
                   </div>
-                  <span className="text-sm text-white/80 font-medium" style={titleFadeStyle}>
+                  <span className="text-sm text-on-dark/80 font-medium" style={titleFadeStyle}>
                     {t('category.results.count', { count: filteredBoats.length })}
                   </span>
                 </div>
 
                 {filteredBoats.length === 0 ? (
                   boatsLoaded && (
-                    <p className="text-sm text-white/80 py-6" style={slideInStyle(4)}>
+                    <p className="text-sm text-on-dark/80 py-6" style={slideInStyle(4)}>
                       {t('category.results.empty')}
                     </p>
                   )

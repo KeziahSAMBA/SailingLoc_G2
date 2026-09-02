@@ -102,7 +102,7 @@ const ShareButton = memo(function ShareButton({ url, title, size = 22, className
         aria-label={t('share.title')}
         aria-expanded={open}
       >
-        <MdIosShare size={size} className="text-white" />
+        <MdIosShare size={size} className="text-on-dark" />
       </button>
 
       {open &&
@@ -116,7 +116,7 @@ const ShareButton = memo(function ShareButton({ url, title, size = 22, className
             <button
               type="button"
               onClick={handleCopy}
-              className="flex items-center gap-2 text-sm text-white px-2.5 py-2 rounded-lg hover:bg-white/10 transition-colors text-left"
+              className="flex items-center gap-2 text-sm text-on-dark px-2.5 py-2 rounded-lg hover:bg-surface/10 transition-colors text-left"
             >
               {copied ? (
                 <MdCheck className="text-green-400 flex-shrink-0" size={16} />
@@ -125,14 +125,14 @@ const ShareButton = memo(function ShareButton({ url, title, size = 22, className
               )}
               {copied ? t('share.copied') : t('share.copyLink')}
             </button>
-            <div className="h-px bg-white/15 my-1" />
+            <div className="h-px bg-surface/15 my-1" />
             {links.map((l) => (
               <a
                 key={l.key}
                 href={l.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-white px-2.5 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 text-sm text-on-dark px-2.5 py-2 rounded-lg hover:bg-surface/10 transition-colors"
               >
                 <span className="flex-shrink-0 text-sky-400">{l.icon}</span>
                 {l.label}

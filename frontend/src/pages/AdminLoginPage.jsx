@@ -5,10 +5,10 @@ import PasswordField from '../components/auth/PasswordField.jsx';
 import bgImage from '../assets/image/paysage/crique.jpg';
 
 const inputClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 function formatCountdown(seconds) {
   const m = Math.floor(seconds / 60);
@@ -84,7 +84,7 @@ function AdminLoginPage() {
     // Même univers visuel que les espaces propriétaire et locataire : photo
     // plein écran sous un voile sombre et panneaux en verre dépoli.
     <main
-      className="min-h-screen w-full bg-cover bg-fixed bg-center text-white"
+      className="min-h-screen w-full bg-cover bg-fixed bg-center text-on-dark"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60 px-4 pt-[120px] pb-12">
@@ -92,7 +92,7 @@ function AdminLoginPage() {
           <div className="mb-6 text-center">
             <div
               aria-hidden="true"
-              className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg"
+              className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-action text-on-dark shadow-lg"
             >
               <svg
                 width="26"
@@ -108,15 +108,15 @@ function AdminLoginPage() {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
-            <h1 id="admin-login-title" className="text-2xl font-bold text-white">
+            <h1 id="admin-login-title" className="text-2xl font-bold text-on-dark">
               Espace administrateur
             </h1>
-            <p className="mt-2 text-sm text-white/70">
+            <p className="mt-2 text-sm text-on-dark/70">
               Accès restreint. Cette page est réservée à l'équipe SailingLoc.
             </p>
           </div>
 
-          <article className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
+          <article className="rounded-2xl border border-glass/20 bg-surface/10 p-8 shadow-2xl backdrop-blur-xl">
             {serverError && (
               <div
                 role="alert"
@@ -165,7 +165,7 @@ function AdminLoginPage() {
                 <div className="mt-1.5 text-right">
                   <Link
                     to="/forgot-password?role=admin"
-                    className={`rounded text-xs text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                    className={`rounded text-xs text-brand hover:underline ${FOCUS_RING}`}
                   >
                     Mot de passe oublié&nbsp;?
                   </Link>
@@ -175,7 +175,7 @@ function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={submitting || isBlocked}
-                className={`mt-2 w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                className={`mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
               >
                 {isBlocked
                   ? `Réessayez dans ${formatCountdown(retryAfter)}`
@@ -186,11 +186,11 @@ function AdminLoginPage() {
             </form>
           </article>
 
-          <p className="mt-6 text-center text-xs text-white/60">
+          <p className="mt-6 text-center text-xs text-on-dark/60">
             Vous n'êtes pas administrateur ?{' '}
             <a
               href="/"
-              className={`rounded font-semibold text-white/80 hover:text-white hover:underline ${FOCUS_RING}`}
+              className={`rounded font-semibold text-on-dark/80 hover:text-on-dark hover:underline ${FOCUS_RING}`}
             >
               Retour à l'accueil
             </a>
