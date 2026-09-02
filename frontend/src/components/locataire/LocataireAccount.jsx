@@ -15,10 +15,10 @@ function LocataireAccount() {
   return (
     <section aria-labelledby="account-title" className="w-full">
       <header className="mb-6">
-        <h1 id="account-title" className="text-2xl font-bold text-white">
+        <h1 id="account-title" className="text-2xl font-bold text-on-dark">
           {t('locataireAccount.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">
+        <p className="mt-1 text-sm text-on-dark/70">
           {t('locataireAccount.subtitle', { name: user?.first_name })}
         </p>
       </header>

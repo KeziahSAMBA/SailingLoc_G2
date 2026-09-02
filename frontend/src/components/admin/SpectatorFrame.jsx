@@ -85,12 +85,12 @@ function SpectatorFrame({ mode, title, description, banner }) {
         type="button"
         onClick={refresh}
         title={t('spectatorFrame.reload')}
-        className="rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 transition hover:bg-white/10"
+        className="rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 transition hover:bg-surface/10"
       >
         ⟳
       </button>
       <div className="flex min-w-0 sm:flex-1">
-        <span className="hidden max-w-[45%] truncate rounded-l-lg border border-r-0 border-white/30 bg-white/10 px-3 py-2 text-xs text-white/60 md:block">
+        <span className="hidden max-w-[45%] truncate rounded-l-lg border border-r-0 border-glass/30 bg-surface/10 px-3 py-2 text-xs text-on-dark/60 md:block">
           {currentOrigin}
         </span>
         <input
@@ -98,12 +98,12 @@ function SpectatorFrame({ mode, title, description, banner }) {
           value={path}
           onChange={(e) => setPath(e.target.value)}
           placeholder="/"
-          className="min-w-0 flex-1 rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#5AB4EC] md:rounded-l-none"
+          className="min-w-0 flex-1 rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark outline-none focus:border-brand md:rounded-l-none"
         />
       </div>
       <button
         type="submit"
-        className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-500/90"
+        className="rounded-lg bg-action px-4 py-2 text-sm font-semibold text-on-dark transition hover:bg-action/90"
       >
         {t('spectatorFrame.go')}
       </button>
@@ -115,8 +115,8 @@ function SpectatorFrame({ mode, title, description, banner }) {
             onClick={() => go(p)}
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition ${
               src === p
-                ? 'bg-sky-500 text-white'
-                : 'border border-white/30 text-white/80 hover:bg-white/10'
+                ? 'bg-action text-on-dark'
+                : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
             }`}
           >
             {t(labelKey)}
@@ -129,21 +129,21 @@ function SpectatorFrame({ mode, title, description, banner }) {
   // Mode plein écran : on échappe au layout admin via un overlay fixed.
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-slate-950 p-2 sm:p-4">
+      <div className="fixed inset-0 z-[60] flex min-h-0 flex-col bg-dark-strong p-2 sm:p-4">
         <div className="mb-3 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-          <h1 className="text-lg font-bold text-white">
+          <h1 className="text-lg font-bold text-on-dark">
             {title} — {t('spectatorFrame.fullscreenSuffix')}
           </h1>
           <button
             type="button"
             onClick={() => setFullscreen(false)}
-            className="w-full rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 sm:w-auto"
+            className="w-full rounded-full bg-surface/20 px-4 py-1.5 text-xs font-semibold text-on-dark transition hover:bg-surface/20 sm:w-auto"
           >
             {t('spectatorFrame.exit')}
           </button>
         </div>
         <div className="mb-3 min-w-0">{urlBar}</div>
-        <div className="flex-1 overflow-hidden rounded-2xl border border-white/20 bg-white">
+        <div className="flex-1 overflow-hidden rounded-2xl border border-glass/20 bg-surface">
           {src ? (
             <iframe
               ref={iframeRef}
@@ -158,7 +158,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
               className="block h-full w-full"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-white/60">
+            <div className="flex h-full items-center justify-center text-sm text-on-dark/60">
               {t('spectatorFrame.reloading')}
             </div>
           )}
@@ -171,19 +171,19 @@ function SpectatorFrame({ mode, title, description, banner }) {
     <section>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">{title}</h1>
-          <p className="mt-1 text-sm text-white/70">{description}</p>
+          <h1 className="text-2xl font-bold text-on-dark">{title}</h1>
+          <p className="mt-1 text-sm text-on-dark/70">{description}</p>
         </div>
         <button
           type="button"
           onClick={() => setFullscreen(true)}
-          className="rounded-full bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-sky-500/90"
+          className="rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-on-dark shadow transition hover:bg-action/90"
         >
           {t('spectatorFrame.fullscreen')}
         </button>
       </div>
 
-      <div className="mt-3 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs text-sky-200">
+      <div className="mt-3 rounded-lg border border-action/30 bg-action/10 px-3 py-2 text-xs text-action-pale">
         {banner}
       </div>
 
@@ -191,7 +191,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
 
       {/* Cadre de l'iframe — hauteur calculée pour utiliser tout l'espace dispo
           sous la chrome (header fixe, padding layout, chrome de la page). */}
-      <div className="mt-4 overflow-hidden rounded-2xl border border-white/20 bg-white">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-glass/20 bg-surface">
         {src ? (
           <iframe
             ref={iframeRef}
@@ -203,7 +203,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
             className="block h-[calc(100svh-20rem)] min-h-96 w-full sm:min-h-[37.5rem]"
           />
         ) : (
-          <div className="flex h-[calc(100svh-20rem)] min-h-96 w-full items-center justify-center text-sm text-white/60 sm:min-h-[37.5rem]">
+          <div className="flex h-[calc(100svh-20rem)] min-h-96 w-full items-center justify-center text-sm text-on-dark/60 sm:min-h-[37.5rem]">
             Rechargement…
           </div>
         )}

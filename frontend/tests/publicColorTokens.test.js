@@ -12,6 +12,11 @@ const migratedRoots = [
   'src/components/messages',
   'src/pages',
 ];
+const privateRoots = [
+  'src/components/locataire',
+  'src/components/proprietaire',
+  'src/components/admin',
+];
 const assetAllowlist = new Set(['FlagIcons.jsx']);
 const allowedRaw = new Set(
   JSON.parse(
@@ -45,6 +50,36 @@ test('les tokens publics conservent les valeurs historiques du thème clair', ()
   }
 });
 
+test('les tokens privés conservent les teintes historiques du thème clair', () => {
+  const css = readFileSync(path.join(root, 'src/index.css'), 'utf8');
+  for (const declaration of [
+    '--sl-brand-hover: 74 163 219',
+    '--sl-action-pale: 186 230 253',
+    '--sl-action-soft: 125 211 252',
+    '--sl-action-bright: 56 189 248',
+    '--sl-action-deep: 3 105 161',
+    '--sl-dark-muted: 51 65 85',
+    '--sl-dark-strong: 2 6 23',
+    '--sl-content-soft: 203 213 225',
+    '--sl-content-subtle: 148 163 184',
+    '--sl-success-base: 16 185 129',
+    '--sl-success-bright: 52 211 153',
+    '--sl-success-soft: 110 231 183',
+    '--sl-success-deep: 5 150 105',
+    '--sl-warning-base: 245 158 11',
+    '--sl-warning-bright: 251 191 36',
+    '--sl-warning-soft: 252 211 77',
+    '--sl-warning-pale: 253 230 138',
+    '--sl-danger-base: 239 68 68',
+    '--sl-danger-bright: 248 113 113',
+    '--sl-danger-soft: 252 165 165',
+    '--sl-danger-pale: 254 202 202',
+    '--sl-chart-violet: 167 139 250',
+  ]) {
+    assert.ok(css.includes(declaration), `token privé absent ou altéré: ${declaration}`);
+  }
+});
+
 test('aucune nouvelle couleur brute ne contourne les tokens dans les fichiers migrés', () => {
   for (const relative of migratedRoots.flatMap(filesBelow)) {
     if (assetAllowlist.has(path.basename(relative))) continue;
@@ -56,5 +91,27 @@ test('aucune nouvelle couleur brute ne contourne les tokens dans les fichiers mi
     );
     for (const color of colors)
       assert.ok(allowedRaw.has(color), `${relative}: couleur brute non autorisée ${color}`);
+  }
+});
+
+test('les espaces privés n’utilisent que les tokens de couleur déclarés', () => {
+  // Les espaces privés n’ont aucune exception : même les graphiques et les
+  // états de tableau doivent référencer les tokens, afin de rester migrables.
+  const privateColorPattern =
+    /\b(?:text|bg|border|ring|from|via|to|divide|placeholder|fill|stroke|decoration|accent|shadow)-(?:slate|gray|zinc|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(?:-\d+)?(?:\/\d+)?|\b(?:text|bg|border|ring|from|via|to|divide|placeholder|fill|stroke|decoration|accent|shadow)-\[#(?:[0-9a-f]{3,8})\]/gi;
+
+  for (const relative of privateRoots.flatMap(filesBelow)) {
+    const source = readFileSync(path.join(root, relative), 'utf8');
+    const rawColors = (source.match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/gi) || []).filter(
+      (color) => !color.toLowerCase().includes('var(')
+    );
+    assert.equal(rawColors.length, 0, `${relative}: couleur brute privée non autorisée`);
+
+    const rawTailwindColors = source.match(privateColorPattern) || [];
+    assert.equal(
+      rawTailwindColors.length,
+      0,
+      `${relative}: classes de couleur privées non tokenisées: ${rawTailwindColors.join(', ')}`
+    );
   }
 });

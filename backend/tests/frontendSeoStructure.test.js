@@ -24,10 +24,10 @@ describe('structure sémantique et textes alternatifs frontend', () => {
     const product = source('frontend/src/pages/ProductPage.jsx');
 
     expect(category).toMatch(
-      /<h1 className="text-xl font-bold uppercase tracking-tight text-white drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.4\)\] sm:text-2xl">\s*\{t\('category\.results\.title'\)\}\s*<\/h1>/u
+      /<h1 className="text-xl font-bold uppercase tracking-tight text-on-dark drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.4\)\] sm:text-2xl">\s*\{t\('category\.results\.title'\)\}\s*<\/h1>/u
     );
     expect(product).toMatch(
-      /<h1 className="text-lg font-bold text-white tracking-tight drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.4\)\]">\s*\{boat\.name\}\s*<\/h1>/u
+      /<h1 className="text-lg font-bold text-on-dark tracking-tight drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.4\)\]">\s*\{boat\.name\}\s*<\/h1>/u
     );
   });
 

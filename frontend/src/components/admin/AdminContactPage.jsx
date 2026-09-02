@@ -9,8 +9,8 @@ import usePagination from '../../hooks/usePagination.js';
 const PAGE_SIZE = 10;
 
 const STATUS_CLS = {
-  new: 'bg-amber-500/15 text-amber-300',
-  processed: 'bg-emerald-500/15 text-emerald-300',
+  new: 'bg-warning-base/15 text-warning-soft',
+  processed: 'bg-success-base/15 text-success-soft',
 };
 
 const FILTERS = [
@@ -28,7 +28,7 @@ const DATE_OPTS = {
 };
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-dark-strong';
 
 // Demandes envoyées via le formulaire public de la page Contact : l'admin les
 // consulte et les marque traitées (ou à retraiter).
@@ -85,10 +85,10 @@ function AdminContactPage() {
   return (
     <section aria-labelledby="contact-requests-title">
       <header className="mb-6">
-        <h1 id="contact-requests-title" className="text-2xl font-bold text-white">
+        <h1 id="contact-requests-title" className="text-2xl font-bold text-on-dark">
           {t('adminContact.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('adminContact.subtitle')}</p>
+        <p className="mt-1 text-sm text-on-dark/70">{t('adminContact.subtitle')}</p>
       </header>
 
       {/* Filtres par statut */}
@@ -107,8 +107,8 @@ function AdminContactPage() {
               aria-pressed={active}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-sky-500 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
+                  ? 'bg-action text-on-dark'
+                  : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
               }`}
             >
               {t(`adminContact.filters.${labelKey}`)}
@@ -118,28 +118,30 @@ function AdminContactPage() {
       </div>
 
       {loading ? (
-        <p className="text-white/80">{t('adminContact.loading')}</p>
+        <p className="text-on-dark/80">{t('adminContact.loading')}</p>
       ) : requests.length === 0 ? (
-        <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
+        <p className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-on-dark/70">
           {t('adminContact.empty')}
         </p>
       ) : (
         <ul className="space-y-4">
           {pageRequests.map((r) => {
-            const statusCls = STATUS_CLS[r.status] || 'bg-slate-500/15 text-white/80';
+            const statusCls = STATUS_CLS[r.status] || 'bg-neutral/15 text-on-dark/80';
             return (
               <li
                 key={r.id_request}
-                className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl sm:p-5"
+                className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl sm:p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 basis-60">
-                    <h2 className="break-words text-base font-semibold text-white">{r.subject}</h2>
-                    <p className="mt-0.5 break-words text-sm text-white/70">
+                    <h2 className="break-words text-base font-semibold text-on-dark">
+                      {r.subject}
+                    </h2>
+                    <p className="mt-0.5 break-words text-sm text-on-dark/70">
                       {r.name} ·{' '}
                       <a
                         href={`mailto:${r.email}`}
-                        className={`break-all text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                        className={`break-all text-brand hover:underline ${FOCUS_RING}`}
                       >
                         {r.email}
                       </a>{' '}
@@ -153,7 +155,7 @@ function AdminContactPage() {
                   </span>
                 </div>
 
-                <p className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-white/10 px-4 py-3 text-sm text-white/90">
+                <p className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-surface/10 px-4 py-3 text-sm text-on-dark/90">
                   {r.message}
                 </p>
 
@@ -164,8 +166,8 @@ function AdminContactPage() {
                     onClick={() => toggleStatus(r)}
                     className={`w-full rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${FOCUS_RING} ${
                       r.status === 'processed'
-                        ? 'border border-white/30 text-white/80 hover:bg-white/10 hover:text-white'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                        ? 'border border-glass/30 text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
+                        : 'bg-success-deep text-on-dark hover:bg-success-base'
                     }`}
                   >
                     {r.status === 'processed'
@@ -173,7 +175,7 @@ function AdminContactPage() {
                       : t('adminContact.markProcessed')}
                   </button>
                   {r.processed_at && (
-                    <span className="text-xs text-white/60">
+                    <span className="text-xs text-on-dark/60">
                       {t('adminContact.processedOn', {
                         date: formatDate(r.processed_at, DATE_OPTS),
                       })}

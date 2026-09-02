@@ -25,10 +25,10 @@ const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
 
 function getBookingStatus(t) {
   return {
-    pending: { label: t('bookingStatus.pending'), cls: 'bg-amber-500/15 text-amber-300' },
-    confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-emerald-500/15 text-emerald-300' },
-    refused: { label: t('bookingStatus.refused'), cls: 'bg-red-500/15 text-red-300' },
-    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-slate-500/15 text-white/80' },
+    pending: { label: t('bookingStatus.pending'), cls: 'bg-warning-base/15 text-warning-soft' },
+    confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-success-base/15 text-success-soft' },
+    refused: { label: t('bookingStatus.refused'), cls: 'bg-danger-base/15 text-danger-soft' },
+    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-neutral/15 text-on-dark/80' },
   };
 }
 
@@ -62,7 +62,7 @@ function matchesPeriod(booking, period) {
 }
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
   const scrollRef = useRef(null);
@@ -117,7 +117,7 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
       {scrollEdges.left && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-dark-strong/95 via-dark-strong/70 to-transparent pl-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -134,7 +134,7 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
       {scrollEdges.right && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-dark-strong/95 via-dark-strong/70 to-transparent pr-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -177,23 +177,26 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
   const boatLink = booking.boat?.id_boat != null ? `/product/${booking.boat.id_boat}` : '/product';
   const meta = getBookingStatus(t)[booking.status] || {
     label: booking.status,
-    cls: 'bg-slate-500/15 text-white/80',
+    cls: 'bg-neutral/15 text-on-dark/80',
   };
   const port = booking.boat?.port;
 
   // Sous-état de paiement affiché à côté du statut.
   const paymentBadge =
     booking.status === 'pending' && booking.payment?.status === 'pending'
-      ? { label: t('locataireReservations.paymentBadge.paid'), cls: 'bg-sky-500/15 text-sky-300' }
+      ? {
+          label: t('locataireReservations.paymentBadge.paid'),
+          cls: 'bg-action/15 text-action-soft',
+        }
       : booking.refund_requested
         ? {
             label: t('locataireReservations.paymentBadge.disputeOpen'),
-            cls: 'bg-amber-500/15 text-amber-300',
+            cls: 'bg-warning-base/15 text-warning-soft',
           }
         : booking.payment?.status === 'refunded' && booking.payment?.refunded_amount != null
           ? {
               label: t('locataireReservations.paymentBadge.refunded'),
-              cls: 'bg-emerald-500/15 text-emerald-300',
+              cls: 'bg-success-base/15 text-success-soft',
             }
           : null;
 
@@ -213,7 +216,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
   const canInvoice = booking.status === 'confirmed';
 
   return (
-    <article className="group min-h-52 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
+    <article className="group min-h-52 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
       {/* Colonne gauche de la grille : photo à droite ; colonne droite : photo à
           gauche — les photos se font face vers le centre. */}
       <div
@@ -224,12 +227,12 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
           alt={t('carrousel.boatImageAlt', { name: booking.boat?.name })}
           loading="lazy"
           className="aspect-video w-full object-cover transition-transform duration-500 sm:aspect-auto sm:w-28 sm:self-stretch md:w-36 motion-safe:group-hover:scale-105"
-          fallbackClassName="flex aspect-video w-full items-center justify-center bg-white/5 text-3xl sm:aspect-auto sm:w-28 sm:self-stretch md:w-36"
+          fallbackClassName="flex aspect-video w-full items-center justify-center bg-surface/5 text-3xl sm:aspect-auto sm:w-28 sm:self-stretch md:w-36"
         />
 
         <div className="flex min-w-0 flex-1 flex-col p-4">
           <header className="min-w-0">
-            <h3 className="truncate text-base font-bold text-white">
+            <h3 className="truncate text-base font-bold text-on-dark">
               <Link
                 to={boatLink}
                 state={
@@ -237,14 +240,14 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                     ? { reviewBookingId: booking.id_booking }
                     : undefined
                 }
-                className={`transition hover:text-[#ABD4FF] hover:underline ${FOCUS_RING}`}
+                className={`transition hover:text-brand-soft hover:underline ${FOCUS_RING}`}
                 title={t('locataireReservations.viewProduct')}
               >
                 {booking.boat?.name}
               </Link>
             </h3>
             {(booking.boat?.type || port) && (
-              <p className="mt-0.5 truncate text-xs text-white/60">
+              <p className="mt-0.5 truncate text-xs text-on-dark/60">
                 {[booking.boat?.type, port && `${port.name} · ${port.city}`]
                   .filter(Boolean)
                   .join(' — ')}
@@ -268,18 +271,18 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
           </header>
 
           {/* Ligne méta mono-ligne tronquée : la hauteur de carte reste fixe. */}
-          <p className="mt-2.5 truncate text-sm text-white/90">
-            <span className="font-bold text-white">{EURO.format(booking.total_amount ?? 0)}</span>
-            <span aria-hidden className="text-white/30">
+          <p className="mt-2.5 truncate text-sm text-on-dark/90">
+            <span className="font-bold text-on-dark">{EURO.format(booking.total_amount ?? 0)}</span>
+            <span aria-hidden className="text-on-dark/30">
               {' • '}
             </span>
             <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time>
             {' → '}
             <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
-            <span aria-hidden className="text-white/30">
+            <span aria-hidden className="text-on-dark/30">
               {' • '}
             </span>
-            <span className="text-xs text-white/60">
+            <span className="text-xs text-on-dark/60">
               {t('locataireReservations.bookedOn')}{' '}
               <time dateTime={booking.booking_date}>{fmtDate(booking.booking_date)}</time>
             </span>
@@ -287,7 +290,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
 
           {booking.status === 'cancelled' && booking.cancellation_reason && (
             <p
-              className="mt-2 truncate rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-white/70"
+              className="mt-2 truncate rounded-lg bg-surface/10 px-2.5 py-1.5 text-xs text-on-dark/70"
               title={booking.cancellation_reason}
             >
               <span className="font-semibold">{t('locataireReservations.cancellation')}</span>{' '}
@@ -300,7 +303,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
           )}
 
           {finished && (
-            <p className="mt-2 truncate text-xs font-medium text-[#5AB4EC]">
+            <p className="mt-2 truncate text-xs font-medium text-brand">
               {booking.reviewed
                 ? t('locataireReservations.reviewDone')
                 : t('locataireReservations.reviewHint')}
@@ -321,7 +324,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'review')}
-                  className={`inline-flex items-center gap-1 rounded-full bg-[#5AB4EC] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#4aa3db] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-on-dark transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   <FaStar aria-hidden className="text-[0.6875rem]" />
                   {t('locataireReservations.actions.review')}
@@ -332,7 +335,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'cancel')}
-                  className={`rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.actions.cancel')}
                 </button>
@@ -342,7 +345,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'refund')}
-                  className={`rounded-full bg-sky-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full bg-action px-3 py-1 text-xs font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.actions.refund')}
                 </button>
@@ -352,7 +355,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'dispute')}
-                  className={`rounded-full border border-amber-500/50 px-3 py-1 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-warning-base/50 px-3 py-1 text-xs font-semibold text-warning-soft transition hover:bg-warning-base/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.actions.dispute')}
                 </button>
@@ -550,16 +553,16 @@ function LocataireReservations() {
   return (
     <section aria-labelledby="reservations-title">
       <header className="mb-6">
-        <h1 id="reservations-title" className="text-2xl font-bold text-white">
+        <h1 id="reservations-title" className="text-2xl font-bold text-on-dark">
           {t('locataireReservations.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('locataireReservations.subtitle')}</p>
+        <p className="mt-1 text-sm text-on-dark/70">{t('locataireReservations.subtitle')}</p>
       </header>
 
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -581,8 +584,8 @@ function LocataireReservations() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-sky-500 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
+                  ? 'bg-action text-on-dark'
+                  : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
               }`}
             >
               {f.label}
@@ -607,8 +610,8 @@ function LocataireReservations() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
-                  : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
+                  ? 'border-brand bg-brand/15 text-brand-soft'
+                  : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
               }`}
             >
               {f.label}
@@ -620,7 +623,7 @@ function LocataireReservations() {
       {loading ? (
         <CardSkeleton count={4} height="h-52" />
       ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
+        <p className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-on-dark/70">
           {bookings.length === 0
             ? t('locataireReservations.emptyAll')
             : t('locataireReservations.emptyFiltered')}
@@ -646,20 +649,20 @@ function LocataireReservations() {
 
       {reviewBooking && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
           onClick={closeReviewModal}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="locataire-review-title"
-            className="w-full max-w-md rounded-2xl border border-white/20 bg-slate-900/90 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
+            className="w-full max-w-md rounded-2xl border border-glass/20 bg-dark-surface/90 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="locataire-review-title" className="text-lg font-semibold text-white">
+            <h2 id="locataire-review-title" className="text-lg font-semibold text-on-dark">
               {t('locataireReservations.reviewModal.title')}
             </h2>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 text-sm text-on-dark/70">
               {reviewBooking.boat?.name}, {fmtDate(reviewBooking.start_date)} →{' '}
               {fmtDate(reviewBooking.end_date)}.
             </p>
@@ -671,7 +674,7 @@ function LocataireReservations() {
               }}
             >
               <fieldset className="mt-5">
-                <legend className="mb-2 text-xs font-medium text-white/70">
+                <legend className="mb-2 text-xs font-medium text-on-dark/70">
                   {t('locataireReservations.reviewModal.ratingLabel')}
                 </legend>
                 <div className="flex gap-2" role="radiogroup">
@@ -689,7 +692,7 @@ function LocataireReservations() {
                         setReviewError('');
                       }}
                       className={`text-3xl leading-none transition hover:scale-110 ${
-                        value <= reviewRating ? 'text-amber-300' : 'text-white/25'
+                        value <= reviewRating ? 'text-warning-soft' : 'text-on-dark/25'
                       } ${FOCUS_RING}`}
                     >
                       ★
@@ -700,7 +703,7 @@ function LocataireReservations() {
 
               <label
                 htmlFor="locataire-review-comment"
-                className="mb-1 mt-5 block text-xs font-medium text-white/70"
+                className="mb-1 mt-5 block text-xs font-medium text-on-dark/70"
               >
                 {t('locataireReservations.reviewModal.commentLabel')}
               </label>
@@ -714,17 +717,19 @@ function LocataireReservations() {
                   setReviewError('');
                 }}
                 placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
-                className="w-full resize-y rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+                className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
               />
               <div className="mt-1 flex items-start justify-between gap-3">
-                <p className="text-xs text-white/50">
+                <p className="text-xs text-on-dark/50">
                   {t('locataireReservations.reviewModal.moderationHint')}
                 </p>
-                <span className="shrink-0 text-xs text-white/50">{reviewComment.length}/1000</span>
+                <span className="shrink-0 text-xs text-on-dark/50">
+                  {reviewComment.length}/1000
+                </span>
               </div>
 
               {reviewError && (
-                <p role="alert" className="mt-2 text-xs font-medium text-red-300">
+                <p role="alert" className="mt-2 text-xs font-medium text-danger-soft">
                   {reviewError}
                 </p>
               )}
@@ -734,14 +739,14 @@ function LocataireReservations() {
                   type="button"
                   disabled={busyId === reviewBooking.id_booking}
                   onClick={closeReviewModal}
-                  className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.reviewModal.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={busyId === reviewBooking.id_booking}
-                  className={`rounded-full bg-[#5AB4EC] px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#ABD4FF] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                  className={`rounded-full bg-brand px-4 py-2 text-sm font-semibold text-dark-strong transition hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                 >
                   {busyId === reviewBooking.id_booking
                     ? t('locataireReservations.reviewModal.submitting')
@@ -756,24 +761,24 @@ function LocataireReservations() {
       {/* Modal d'annulation / demande de remboursement */}
       {decision && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
           onClick={() => !deciding && closeModal()}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="locataire-decision-title"
-            className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+            className="w-full max-w-md rounded-2xl border border-glass/20 bg-surface/10 p-6 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="locataire-decision-title" className="text-lg font-semibold text-white">
+            <h2 id="locataire-decision-title" className="text-lg font-semibold text-on-dark">
               {decision.action === 'cancel'
                 ? t('locataireReservations.modal.cancelTitle')
                 : decision.action === 'refund'
                   ? t('locataireReservations.modal.refundTitle')
                   : t('locataireReservations.modal.disputeTitle')}
             </h2>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 text-sm text-on-dark/70">
               {decision.booking.boat?.name}, {fmtDate(decision.booking.start_date)} →{' '}
               {fmtDate(decision.booking.end_date)}.
             </p>
@@ -786,7 +791,7 @@ function LocataireReservations() {
             >
               <label
                 htmlFor="locataire-decision-reason"
-                className="mb-1 mt-4 block text-xs font-medium text-white/70"
+                className="mb-1 mt-4 block text-xs font-medium text-on-dark/70"
               >
                 {decision.action === 'cancel'
                   ? t('locataireReservations.modal.cancelReasonLabel')
@@ -805,17 +810,17 @@ function LocataireReservations() {
                 autoFocus
                 aria-describedby="locataire-decision-hint"
                 aria-invalid={reasonError ? true : undefined}
-                className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+                className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
               />
               {reasonError && (
-                <p role="alert" className="mt-1 text-xs text-red-400">
+                <p role="alert" className="mt-1 text-xs text-danger-bright">
                   {reasonError}
                 </p>
               )}
 
               {decision.action === 'dispute' && (
                 <div className="mt-3">
-                  <span className="mb-1 block text-xs font-medium text-white/70">
+                  <span className="mb-1 block text-xs font-medium text-on-dark/70">
                     {t('locataireReservations.modal.disputePhotosLabel')}
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
@@ -824,13 +829,13 @@ function LocataireReservations() {
                         <img
                           src={p.url}
                           alt=""
-                          className="h-14 w-14 rounded-lg border border-white/30 object-cover"
+                          className="h-14 w-14 rounded-lg border border-glass/30 object-cover"
                         />
                         <button
                           type="button"
                           onClick={() => removePhoto(i)}
                           aria-label={t('locataireReservations.modal.disputeRemovePhoto')}
-                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-xs text-white hover:bg-red-500 ${FOCUS_RING}`}
+                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-dark-muted text-xs text-on-dark hover:bg-danger-base ${FOCUS_RING}`}
                         >
                           ×
                         </button>
@@ -838,7 +843,7 @@ function LocataireReservations() {
                     ))}
                     {photos.length < 5 && (
                       <label
-                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/40 text-xl text-white/70 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
+                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-xl text-on-dark/70 transition hover:border-brand hover:text-brand ${FOCUS_RING}`}
                         title={t('locataireReservations.modal.disputeAddPhotos')}
                       >
                         +
@@ -857,7 +862,7 @@ function LocataireReservations() {
                   </div>
                 </div>
               )}
-              <p id="locataire-decision-hint" className="mt-2 text-xs text-white/60">
+              <p id="locataire-decision-hint" className="mt-2 text-xs text-on-dark/60">
                 {decision.action === 'refund'
                   ? t('locataireReservations.modal.refundHint')
                   : decision.action === 'dispute'
@@ -874,17 +879,17 @@ function LocataireReservations() {
                   type="button"
                   disabled={deciding}
                   onClick={closeModal}
-                  className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.modal.back')}
                 </button>
                 <button
                   type="submit"
                   disabled={deciding}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING} ${
+                  className={`rounded-full px-4 py-2 text-sm font-semibold text-on-dark transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING} ${
                     decision.action === 'cancel'
-                      ? 'bg-red-600/80 hover:bg-red-500'
-                      : 'bg-sky-500 hover:bg-sky-600'
+                      ? 'bg-danger/80 hover:bg-danger-base'
+                      : 'bg-action hover:bg-action-hover'
                   }`}
                 >
                   {deciding

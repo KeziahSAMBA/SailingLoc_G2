@@ -60,7 +60,7 @@ function LocataireLayout() {
     // Même univers visuel que les autres pages : photo plein écran sous un
     // voile noir transparent (contraste des textes) et panneaux en verre dépoli.
     <div
-      className="relative min-h-screen overflow-x-clip bg-cover bg-fixed bg-center text-white"
+      className="relative min-h-screen overflow-x-clip bg-cover bg-fixed bg-center text-on-dark"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <style>{PAGE_SLIDE_CSS}</style>
@@ -80,14 +80,14 @@ function LocataireLayout() {
           }}
         />
       )}
-      <div className="min-h-screen w-full bg-black/40">
+      <div className="min-h-screen w-full bg-overlay/40">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
           {/* Menu : pleine largeur sur mobile (barre horizontale défilable),
             colonne latérale à partir de lg. */}
           <aside className="w-full lg:w-60 lg:shrink-0" style={slide(0)}>
             <nav
               aria-label={t('locataireLayout.navAria')}
-              className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl lg:sticky lg:top-[6rem]"
+              className="rounded-2xl border border-glass/20 bg-surface/10 p-3 backdrop-blur-xl lg:sticky lg:top-[6rem]"
             >
               <button
                 type="button"
@@ -95,20 +95,20 @@ function LocataireLayout() {
                 aria-controls="locataire-dashboard-navigation"
                 aria-label={t('locataireLayout.navAria')}
                 onClick={() => setMobileNavOpen((open) => !open)}
-                className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:hidden"
+                className="flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2 text-left transition hover:bg-surface/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright lg:hidden"
               >
-                <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-white/60">
+                <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-on-dark/60">
                   {t('locataireLayout.mySpace')}
                 </span>
                 <span className="ml-auto flex min-w-0 items-center gap-2">
-                  <span className="min-w-0 truncate text-sm font-semibold text-white">
+                  <span className="min-w-0 truncate text-sm font-semibold text-on-dark">
                     {activeItem.label}
                   </span>
                   <svg
                     aria-hidden="true"
                     viewBox="0 0 20 20"
                     fill="none"
-                    className={`h-5 w-5 shrink-0 text-white/70 transition-transform duration-200 ${
+                    className={`h-5 w-5 shrink-0 text-on-dark/70 transition-transform duration-200 ${
                       mobileNavOpen ? 'rotate-180' : ''
                     }`}
                   >
@@ -123,12 +123,12 @@ function LocataireLayout() {
                 </span>
               </button>
 
-              <p className="hidden px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-white/60 lg:block">
+              <p className="hidden px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-on-dark/60 lg:block">
                 {t('locataireLayout.mySpace')}
               </p>
               <div
                 id="locataire-dashboard-navigation"
-                className={`${mobileNavOpen ? 'flex' : 'hidden'} mt-2 flex-col gap-1 border-t border-white/15 pt-2 lg:mt-0 lg:flex lg:border-0 lg:pt-0`}
+                className={`${mobileNavOpen ? 'flex' : 'hidden'} mt-2 flex-col gap-1 border-t border-glass/15 pt-2 lg:mt-0 lg:flex lg:border-0 lg:pt-0`}
               >
                 {nav.map((item) => (
                   <NavLink
@@ -136,10 +136,10 @@ function LocataireLayout() {
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `block w-full rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                      `block w-full rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
                         isActive
-                          ? 'bg-sky-500 text-white'
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          ? 'bg-action text-on-dark'
+                          : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
                       }`
                     }
                   >

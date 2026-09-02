@@ -17,25 +17,47 @@
   --sl-on-light: 0 0 0;
   --sl-brand: 90 180 236;
   --sl-brand-soft: 171 212 255;
+  --sl-brand-hover: 74 163 219;
   --sl-brand-navy: 10 49 114;
   --sl-brand-focus: 10 82 122;
   --sl-brand-text: 36 112 172;
   --sl-action: 14 165 233;
   --sl-action-hover: 2 132 199;
+  --sl-action-pale: 186 230 253;
+  --sl-action-soft: 125 211 252;
+  --sl-action-bright: 56 189 248;
+  --sl-action-deep: 3 105 161;
   --sl-glass: 255 255 255;
   --sl-overlay: 0 0 0;
   --sl-dark-surface: 15 23 42;
   --sl-dark-elevated: 30 41 59;
+  --sl-dark-muted: 51 65 85;
+  --sl-dark-strong: 2 6 23;
+  --sl-content-soft: 203 213 225;
+  --sl-content-subtle: 148 163 184;
   --sl-border-light: 226 232 240;
   --sl-neutral: 100 116 139;
   --sl-success: 22 163 74;
+  --sl-success-base: 16 185 129;
+  --sl-success-bright: 52 211 153;
+  --sl-success-soft: 110 231 183;
+  --sl-success-deep: 5 150 105;
   --sl-warning: 217 119 6;
+  --sl-warning-base: 245 158 11;
+  --sl-warning-bright: 251 191 36;
+  --sl-warning-soft: 252 211 77;
+  --sl-warning-pale: 253 230 138;
   --sl-danger: 220 38 38;
+  --sl-danger-base: 239 68 68;
+  --sl-danger-bright: 248 113 113;
+  --sl-danger-soft: 252 165 165;
+  --sl-danger-pale: 254 202 202;
   --sl-info: 2 132 199;
   --sl-map-available: 10 49 114;
   --sl-map-unavailable: 148 163 184;
   --sl-chart-primary: 62 151 214;
   --sl-chart-hover: 90 180 236;
+  --sl-chart-violet: 167 139 250;
 }
 
 html {

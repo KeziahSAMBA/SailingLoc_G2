@@ -6,7 +6,7 @@ import CardSkeleton from '../common/CardSkeleton.jsx';
 import { formatDate } from '../../utils/formatDate.js';
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 const STATUS_FILTERS = ['all', 'success', 'pending', 'refunded', 'failed'];
 const PERIOD_FILTERS = ['all', 'last30', 'last180', 'year'];
@@ -64,7 +64,7 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
       {scrollEdges.left && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-dark-strong/95 via-dark-strong/70 to-transparent pl-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -81,7 +81,7 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
       {scrollEdges.right && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-dark-strong/95 via-dark-strong/70 to-transparent pr-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -115,10 +115,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 const DATE_OPTS = { day: 'numeric', month: 'long', year: 'numeric' };
 
 const STATUS_CLS = {
-  pending: 'bg-sky-500/15 text-sky-300',
-  success: 'bg-emerald-500/15 text-emerald-300',
-  refunded: 'bg-amber-500/15 text-amber-300',
-  failed: 'bg-slate-500/15 text-white/70',
+  pending: 'bg-action/15 text-action-soft',
+  success: 'bg-success-base/15 text-success-soft',
+  refunded: 'bg-warning-base/15 text-warning-soft',
+  failed: 'bg-neutral/15 text-on-dark/70',
 };
 
 const STATUS_ICON = {
@@ -134,8 +134,8 @@ function fmtDate(value) {
 
 function StatTile({ label, value, accent }) {
   return (
-    <div className="rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-center backdrop-blur-xl sm:text-left">
-      <p className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</p>
+    <div className="rounded-2xl border border-glass/20 bg-surface/10 px-5 py-4 text-center backdrop-blur-xl sm:text-left">
+      <p className="text-xs font-semibold uppercase tracking-wide text-on-dark/60">{label}</p>
       <p className={`mt-1 text-2xl font-bold ${accent}`}>{value}</p>
     </div>
   );
@@ -175,16 +175,16 @@ function LocataireDepenses() {
   return (
     <section aria-labelledby="depenses-title">
       <header className="mb-6">
-        <h1 id="depenses-title" className="text-2xl font-bold text-white">
+        <h1 id="depenses-title" className="text-2xl font-bold text-on-dark">
           {t('locataireDepenses.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('locataireDepenses.subtitle')}</p>
+        <p className="mt-1 text-sm text-on-dark/70">{t('locataireDepenses.subtitle')}</p>
       </header>
 
       {error && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -198,17 +198,17 @@ function LocataireDepenses() {
             <StatTile
               label={t('locataireDepenses.totals.paid')}
               value={EURO.format(totals?.paid ?? 0)}
-              accent="text-white"
+              accent="text-on-dark"
             />
             <StatTile
               label={t('locataireDepenses.totals.refunded')}
               value={EURO.format(totals?.refunded ?? 0)}
-              accent="text-amber-300"
+              accent="text-warning-soft"
             />
             <StatTile
               label={t('locataireDepenses.totals.net')}
               value={EURO.format(totals?.net ?? 0)}
-              accent="text-[#5AB4EC]"
+              accent="text-brand"
             />
           </div>
 
@@ -230,8 +230,8 @@ function LocataireDepenses() {
                   aria-pressed={active}
                   className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                     active
-                      ? 'bg-sky-500 text-white'
-                      : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
+                      ? 'bg-action text-on-dark'
+                      : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
                   }`}
                 >
                   {t(`locataireDepenses.filters.${key}`)}
@@ -258,8 +258,8 @@ function LocataireDepenses() {
                   aria-pressed={active}
                   className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                     active
-                      ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
-                      : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
+                      ? 'border-brand bg-brand/15 text-brand-soft'
+                      : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
                   }`}
                 >
                   {t(`locataireDepenses.periodFilters.${key}`)}
@@ -269,7 +269,7 @@ function LocataireDepenses() {
           </ScrollableFilterRow>
 
           {filtered.length === 0 ? (
-            <p className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+            <p className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
               {payments.length === 0
                 ? t('locataireDepenses.empty')
                 : t('locataireDepenses.emptyFiltered')}
@@ -281,7 +281,7 @@ function LocataireDepenses() {
                 const cls = STATUS_CLS[p.status] || STATUS_CLS.failed;
                 return (
                   <li key={p.id_payment} className="min-w-0">
-                    <article className="flex h-32 items-center gap-4 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl transition hover:border-[#5AB4EC]/60 hover:bg-white/15">
+                    <article className="flex h-32 items-center gap-4 rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl transition hover:border-brand/60 hover:bg-surface/15">
                       <span
                         aria-hidden
                         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl ${cls}`}
@@ -290,14 +290,14 @@ function LocataireDepenses() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-3">
-                          <h3 className="truncate text-sm font-bold text-white">
+                          <h3 className="truncate text-sm font-bold text-on-dark">
                             {p.booking?.boat_name || '—'}
                           </h3>
-                          <span className="shrink-0 text-lg font-bold text-white">
+                          <span className="shrink-0 text-lg font-bold text-on-dark">
                             {EURO.format(p.amount)}
                           </span>
                         </div>
-                        <p className="mt-0.5 truncate text-xs text-white/70">
+                        <p className="mt-0.5 truncate text-xs text-on-dark/70">
                           {p.booking &&
                             `${t('locataireDepenses.stay', {
                               start: fmtDate(p.booking.start_date),
@@ -306,7 +306,7 @@ function LocataireDepenses() {
                           {t('locataireDepenses.paidOn', { date: fmtDate(p.payment_date) })}
                         </p>
                         {p.transaction_ref && (
-                          <p className="mt-0.5 truncate text-[0.6875rem] text-white/40">
+                          <p className="mt-0.5 truncate text-[0.6875rem] text-on-dark/40">
                             {t('locataireDepenses.reference', { ref: p.transaction_ref })}
                           </p>
                         )}
@@ -320,7 +320,7 @@ function LocataireDepenses() {
                           </span>
                           {p.refunded_amount != null && (
                             <span
-                              className="truncate text-[0.6875rem] font-medium text-amber-300"
+                              className="truncate text-[0.6875rem] font-medium text-warning-soft"
                               title={p.refund_reason || undefined}
                             >
                               {t('locataireDepenses.refundedDetail', {

@@ -13,11 +13,11 @@ const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
 const PAGE_SIZE = 5;
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 const STATUS_CLS = {
-  validated: 'bg-emerald-500/15 text-emerald-300',
-  pending: 'bg-amber-500/15 text-amber-300',
+  validated: 'bg-success-base/15 text-success-soft',
+  pending: 'bg-warning-base/15 text-warning-soft',
 };
 
 function Stars({ rating }) {
@@ -25,11 +25,16 @@ function Stars({ rating }) {
     <div className="flex gap-0.5" aria-label={`${rating}/5`}>
       {Array.from({ length: 5 }, (_, i) =>
         i < Math.round(rating) ? (
-          <FaStar key={i} className="text-sky-400" style={{ fontSize: '0.8125rem' }} aria-hidden />
+          <FaStar
+            key={i}
+            className="text-action-bright"
+            style={{ fontSize: '0.8125rem' }}
+            aria-hidden
+          />
         ) : (
           <FaRegStar
             key={i}
-            className="text-sky-400"
+            className="text-action-bright"
             style={{ fontSize: '0.8125rem' }}
             aria-hidden
           />
@@ -64,33 +69,35 @@ function ReviewCard({ review, onReplied }) {
   }
 
   return (
-    <article className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl">
+    <article className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <h3 className="min-w-0 break-words text-sm font-bold text-white">{review.boat?.name}</h3>
-        <span className="text-xs text-white/50">·</span>
-        <span className="min-w-0 break-words text-xs text-white/70">{review.author}</span>
+        <h3 className="min-w-0 break-words text-sm font-bold text-on-dark">{review.boat?.name}</h3>
+        <span className="text-xs text-on-dark/50">·</span>
+        <span className="min-w-0 break-words text-xs text-on-dark/70">{review.author}</span>
         <span
           className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-            STATUS_CLS[review.status] || 'bg-slate-500/15 text-white/70'
+            STATUS_CLS[review.status] || 'bg-neutral/15 text-on-dark/70'
           }`}
         >
           {t(`proprietaireReviews.status.${review.status}`, { defaultValue: review.status })}
         </span>
         <div className="mt-1 flex w-full items-center justify-between gap-2 sm:ml-auto sm:mt-0 sm:w-auto sm:justify-start">
           <Stars rating={review.rating} />
-          <span className="text-xs text-white/50">{formatDate(review.created_at, DATE_OPTS)}</span>
+          <span className="text-xs text-on-dark/50">
+            {formatDate(review.created_at, DATE_OPTS)}
+          </span>
         </div>
       </div>
 
       {review.comment && (
-        <p className="mt-2 break-words text-sm leading-relaxed text-white/80">{review.comment}</p>
+        <p className="mt-2 break-words text-sm leading-relaxed text-on-dark/80">{review.comment}</p>
       )}
 
       {/* Réponse existante ou éditeur de réponse. */}
       {review.owner_reply && !editing ? (
-        <div className="mt-3 rounded-lg border-l-2 border-sky-400/60 bg-white/5 px-3 py-2">
+        <div className="mt-3 rounded-lg border-l-2 border-action-bright/60 bg-surface/5 px-3 py-2">
           <div className="flex items-center gap-2">
-            <p className="text-xs font-semibold text-sky-300">
+            <p className="text-xs font-semibold text-action-soft">
               {t('proprietaireReviews.yourReply')}
             </p>
             <button
@@ -99,12 +106,12 @@ function ReviewCard({ review, onReplied }) {
                 setText(review.owner_reply);
                 setEditing(true);
               }}
-              className={`ml-auto text-xs font-semibold text-white/70 hover:text-white hover:underline ${FOCUS_RING}`}
+              className={`ml-auto text-xs font-semibold text-on-dark/70 hover:text-on-dark hover:underline ${FOCUS_RING}`}
             >
               {t('proprietaireReviews.edit')}
             </button>
           </div>
-          <p className="mt-0.5 break-words text-sm leading-relaxed text-white/80">
+          <p className="mt-0.5 break-words text-sm leading-relaxed text-on-dark/80">
             {review.owner_reply}
           </p>
         </div>
@@ -112,7 +119,7 @@ function ReviewCard({ review, onReplied }) {
         <form onSubmit={submit} className="mt-3">
           <label
             htmlFor={`reply-${review.id_review}`}
-            className="mb-1 block text-xs font-medium text-white/70"
+            className="mb-1 block text-xs font-medium text-on-dark/70"
           >
             {t('proprietaireReviews.replyLabel')}
           </label>
@@ -123,7 +130,7 @@ function ReviewCard({ review, onReplied }) {
             onChange={(e) => setText(e.target.value)}
             maxLength={1000}
             placeholder={t('proprietaireReviews.replyPlaceholder')}
-            className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+            className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
           />
           <div className="mt-2 flex justify-end gap-2">
             {editing && (
@@ -131,7 +138,7 @@ function ReviewCard({ review, onReplied }) {
                 type="button"
                 disabled={busy}
                 onClick={() => setEditing(false)}
-                className={`rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10 disabled:opacity-50 ${FOCUS_RING}`}
+                className={`rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/80 transition hover:bg-surface/10 disabled:opacity-50 ${FOCUS_RING}`}
               >
                 {t('proprietaireReviews.cancel')}
               </button>
@@ -139,7 +146,7 @@ function ReviewCard({ review, onReplied }) {
             <button
               type="submit"
               disabled={busy || !text.trim()}
-              className={`rounded-full bg-sky-500 px-4 py-1 text-xs font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+              className={`rounded-full bg-action px-4 py-1 text-xs font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
             >
               {busy ? t('proprietaireReviews.sending') : t('proprietaireReviews.reply')}
             </button>
@@ -193,16 +200,16 @@ function ProprietaireReviews() {
   return (
     <section aria-labelledby="reviews-title">
       <header className="mb-6">
-        <h1 id="reviews-title" className="text-2xl font-bold text-white">
+        <h1 id="reviews-title" className="text-2xl font-bold text-on-dark">
           {t('proprietaireReviews.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('proprietaireReviews.subtitle')}</p>
+        <p className="mt-1 text-sm text-on-dark/70">{t('proprietaireReviews.subtitle')}</p>
       </header>
 
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -222,11 +229,11 @@ function ProprietaireReviews() {
       {loading ? (
         <CardSkeleton count={3} height="h-40" />
       ) : reviews.length === 0 ? (
-        <p className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+        <p className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
           {t('proprietaireReviews.empty')}
         </p>
       ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+        <p className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
           {t('proprietaireReviews.emptyFilter')}
         </p>
       ) : (

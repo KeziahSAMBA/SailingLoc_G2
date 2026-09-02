@@ -21,10 +21,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const BOOKING_STATUS_CLS = {
-  pending: 'bg-amber-500/15 text-amber-300',
-  confirmed: 'bg-emerald-500/15 text-emerald-300',
-  refused: 'bg-red-500/15 text-red-300',
-  cancelled: 'bg-slate-500/15 text-white/70',
+  pending: 'bg-warning-base/15 text-warning-soft',
+  confirmed: 'bg-success-base/15 text-success-soft',
+  refused: 'bg-danger-base/15 text-danger-soft',
+  cancelled: 'bg-neutral/15 text-on-dark/70',
 };
 const BOOKING_FILTERS = [
   { value: '', labelKey: 'all' },
@@ -35,9 +35,9 @@ const BOOKING_FILTERS = [
 ];
 
 const DISPUTE_STATUS_CLS = {
-  open: 'bg-amber-500/15 text-amber-300',
-  resolved: 'bg-emerald-500/15 text-emerald-300',
-  rejected: 'bg-slate-500/15 text-white/70',
+  open: 'bg-warning-base/15 text-warning-soft',
+  resolved: 'bg-success-base/15 text-success-soft',
+  rejected: 'bg-neutral/15 text-on-dark/70',
 };
 const DISPUTE_FILTERS = [
   { value: 'open', labelKey: 'open' },
@@ -49,7 +49,7 @@ const DISPUTE_FILTERS = [
 const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 const selectClass =
-  'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
+  'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand';
 
 const PAGE_SIZE = 10;
 
@@ -249,22 +249,24 @@ function AdminBookingsPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-sky-500 text-white'
-        : 'border border-white/30 text-white/80 hover:bg-white/10'
+        ? 'bg-action text-on-dark'
+        : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
-      active ? 'bg-sky-500 text-white' : 'border border-white/30 text-white/80 hover:bg-white/10'
+      active
+        ? 'bg-action text-on-dark'
+        : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const badge = (cls) =>
     `inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-      cls || 'bg-slate-500/15 text-white/70'
+      cls || 'bg-neutral/15 text-on-dark/70'
     }`;
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">{t('adminBookings.title')}</h1>
-      <p className="mt-1 text-sm text-white/70">{t('adminBookings.subtitle')}</p>
+      <h1 className="text-2xl font-bold text-on-dark">{t('adminBookings.title')}</h1>
+      <p className="mt-1 text-sm text-on-dark/70">{t('adminBookings.subtitle')}</p>
 
       <div className="mt-5 flex gap-2">
         <button type="button" onClick={() => setTab('bookings')} className={tabBtn('bookings')}>
@@ -297,67 +299,67 @@ function AdminBookingsPage() {
                 type="button"
                 aria-pressed={status === value}
                 onClick={() => setStatus(value)}
-                className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+                className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright`}
               >
                 {t(`adminBookings.bookingFilters.${labelKey}`)}
               </button>
             ))}
           </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl xl:block">
             <table className="w-full text-sm">
-              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
+              <thead className="border-b border-glass/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colRenter')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colBoat')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colDates')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colAmount')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colStatus')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colDisputes')}
                   </th>
-                  <th className="px-4 py-3 text-right font-semibold text-white/80">
+                  <th className="px-4 py-3 text-right font-semibold text-on-dark/80">
                     {t('adminBookings.colAction')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/15">
+              <tbody className="divide-y divide-glass/15">
                 {bookingsLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-white/70">
+                    <td colSpan={7} className="px-4 py-8 text-center text-on-dark/70">
                       {t('adminBookings.loading')}
                     </td>
                   </tr>
                 ) : bookings.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-white/70">
+                    <td colSpan={7} className="px-4 py-8 text-center text-on-dark/70">
                       {t('adminBookings.emptyBookings')}
                     </td>
                   </tr>
                 ) : (
                   pageBookings.map((b) => (
-                    <tr key={b.id_booking} className="text-white/90">
+                    <tr key={b.id_booking} className="text-on-dark/90">
                       <td className="px-4 py-3">
                         <div className="font-medium">
                           {b.user ? `${b.user.first_name} ${b.user.last_name}` : '—'}
                         </div>
-                        <div className="text-xs text-white/60">{b.user?.email}</div>
+                        <div className="text-xs text-on-dark/60">{b.user?.email}</div>
                       </td>
-                      <td className="px-4 py-3 text-white/70">{b.boat?.name || '—'}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-white/70">
+                      <td className="px-4 py-3 text-on-dark/70">{b.boat?.name || '—'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-on-dark/70">
                         {fmtDate(b.start_date)} → {fmtDate(b.end_date)}
                       </td>
-                      <td className="px-4 py-3 text-white/70">
+                      <td className="px-4 py-3 text-on-dark/70">
                         {b.total_amount != null ? EURO.format(b.total_amount) : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -367,11 +369,11 @@ function AdminBookingsPage() {
                       </td>
                       <td className="px-4 py-3">
                         {b.open_disputes > 0 ? (
-                          <span className="inline-block whitespace-nowrap rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
+                          <span className="inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
                             {t('adminBookings.openDisputes', { count: b.open_disputes })}
                           </span>
                         ) : (
-                          <span className="text-xs text-white/60">—</span>
+                          <span className="text-xs text-on-dark/60">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -387,7 +389,7 @@ function AdminBookingsPage() {
                             </IconBtn>
                           </div>
                         ) : (
-                          <span className="block text-right text-xs text-white/60">—</span>
+                          <span className="block text-right text-xs text-on-dark/60">—</span>
                         )}
                       </td>
                     </tr>
@@ -400,17 +402,17 @@ function AdminBookingsPage() {
           {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
           <ul className="mt-4 space-y-3 xl:hidden">
             {bookingsLoading || bookings.length === 0 ? (
-              <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+              <li className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
                 {bookingsLoading ? t('adminBookings.loading') : t('adminBookings.emptyBookings')}
               </li>
             ) : (
               pageBookings.map((b) => (
                 <li
                   key={b.id_booking}
-                  className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+                  className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <p className="min-w-0 font-medium text-white">
+                    <p className="min-w-0 font-medium text-on-dark">
                       {b.user ? `${b.user.first_name} ${b.user.last_name}` : '—'}
                     </p>
                     <span className={`shrink-0 ${badge(BOOKING_STATUS_CLS[b.status])}`}>
@@ -419,27 +421,27 @@ function AdminBookingsPage() {
                   </div>
 
                   {b.user?.email && (
-                    <p className="break-all text-xs text-white/60">{b.user.email}</p>
+                    <p className="break-all text-xs text-on-dark/60">{b.user.email}</p>
                   )}
 
-                  <p className="mt-2 text-sm text-white/80">{b.boat?.name || '—'}</p>
-                  <p className="text-xs text-white/70">
+                  <p className="mt-2 text-sm text-on-dark/80">{b.boat?.name || '—'}</p>
+                  <p className="text-xs text-on-dark/70">
                     {fmtDate(b.start_date)} → {fmtDate(b.end_date)}
                   </p>
-                  <p className="mt-1 text-sm font-medium text-white">
+                  <p className="mt-1 text-sm font-medium text-on-dark">
                     {b.total_amount != null ? EURO.format(b.total_amount) : '—'}
                   </p>
 
                   {b.open_disputes > 0 && (
                     <p className="mt-2">
-                      <span className="inline-block whitespace-nowrap rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
+                      <span className="inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
                         {t('adminBookings.openDisputes', { count: b.open_disputes })}
                       </span>
                     </p>
                   )}
 
                   {(b.status === 'pending' || b.status === 'confirmed') && (
-                    <div className="mt-3 flex justify-end border-t border-white/15 pt-3">
+                    <div className="mt-3 flex justify-end border-t border-glass/15 pt-3">
                       <IconBtn
                         title={t('adminBookings.cancelBooking')}
                         variant="danger"
@@ -477,57 +479,57 @@ function AdminBookingsPage() {
                 type="button"
                 aria-pressed={disputeStatus === value}
                 onClick={() => setDisputeStatusFilter(value)}
-                className={`${pill(disputeStatus === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+                className={`${pill(disputeStatus === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright`}
               >
                 {t(`adminBookings.disputeFilters.${labelKey}`)}
               </button>
             ))}
           </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl xl:block">
             <table className="w-full text-sm">
-              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
+              <thead className="border-b border-glass/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colBooking')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colReason')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colOpenedBy')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminBookings.colStatus')}
                   </th>
-                  <th className="px-4 py-3 text-right font-semibold text-white/80">
+                  <th className="px-4 py-3 text-right font-semibold text-on-dark/80">
                     {t('adminBookings.colActions')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/15">
+              <tbody className="divide-y divide-glass/15">
                 {disputesLoading ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-white/70">
+                    <td colSpan={5} className="px-4 py-8 text-center text-on-dark/70">
                       {t('adminBookings.loading')}
                     </td>
                   </tr>
                 ) : disputes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-white/70">
+                    <td colSpan={5} className="px-4 py-8 text-center text-on-dark/70">
                       {t('adminBookings.emptyDisputes')}
                     </td>
                   </tr>
                 ) : (
                   pageDisputes.map((d) => (
-                    <tr key={d.id_dispute} className="align-top text-white/90">
+                    <tr key={d.id_dispute} className="align-top text-on-dark/90">
                       <td className="px-4 py-3">
                         <div className="font-medium">{d.booking?.boat_name || '—'}</div>
-                        <div className="whitespace-nowrap text-xs text-white/60">
+                        <div className="whitespace-nowrap text-xs text-on-dark/60">
                           {fmtDate(d.booking?.start_date)} → {fmtDate(d.booking?.end_date)}
                         </div>
                       </td>
-                      <td className="max-w-xs px-4 py-3 text-white/80">
+                      <td className="max-w-xs px-4 py-3 text-on-dark/80">
                         {d.reason}
                         {d.photos?.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -545,7 +547,7 @@ function AdminBookingsPage() {
                                     src={imageUrl}
                                     alt={t('adminBookings.photoAlt')}
                                     loading="lazy"
-                                    className="h-10 w-10 rounded border border-white/30 object-cover transition hover:border-[#5AB4EC]"
+                                    className="h-10 w-10 rounded border border-glass/30 object-cover transition hover:border-brand"
                                   />
                                 </a>
                               );
@@ -553,12 +555,12 @@ function AdminBookingsPage() {
                           </div>
                         )}
                         {d.resolution && (
-                          <div className="mt-1 text-xs text-white/60">
+                          <div className="mt-1 text-xs text-on-dark/60">
                             {t('adminBookings.resolutionPrefix', { text: d.resolution })}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-white/70">
+                      <td className="px-4 py-3 text-on-dark/70">
                         {d.opener ? `${d.opener.first_name} ${d.opener.last_name}` : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -596,19 +598,19 @@ function AdminBookingsPage() {
           {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
           <ul className="mt-4 space-y-3 xl:hidden">
             {disputesLoading || disputes.length === 0 ? (
-              <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+              <li className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
                 {disputesLoading ? t('adminBookings.loading') : t('adminBookings.emptyDisputes')}
               </li>
             ) : (
               pageDisputes.map((d) => (
                 <li
                   key={d.id_dispute}
-                  className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+                  className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-medium text-white">{d.booking?.boat_name || '—'}</p>
-                      <p className="text-xs text-white/60">
+                      <p className="font-medium text-on-dark">{d.booking?.boat_name || '—'}</p>
+                      <p className="text-xs text-on-dark/60">
                         {fmtDate(d.booking?.start_date)} → {fmtDate(d.booking?.end_date)}
                       </p>
                     </div>
@@ -617,7 +619,7 @@ function AdminBookingsPage() {
                     </span>
                   </div>
 
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-white/80">
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-on-dark/80">
                     {d.reason}
                   </p>
 
@@ -632,7 +634,7 @@ function AdminBookingsPage() {
                               src={imageUrl}
                               alt={t('adminBookings.photoAlt')}
                               loading="lazy"
-                              className="h-12 w-12 rounded border border-white/30 object-cover transition hover:border-[#5AB4EC]"
+                              className="h-12 w-12 rounded border border-glass/30 object-cover transition hover:border-brand"
                             />
                           </a>
                         );
@@ -641,17 +643,17 @@ function AdminBookingsPage() {
                   )}
 
                   {d.resolution && (
-                    <p className="mt-2 text-xs text-white/60">
+                    <p className="mt-2 text-xs text-on-dark/60">
                       {t('adminBookings.resolutionPrefix', { text: d.resolution })}
                     </p>
                   )}
 
-                  <p className="mt-2 text-xs text-white/60">
+                  <p className="mt-2 text-xs text-on-dark/60">
                     {t('adminBookings.colOpenedBy')} :{' '}
                     {d.opener ? `${d.opener.first_name} ${d.opener.last_name}` : '—'}
                   </p>
 
-                  <div className="mt-3 flex justify-end gap-2 border-t border-white/15 pt-3">
+                  <div className="mt-3 flex justify-end gap-2 border-t border-glass/15 pt-3">
                     <IconBtn
                       title={t('adminBookings.disputeResolve')}
                       variant="success"
@@ -687,19 +689,19 @@ function AdminBookingsPage() {
 
       {decision && (
         <div
-          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center"
+          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-overlay/60 p-4 sm:items-center"
           onClick={() => !deciding && setDecision(null)}
         >
           <div
-            className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
+            className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-glass/20 bg-surface/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-on-dark">
               {decision.status === 'resolved'
                 ? t('adminBookings.modalResolveTitle')
                 : t('adminBookings.modalRejectTitle')}
             </h2>
-            <p className="mt-1 break-words text-sm text-white/70">
+            <p className="mt-1 break-words text-sm text-on-dark/70">
               {decision.dispute.booking?.boat_name
                 ? `${decision.dispute.booking.boat_name} — `
                 : ''}
@@ -708,7 +710,7 @@ function AdminBookingsPage() {
 
             <label
               htmlFor="resolution"
-              className="mb-1 mt-4 block text-xs font-medium text-white/70"
+              className="mb-1 mt-4 block text-xs font-medium text-on-dark/70"
             >
               {decision.status === 'resolved'
                 ? t('adminBookings.resolutionNote')
@@ -720,7 +722,7 @@ function AdminBookingsPage() {
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
               placeholder={t('adminBookings.decisionPlaceholder')}
-              className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+              className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
             />
 
             {decision.status === 'resolved' &&
@@ -728,7 +730,7 @@ function AdminBookingsPage() {
                 const payment = decision.dispute.booking?.payment;
                 if (!payment || payment.status !== 'success') {
                   return (
-                    <p className="mt-4 rounded-lg border border-white/30 bg-white/10 backdrop-blur-xl px-3 py-2 text-xs text-white/70">
+                    <p className="mt-4 rounded-lg border border-glass/30 bg-surface/10 backdrop-blur-xl px-3 py-2 text-xs text-on-dark/70">
                       {t('adminBookings.noPayment')}
                     </p>
                   );
@@ -738,13 +740,13 @@ function AdminBookingsPage() {
                   : payment.amount;
                 const computed = Math.round(base * Number(refundPct || 0)) / 100;
                 return (
-                  <div className="mt-4 rounded-lg border border-white/30 bg-white/10 backdrop-blur-xl p-3">
-                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-white/90">
+                  <div className="mt-4 rounded-lg border border-glass/30 bg-surface/10 backdrop-blur-xl p-3">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-on-dark/90">
                       <input
                         type="checkbox"
                         checked={refundEnabled}
                         onChange={(e) => setRefundEnabled(e.target.checked)}
-                        className="h-4 w-4 accent-emerald-500"
+                        className="h-4 w-4 accent-success-base"
                       />
                       {t('adminBookings.refundRenter')}
                     </label>
@@ -752,7 +754,7 @@ function AdminBookingsPage() {
                     {refundEnabled && (
                       <div className="mt-3 space-y-3">
                         <div>
-                          <p className="mb-1 text-xs font-medium text-white/70">
+                          <p className="mb-1 text-xs font-medium text-on-dark/70">
                             {t('adminBookings.refundPercent')}
                           </p>
                           <div className="flex flex-wrap gap-2">
@@ -763,8 +765,8 @@ function AdminBookingsPage() {
                                 onClick={() => setRefundPct(p)}
                                 className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                                   Number(refundPct) === p
-                                    ? 'bg-emerald-600 text-white'
-                                    : 'border border-white/30 text-white/80 hover:bg-white/10'
+                                    ? 'bg-success-deep text-on-dark'
+                                    : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
                                 }`}
                               >
                                 {p}%
@@ -777,31 +779,31 @@ function AdminBookingsPage() {
                                 max={100}
                                 value={refundPct}
                                 onChange={(e) => setRefundPct(e.target.value)}
-                                className="w-16 rounded-lg border border-white/30 bg-white/10 px-2 py-1 text-xs text-white outline-none focus:border-[#5AB4EC]"
+                                className="w-16 rounded-lg border border-glass/30 bg-surface/10 px-2 py-1 text-xs text-on-dark outline-none focus:border-brand"
                               />
-                              <span className="text-xs text-white/70">%</span>
+                              <span className="text-xs text-on-dark/70">%</span>
                             </div>
                           </div>
                         </div>
 
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-white/80">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-on-dark/80">
                           <input
                             type="checkbox"
                             checked={refundCommission}
                             onChange={(e) => setRefundCommission(e.target.checked)}
-                            className="h-3.5 w-3.5 accent-emerald-500"
+                            className="h-3.5 w-3.5 accent-success-base"
                           />
                           {t('adminBookings.refundCommission', {
                             amount: EURO.format(payment.commission),
                           })}
                         </label>
 
-                        <div className="rounded-md bg-slate-950/60 px-3 py-2 text-xs">
-                          <div className="flex flex-wrap justify-between gap-2 text-white/70">
+                        <div className="rounded-md bg-dark-strong/60 px-3 py-2 text-xs">
+                          <div className="flex flex-wrap justify-between gap-2 text-on-dark/70">
                             <span>{t('adminBookings.amountPaid')}</span>
                             <span>{EURO.format(payment.amount)}</span>
                           </div>
-                          <div className="flex flex-wrap justify-between gap-2 text-white/70">
+                          <div className="flex flex-wrap justify-between gap-2 text-on-dark/70">
                             <span>{t('adminBookings.commission')}</span>
                             <span className="break-words text-right">
                               {refundCommission
@@ -810,7 +812,7 @@ function AdminBookingsPage() {
                               ({EURO.format(payment.commission)})
                             </span>
                           </div>
-                          <div className="mt-1 flex flex-wrap justify-between gap-2 border-t border-white/30 pt-1 font-semibold text-emerald-300">
+                          <div className="mt-1 flex flex-wrap justify-between gap-2 border-t border-glass/30 pt-1 font-semibold text-success-soft">
                             <span>{t('adminBookings.refund')}</span>
                             <span>{EURO.format(computed)}</span>
                           </div>
@@ -826,7 +828,7 @@ function AdminBookingsPage() {
                 type="button"
                 onClick={() => setDecision(null)}
                 disabled={deciding}
-                className="w-full rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 disabled:opacity-50 sm:w-auto"
+                className="w-full rounded-full border border-glass/30 px-5 py-2 text-sm font-semibold text-on-dark/90 transition hover:bg-surface/10 disabled:opacity-50 sm:w-auto"
               >
                 {t('adminBookings.cancel')}
               </button>
@@ -834,10 +836,10 @@ function AdminBookingsPage() {
                 type="button"
                 onClick={confirmDecision}
                 disabled={deciding}
-                className={`w-full rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition disabled:opacity-60 sm:w-auto ${
+                className={`w-full rounded-full px-5 py-2 text-sm font-semibold text-on-dark shadow transition disabled:opacity-60 sm:w-auto ${
                   decision.status === 'resolved'
-                    ? 'bg-emerald-600 hover:bg-emerald-600/90'
-                    : 'bg-red-600 hover:bg-red-600/90'
+                    ? 'bg-success-deep hover:bg-success-deep/90'
+                    : 'bg-danger hover:bg-danger/90'
                 }`}
               >
                 {deciding

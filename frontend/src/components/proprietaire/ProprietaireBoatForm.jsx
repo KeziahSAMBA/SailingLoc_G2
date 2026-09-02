@@ -56,11 +56,11 @@ function formatRegistration(input, typing) {
 }
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 const inputClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC]';
-const labelClass = 'mb-1 block text-xs font-medium text-white/70';
-const cardClass = 'rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand';
+const labelClass = 'mb-1 block text-xs font-medium text-on-dark/70';
+const cardClass = 'rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5';
 
 const EMPTY_AVAILABILITY = { start_date: '', end_date: '', price_override: '', notes: '' };
 
@@ -349,14 +349,14 @@ function ProprietaireBoatForm() {
   return (
     <section aria-labelledby="boat-form-title" className="w-full">
       <header className="mb-6">
-        <h1 id="boat-form-title" className="text-2xl font-bold text-white">
+        <h1 id="boat-form-title" className="text-2xl font-bold text-on-dark">
           {!editId
             ? t('proprietaireBoatForm.titleCreate')
             : editStatus === 'draft'
               ? t('proprietaireBoatForm.titleEditDraft')
               : t('proprietaireBoatForm.titleEdit')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">
+        <p className="mt-1 text-sm text-on-dark/70">
           {!editId
             ? t('proprietaireBoatForm.subtitleCreate')
             : editStatus === 'draft'
@@ -370,7 +370,7 @@ function ProprietaireBoatForm() {
       {serverError && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {serverError}
         </div>
@@ -381,7 +381,7 @@ function ProprietaireBoatForm() {
       <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-5">
         {/* Caractéristiques */}
         <section className={cardClass}>
-          <h2 className="mb-4 text-sm font-semibold text-white/90">
+          <h2 className="mb-4 text-sm font-semibold text-on-dark/90">
             {t('proprietaireBoatForm.featuresTitle')}
           </h2>
 
@@ -438,7 +438,7 @@ function ProprietaireBoatForm() {
                 aria-describedby="registration-hint"
                 className={inputClass}
               />
-              <small id="registration-hint" className="mt-1 block text-xs text-white/60">
+              <small id="registration-hint" className="mt-1 block text-xs text-on-dark/60">
                 {t('proprietaireBoatForm.registrationHint')}
               </small>
             </div>
@@ -544,29 +544,29 @@ function ProprietaireBoatForm() {
               />
             </div>
 
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-white/90">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-on-dark/90">
               <input
                 type="checkbox"
                 name="with_skipper"
                 checked={form.with_skipper}
                 onChange={handleChange}
-                className="h-4 w-4 accent-[#5AB4EC]"
+                className="h-4 w-4 accent-brand"
               />
               <span>
                 {t('proprietaireBoatForm.skipperOffered')}{' '}
-                <span className="text-xs text-white/60">
+                <span className="text-xs text-on-dark/60">
                   {t('proprietaireBoatForm.skipperHint')}
                 </span>
               </span>
             </label>
 
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-white/90">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-on-dark/90">
               <input
                 type="checkbox"
                 name="license_required"
                 checked={form.license_required}
                 onChange={handleChange}
-                className="h-4 w-4 accent-[#5AB4EC]"
+                className="h-4 w-4 accent-brand"
               />
               {t('proprietaireBoatForm.licenseRequired')}
             </label>
@@ -575,7 +575,7 @@ function ProprietaireBoatForm() {
 
         {/* Port d'attache */}
         <section className={cardClass}>
-          <h2 className="mb-4 text-sm font-semibold text-white/90">
+          <h2 className="mb-4 text-sm font-semibold text-on-dark/90">
             {t('proprietaireBoatForm.homePortTitle')}
           </h2>
 
@@ -606,7 +606,7 @@ function ProprietaireBoatForm() {
             />
 
             {suggestionsOpen && portSuggestions.length > 0 && !selectedPort && (
-              <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-white/20 bg-slate-900/95 shadow-xl backdrop-blur-xl">
+              <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-glass/20 bg-dark-surface/95 shadow-xl backdrop-blur-xl">
                 {portSuggestions.map((p) => (
                   <li key={`${p.source}-${p.id_port ?? p.name}`}>
                     <button
@@ -616,21 +616,21 @@ function ProprietaireBoatForm() {
                         setPortQuery(p.name);
                         setSuggestionsOpen(false);
                       }}
-                      className="block w-full truncate px-3 py-2 text-left text-sm text-white transition hover:bg-white/10"
+                      className="block w-full truncate px-3 py-2 text-left text-sm text-on-dark transition hover:bg-surface/10"
                     >
-                      {p.name} <span className="text-white/60">— {p.city}</span>
+                      {p.name} <span className="text-on-dark/60">— {p.city}</span>
                     </button>
                   </li>
                 ))}
               </ul>
             )}
             {suggestionsOpen && portQuery.trim() && catalog === null && (
-              <p className="mt-1 text-xs text-white/60">Chargement du catalogue des ports…</p>
+              <p className="mt-1 text-xs text-on-dark/60">Chargement du catalogue des ports…</p>
             )}
           </div>
 
           {resolvedPort && (
-            <p className="mt-2 text-xs text-emerald-300">
+            <p className="mt-2 text-xs text-success-soft">
               {t('proprietaireBoatForm.portSelected', {
                 name: resolvedPort.name,
                 city: resolvedPort.city,
@@ -639,7 +639,7 @@ function ProprietaireBoatForm() {
           )}
 
           {!resolvedPort && portQuery.trim().length > 0 && (
-            <p className="mt-2 text-xs text-amber-300">
+            <p className="mt-2 text-xs text-warning-soft">
               {t('proprietaireBoatForm.portSelectHint')}
             </p>
           )}
@@ -647,10 +647,10 @@ function ProprietaireBoatForm() {
 
         {/* Photos */}
         <section className={cardClass}>
-          <h2 className="mb-1 text-sm font-semibold text-white/90">
+          <h2 className="mb-1 text-sm font-semibold text-on-dark/90">
             {t('proprietaireBoatForm.photosTitle')}
           </h2>
-          <p className="mb-4 text-xs text-white/60">
+          <p className="mb-4 text-xs text-on-dark/60">
             {t('proprietaireBoatForm.photosHint', { max: MAX_PHOTOS })}
           </p>
 
@@ -661,10 +661,10 @@ function ProprietaireBoatForm() {
                   src={p.preview}
                   alt={`Photo ${i + 1}${i === 0 ? ' (principale)' : ''}`}
                   className="h-24 w-32 rounded-lg object-cover"
-                  fallbackClassName="flex h-24 w-32 items-center justify-center rounded-lg bg-white/5 text-3xl text-white/40"
+                  fallbackClassName="flex h-24 w-32 items-center justify-center rounded-lg bg-surface/5 text-3xl text-on-dark/40"
                 />
                 {i === 0 && (
-                  <span className="absolute bottom-1 left-1 rounded bg-slate-950/80 px-1.5 py-0.5 text-[0.625rem] font-semibold text-white">
+                  <span className="absolute bottom-1 left-1 rounded bg-dark-strong/80 px-1.5 py-0.5 text-[0.625rem] font-semibold text-on-dark">
                     {t('proprietaireBoatForm.mainPhoto')}
                   </span>
                 )}
@@ -672,7 +672,7 @@ function ProprietaireBoatForm() {
                   type="button"
                   onClick={() => removePhoto(i)}
                   aria-label={t('proprietaireBoatForm.removePhoto', { n: i + 1 })}
-                  className={`absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white shadow transition hover:bg-red-500 ${FOCUS_RING}`}
+                  className={`absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-danger text-xs font-bold text-on-dark shadow transition hover:bg-danger-base ${FOCUS_RING}`}
                 >
                   ×
                 </button>
@@ -681,7 +681,7 @@ function ProprietaireBoatForm() {
 
             {photos.length < MAX_PHOTOS && (
               <label
-                className={`flex h-24 w-32 cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/40 text-sm text-white/70 transition hover:border-[#5AB4EC] hover:text-white/90 ${FOCUS_RING}`}
+                className={`flex h-24 w-32 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-sm text-on-dark/70 transition hover:border-brand hover:text-on-dark/90 ${FOCUS_RING}`}
               >
                 {t('proprietaireBoatForm.addPhoto')}
                 <input
@@ -698,22 +698,22 @@ function ProprietaireBoatForm() {
 
         {/* Documents du bateau */}
         <section className={cardClass}>
-          <h2 className="mb-1 text-sm font-semibold text-white/90">
+          <h2 className="mb-1 text-sm font-semibold text-on-dark/90">
             {t('proprietaireBoatForm.documentsTitle')}
           </h2>
-          <p className="mb-4 text-xs text-white/60">{t('proprietaireBoatForm.documentsHint')}</p>
+          <p className="mb-4 text-xs text-on-dark/60">{t('proprietaireBoatForm.documentsHint')}</p>
 
           {/* Acte de francisation actuellement rattaché au bateau (édition). */}
           {existingActe && !acteFile && !acteDocId && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white/90">
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-glass/20 bg-surface/10 px-3 py-2 text-sm text-on-dark/90">
               <span className="min-w-0 truncate">{existingActe.file_name}</span>
               <span
                 className={`rounded-full px-2 py-0.5 text-[0.625rem] font-semibold ${
                   existingActe.status === 'validated'
-                    ? 'bg-emerald-500/15 text-emerald-300'
+                    ? 'bg-success-base/15 text-success-soft'
                     : existingActe.status === 'refused'
-                      ? 'bg-red-500/15 text-red-300'
-                      : 'bg-amber-500/15 text-amber-300'
+                      ? 'bg-danger-base/15 text-danger-soft'
+                      : 'bg-warning-base/15 text-warning-soft'
                 }`}
               >
                 {existingActe.status === 'validated'
@@ -728,16 +728,16 @@ function ProprietaireBoatForm() {
           {acteFile ? (
             /* Nouveau fichier choisi : il sera vérifié par l'équipe. */
             <div className="flex flex-wrap items-center gap-3">
-              <span className="min-w-0 truncate rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white/90">
+              <span className="min-w-0 truncate rounded-lg border border-glass/20 bg-surface/10 px-3 py-2 text-sm text-on-dark/90">
                 {acteFile.name}{' '}
-                <span className="text-xs text-amber-300">
+                <span className="text-xs text-warning-soft">
                   {t('proprietaireBoatForm.willBeReviewedInline')}
                 </span>
               </span>
               <button
                 type="button"
                 onClick={() => setActeFile(null)}
-                className={`rounded-full border border-white/40 px-4 py-1.5 text-sm text-white/80 transition hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
+                className={`rounded-full border border-glass/40 px-4 py-1.5 text-sm text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark ${FOCUS_RING}`}
               >
                 {t('proprietaireBoatForm.removeDoc')}
               </button>
@@ -773,7 +773,7 @@ function ProprietaireBoatForm() {
               {/* Option 2 : en déposer un nouveau, qui sera vérifié. */}
               {!acteDocId && (
                 <label
-                  className={`inline-flex cursor-pointer items-center gap-2 self-end rounded-full border border-dashed border-white/40 px-4 py-2 text-sm text-white/70 transition hover:border-[#5AB4EC] hover:text-white/90 ${FOCUS_RING}`}
+                  className={`inline-flex cursor-pointer items-center gap-2 self-end rounded-full border border-dashed border-glass/40 px-4 py-2 text-sm text-on-dark/70 transition hover:border-brand hover:text-on-dark/90 ${FOCUS_RING}`}
                 >
                   {myActes.length > 0
                     ? t('proprietaireBoatForm.uploadNewInline')
@@ -800,11 +800,11 @@ function ProprietaireBoatForm() {
 
           {/* Découvrabilité de l'option « acte existant » quand il n'y en a aucun. */}
           {myActes.length === 0 && !acteFile && !existingActe && (
-            <p className="mt-3 text-xs text-white/60">
+            <p className="mt-3 text-xs text-on-dark/60">
               {t('proprietaireBoatForm.docTip')}{' '}
               <Link
                 to="/proprietaire/documents"
-                className={`text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                className={`text-brand hover:underline ${FOCUS_RING}`}
               >
                 {t('proprietaireBoatForm.myDocuments')}
               </Link>{' '}
@@ -815,16 +815,18 @@ function ProprietaireBoatForm() {
 
         {/* Disponibilités */}
         <section className={cardClass}>
-          <h2 className="mb-1 text-sm font-semibold text-white/90">
+          <h2 className="mb-1 text-sm font-semibold text-on-dark/90">
             {t('proprietaireBoatForm.availabilityTitle')}
           </h2>
-          <p className="mb-4 text-xs text-white/60">{t('proprietaireBoatForm.availabilityHint')}</p>
+          <p className="mb-4 text-xs text-on-dark/60">
+            {t('proprietaireBoatForm.availabilityHint')}
+          </p>
 
           <ul className="space-y-3">
             {availabilities.map((a, i) => (
               <li
                 key={i}
-                className="grid items-end gap-3 rounded-lg border border-white/20 p-3 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]"
+                className="grid items-end gap-3 rounded-lg border border-glass/20 p-3 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]"
               >
                 <div>
                   <label htmlFor={`avail-start-${i}`} className={labelClass}>
@@ -883,7 +885,7 @@ function ProprietaireBoatForm() {
                   onClick={() => setAvailabilities((prev) => prev.filter((_, j) => j !== i))}
                   disabled={availabilities.length === 1}
                   aria-label={t('proprietaireBoatForm.removePeriod', { n: i + 1 })}
-                  className={`flex h-9 w-9 items-center justify-center justify-self-end rounded-lg border border-white/30 text-sm text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2 lg:col-span-1 ${FOCUS_RING}`}
+                  className={`flex h-9 w-9 items-center justify-center justify-self-end rounded-lg border border-glass/30 text-sm text-on-dark/70 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2 lg:col-span-1 ${FOCUS_RING}`}
                 >
                   ×
                 </button>
@@ -894,7 +896,7 @@ function ProprietaireBoatForm() {
           <button
             type="button"
             onClick={() => setAvailabilities((prev) => [...prev, { ...EMPTY_AVAILABILITY }])}
-            className={`mt-3 rounded-full border border-white/40 px-4 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
+            className={`mt-3 rounded-full border border-glass/40 px-4 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark ${FOCUS_RING}`}
           >
             {t('proprietaireBoatForm.addPeriod')}
           </button>
@@ -906,7 +908,7 @@ function ProprietaireBoatForm() {
             type="button"
             disabled={submitting}
             onClick={() => navigate('/proprietaire/bateaux')}
-            className={`w-fit max-w-full self-start whitespace-nowrap rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 sm:self-auto ${FOCUS_RING}`}
+            className={`w-fit max-w-full self-start whitespace-nowrap rounded-full border border-glass/40 px-5 py-2.5 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:opacity-50 sm:self-auto ${FOCUS_RING}`}
           >
             {t('proprietaireBoatForm.cancel')}
           </button>
@@ -916,7 +918,7 @@ function ProprietaireBoatForm() {
               type="button"
               disabled={submitting}
               onClick={(e) => handleSubmit(e, true)}
-              className={`w-fit max-w-full self-start whitespace-nowrap rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 sm:self-auto ${FOCUS_RING}`}
+              className={`w-fit max-w-full self-start whitespace-nowrap rounded-full border border-glass/40 px-5 py-2.5 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:opacity-50 sm:self-auto ${FOCUS_RING}`}
             >
               {t('proprietaireBoatForm.saveDraft')}
             </button>
@@ -924,7 +926,7 @@ function ProprietaireBoatForm() {
           <button
             type="submit"
             disabled={submitting}
-            className={`w-fit max-w-full self-start whitespace-nowrap rounded-full bg-sky-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto ${FOCUS_RING}`}
+            className={`w-fit max-w-full self-start whitespace-nowrap rounded-full bg-action px-6 py-2.5 text-sm font-semibold text-on-dark shadow transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto ${FOCUS_RING}`}
           >
             {submitting
               ? t('proprietaireBoatForm.sending')

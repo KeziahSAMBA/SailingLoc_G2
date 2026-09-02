@@ -24,16 +24,16 @@ const DATE_OPTS = {
 const MONTH_SHORT_OPTS = { month: 'short' };
 const MONTH_FULL_OPTS = { month: 'long', year: 'numeric' };
 
-// Bleu des graphiques : pas plus foncé que l'accent #5AB4EC du site, validé
+// Bleu des graphiques : la teinte est centralisée dans les tokens du thème.
 // (luminosité + contraste ≥ 3:1) sur la surface sombre du dashboard.
-const CHART_BLUE = '#3E97D6';
-const CHART_BLUE_HOVER = '#5AB4EC';
+const CHART_BLUE = 'rgb(var(--sl-chart-primary))';
+const CHART_BLUE_HOVER = 'rgb(var(--sl-chart-hover))';
 
 const PAYMENT_STATUS_CLS = {
-  pending: 'bg-amber-500/15 text-amber-300',
-  success: 'bg-emerald-500/15 text-emerald-300',
-  failed: 'bg-red-500/15 text-red-300',
-  refunded: 'bg-slate-500/15 text-white/80',
+  pending: 'bg-warning-base/15 text-warning-soft',
+  success: 'bg-success-base/15 text-success-soft',
+  failed: 'bg-danger-base/15 text-danger-soft',
+  refunded: 'bg-neutral/15 text-on-dark/80',
 };
 
 const STATUS_KEYS = ['all', 'success', 'pending', 'refunded', 'failed'];
@@ -94,7 +94,7 @@ function ScrollableFilterRow({ ariaLabel, children, className = '', contentKey }
       {scrollEdges.left && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-dark-strong/95 via-dark-strong/70 to-transparent pl-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -111,7 +111,7 @@ function ScrollableFilterRow({ ariaLabel, children, className = '', contentKey }
       {scrollEdges.right && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-dark-strong/95 via-dark-strong/70 to-transparent pr-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -199,14 +199,14 @@ function MonthlyChart({ months }) {
               x2={W - PAD.right}
               y1={y(t)}
               y2={y(t)}
-              stroke="rgba(255,255,255,0.15)"
+              stroke="rgb(var(--sl-glass) / 0.15)"
               strokeWidth="1"
             />
             <text
               x={PAD.left - 8}
               y={y(t) + 3}
               textAnchor="end"
-              className="fill-white/50 text-[0.625rem]"
+              className="fill-on-dark/50 text-[0.625rem]"
             >
               {EURO_ROUND.format(t)}
             </text>
@@ -232,7 +232,7 @@ function MonthlyChart({ months }) {
                   x={cx}
                   y={top - 6}
                   textAnchor="middle"
-                  className="fill-white/90 text-[0.6875rem] font-medium"
+                  className="fill-on-dark/90 text-[0.6875rem] font-medium"
                 >
                   {EURO_ROUND.format(m.net)}
                 </text>
@@ -242,7 +242,7 @@ function MonthlyChart({ months }) {
                   x={cx}
                   y={H - 8}
                   textAnchor="middle"
-                  className="fill-white/60 text-[0.625rem]"
+                  className="fill-on-dark/60 text-[0.625rem]"
                 >
                   {m.label}
                 </text>
@@ -272,16 +272,16 @@ function MonthlyChart({ months }) {
       {/* Tooltip : la valeur d'abord, le libellé ensuite */}
       {hover != null && (
         <div
-          className="pointer-events-none absolute -top-1 rounded-lg border border-white/20 bg-slate-950/90 px-3 py-1.5 shadow-lg backdrop-blur-xl"
+          className="pointer-events-none absolute -top-1 rounded-lg border border-glass/20 bg-dark-strong/90 px-3 py-1.5 shadow-lg backdrop-blur-xl"
           style={{
             left: `${((PAD.left + band * hover + band / 2) / W) * 100}%`,
             transform: 'translateX(-50%)',
           }}
         >
-          <p className="whitespace-nowrap text-sm font-semibold text-white">
+          <p className="whitespace-nowrap text-sm font-semibold text-on-dark">
             {EURO_ROUND.format(months[hover].net)}
           </p>
-          <p className="whitespace-nowrap text-xs text-white/70">{months[hover].fullLabel}</p>
+          <p className="whitespace-nowrap text-xs text-on-dark/70">{months[hover].fullLabel}</p>
         </div>
       )}
     </div>
@@ -297,12 +297,12 @@ function BoatChart({ boats }) {
       {boats.map((b) => (
         <li key={b.name}>
           <div className="mb-1 flex items-baseline justify-between gap-3">
-            <span className="truncate text-sm text-white/80">{b.name}</span>
-            <span className="shrink-0 text-sm font-medium text-white">
+            <span className="truncate text-sm text-on-dark/80">{b.name}</span>
+            <span className="shrink-0 text-sm font-medium text-on-dark">
               {EURO_ROUND.format(b.net)}
             </span>
           </div>
-          <div className="h-3 rounded-r bg-white/10">
+          <div className="h-3 rounded-r bg-surface/10">
             <div
               className="h-3 rounded-r"
               style={{
@@ -317,30 +317,30 @@ function BoatChart({ boats }) {
   );
 }
 
-function TotalCard({ label, value, accent = 'text-white', hint }) {
+function TotalCard({ label, value, accent = 'text-on-dark', hint }) {
   return (
-    <li className="rounded-2xl border border-white/20 bg-white/10 p-5 text-center backdrop-blur-xl sm:text-left">
-      <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
+    <li className="rounded-2xl border border-glass/20 bg-surface/10 p-5 text-center backdrop-blur-xl sm:text-left">
+      <span className="block text-xs font-semibold uppercase tracking-wide text-on-dark/70">
         {label}
       </span>
       <span className={`mt-2 block text-3xl font-bold ${accent}`}>{EURO.format(value ?? 0)}</span>
-      {hint && <span className="mt-1 block text-xs text-white/60">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-on-dark/60">{hint}</span>}
     </li>
   );
 }
 
 function TransactionCard({ payment }) {
   const { t } = useTranslation();
-  const statusCls = PAYMENT_STATUS_CLS[payment.status] || 'bg-slate-500/15 text-white/80';
+  const statusCls = PAYMENT_STATUS_CLS[payment.status] || 'bg-neutral/15 text-on-dark/80';
 
   return (
     <article className="px-4 py-4">
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <time dateTime={payment.payment_date} className="block text-xs text-white/60">
+          <time dateTime={payment.payment_date} className="block text-xs text-on-dark/60">
             {fmtDate(payment.payment_date)}
           </time>
-          <h3 className="mt-1 break-words text-sm font-semibold text-white">
+          <h3 className="mt-1 break-words text-sm font-semibold text-on-dark">
             {payment.booking?.boat_name}
           </h3>
         </div>
@@ -352,7 +352,7 @@ function TransactionCard({ payment }) {
       </header>
 
       {payment.booking && (
-        <p className="mt-1 break-words text-xs leading-relaxed text-white/70">
+        <p className="mt-1 break-words text-xs leading-relaxed text-on-dark/70">
           {payment.booking.locataire}
           {payment.booking.locataire && ' · '}
           <time dateTime={payment.booking.start_date}>
@@ -364,29 +364,31 @@ function TransactionCard({ payment }) {
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
         <div>
-          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.method')}</dt>
-          <dd className="mt-0.5 break-words text-white/80">
+          <dt className="text-xs text-on-dark/60">{t('proprietaireRevenus.table.method')}</dt>
+          <dd className="mt-0.5 break-words text-on-dark/80">
             {t(`proprietaireRevenus.method.${payment.payment_method}`, {
               defaultValue: payment.payment_method,
             })}
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.gross')}</dt>
-          <dd className="mt-0.5 font-medium text-white">{EURO.format(payment.amount)}</dd>
+          <dt className="text-xs text-on-dark/60">{t('proprietaireRevenus.table.gross')}</dt>
+          <dd className="mt-0.5 font-medium text-on-dark">{EURO.format(payment.amount)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.commission')}</dt>
-          <dd className="mt-0.5 font-medium text-amber-300">− {EURO.format(payment.commission)}</dd>
+          <dt className="text-xs text-on-dark/60">{t('proprietaireRevenus.table.commission')}</dt>
+          <dd className="mt-0.5 font-medium text-warning-soft">
+            − {EURO.format(payment.commission)}
+          </dd>
         </div>
         <div>
-          <dt className="text-xs text-white/60">{t('proprietaireRevenus.table.net')}</dt>
-          <dd className="mt-0.5 font-semibold text-emerald-300">{EURO.format(payment.net)}</dd>
+          <dt className="text-xs text-on-dark/60">{t('proprietaireRevenus.table.net')}</dt>
+          <dd className="mt-0.5 font-semibold text-success-soft">{EURO.format(payment.net)}</dd>
         </div>
       </dl>
 
       {payment.status === 'refunded' && payment.refunded_amount != null && (
-        <p className="mt-3 break-words rounded-lg bg-white/5 px-3 py-2 text-xs text-white/70">
+        <p className="mt-3 break-words rounded-lg bg-surface/5 px-3 py-2 text-xs text-on-dark/70">
           {t('proprietaireRevenus.refundedAmount', {
             amount: EURO.format(payment.refunded_amount),
           })}
@@ -549,16 +551,16 @@ function ProprietaireRevenus() {
   return (
     <section aria-labelledby="revenus-title">
       <header className="mb-6">
-        <h1 id="revenus-title" className="text-2xl font-bold text-white">
+        <h1 id="revenus-title" className="text-2xl font-bold text-on-dark">
           {t('proprietaireRevenus.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('proprietaireRevenus.subtitle')}</p>
+        <p className="mt-1 text-sm text-on-dark/70">{t('proprietaireRevenus.subtitle')}</p>
       </header>
 
       {error && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -566,12 +568,12 @@ function ProprietaireRevenus() {
 
       {/* Virements Stripe Connect : l'IBAN est collecté par Stripe, jamais ici. */}
       {stripeAccount?.enabled && (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-5 py-4">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl px-5 py-4">
           <div>
-            <h2 className="text-sm font-semibold text-white">
+            <h2 className="text-sm font-semibold text-on-dark">
               {t('proprietaireRevenus.stripe.title')}
             </h2>
-            <p className="mt-0.5 text-xs text-white/70">
+            <p className="mt-0.5 text-xs text-on-dark/70">
               {stripeAccount.onboarded
                 ? t('proprietaireRevenus.stripe.onboarded')
                 : stripeAccount.has_account
@@ -581,14 +583,14 @@ function ProprietaireRevenus() {
           </div>
           {stripeAccount.onboarded ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+              <span className="rounded-full bg-success-base/15 px-3 py-1 text-xs font-semibold text-success-soft">
                 {t('proprietaireRevenus.stripe.enabled')}
               </span>
               <button
                 type="button"
                 onClick={handleManageAccount}
                 disabled={onboarding}
-                className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+                className="rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 {onboarding
                   ? t('proprietaireRevenus.stripe.opening')
@@ -600,7 +602,7 @@ function ProprietaireRevenus() {
               type="button"
               onClick={handleOnboarding}
               disabled={onboarding}
-              className="rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+              className="rounded-full bg-action px-4 py-2 text-sm font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               {onboarding
                 ? t('proprietaireRevenus.stripe.redirecting')
@@ -634,10 +636,10 @@ function ProprietaireRevenus() {
                       type="button"
                       onClick={() => setStatus(key)}
                       aria-pressed={active}
-                      className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                      className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         active
-                          ? 'bg-sky-500 text-white'
-                          : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
+                          ? 'bg-action text-on-dark'
+                          : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
                       }`}
                     >
                       {t(`proprietaireRevenus.filters.${key}`)}
@@ -661,10 +663,10 @@ function ProprietaireRevenus() {
                       type="button"
                       onClick={() => setPeriod(key)}
                       aria-pressed={active}
-                      className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                      className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         active
-                          ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
-                          : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
+                          ? 'border-brand bg-brand/15 text-brand-soft'
+                          : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
                       }`}
                     >
                       {t(`proprietaireRevenus.periods.${key}`)}
@@ -683,7 +685,7 @@ function ProprietaireRevenus() {
             <TotalCard
               label={t('proprietaireRevenus.netEarnings')}
               value={totals.net}
-              accent="text-emerald-300"
+              accent="text-success-soft"
               hint={
                 t('proprietaireRevenus.transactionCount', { count: totals.count }) +
                 (status === 'all'
@@ -695,7 +697,7 @@ function ProprietaireRevenus() {
             <TotalCard
               label={t('proprietaireRevenus.commissions')}
               value={totals.commission}
-              accent="text-amber-300"
+              accent="text-warning-soft"
               hint={t('proprietaireRevenus.commissionHint')}
             />
           </ul>
@@ -705,12 +707,12 @@ function ProprietaireRevenus() {
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
               <section
                 aria-labelledby="chart-months-title"
-                className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
+                className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5"
               >
-                <h2 id="chart-months-title" className="text-sm font-semibold text-white/90">
+                <h2 id="chart-months-title" className="text-sm font-semibold text-on-dark/90">
                   {t('proprietaireRevenus.chartMonths')}
                 </h2>
-                <p className="mb-4 mt-0.5 text-xs text-white/60">
+                <p className="mb-4 mt-0.5 text-xs text-on-dark/60">
                   {t('proprietaireRevenus.chartMonthsHint')}
                 </p>
                 <MonthlyChart months={months} />
@@ -718,12 +720,12 @@ function ProprietaireRevenus() {
 
               <section
                 aria-labelledby="chart-boats-title"
-                className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
+                className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5"
               >
-                <h2 id="chart-boats-title" className="text-sm font-semibold text-white/90">
+                <h2 id="chart-boats-title" className="text-sm font-semibold text-on-dark/90">
                   {t('proprietaireRevenus.chartBoats')}
                 </h2>
-                <p className="mb-4 mt-0.5 text-xs text-white/60">
+                <p className="mb-4 mt-0.5 text-xs text-on-dark/60">
                   {t('proprietaireRevenus.chartBoatsHint')}
                 </p>
                 <BoatChart boats={boats} />
@@ -732,11 +734,11 @@ function ProprietaireRevenus() {
           )}
 
           {/* Historique des transactions */}
-          <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl">
-            <h2 className="border-b border-white/20 px-5 py-4 text-sm font-semibold text-white/90">
+          <div className="mt-6 rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl">
+            <h2 className="border-b border-glass/20 px-5 py-4 text-sm font-semibold text-on-dark/90">
               {t('proprietaireRevenus.history')}
               {filtered.length !== payments.length && (
-                <span className="ml-2 font-normal text-white/60">
+                <span className="ml-2 font-normal text-on-dark/60">
                   {t('proprietaireRevenus.historyCount', {
                     shown: filtered.length,
                     total: payments.length,
@@ -746,7 +748,7 @@ function ProprietaireRevenus() {
             </h2>
 
             {filtered.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-white/70">
+              <p className="px-5 py-8 text-center text-sm text-on-dark/70">
                 {payments.length === 0
                   ? t('proprietaireRevenus.emptyAll')
                   : t('proprietaireRevenus.emptyFilter')}
@@ -754,7 +756,7 @@ function ProprietaireRevenus() {
             ) : (
               <>
                 <ul
-                  className="divide-y divide-white/15 xl:hidden"
+                  className="divide-y divide-glass/15 xl:hidden"
                   aria-label={t('proprietaireRevenus.history')}
                 >
                   {pageRows.map((payment) => (
@@ -767,7 +769,7 @@ function ProprietaireRevenus() {
                 <div className="hidden overflow-x-auto xl:block">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-white/20 text-xs uppercase tracking-wide text-white/60">
+                      <tr className="border-b border-glass/20 text-xs uppercase tracking-wide text-on-dark/60">
                         <th scope="col" className="px-5 py-3 font-semibold">
                           {t('proprietaireRevenus.table.date')}
                         </th>
@@ -791,18 +793,18 @@ function ProprietaireRevenus() {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/15">
+                    <tbody className="divide-y divide-glass/15">
                       {pageRows.map((p) => {
                         const statusCls =
-                          PAYMENT_STATUS_CLS[p.status] || 'bg-slate-500/15 text-white/80';
+                          PAYMENT_STATUS_CLS[p.status] || 'bg-neutral/15 text-on-dark/80';
                         return (
                           <tr key={p.id_payment}>
-                            <td className="whitespace-nowrap px-5 py-3 text-white/80">
+                            <td className="whitespace-nowrap px-5 py-3 text-on-dark/80">
                               <time dateTime={p.payment_date}>{fmtDate(p.payment_date)}</time>
                             </td>
                             <td className="px-5 py-3">
-                              <p className="font-medium text-white">{p.booking?.boat_name}</p>
-                              <p className="text-xs text-white/70">
+                              <p className="font-medium text-on-dark">{p.booking?.boat_name}</p>
+                              <p className="text-xs text-on-dark/70">
                                 {p.booking?.locataire}
                                 {p.booking && (
                                   <>
@@ -818,7 +820,7 @@ function ProprietaireRevenus() {
                                 )}
                               </p>
                               {p.status === 'refunded' && p.refunded_amount != null && (
-                                <p className="mt-1 text-xs text-white/70">
+                                <p className="mt-1 text-xs text-on-dark/70">
                                   {t('proprietaireRevenus.refundedAmount', {
                                     amount: EURO.format(p.refunded_amount),
                                   })}
@@ -826,18 +828,18 @@ function ProprietaireRevenus() {
                                 </p>
                               )}
                             </td>
-                            <td className="whitespace-nowrap px-5 py-3 text-white/80">
+                            <td className="whitespace-nowrap px-5 py-3 text-on-dark/80">
                               {t(`proprietaireRevenus.method.${p.payment_method}`, {
                                 defaultValue: p.payment_method,
                               })}
                             </td>
-                            <td className="whitespace-nowrap px-5 py-3 text-right text-white">
+                            <td className="whitespace-nowrap px-5 py-3 text-right text-on-dark">
                               {EURO.format(p.amount)}
                             </td>
-                            <td className="whitespace-nowrap px-5 py-3 text-right text-amber-300">
+                            <td className="whitespace-nowrap px-5 py-3 text-right text-warning-soft">
                               − {EURO.format(p.commission)}
                             </td>
-                            <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-emerald-300">
+                            <td className="whitespace-nowrap px-5 py-3 text-right font-semibold text-success-soft">
                               {EURO.format(p.net)}
                             </td>
                             <td className="whitespace-nowrap px-5 py-3">
@@ -861,9 +863,9 @@ function ProprietaireRevenus() {
             {pageCount > 1 && (
               <nav
                 aria-label="Pagination de l'historique"
-                className="flex flex-wrap items-center justify-between gap-3 border-t border-white/20 px-5 py-3"
+                className="flex flex-wrap items-center justify-between gap-3 border-t border-glass/20 px-5 py-3"
               >
-                <p className="text-xs text-white/60" aria-live="polite">
+                <p className="text-xs text-on-dark/60" aria-live="polite">
                   {t('proprietaireRevenus.paginationRange', {
                     first: (safePage - 1) * PAGE_SIZE + 1,
                     last: Math.min(safePage * PAGE_SIZE, filtered.length),
@@ -875,7 +877,7 @@ function ProprietaireRevenus() {
                     type="button"
                     onClick={() => setPage(safePage - 1)}
                     disabled={safePage === 1}
-                    className="rounded-full px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+                    className="rounded-full px-3 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     {t('pagination.previous')}
                   </button>
@@ -886,10 +888,10 @@ function ProprietaireRevenus() {
                       onClick={() => setPage(n)}
                       aria-current={n === safePage ? 'page' : undefined}
                       aria-label={t('pagination.page', { n })}
-                      className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] ${
+                      className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         n === safePage
-                          ? 'bg-sky-500 text-white'
-                          : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          ? 'bg-action text-on-dark'
+                          : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
                       }`}
                     >
                       {n}
@@ -899,7 +901,7 @@ function ProprietaireRevenus() {
                     type="button"
                     onClick={() => setPage(safePage + 1)}
                     disabled={safePage === pageCount}
-                    className="rounded-full px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC]"
+                    className="rounded-full px-3 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     {t('pagination.next')}
                   </button>

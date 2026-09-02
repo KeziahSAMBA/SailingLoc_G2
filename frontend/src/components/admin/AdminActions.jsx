@@ -62,11 +62,11 @@ export const BanIcon = () => (
 );
 
 const VARIANTS = {
-  default: 'border-white/30 text-white/90 hover:bg-white/10',
-  success: 'border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10',
-  danger: 'border-red-500/40 text-red-300 hover:bg-red-500/10',
-  warn: 'border-amber-500/40 text-amber-300 hover:bg-amber-500/10',
-  info: 'border-[#5AB4EC]/40 text-[#5AB4EC] hover:bg-[#5AB4EC]/10',
+  default: 'border-glass/30 text-on-dark/90 hover:bg-surface/10',
+  success: 'border-success-base/40 text-success-soft hover:bg-success-base/10',
+  danger: 'border-danger-base/40 text-danger-soft hover:bg-danger-base/10',
+  warn: 'border-warning-base/40 text-warning-soft hover:bg-warning-base/10',
+  info: 'border-brand/40 text-brand hover:bg-brand/10',
 };
 
 export function IconBtn({ title, onClick, disabled, variant = 'default', children }) {

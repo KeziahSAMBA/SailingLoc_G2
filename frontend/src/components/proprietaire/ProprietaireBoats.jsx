@@ -13,17 +13,17 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const BOAT_STATUS_CLS = {
-  draft: 'bg-slate-500/15 text-white/80',
-  pending: 'bg-amber-500/15 text-amber-300',
-  published: 'bg-emerald-500/15 text-emerald-300',
-  refused: 'bg-red-500/15 text-red-300',
+  draft: 'bg-neutral/15 text-on-dark/80',
+  pending: 'bg-warning-base/15 text-warning-soft',
+  published: 'bg-success-base/15 text-success-soft',
+  refused: 'bg-danger-base/15 text-danger-soft',
 };
 
 const FILTER_KEYS = ['all', 'draft', 'pending', 'published', 'refused'];
 
 // Styles de focus clavier communs aux éléments cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 const PAGE_SIZE = 9;
 
@@ -80,7 +80,7 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
       {scrollEdges.left && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-dark-strong/95 via-dark-strong/70 to-transparent pl-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -97,7 +97,7 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
       {scrollEdges.right && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-dark-strong/95 via-dark-strong/70 to-transparent pr-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -116,22 +116,22 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
 
 function BoatCard({ boat, busy, onDelete }) {
   const { t } = useTranslation();
-  const statusCls = BOAT_STATUS_CLS[boat.status] || 'bg-slate-500/15 text-white/80';
+  const statusCls = BOAT_STATUS_CLS[boat.status] || 'bg-neutral/15 text-on-dark/80';
 
   return (
-    <article className="group flex h-full min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:shadow-xl hover:shadow-sky-500/10">
+    <article className="group flex h-full min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand/60 hover:shadow-xl hover:shadow-action/10">
       {boat.image ? (
         <SafeImage
           src={boat.image}
           alt={t('proprietaireBoats.boatAlt', { name: boat.name })}
           loading="lazy"
           className="h-36 w-full shrink-0 object-cover transition-transform duration-500 motion-safe:group-hover:scale-105"
-          fallbackClassName="flex h-36 w-full shrink-0 items-center justify-center bg-white/5 text-3xl text-white/50"
+          fallbackClassName="flex h-36 w-full shrink-0 items-center justify-center bg-surface/5 text-3xl text-on-dark/50"
         />
       ) : (
         <div
           aria-hidden="true"
-          className="flex h-36 w-full shrink-0 items-center justify-center bg-white/5 text-sm text-white/50"
+          className="flex h-36 w-full shrink-0 items-center justify-center bg-surface/5 text-sm text-on-dark/50"
         >
           {t('proprietaireBoats.noPhoto')}
         </div>
@@ -140,8 +140,8 @@ function BoatCard({ boat, busy, onDelete }) {
       <div className="flex flex-1 flex-col p-4">
         <header className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h2 className="truncate text-base font-bold text-white">{boat.name}</h2>
-            <p className="mt-0.5 truncate text-xs text-white/60">
+            <h2 className="truncate text-base font-bold text-on-dark">{boat.name}</h2>
+            <p className="mt-0.5 truncate text-xs text-on-dark/60">
               {[boat.type, boat.port && `${boat.port.name} · ${boat.port.city}`]
                 .filter(Boolean)
                 .join(' — ')}
@@ -157,14 +157,14 @@ function BoatCard({ boat, busy, onDelete }) {
         <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
           {/* Champs possiblement vides sur un brouillon. */}
           <div className="flex items-baseline gap-1.5">
-            <dt className="text-xs text-white/60">{t('proprietaireBoats.pricePerDay')}</dt>
-            <dd className="font-medium text-white">
+            <dt className="text-xs text-on-dark/60">{t('proprietaireBoats.pricePerDay')}</dt>
+            <dd className="font-medium text-on-dark">
               {boat.daily_price != null ? EURO.format(boat.daily_price) : '—'}
             </dd>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <dt className="text-xs text-white/60">{t('proprietaireBoats.capacity')}</dt>
-            <dd className="font-medium text-white">
+            <dt className="text-xs text-on-dark/60">{t('proprietaireBoats.capacity')}</dt>
+            <dd className="font-medium text-on-dark">
               {boat.capacity != null
                 ? t('proprietaireBoats.people', { count: boat.capacity })
                 : '—'}
@@ -173,13 +173,13 @@ function BoatCard({ boat, busy, onDelete }) {
         </dl>
 
         {boat.pending_bookings > 0 && (
-          <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-300">
+          <p className="mt-3 rounded-lg bg-warning-base/10 px-3 py-1.5 text-xs font-medium text-warning-soft">
             {t('proprietaireBoats.pendingBookings', { count: boat.pending_bookings })}
           </p>
         )}
 
         {boat.status === 'refused' && (
-          <p className="mt-3 rounded-lg bg-red-500/10 px-3 py-1.5 text-xs text-red-300">
+          <p className="mt-3 rounded-lg bg-danger-base/10 px-3 py-1.5 text-xs text-danger-soft">
             {t('proprietaireBoats.refusedNotice')}
           </p>
         )}
@@ -187,7 +187,7 @@ function BoatCard({ boat, busy, onDelete }) {
         <div className="mt-auto flex flex-wrap gap-2 pt-3">
           <Link
             to={`/proprietaire/bateaux/${boat.id_boat}/modifier`}
-            className={`rounded-full bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-600 ${FOCUS_RING}`}
+            className={`rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-on-dark transition hover:bg-action-hover ${FOCUS_RING}`}
           >
             {boat.status === 'draft'
               ? t('proprietaireBoats.editDraft')
@@ -197,7 +197,7 @@ function BoatCard({ boat, busy, onDelete }) {
             type="button"
             disabled={busy}
             onClick={() => onDelete(boat)}
-            className={`rounded-full border border-red-500/40 px-4 py-1.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+            className={`rounded-full border border-danger-base/40 px-4 py-1.5 text-xs font-semibold text-danger-soft transition hover:bg-danger-base/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
           >
             {t('proprietaireBoats.delete')}
           </button>
@@ -288,14 +288,14 @@ function ProprietaireBoats() {
     <section aria-labelledby="boats-title">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 id="boats-title" className="text-2xl font-bold text-white">
+          <h1 id="boats-title" className="text-2xl font-bold text-on-dark">
             {t('proprietaireBoats.title')}
           </h1>
-          <p className="mt-1 text-sm text-white/70">{t('proprietaireBoats.subtitle')}</p>
+          <p className="mt-1 text-sm text-on-dark/70">{t('proprietaireBoats.subtitle')}</p>
         </div>
         <Link
           to="/proprietaire/bateaux/nouveau"
-          className={`shrink-0 rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-600 ${FOCUS_RING}`}
+          className={`shrink-0 rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-on-dark shadow transition hover:bg-action-hover ${FOCUS_RING}`}
         >
           {t('proprietaireBoats.addBoat')}
         </Link>
@@ -304,7 +304,7 @@ function ProprietaireBoats() {
       {error && (
         <div
           role="alert"
-          className="mb-5 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="mb-5 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -329,8 +329,8 @@ function ProprietaireBoats() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-sky-500 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
+                  ? 'bg-action text-on-dark'
+                  : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
               }`}
             >
               {t(`proprietaireBoats.filters.${key}`)}
@@ -343,7 +343,7 @@ function ProprietaireBoats() {
       {loading ? (
         <CardSkeleton count={6} height="h-64" withIcon />
       ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
+        <p className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-on-dark/70">
           {boats.length === 0
             ? t('proprietaireBoats.emptyAll')
             : t('proprietaireBoats.emptyFilter')}
@@ -368,7 +368,7 @@ function ProprietaireBoats() {
               aria-label="Pagination des bateaux"
               className="mt-5 flex flex-wrap items-center justify-between gap-3"
             >
-              <p className="text-xs text-white/60" aria-live="polite">
+              <p className="text-xs text-on-dark/60" aria-live="polite">
                 {t('proprietaireBoats.paginationLabel')} {(safePage - 1) * PAGE_SIZE + 1}
                 {' – '}
                 {Math.min(safePage * PAGE_SIZE, filtered.length)} / {filtered.length}
@@ -378,7 +378,7 @@ function ProprietaireBoats() {
                   type="button"
                   onClick={() => setPage(safePage - 1)}
                   disabled={safePage === 1}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${FOCUS_RING}`}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${FOCUS_RING}`}
                 >
                   {t('pagination.previous')}
                 </button>
@@ -391,8 +391,8 @@ function ProprietaireBoats() {
                     aria-label={t('pagination.page', { n })}
                     className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                       n === safePage
-                        ? 'bg-sky-500 text-white'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        ? 'bg-action text-on-dark'
+                        : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
                     }`}
                   >
                     {n}
@@ -402,7 +402,7 @@ function ProprietaireBoats() {
                   type="button"
                   onClick={() => setPage(safePage + 1)}
                   disabled={safePage === pageCount}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${FOCUS_RING}`}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${FOCUS_RING}`}
                 >
                   {t('pagination.next')}
                 </button>
@@ -415,26 +415,26 @@ function ProprietaireBoats() {
       {/* Modal de confirmation de suppression */}
       {toDelete && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
           onClick={() => !deleting && setToDelete(null)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-boat-title"
-            className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+            className="w-full max-w-md rounded-2xl border border-glass/20 bg-surface/10 p-6 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="delete-boat-title" className="text-lg font-semibold text-white">
+            <h2 id="delete-boat-title" className="text-lg font-semibold text-on-dark">
               {toDelete.status === 'draft'
                 ? t('proprietaireBoats.deleteDraftTitle')
                 : t('proprietaireBoats.deleteListingTitle')}
             </h2>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 text-sm text-on-dark/70">
               {toDelete.name}
               {toDelete.port && ` — ${toDelete.port.name} · ${toDelete.port.city}`}
             </p>
-            <p className="mt-3 text-sm text-white/80">
+            <p className="mt-3 text-sm text-on-dark/80">
               {toDelete.status === 'published'
                 ? t('proprietaireBoats.deletePublishedWarning')
                 : t('proprietaireBoats.deleteWarning')}
@@ -445,7 +445,7 @@ function ProprietaireBoats() {
                 type="button"
                 disabled={deleting}
                 onClick={() => setToDelete(null)}
-                className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                className={`rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
               >
                 {t('proprietaireBoats.back')}
               </button>
@@ -453,7 +453,7 @@ function ProprietaireBoats() {
                 type="button"
                 disabled={deleting}
                 onClick={confirmDelete}
-                className={`rounded-full bg-red-600/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                className={`rounded-full bg-danger/80 px-4 py-2 text-sm font-semibold text-on-dark transition hover:bg-danger-base disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
               >
                 {deleting ? t('proprietaireBoats.deleting') : t('proprietaireBoats.deleteConfirm')}
               </button>
