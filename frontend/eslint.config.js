@@ -38,4 +38,20 @@ export default [
       'react/jsx-uses-vars': 'error',
     },
   },
+  {
+    // Les tests exercent des API que l'application n'utilise pas directement :
+    // File pour un envoi multipart simulé, Storage pour faire échouer le
+    // stockage à volonté. Les déclarer ici plutôt que d'élargir les globales de
+    // l'application, qui doit rester la liste de ce qu'elle emploie vraiment.
+    files: ['src/**/*.test.{js,jsx}', 'src/tests/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        File: 'readonly',
+        Blob: 'readonly',
+        Storage: 'readonly',
+        Event: 'readonly',
+        IntersectionObserver: 'readonly',
+      },
+    },
+  },
 ];

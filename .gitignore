@@ -18,6 +18,7 @@ backend/storage/documents
 # Rapports de couverture Jest
 coverage
 backend/coverage
+frontend/coverage
 
 # Rapports de tests de charge k6 — le dossier reste versionné (k6 ne le crée pas)
 loadtest/rapports/*

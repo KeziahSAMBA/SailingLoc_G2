@@ -13,7 +13,9 @@
     "lint": "npm run lint --workspace backend && npm run lint --workspace frontend",
     "format": "npm run format --workspace backend && npm run format --workspace frontend",
     "test": "npm run test --workspace backend",
+    "test:front": "npm run test --workspace frontend",
     "test:coverage": "npm run test:coverage --workspace backend",
+    "test:coverage:front": "npm run test:coverage --workspace frontend",
     "prepare": "husky"
   },
   "devDependencies": {
