@@ -58,6 +58,18 @@
   --sl-chart-primary: 62 151 214;
   --sl-chart-hover: 90 180 236;
   --sl-chart-violet: 167 139 250;
+  --sl-calendar-border: 243 244 246;
+  --sl-calendar-title: 55 65 81;
+  --sl-calendar-muted: 107 114 128;
+  --sl-calendar-weekday: 156 163 175;
+  --sl-calendar-disabled: 209 213 219;
+  --sl-calendar-hover: 243 244 246;
+  --sl-calendar-available: 187 247 208;
+  --sl-calendar-available-text: 22 101 52;
+  --sl-calendar-available-hover: 134 239 172;
+  --sl-calendar-selected: 2 132 199;
+  --sl-calendar-range: 224 242 254;
+  --sl-calendar-range-text: 7 89 133;
 }
 
 /* Palette du mode nuit. Les composants utilisent les mêmes tokens que le
@@ -120,6 +132,18 @@ html[data-sailingloc-theme='dark'] {
   --sl-chart-primary: 56 189 248;
   --sl-chart-hover: 125 211 252;
   --sl-chart-violet: 196 181 253;
+  --sl-calendar-border: 51 65 85;
+  --sl-calendar-title: 248 250 252;
+  --sl-calendar-muted: 203 213 225;
+  --sl-calendar-weekday: 148 163 184;
+  --sl-calendar-disabled: 100 116 139;
+  --sl-calendar-hover: 51 65 85;
+  --sl-calendar-available: 22 101 52;
+  --sl-calendar-available-text: 220 252 231;
+  --sl-calendar-available-hover: 21 128 61;
+  --sl-calendar-selected: 2 132 199;
+  --sl-calendar-range: 12 74 110;
+  --sl-calendar-range-text: 224 242 254;
 
   /* Sans imposer une largeur, ces couleurs s'appliquent aux barres natives
      des navigateurs qui les exposent. */
@@ -339,4 +363,10 @@ html[data-sailingloc-theme='dark'] .select-glass option:checked,
 html[data-sailingloc-theme='dark'] .select-glass option:hover {
   background-color: rgb(var(--sl-brand-hover));
   color: rgb(var(--sl-on-light));
+}
+
+html[data-sailingloc-theme='dark'] .sailingloc-popup .leaflet-popup-content-wrapper,
+html[data-sailingloc-theme='dark'] .sailingloc-popup .leaflet-popup-tip {
+  background-color: rgb(var(--sl-surface));
+  color: rgb(var(--sl-content));
 }

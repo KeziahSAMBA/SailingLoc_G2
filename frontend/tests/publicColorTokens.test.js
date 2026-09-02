@@ -23,6 +23,11 @@ const allowedRaw = new Set(
     '["#00247d","#0055a4","#0a3172","#0a527a","#0d3d8c","#16a34a","#333","#5ab4ec","#7dd3fc","#94a3b8","#abd4ff","#cf142b","#e05252","#ef4135","#ef4444","#f59e0b","#fca5a5","#fff","#ffffff","rgb(0,78,87)","rgb(000/45%)","rgb(255255255)","rgb(255255255/78%)","rgba(0,0,0,0.05)","rgba(0,0,0,0.1)","rgba(0,0,0,0.15)","rgba(0,0,0,0.18)","rgba(0,0,0,0.2)","rgba(0,0,0,0.25)","rgba(0,0,0,0.28)","rgba(0,0,0,0.35)","rgba(0,0,0,0.4)","rgba(0,0,0,0.45)","rgba(0,0,0,0.5)","rgba(0,0,0,0.6)","rgba(10,49,114,0.06)","rgba(10,49,114,0.08)","rgba(10,49,114,0.15)","rgba(10,49,114,0.3)","rgba(10,49,114,0.95)","rgba(14,165,233,0.15)","rgba(14,165,233,0.25)","rgba(14,165,233,0.3)","rgba(14,165,233,0.35)","rgba(14,165,233,0.5)","rgba(14,165,233,0.55)","rgba(14,165,233,0.8)","rgba(14,165,233,0.95)","rgba(2,44,74,0.18)","rgba(2,44,74,0.25)","rgba(2,44,74,0.35)","rgba(20,20,30,0.85)","rgba(224,82,82,0.08)","rgba(255,255,255,0.05)","rgba(255,255,255,0.1)","rgba(255,255,255,0.15)","rgba(255,255,255,0.2)","rgba(255,255,255,0.25)","rgba(255,255,255,0.3)","rgba(255,255,255,0.4)","rgba(255,255,255,0.45)","rgba(255,255,255,0.5)","rgba(255,255,255,0.6)","rgba(255,255,255,0.7)","rgba(255,255,255,0.95)","rgba(255,255,255,0.98)","rgba(3,24,30,0.62)","rgba(3,24,30,0.72)","rgba(3,35,39,0.72)","rgba(3,35,39,0.8)","rgba(51,51,51,0.4)","rgba(90,180,236,0.2)","rgba(90,180,236,0.45)"]'
   )
 );
+// Stripe Elements est une iframe : les variables CSS de l'application ne la
+// traversent pas. Ces valeurs sont l'exception visuelle explicitement testée.
+for (const stripeIframeColor of ['#f8fafc', '#f87171', 'rgba(203,213,225,0.65)']) {
+  allowedRaw.add(stripeIframeColor);
+}
 
 function filesBelow(relative) {
   const absolute = path.join(root, relative);

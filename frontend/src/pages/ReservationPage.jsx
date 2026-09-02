@@ -14,6 +14,7 @@ import {
 } from '../utils/reservationResume.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 import SafeImage from '../components/common/SafeImage.jsx';
+import { useVisualPreferences } from '../context/VisualPreferencesContext.jsx';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,18 +41,24 @@ const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
 // Style du champ carte Stripe (iframe) accordé au thème sombre de la page.
-const CARD_ELEMENT_OPTIONS = {
-  hidePostalCode: true,
-  style: {
-    base: {
-      color: '#ffffff',
-      fontSize: '16px',
-      '::placeholder': { color: 'rgba(255,255,255,0.4)' },
-      iconColor: '#7dd3fc',
+export function stripeCardElementOptions(theme) {
+  const dark = theme === 'dark';
+  return {
+    hidePostalCode: true,
+    style: {
+      base: {
+        color: dark ? '#f8fafc' : '#ffffff',
+        fontSize: '16px',
+        '::placeholder': { color: dark ? 'rgba(203,213,225,0.65)' : 'rgba(255,255,255,0.4)' },
+        iconColor: '#7dd3fc',
+      },
+      invalid: {
+        color: dark ? '#f87171' : '#fca5a5',
+        iconColor: dark ? '#f87171' : '#fca5a5',
+      },
     },
-    invalid: { color: '#fca5a5', iconColor: '#fca5a5' },
-  },
-};
+  };
+}
 
 // Saisie carte : groupes de 4 chiffres (affichage uniquement, rien n'est envoyé).
 function formatCardNumber(value) {
@@ -124,8 +131,10 @@ function ErrorNote({ children }) {
 // posée ici ; le débit n'a lieu qu'à la confirmation du propriétaire.
 function StripeCardForm({ idBooking, total, onPaid, onBack }) {
   const { t } = useTranslation();
+  const { theme } = useVisualPreferences();
   const stripe = useStripe();
   const elements = useElements();
+  const cardElementOptions = useMemo(() => stripeCardElementOptions(theme), [theme]);
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -190,7 +199,7 @@ function StripeCardForm({ idBooking, total, onPaid, onBack }) {
       <div className="flex flex-col gap-1 text-sm text-on-dark/80">
         <span>{t('reservation.payment.card')}</span>
         <div className={`${FIELD} py-3`}>
-          <CardElement options={CARD_ELEMENT_OPTIONS} />
+          <CardElement options={cardElementOptions} />
         </div>
       </div>
       <ErrorNote>{error}</ErrorNote>

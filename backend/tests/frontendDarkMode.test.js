@@ -127,3 +127,32 @@ describe('bascule lune et soleil', () => {
     expect(settings).toContain("{theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}");
   });
 });
+
+describe('composants spéciaux du mode nuit', () => {
+  it('adapte uniquement le style visuel de Stripe CardElement au thème', () => {
+    const reservation = source('frontend/src/pages/ReservationPage.jsx');
+
+    expect(reservation).toContain('stripeCardElementOptions(theme)');
+    expect(reservation).toContain("const dark = theme === 'dark'");
+    expect(reservation).toContain('<CardElement options={cardElementOptions} />');
+    expect(reservation).not.toContain('key={theme}');
+    expect(reservation).toContain('stripe.confirmCardPayment(data.client_secret');
+    expect(reservation).toContain('card: elements.getElement(CardElement)');
+    expect(reservation).toContain('billing_details: { name: name.trim() }');
+  });
+
+  it('relie calendrier Leaflet et graphiques aux tokens sans filtre sur les images', () => {
+    const calendar = source('frontend/src/components/common/DateRangePicker.jsx');
+    const map = source('frontend/src/components/common/MapView.jsx');
+    const chart = source('frontend/src/components/proprietaire/ProprietaireRevenus.jsx');
+
+    expect(calendar).toContain('bg-calendar-available');
+    expect(calendar).toContain('bg-calendar-selected');
+    expect(calendar).toContain('text-calendar-disabled');
+    expect(map).toContain('rgb(var(--sl-map-available))');
+    expect(map).toContain('background: rgb(var(--sl-surface))');
+    expect(chart).toContain('rgb(var(--sl-chart-primary))');
+    expect(chart).toContain('rgb(var(--sl-glass) / 0.15)');
+    expect(source('frontend/src/index.css')).not.toMatch(/\b(?:img|video)\s*\{[^}]*filter:/su);
+  });
+});
