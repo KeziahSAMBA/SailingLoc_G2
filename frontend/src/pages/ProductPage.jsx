@@ -26,6 +26,7 @@ import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import ShareButton from '../components/common/ShareButton.jsx';
 import DateRangePicker from '../components/common/DateRangePicker.jsx';
 import SafeImage from '../components/common/SafeImage.jsx';
+import SeoMetadata from '../components/common/SeoMetadata.jsx';
 import {
   MdLocationOn,
   MdVerified,
@@ -899,6 +900,7 @@ function ProductPage() {
     // qui casserait les sticky) évite l'ascenseur horizontal pendant l'entrée
     // des blocs depuis la marge droite (translateX(110vw)).
     <main className="w-full min-h-[100svh] pt-[clamp(4rem,6vw,5rem)] bg-white overflow-x-clip">
+      <SeoMetadata product={boat} productMode />
       <style>{`${PAGE_SLIDE_CSS}\n${PRODUCT_RESPONSIVE_CSS}`}</style>
       <div>
         {/* Fond photo bateau — image propre à la page produit ; le raccord
