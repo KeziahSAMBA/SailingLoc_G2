@@ -27,6 +27,13 @@ export const options = {
   summaryTrendStats: ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
   noConnectionReuse: false,
   discardResponseBodies: false,
+  // Grafana Cloud k6 : nomme le tir dans le tableau de bord et le range dans le
+  // bon projet. Sans K6_CLOUD_PROJECT_ID, le run atterrit dans le projet par
+  // défaut du compte — le tir fonctionne quand même.
+  cloud: {
+    name: `SailingLoc — ${PROFILE}`,
+    ...(__ENV.K6_CLOUD_PROJECT_ID ? { projectID: Number(__ENV.K6_CLOUD_PROJECT_ID) } : {}),
+  },
 };
 
 function login(email, password, role) {
@@ -200,6 +207,15 @@ export function handleSummary(data) {
     profile: PROFILE,
     date: new Date().toISOString().replace('T', ' ').slice(0, 19),
   };
+
+  // En exécution cloud, le runner Grafana n'a pas l'arborescence du dépôt :
+  // écrire un fichier ferait échouer le tir à la toute dernière seconde. Les
+  // résultats vivent de toute façon dans le tableau de bord.
+  const enCloud = Boolean(__ENV.K6_CLOUDRUN_TEST_RUN_ID || __ENV.K6_CLOUD_TEST_RUN_ID);
+  if (enCloud) {
+    return { stdout: '\nRésultats disponibles dans Grafana Cloud k6.\n' };
+  }
+
   const base = `loadtest/rapports/${PROFILE}`;
   return {
     stdout: `\nRapport écrit dans ${base}.html\n`,

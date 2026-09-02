@@ -338,11 +338,27 @@ Les uploads de fichiers (bateaux, documents) utilisent `multipart/form-data` via
 Les tests sont écrits avec **Jest** et placés dans `backend/tests/`.
 
 ```bash
-npm test              # lance la suite complète
-npm test -- --watch   # mode watch
+npm test               # lance la suite complète
+npm test -- --watch    # mode watch
+npm run test:coverage  # avec rapport de couverture
 ```
 
 La logique métier est testée au niveau des **services** (sans Express ni base réelle) ; les repositories peuvent être mockés.
+
+Les seuils de couverture sont définis dans `jest.config.js` et vérifiés à chaque
+exécution : passer en dessous fait échouer la commande et la CI.
+
+### Tests de montée en charge
+
+Ils ne sont **pas** ici : ils utilisent k6, visent le backend déployé sur Railway
+staging, et sont documentés dans [`loadtest/README.md`](../loadtest/README.md).
+
+Deux points touchent ce dossier :
+
+- `src/server.js` et `src/services/emailService.js` réagissent à `LOAD_TEST_MODE`
+  (rate limiting, transport email, planificateur cron neutralisés) ;
+- `prisma/seedLoad.js` injecte le jeu volumétrique, appelé automatiquement par le
+  `preDeployCommand` de `railway.json`.
 
 ---
 

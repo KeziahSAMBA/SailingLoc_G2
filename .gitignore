@@ -19,8 +19,9 @@ backend/storage/documents
 coverage
 backend/coverage
 
-# Rapports de tests de charge k6
-loadtest/rapports
+# Rapports de tests de charge k6 — le dossier reste versionné (k6 ne le crée pas)
+loadtest/rapports/*
+!loadtest/rapports/.gitkeep
 
 # Docker
 docker-compose.override.yml

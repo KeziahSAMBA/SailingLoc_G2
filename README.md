@@ -15,6 +15,7 @@ Plateforme de location de bateaux — projet fullstack avec un backend Node.js/E
 - [Paiements Stripe](#paiements-stripe)
 - [Scripts disponibles](#scripts-disponibles)
 - [Tests et couverture](#tests-et-couverture)
+- [Tests de montée en charge](#tests-de-montée-en-charge)
 - [Structure du projet](#structure-du-projet)
 - [API](#api)
 - [Choses à savoir](#choses-à-savoir)
@@ -380,6 +381,38 @@ Le rapport HTML détaillé, ligne par ligne, est généré dans `backend/coverag
 Ces planchers sont volontairement calés juste sous la couverture réelle du moment. Après chaque lot de nouveaux tests, on les remonte au niveau atteint — la progression est ainsi acquise définitivement, sans jamais laisser la CI rouge (ce qui bloquerait les déploiements, `deploy-staging` dépendant de `test-and-build`).
 
 > Attention à la lecture des seuils : dès qu'un groupe par chemin existe (ici `./src/jobs/handlers/`), Jest **retire ses fichiers du groupe `global`**. Le pourcentage du bloc « Coverage summary » et celui évalué contre le seuil `global` sont donc différents, et c'est normal.
+
+---
+
+## Tests de montée en charge
+
+Les tests de charge utilisent **[k6](https://k6.io)** et visent le backend déployé
+sur Railway staging — jamais la production, jamais l'environnement local (qui ne
+mesurerait que votre machine).
+
+> 📘 **Tout est documenté dans [`loadtest/README.md`](loadtest/README.md)** :
+> installation de k6, variables à poser sur Railway, jeu de données, profils de
+> tir, seuils et lecture du rapport.
+
+```bash
+k6 run -e PROFILE=smoke loadtest/k6/main.js    # validation, 1 minute
+k6 run -e PROFILE=load  loadtest/k6/main.js    # charge nominale, 50 VUs
+```
+
+Chaque tir produit un rapport HTML dans `loadtest/rapports/`. Cinq profils sont
+disponibles : `smoke`, `load`, `stress`, `spike`, `soak`.
+
+Pour obtenir un **lien partageable** au lieu d'un fichier local, les tirs peuvent
+être publiés sur Grafana Cloud k6 :
+
+```bash
+k6 cloud run -e PROFILE=load loadtest/k6/main.js   # charge générée par Grafana
+k6 run --out cloud -e PROFILE=load loadtest/k6/main.js   # charge locale, résultats en ligne
+```
+
+L'environnement de charge s'active avec `LOAD_TEST_MODE=true`, qui neutralise le
+rate limiting, l'envoi réel d'emails et les tâches planifiées. **Cette variable ne
+doit jamais être posée en production.**
 
 ---
 
