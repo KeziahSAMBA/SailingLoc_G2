@@ -74,7 +74,7 @@ function NotFoundPage() {
         <h1 className="mt-4 text-2xl font-semibold text-on-dark md:text-3xl">
           Vous avez dérivé hors des eaux connues
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm text-gray-300 md:text-base">
+        <p className="mx-auto mt-3 max-w-md text-sm text-content-soft md:text-base">
           Cette page n&apos;existe pas (ou a coulé corps et biens). Pas de panique : reprenez le cap
           avec l&apos;un de ces liens.
         </p>
@@ -82,7 +82,7 @@ function NotFoundPage() {
         <nav aria-label="Liens de secours" className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             to="/"
-            className={`rounded-full bg-surface px-6 py-2.5 text-sm font-semibold text-brand-navy shadow transition hover:bg-gray-100 ${FOCUS_RING}`}
+            className={`rounded-full bg-surface px-6 py-2.5 text-sm font-semibold text-brand-navy shadow transition hover:bg-page ${FOCUS_RING}`}
           >
             Retour à l&apos;accueil
           </Link>

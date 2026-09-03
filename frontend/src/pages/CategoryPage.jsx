@@ -253,14 +253,14 @@ const BoatListingCard = memo(function BoatListingCard({
               {name}
             </h3>
             <span className="text-on-dark/50 flex-shrink-0">-</span>
-            <span className="flex-shrink-0 text-[0.625rem] font-bold uppercase tracking-widest text-sky-500">
+            <span className="flex-shrink-0 text-[0.625rem] font-bold uppercase tracking-widest text-action">
               {type}
             </span>
           </div>
           <span className="text-xs font-semibold text-on-dark flex-shrink-0">
             {rating != null ? (
               <>
-                <span className="text-amber-400">★</span> {rating}
+                <span className="text-warning-bright">★</span> {rating}
                 {reviewCount > 0 && <span className="text-on-dark/70"> ({reviewCount})</span>}
               </>
             ) : (
@@ -272,16 +272,13 @@ const BoatListingCard = memo(function BoatListingCard({
         {/* Lieu + dates */}
         <div className="mb-2 flex flex-col items-start gap-2 border-b border-glass/40 pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-1">
           <span className="text-xs text-on-dark/80 flex items-center gap-1 min-w-0">
-            <MdLocationOn
-              className="flex-shrink-0 text-sky-500"
-              style={{ fontSize: '0.8125rem' }}
-            />
+            <MdLocationOn className="flex-shrink-0 text-action" style={{ fontSize: '0.8125rem' }} />
             <span className="truncate">{location}</span>
           </span>
           {availability?.length > 0 && (
             <div className="flex flex-wrap items-center justify-start gap-1 sm:justify-end">
               <MdCalendarToday
-                className="text-sky-500 flex-shrink-0"
+                className="text-action flex-shrink-0"
                 style={{ fontSize: '0.75rem' }}
               />
               {availability.map((period) => (
@@ -304,7 +301,7 @@ const BoatListingCard = memo(function BoatListingCard({
         {/* Personnes + badges skipper/permis */}
         <div className="mb-2 flex flex-col items-start gap-2 2xl:flex-row 2xl:items-center 2xl:justify-between">
           <span className="flex items-center gap-1 text-xs text-on-dark/70 flex-shrink-0">
-            <MdPeople className="text-sky-500" style={{ fontSize: '0.875rem' }} />
+            <MdPeople className="text-action" style={{ fontSize: '0.875rem' }} />
             {t('category.card.persons', { count: capacity })}
           </span>
           <div className="flex flex-wrap items-center justify-start gap-1 2xl:justify-end">
@@ -1139,7 +1136,7 @@ function CategoryPage() {
                   aria-label={
                     mobileSearchExpanded ? t('cookieConsent.prefs.close') : t('searchBar.search')
                   }
-                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-on-dark shadow-lg transition-colors hover:bg-sky-800 md:hidden"
+                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-action-deep bg-action-hover text-on-dark shadow-lg transition-colors hover:bg-brand-navy md:hidden"
                 >
                   {mobileSearchExpanded ? (
                     <MdClose className="text-lg" aria-hidden="true" />
@@ -1186,7 +1183,7 @@ function CategoryPage() {
               <div className="relative z-10 flex flex-col gap-5">
                 <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
-                    <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-sky-500">
+                    <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-action">
                       {t('category.results.kicker')}
                     </p>
                     <h1 className="text-xl font-bold uppercase tracking-tight text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-2xl">
@@ -1254,14 +1251,11 @@ function CategoryPage() {
                     WebkitBackdropFilter: 'blur(20px)',
                   }}
                 >
-                  <p className="text-xs font-bold tracking-widest uppercase text-sky-500">
+                  <p className="text-xs font-bold tracking-widest uppercase text-action">
                     {t('category.map.title')}
                   </p>
-                  <span
-                    className="flex items-center gap-1.5 text-[0.625rem] font-semibold"
-                    style={{ color: '#16a34a' }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                  <span className="flex items-center gap-1.5 text-[0.625rem] font-semibold text-success">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
                     {t('category.map.live')}
                   </span>
                 </div>
@@ -1285,7 +1279,7 @@ function CategoryPage() {
                   />
                 </div>
               </div>
-              <p className="px-2 text-center text-[0.625rem] text-gray-300">
+              <p className="px-2 text-center text-[0.625rem] text-content-soft">
                 {t('category.map.hint')}
               </p>
             </aside>

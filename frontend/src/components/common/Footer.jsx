@@ -41,7 +41,7 @@ const SOCIAL_LINKS = [
     icon: <FaFacebook />,
     label: 'Facebook',
     href: 'https://facebook.com',
-    hoverClass: 'hover:text-blue-500',
+    hoverClass: 'hover:text-action',
   },
 ];
 
@@ -106,7 +106,7 @@ const Footer = () => {
   return (
     <footer
       id="contact"
-      className="flex flex-col justify-between overflow-x-hidden px-4 text-gray-300 sm:px-8 lg:px-12 xl:px-16"
+      className="flex flex-col justify-between overflow-x-hidden px-4 text-content-soft sm:px-8 lg:px-12 xl:px-16"
       style={{
         backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${bgImage})`,
         backgroundSize: 'cover',
@@ -176,11 +176,11 @@ const Footer = () => {
         {/* Ligne C — contenu */}
         <ul className="order-4 min-w-0 space-y-3 text-sm lg:order-none">
           <li className="flex items-start gap-2">
-            <FaPhone className="mt-0.5 shrink-0 text-blue-400" />
+            <FaPhone className="mt-0.5 shrink-0 text-action-bright" />
             <span className="break-words">+33 (0)2 00 66 77 89</span>
           </li>
           <li className="flex min-w-0 items-start gap-2">
-            <FaEnvelope className="mt-0.5 shrink-0 text-blue-400" />
+            <FaEnvelope className="mt-0.5 shrink-0 text-action-bright" />
             <a
               href="mailto:contact@sailingloc.fr"
               className="min-w-0 break-all transition-colors hover:text-on-dark"
@@ -189,7 +189,7 @@ const Footer = () => {
             </a>
           </li>
           <li className="flex items-start gap-2">
-            <FaComments className="mt-0.5 shrink-0 text-blue-400" />
+            <FaComments className="mt-0.5 shrink-0 text-action-bright" />
             {user ? (
               <button
                 type="button"
@@ -238,7 +238,7 @@ const Footer = () => {
               }}
               className="flex items-start gap-2 transition-colors hover:text-on-dark"
             >
-              <FaCircleInfo className="mt-0.5 shrink-0 text-blue-400" />
+              <FaCircleInfo className="mt-0.5 shrink-0 text-action-bright" />
               <span className="break-words">{t('footer.moreInfo')}</span>
             </a>
           </li>
@@ -247,7 +247,7 @@ const Footer = () => {
         <ul className="order-8 min-w-0 space-y-2 pb-2 text-sm lg:order-none lg:pb-0">
           <li>{t('footer.founded')}</li>
           <li className="flex items-start gap-2">
-            <FaLocationDot className="mt-0.5 shrink-0 text-blue-400" />
+            <FaLocationDot className="mt-0.5 shrink-0 text-action-bright" />
             <span className="break-words">{t('footer.address')}</span>
           </li>
           {infoLinks.map(({ label, href }) => (

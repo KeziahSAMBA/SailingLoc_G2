@@ -28,7 +28,10 @@ function MentionsLegalesPage() {
             i18nKey="mentionsLegalesPage.s1.emailLine"
             components={{
               email: (
-                <a href="mailto:contact@sailingloc.fr" className="text-sky-300 hover:underline" />
+                <a
+                  href="mailto:contact@sailingloc.fr"
+                  className="text-action-soft hover:underline"
+                />
               ),
             }}
           />
@@ -59,7 +62,10 @@ function MentionsLegalesPage() {
             i18nKey="mentionsLegalesPage.s5.p1"
             components={{
               privacy: (
-                <a href="/politique-de-confidentialite" className="text-sky-300 hover:underline" />
+                <a
+                  href="/politique-de-confidentialite"
+                  className="text-action-soft hover:underline"
+                />
               ),
             }}
           />
@@ -70,7 +76,9 @@ function MentionsLegalesPage() {
         <p>
           <Trans
             i18nKey="mentionsLegalesPage.s6.p1"
-            components={{ contact: <a href="/contact" className="text-sky-300 hover:underline" /> }}
+            components={{
+              contact: <a href="/contact" className="text-action-soft hover:underline" />,
+            }}
           />
         </p>
       </LegalSection>

@@ -101,7 +101,7 @@ function DataDots({ active }) {
       {dots.map((dot, i) => (
         <div
           key={i}
-          className="absolute rounded-full bg-sky-400"
+          className="absolute rounded-full bg-action-bright"
           style={{
             width: dot.size,
             height: dot.size,
@@ -142,22 +142,22 @@ function getSteps(t) {
 function getValueCards(t) {
   return [
     {
-      icon: <MdAnchor className="text-2xl text-sky-500 sm:text-3xl" />,
+      icon: <MdAnchor className="text-2xl text-action sm:text-3xl" />,
       title: t('home.values.fleet.title'),
       text: t('home.values.fleet.text'),
     },
     {
-      icon: <FaShieldAlt className="text-2xl text-sky-500 sm:text-3xl" />,
+      icon: <FaShieldAlt className="text-2xl text-action sm:text-3xl" />,
       title: t('home.values.payment.title'),
       text: t('home.values.payment.text'),
     },
     {
-      icon: <FaHandshake className="text-2xl text-sky-500 sm:text-3xl" />,
+      icon: <FaHandshake className="text-2xl text-action sm:text-3xl" />,
       title: t('home.values.owners.title'),
       text: t('home.values.owners.text'),
     },
     {
-      icon: <MdVerified className="text-2xl text-sky-500 sm:text-3xl" />,
+      icon: <MdVerified className="text-2xl text-action sm:text-3xl" />,
       title: t('home.values.support.title'),
       text: t('home.values.support.text'),
     },
@@ -558,7 +558,7 @@ function HomePage() {
           <div className="relative w-full min-w-0" style={introLogoBlockStyle}>
             {introActive && (
               <p
-                className="absolute left-1/2 -top-12 w-max max-w-[90vw] text-base text-gray-300 sm:-top-16 sm:text-xl"
+                className="absolute left-1/2 -top-12 w-max max-w-[90vw] text-base text-content-soft sm:-top-16 sm:text-xl"
                 style={{
                   fontFamily: "'Montserrat Alternates', sans-serif",
                   fontWeight: 600,
@@ -581,7 +581,7 @@ function HomePage() {
               style={heroSlideStyle('right')}
             />
             <h1
-              className="mx-auto max-w-3xl px-2 text-base leading-relaxed text-gray-300 sm:text-lg lg:text-xl"
+              className="mx-auto max-w-3xl px-2 text-base leading-relaxed text-content-soft sm:text-lg lg:text-xl"
               style={{ ...heroSlideStyle('left'), ...introTaglineStyle }}
             >
               {t('home.hero.tagline')}
@@ -637,7 +637,7 @@ function HomePage() {
           {/* Section 2 — Carrousels bateaux & ports */}
           <section
             id="suggestions"
-            className="relative flex w-full flex-col gap-8 bg-[linear-gradient(to_bottom,rgb(0,78,87)_0%,#EBF5FD_38%,white_53%,white_100%)] px-4 py-8 scroll-mt-[45px] sm:px-8 lg:px-16 lg:py-10 xl:px-28"
+            className="relative flex w-full flex-col gap-8 bg-[linear-gradient(to_bottom,rgb(var(--sl-home-sea))_0%,rgb(var(--sl-home-tint))_38%,rgb(var(--sl-surface))_53%,rgb(var(--sl-surface))_100%)] px-4 py-8 scroll-mt-[45px] sm:px-8 lg:px-16 lg:py-10 xl:px-28"
           >
             <div className="w-full flex flex-col gap-8">
               <Carrousel />
@@ -646,17 +646,17 @@ function HomePage() {
 
           <div
             id="tutoriel"
-            className="mx-4 border-t border-gray-200 scroll-mt-[60px] sm:mx-8 sm:scroll-mt-[115px] lg:mx-[168px]"
+            className="mx-4 border-t border-border-light scroll-mt-[60px] sm:mx-8 sm:scroll-mt-[115px] lg:mx-[168px]"
           />
 
           {/* Section 3 — Tuto */}
           <section className="flex w-full flex-col items-center justify-center gap-0 bg-surface px-4 py-0 max-sm:min-h-[100svh] sm:px-8 sm:py-8 lg:px-16 xl:px-28">
             <div className="flex w-full max-w-7xl flex-col items-center py-0 sm:px-4 sm:py-8 lg:px-16 lg:py-10">
               <div className="text-center mb-4 sm:mb-10">
-                <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+                <p className="text-sm font-semibold tracking-widest text-action uppercase mb-6 underline underline-offset-4">
                   {t('home.steps.kicker')}
                 </p>
-                <h2 className="text-lg font-semibold text-gray-900 sm:text-3xl md:text-4xl">
+                <h2 className="text-lg font-semibold text-content sm:text-3xl md:text-4xl">
                   {t('home.steps.title')}
                 </h2>
               </div>
@@ -669,19 +669,21 @@ function HomePage() {
                   <Fragment key={num}>
                     <div className="flex flex-1 flex-col items-center px-2 text-center sm:px-4">
                       <div
-                        className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-sky-500 bg-surface text-sm font-semibold text-sky-500 sm:mb-4 sm:h-14 sm:w-14 sm:text-xl"
+                        className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-action bg-surface text-sm font-semibold text-action sm:mb-4 sm:h-14 sm:w-14 sm:text-xl"
                         style={{ boxShadow: '0 2px 8px rgba(14,165,233,0.3)' }}
                       >
                         {num}
                       </div>
                       <h3
-                        className="font-semibold text-gray-900 flex items-center gap-1.5"
+                        className="font-semibold text-content flex items-center gap-1.5"
                         style={{ letterSpacing: '-0.01em' }}
                       >
-                        <span className="text-sky-500">{icon}</span>
+                        <span className="text-action">{icon}</span>
                         {title}
                       </h3>
-                      <p className="text-sm text-gray-500 leading-relaxed max-w-xs mt-2">{text}</p>
+                      <p className="text-sm text-content-muted leading-relaxed max-w-xs mt-2">
+                        {text}
+                      </p>
                     </div>
                     {i < STEPS.length - 1 && (
                       <div className="hidden flex-1 md:block">
@@ -703,7 +705,7 @@ function HomePage() {
             </div>
           </section>
 
-          <div className="mx-4 border-t border-gray-200 sm:mx-8 lg:mx-[168px]" />
+          <div className="mx-4 border-t border-border-light sm:mx-8 lg:mx-[168px]" />
 
           {/* Section 4 — Proposition de valeur */}
           <section
@@ -711,10 +713,10 @@ function HomePage() {
             className="flex w-full flex-col items-center justify-center gap-0 bg-surface px-4 py-0 max-sm:min-h-[100svh] scroll-mt-[40px] sm:scroll-mt-[130px] sm:px-8 sm:py-8 lg:px-16 xl:px-28"
           >
             <div className="text-center mb-10">
-              <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+              <p className="text-sm font-semibold tracking-widest text-action uppercase mb-6 underline underline-offset-4">
                 {t('home.values.kicker')}
               </p>
-              <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl">
+              <h2 className="text-2xl font-semibold text-content sm:text-3xl md:text-4xl">
                 {t('home.values.title')}
               </h2>
             </div>
@@ -723,11 +725,11 @@ function HomePage() {
               {VALUE_CARDS.map(({ icon, title, text }) => (
                 <div
                   key={title}
-                  className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-surface p-4 text-center shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] sm:gap-3 sm:p-8"
+                  className="flex flex-col items-center gap-2 rounded-2xl border border-border-light/50 bg-surface p-4 text-center shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(14,165,233,0.95)] sm:gap-3 sm:p-8"
                 >
                   <span>{icon}</span>
-                  <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">{text}</p>
+                  <h3 className="text-sm font-semibold text-content">{title}</h3>
+                  <p className="text-xs text-content-muted leading-relaxed">{text}</p>
                 </div>
               ))}
             </div>
@@ -739,13 +741,13 @@ function HomePage() {
 
           <div
             id="avis"
-            className="mx-4 border-t border-gray-200 scroll-mt-[60px] sm:mx-8 lg:mx-[168px]"
+            className="mx-4 border-t border-border-light scroll-mt-[60px] sm:mx-8 lg:mx-[168px]"
           />
 
           {/* Section 5 — Avis clients */}
           <ClientReviews className="py-8">
             <div className="flex flex-col items-center gap-4 mt-10">
-              <p className="px-4 text-center text-base font-semibold text-gray-700 sm:text-lg">
+              <p className="px-4 text-center text-base font-semibold text-content-muted sm:text-lg">
                 {t('home.reviews.tagline')}
               </p>
               <GhostButton className="font-semibold text-lg" onClick={() => goToCategory()}>

@@ -41,7 +41,7 @@ function getFAQ(t) {
 
 // Focus clavier visible sur fond sombre (liens et accordéons du formulaire/FAQ).
 const FOCUS_LIGHT =
-  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
+  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-action-soft focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
 
 // Cartes glassmorphism, comme les autres blocs de la page (formulaire, FAQ) —
 // mise en page (gap, tailles de texte) reprise du modèle Section 4 (proposition
@@ -50,7 +50,7 @@ const detailCardClass =
   'flex flex-col items-center gap-3 rounded-2xl border border-glass/20 bg-surface/5 p-4 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-6';
 
 const inputLight =
-  'w-full rounded-lg border border-glass/25 bg-surface/10 px-4 py-2.5 text-sm text-on-dark placeholder-on-dark/45 outline-none backdrop-blur-md transition focus:border-sky-300 focus:bg-surface/15 focus:ring-2 focus:ring-sky-300/20';
+  'w-full rounded-lg border border-glass/25 bg-surface/10 px-4 py-2.5 text-sm text-on-dark placeholder-on-dark/45 outline-none backdrop-blur-md transition focus:border-action-soft focus:bg-surface/15 focus:ring-2 focus:ring-action-soft/20';
 const labelLight = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 
 const PHOTO_BG_STYLE = {
@@ -206,7 +206,7 @@ function ContactPage() {
         >
           <div className="mb-10 text-center">
             <p
-              className="mb-6 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4"
+              className="mb-6 text-sm font-semibold uppercase tracking-widest text-action-bright underline underline-offset-4"
               style={slide(2)}
             >
               {t('contactPage.details.kicker')}
@@ -222,7 +222,7 @@ function ContactPage() {
 
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-8" style={slide(4)}>
             <li className={detailCardClass}>
-              <FaPhone aria-hidden="true" className="text-3xl text-sky-500" />
+              <FaPhone aria-hidden="true" className="text-3xl text-action" />
               <h3 className="text-sm font-semibold text-on-dark">
                 {t('contactPage.details.phone.title')}
               </h3>
@@ -231,13 +231,13 @@ function ContactPage() {
               </p>
               <a
                 href="tel:+33200667789"
-                className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                className={`font-medium text-action-soft hover:text-action-pale hover:underline ${FOCUS_LIGHT}`}
               >
                 +33 (0)2 00 66 77 89
               </a>
             </li>
             <li className={detailCardClass}>
-              <FaComments aria-hidden="true" className="text-3xl text-sky-500" />
+              <FaComments aria-hidden="true" className="text-3xl text-action" />
               <h3 className="text-sm font-semibold text-on-dark">
                 {t('contactPage.details.chat.title')}
               </h3>
@@ -249,7 +249,7 @@ function ContactPage() {
                   type="button"
                   onClick={openSupportChat}
                   disabled={chatBusy}
-                  className={`font-medium text-sky-300 hover:text-sky-200 hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
+                  className={`font-medium text-action-soft hover:text-action-pale hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
                 >
                   {chatBusy
                     ? t('contactPage.details.chat.opening')
@@ -262,14 +262,14 @@ function ContactPage() {
                     e.preventDefault();
                     pageExitNavigate('/login');
                   }}
-                  className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                  className={`font-medium text-action-soft hover:text-action-pale hover:underline ${FOCUS_LIGHT}`}
                 >
                   {t('contactPage.details.chat.login')}
                 </a>
               )}
             </li>
             <li className={detailCardClass}>
-              <FaEnvelope aria-hidden="true" className="text-3xl text-sky-500" />
+              <FaEnvelope aria-hidden="true" className="text-3xl text-action" />
               <h3 className="text-sm font-semibold text-on-dark">
                 {t('contactPage.details.email.title')}
               </h3>
@@ -278,7 +278,7 @@ function ContactPage() {
               </p>
               <a
                 href="mailto:contact@sailingloc.fr"
-                className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                className={`font-medium text-action-soft hover:text-action-pale hover:underline ${FOCUS_LIGHT}`}
               >
                 contact@sailingloc.fr
               </a>
@@ -299,7 +299,7 @@ function ContactPage() {
             style={slide(5)}
           >
             <div className="mb-6 text-center">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-action-bright underline underline-offset-4">
                 {t('contactPage.form.kicker')}
               </p>
               <h2
@@ -313,18 +313,18 @@ function ContactPage() {
             {formSent ? (
               <div
                 role="status"
-                className="status-indicator status-indicator--success mx-auto w-3/4 rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
+                className="status-indicator status-indicator--success mx-auto w-3/4 rounded-2xl border border-success/40 bg-success-surface/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
               >
-                <p className="text-lg font-semibold text-emerald-200">
+                <p className="text-lg font-semibold text-success-text">
                   {t('contactPage.form.sent.title')}
                 </p>
-                <p className="mt-2 text-sm text-emerald-100/80">
+                <p className="mt-2 text-sm text-success-text/80">
                   {t('contactPage.form.sent.text')}
                 </p>
                 <button
                   type="button"
                   onClick={() => setFormSent(false)}
-                  className={`mt-4 font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                  className={`mt-4 font-medium text-action-soft hover:text-action-pale hover:underline ${FOCUS_LIGHT}`}
                 >
                   {t('contactPage.form.sent.again')}
                 </button>
@@ -337,7 +337,7 @@ function ContactPage() {
                 {formError && (
                   <div
                     role="alert"
-                    className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-300/50 bg-red-400/15 px-4 py-2 text-sm text-red-100"
+                    className="status-indicator status-indicator--danger mb-4 rounded-lg border border-danger/50 bg-danger-surface/15 px-4 py-2 text-sm text-danger-text"
                   >
                     {formError}
                   </div>
@@ -428,7 +428,7 @@ function ContactPage() {
             style={slide(6, 'right')}
           >
             <div className="mb-6 text-center">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-sky-400 underline underline-offset-4">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-action-bright underline underline-offset-4">
                 {t('contactPage.faq.kicker')}
               </p>
               <h2
@@ -453,12 +453,12 @@ function ContactPage() {
                       onClick={() => toggleFaqItem(index)}
                       aria-expanded={open}
                       aria-controls={answerId}
-                      className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-semibold text-on-dark transition hover:text-sky-300 ${FOCUS_LIGHT}`}
+                      className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-semibold text-on-dark transition hover:text-action-soft ${FOCUS_LIGHT}`}
                     >
                       {item.q}
                       <span
                         aria-hidden="true"
-                        className={`shrink-0 text-sky-300 transition-transform duration-300 ${open ? 'rotate-45' : ''}`}
+                        className={`shrink-0 text-action-soft transition-transform duration-300 ${open ? 'rotate-45' : ''}`}
                       >
                         +
                       </span>
@@ -486,7 +486,7 @@ function ContactPage() {
                   type="button"
                   onClick={openSupportChat}
                   disabled={chatBusy}
-                  className={`font-medium text-sky-300 hover:text-sky-200 hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
+                  className={`font-medium text-action-soft hover:text-action-pale hover:underline disabled:opacity-60 ${FOCUS_LIGHT}`}
                 >
                   {t('contactPage.faq.contactDirect')}
                 </button>
@@ -497,7 +497,7 @@ function ContactPage() {
                     e.preventDefault();
                     pageExitNavigate('/login');
                   }}
-                  className={`font-medium text-sky-300 hover:text-sky-200 hover:underline ${FOCUS_LIGHT}`}
+                  className={`font-medium text-action-soft hover:text-action-pale hover:underline ${FOCUS_LIGHT}`}
                 >
                   {t('contactPage.faq.contactDirect')}
                 </a>

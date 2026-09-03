@@ -216,7 +216,7 @@ function SearchBar({
           />
 
           {destinationFocused && (localMatches.length > 0 || nearestSuggestion) && (
-            <div className="absolute left-0 top-full mt-2 w-64 rounded-xl bg-surface shadow-xl border border-gray-100 py-1.5 z-50 text-left max-sm:w-[min(16rem,calc(100vw-2rem))]">
+            <div className="absolute left-0 top-full mt-2 w-64 rounded-xl bg-surface shadow-xl border border-border-light py-1.5 z-50 text-left max-sm:w-[min(16rem,calc(100vw-2rem))]">
               {localMatches.length > 0
                 ? localMatches.slice(0, 6).map((p) => (
                     <button
@@ -224,7 +224,7 @@ function SearchBar({
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => selectDestination(p.city)}
-                      className="w-full text-left px-4 py-1.5 text-xs text-gray-700 hover:bg-sky-50 hover:text-sky-700 transition-colors"
+                      className="w-full text-left px-4 py-1.5 text-xs text-content-muted hover:bg-info-surface hover:text-info-text transition-colors"
                     >
                       {p.city}
                     </button>
@@ -234,11 +234,12 @@ function SearchBar({
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => selectDestination(nearestSuggestion.city)}
-                      className="w-full text-left px-4 py-2 text-xs text-gray-600 hover:bg-sky-50 transition-colors"
+                      className="w-full text-left px-4 py-2 text-xs text-content-muted hover:bg-info-surface transition-colors"
                     >
                       {t('searchBar.noPortMatch', { query: trimmedDestination })}{' '}
-                      <span className="font-semibold text-sky-700">{nearestSuggestion.city}</span> (
-                      {t('searchBar.distanceKm', { km: Math.round(nearestSuggestion.distanceKm) })})
+                      <span className="font-semibold text-info-text">{nearestSuggestion.city}</span>{' '}
+                      ({t('searchBar.distanceKm', { km: Math.round(nearestSuggestion.distanceKm) })}
+                      )
                     </button>
                   )}
             </div>
@@ -299,7 +300,7 @@ function SearchBar({
       <button
         type="submit"
         title={t('searchBar.search')}
-        className="flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-sky-700/50 px-5 py-1.5 text-xs font-semibold text-on-dark transition-colors hover:bg-sky-900 sm:min-h-0 sm:w-auto sm:rounded-full max-sm:min-h-0 max-sm:min-w-0 max-sm:flex-[2.5_1_0%] max-sm:rounded-full max-sm:px-1.5 max-sm:py-1.5"
+        className="flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-action-deep/50 px-5 py-1.5 text-xs font-semibold text-on-dark transition-colors hover:bg-brand-navy sm:min-h-0 sm:w-auto sm:rounded-full max-sm:min-h-0 max-sm:min-w-0 max-sm:flex-[2.5_1_0%] max-sm:rounded-full max-sm:px-1.5 max-sm:py-1.5"
       >
         <FiSearch size={14} />
         <span className="max-sm:hidden">{t('searchBar.search')}</span>

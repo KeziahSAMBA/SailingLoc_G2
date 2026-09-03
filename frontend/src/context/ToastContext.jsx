@@ -71,17 +71,17 @@ const ICONS = {
 };
 
 const COLORS = {
-  success: 'border-emerald-400 bg-emerald-50 text-emerald-900',
-  error: 'border-red-400 bg-red-50 text-red-900',
-  info: 'border-sky-400 bg-sky-50 text-sky-900',
-  warning: 'border-orange-400 bg-orange-50 text-orange-900',
+  success: 'border-success bg-success-surface text-success-text',
+  error: 'border-danger bg-danger-surface text-danger-text',
+  info: 'border-info bg-info-surface text-info-text',
+  warning: 'border-warning bg-warning-surface text-warning-text',
 };
 
 const ICON_COLORS = {
-  success: 'text-emerald-600',
-  error: 'text-red-600',
+  success: 'text-success',
+  error: 'text-danger',
   info: 'text-info',
-  warning: 'text-orange-600',
+  warning: 'text-warning',
 };
 
 const STATUS_INDICATOR_CLASSES = {

@@ -29,7 +29,7 @@ const REQUIRED_DOC_TYPES = ['permis_conduire', 'piece_identite', 'cv_nautique'];
 
 const GLASS = 'rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl';
 const FIELD =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-action-bright focus:ring-2 focus:ring-action-bright/30';
 const PRIMARY_BTN =
   'rounded-full bg-action px-8 py-2.5 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50';
 const GHOST_BTN =
@@ -91,7 +91,7 @@ function Stepper({ step }) {
             <span
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                 state === 'done'
-                  ? 'bg-emerald-500 text-on-dark'
+                  ? 'bg-success text-on-dark'
                   : state === 'current'
                     ? 'bg-action text-on-dark'
                     : 'bg-surface/20 text-on-dark/60'
@@ -119,7 +119,7 @@ function ErrorNote({ children }) {
   return (
     <p
       role="alert"
-      className="status-indicator status-indicator--danger rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-200"
+      className="status-indicator status-indicator--danger rounded-lg bg-danger-surface/20 px-4 py-2 text-sm text-danger-text"
     >
       {children}
     </p>
@@ -184,9 +184,9 @@ function StripeCardForm({ idBooking, total, onPaid, onBack }) {
       <h2 className="text-lg font-semibold text-on-dark">{t('reservation.payment.title')}</h2>
       <div className="flex justify-between rounded-lg bg-surface/10 px-4 py-3 text-sm">
         <span className="text-on-dark/70">{t('reservation.payment.amount')}</span>
-        <span className="text-lg font-bold text-sky-400">{total} €</span>
+        <span className="text-lg font-bold text-action-bright">{total} €</span>
       </div>
-      <p className="flex items-center gap-1.5 text-xs text-amber-300">
+      <p className="flex items-center gap-1.5 text-xs text-warning-text">
         <MdLockOutline aria-hidden />
         {t('reservation.payment.stripeTest')}
       </p>
@@ -383,20 +383,22 @@ function ReservationPage() {
             {t('reservation.title')}
           </h1>
           {boat && (
-            <p className="mb-6 text-center text-slate-200">
+            <p className="mb-6 text-center text-content-soft">
               {boat.name}
               {boat.port ? ` · ${boat.port.name}, ${boat.port.city}` : ''}
             </p>
           )}
 
-          {!boatsLoaded && <p className="text-center text-slate-200">{t('reservation.loading')}</p>}
+          {!boatsLoaded && (
+            <p className="text-center text-content-soft">{t('reservation.loading')}</p>
+          )}
 
           {invalid && (
             <div className={`${GLASS} p-6 text-center`}>
               <p className="text-on-dark">{t('reservation.invalid')}</p>
               <Link
                 to="/categorie"
-                className="mt-4 inline-block text-sm font-semibold text-sky-400 hover:text-sky-300"
+                className="mt-4 inline-block text-sm font-semibold text-action-bright hover:text-action-soft"
               >
                 {t('reservation.backToCatalog')}
               </Link>
@@ -434,7 +436,7 @@ function ReservationPage() {
                     </div>
                     <div className="flex justify-between gap-4 border-t border-glass/20 pt-2 text-base">
                       <dt className="font-semibold text-on-dark">{t('reservation.recap.total')}</dt>
-                      <dd className="text-xl font-bold text-sky-400">{total} €</dd>
+                      <dd className="text-xl font-bold text-action-bright">{total} €</dd>
                     </div>
                   </dl>
                   <ErrorNote>{error}</ErrorNote>
@@ -488,9 +490,9 @@ function ReservationPage() {
                   </h2>
                   <div className="flex justify-between rounded-lg bg-surface/10 px-4 py-3 text-sm">
                     <span className="text-on-dark/70">{t('reservation.payment.amount')}</span>
-                    <span className="text-lg font-bold text-sky-400">{total} €</span>
+                    <span className="text-lg font-bold text-action-bright">{total} €</span>
                   </div>
-                  <p className="flex items-center gap-1.5 text-xs text-amber-300">
+                  <p className="flex items-center gap-1.5 text-xs text-warning-text">
                     <MdLockOutline aria-hidden />
                     {t('reservation.payment.demo')}
                   </p>
@@ -558,11 +560,11 @@ function ReservationPage() {
               {/* ── Confirmation ── */}
               {step === 2 && (
                 <div className={`${GLASS} flex flex-col items-center gap-4 p-8 text-center`}>
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-success">
                     <MdCheck className="text-3xl text-on-dark" aria-hidden />
                   </span>
                   <h2 className="text-xl font-bold text-on-dark">{t('reservation.done.title')}</h2>
-                  <p className="text-sm leading-relaxed text-slate-200">
+                  <p className="text-sm leading-relaxed text-content-soft">
                     {t('reservation.done.text', { boat: boat.name })}
                   </p>
                   {payment?.transaction_ref && (

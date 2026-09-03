@@ -973,7 +973,7 @@ function ProductPage() {
                   aria-label={
                     mobileSearchExpanded ? t('cookieConsent.prefs.close') : t('searchBar.search')
                   }
-                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-sky-600 bg-sky-700 text-on-dark shadow-lg transition-colors hover:bg-sky-800 md:hidden"
+                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-action-deep bg-action-hover text-on-dark shadow-lg transition-colors hover:bg-brand-navy md:hidden"
                 >
                   {mobileSearchExpanded ? (
                     <MdClose className="text-lg" aria-hidden="true" />
@@ -1111,7 +1111,7 @@ function ProductPage() {
                         style={GLASS_STYLE}
                       >
                         <div className="text-center">
-                          <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-6 underline underline-offset-4">
+                          <p className="text-sm font-semibold tracking-widest text-action uppercase mb-6 underline underline-offset-4">
                             {t('product.specs.kicker')}
                           </p>
                           <h2 className="text-2xl font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
@@ -1138,7 +1138,7 @@ function ProductPage() {
                         </div>
                         {boat.equipment?.length > 0 && (
                           <div className="w-full flex flex-col items-center gap-4 pt-2 border-t border-glass/15">
-                            <p className="text-xs font-bold tracking-widest uppercase text-sky-500">
+                            <p className="text-xs font-bold tracking-widest uppercase text-action">
                               {t('product.specs.equipment')}
                             </p>
                             <div className="flex flex-wrap justify-center gap-2">
@@ -1194,7 +1194,7 @@ function ProductPage() {
                         {boat.name}
                       </h1>
                       <span className="text-on-dark/50">-</span>
-                      <span className="text-xs font-bold tracking-widest text-sky-500 uppercase">
+                      <span className="text-xs font-bold tracking-widest text-action uppercase">
                         {typeLabel}
                       </span>
                     </div>
@@ -1210,7 +1210,7 @@ function ProductPage() {
 
                   {/* Lieu */}
                   {boat.port && (
-                    <p className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-sky-500">
+                    <p className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-action">
                       <MdLocationOn style={{ fontSize: '13px' }} />
                       {portLabel}
                     </p>
@@ -1250,7 +1250,7 @@ function ProductPage() {
                             border: '1px solid rgba(255,255,255,0.3)',
                           }}
                         >
-                          <Icon className="text-sky-400" style={{ fontSize: '12px' }} />
+                          <Icon className="text-action-bright" style={{ fontSize: '12px' }} />
                           {label}
                         </span>
                       ))}
@@ -1265,7 +1265,7 @@ function ProductPage() {
                   <p className="flex items-center gap-1.5 text-xs font-semibold text-on-dark">
                     {boat.review_count > 0 ? (
                       <>
-                        <span className="text-amber-400">★</span> {boat.avg_rating}
+                        <span className="text-warning-bright">★</span> {boat.avg_rating}
                         <span className="text-on-dark/70">
                           {' '}
                           ({t('product.header.ratings', { count: boat.review_count })}) ·{' '}
@@ -1289,7 +1289,7 @@ function ProductPage() {
                     style={GLASS_STYLE}
                   >
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-sky-400">
+                      <p className="text-xs font-bold uppercase tracking-widest text-action-bright">
                         {t('locataireReservations.reviewModal.title')}
                       </p>
                       <p className="mt-1 text-xs text-on-dark/70">
@@ -1315,7 +1315,7 @@ function ProductPage() {
                               setReviewError('');
                             }}
                             className={`text-2xl leading-none transition hover:scale-110 ${
-                              value <= reviewRating ? 'text-amber-300' : 'text-on-dark/30'
+                              value <= reviewRating ? 'text-warning-pale' : 'text-on-dark/30'
                             }`}
                           >
                             ★
@@ -1339,14 +1339,14 @@ function ProductPage() {
                         setReviewError('');
                       }}
                       placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
-                      className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-sky-400"
+                      className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-action-bright"
                     />
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs text-on-dark/50">{reviewComment.length}/1000</span>
                       <button
                         type="submit"
                         disabled={reviewSaving}
-                        className="rounded-full bg-sky-400 px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-full bg-action-bright px-4 py-2 text-xs font-bold text-on-light transition hover:bg-action-soft disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {reviewSaving
                           ? t('locataireReservations.reviewModal.submitting')
@@ -1380,12 +1380,13 @@ function ProductPage() {
                       </span>
                     </div>
                     <span
-                      className="flex items-center gap-1.5 text-[10px] font-semibold"
-                      style={{ color: isAvailable ? '#16a34a' : '#f59e0b' }}
+                      className={`flex items-center gap-1.5 text-[10px] font-semibold ${
+                        isAvailable ? 'text-success' : 'text-warning'
+                      }`}
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full inline-block ${
-                          isAvailable ? 'bg-green-500 animate-pulse' : 'bg-amber-500'
+                          isAvailable ? 'bg-success animate-pulse' : 'bg-warning'
                         }`}
                       />
                       {isAvailable
@@ -1397,7 +1398,7 @@ function ProductPage() {
                     className="flex flex-col gap-3 px-4 py-3 border-t rounded-b-2xl"
                     style={{ ...GLASS_STYLE, borderColor: 'rgba(255,255,255,0.2)' }}
                   >
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-sky-500 text-center">
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-action text-center">
                       {t('product.booking.selectDates')}
                     </p>
                     <div
@@ -1435,7 +1436,7 @@ function ProductPage() {
                           <span className="text-sm font-semibold text-on-dark">
                             {t('product.booking.total')}
                           </span>
-                          <span className="text-xl font-bold text-sky-400">{total} €</span>
+                          <span className="text-xl font-bold text-action-bright">{total} €</span>
                         </div>
                       </div>
                     )}
@@ -1448,7 +1449,10 @@ function ProductPage() {
                       {t('product.booking.book')}
                     </button>
                     {bookingHint && (
-                      <p role="status" className="text-xs text-center font-semibold text-amber-300">
+                      <p
+                        role="status"
+                        className="text-xs text-center font-semibold text-warning-pale"
+                      >
                         {bookingHint}
                       </p>
                     )}
@@ -1456,7 +1460,7 @@ function ProductPage() {
                       {t('product.booking.noCharge')}
                     </p>
                     <p className="flex items-center justify-center gap-1.5 text-xs text-on-dark/80">
-                      <MdVerified className="text-sky-400" style={{ fontSize: '14px' }} />
+                      <MdVerified className="text-action-bright" style={{ fontSize: '14px' }} />
                       {t('product.booking.secure')}
                     </p>
                     <div className="border-t border-glass/20 pt-3 text-center">
@@ -1467,15 +1471,18 @@ function ProductPage() {
                         type="button"
                         onClick={handleContactOwner}
                         disabled={contactBusy}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-glass/40 bg-surface/10 px-5 py-2 text-sm font-semibold text-on-dark transition hover:border-sky-300 hover:bg-action/25 disabled:cursor-wait disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-glass/40 bg-surface/10 px-5 py-2 text-sm font-semibold text-on-dark transition hover:border-action-soft hover:bg-action/25 disabled:cursor-wait disabled:opacity-60"
                       >
-                        <MdChatBubbleOutline aria-hidden="true" className="text-lg text-sky-300" />
+                        <MdChatBubbleOutline
+                          aria-hidden="true"
+                          className="text-lg text-action-soft"
+                        />
                         {contactBusy
                           ? t('product.ownerContact.opening')
                           : t('product.ownerContact.cta')}
                       </button>
                       {contactHint && (
-                        <p role="status" className="mt-2 text-xs font-semibold text-amber-300">
+                        <p role="status" className="mt-2 text-xs font-semibold text-warning-pale">
                           {contactHint}
                         </p>
                       )}
@@ -1488,7 +1495,7 @@ function ProductPage() {
                   className="rounded-2xl border p-3 flex items-start gap-2"
                   style={{ ...GLASS_STYLE, ...slideInStyleLate('help', 4, 'right') }}
                 >
-                  <MdInfoOutline className="text-sky-400 flex-shrink-0 mt-0.5 text-lg" />
+                  <MdInfoOutline className="text-action-bright flex-shrink-0 mt-0.5 text-lg" />
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-semibold text-on-dark">
                       {t('product.booking.help.title')}
@@ -1498,7 +1505,7 @@ function ProductPage() {
                     </p>
                     <Link
                       to="/contact"
-                      className="text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors"
+                      className="text-xs font-semibold text-action-bright hover:text-action-soft transition-colors"
                     >
                       {t('product.booking.help.cta')}
                     </Link>

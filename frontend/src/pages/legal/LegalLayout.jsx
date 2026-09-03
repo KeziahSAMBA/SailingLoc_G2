@@ -25,7 +25,7 @@ function overlayFor(bg) {
 
 // Focus clavier visible sur fond sombre — même convention que ContactPage/AboutPage.
 const FOCUS_LIGHT =
-  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
+  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-action-soft focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
 
 // Les quatre documents légaux, navigables entre eux via des onglets.
 // Libellés réutilisés du footer.
@@ -129,7 +129,7 @@ function LegalLayout({ title, pageTitle, updated, children }) {
                     className={({ isActive }) =>
                       `inline-block whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition ${FOCUS_LIGHT} ${
                         isActive
-                          ? 'bg-[#0A3172] text-on-dark shadow'
+                          ? 'bg-brand-navy text-on-dark shadow'
                           : 'border border-glass/30 text-on-dark/75 hover:bg-surface/10 hover:text-on-dark'
                       }`
                     }
@@ -141,7 +141,7 @@ function LegalLayout({ title, pageTitle, updated, children }) {
             </ul>
           </nav>
 
-          <p className="mt-6 rounded-xl border border-amber-300/40 bg-amber-400/10 px-4 py-3 text-xs leading-relaxed text-amber-100">
+          <p className="mt-6 rounded-xl border border-warning/40 bg-warning-surface/10 px-4 py-3 text-xs leading-relaxed text-warning-text">
             {t('legalLayout.disclaimer')}
           </p>
           {children}

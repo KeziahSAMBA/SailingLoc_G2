@@ -40,9 +40,14 @@ function Stars({ rating }) {
     <div className="flex gap-0.5" aria-label={`${rating}/5`}>
       {Array.from({ length: 5 }, (_, i) =>
         i < Math.round(rating) ? (
-          <FaStar key={i} className="text-sky-400" style={{ fontSize: '13px' }} aria-hidden />
+          <FaStar key={i} className="text-action-bright" style={{ fontSize: '13px' }} aria-hidden />
         ) : (
-          <FaRegStar key={i} className="text-sky-400" style={{ fontSize: '13px' }} aria-hidden />
+          <FaRegStar
+            key={i}
+            className="text-action-bright"
+            style={{ fontSize: '13px' }}
+            aria-hidden
+          />
         )
       )}
     </div>
@@ -142,7 +147,7 @@ function ReviewForm({ idBooking, review, onDone, onCancel, style, className = ''
         className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
       />
       {error && (
-        <p role="alert" className="mt-1 text-xs text-red-400">
+        <p role="alert" className="mt-1 text-xs text-danger">
           {error}
         </p>
       )}
@@ -355,7 +360,7 @@ export default function BoatReviews({
                         {r.author}
                         {r.status === 'validated' && (
                           <MdVerified
-                            className="text-sky-400"
+                            className="text-action-bright"
                             title={t('boatReviews.verified')}
                             aria-label={t('boatReviews.verified')}
                           />
@@ -377,8 +382,8 @@ export default function BoatReviews({
                   )}
 
                   {r.owner_reply && (
-                    <div className="mt-3 rounded-lg border-l-2 border-sky-400/60 bg-surface/5 px-3 py-2">
-                      <p className="text-xs font-semibold text-sky-300">
+                    <div className="mt-3 rounded-lg border-l-2 border-info/60 bg-info-surface/10 px-3 py-2">
+                      <p className="text-xs font-semibold text-info-text">
                         {t('boatReviews.ownerReply')}
                       </p>
                       <p className="mt-0.5 break-words text-sm leading-relaxed text-on-dark/80">
@@ -391,7 +396,7 @@ export default function BoatReviews({
                     <button
                       type="button"
                       onClick={() => setEditingId(r.id_review)}
-                      className={`mt-3 text-xs font-semibold text-sky-300 transition hover:text-sky-200 hover:underline ${FOCUS_RING}`}
+                      className={`mt-3 text-xs font-semibold text-info-text transition hover:text-info hover:underline ${FOCUS_RING}`}
                     >
                       {t('boatReviews.edit')}
                     </button>

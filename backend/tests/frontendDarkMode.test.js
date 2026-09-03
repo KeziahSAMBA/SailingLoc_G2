@@ -119,6 +119,31 @@ describe('palette du mode nuit', () => {
   });
 });
 
+describe('pages publiques et composants partages', () => {
+  it('conserve les couleurs historiques claires dans les nouveaux tokens contextuels', () => {
+    const css = source('frontend/src/index.css');
+    const root = css.match(/:root\s*\{([\s\S]*?)\n\}/u)?.[1] ?? '';
+
+    expect(tokenValue(root, '--sl-field-border')).toBe('203 213 225');
+    expect(tokenValue(root, '--sl-field-placeholder')).toBe('148 163 184');
+    expect(tokenValue(root, '--sl-home-sea')).toBe('0 78 87');
+    expect(tokenValue(root, '--sl-home-tint')).toBe('235 245 253');
+  });
+
+  it('relie les surfaces publiques et les retours utilisateur aux palettes', () => {
+    const home = source('frontend/src/pages/HomePage.jsx');
+    const toast = source('frontend/src/context/ToastContext.jsx');
+    const cookie = source('frontend/src/components/common/CookieConsentBanner.jsx');
+
+    expect(home).toContain('var(--sl-home-sea)');
+    expect(home).toContain('var(--sl-home-tint)');
+    expect(toast).toContain('bg-success-surface text-success-text');
+    expect(toast).toContain('bg-danger-surface text-danger-text');
+    expect(cookie).toContain('border-field-border');
+    expect(cookie).toContain('text-content-muted');
+  });
+});
+
 describe('bascule lune et soleil', () => {
   it('conserve le bouton de thème et son état accessible', () => {
     const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');

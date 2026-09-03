@@ -95,10 +95,10 @@ const PortCarousel = memo(
     const arrowBtn =
       theme === 'dark'
         ? 'bg-surface/10 hover:bg-surface/25 text-on-dark'
-        : 'bg-overlay/10 hover:bg-gray-300 text-gray-700';
+        : 'bg-overlay/10 hover:bg-field-border text-content-muted';
     const captionTitle = theme === 'dark' ? 'text-on-dark' : 'text-on-light';
-    const captionMeta = theme === 'dark' ? 'text-on-dark/70' : 'text-gray-600';
-    const captionSubtle = theme === 'dark' ? 'text-on-dark/60' : 'text-gray-500';
+    const captionMeta = theme === 'dark' ? 'text-on-dark/70' : 'text-content-muted';
+    const captionSubtle = theme === 'dark' ? 'text-on-dark/60' : 'text-content-muted';
     const getImageAlt = (slide) =>
       slide.kind === 'port'
         ? t('carrousel.portImageAlt', { city: slide.label })
@@ -412,15 +412,15 @@ const CarouselSection = ({
   const titleColor =
     theme === 'dark'
       ? isResponsivePortHeader
-        ? 'text-gray-900 lg:text-on-dark'
+        ? 'text-content lg:text-on-dark'
         : 'text-on-dark'
       : 'text-on-light';
   const linkColor =
     theme === 'dark'
       ? isResponsivePortHeader
-        ? 'text-gray-600 hover:text-on-light lg:text-on-dark/70 lg:hover:text-on-dark'
+        ? 'text-content-muted hover:text-on-light lg:text-on-dark/70 lg:hover:text-on-dark'
         : 'text-on-dark/70 hover:text-on-dark'
-      : 'text-gray-600 hover:text-on-light';
+      : 'text-content-muted hover:text-on-light';
   return (
     <div className="relative w-full">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -916,7 +916,9 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
 
   const headerTitle = theme === 'light' ? 'text-on-light' : 'text-on-dark';
   const headerLink =
-    theme === 'light' ? 'text-gray-600 hover:text-on-light' : 'text-on-dark/70 hover:text-on-dark';
+    theme === 'light'
+      ? 'text-content-muted hover:text-on-light'
+      : 'text-on-dark/70 hover:text-on-dark';
 
   if (portsOnly) {
     const section = carouselSections[0];

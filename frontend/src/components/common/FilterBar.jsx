@@ -52,7 +52,7 @@ function FilterCheckbox({ label, checked, onChange }) {
         onChange={onChange}
         className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
       />
-      <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+      <span className="text-sm text-content-muted group-hover:text-content transition-colors">
         {label}
       </span>
     </label>
@@ -69,7 +69,7 @@ function FilterRadio({ name, label, checked, onChange }) {
         onChange={onChange}
         className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
       />
-      <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+      <span className="text-sm text-content-muted group-hover:text-content transition-colors">
         {label}
       </span>
     </label>
@@ -300,7 +300,7 @@ function FilterBar({
           <div className="grid grid-cols-2 gap-6 xl:flex xl:gap-0 xl:divide-x xl:divide-gray-100">
             {/* Type de bateau */}
             <div className="xl:pr-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
+              <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
                 {t('filterBar.boatType.title')}
               </p>
               <div className="space-y-1.5">
@@ -319,7 +319,7 @@ function FilterBar({
 
             {/* Permis */}
             <div className="xl:px-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
+              <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
                 {t('filterBar.license.title')}
               </p>
               <div className="space-y-1.5">
@@ -348,7 +348,7 @@ function FilterBar({
 
             {/* Prix par jour */}
             <div className="xl:px-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
+              <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
                 {t('filterBar.price.title')}
               </p>
               <div className="flex flex-wrap items-center gap-2">
@@ -358,23 +358,23 @@ function FilterBar({
                   placeholder={t('filterBar.price.min')}
                   value={priceRange.min}
                   onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
-                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1 text-sm outline-none focus:border-sky-400 sm:w-20 sm:flex-none"
+                  className="min-w-0 flex-1 rounded-lg border border-field-border bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
                 />
-                <span className="text-gray-400">–</span>
+                <span className="text-field-placeholder">–</span>
                 <input
                   type="number"
                   min="0"
                   placeholder={t('filterBar.price.max')}
                   value={priceRange.max}
                   onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
-                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1 text-sm outline-none focus:border-sky-400 sm:w-20 sm:flex-none"
+                  className="min-w-0 flex-1 rounded-lg border border-field-border bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
                 />
               </div>
             </div>
 
             {/* Trier par */}
             <div className="xl:pl-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
+              <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
                 {t('filterBar.sort.title')}
               </p>
               <div className="space-y-1.5">

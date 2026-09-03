@@ -17,7 +17,7 @@ function CgvPage() {
         <p>
           <Trans
             i18nKey="cgvPage.s1.p1"
-            components={{ cgu: <a href="/cgu" className="text-sky-300 hover:underline" /> }}
+            components={{ cgu: <a href="/cgu" className="text-action-soft hover:underline" /> }}
           />
         </p>
       </LegalSection>
@@ -72,7 +72,7 @@ function CgvPage() {
                   href="https://ec.europa.eu/consumers/odr"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sky-300 hover:underline"
+                  className="text-action-soft hover:underline"
                 />
               ),
             }}

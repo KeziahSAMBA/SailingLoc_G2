@@ -117,6 +117,10 @@
   --sl-content-soft: 203 213 225;
   --sl-content-subtle: 148 163 184;
   --sl-border-light: 226 232 240;
+  --sl-field-border: 203 213 225;
+  --sl-field-placeholder: 148 163 184;
+  --sl-home-sea: 0 78 87;
+  --sl-home-tint: 235 245 253;
   --sl-neutral: 100 116 139;
   --sl-success: 22 163 74;
   --sl-success-base: 16 185 129;
@@ -202,6 +206,10 @@ html[data-sailingloc-theme='dark'] {
   --sl-content-soft: 203 213 225;
   --sl-content-subtle: 148 163 184;
   --sl-border-light: 100 116 139;
+  --sl-field-border: 71 85 105;
+  --sl-field-placeholder: 148 163 184;
+  --sl-home-sea: 15 23 42;
+  --sl-home-tint: 30 41 59;
   --sl-neutral: 148 163 184;
 
   /* Les variantes utilisées en surface / texte gardent une couleur de
