@@ -30,7 +30,10 @@ import { getAboutNavigationItems } from './shared/aboutNavigation.js';
 import { getContactNavigationItems } from './shared/contactNavigation.js';
 import SafeImage from '../SafeImage.jsx';
 
-const roundIconHover = hoverBackground('rgba(255,255,255,0.25)', 'rgba(255,255,255,0.1)');
+const roundIconHover = hoverBackground(
+  'rgb(var(--sl-on-dark) / 0.25)',
+  'rgb(var(--sl-on-dark) / 0.1)'
+);
 
 /**
  * Header shared by every authenticated role (admin, propriétaire, locataire).
@@ -215,7 +218,7 @@ function DashboardHeader({
                 <div
                   className="flex flex-col py-2 lg:hidden"
                   style={{
-                    borderBottom: `1px solid ${scrolled ? 'rgba(10, 49, 114, 0.15)' : 'rgba(255, 255, 255, 0.2)'}`,
+                    borderBottom: `1px solid ${scrolled ? 'rgb(var(--sl-header-panel-scrolled-separator) / 0.15)' : 'rgb(var(--sl-glass) / 0.2)'}`,
                   }}
                 >
                   {centerNav.map((item) => (
@@ -255,8 +258,8 @@ function DashboardHeader({
                           margin: '6px 16px',
                           height: '1px',
                           backgroundColor: scrolled
-                            ? 'rgba(10, 49, 114, 0.15)'
-                            : 'rgba(255, 255, 255, 0.2)',
+                            ? 'rgb(var(--sl-header-panel-scrolled-separator) / 0.15)'
+                            : 'rgb(var(--sl-glass) / 0.2)',
                         }}
                       />
                     )}
@@ -329,8 +332,8 @@ function DashboardHeader({
             style={{
               width: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
               height: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
-              border: '1.5px solid rgba(255, 255, 255, 0.7)',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              border: '1.5px solid rgb(var(--sl-on-dark) / 0.7)',
+              backgroundColor: 'rgb(var(--sl-on-dark) / 0.1)',
               transition: 'width 0.3s ease, height 0.3s ease, background-color 0.2s ease',
             }}
             {...roundIconHover}
@@ -357,11 +360,12 @@ function DashboardHeader({
             {...roundIconHover}
             aria-label={t('dashboardHeader.messagesAria')}
           >
-            <FiMail size={scrolled ? 18 : 22} color="#fff" />
+            <FiMail size={scrolled ? 18 : 22} color="rgb(var(--sl-on-dark))" />
             {unread > 0 && (
               <span
                 aria-hidden="true"
-                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-slate-950"
+                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold"
+                style={{ color: 'rgb(var(--sl-header-badge-text))' }}
               >
                 {unread > 9 ? '9+' : unread}
               </span>

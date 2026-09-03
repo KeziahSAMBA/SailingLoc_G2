@@ -11,8 +11,12 @@
  *   large/flex-1 look at `lg` and up instead of staying small everywhere.
  */
 function PanelLink({ href = '#', onClick, danger, scrolled, stretch, large, borderTop, children }) {
-  const textColor = scrolled ? '#0A3172' : '#fff';
-  const hoverBg = scrolled ? 'rgba(10, 49, 114, 0.06)' : 'rgba(255, 255, 255, 0.1)';
+  const textColor = scrolled
+    ? 'rgb(var(--sl-header-panel-scrolled-text))'
+    : 'rgb(var(--sl-on-dark))';
+  const hoverBg = scrolled
+    ? 'rgb(var(--sl-header-panel-scrolled-hover) / 0.06)'
+    : 'rgb(var(--sl-glass) / 0.1)';
   const smallOnMobileOnly = large === false;
   const isLarge = large ?? stretch;
   const textSize = smallOnMobileOnly ? 'text-sm lg:text-base' : isLarge ? 'text-base' : 'text-sm';
@@ -34,14 +38,16 @@ function PanelLink({ href = '#', onClick, danger, scrolled, stretch, large, bord
       onClick={handleClick}
       className={`${layout} ${textSize} font-medium transition-colors`}
       style={{
-        color: danger ? '#e05252' : textColor,
+        color: danger ? 'rgb(var(--sl-header-panel-danger))' : textColor,
         borderTop: borderTop
-          ? `1px solid ${scrolled ? 'rgba(10,49,114,0.15)' : 'rgba(255,255,255,0.2)'}`
+          ? `1px solid ${scrolled ? 'rgb(var(--sl-header-panel-scrolled-separator) / 0.15)' : 'rgb(var(--sl-glass) / 0.2)'}`
           : 'none',
         marginTop: borderTop ? '6px' : 0,
       }}
       onMouseEnter={(e) =>
-        (e.currentTarget.style.backgroundColor = danger ? 'rgba(224, 82, 82, 0.08)' : hoverBg)
+        (e.currentTarget.style.backgroundColor = danger
+          ? 'rgb(var(--sl-header-panel-danger) / 0.08)'
+          : hoverBg)
       }
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
     >

@@ -85,22 +85,7 @@ const RAW_EXCEPTION_COUNTS = {
     'rgba(255,255,255,0.15)': 1,
   },
   'src/components/common/GhostButton.jsx': { 'rgba(10,49,114,0.3)': 1, 'rgba(0,0,0,0.5)': 1 },
-  'src/components/common/Header/DashboardHeader.jsx': {
-    'rgba(255,255,255,0.25)': 1,
-    'rgba(255,255,255,0.1)': 2,
-    'rgba(10,49,114,0.15)': 2,
-    'rgba(255,255,255,0.2)': 2,
-    'rgba(255,255,255,0.7)': 1,
-    '#fff': 1,
-  },
-  'src/components/common/Header/Header.jsx': {
-    'rgba(255,255,255,0.6)': 1,
-    '#fff': 4,
-    'rgba(255,255,255,0.5)': 2,
-    'rgba(255,255,255,0.15)': 1,
-    'rgba(10,49,114,0.15)': 1,
-    'rgba(255,255,255,0.2)': 1,
-  },
+
   'src/components/common/Header/shared/FlagIcons.jsx': {
     '#0055a4': 1,
     '#ffffff': 1,
@@ -109,33 +94,11 @@ const RAW_EXCEPTION_COUNTS = {
     '#fff': 2,
     '#cf142b': 2,
   },
-  'src/components/common/Header/shared/HeaderShell.jsx': {
-    'rgba(10,49,114,0.95)': 1,
-    'rgba(255,255,255,0.05)': 1,
-    'rgba(90,180,236,0.2)': 1,
-    'rgba(10,49,114,0.08)': 1,
-  },
-  'src/components/common/Header/shared/hoverUnderline.js': { '#fff': 3 },
-  'src/components/common/Header/shared/PanelLink.jsx': {
-    '#0a3172': 1,
-    '#fff': 1,
-    'rgba(10,49,114,0.06)': 1,
-    'rgba(255,255,255,0.1)': 1,
-    '#e05252': 1,
-    'rgba(10,49,114,0.15)': 1,
-    'rgba(255,255,255,0.2)': 1,
-    'rgba(224,82,82,0.08)': 1,
-  },
+
   'src/components/common/Header/shared/SettingsMenu.jsx': {
     'rgba(255,255,255,0.5)': 1,
   },
-  'src/components/common/Header/shared/SidePanel.jsx': {
-    'rgba(255,255,255,0.95)': 1,
-    'rgba(0,0,0,0.45)': 1,
-    'rgba(0,0,0,0.25)': 1,
-    'rgba(255,255,255,0.15)': 1,
-    'rgba(0,0,0,0.2)': 2,
-  },
+
   'src/components/common/InvoiceButton.jsx': { '#abd4ff': 1 },
   'src/components/common/MapView.jsx': {
     'rgba(2,44,74,0.25)': 1,
@@ -273,7 +236,6 @@ const TAILWIND_EXCEPTION_COUNTS = {
     'divide-gray-100': 1,
   },
   'src/components/common/Footer.jsx': { 'text-pink-400': 1, 'text-yellow-400/70': 1 },
-  'src/components/common/Header/DashboardHeader.jsx': { 'text-slate-950': 1 },
   'src/components/common/Header/shared/HeaderDropdown.jsx': {
     'ring-slate-200': 1,
     'border-slate-100': 1,
@@ -410,6 +372,45 @@ test('les tokens privés conservent les teintes historiques du thème clair', ()
     '--sl-chart-violet: 167 139 250',
   ]) {
     assert.ok(css.includes(declaration), `token privé absent ou altéré: ${declaration}`);
+  }
+});
+
+test('la navigation du header référence les tokens contextuels de contraste', () => {
+  const requiredTokens = {
+    'src/components/common/Header/Header.jsx': [
+      '--sl-on-dark',
+      '--sl-header-panel-scrolled-separator',
+      '--sl-glass',
+    ],
+    'src/components/common/Header/DashboardHeader.jsx': [
+      '--sl-on-dark',
+      '--sl-header-panel-scrolled-separator',
+      '--sl-header-badge-text',
+    ],
+    'src/components/common/Header/shared/BurgerIcon.jsx': ['bg-on-dark'],
+    'src/components/common/Header/shared/HeaderShell.jsx': [
+      '--sl-brand-navy',
+      '--sl-glass',
+      '--sl-brand',
+    ],
+    'src/components/common/Header/shared/PanelLink.jsx': [
+      '--sl-header-panel-scrolled-text',
+      '--sl-header-panel-scrolled-hover',
+      '--sl-header-panel-danger',
+    ],
+    'src/components/common/Header/shared/SidePanel.jsx': [
+      '--sl-surface',
+      '--sl-overlay',
+      '--sl-glass',
+    ],
+    'src/components/common/Header/shared/hoverUnderline.js': ['--sl-on-dark'],
+  };
+
+  for (const [relative, tokens] of Object.entries(requiredTokens)) {
+    const source = readFileSync(path.join(root, relative), 'utf8');
+    for (const token of tokens) {
+      assert.ok(source.includes(token), `${relative}: token de header absent: ${token}`);
+    }
   }
 });
 

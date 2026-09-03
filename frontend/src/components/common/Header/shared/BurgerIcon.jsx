@@ -2,15 +2,15 @@ function BurgerIcon({ open }) {
   return (
     <>
       <span
-        className="block w-5 h-[1.5px] bg-surface rounded transition-all duration-300"
+        className="block w-5 h-[1.5px] bg-on-dark rounded transition-all duration-300"
         style={{ transform: open ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
       />
       <span
-        className="block w-5 h-[1.5px] bg-surface rounded transition-all duration-300"
+        className="block w-5 h-[1.5px] bg-on-dark rounded transition-all duration-300"
         style={{ opacity: open ? 0 : 1 }}
       />
       <span
-        className="block w-5 h-[1.5px] bg-surface rounded transition-all duration-300"
+        className="block w-5 h-[1.5px] bg-on-dark rounded transition-all duration-300"
         style={{ transform: open ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }}
       />
     </>
