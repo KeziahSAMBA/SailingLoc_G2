@@ -151,7 +151,7 @@ function Stepper({ step }) {
                 state === 'done'
                   ? 'bg-success text-on-dark'
                   : state === 'current'
-                    ? 'bg-action text-action-text'
+                    ? 'bg-action text-action-text non-color-active'
                     : 'bg-surface/20 text-on-dark/60'
               }`}
             >

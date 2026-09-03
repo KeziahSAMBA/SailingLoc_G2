@@ -83,6 +83,9 @@ function AdminDashboard() {
     value: b.count,
     color: STATUS_COLOR[b.status] || 'rgb(var(--sl-neutral))',
   }));
+  const pieDescription = pieData.length
+    ? pieData.map((entry) => `${entry.name}: ${NUMBER.format(entry.value)}`).join(', ')
+    : t('adminDashboard.noData');
   const revenueData = (stats?.revenueByMonth ?? []).map((r) => ({
     month: fmtMonth(r.month),
     revenue: r.revenue,
@@ -104,7 +107,10 @@ function AdminDashboard() {
       </p>
 
       {error && (
-        <div className="mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft">
+        <div
+          role="alert"
+          className="mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+        >
           {error}
         </div>
       )}
@@ -135,39 +141,49 @@ function AdminDashboard() {
       {!loading && !error && (
         <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-2">
           <ChartCard title={t('adminDashboard.bookingsByStatus')}>
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="42%"
-                  outerRadius="68%"
-                  paddingAngle={2}
-                >
-                  {pieData.map((entry) => (
-                    <Cell
-                      key={entry.name}
-                      fill={entry.color}
-                      stroke="rgb(var(--sl-dark-surface))"
-                    />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend
-                  align="center"
-                  verticalAlign="bottom"
-                  iconSize={10}
-                  wrapperStyle={{
-                    fontSize: '0.75rem',
-                    lineHeight: '1.25rem',
-                    color: 'rgb(var(--sl-content-soft))',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div
+              className="h-full w-full"
+              role="img"
+              aria-label={t('adminDashboard.bookingsByStatus')}
+              aria-describedby="admin-bookings-status-chart-description"
+            >
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="42%"
+                    outerRadius="68%"
+                    paddingAngle={2}
+                  >
+                    {pieData.map((entry) => (
+                      <Cell
+                        key={entry.name}
+                        fill={entry.color}
+                        stroke="rgb(var(--sl-dark-surface))"
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend
+                    align="center"
+                    verticalAlign="bottom"
+                    iconSize={10}
+                    wrapperStyle={{
+                      fontSize: '0.75rem',
+                      lineHeight: '1.25rem',
+                      color: 'rgb(var(--sl-content-soft))',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <p id="admin-bookings-status-chart-description" className="sr-only">
+              {pieDescription}
+            </p>
           </ChartCard>
 
           <ChartCard title={t('adminDashboard.revenueByMonth')}>

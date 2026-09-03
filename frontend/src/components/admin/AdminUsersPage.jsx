@@ -336,7 +336,7 @@ function AdminUsersPage() {
               onClick={() => toggleSort(field)}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
                 sort === field
-                  ? 'bg-action text-action-text'
+                  ? 'bg-action text-action-text non-color-active'
                   : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
               }`}
             >

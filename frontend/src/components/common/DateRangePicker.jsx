@@ -173,7 +173,8 @@ function DateRangePicker({
               type="button"
               disabled={!canGoPrev}
               onClick={() => setMonth((m) => addMonths(m, -1))}
-              className="w-6 h-6 flex items-center justify-center rounded-full text-calendar-muted hover:bg-calendar-hover disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label={t('searchBar.previousMonth')}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-calendar-muted hover:bg-calendar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-30"
             >
               ‹
             </button>
@@ -183,7 +184,8 @@ function DateRangePicker({
             <button
               type="button"
               onClick={() => setMonth((m) => addMonths(m, 1))}
-              className="w-6 h-6 flex items-center justify-center rounded-full text-calendar-muted hover:bg-calendar-hover"
+              aria-label={t('searchBar.nextMonth')}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-calendar-muted hover:bg-calendar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               ›
             </button>

@@ -58,7 +58,7 @@ export function invalidatePublicReviews() {}
 
 const StarRating = memo(function StarRating({ rating, light = false }) {
   return (
-    <div className="flex gap-0.5">
+    <div className="flex gap-0.5" role="img" aria-label={`${rating}/5`}>
       {Array.from({ length: 5 }, (_, i) =>
         i < Math.round(rating) ? (
           <FaStar
@@ -333,10 +333,12 @@ export default function ClientReviews({
               {roleFilters.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
                   onClick={() => handleRoleFilter(opt.value)}
-                  className={`px-3 py-1 rounded-full text-sm font-semibold border transition-all duration-200 ${
+                  aria-pressed={roleFilter === opt.value}
+                  className={`rounded-full border px-3 py-1 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                     roleFilter === opt.value
-                      ? 'bg-action text-action-text border-action shadow-sm'
+                      ? 'bg-action text-action-text border-action shadow-sm non-color-active'
                       : light
                         ? 'bg-surface/5 text-on-dark border-glass/30 hover:border-action-bright hover:text-action-soft'
                         : 'bg-surface text-content-muted border-border-light hover:border-action-bright hover:text-brand-text'
@@ -391,9 +393,11 @@ export default function ClientReviews({
           {/* Navigation */}
           <div className="flex items-center gap-4">
             <button
+              type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={currentPage === 0}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
+              aria-label={t('reviewFilters.prevPage')}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-30 ${
                 light
                   ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-action-bright hover:text-action-soft'
                   : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
@@ -409,9 +413,11 @@ export default function ClientReviews({
             </span>
 
             <button
+              type="button"
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={currentPage === totalPages - 1}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
+              aria-label={t('reviewFilters.nextPage')}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-30 ${
                 light
                   ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-action-bright hover:text-action-soft'
                   : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'

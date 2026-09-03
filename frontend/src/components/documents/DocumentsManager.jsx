@@ -286,7 +286,11 @@ function DocumentRow({
 
       <p className="mt-2 text-xs text-on-dark/70">{t('documentsManager.acceptedFormats')}</p>
 
-      {error && <p className="mt-2 text-xs text-danger-soft">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-danger-soft">
+          {error}
+        </p>
+      )}
     </article>
   );
 }

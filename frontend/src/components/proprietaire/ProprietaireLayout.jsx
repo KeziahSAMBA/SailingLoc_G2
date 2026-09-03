@@ -139,7 +139,7 @@ function ProprietaireLayout() {
                     className={({ isActive }) =>
                       `block w-full rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
                         isActive
-                          ? 'bg-action text-action-text'
+                          ? 'bg-action text-action-text non-color-active'
                           : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
                       }`
                     }

@@ -249,13 +249,13 @@ function AdminBookingsPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-action text-action-text'
+        ? 'bg-action text-action-text non-color-active'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       active
-        ? 'bg-action text-action-text'
+        ? 'bg-action text-action-text non-color-active'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const badge = (cls) =>
@@ -269,10 +269,20 @@ function AdminBookingsPage() {
       <p className="mt-1 text-sm text-on-dark/70">{t('adminBookings.subtitle')}</p>
 
       <div className="mt-5 flex gap-2">
-        <button type="button" onClick={() => setTab('bookings')} className={tabBtn('bookings')}>
+        <button
+          type="button"
+          aria-pressed={tab === 'bookings'}
+          onClick={() => setTab('bookings')}
+          className={tabBtn('bookings')}
+        >
           {t('adminBookings.tabBookings')}
         </button>
-        <button type="button" onClick={() => setTab('disputes')} className={tabBtn('disputes')}>
+        <button
+          type="button"
+          aria-pressed={tab === 'disputes'}
+          onClick={() => setTab('disputes')}
+          className={tabBtn('disputes')}
+        >
           {t('adminBookings.tabDisputes')}
         </button>
       </div>

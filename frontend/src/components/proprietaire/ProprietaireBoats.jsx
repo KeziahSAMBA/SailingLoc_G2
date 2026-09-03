@@ -331,7 +331,7 @@ function ProprietaireBoats() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-action text-action-text'
+                  ? 'bg-action text-action-text non-color-active'
                   : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
               }`}
             >
@@ -393,7 +393,7 @@ function ProprietaireBoats() {
                     aria-label={t('pagination.page', { n })}
                     className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                       n === safePage
-                        ? 'bg-action text-action-text'
+                        ? 'bg-action text-action-text non-color-active'
                         : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
                     }`}
                   >

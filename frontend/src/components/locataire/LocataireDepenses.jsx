@@ -230,7 +230,7 @@ function LocataireDepenses() {
                   aria-pressed={active}
                   className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                     active
-                      ? 'bg-action text-action-text'
+                      ? 'bg-action text-action-text non-color-active'
                       : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
                   }`}
                 >
@@ -258,7 +258,7 @@ function LocataireDepenses() {
                   aria-pressed={active}
                   className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                     active
-                      ? 'border-brand bg-brand/15 text-brand-soft'
+                      ? 'border-brand bg-brand/15 text-brand-soft non-color-active'
                       : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
                   }`}
                 >

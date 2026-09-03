@@ -48,6 +48,12 @@
     border-color: currentColor;
   }
 
+  /* Un contour interne complète la couleur pour signaler un état actif. Il
+     n'ajoute aucune dimension et reste lisible avec une palette forcée. */
+  .non-color-active {
+    box-shadow: inset 0 0 0 2px currentColor;
+  }
+
   /* États du calendrier : la forme reste lisible sans distinguer les teintes. */
   .calendar-day {
     border-color: transparent;
@@ -69,7 +75,7 @@
 
   .calendar-day.calendar-day--range {
     border-color: currentColor;
-    border-style: solid;
+    border-style: dotted;
     border-width: 1px;
   }
 

@@ -371,7 +371,7 @@ function Messenger({
                     }}
                     aria-current={active || undefined}
                     className={`block w-full px-4 py-3 text-left transition ${FOCUS_RING} ${
-                      active ? 'bg-brand/20' : 'hover:bg-surface/10'
+                      active ? 'bg-brand/20 non-color-active' : 'hover:bg-surface/10'
                     }`}
                   >
                     <span className="flex items-baseline justify-between gap-2">

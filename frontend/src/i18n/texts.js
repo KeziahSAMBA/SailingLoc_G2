@@ -508,6 +508,8 @@ export const TEXTS = {
     collapseTitle: { fr: 'Replier la recherche', en: 'Collapse search' },
     resetTitle: { fr: 'Réinitialiser la recherche', en: 'Reset search' },
     resetDatesTitle: { fr: 'Effacer les dates', en: 'Clear dates' },
+    previousMonth: { fr: 'Mois précédent', en: 'Previous month' },
+    nextMonth: { fr: 'Mois suivant', en: 'Next month' },
     noPortMatch: {
       fr: 'Aucun port à « {{query}} ». Le plus proche :',
       en: 'No port matching "{{query}}". Nearest:',
@@ -862,6 +864,8 @@ export const TEXTS = {
   },
 
   carrousel: {
+    goToSlide: { fr: 'Aller à la diapositive', en: 'Go to slide' },
+    slideNavigation: { fr: 'Navigation du carrousel', en: 'Carousel navigation' },
     boatImageAlt: { fr: 'Photo du bateau {{name}}', en: 'Photo of {{name}}' },
     portImageAlt: { fr: 'Port de {{city}}', en: '{{city}} marina' },
     soon: { fr: 'Bientôt disponible', en: 'Coming soon' },
@@ -1033,6 +1037,7 @@ export const TEXTS = {
     revenue: { fr: 'Revenus', en: 'Revenue' },
     commission: { fr: 'Commissions', en: 'Commissions' },
     bookingsByStatus: { fr: 'Réservations par statut', en: 'Bookings by status' },
+    noData: { fr: 'Aucune donnée disponible.', en: 'No data available.' },
     revenueByMonth: { fr: 'Revenus par mois', en: 'Revenue by month' },
     bookingsByMonth: { fr: 'Réservations par mois', en: 'Bookings by month' },
     commissionByMonth: { fr: 'Commissions par mois', en: 'Commissions by month' },

@@ -25,6 +25,12 @@ function isPlainLeftClick(e) {
   return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 }
 
+function activateSlideWithKeyboard(event, slide, onSlideClick) {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  onSlideClick?.(slide);
+}
+
 // ─── Transformateurs DB → slide ───────────────────────────────────────────────
 
 const portToSlide = (port) => ({
@@ -151,8 +157,9 @@ const PortCarousel = memo(
       <div ref={carouselRef} className="relative p-2 sm:p-4">
         {index > 0 && (
           <button
+            type="button"
             onClick={prev}
-            className={`absolute left-0 z-20 rounded-full p-2.5 shadow-lg transition-colors ${arrowBtn}`}
+            className={`absolute left-0 z-20 rounded-full p-2.5 shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${arrowBtn}`}
             style={{ transform: 'translate(-50%, 0)', top: '40%' }}
             aria-label={t('carrousel.prev')}
           >
@@ -178,9 +185,13 @@ const PortCarousel = memo(
             {slides.map((slide) => (
               <div
                 key={slide.id}
-                className="flex flex-col cursor-pointer group px-1.5"
+                className="group flex cursor-pointer flex-col px-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 style={{ width: `${slideWidthPct}%` }}
                 onClick={() => onSlideClick?.(slide)}
+                onKeyDown={(event) => activateSlideWithKeyboard(event, slide, onSlideClick)}
+                role={onSlideClick ? 'link' : undefined}
+                tabIndex={onSlideClick ? 0 : undefined}
+                aria-label={onSlideClick ? slide.label : undefined}
               >
                 {variant === 'overlay' ? (
                   <>
@@ -378,8 +389,9 @@ const PortCarousel = memo(
 
         {index < maxIndex && (
           <button
+            type="button"
             onClick={next}
-            className={`absolute right-0 z-20 rounded-full p-2.5 shadow-lg transition-colors ${arrowBtn}`}
+            className={`absolute right-0 z-20 rounded-full p-2.5 shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${arrowBtn}`}
             style={{ transform: 'translate(50%, 0)', top: '40%' }}
             aria-label={t('carrousel.next')}
           >
@@ -485,9 +497,13 @@ const SlideItem = memo(function SlideItem({
 
   return (
     <motion.div
-      className="relative shrink-0 rounded-[8px] overflow-hidden border border-glass/20 cursor-pointer"
+      className="relative shrink-0 cursor-pointer overflow-hidden rounded-[8px] border border-glass/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       style={{ width: itemWidth, height: 220, rotateY, willChange: 'transform' }}
       onClick={() => onSlideClick?.(slide)}
+      onKeyDown={(event) => activateSlideWithKeyboard(event, slide, onSlideClick)}
+      role={onSlideClick ? 'link' : undefined}
+      tabIndex={onSlideClick ? 0 : undefined}
+      aria-label={onSlideClick ? slide.label : undefined}
     >
       <div className="block w-full h-full">
         <SafeImage
@@ -672,8 +688,9 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
         onTouchEnd={handleTouchEnd}
       >
         <button
+          type="button"
           onClick={goPrev}
-          className="absolute left-0 z-20 bg-overlay/20 hover:bg-overlay/40 rounded-full p-2.5 shadow-lg transition-colors"
+          className="absolute left-0 z-20 rounded-full bg-overlay/20 p-2.5 shadow-lg transition-colors hover:bg-overlay/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
           aria-label={t('carrousel.prev')}
         >
@@ -712,8 +729,9 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
           </motion.div>
         )}
         <button
+          type="button"
           onClick={goNext}
-          className="absolute right-0 z-20 bg-overlay/20 hover:bg-overlay/40 rounded-full p-2.5 shadow-lg transition-colors"
+          className="absolute right-0 z-20 rounded-full bg-overlay/20 p-2.5 shadow-lg transition-colors hover:bg-overlay/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           style={{ top: '50%', transform: 'translateY(-50%)' }}
           aria-label={t('carrousel.next')}
         >
@@ -721,15 +739,18 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
         </button>
       </div>
 
-      <div className="flex gap-2 mt-3">
+      <div className="mt-3 flex gap-2" role="group" aria-label={t('carrousel.slideNavigation')}>
         {slides.map((_, i) => (
-          <motion.div
+          <motion.button
             key={i}
-            className="h-2 w-2 rounded-full cursor-pointer"
+            type="button"
+            className="h-2 w-2 cursor-pointer rounded-full border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             style={{ background: activeIndex === i ? '#333' : 'rgba(51,51,51,0.4)' }}
             animate={{ scale: activeIndex === i ? 1.2 : 1 }}
             transition={{ duration: 0.15 }}
             onClick={() => setPosition(i + 1)}
+            aria-label={`${t('carrousel.goToSlide')} ${i + 1}`}
+            aria-current={activeIndex === i ? 'true' : undefined}
           />
         ))}
       </div>

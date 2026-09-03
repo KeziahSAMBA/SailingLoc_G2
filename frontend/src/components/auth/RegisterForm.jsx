@@ -338,7 +338,7 @@ function RegisterForm({ onSwitchToLogin }) {
                   key={value}
                   className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
                     checked
-                      ? 'border-brand bg-brand/15 text-brand-soft'
+                      ? 'border-brand bg-brand/15 text-brand-soft non-color-active'
                       : 'border-glass/30 bg-surface/5 text-on-dark/80 hover:bg-surface/10'
                   }`}
                 >

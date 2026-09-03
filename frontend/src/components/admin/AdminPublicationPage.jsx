@@ -159,13 +159,13 @@ function AdminPublicationPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-action text-action-text'
+        ? 'bg-action text-action-text non-color-active'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       active
-        ? 'bg-action text-action-text'
+        ? 'bg-action text-action-text non-color-active'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
 
@@ -175,10 +175,20 @@ function AdminPublicationPage() {
       <p className="mt-1 text-sm text-on-dark/70">{t('adminPublication.subtitle')}</p>
 
       <div className="mt-5 flex gap-2">
-        <button type="button" onClick={() => setTab('boats')} className={tabBtn('boats')}>
+        <button
+          type="button"
+          aria-pressed={tab === 'boats'}
+          onClick={() => setTab('boats')}
+          className={tabBtn('boats')}
+        >
           {t('adminPublication.tabBoats')}
         </button>
-        <button type="button" onClick={() => setTab('reports')} className={tabBtn('reports')}>
+        <button
+          type="button"
+          aria-pressed={tab === 'reports'}
+          onClick={() => setTab('reports')}
+          className={tabBtn('reports')}
+        >
           {t('adminPublication.tabReports')}
         </button>
       </div>

@@ -211,7 +211,7 @@ function AdminCommentsPage() {
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       active
-        ? 'bg-action text-action-text'
+        ? 'bg-action text-action-text non-color-active'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
 

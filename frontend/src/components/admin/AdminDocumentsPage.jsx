@@ -138,7 +138,7 @@ function AdminDocumentsPage() {
             onClick={() => setStatus(value)}
             className={`shrink-0 snap-start rounded-full px-4 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
               status === value
-                ? 'bg-action text-action-text'
+                ? 'bg-action text-action-text non-color-active'
                 : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
             }`}
           >

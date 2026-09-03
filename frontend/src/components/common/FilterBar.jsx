@@ -31,11 +31,12 @@ function FilterChip({ label, onRemove }) {
     >
       {label}
       <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
         }}
-        className="flex flex-shrink-0 items-center hover:opacity-70 transition-opacity"
+        className="flex flex-shrink-0 items-center transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-on-dark"
       >
         <FaXmark size={9} />
       </button>
@@ -98,6 +99,13 @@ function FilterBar({
   const containerRef = useRef(null);
   const boatTypeLabels = getBoatTypeLabels(t);
   const sortLabels = getSortLabels(t);
+
+  function handleHeaderKeyDown(event) {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    setFilterOpen((value) => !value);
+  }
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -281,6 +289,11 @@ function FilterBar({
             'width 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease',
         }}
         onClick={() => setFilterOpen((v) => !v)}
+        onKeyDown={handleHeaderKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-expanded={filterOpen}
+        aria-controls="category-filter-panel"
       >
         {headerContent}
       </div>
@@ -288,6 +301,7 @@ function FilterBar({
       {/* Expanded filter panel */}
       {filterOpen && (
         <div
+          id="category-filter-panel"
           className="fixed inset-x-4 z-30 max-h-[70vh] overflow-y-auto rounded-xl p-4 sm:inset-x-8 sm:p-6 lg:absolute lg:inset-x-auto lg:left-16 lg:right-16 lg:!top-full lg:mt-2 lg:max-h-none lg:w-auto lg:overflow-visible xl:left-28 xl:right-28"
           style={{
             top: compact

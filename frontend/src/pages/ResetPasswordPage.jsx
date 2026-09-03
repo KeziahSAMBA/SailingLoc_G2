@@ -212,9 +212,13 @@ function ResetPasswordPage() {
                       required
                       variant="glass"
                       ariaInvalid={Boolean(errors.confirmPassword)}
+                      ariaDescribedBy={errors.confirmPassword ? 'reset-confirm-error' : undefined}
                     />
                     {errors.confirmPassword && (
-                      <span className="mt-1 block text-xs text-danger-soft">
+                      <span
+                        id="reset-confirm-error"
+                        className="mt-1 block text-xs text-danger-soft"
+                      >
                         {errors.confirmPassword}
                       </span>
                     )}

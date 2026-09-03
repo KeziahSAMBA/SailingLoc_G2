@@ -399,9 +399,14 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                 onChange={handleChange}
                 autoComplete="given-name"
                 aria-invalid={Boolean(errors.first_name)}
+                aria-describedby={errors.first_name ? 'account-first-name-error' : undefined}
                 className={inputClass}
               />
-              {errors.first_name && <span className={errorClass}>{errors.first_name}</span>}
+              {errors.first_name && (
+                <span id="account-first-name-error" className={errorClass}>
+                  {errors.first_name}
+                </span>
+              )}
             </div>
 
             <div>
@@ -416,9 +421,14 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                 onChange={handleChange}
                 autoComplete="family-name"
                 aria-invalid={Boolean(errors.last_name)}
+                aria-describedby={errors.last_name ? 'account-last-name-error' : undefined}
                 className={inputClass}
               />
-              {errors.last_name && <span className={errorClass}>{errors.last_name}</span>}
+              {errors.last_name && (
+                <span id="account-last-name-error" className={errorClass}>
+                  {errors.last_name}
+                </span>
+              )}
             </div>
           </div>
 
@@ -455,9 +465,14 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
               autoComplete="tel"
               placeholder={t('accountForm.personalInfo.phonePlaceholder')}
               aria-invalid={Boolean(errors.phone)}
+              aria-describedby={errors.phone ? 'account-phone-error' : undefined}
               className={inputClass}
             />
-            {errors.phone && <span className={errorClass}>{errors.phone}</span>}
+            {errors.phone && (
+              <span id="account-phone-error" className={errorClass}>
+                {errors.phone}
+              </span>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -522,9 +537,14 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
               onChange={handlePwdChange}
               autoComplete="current-password"
               ariaInvalid={Boolean(pwdErrors.currentPassword)}
+              ariaDescribedBy={
+                pwdErrors.currentPassword ? 'account-current-password-error' : undefined
+              }
             />
             {pwdErrors.currentPassword && (
-              <span className={errorClass}>{pwdErrors.currentPassword}</span>
+              <span id="account-current-password-error" className={errorClass}>
+                {pwdErrors.currentPassword}
+              </span>
             )}
           </div>
 
@@ -540,12 +560,16 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
               onChange={handlePwdChange}
               autoComplete="new-password"
               ariaInvalid={Boolean(pwdErrors.newPassword)}
-              ariaDescribedBy="newPassword-hint"
+              ariaDescribedBy={`newPassword-hint${pwdErrors.newPassword ? ' account-new-password-error' : ''}`}
             />
             <small id="newPassword-hint" className="mt-1 block text-xs text-on-dark/60">
               {t('accountForm.password.hint')}
             </small>
-            {pwdErrors.newPassword && <span className={errorClass}>{pwdErrors.newPassword}</span>}
+            {pwdErrors.newPassword && (
+              <span id="account-new-password-error" className={errorClass}>
+                {pwdErrors.newPassword}
+              </span>
+            )}
           </div>
 
           <div>
@@ -560,9 +584,14 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
               onChange={handlePwdChange}
               autoComplete="new-password"
               ariaInvalid={Boolean(pwdErrors.confirmPassword)}
+              ariaDescribedBy={
+                pwdErrors.confirmPassword ? 'account-confirm-password-error' : undefined
+              }
             />
             {pwdErrors.confirmPassword && (
-              <span className={errorClass}>{pwdErrors.confirmPassword}</span>
+              <span id="account-confirm-password-error" className={errorClass}>
+                {pwdErrors.confirmPassword}
+              </span>
             )}
           </div>
 

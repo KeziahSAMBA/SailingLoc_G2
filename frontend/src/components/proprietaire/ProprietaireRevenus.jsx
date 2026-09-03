@@ -674,7 +674,7 @@ function ProprietaireRevenus() {
                       aria-pressed={active}
                       className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         active
-                          ? 'bg-action text-action-text'
+                          ? 'bg-action text-action-text non-color-active'
                           : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
                       }`}
                     >
@@ -701,7 +701,7 @@ function ProprietaireRevenus() {
                       aria-pressed={active}
                       className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         active
-                          ? 'border-brand bg-brand/15 text-brand-soft'
+                          ? 'border-brand bg-brand/15 text-brand-soft non-color-active'
                           : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
                       }`}
                     >
@@ -927,7 +927,7 @@ function ProprietaireRevenus() {
                       aria-label={t('pagination.page', { n })}
                       className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         n === safePage
-                          ? 'bg-action text-action-text'
+                          ? 'bg-action text-action-text non-color-active'
                           : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
                       }`}
                     >
