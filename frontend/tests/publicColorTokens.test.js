@@ -60,23 +60,6 @@ const RAW_EXCEPTION_COUNTS = {
     'rgba(0,0,0,0.4)': 2,
   },
   'src/components/common/CookieConsentBanner.jsx': { 'rgba(0,0,0,0.15)': 1 },
-  'src/components/common/FilAriane.jsx': {
-    '#0a527a': 2,
-    'rgba(255,255,255,0.1)': 1,
-    'rgba(255,255,255,0.3)': 1,
-    '#0a3172': 2,
-    'rgba(14,165,233,0.95)': 2,
-  },
-  'src/components/common/FilterBar.jsx': {
-    'rgba(14,165,233,0.95)': 1,
-    '#0a527a': 5,
-    'rgba(255,255,255,0.1)': 1,
-    'rgba(0,0,0,0.05)': 1,
-    'rgba(255,255,255,0.3)': 1,
-    'rgba(0,0,0,0.1)': 1,
-    'rgba(255,255,255,0.98)': 1,
-    'rgba(0,0,0,0.25)': 1,
-  },
   'src/components/common/Footer.jsx': {
     '#fff': 2,
     'rgba(255,255,255,0.5)': 2,
@@ -93,10 +76,6 @@ const RAW_EXCEPTION_COUNTS = {
     '#00247d': 1,
     '#fff': 2,
     '#cf142b': 2,
-  },
-
-  'src/components/common/Header/shared/SettingsMenu.jsx': {
-    'rgba(255,255,255,0.5)': 1,
   },
 
   'src/components/common/InvoiceButton.jsx': { '#abd4ff': 1 },
@@ -130,30 +109,17 @@ const RAW_EXCEPTION_COUNTS = {
   },
   'src/pages/CategoryPage.jsx': {
     'rgba(0,0,0,0.5)': 2,
-    'rgb(255255255)': 1,
-    'rgb(000/45%)': 2,
-    'rgb(255255255/78%)': 1,
     'rgba(14,165,233,0.35)': 2,
-    'rgba(14,165,233,0.15)': 4,
+    'rgba(14,165,233,0.15)': 1,
     'rgba(255,255,255,0.5)': 1,
-    'rgba(14,165,233,0.8)': 1,
-    'rgba(14,165,233,0.5)': 1,
-    'rgba(255,255,255,0.1)': 3,
-    'rgba(255,255,255,0.3)': 4,
-    '#ffffff': 3,
-    'rgba(14,165,233,0.55)': 1,
-    'rgba(10,49,114,0.95)': 1,
     'rgba(0,0,0,0.28)': 1,
     'rgba(0,0,0,0.4)': 1,
-    'rgba(255,255,255,0.2)': 1,
   },
   'src/pages/ContactPage.jsx': {
     'rgba(0,0,0,0.18)': 4,
     'rgba(3,24,30,0.62)': 1,
     'rgba(3,35,39,0.72)': 1,
-    'rgba(14,165,233,0.55)': 1,
     'rgba(14,165,233,0.35)': 1,
-    'rgba(10,49,114,0.95)': 1,
   },
   'src/pages/HomePage.jsx': {
     'rgb(0,78,87)': 1,
@@ -179,12 +145,8 @@ const RAW_EXCEPTION_COUNTS = {
     'rgba(255,255,255,0.2)': 3,
     'rgba(0,0,0,0.5)': 2,
     'rgba(0,0,0,0.4)': 3,
-    'rgba(14,165,233,0.15)': 2,
-    '#ffffff': 1,
-    'rgba(255,255,255,0.3)': 3,
-    'rgba(14,165,233,0.55)': 1,
+    'rgba(255,255,255,0.3)': 1,
     'rgba(14,165,233,0.35)': 1,
-    'rgba(10,49,114,0.95)': 1,
   },
   'src/pages/ReservationPage.jsx': {
     '#ffffff': 1,
@@ -224,47 +186,20 @@ const TAILWIND_EXCEPTION_COUNTS = {
     'border-black/10': 1,
   },
   'src/components/common/FavoriteButton.jsx': { 'text-red-500': 1 },
-  'src/components/common/FilAriane.jsx': {
-    'text-[#0a527a]': 2,
-    'text-sky-700': 2,
-    'text-gray-900': 1,
-  },
-  'src/components/common/FilterBar.jsx': {
-    'accent-sky-500': 2,
-    'text-[#0a527a]': 5,
-    'text-sky-800': 1,
-    'divide-gray-100': 1,
-  },
   'src/components/common/Footer.jsx': { 'text-pink-400': 1, 'text-yellow-400/70': 1 },
-  'src/components/common/Header/shared/HeaderDropdown.jsx': {
-    'ring-slate-200': 1,
-    'border-slate-100': 1,
-    'text-red-600': 1,
-    'bg-red-50': 1,
-    'text-slate-700': 1,
-  },
   'src/components/common/InvoiceButton.jsx': {
     'bg-slate-900/90': 1,
     'text-slate-950': 1,
     'bg-[#abd4ff]': 1,
   },
-  'src/components/common/ReviewFilterBar.jsx': { 'border-sky-400': 1, 'text-gray-900': 2 },
-  'src/components/common/ReviewPagination.jsx': { 'border-sky-400': 1, 'text-sky-300': 1 },
+  'src/components/common/ReviewFilterBar.jsx': {},
+  'src/components/common/ReviewPagination.jsx': {},
   'src/pages/CategoryPage.jsx': {
-    'border-sky-400': 1,
-    'ring-sky-400/60': 1,
     'bg-slate-800': 2,
-    'bg-[rgba(14,165,233,0.55)]': 1,
-    'bg-[rgba(10,49,114,0.95)]': 1,
   },
-  'src/pages/ContactPage.jsx': { 'bg-[rgba(14,165,233,0.55)]': 1, 'bg-[rgba(10,49,114,0.95)]': 1 },
+  'src/pages/ContactPage.jsx': {},
   'src/pages/HomePage.jsx': { 'to-[rgb(0,78,87)]': 1 },
-  'src/pages/ProductPage.jsx': {
-    'bg-slate-800': 1,
-    'text-red-300': 1,
-    'bg-[rgba(14,165,233,0.55)]': 1,
-    'bg-[rgba(10,49,114,0.95)]': 1,
-  },
+  'src/pages/ProductPage.jsx': {},
   'src/pages/ReservationPage.jsx': { 'bg-slate-800': 1, 'text-sky-300': 1, 'text-sky-200': 1 },
 };
 
@@ -377,19 +312,14 @@ test('les tokens privés conservent les teintes historiques du thème clair', ()
 
 test('la navigation du header référence les tokens contextuels de contraste', () => {
   const requiredTokens = {
-    'src/components/common/Header/Header.jsx': [
-      '--sl-on-dark',
-      '--sl-header-panel-scrolled-separator',
-      '--sl-glass',
-    ],
+    'src/components/common/Header/Header.jsx': ['--sl-header-text', '--sl-header-icon'],
     'src/components/common/Header/DashboardHeader.jsx': [
-      '--sl-on-dark',
-      '--sl-header-panel-scrolled-separator',
+      '--sl-header-icon',
       '--sl-header-badge-text',
     ],
-    'src/components/common/Header/shared/BurgerIcon.jsx': ['bg-on-dark'],
+    'src/components/common/Header/shared/BurgerIcon.jsx': ['bg-header-icon'],
     'src/components/common/Header/shared/HeaderShell.jsx': [
-      '--sl-brand-navy',
+      '--sl-header-bar-bg',
       '--sl-glass',
       '--sl-brand',
     ],
@@ -403,7 +333,7 @@ test('la navigation du header référence les tokens contextuels de contraste', 
       '--sl-overlay',
       '--sl-glass',
     ],
-    'src/components/common/Header/shared/hoverUnderline.js': ['--sl-on-dark'],
+    'src/components/common/Header/shared/hoverUnderline.js': ['--sl-header-text'],
   };
 
   for (const [relative, tokens] of Object.entries(requiredTokens)) {

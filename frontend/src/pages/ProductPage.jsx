@@ -1065,7 +1065,7 @@ function ProductPage() {
                             loading={rowIndex === 0 ? undefined : 'lazy'}
                             decoding="async"
                             className="rounded-2xl object-cover"
-                            fallbackClassName="flex items-center justify-center rounded-2xl bg-slate-800 text-4xl"
+                            fallbackClassName="flex items-center justify-center rounded-2xl bg-photo-surface text-4xl"
                             style={{
                               height: `${row.height}px`,
                               width: `${row.height * item.ratio}px`,
@@ -1111,7 +1111,7 @@ function ProductPage() {
                         style={GLASS_STYLE}
                       >
                         <div className="text-center">
-                          <p className="text-sm font-semibold tracking-widest text-action uppercase mb-6 underline underline-offset-4">
+                          <p className="text-sm font-semibold tracking-widest text-photo-action uppercase mb-6 underline underline-offset-4">
                             {t('product.specs.kicker')}
                           </p>
                           <h2 className="text-2xl font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
@@ -1138,7 +1138,7 @@ function ProductPage() {
                         </div>
                         {boat.equipment?.length > 0 && (
                           <div className="w-full flex flex-col items-center gap-4 pt-2 border-t border-glass/15">
-                            <p className="text-xs font-bold tracking-widest uppercase text-action">
+                            <p className="text-xs font-bold tracking-widest uppercase text-photo-action">
                               {t('product.specs.equipment')}
                             </p>
                             <div className="flex flex-wrap justify-center gap-2">
@@ -1147,9 +1147,9 @@ function ProductPage() {
                                   key={eq.id_equipment}
                                   className="text-xs font-medium px-3 py-1 rounded-full backdrop-blur-md"
                                   style={{
-                                    backgroundColor: 'rgba(14,165,233,0.15)',
-                                    color: '#ffffff',
-                                    border: '1px solid rgba(255,255,255,0.3)',
+                                    backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.15)',
+                                    color: 'rgb(var(--sl-photo-text))',
+                                    border: '1px solid rgb(var(--sl-glass) / 0.3)',
                                   }}
                                 >
                                   {eq.name}
@@ -1194,7 +1194,7 @@ function ProductPage() {
                         {boat.name}
                       </h1>
                       <span className="text-on-dark/50">-</span>
-                      <span className="text-xs font-bold tracking-widest text-action uppercase">
+                      <span className="text-xs font-bold tracking-widest text-photo-action uppercase">
                         {typeLabel}
                       </span>
                     </div>
@@ -1210,7 +1210,7 @@ function ProductPage() {
 
                   {/* Lieu */}
                   {boat.port && (
-                    <p className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-action">
+                    <p className="flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase text-photo-action">
                       <MdLocationOn style={{ fontSize: '13px' }} />
                       {portLabel}
                     </p>
@@ -1246,11 +1246,11 @@ function ProductPage() {
                           key={label}
                           className="flex items-center gap-1 text-[11px] font-medium text-on-dark px-1.5 py-0.5 rounded-full backdrop-blur-md"
                           style={{
-                            backgroundColor: 'rgba(14,165,233,0.15)',
-                            border: '1px solid rgba(255,255,255,0.3)',
+                            backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.15)',
+                            border: '1px solid rgb(var(--sl-glass) / 0.3)',
                           }}
                         >
-                          <Icon className="text-action-bright" style={{ fontSize: '12px' }} />
+                          <Icon className="text-photo-icon" style={{ fontSize: '12px' }} />
                           {label}
                         </span>
                       ))}
@@ -1289,7 +1289,7 @@ function ProductPage() {
                     style={GLASS_STYLE}
                   >
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-action-bright">
+                      <p className="text-xs font-bold uppercase tracking-widest text-photo-action">
                         {t('locataireReservations.reviewModal.title')}
                       </p>
                       <p className="mt-1 text-xs text-on-dark/70">
@@ -1356,7 +1356,7 @@ function ProductPage() {
                       </button>
                     </div>
                     {reviewError && (
-                      <p role="alert" className="text-xs font-medium text-red-300">
+                      <p role="alert" className="text-xs font-medium text-danger-pale">
                         {reviewError}
                       </p>
                     )}
@@ -1400,7 +1400,7 @@ function ProductPage() {
                     className="flex flex-col gap-3 px-4 py-3 border-t rounded-b-2xl"
                     style={{ ...GLASS_STYLE, borderColor: 'rgba(255,255,255,0.2)' }}
                   >
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-action text-center">
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-photo-action text-center">
                       {t('product.booking.selectDates')}
                     </p>
                     <div
@@ -1438,7 +1438,7 @@ function ProductPage() {
                           <span className="text-sm font-semibold text-on-dark">
                             {t('product.booking.total')}
                           </span>
-                          <span className="text-xl font-bold text-action-bright">{total} €</span>
+                          <span className="text-xl font-bold text-photo-action">{total} €</span>
                         </div>
                       </div>
                     )}
@@ -1446,7 +1446,7 @@ function ProductPage() {
                     <button
                       type="button"
                       onClick={handleBook}
-                      className="self-center text-on-dark text-sm font-semibold px-6 py-2 rounded-full transition-all backdrop-blur-md border border-glass/40 bg-[rgba(14,165,233,0.55)] shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-[rgba(10,49,114,0.95)] hover:border-glass/20"
+                      className="self-center text-photo-text text-sm font-semibold px-6 py-2 rounded-full transition-all backdrop-blur-md border border-glass/40 bg-photo-action-fill/55 shadow-[0_4px_16px_rgba(14,165,233,0.35)] hover:bg-header-bar-bg/95 hover:border-glass/20"
                     >
                       {t('product.booking.book')}
                     </button>
@@ -1462,7 +1462,7 @@ function ProductPage() {
                       {t('product.booking.noCharge')}
                     </p>
                     <p className="flex items-center justify-center gap-1.5 text-xs text-on-dark/80">
-                      <MdVerified className="text-action-bright" style={{ fontSize: '14px' }} />
+                      <MdVerified className="text-photo-icon" style={{ fontSize: '14px' }} />
                       {t('product.booking.secure')}
                     </p>
                     <div className="border-t border-glass/20 pt-3 text-center">
@@ -1473,11 +1473,11 @@ function ProductPage() {
                         type="button"
                         onClick={handleContactOwner}
                         disabled={contactBusy}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border border-glass/40 bg-surface/10 px-5 py-2 text-sm font-semibold text-on-dark transition hover:border-action-soft hover:bg-action/25 disabled:cursor-wait disabled:opacity-60"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-glass/40 bg-surface/10 px-5 py-2 text-sm font-semibold text-photo-text transition hover:border-photo-action-hover hover:bg-photo-action/25 disabled:cursor-wait disabled:opacity-60"
                       >
                         <MdChatBubbleOutline
                           aria-hidden="true"
-                          className="text-lg text-action-soft"
+                          className="text-lg text-photo-action-hover"
                         />
                         {contactBusy
                           ? t('product.ownerContact.opening')
@@ -1497,7 +1497,7 @@ function ProductPage() {
                   className="rounded-2xl border p-3 flex items-start gap-2"
                   style={{ ...GLASS_STYLE, ...slideInStyleLate('help', 4, 'right') }}
                 >
-                  <MdInfoOutline className="text-action-bright flex-shrink-0 mt-0.5 text-lg" />
+                  <MdInfoOutline className="text-photo-icon flex-shrink-0 mt-0.5 text-lg" />
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-semibold text-on-dark">
                       {t('product.booking.help.title')}
@@ -1507,7 +1507,7 @@ function ProductPage() {
                     </p>
                     <Link
                       to="/contact"
-                      className="text-xs font-semibold text-action-bright hover:text-action-soft transition-colors"
+                      className="text-xs font-semibold text-photo-action hover:text-photo-action-hover transition-colors"
                     >
                       {t('product.booking.help.cta')}
                     </Link>

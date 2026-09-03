@@ -31,8 +31,8 @@ import { getContactNavigationItems } from './shared/contactNavigation.js';
 import SafeImage from '../SafeImage.jsx';
 
 const roundIconHover = hoverBackground(
-  'rgb(var(--sl-on-dark) / 0.25)',
-  'rgb(var(--sl-on-dark) / 0.1)'
+  'rgb(var(--sl-header-icon) / 0.25)',
+  'rgb(var(--sl-header-icon) / 0.1)'
 );
 
 /**
@@ -332,8 +332,8 @@ function DashboardHeader({
             style={{
               width: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
               height: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
-              border: '1.5px solid rgb(var(--sl-on-dark) / 0.7)',
-              backgroundColor: 'rgb(var(--sl-on-dark) / 0.1)',
+              border: '1.5px solid rgb(var(--sl-header-icon) / 0.7)',
+              backgroundColor: 'rgb(var(--sl-header-icon) / 0.1)',
               transition: 'width 0.3s ease, height 0.3s ease, background-color 0.2s ease',
             }}
             {...roundIconHover}
@@ -360,7 +360,7 @@ function DashboardHeader({
             {...roundIconHover}
             aria-label={t('dashboardHeader.messagesAria')}
           >
-            <FiMail size={scrolled ? 18 : 22} color="rgb(var(--sl-on-dark))" />
+            <FiMail size={scrolled ? 18 : 22} color="rgb(var(--sl-header-icon))" />
             {unread > 0 && (
               <span
                 aria-hidden="true"

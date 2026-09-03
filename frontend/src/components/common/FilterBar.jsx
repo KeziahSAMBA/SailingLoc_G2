@@ -26,8 +26,8 @@ function getSortLabels(t) {
 function FilterChip({ label, onRemove }) {
   return (
     <span
-      className="flex flex-shrink-0 items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold text-on-dark"
-      style={{ backgroundColor: 'rgba(14,165,233,0.95)' }}
+      className="flex flex-shrink-0 items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold text-photo-text"
+      style={{ backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.95)' }}
     >
       {label}
       <button
@@ -51,7 +51,7 @@ function FilterCheckbox({ label, checked, onChange }) {
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
+        className="w-3.5 h-3.5 accent-action cursor-pointer"
       />
       <span className="text-sm text-content-muted group-hover:text-content transition-colors">
         {label}
@@ -68,7 +68,7 @@ function FilterRadio({ name, label, checked, onChange }) {
         name={name}
         checked={checked}
         onChange={onChange}
-        className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
+        className="w-3.5 h-3.5 accent-action cursor-pointer"
       />
       <span className="text-sm text-content-muted group-hover:text-content transition-colors">
         {label}
@@ -195,11 +195,13 @@ function FilterBar({
     <>
       <div className="flex flex-shrink-0 items-center gap-2">
         <FaSliders
-          className={compact ? 'text-[#0A527A]' : light ? 'text-on-dark/80' : 'text-on-light/70'}
+          className={
+            compact ? 'text-photo-compact-link' : light ? 'text-photo-text' : 'text-on-light/70'
+          }
           size={13}
         />
         <span
-          className={`hidden whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:inline ${compact ? 'text-[#0A527A]' : light ? 'text-on-dark' : 'text-on-light'}`}
+          className={`hidden whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:inline ${compact ? 'text-photo-compact-link' : light ? 'text-photo-text' : 'text-on-light'}`}
         >
           {t('filterBar.label')}
         </span>
@@ -214,7 +216,7 @@ function FilterBar({
             ))}
             {activeChips.length > 2 && (
               <span
-                className={`whitespace-nowrap text-[10px] font-semibold ${light ? 'text-on-dark/70' : 'text-on-light/50'}`}
+                className={`whitespace-nowrap text-[10px] font-semibold ${light ? 'text-photo-text' : 'text-on-light/50'}`}
               >
                 ...
               </span>
@@ -229,19 +231,23 @@ function FilterBar({
             e.stopPropagation();
             onReset();
           }}
-          className={`relative z-10 whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-[#0A527A] hover:text-sky-800' : light ? 'text-on-dark/70 hover:text-on-dark' : 'text-on-light/60 hover:text-on-light'}`}
+          className={`relative z-10 whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-photo-compact-link hover:text-photo-action-hover' : light ? 'text-photo-action-hover hover:text-photo-text' : 'text-on-light/60 hover:text-on-light'}`}
         >
           {t('filterBar.reset')}
         </button>
         {filterOpen ? (
           <FaChevronUp
             size={9}
-            className={compact ? 'text-[#0A527A]' : light ? 'text-on-dark/70' : 'text-on-light/50'}
+            className={
+              compact ? 'text-photo-compact-link' : light ? 'text-photo-text' : 'text-on-light/50'
+            }
           />
         ) : (
           <FaChevronDown
             size={9}
-            className={compact ? 'text-[#0A527A]' : light ? 'text-on-dark/70' : 'text-on-light/50'}
+            className={
+              compact ? 'text-photo-compact-link' : light ? 'text-photo-text' : 'text-on-light/50'
+            }
           />
         )}
       </div>
@@ -264,19 +270,19 @@ function FilterBar({
 
       {/* Header — always visible */}
       <div
-        className={`relative flex select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-surface/10' : 'hover:bg-overlay/10'}`}
+        className={`relative flex select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-photo-text/10' : 'hover:bg-overlay/10'}`}
         style={{
           width: headerWidth != null ? `${headerWidth}px` : undefined,
           backgroundColor: compact
             ? 'transparent'
             : light
-              ? 'rgba(255,255,255,0.1)'
-              : 'rgba(0,0,0,0.05)',
+              ? 'rgb(var(--sl-glass) / 0.1)'
+              : 'rgb(var(--sl-overlay) / 0.05)',
           borderColor: compact
             ? 'transparent'
             : light
-              ? 'rgba(255,255,255,0.3)'
-              : 'rgba(0,0,0,0.1)',
+              ? 'rgb(var(--sl-glass) / 0.3)'
+              : 'rgb(var(--sl-overlay) / 0.1)',
           backdropFilter: compact ? 'none' : 'blur(40px)',
           WebkitBackdropFilter: compact ? 'none' : 'blur(40px)',
           transition:
@@ -285,7 +291,7 @@ function FilterBar({
       >
         <button
           type="button"
-          className="absolute inset-0 z-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="absolute inset-0 z-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action"
           onClick={() => setFilterOpen((value) => !value)}
           aria-label={t('filterBar.label')}
           aria-expanded={filterOpen}
@@ -303,11 +309,11 @@ function FilterBar({
           top: compact
             ? 'calc(var(--category-header-height) + 0.5rem)'
             : 'calc(var(--category-header-height) + 1.25rem)',
-          backgroundColor: 'rgba(255,255,255,0.98)',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+          backgroundColor: 'rgb(var(--sl-surface) / 0.98)',
+          boxShadow: '0 12px 40px rgb(var(--sl-overlay) / 0.25)',
         }}
       >
-        <div className="grid grid-cols-2 gap-6 xl:flex xl:gap-0 xl:divide-x xl:divide-gray-100">
+        <div className="grid grid-cols-2 gap-6 xl:flex xl:gap-0 xl:divide-x xl:divide-border-light">
           {/* Type de bateau */}
           <div className="xl:pr-10">
             <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
@@ -368,7 +374,7 @@ function FilterBar({
                 placeholder={t('filterBar.price.min')}
                 value={priceRange.min}
                 onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
-                className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
+                className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-focus-ring sm:w-20 sm:flex-none"
               />
               <span className="text-field-placeholder">–</span>
               <input
@@ -377,7 +383,7 @@ function FilterBar({
                 placeholder={t('filterBar.price.max')}
                 value={priceRange.max}
                 onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
-                className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
+                className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-focus-ring sm:w-20 sm:flex-none"
               />
             </div>
           </div>

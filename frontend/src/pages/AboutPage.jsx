@@ -26,7 +26,7 @@ function overlayFor(bg) {
 
 // Focus clavier visible sur fond clair — même convention que ContactPage.
 const FOCUS_LIGHT =
-  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-action-soft focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
+  'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
 
 // Cartes glassmorphism, comme les sections de la page d'accueil.
 const cardClass =
@@ -74,17 +74,17 @@ function AboutPage() {
 
   const VALUES = [
     {
-      icon: <MdVerified aria-hidden="true" className="text-3xl text-action" />,
+      icon: <MdVerified aria-hidden="true" className="text-3xl text-photo-icon" />,
       title: t('aboutPage.values.trust.title'),
       text: t('aboutPage.values.trust.text'),
     },
     {
-      icon: <MdAnchor aria-hidden="true" className="text-3xl text-action" />,
+      icon: <MdAnchor aria-hidden="true" className="text-3xl text-photo-icon" />,
       title: t('aboutPage.values.passion.title'),
       text: t('aboutPage.values.passion.text'),
     },
     {
-      icon: <FaHandshake aria-hidden="true" className="text-3xl text-action" />,
+      icon: <FaHandshake aria-hidden="true" className="text-3xl text-photo-icon" />,
       title: t('aboutPage.values.simplicity.title'),
       text: t('aboutPage.values.simplicity.text'),
     },
@@ -141,7 +141,7 @@ function AboutPage() {
         >
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div style={slide(2)}>
-              <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-action-bright underline underline-offset-4">
+              <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-photo-action underline underline-offset-4">
                 {t('aboutPage.story.kicker')}
               </p>
               <h2
@@ -157,7 +157,7 @@ function AboutPage() {
             <ul className="grid grid-cols-2 gap-4 sm:gap-6" style={slide(3, 'right')}>
               {STATS.map(({ value, label }) => (
                 <li key={label} className={`${cardClass} text-center`}>
-                  <p className="text-3xl font-bold text-action-soft">{value}</p>
+                  <p className="text-3xl font-bold text-photo-action-hover">{value}</p>
                   <p className="mt-1 text-sm text-on-dark/65">{label}</p>
                 </li>
               ))}
@@ -177,7 +177,7 @@ function AboutPage() {
       >
         <div className="mx-auto w-full max-w-6xl">
           <div className="mb-10 text-center">
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-action-bright underline underline-offset-4">
+            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-photo-action underline underline-offset-4">
               {t('aboutPage.values.kicker')}
             </p>
             <h2
@@ -210,7 +210,7 @@ function AboutPage() {
         style={slide(5)}
       >
         <div className="mb-10 text-center">
-          <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-action-bright underline underline-offset-4">
+          <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-photo-action underline underline-offset-4">
             {t('aboutPage.destinations.kicker')}
           </p>
           <h2
@@ -252,7 +252,7 @@ function AboutPage() {
               e.preventDefault();
               pageExitNavigate('/contact');
             }}
-            className={`text-sm font-medium text-action-soft hover:text-action-pale hover:underline ${FOCUS_LIGHT}`}
+            className={`text-sm font-medium text-photo-action-hover hover:text-photo-action hover:underline ${FOCUS_LIGHT}`}
           >
             {t('aboutPage.cta.contact')}
           </a>

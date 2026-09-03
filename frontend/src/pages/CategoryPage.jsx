@@ -93,13 +93,13 @@ const CATEGORY_RESPONSIVE_CSS = `
   }
 
   .category-secondary-carousels h2 {
-    color: rgb(255 255 255) !important;
-    text-shadow: 0 0.125rem 0.375rem rgb(0 0 0 / 45%);
+    color: rgb(var(--sl-photo-text)) !important;
+    text-shadow: 0 0.125rem 0.375rem rgb(var(--sl-overlay) / 45%);
   }
 
   .category-secondary-carousels h2 + a {
-    color: rgb(255 255 255 / 78%) !important;
-    text-shadow: 0 0.125rem 0.375rem rgb(0 0 0 / 45%);
+    color: rgb(var(--sl-photo-text) / 78%) !important;
+    text-shadow: 0 0.125rem 0.375rem rgb(var(--sl-overlay) / 45%);
   }
 
   .category-page-reviews {
@@ -205,7 +205,7 @@ const BoatListingCard = memo(function BoatListingCard({
     <article
       id={`boat-${id}`}
       onClick={() => onSelect?.(id)}
-      className={`relative rounded-3xl overflow-hidden border hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-glass/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] ${highlighted ? 'border-sky-400 ring-4 ring-sky-400/60' : 'border-glass/50'}`}
+      className={`relative rounded-3xl overflow-hidden border hover:-translate-y-1.5 hover:shadow-[0_20px_48px_rgba(14,165,233,0.35)] hover:border-glass/70 transition-all duration-300 group cursor-pointer shadow-[0_8px_32px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.5)] ${highlighted ? 'border-photo-action ring-4 ring-photo-action/60' : 'border-glass/50'}`}
     >
       <div className="relative overflow-hidden" style={{ aspectRatio: '7/5' }}>
         <SafeImage
@@ -221,8 +221,8 @@ const BoatListingCard = memo(function BoatListingCard({
           <div
             className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-glass/30 px-2.5 py-1 text-[0.5625rem] font-bold uppercase tracking-wider text-on-dark backdrop-blur-sm"
             style={{
-              backgroundColor: 'rgba(14,165,233,0.8)',
-              boxShadow: '0 2px 8px rgba(14,165,233,0.5)',
+              backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.8)',
+              boxShadow: '0 2px 8px rgb(var(--sl-photo-action-shadow) / 0.5)',
             }}
           >
             <FaCrown style={{ fontSize: '0.5625rem' }} />
@@ -240,8 +240,8 @@ const BoatListingCard = memo(function BoatListingCard({
       <div
         className="relative p-3 border-t"
         style={{
-          backgroundColor: 'rgba(255,255,255,0.1)',
-          borderColor: 'rgba(255,255,255,0.3)',
+          backgroundColor: 'rgb(var(--sl-glass) / 0.1)',
+          borderColor: 'rgb(var(--sl-glass) / 0.3)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
         }}
@@ -253,7 +253,7 @@ const BoatListingCard = memo(function BoatListingCard({
               {name}
             </h3>
             <span className="text-on-dark/50 flex-shrink-0">-</span>
-            <span className="flex-shrink-0 text-[0.625rem] font-bold uppercase tracking-widest text-action">
+            <span className="flex-shrink-0 text-[0.625rem] font-bold uppercase tracking-widest text-photo-action">
               {type}
             </span>
           </div>
@@ -272,13 +272,16 @@ const BoatListingCard = memo(function BoatListingCard({
         {/* Lieu + dates */}
         <div className="mb-2 flex flex-col items-start gap-2 border-b border-glass/40 pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-1">
           <span className="text-xs text-on-dark/80 flex items-center gap-1 min-w-0">
-            <MdLocationOn className="flex-shrink-0 text-action" style={{ fontSize: '0.8125rem' }} />
+            <MdLocationOn
+              className="flex-shrink-0 text-photo-icon"
+              style={{ fontSize: '0.8125rem' }}
+            />
             <span className="truncate">{location}</span>
           </span>
           {availability?.length > 0 && (
             <div className="flex flex-wrap items-center justify-start gap-1 sm:justify-end">
               <MdCalendarToday
-                className="text-action flex-shrink-0"
+                className="text-photo-icon flex-shrink-0"
                 style={{ fontSize: '0.75rem' }}
               />
               {availability.map((period) => (
@@ -286,9 +289,9 @@ const BoatListingCard = memo(function BoatListingCard({
                   key={period}
                   className="rounded-full px-1 py-0.5 text-[0.625rem] font-medium backdrop-blur-md"
                   style={{
-                    backgroundColor: 'rgba(14,165,233,0.15)',
-                    color: '#ffffff',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.15)',
+                    color: 'rgb(var(--sl-photo-text))',
+                    border: '1px solid rgb(var(--sl-photo-text) / 0.3)',
                   }}
                 >
                   {period}
@@ -301,16 +304,16 @@ const BoatListingCard = memo(function BoatListingCard({
         {/* Personnes + badges skipper/permis */}
         <div className="mb-2 flex flex-col items-start gap-2 2xl:flex-row 2xl:items-center 2xl:justify-between">
           <span className="flex items-center gap-1 text-xs text-on-dark/70 flex-shrink-0">
-            <MdPeople className="text-action" style={{ fontSize: '0.875rem' }} />
+            <MdPeople className="text-photo-icon" style={{ fontSize: '0.875rem' }} />
             {t('category.card.persons', { count: capacity })}
           </span>
           <div className="flex flex-wrap items-center justify-start gap-1 2xl:justify-end">
             <span
               className="rounded-full px-1 py-0.5 text-[0.5625rem] font-medium backdrop-blur-md"
               style={{
-                backgroundColor: 'rgba(14,165,233,0.15)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.3)',
+                backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.15)',
+                color: 'rgb(var(--sl-photo-text))',
+                border: '1px solid rgb(var(--sl-photo-text) / 0.3)',
               }}
             >
               {skipper ? t('category.card.skipperIncluded') : t('category.card.skipperExcluded')}
@@ -318,9 +321,9 @@ const BoatListingCard = memo(function BoatListingCard({
             <span
               className="rounded-full px-1 py-0.5 text-[0.5625rem] font-medium backdrop-blur-md"
               style={{
-                backgroundColor: 'rgba(14,165,233,0.15)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.3)',
+                backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.15)',
+                color: 'rgb(var(--sl-photo-text))',
+                border: '1px solid rgb(var(--sl-photo-text) / 0.3)',
               }}
             >
               {licenseRequired
@@ -339,7 +342,7 @@ const BoatListingCard = memo(function BoatListingCard({
           <button
             type="button"
             onClick={(e) => e.stopPropagation()}
-            className="flex min-h-10 items-center rounded-full border border-glass/40 bg-[rgba(14,165,233,0.55)] px-3 py-1 text-[0.6875rem] font-semibold text-on-dark shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition-all hover:border-glass/20 hover:bg-[rgba(10,49,114,0.95)] sm:min-h-0"
+            className="flex min-h-10 items-center rounded-full border border-glass/40 bg-photo-action-fill/55 px-3 py-1 text-[0.6875rem] font-semibold text-photo-text shadow-[0_4px_16px_rgba(14,165,233,0.35)] backdrop-blur-md transition-all hover:border-glass/20 hover:bg-header-bar-bg/95 sm:min-h-0"
           >
             {t('category.card.book')}
           </button>
@@ -1084,7 +1087,7 @@ function CategoryPage() {
             }`}
             style={{
               top: 'var(--category-header-height)',
-              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
+              backgroundColor: scrolled ? 'rgb(var(--sl-glass) / 0.1)' : 'transparent',
               backdropFilter: scrolled ? 'blur(5px)' : 'none',
               WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
               transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
@@ -1183,7 +1186,7 @@ function CategoryPage() {
               <div className="relative z-10 flex flex-col gap-5">
                 <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
-                    <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-action">
+                    <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-photo-action">
                       {t('category.results.kicker')}
                     </p>
                     <h1 className="text-xl font-bold uppercase tracking-tight text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-2xl">
@@ -1241,17 +1244,20 @@ function CategoryPage() {
                   l'<aside> sticky, dont le style transition (top) doit rester. */}
               <div
                 className="flex flex-col rounded-2xl border overflow-hidden"
-                style={{ borderColor: 'rgba(255,255,255,0.2)', ...slideInStyle(5, 'right') }}
+                style={{
+                  borderColor: 'rgb(var(--sl-photo-text) / 0.2)',
+                  ...slideInStyle(5, 'right'),
+                }}
               >
                 <div
                   className="flex items-center justify-between px-4 py-2"
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    backgroundColor: 'rgb(var(--sl-glass) / 0.1)',
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)',
                   }}
                 >
-                  <p className="text-xs font-bold tracking-widest uppercase text-action">
+                  <p className="text-xs font-bold tracking-widest uppercase text-photo-action">
                     {t('category.map.title')}
                   </p>
                   <span className="flex items-center gap-1.5 text-[0.625rem] font-semibold text-success">

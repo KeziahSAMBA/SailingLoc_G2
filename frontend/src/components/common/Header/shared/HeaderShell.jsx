@@ -65,7 +65,7 @@ function HeaderShell({ scrolled, introHidden, settingsOpen = false, settingsPane
           style={{
             height: baseHeight,
             backgroundColor: scrolled
-              ? 'rgb(var(--sl-brand-navy) / 0.95)'
+              ? 'rgb(var(--sl-header-bar-bg) / 0.95)'
               : 'rgb(var(--sl-glass) / 0.05)',
             borderBottom: '1px solid rgb(var(--sl-brand) / 0.2)',
             boxShadow: scrolled ? '0 2px 12px rgb(var(--sl-brand-navy) / 0.08)' : 'none',

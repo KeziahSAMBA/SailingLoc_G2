@@ -139,7 +139,7 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
                 width: '26px',
                 height: '18px',
                 opacity: i18n.language === code ? 1 : 0.6,
-                boxShadow: '0 0 0 1px rgba(255,255,255,0.5)',
+                boxShadow: '0 0 0 1px rgb(var(--sl-glass) / 0.5)',
               }}
             >
               <Flag className="w-full h-full block" />

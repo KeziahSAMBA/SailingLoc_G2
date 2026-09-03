@@ -13,7 +13,7 @@
 function PanelLink({ href = '#', onClick, danger, scrolled, stretch, large, borderTop, children }) {
   const textColor = scrolled
     ? 'rgb(var(--sl-header-panel-scrolled-text))'
-    : 'rgb(var(--sl-on-dark))';
+    : 'rgb(var(--sl-header-text))';
   const hoverBg = scrolled
     ? 'rgb(var(--sl-header-panel-scrolled-hover) / 0.06)'
     : 'rgb(var(--sl-glass) / 0.1)';

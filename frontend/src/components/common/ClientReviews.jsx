@@ -63,13 +63,13 @@ const StarRating = memo(function StarRating({ rating, light = false }) {
         i < Math.round(rating) ? (
           <FaStar
             key={i}
-            className={light ? 'text-action' : 'text-brand-text'}
+            className={light ? 'text-photo-action' : 'text-brand-text'}
             style={{ fontSize: '13px' }}
           />
         ) : (
           <FaRegStar
             key={i}
-            className={light ? 'text-action' : 'text-brand-text'}
+            className={light ? 'text-photo-action' : 'text-brand-text'}
             style={{ fontSize: '13px' }}
           />
         )
@@ -127,7 +127,7 @@ const ReviewCard = memo(function ReviewCard({
           </span>
           {role && (
             <span
-              className={`text-[11px] font-semibold sm:text-xs ${light ? 'text-action' : 'text-brand-text'}`}
+              className={`text-[11px] font-semibold sm:text-xs ${light ? 'text-photo-action' : 'text-brand-text'}`}
             >
               {roleLabels[role] ?? role}
             </span>
@@ -149,9 +149,9 @@ const ReviewCard = memo(function ReviewCard({
       </p>
       {ownerReply && (
         <div
-          className={`rounded-lg border-l-2 px-3 py-2 ${light ? 'border-info/60 bg-surface/5' : 'border-info/60 bg-info-surface'}`}
+          className={`rounded-lg border-l-2 px-3 py-2 ${light ? 'border-photo-action bg-surface/5' : 'border-info/60 bg-info-surface'}`}
         >
-          <p className={`text-xs font-semibold ${light ? 'text-info-text' : 'text-info'}`}>
+          <p className={`text-xs font-semibold ${light ? 'text-photo-action' : 'text-info'}`}>
             {t('boatReviews.ownerReply')}
           </p>
           <p
@@ -167,7 +167,7 @@ const ReviewCard = memo(function ReviewCard({
             <button
               type="button"
               onClick={onEdit}
-              className={`text-xs font-semibold transition hover:underline ${light ? 'text-info-text hover:text-info' : 'text-info hover:text-info-text'}`}
+              className={`text-xs font-semibold transition hover:underline ${light ? 'text-photo-action hover:text-photo-action-hover' : 'text-info hover:text-info-text'}`}
             >
               {t('boatReviews.edit')}
             </button>
@@ -284,7 +284,7 @@ export default function ClientReviews({
       onChange={(e) => handleSort(e.target.value)}
       className={`text-sm border rounded-full px-3 py-1 cursor-pointer focus:outline-none ${
         light
-          ? 'border-glass/30 text-on-dark bg-surface/10 focus:border-action-bright focus:text-action-soft'
+          ? 'border-glass/30 text-on-dark bg-surface/10 focus:border-photo-action focus:text-photo-action-hover'
           : 'border-border-light text-content-muted bg-surface focus:border-action-bright focus:text-brand-text'
       }`}
     >
@@ -317,7 +317,7 @@ export default function ClientReviews({
         <>
           <div className="text-center mb-2">
             <p
-              className={`text-sm font-semibold tracking-widest uppercase mb-4 underline underline-offset-4 ${light ? 'text-action' : 'text-brand-text'}`}
+              className={`text-sm font-semibold tracking-widest uppercase mb-4 underline underline-offset-4 ${light ? 'text-photo-action' : 'text-brand-text'}`}
             >
               {t('reviews.kicker')}
             </p>
@@ -336,11 +336,11 @@ export default function ClientReviews({
                   type="button"
                   onClick={() => handleRoleFilter(opt.value)}
                   aria-pressed={roleFilter === opt.value}
-                  className={`rounded-full border px-3 py-1 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                  className={`rounded-full border px-3 py-1 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action ${
                     roleFilter === opt.value
-                      ? 'bg-action text-action-text border-action shadow-sm non-color-active'
+                      ? 'bg-photo-action-fill text-photo-text border-photo-action shadow-sm non-color-active'
                       : light
-                        ? 'bg-surface/5 text-on-dark border-glass/30 hover:border-action-bright hover:text-action-soft'
+                        ? 'bg-surface/5 text-on-dark border-glass/30 hover:border-photo-action hover:text-photo-action-hover'
                         : 'bg-surface text-content-muted border-border-light hover:border-action-bright hover:text-brand-text'
                   }`}
                   style={
@@ -397,9 +397,9 @@ export default function ClientReviews({
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={currentPage === 0}
               aria-label={t('reviewFilters.prevPage')}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-30 ${
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action disabled:cursor-not-allowed disabled:opacity-30 ${
                 light
-                  ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-action-bright hover:text-action-soft'
+                  ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-photo-action hover:text-photo-action-hover'
                   : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
               }`}
             >
@@ -417,9 +417,9 @@ export default function ClientReviews({
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={currentPage === totalPages - 1}
               aria-label={t('reviewFilters.nextPage')}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-30 ${
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action disabled:cursor-not-allowed disabled:opacity-30 ${
                 light
-                  ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-action-bright hover:text-action-soft'
+                  ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-photo-action hover:text-photo-action-hover'
                   : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
               }`}
             >
