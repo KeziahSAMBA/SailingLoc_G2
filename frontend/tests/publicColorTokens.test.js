@@ -344,6 +344,47 @@ test('la navigation du header référence les tokens contextuels de contraste', 
   }
 });
 
+test('le header ouvert et la carte utilisent les règles de contraste effectivement rendues', () => {
+  const headerShell = readFileSync(
+    path.join(root, 'src/components/common/Header/shared/HeaderShell.jsx'),
+    'utf8'
+  );
+  assert.match(
+    headerShell,
+    /scrolled\s*\|\|\s*settingsOpen/u,
+    'le fond de la barre doit être opaque dès que le panneau est ouvert'
+  );
+
+  const css = readFileSync(path.join(root, 'src/index.css'), 'utf8');
+  assert.match(
+    css,
+    /\.bg-header-icon\s*\{[\s\S]*background-color:\s*rgb\(var\(--sl-header-icon\)\)/u,
+    'les barres du burger doivent avoir une règle CSS générée et non transparente'
+  );
+
+  const category = readFileSync(path.join(root, 'src/pages/CategoryPage.jsx'), 'utf8');
+  for (const className of [
+    'text-map-heading',
+    'text-map-results-heading',
+    'text-map-live',
+    'bg-map-live',
+    'text-map-hint',
+  ]) {
+    assert.ok(category.includes(className), `token de carte absent de CategoryPage: ${className}`);
+  }
+
+  const mapView = readFileSync(path.join(root, 'src/components/common/MapView.jsx'), 'utf8');
+  for (const token of [
+    '--sl-map-control',
+    '--sl-map-control-text',
+    '--sl-map-control-hover',
+    '--sl-map-control-hover-text',
+    '--sl-map-control-border',
+  ]) {
+    assert.ok(mapView.includes(token), `token de contrôle cartographique absent: ${token}`);
+  }
+});
+
 test('aucune nouvelle couleur brute ne contourne les tokens dans les fichiers migrés', () => {
   for (const relative of migratedRoots.flatMap(filesBelow)) {
     const portableRelative = relative.replaceAll('\\', '/');

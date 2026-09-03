@@ -93,6 +93,52 @@
   }
 }
 
+/* Le burger utilise cette classe partagée dans le JSX. La déclaration
+   explicite garantit sa présence aussi dans la feuille injectée par Vite en
+   développement, où une classe dynamique peut sinon rester absente jusqu'au
+   prochain cycle de compilation. */
+@layer utilities {
+  .bg-header-icon {
+    background-color: rgb(var(--sl-header-icon));
+  }
+
+  .text-map-heading {
+    color: rgb(var(--sl-map-heading));
+  }
+
+  .text-map-results-heading {
+    color: rgb(var(--sl-map-results-heading));
+  }
+
+  .text-map-live {
+    color: rgb(var(--sl-map-live));
+  }
+
+  .bg-map-live {
+    background-color: rgb(var(--sl-map-live));
+  }
+
+  .text-map-hint {
+    color: rgb(var(--sl-map-hint));
+  }
+
+  .bg-map-control {
+    background-color: rgb(var(--sl-map-control));
+  }
+
+  .text-map-control-text {
+    color: rgb(var(--sl-map-control-text));
+  }
+
+  .bg-map-control-hover:hover {
+    background-color: rgb(var(--sl-map-control-hover));
+  }
+
+  .text-map-control-hover-text:hover {
+    color: rgb(var(--sl-map-control-hover-text));
+  }
+}
+
 /* Couleurs contextuelles du rendu clair historique. Les sélecteurs des futurs
    modes héritent volontairement de ces mêmes valeurs sur la branche commune. */
 :root {
@@ -192,6 +238,15 @@
   --sl-map-available: 10 49 114;
   --sl-map-unavailable: 148 163 184;
   --sl-map-unavailable-strong: 100 116 139;
+  --sl-map-heading: var(--sl-photo-action);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-success);
+  --sl-map-hint: var(--sl-content-soft);
+  --sl-map-control: var(--sl-surface);
+  --sl-map-control-text: var(--sl-content);
+  --sl-map-control-hover: var(--sl-page);
+  --sl-map-control-hover-text: var(--sl-brand-text);
+  --sl-map-control-border: var(--sl-border-light);
   --sl-chart-primary: 62 151 214;
   --sl-chart-hover: 90 180 236;
   --sl-chart-violet: 167 139 250;
@@ -321,6 +376,15 @@ html[data-sailingloc-theme='dark'] {
   --sl-map-available: 125 211 252;
   --sl-map-unavailable: 148 163 184;
   --sl-map-unavailable-strong: 203 213 225;
+  --sl-map-heading: var(--sl-on-dark);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-on-dark);
+  --sl-map-hint: var(--sl-on-dark);
+  --sl-map-control: var(--sl-surface);
+  --sl-map-control-text: var(--sl-content);
+  --sl-map-control-hover: var(--sl-dark-elevated);
+  --sl-map-control-hover-text: var(--sl-content);
+  --sl-map-control-border: var(--sl-border-light);
   --sl-chart-primary: 56 189 248;
   --sl-chart-hover: 125 211 252;
   --sl-chart-violet: 196 181 253;
@@ -432,6 +496,10 @@ html[data-sailingloc-theme='light'][data-sailingloc-color-vision='protanopia'] {
   --sl-map-available: 0 114 178;
   --sl-map-unavailable: 95 61 140;
   --sl-map-unavailable-strong: 100 116 139;
+  --sl-map-heading: var(--sl-on-dark);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-on-dark);
+  --sl-map-hint: var(--sl-on-dark);
   --sl-chart-primary: 0 114 178;
   --sl-chart-hover: 0 90 141;
   /* Couleurs de graphiques lisibles à la fois sur la page claire et sur
@@ -634,6 +702,10 @@ html[data-sailingloc-theme='light'][data-sailingloc-color-vision='deuteranopia']
   --sl-map-available: 0 114 178;
   --sl-map-unavailable: 95 61 140;
   --sl-map-unavailable-strong: 100 116 139;
+  --sl-map-heading: var(--sl-on-dark);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-on-dark);
+  --sl-map-hint: var(--sl-on-dark);
   --sl-chart-primary: 0 114 178;
   --sl-chart-hover: 0 90 141;
   /* Palette catégorielle renforcée : chaque série reste visible sur la
@@ -835,6 +907,10 @@ html[data-sailingloc-theme='light'][data-sailingloc-color-vision='tritanopia'] {
   --sl-map-available: 0 122 94;
   --sl-map-unavailable: 143 36 95;
   --sl-map-unavailable-strong: 100 116 139;
+  --sl-map-heading: var(--sl-on-dark);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-on-dark);
+  --sl-map-hint: var(--sl-on-dark);
   --sl-chart-primary: 0 122 94;
   --sl-chart-hover: 0 92 70;
   /* Vert, turquoise et rose sont associés à des teintes distinctes ; les

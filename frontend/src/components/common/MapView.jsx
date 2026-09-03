@@ -155,14 +155,14 @@ const MAP_STYLE_CSS = `
   box-shadow: none;
 }
 .leaflet-control-zoom a {
-  background: rgb(var(--sl-surface));
-  color: rgb(var(--sl-content));
-  border-bottom-color: rgb(var(--sl-border-light));
+  background: rgb(var(--sl-map-control));
+  color: rgb(var(--sl-map-control-text));
+  border-bottom-color: rgb(var(--sl-map-control-border));
 }
 .leaflet-control-zoom a:hover,
 .leaflet-control-zoom a:focus-visible {
-  background: rgb(var(--sl-page));
-  color: rgb(var(--sl-brand-text));
+  background: rgb(var(--sl-map-control-hover));
+  color: rgb(var(--sl-map-control-hover-text));
 }
 `;
 
@@ -307,7 +307,7 @@ function MapView({
         onClick={handleResetView}
         title="Réinitialiser la carte"
         aria-label="Réinitialiser la carte"
-        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-surface text-on-light shadow-md hover:bg-page transition-colors"
+        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-map-control text-map-control-text shadow-md hover:bg-map-control-hover hover:text-map-control-hover-text transition-colors"
       >
         <FiRefreshCw size={15} />
       </button>

@@ -1186,10 +1186,10 @@ function CategoryPage() {
               <div className="relative z-10 flex flex-col gap-5">
                 <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex flex-col items-start gap-3" style={titleFadeStyle}>
-                    <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-photo-action">
+                    <p className="text-xs font-bold tracking-widest uppercase underline underline-offset-4 text-map-heading">
                       {t('category.results.kicker')}
                     </p>
-                    <h1 className="text-xl font-bold uppercase tracking-tight text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-2xl">
+                    <h1 className="text-xl font-bold uppercase tracking-tight text-map-results-heading drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-2xl">
                       {t('category.results.title')}
                     </h1>
                   </div>
@@ -1257,11 +1257,11 @@ function CategoryPage() {
                     WebkitBackdropFilter: 'blur(20px)',
                   }}
                 >
-                  <p className="text-xs font-bold tracking-widest uppercase text-photo-action">
+                  <p className="text-xs font-bold tracking-widest uppercase text-map-heading">
                     {t('category.map.title')}
                   </p>
-                  <span className="flex items-center gap-1.5 text-[0.625rem] font-semibold text-success">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block" />
+                  <span className="flex items-center gap-1.5 text-[0.625rem] font-semibold text-map-live">
+                    <span className="w-1.5 h-1.5 rounded-full bg-map-live animate-pulse inline-block" />
                     {t('category.map.live')}
                   </span>
                 </div>
@@ -1285,7 +1285,7 @@ function CategoryPage() {
                   />
                 </div>
               </div>
-              <p className="px-2 text-center text-[0.625rem] text-content-soft">
+              <p className="px-2 text-center text-[0.625rem] text-map-hint">
                 {t('category.map.hint')}
               </p>
             </aside>
