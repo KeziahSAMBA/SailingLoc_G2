@@ -58,7 +58,7 @@ function formatRegistration(input, typing) {
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none transition focus:border-brand';
 const labelClass = 'mb-1 block text-xs font-medium text-on-dark/70';
 const cardClass = 'rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5';
 
@@ -926,7 +926,7 @@ function ProprietaireBoatForm() {
           <button
             type="submit"
             disabled={submitting}
-            className={`w-fit max-w-full self-start whitespace-nowrap rounded-full bg-action px-6 py-2.5 text-sm font-semibold text-on-dark shadow transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto ${FOCUS_RING}`}
+            className={`w-fit max-w-full self-start whitespace-nowrap rounded-full bg-action px-6 py-2.5 text-sm font-semibold text-action-text shadow transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto ${FOCUS_RING}`}
           >
             {submitting
               ? t('proprietaireBoatForm.sending')

@@ -50,7 +50,7 @@ const detailCardClass =
   'flex flex-col items-center gap-3 rounded-2xl border border-glass/20 bg-surface/5 p-4 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-6';
 
 const inputLight =
-  'w-full rounded-lg border border-glass/25 bg-surface/10 px-4 py-2.5 text-sm text-on-dark placeholder-on-dark/45 outline-none backdrop-blur-md transition focus:border-action-soft focus:bg-surface/15 focus:ring-2 focus:ring-action-soft/20';
+  'w-full rounded-lg border border-glass/25 bg-surface/10 px-4 py-2.5 text-sm text-on-dark placeholder-on-dark outline-none backdrop-blur-md transition focus:border-action-soft focus:bg-surface/15 focus:ring-2 focus:ring-action-soft/20';
 const labelLight = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 
 const PHOTO_BG_STYLE = {

@@ -565,7 +565,7 @@ function ProprietaireReservations() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-action text-on-dark'
+                  ? 'bg-action text-action-text'
                   : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
               }`}
             >
@@ -693,7 +693,7 @@ function ProprietaireReservations() {
                         : t('proprietaireReservations.modal.cancelPlaceholder')
                     }
                     aria-describedby="cancel-reason-hint"
-                    className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
+                    className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
                   />
                 </>
               )}
@@ -828,7 +828,7 @@ function ProprietaireReservations() {
                       </dt>
                       <dd className="text-on-dark/90">
                         {locataireData.locataire.phone || (
-                          <span className="text-on-dark/50">
+                          <span className="text-content-light">
                             {t('proprietaireReservations.locataire.noPhone')}
                           </span>
                         )}
@@ -846,7 +846,7 @@ function ProprietaireReservations() {
                   <button
                     type="button"
                     onClick={messageLocataire}
-                    className={`mt-4 w-fit max-w-full whitespace-nowrap rounded-full bg-action px-4 py-2 text-sm font-semibold text-on-dark transition hover:bg-action-hover sm:w-full ${FOCUS_RING}`}
+                    className={`mt-4 w-fit max-w-full whitespace-nowrap rounded-full bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action-hover sm:w-full ${FOCUS_RING}`}
                   >
                     {t('proprietaireReservations.locataire.sendMessage')}
                   </button>

@@ -159,13 +159,13 @@ function AdminPublicationPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-action text-on-dark'
+        ? 'bg-action text-action-text'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       active
-        ? 'bg-action text-on-dark'
+        ? 'bg-action text-action-text'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
 

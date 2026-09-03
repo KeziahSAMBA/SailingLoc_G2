@@ -29,9 +29,9 @@ const REQUIRED_DOC_TYPES = ['permis_conduire', 'piece_identite', 'cv_nautique'];
 
 const GLASS = 'rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl';
 const FIELD =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-action-bright focus:ring-2 focus:ring-action-bright/30';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-action-bright focus:ring-2 focus:ring-action-bright/30';
 const PRIMARY_BTN =
-  'rounded-full bg-action px-8 py-2.5 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50';
+  'rounded-full bg-action px-8 py-2.5 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50';
 const GHOST_BTN =
   'rounded-full border border-glass/40 px-6 py-2.5 text-sm font-semibold text-on-dark transition hover:bg-surface/10';
 
@@ -151,7 +151,7 @@ function Stepper({ step }) {
                 state === 'done'
                   ? 'bg-success text-on-dark'
                   : state === 'current'
-                    ? 'bg-action text-on-dark'
+                    ? 'bg-action text-action-text'
                     : 'bg-surface/20 text-on-dark/60'
               }`}
             >

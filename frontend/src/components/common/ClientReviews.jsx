@@ -56,14 +56,22 @@ function fetchReviews(boatId) {
 // ClientReviews via sa clé côté page produit suffit donc à rafraîchir la liste.
 export function invalidatePublicReviews() {}
 
-const StarRating = memo(function StarRating({ rating }) {
+const StarRating = memo(function StarRating({ rating, light = false }) {
   return (
     <div className="flex gap-0.5">
       {Array.from({ length: 5 }, (_, i) =>
         i < Math.round(rating) ? (
-          <FaStar key={i} className="text-action" style={{ fontSize: '13px' }} />
+          <FaStar
+            key={i}
+            className={light ? 'text-action' : 'text-brand-text'}
+            style={{ fontSize: '13px' }}
+          />
         ) : (
-          <FaRegStar key={i} className="text-action" style={{ fontSize: '13px' }} />
+          <FaRegStar
+            key={i}
+            className={light ? 'text-action' : 'text-brand-text'}
+            style={{ fontSize: '13px' }}
+          />
         )
       )}
     </div>
@@ -118,16 +126,18 @@ const ReviewCard = memo(function ReviewCard({
             {name}
           </span>
           {role && (
-            <span className="text-[11px] font-semibold text-action sm:text-xs">
+            <span
+              className={`text-[11px] font-semibold sm:text-xs ${light ? 'text-action' : 'text-brand-text'}`}
+            >
               {roleLabels[role] ?? role}
             </span>
           )}
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <StarRating rating={rating} />
+        <StarRating rating={rating} light={light} />
         <span
-          className={`text-[11px] sm:text-xs ${light ? 'text-on-dark/50' : 'text-field-placeholder'}`}
+          className={`text-[11px] sm:text-xs ${light ? 'text-on-dark/80' : 'text-content-muted'}`}
         >
           {displayedDate}
         </span>
@@ -275,7 +285,7 @@ export default function ClientReviews({
       className={`text-sm border rounded-full px-3 py-1 cursor-pointer focus:outline-none ${
         light
           ? 'border-glass/30 text-on-dark bg-surface/10 focus:border-action-bright focus:text-action-soft'
-          : 'border-border-light text-content-muted bg-surface focus:border-action-bright focus:text-action'
+          : 'border-border-light text-content-muted bg-surface focus:border-action-bright focus:text-brand-text'
       }`}
     >
       {sortOptions.map((opt) => (
@@ -306,7 +316,9 @@ export default function ClientReviews({
       ) : (
         <>
           <div className="text-center mb-2">
-            <p className="text-sm font-semibold tracking-widest text-action uppercase mb-4 underline underline-offset-4">
+            <p
+              className={`text-sm font-semibold tracking-widest uppercase mb-4 underline underline-offset-4 ${light ? 'text-action' : 'text-brand-text'}`}
+            >
               {t('reviews.kicker')}
             </p>
             <h2
@@ -324,10 +336,10 @@ export default function ClientReviews({
                   onClick={() => handleRoleFilter(opt.value)}
                   className={`px-3 py-1 rounded-full text-sm font-semibold border transition-all duration-200 ${
                     roleFilter === opt.value
-                      ? 'bg-action text-on-dark border-action shadow-sm'
+                      ? 'bg-action text-action-text border-action shadow-sm'
                       : light
                         ? 'bg-surface/5 text-on-dark border-glass/30 hover:border-action-bright hover:text-action-soft'
-                        : 'bg-surface text-content-muted border-border-light hover:border-action-bright hover:text-action'
+                        : 'bg-surface text-content-muted border-border-light hover:border-action-bright hover:text-brand-text'
                   }`}
                   style={
                     light && roleFilter !== opt.value
@@ -384,7 +396,7 @@ export default function ClientReviews({
               className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
                 light
                   ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-action-bright hover:text-action-soft'
-                  : 'border-border-light bg-surface text-content-muted hover:border-action hover:text-action shadow-sm'
+                  : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
               }`}
             >
               <FaChevronLeft size={13} />
@@ -402,7 +414,7 @@ export default function ClientReviews({
               className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
                 light
                   ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-action-bright hover:text-action-soft'
-                  : 'border-border-light bg-surface text-content-muted hover:border-action hover:text-action shadow-sm'
+                  : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
               }`}
             >
               <FaChevronRight size={13} />

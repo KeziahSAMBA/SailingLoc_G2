@@ -230,7 +230,7 @@ function MonthlyChart({ months }) {
               x={PAD.left - 8}
               y={y(t) + 3}
               textAnchor="end"
-              className="fill-on-dark/50 text-[0.625rem]"
+              className="fill-content-light text-[0.625rem]"
             >
               {EURO_ROUND.format(t)}
             </text>
@@ -266,7 +266,7 @@ function MonthlyChart({ months }) {
                   x={cx}
                   y={top - 6}
                   textAnchor="middle"
-                  className="fill-on-dark/90 text-[0.6875rem] font-medium"
+                  className="fill-content-bright text-[0.6875rem] font-medium"
                 >
                   {EURO_ROUND.format(m.net)}
                 </text>
@@ -276,7 +276,7 @@ function MonthlyChart({ months }) {
                   x={cx}
                   y={H - 8}
                   textAnchor="middle"
-                  className="fill-on-dark/60 text-[0.625rem]"
+                  className="fill-content-light text-[0.625rem]"
                 >
                   {m.label}
                 </text>
@@ -638,7 +638,7 @@ function ProprietaireRevenus() {
               type="button"
               onClick={handleOnboarding}
               disabled={onboarding}
-              className="rounded-full bg-action px-4 py-2 text-sm font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="rounded-full bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               {onboarding
                 ? t('proprietaireRevenus.stripe.redirecting')
@@ -674,7 +674,7 @@ function ProprietaireRevenus() {
                       aria-pressed={active}
                       className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         active
-                          ? 'bg-action text-on-dark'
+                          ? 'bg-action text-action-text'
                           : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
                       }`}
                     >
@@ -927,7 +927,7 @@ function ProprietaireRevenus() {
                       aria-label={t('pagination.page', { n })}
                       className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         n === safePage
-                          ? 'bg-action text-on-dark'
+                          ? 'bg-action text-action-text'
                           : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
                       }`}
                     >

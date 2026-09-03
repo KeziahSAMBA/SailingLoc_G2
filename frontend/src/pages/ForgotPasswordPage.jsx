@@ -5,7 +5,7 @@ import { requestPasswordReset } from '../services/authService.js';
 import bgImage from '../assets/image/paysage/crique.jpg';
 
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
 const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
@@ -94,7 +94,7 @@ function ForgotPasswordPage() {
                 </p>
                 <Link
                   to="/"
-                  className={`mt-6 inline-block w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover ${FOCUS_RING}`}
+                  className={`mt-6 inline-block w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover ${FOCUS_RING}`}
                 >
                   Retour à l'accueil
                 </Link>
@@ -180,7 +180,7 @@ function ForgotPasswordPage() {
                   <button
                     type="submit"
                     disabled={loading || isBlocked}
-                    className={`mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                    className={`mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                   >
                     {isBlocked
                       ? `Réessayez dans ${formatCountdown(retryAfter)}`

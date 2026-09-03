@@ -283,7 +283,7 @@ const Footer = () => {
         <p className="flex flex-wrap items-start gap-x-1 gap-y-1 text-xs leading-relaxed text-on-dark/60">
           <span>{t('footer.copyright')}</span>
           <FaTriangleExclamation className="mt-0.5 shrink-0 text-yellow-400/70" />
-          <span className="min-w-0 break-words text-on-dark/40">{t('footer.disclaimer')}</span>
+          <span className="min-w-0 break-words text-content-light">{t('footer.disclaimer')}</span>
         </p>
       </div>
     </footer>

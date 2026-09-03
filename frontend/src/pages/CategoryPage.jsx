@@ -1136,7 +1136,7 @@ function CategoryPage() {
                   aria-label={
                     mobileSearchExpanded ? t('cookieConsent.prefs.close') : t('searchBar.search')
                   }
-                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-action-deep bg-action-hover text-on-dark shadow-lg transition-colors hover:bg-brand-navy md:hidden"
+                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-action-deep bg-action-hover text-action-text shadow-lg transition-colors hover:bg-brand-navy md:hidden"
                 >
                   {mobileSearchExpanded ? (
                     <MdClose className="text-lg" aria-hidden="true" />

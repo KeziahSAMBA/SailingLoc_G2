@@ -120,7 +120,7 @@ function ResetPasswordPage() {
             <header className="mb-6 text-center">
               <div
                 aria-hidden="true"
-                className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-action text-on-dark shadow-lg"
+                className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-action text-action-text shadow-lg"
               >
                 <MdLockReset size={30} />
               </div>
@@ -223,7 +223,7 @@ function ResetPasswordPage() {
                   <button
                     type="submit"
                     disabled={loading || isBlocked}
-                    className={`mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                    className={`mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                   >
                     {isBlocked
                       ? `Réessayez dans ${formatCountdown(retryAfter)}`

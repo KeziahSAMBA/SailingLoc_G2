@@ -255,7 +255,6 @@ const RAW_EXCEPTION_COUNTS = {
 };
 
 const TAILWIND_EXCEPTION_COUNTS = {
-  'src/components/common/Button.jsx': { 'bg-sky-600': 1, 'bg-sky-700': 1 },
   'src/components/common/Carrousel.jsx': {
     'border-black/40': 1,
     'bg-slate-800': 3,
@@ -289,7 +288,6 @@ const TAILWIND_EXCEPTION_COUNTS = {
   },
   'src/components/common/ReviewFilterBar.jsx': { 'border-sky-400': 1, 'text-gray-900': 2 },
   'src/components/common/ReviewPagination.jsx': { 'border-sky-400': 1, 'text-sky-300': 1 },
-  'src/components/common/SearchBar.jsx': { 'placeholder-black/50': 2 },
   'src/pages/CategoryPage.jsx': {
     'border-sky-400': 1,
     'ring-sky-400/60': 1,

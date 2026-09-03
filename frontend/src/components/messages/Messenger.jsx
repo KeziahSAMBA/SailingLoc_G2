@@ -466,7 +466,7 @@ function Messenger({
                       <div
                         className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
                           m.from_me
-                            ? 'rounded-br-sm bg-action text-on-dark'
+                            ? 'rounded-br-sm bg-action text-action-text'
                             : 'rounded-bl-sm bg-surface/10 text-on-dark'
                         }`}
                       >
@@ -600,12 +600,12 @@ function Messenger({
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={2000}
                 placeholder={t('messenger.placeholder')}
-                className="w-full rounded-full border border-glass/30 bg-surface/10 px-4 py-2.5 text-sm text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand"
+                className="w-full rounded-full border border-glass/30 bg-surface/10 px-4 py-2.5 text-sm text-on-dark placeholder-on-dark outline-none transition focus:border-brand"
               />
               <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                className={`shrink-0 rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                className={`shrink-0 rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
               >
                 {sending ? t('messenger.sending') : t('messenger.send')}
               </button>

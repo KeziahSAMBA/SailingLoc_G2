@@ -103,7 +103,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
       </div>
       <button
         type="submit"
-        className="rounded-lg bg-action px-4 py-2 text-sm font-semibold text-on-dark transition hover:bg-action/90"
+        className="rounded-lg bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action/90"
       >
         {t('spectatorFrame.go')}
       </button>
@@ -115,7 +115,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
             onClick={() => go(p)}
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition ${
               src === p
-                ? 'bg-action text-on-dark'
+                ? 'bg-action text-action-text'
                 : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
             }`}
           >
@@ -177,7 +177,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
         <button
           type="button"
           onClick={() => setFullscreen(true)}
-          className="rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-on-dark shadow transition hover:bg-action/90"
+          className="rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-action-text shadow transition hover:bg-action/90"
         >
           {t('spectatorFrame.fullscreen')}
         </button>

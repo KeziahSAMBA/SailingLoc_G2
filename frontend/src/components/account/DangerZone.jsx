@@ -7,7 +7,7 @@ import { getClosureStatus, deactivateAccount, deleteAccount } from '../../servic
 import PasswordField from '../auth/PasswordField.jsx';
 
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
 const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 const errorClass = 'mt-1 block text-xs text-danger-bright';
 

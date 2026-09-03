@@ -212,7 +212,7 @@ function SearchBar({
             onBlur={() => setTimeout(() => setDestinationFocused(false), 150)}
             placeholder={t('searchBar.destinationPlaceholder')}
             autoComplete="off"
-            className={`w-full bg-transparent outline-none text-xs text-center max-sm:min-w-0 ${light ? 'text-on-dark placeholder-on-dark/50' : 'text-on-light placeholder-black/50'}`}
+            className={`w-full bg-transparent outline-none text-xs text-center max-sm:min-w-0 ${light ? 'text-on-dark placeholder-on-dark' : 'text-on-light placeholder-on-light'}`}
           />
 
           {destinationFocused && (localMatches.length > 0 || nearestSuggestion) && (
@@ -281,7 +281,7 @@ function SearchBar({
             value={travelers}
             onChange={(e) => setTravelers(e.target.value)}
             placeholder={t('searchBar.travelersPlaceholder')}
-            className={`w-full bg-transparent text-center text-xs outline-none sm:w-36 max-sm:min-w-0 max-sm:placeholder-transparent ${light ? 'text-on-dark placeholder-on-dark/50' : 'text-on-light placeholder-black/50'}`}
+            className={`w-full bg-transparent text-center text-xs outline-none sm:w-36 max-sm:min-w-0 max-sm:placeholder-transparent ${light ? 'text-on-dark placeholder-on-dark' : 'text-on-light placeholder-on-light'}`}
           />
         </div>
 

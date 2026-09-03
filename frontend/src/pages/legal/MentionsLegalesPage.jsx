@@ -46,7 +46,7 @@ function MentionsLegalesPage() {
         <p>
           <Trans
             i18nKey="mentionsLegalesPage.s3.p1"
-            components={{ strong: <strong />, muted: <span className="text-on-dark/50" /> }}
+            components={{ strong: <strong />, muted: <span className="text-content-light" /> }}
           />
         </p>
       </LegalSection>

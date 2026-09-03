@@ -84,7 +84,7 @@ function ReviewCard({ review, onReplied }) {
         </span>
         <div className="mt-1 flex w-full items-center justify-between gap-2 sm:ml-auto sm:mt-0 sm:w-auto sm:justify-start">
           <Stars rating={review.rating} />
-          <span className="text-xs text-on-dark/50">
+          <span className="text-xs text-content-light">
             {formatDate(review.created_at, DATE_OPTS)}
           </span>
         </div>
@@ -131,7 +131,7 @@ function ReviewCard({ review, onReplied }) {
             onChange={(e) => setText(e.target.value)}
             maxLength={1000}
             placeholder={t('proprietaireReviews.replyPlaceholder')}
-            className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
+            className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
           />
           <div className="mt-2 flex justify-end gap-2">
             {editing && (
@@ -147,7 +147,7 @@ function ReviewCard({ review, onReplied }) {
             <button
               type="submit"
               disabled={busy || !text.trim()}
-              className={`rounded-full bg-action px-4 py-1 text-xs font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+              className={`rounded-full bg-action px-4 py-1 text-xs font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
             >
               {busy ? t('proprietaireReviews.sending') : t('proprietaireReviews.reply')}
             </button>

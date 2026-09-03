@@ -189,7 +189,7 @@ function BoatCard({ boat, busy, onDelete }) {
         <div className="mt-auto flex flex-wrap gap-2 pt-3">
           <Link
             to={`/proprietaire/bateaux/${boat.id_boat}/modifier`}
-            className={`rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-on-dark transition hover:bg-action-hover ${FOCUS_RING}`}
+            className={`rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-action-text transition hover:bg-action-hover ${FOCUS_RING}`}
           >
             {boat.status === 'draft'
               ? t('proprietaireBoats.editDraft')
@@ -297,7 +297,7 @@ function ProprietaireBoats() {
         </div>
         <Link
           to="/proprietaire/bateaux/nouveau"
-          className={`shrink-0 rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-on-dark shadow transition hover:bg-action-hover ${FOCUS_RING}`}
+          className={`shrink-0 rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-action-text shadow transition hover:bg-action-hover ${FOCUS_RING}`}
         >
           {t('proprietaireBoats.addBoat')}
         </Link>
@@ -331,7 +331,7 @@ function ProprietaireBoats() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-action text-on-dark'
+                  ? 'bg-action text-action-text'
                   : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
               }`}
             >
@@ -393,7 +393,7 @@ function ProprietaireBoats() {
                     aria-label={t('pagination.page', { n })}
                     className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                       n === safePage
-                        ? 'bg-action text-on-dark'
+                        ? 'bg-action text-action-text'
                         : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
                     }`}
                   >

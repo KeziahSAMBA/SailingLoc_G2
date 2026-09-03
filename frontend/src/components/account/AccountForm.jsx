@@ -19,7 +19,7 @@ const PHONE_REGEX = /^\+?[0-9\s().-]{6,20}$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
 
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
 const readonlyClass =
   'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark/60 cursor-not-allowed';
 const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
@@ -277,7 +277,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                   aria-controls="locataire-avatar-actions-menu"
                   onClick={() => setAvatarMenuOpen((open) => !open)}
                   disabled={avatarBusy}
-                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-glass/50 bg-action text-on-dark shadow-lg transition hover:bg-action-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-soft focus-visible:ring-offset-2 focus-visible:ring-offset-dark-surface disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
+                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-glass/50 bg-action text-action-text shadow-lg transition hover:bg-action-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-soft focus-visible:ring-offset-2 focus-visible:ring-offset-dark-surface disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
                 >
                   <MdEdit aria-hidden="true" className="h-4 w-4" />
                 </button>
@@ -472,7 +472,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
             <button
               type="submit"
               disabled={!dirty || saving}
-              className={`rounded-full bg-action text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit flex-none px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-auto lg:flex-1 lg:px-6 lg:py-3' : ''}` : 'flex-1 px-6 py-3'}`}
+              className={`rounded-full bg-action text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit flex-none px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-auto lg:flex-1 lg:px-6 lg:py-3' : ''}` : 'flex-1 px-6 py-3'}`}
             >
               {saving ? (
                 t('accountForm.personalInfo.saving')
@@ -570,7 +570,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
             <button
               type="submit"
               disabled={pwdSaving}
-              className={`rounded-full bg-action text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit whitespace-nowrap px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-full lg:px-6 lg:py-3' : ''}` : 'w-full px-6 py-3'}`}
+              className={`rounded-full bg-action text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${compactMobile ? `w-fit whitespace-nowrap px-4 py-2.5 ${restoreDesktopActions ? 'lg:w-full lg:px-6 lg:py-3' : ''}` : 'w-full px-6 py-3'}`}
             >
               {pwdSaving ? t('accountForm.password.updating') : t('accountForm.password.submit')}
             </button>

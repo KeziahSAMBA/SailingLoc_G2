@@ -255,7 +255,7 @@ function LocataireFavorites() {
                 aria-pressed={active}
                 className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                   active
-                    ? 'bg-action text-on-dark'
+                    ? 'bg-action text-action-text'
                     : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
                 }`}
               >

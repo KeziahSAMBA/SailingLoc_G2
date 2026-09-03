@@ -197,7 +197,7 @@ function CookieConsentBanner() {
           <button
             type="button"
             onClick={openPreferences}
-            className={`inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-field-border px-4 py-2.5 text-center text-sm font-semibold leading-tight text-content-muted transition hover:bg-page sm:px-6 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-field-border-strong px-4 py-2.5 text-center text-sm font-semibold leading-tight text-content-muted transition hover:bg-page sm:px-6 ${FOCUS_RING}`}
           >
             {t('cookieConsent.banner.customize')}
           </button>

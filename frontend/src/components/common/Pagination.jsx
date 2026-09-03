@@ -119,7 +119,7 @@ function Pagination({
               aria-label={t('pagination.page', { n: item })}
               className={`rounded-full font-medium transition ${pageSizeClass} ${FOCUS_RING} ${
                 item === page
-                  ? 'bg-action text-on-dark'
+                  ? 'bg-action text-action-text'
                   : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
               }`}
             >

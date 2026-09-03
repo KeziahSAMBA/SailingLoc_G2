@@ -57,7 +57,7 @@ function DateField({ label, displayValue, placeholder, onClick, light }) {
         {label}
       </span>
       <span
-        className={`text-xs whitespace-nowrap max-sm:block max-sm:max-w-full max-sm:truncate ${light ? (displayValue ? 'text-on-dark/80' : 'text-on-dark/50') : displayValue ? 'text-on-light/80' : 'text-on-light/50'}`}
+        className={`text-xs whitespace-nowrap max-sm:block max-sm:max-w-full max-sm:truncate ${light ? 'text-on-dark' : 'text-on-light'}`}
       >
         {displayValue || placeholder}
       </span>

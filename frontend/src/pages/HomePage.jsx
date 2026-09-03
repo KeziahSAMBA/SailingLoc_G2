@@ -142,22 +142,22 @@ function getSteps(t) {
 function getValueCards(t) {
   return [
     {
-      icon: <MdAnchor className="text-2xl text-action sm:text-3xl" />,
+      icon: <MdAnchor className="text-2xl text-brand-text sm:text-3xl" />,
       title: t('home.values.fleet.title'),
       text: t('home.values.fleet.text'),
     },
     {
-      icon: <FaShieldAlt className="text-2xl text-action sm:text-3xl" />,
+      icon: <FaShieldAlt className="text-2xl text-brand-text sm:text-3xl" />,
       title: t('home.values.payment.title'),
       text: t('home.values.payment.text'),
     },
     {
-      icon: <FaHandshake className="text-2xl text-action sm:text-3xl" />,
+      icon: <FaHandshake className="text-2xl text-brand-text sm:text-3xl" />,
       title: t('home.values.owners.title'),
       text: t('home.values.owners.text'),
     },
     {
-      icon: <MdVerified className="text-2xl text-action sm:text-3xl" />,
+      icon: <MdVerified className="text-2xl text-brand-text sm:text-3xl" />,
       title: t('home.values.support.title'),
       text: t('home.values.support.text'),
     },
@@ -653,7 +653,7 @@ function HomePage() {
           <section className="flex w-full flex-col items-center justify-center gap-0 bg-surface px-4 py-0 max-sm:min-h-[100svh] sm:px-8 sm:py-8 lg:px-16 xl:px-28">
             <div className="flex w-full max-w-7xl flex-col items-center py-0 sm:px-4 sm:py-8 lg:px-16 lg:py-10">
               <div className="text-center mb-4 sm:mb-10">
-                <p className="text-sm font-semibold tracking-widest text-action uppercase mb-6 underline underline-offset-4">
+                <p className="text-sm font-semibold tracking-widest text-brand-text uppercase mb-6 underline underline-offset-4">
                   {t('home.steps.kicker')}
                 </p>
                 <h2 className="text-lg font-semibold text-content sm:text-3xl md:text-4xl">
@@ -669,7 +669,7 @@ function HomePage() {
                   <Fragment key={num}>
                     <div className="flex flex-1 flex-col items-center px-2 text-center sm:px-4">
                       <div
-                        className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-action bg-surface text-sm font-semibold text-action sm:mb-4 sm:h-14 sm:w-14 sm:text-xl"
+                        className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-brand-text bg-surface text-sm font-semibold text-brand-text sm:mb-4 sm:h-14 sm:w-14 sm:text-xl"
                         style={{ boxShadow: '0 2px 8px rgba(14,165,233,0.3)' }}
                       >
                         {num}
@@ -678,7 +678,7 @@ function HomePage() {
                         className="font-semibold text-content flex items-center gap-1.5"
                         style={{ letterSpacing: '-0.01em' }}
                       >
-                        <span className="text-action">{icon}</span>
+                        <span className="text-brand-text">{icon}</span>
                         {title}
                       </h3>
                       <p className="text-sm text-content-muted leading-relaxed max-w-xs mt-2">
@@ -713,7 +713,7 @@ function HomePage() {
             className="flex w-full flex-col items-center justify-center gap-0 bg-surface px-4 py-0 max-sm:min-h-[100svh] scroll-mt-[40px] sm:scroll-mt-[130px] sm:px-8 sm:py-8 lg:px-16 xl:px-28"
           >
             <div className="text-center mb-10">
-              <p className="text-sm font-semibold tracking-widest text-action uppercase mb-6 underline underline-offset-4">
+              <p className="text-sm font-semibold tracking-widest text-brand-text uppercase mb-6 underline underline-offset-4">
                 {t('home.values.kicker')}
               </p>
               <h2 className="text-2xl font-semibold text-content sm:text-3xl md:text-4xl">

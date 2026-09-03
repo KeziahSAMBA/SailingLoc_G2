@@ -5,7 +5,7 @@ import PasswordField from '../components/auth/PasswordField.jsx';
 import bgImage from '../assets/image/paysage/crique.jpg';
 
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
 const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
@@ -92,7 +92,7 @@ function AdminLoginPage() {
           <div className="mb-6 text-center">
             <div
               aria-hidden="true"
-              className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-action text-on-dark shadow-lg"
+              className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-action text-action-text shadow-lg"
             >
               <svg
                 width="26"
@@ -175,7 +175,7 @@ function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={submitting || isBlocked}
-                className={`mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                className={`mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
               >
                 {isBlocked
                   ? `Réessayez dans ${formatCountdown(retryAfter)}`

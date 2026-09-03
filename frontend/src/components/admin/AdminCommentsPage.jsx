@@ -26,7 +26,7 @@ const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 const selectClass =
   'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand';
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand';
 
 function fmtDate(d) {
   return d ? formatDate(d, DATE_OPTS) : '—';
@@ -122,7 +122,7 @@ function EditReviewModal({ review, onClose, onSaved }) {
             <button
               type="submit"
               disabled={saving}
-              className="w-full rounded-full bg-action px-5 py-2 text-sm font-semibold text-on-dark shadow transition hover:bg-action/90 disabled:opacity-60 sm:w-auto"
+              className="w-full rounded-full bg-action px-5 py-2 text-sm font-semibold text-action-text shadow transition hover:bg-action/90 disabled:opacity-60 sm:w-auto"
             >
               {saving ? t('adminComments.saving') : t('adminComments.save')}
             </button>
@@ -211,7 +211,7 @@ function AdminCommentsPage() {
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       active
-        ? 'bg-action text-on-dark'
+        ? 'bg-action text-action-text'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
 

@@ -30,7 +30,7 @@ const DATE_OPTS = {
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-dark-strong';
 
-const FIELD_CLS = `w-full rounded-lg border border-glass/20 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/50 backdrop-blur-xl ${FOCUS_RING}`;
+const FIELD_CLS = `w-full rounded-lg border border-glass/20 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark backdrop-blur-xl ${FOCUS_RING}`;
 
 const ICON_BTN_CLS = `rounded-full bg-surface/10 p-2 text-on-dark/80 transition hover:bg-surface/20 hover:text-on-dark ${FOCUS_RING}`;
 
@@ -427,7 +427,9 @@ function AdminCronRunsPage() {
                 <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-on-dark/60">
                   {t('adminCronRuns.targetsLabel')}
                 </h3>
-                <p className="mt-1 text-xs text-on-dark/50">{t('adminCronRuns.targetsPrivacy')}</p>
+                <p className="mt-1 text-xs text-content-light">
+                  {t('adminCronRuns.targetsPrivacy')}
+                </p>
                 {selected.result.targets.length === 0 ? (
                   <p className="mt-2 text-sm text-on-dark/70">{t('adminCronRuns.targetsNone')}</p>
                 ) : (

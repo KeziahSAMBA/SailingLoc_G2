@@ -358,7 +358,7 @@ function FilterBar({
                   placeholder={t('filterBar.price.min')}
                   value={priceRange.min}
                   onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
-                  className="min-w-0 flex-1 rounded-lg border border-field-border bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
+                  className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
                 />
                 <span className="text-field-placeholder">–</span>
                 <input
@@ -367,7 +367,7 @@ function FilterBar({
                   placeholder={t('filterBar.price.max')}
                   value={priceRange.max}
                   onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
-                  className="min-w-0 flex-1 rounded-lg border border-field-border bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
+                  className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
                 />
               </div>
             </div>

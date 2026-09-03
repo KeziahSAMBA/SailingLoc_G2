@@ -7,7 +7,7 @@ const INPUT_CLASSES = {
     'w-full rounded-lg border border-content-soft bg-surface px-4 py-2.5 pr-11 text-content placeholder-content-subtle outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20',
   dark: 'w-full rounded-lg border border-dark-muted bg-dark-surface px-4 py-2.5 pr-11 text-content-bright placeholder-neutral outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20',
   glass:
-    'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 pr-11 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20',
+    'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 pr-11 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20',
 };
 
 const TOGGLE_CLASSES = {

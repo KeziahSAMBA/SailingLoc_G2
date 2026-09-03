@@ -25,7 +25,7 @@ const DATE_OPTS = {
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-dark-strong';
 
-const FIELD_CLS = `w-full rounded-lg border border-glass/20 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/50 backdrop-blur-xl ${FOCUS_RING}`;
+const FIELD_CLS = `w-full rounded-lg border border-glass/20 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark backdrop-blur-xl ${FOCUS_RING}`;
 
 const ICON_BTN_CLS = `rounded-full bg-surface/10 p-2 text-on-dark/80 transition hover:bg-surface/20 hover:text-on-dark ${FOCUS_RING}`;
 
@@ -495,7 +495,7 @@ function AdminLogsPage() {
               <button
                 type="button"
                 onClick={() => downloadLog(selected)}
-                className={`flex items-center gap-2 rounded-full bg-action px-4 py-1.5 text-sm font-semibold text-on-dark transition hover:bg-action-bright ${FOCUS_RING}`}
+                className={`flex items-center gap-2 rounded-full bg-action px-4 py-1.5 text-sm font-semibold text-action-text transition hover:bg-action-bright ${FOCUS_RING}`}
               >
                 <MdDownload aria-hidden="true" className="h-4 w-4" />
                 {t('adminLogs.download')}

@@ -144,7 +144,7 @@ function ReviewForm({ idBooking, review, onDone, onCancel, style, className = ''
         onChange={(e) => setComment(e.target.value)}
         maxLength={1000}
         placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
-        className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
+        className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
       />
       {error && (
         <p role="alert" className="mt-1 text-xs text-danger">
@@ -165,7 +165,7 @@ function ReviewForm({ idBooking, review, onDone, onCancel, style, className = ''
         <button
           type="submit"
           disabled={busy}
-          className={`shrink-0 rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+          className={`shrink-0 rounded-full bg-action px-4 py-1.5 text-xs font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
         >
           {busy
             ? t('proprietaireReviews.sending')
@@ -366,7 +366,7 @@ export default function BoatReviews({
                           />
                         )}
                       </span>
-                      <span className="text-xs text-on-dark/50">
+                      <span className="text-xs text-content-light">
                         {formatDate(r.created_at, DATE_OPTS)}
                       </span>
                     </div>

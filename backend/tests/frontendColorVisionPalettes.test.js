@@ -42,7 +42,9 @@ const STRUCTURAL = [
   'content-subtle',
   'border-light',
   'field-border',
+  'field-border-strong',
   'field-placeholder',
+  'field-placeholder-strong',
   'home-sea',
   'home-tint',
   'neutral',
@@ -78,6 +80,7 @@ const SEMANTIC = [
   'neutral-text',
   'map-available',
   'map-unavailable',
+  'map-unavailable-strong',
   'chart-primary',
   'chart-hover',
   'chart-violet',
@@ -189,6 +192,12 @@ describe('palettes complètes des profils daltoniens', () => {
           4.5
         );
         expect(contrast(rgb(token(source, 'field-border')), surface)).toBeGreaterThanOrEqual(3);
+        expect(
+          contrast(rgb(token(source, 'field-placeholder-strong')), surface)
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(rgb(token(source, 'field-border-strong')), surface)).toBeGreaterThanOrEqual(
+          3
+        );
         expect(
           contrast(rgb(token(source, 'action-text')), rgb(token(source, 'action')))
         ).toBeGreaterThanOrEqual(4.5);

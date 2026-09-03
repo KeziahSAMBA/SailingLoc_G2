@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 // Navy — couleur "sérieuse" de la marque (déjà utilisée pour le header scrollé et le
 // fil d'ariane), plus lisible sur les tuiles claires que le sky ou le blanc.
 const PIN_COLOR_AVAILABLE = 'rgb(var(--sl-map-available))';
-const PIN_COLOR_UNAVAILABLE = 'rgb(var(--sl-map-unavailable))';
+const PIN_COLOR_UNAVAILABLE = 'rgb(var(--sl-map-unavailable-strong))';
 
 function escapeHtml(str) {
   return String(str).replace(

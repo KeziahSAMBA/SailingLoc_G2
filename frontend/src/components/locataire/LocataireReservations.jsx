@@ -357,7 +357,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'refund')}
-                  className={`rounded-full bg-action px-3 py-1 text-xs font-semibold text-on-dark transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full bg-action px-3 py-1 text-xs font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('locataireReservations.actions.refund')}
                 </button>
@@ -596,7 +596,7 @@ function LocataireReservations() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-action text-on-dark'
+                  ? 'bg-action text-action-text'
                   : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
               }`}
             >
@@ -729,13 +729,13 @@ function LocataireReservations() {
                   setReviewError('');
                 }}
                 placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
-                className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
+                className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
               />
               <div className="mt-1 flex items-start justify-between gap-3">
-                <p className="text-xs text-on-dark/50">
+                <p className="text-xs text-content-light">
                   {t('locataireReservations.reviewModal.moderationHint')}
                 </p>
-                <span className="shrink-0 text-xs text-on-dark/50">
+                <span className="shrink-0 text-xs text-content-light">
                   {reviewComment.length}/1000
                 </span>
               </div>
@@ -822,7 +822,7 @@ function LocataireReservations() {
                 autoFocus
                 aria-describedby="locataire-decision-hint"
                 aria-invalid={reasonError ? true : undefined}
-                className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
+                className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
               />
               {reasonError && (
                 <p role="alert" className="mt-1 text-xs text-danger-bright">
@@ -898,10 +898,10 @@ function LocataireReservations() {
                 <button
                   type="submit"
                   disabled={deciding}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold text-on-dark transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING} ${
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING} ${
                     decision.action === 'cancel'
-                      ? 'bg-danger/80 hover:bg-danger-base'
-                      : 'bg-action hover:bg-action-hover'
+                      ? 'bg-danger/80 text-on-dark hover:bg-danger-base'
+                      : 'bg-action text-action-text hover:bg-action-hover'
                   }`}
                 >
                   {deciding

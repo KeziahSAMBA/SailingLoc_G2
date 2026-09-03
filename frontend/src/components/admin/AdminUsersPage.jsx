@@ -18,7 +18,7 @@ const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 const selectClass =
   'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand';
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand';
 const labelClass = 'mb-1 block text-xs font-medium text-on-dark/70';
 
 function EditUserModal({ user, onClose, onSaved }) {
@@ -161,7 +161,7 @@ function EditUserModal({ user, onClose, onSaved }) {
             <button
               type="submit"
               disabled={saving}
-              className="w-full rounded-full bg-action px-5 py-2 text-sm font-semibold text-on-dark shadow transition hover:bg-action/90 disabled:opacity-60 sm:w-auto"
+              className="w-full rounded-full bg-action px-5 py-2 text-sm font-semibold text-action-text shadow transition hover:bg-action/90 disabled:opacity-60 sm:w-auto"
             >
               {saving ? t('adminUsers.saving') : t('adminUsers.save')}
             </button>
@@ -271,7 +271,7 @@ function AdminUsersPage() {
         <h1 className="text-2xl font-bold text-on-dark">{t('adminUsers.title')}</h1>
         <Link
           to="/admin/users/new"
-          className="rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-on-dark shadow transition hover:bg-action/90"
+          className="rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-action-text shadow transition hover:bg-action/90"
         >
           {t('adminUsers.addAccount')}
         </Link>
@@ -336,7 +336,7 @@ function AdminUsersPage() {
               onClick={() => toggleSort(field)}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
                 sort === field
-                  ? 'bg-action text-on-dark'
+                  ? 'bg-action text-action-text'
                   : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
               }`}
             >

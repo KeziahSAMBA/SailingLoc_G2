@@ -270,7 +270,7 @@ function DocumentRow({
           type="button"
           onClick={handleUpload}
           disabled={busy || !file}
-          className={`rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-on-dark shadow transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-action-text shadow transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${
             stackFilePickerOnMobile ? 'w-fit self-start whitespace-nowrap sm:self-auto' : ''
           }`}
         >

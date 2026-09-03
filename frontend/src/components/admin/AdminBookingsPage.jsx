@@ -249,13 +249,13 @@ function AdminBookingsPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-action text-on-dark'
+        ? 'bg-action text-action-text'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       active
-        ? 'bg-action text-on-dark'
+        ? 'bg-action text-action-text'
         : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const badge = (cls) =>
@@ -722,7 +722,7 @@ function AdminBookingsPage() {
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
               placeholder={t('adminBookings.decisionPlaceholder')}
-              className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-brand"
+              className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
             />
 
             {decision.status === 'resolved' &&

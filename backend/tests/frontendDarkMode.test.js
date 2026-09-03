@@ -139,8 +139,44 @@ describe('pages publiques et composants partages', () => {
     expect(home).toContain('var(--sl-home-tint)');
     expect(toast).toContain('bg-success-surface text-success-text');
     expect(toast).toContain('bg-danger-surface text-danger-text');
-    expect(cookie).toContain('border-field-border');
+    expect(cookie).toContain('border-field-border-strong');
     expect(cookie).toContain('text-content-muted');
+  });
+
+  it('utilise des tokens lisibles pour les actions, champs et textes informatifs', () => {
+    const css = source('frontend/src/index.css');
+    const root = css.match(/:root\s*\{([\s\S]*?)\n\}/u)?.[1] ?? '';
+    const dark = darkThemeBlock(css);
+    expect(tokenValue(root, '--sl-field-border-strong')).toBe('100 116 139');
+    expect(tokenValue(root, '--sl-field-placeholder-strong')).toBe('71 85 105');
+    expect(tokenValue(dark, '--sl-field-border-strong')).toBe('148 163 184');
+    expect(tokenValue(dark, '--sl-field-placeholder-strong')).toBe('203 213 225');
+
+    const sourceFiles = [
+      'frontend/src/components/common/Button.jsx',
+      'frontend/src/components/common/GhostButton.jsx',
+      'frontend/src/components/common/SearchBar.jsx',
+      'frontend/src/components/common/FilterBar.jsx',
+      'frontend/src/components/common/CookieConsentBanner.jsx',
+      'frontend/src/components/common/MapView.jsx',
+      'frontend/src/components/proprietaire/ProprietaireRevenus.jsx',
+      'frontend/src/components/locataire/LocataireLayout.jsx',
+      'frontend/src/components/proprietaire/ProprietaireLayout.jsx',
+      'frontend/src/components/admin/AdminLayout.jsx',
+    ].map((relativePath) => source(relativePath));
+    for (const text of sourceFiles) {
+      expect(text).not.toMatch(/\bbg-action\s+text-on-dark\b/u);
+      expect(text).not.toMatch(/placeholder-on-dark\/(?:40|45|50)|placeholder-black\/50/u);
+    }
+    expect(source('frontend/src/components/common/FilterBar.jsx')).toContain(
+      'border-field-border-strong'
+    );
+    expect(source('frontend/src/components/common/MapView.jsx')).toContain(
+      '--sl-map-unavailable-strong'
+    );
+    expect(source('frontend/src/components/proprietaire/ProprietaireRevenus.jsx')).not.toMatch(
+      /fill-on-dark\/(?:50|60)/u
+    );
   });
 });
 

@@ -5,7 +5,7 @@ import PasswordField from './PasswordField.jsx';
 import { loadReservationResume } from '../../utils/reservationResume.js';
 
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
 const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 
 function formatCountdown(seconds) {
@@ -171,7 +171,7 @@ function LoginForm({ onSwitchToRegister }) {
         <button
           type="submit"
           disabled={loading || isBlocked}
-          className="mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isBlocked
             ? `Réessayez dans ${formatCountdown(retryAfter)}`

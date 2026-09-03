@@ -6,7 +6,7 @@ import bgImage from '../assets/image/paysage/crique.jpg';
 
 const FOCUS_RING =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
-const buttonClass = `mt-6 inline-block w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-action-hover ${FOCUS_RING}`;
+const buttonClass = `mt-6 inline-block w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover ${FOCUS_RING}`;
 
 function VerifyEmailPage() {
   const [searchParams] = useSearchParams();

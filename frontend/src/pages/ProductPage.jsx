@@ -973,7 +973,7 @@ function ProductPage() {
                   aria-label={
                     mobileSearchExpanded ? t('cookieConsent.prefs.close') : t('searchBar.search')
                   }
-                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-action-deep bg-action-hover text-on-dark shadow-lg transition-colors hover:bg-brand-navy md:hidden"
+                  className="ml-auto flex min-h-10 min-w-10 flex-none items-center justify-center rounded-full border border-action-deep bg-action-hover text-action-text shadow-lg transition-colors hover:bg-brand-navy md:hidden"
                 >
                   {mobileSearchExpanded ? (
                     <MdClose className="text-lg" aria-hidden="true" />
@@ -1339,10 +1339,12 @@ function ProductPage() {
                         setReviewError('');
                       }}
                       placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
-                      className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark/40 outline-none focus:border-action-bright"
+                      className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-action-bright"
                     />
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-on-dark/50">{reviewComment.length}/1000</span>
+                      <span className="text-xs text-content-light">
+                        {reviewComment.length}/1000
+                      </span>
                       <button
                         type="submit"
                         disabled={reviewSaving}
