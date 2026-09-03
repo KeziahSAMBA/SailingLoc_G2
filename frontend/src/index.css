@@ -377,12 +377,14 @@ html[data-sailingloc-theme='light'][data-sailingloc-color-vision='protanopia'] {
   --sl-map-unavailable-strong: 100 116 139;
   --sl-chart-primary: 0 114 178;
   --sl-chart-hover: 0 90 141;
-  --sl-chart-violet: 95 61 140;
-  --sl-chart-1: 0 114 178;
-  --sl-chart-2: 163 79 0;
-  --sl-chart-3: 143 36 95;
-  --sl-chart-4: 0 122 94;
-  --sl-chart-5: 95 61 140;
+  /* Couleurs de graphiques lisibles à la fois sur la page claire et sur
+     les surfaces de tableau de bord assombries (contraste UI >= 3:1). */
+  --sl-chart-violet: 214 31 214;
+  --sl-chart-1: 32 128 223;
+  --sl-chart-2: 187 107 27;
+  --sl-chart-3: 214 31 214;
+  --sl-chart-4: 22 156 22;
+  --sl-chart-5: 22 156 156;
   --sl-calendar-border: 226 235 240;
   --sl-calendar-title: 15 42 55;
   --sl-calendar-muted: 58 80 92;
@@ -568,12 +570,14 @@ html[data-sailingloc-theme='light'][data-sailingloc-color-vision='deuteranopia']
   --sl-map-unavailable-strong: 100 116 139;
   --sl-chart-primary: 0 114 178;
   --sl-chart-hover: 0 90 141;
-  --sl-chart-violet: 95 61 140;
-  --sl-chart-1: 0 114 178;
-  --sl-chart-2: 163 79 0;
-  --sl-chart-3: 143 36 95;
-  --sl-chart-4: 0 122 94;
-  --sl-chart-5: 95 61 140;
+  /* Palette catégorielle renforcée : chaque série reste visible sur la
+     surface claire et sur le fond sombre des graphiques. */
+  --sl-chart-violet: 168 31 214;
+  --sl-chart-1: 31 122 214;
+  --sl-chart-2: 201 115 29;
+  --sl-chart-3: 214 31 168;
+  --sl-chart-4: 24 133 170;
+  --sl-chart-5: 168 31 214;
   --sl-calendar-border: 226 222 235;
   --sl-calendar-title: 30 18 50;
   --sl-calendar-muted: 78 61 98;
@@ -758,12 +762,14 @@ html[data-sailingloc-theme='light'][data-sailingloc-color-vision='tritanopia'] {
   --sl-map-unavailable-strong: 100 116 139;
   --sl-chart-primary: 0 122 94;
   --sl-chart-hover: 0 92 70;
-  --sl-chart-violet: 95 61 140;
-  --sl-chart-1: 0 114 178;
-  --sl-chart-2: 163 79 0;
-  --sl-chart-3: 143 36 95;
-  --sl-chart-4: 0 122 94;
-  --sl-chart-5: 95 61 140;
+  /* Vert, turquoise et rose sont associés à des teintes distinctes ; les
+     valeurs sont assez soutenues pour les surfaces photo assombries. */
+  --sl-chart-violet: 175 32 223;
+  --sl-chart-1: 22 156 89;
+  --sl-chart-2: 24 133 170;
+  --sl-chart-3: 214 31 168;
+  --sl-chart-4: 214 31 31;
+  --sl-chart-5: 175 32 223;
   --sl-calendar-border: 231 222 211;
   --sl-calendar-title: 54 27 12;
   --sl-calendar-muted: 99 70 45;

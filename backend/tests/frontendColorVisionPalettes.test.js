@@ -218,6 +218,18 @@ describe('palettes complètes des profils daltoniens', () => {
             Math.min(...group.map((key) => contrast(rgb(token(source, key)), page)))
           ).toBeGreaterThanOrEqual(3);
         }
+        // Les graphiques sont rendus dans les tableaux de bord sur une
+        // surface assombrie (et non directement sur le fond de la page).
+        // Contrôler ce contexte évite notamment un violet peu visible sur
+        // un fond bleu sombre dans les profils daltoniens clairs.
+        const darkSurface = rgb(token(source, 'dark-surface'));
+        expect(
+          Math.min(
+            ...['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5'].map((key) =>
+              contrast(rgb(token(source, key)), darkSurface)
+            )
+          )
+        ).toBeGreaterThanOrEqual(3);
         expect(
           contrast(
             rgb(token(source, 'calendar-available-text')),
