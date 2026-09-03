@@ -23,7 +23,7 @@ const inputClass =
 const readonlyClass =
   'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark/60 cursor-not-allowed';
 const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
-const errorClass = 'mt-1 block text-xs text-red-400';
+const errorClass = 'mt-1 block text-xs text-danger-bright';
 
 const EMPTY_PASSWORD_FORM = {
   currentPassword: '',
@@ -277,7 +277,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                   aria-controls="locataire-avatar-actions-menu"
                   onClick={() => setAvatarMenuOpen((open) => !open)}
                   disabled={avatarBusy}
-                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-glass/50 bg-action text-on-dark shadow-lg transition hover:bg-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
+                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-glass/50 bg-action text-on-dark shadow-lg transition hover:bg-action-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-soft focus-visible:ring-offset-2 focus-visible:ring-offset-dark-surface disabled:cursor-not-allowed disabled:opacity-50 lg:hidden"
                 >
                   <MdEdit aria-hidden="true" className="h-4 w-4" />
                 </button>
@@ -294,7 +294,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                     id="locataire-avatar-actions-menu"
                     role="menu"
                     aria-label={t('accountForm.avatar.manage')}
-                    className="absolute left-0 top-full z-30 mt-2 w-48 overflow-hidden rounded-xl border border-glass/20 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden"
+                    className="absolute left-0 top-full z-30 mt-2 w-48 overflow-hidden rounded-xl border border-glass/20 bg-dark-surface/95 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden"
                   >
                     <button
                       type="button"
@@ -304,7 +304,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                         avatarFileInputRef.current?.click();
                       }}
                       disabled={avatarBusy}
-                      className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50"
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright disabled:opacity-50"
                     >
                       {avatarBusy
                         ? t('accountForm.avatar.sending')
@@ -319,7 +319,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                           handleAvatarDelete();
                         }}
                         disabled={avatarBusy}
-                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-300 transition hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"
+                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-danger-soft transition hover:bg-danger-base/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-bright disabled:opacity-50"
                       >
                         {t('accountForm.avatar.remove')}
                       </button>
@@ -358,7 +358,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
                   type="button"
                   onClick={handleAvatarDelete}
                   disabled={avatarBusy}
-                  className="rounded-full border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 disabled:opacity-50"
+                  className="rounded-full border border-danger-base/40 px-4 py-2 text-sm font-semibold text-danger-soft transition hover:bg-danger-base/10 disabled:opacity-50"
                 >
                   {t('accountForm.avatar.remove')}
                 </button>
@@ -375,7 +375,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
         {serverError && (
           <div
             role="alert"
-            className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+            className="status-indicator status-indicator--danger mb-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
           >
             {serverError}
           </div>
@@ -503,7 +503,7 @@ function AccountForm({ compactMobile = false, restoreDesktopActions = false }) {
         {pwdServerError && (
           <div
             role="alert"
-            className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+            className="status-indicator status-indicator--danger mb-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
           >
             {pwdServerError}
           </div>

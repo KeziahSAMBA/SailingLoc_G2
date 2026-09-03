@@ -114,6 +114,9 @@
   --sl-dark-elevated: 30 41 59;
   --sl-dark-muted: 51 65 85;
   --sl-dark-strong: 2 6 23;
+  --sl-content-bright: 241 245 249;
+  --sl-content-light: 226 232 240;
+  --sl-content-media: 209 213 219;
   --sl-content-soft: 203 213 225;
   --sl-content-subtle: 148 163 184;
   --sl-border-light: 226 232 240;
@@ -203,6 +206,9 @@ html[data-sailingloc-theme='dark'] {
   --sl-dark-elevated: 30 41 59;
   --sl-dark-muted: 51 65 85;
   --sl-dark-strong: 2 6 23;
+  --sl-content-bright: 241 245 249;
+  --sl-content-light: 226 232 240;
+  --sl-content-media: 209 213 219;
   --sl-content-soft: 203 213 225;
   --sl-content-subtle: 148 163 184;
   --sl-border-light: 100 116 139;

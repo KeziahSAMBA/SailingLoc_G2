@@ -41,7 +41,7 @@ function VerifyEmailPage() {
       className="min-h-screen w-full bg-cover bg-fixed bg-center text-on-dark"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
+      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-dark-strong/90 via-dark-strong/75 to-dark-strong/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
         <section aria-labelledby="verify-title" aria-live="polite" className="w-full max-w-md">
           <article className="rounded-2xl border border-glass/20 bg-surface/10 p-8 text-center shadow-2xl backdrop-blur-xl">
             {status === 'loading' && (
@@ -64,7 +64,7 @@ function VerifyEmailPage() {
               <>
                 <div
                   aria-hidden="true"
-                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-action/20 text-sky-300 ring-2 ring-sky-400"
+                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-action/20 text-action-soft ring-2 ring-action-bright"
                 >
                   <MdCheck size={30} />
                 </div>
@@ -82,7 +82,7 @@ function VerifyEmailPage() {
               <>
                 <div
                   aria-hidden="true"
-                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15 text-red-300 ring-2 ring-red-400"
+                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-danger-base/15 text-danger-soft ring-2 ring-danger-bright"
                 >
                   <MdClose size={30} />
                 </div>

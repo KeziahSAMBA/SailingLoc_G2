@@ -114,7 +114,7 @@ function ResetPasswordPage() {
       className="min-h-screen w-full bg-cover bg-fixed bg-center text-on-dark"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
+      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-dark-strong/90 via-dark-strong/75 to-dark-strong/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
         <section aria-labelledby="reset-title" className="w-full max-w-md">
           <article className="rounded-2xl border border-glass/20 bg-surface/10 p-8 shadow-2xl backdrop-blur-xl">
             <header className="mb-6 text-center">
@@ -144,7 +144,7 @@ function ResetPasswordPage() {
             ) : tokenStatus === 'invalid' ? (
               <div
                 role="alert"
-                className="status-indicator status-indicator--danger rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                className="status-indicator status-indicator--danger rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-3 text-sm text-danger-soft"
               >
                 Ce lien de réinitialisation est invalide, expiré ou déjà utilisé. Demandez un
                 nouveau lien depuis la page{' '}
@@ -161,11 +161,11 @@ function ResetPasswordPage() {
                 {serverError && (
                   <div
                     role="alert"
-                    className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+                    className="status-indicator status-indicator--danger mb-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
                   >
                     {serverError}
                     {isBlocked && (
-                      <span className="mt-1 block font-mono text-xs text-red-200">
+                      <span className="mt-1 block font-mono text-xs text-danger-pale">
                         Nouvelle tentative possible dans{' '}
                         <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
                       </span>
@@ -193,7 +193,7 @@ function ResetPasswordPage() {
                       12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
                     </small>
                     {errors.password && (
-                      <span id="reset-error" className="mt-1 block text-xs text-red-300">
+                      <span id="reset-error" className="mt-1 block text-xs text-danger-soft">
                         {errors.password}
                       </span>
                     )}
@@ -214,7 +214,7 @@ function ResetPasswordPage() {
                       ariaInvalid={Boolean(errors.confirmPassword)}
                     />
                     {errors.confirmPassword && (
-                      <span className="mt-1 block text-xs text-red-300">
+                      <span className="mt-1 block text-xs text-danger-soft">
                         {errors.confirmPassword}
                       </span>
                     )}

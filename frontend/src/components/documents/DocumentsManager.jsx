@@ -60,15 +60,15 @@ function getStatus(t) {
   return {
     pending: {
       label: t('documentsManager.status.pending'),
-      cls: 'status-indicator status-indicator--warning bg-amber-500/15 text-amber-300',
+      cls: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
     },
     validated: {
       label: t('documentsManager.status.validated'),
-      cls: 'status-indicator status-indicator--success bg-emerald-500/15 text-emerald-300',
+      cls: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
     },
     refused: {
       label: t('documentsManager.status.refused'),
-      cls: 'status-indicator status-indicator--danger bg-red-500/15 text-red-300',
+      cls: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
     },
   };
 }
@@ -141,7 +141,7 @@ function DocumentRow({
     ? hasDocs
       ? {
           label: t('documentsManager.filesCount', { count: docs.length }),
-          cls: 'status-indicator status-indicator--neutral bg-page0/15 text-on-dark/80',
+          cls: 'status-indicator status-indicator--neutral bg-page/15 text-on-dark/80',
         }
       : null
     : hasDocs
@@ -200,7 +200,7 @@ function DocumentRow({
               type="button"
               onClick={() => handleDelete(doc)}
               disabled={busy}
-              className={`${keepDocumentActionsTogether ? '' : 'ml-auto '}text-xs font-semibold text-red-300 hover:underline disabled:opacity-50`}
+              className={`${keepDocumentActionsTogether ? '' : 'ml-auto '}text-xs font-semibold text-danger-soft hover:underline disabled:opacity-50`}
             >
               {t('documentsManager.delete')}
             </button>
@@ -286,7 +286,7 @@ function DocumentRow({
 
       <p className="mt-2 text-xs text-on-dark/70">{t('documentsManager.acceptedFormats')}</p>
 
-      {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
+      {error && <p className="mt-2 text-xs text-danger-soft">{error}</p>}
     </article>
   );
 }

@@ -77,10 +77,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 
 // Même palette de statuts que ProprietaireBoats.jsx / ProprietaireDashboard.jsx.
 const BOAT_STATUS_CLS = {
-  draft: 'status-indicator status-indicator--neutral bg-page0/15 text-on-dark/80',
-  pending: 'status-indicator status-indicator--warning bg-amber-500/15 text-amber-300',
-  published: 'status-indicator status-indicator--success bg-emerald-500/15 text-emerald-300',
-  refused: 'status-indicator status-indicator--danger bg-red-500/15 text-red-300',
+  draft: 'status-indicator status-indicator--neutral bg-page/15 text-on-dark/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  published: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
@@ -90,7 +90,7 @@ const FOCUS_RING =
 function OwnerBoatCard({ boat, t }) {
   const statusCls =
     BOAT_STATUS_CLS[boat.status] ||
-    'status-indicator status-indicator--neutral bg-page0/15 text-on-dark/80';
+    'status-indicator status-indicator--neutral bg-page/15 text-on-dark/80';
   return (
     <Link
       to={`/proprietaire/bateaux/${boat.id_boat}/modifier`}
@@ -281,7 +281,7 @@ function HomePageProprio() {
               alt="SailingLoc"
               className="mx-auto mb-3 h-9 max-w-[70vw] object-contain sm:h-11 lg:h-12"
             />
-            <p className="mx-auto max-w-2xl px-2 text-sm leading-relaxed text-gray-300 sm:text-base lg:text-lg">
+            <p className="mx-auto max-w-2xl px-2 text-sm leading-relaxed text-content-media sm:text-base lg:text-lg">
               {t('homeProprio.hero.tagline')}
             </p>
           </div>

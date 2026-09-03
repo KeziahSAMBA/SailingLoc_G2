@@ -17,6 +17,21 @@ const privateRoots = [
   'src/components/proprietaire',
   'src/components/admin',
 ];
+const authenticatedRoots = [
+  'src/components/auth',
+  'src/components/account',
+  'src/components/documents',
+  'src/components/messages',
+];
+const privatePageFiles = [
+  'src/pages/AdminCreateUserPage.jsx',
+  'src/pages/AdminLoginPage.jsx',
+  'src/pages/ForgotPasswordPage.jsx',
+  'src/pages/MyDocumentsPage.jsx',
+  'src/pages/ResetPasswordPage.jsx',
+  'src/pages/VerifyEmailPage.jsx',
+  'src/pages/HomePageProprio.jsx',
+];
 const assetAllowlist = new Set(['FlagIcons.jsx']);
 const allowedRaw = new Set(
   JSON.parse(
@@ -65,6 +80,9 @@ test('les tokens privés conservent les teintes historiques du thème clair', ()
     '--sl-action-deep: 3 105 161',
     '--sl-dark-muted: 51 65 85',
     '--sl-dark-strong: 2 6 23',
+    '--sl-content-bright: 241 245 249',
+    '--sl-content-light: 226 232 240',
+    '--sl-content-media: 209 213 219',
     '--sl-content-soft: 203 213 225',
     '--sl-content-subtle: 148 163 184',
     '--sl-success-base: 16 185 129',
@@ -105,7 +123,11 @@ test('les espaces privés n’utilisent que les tokens de couleur déclarés', (
   const privateColorPattern =
     /\b(?:text|bg|border|ring|from|via|to|divide|placeholder|fill|stroke|decoration|accent|shadow)-(?:slate|gray|zinc|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(?:-\d+)?(?:\/\d+)?|\b(?:text|bg|border|ring|from|via|to|divide|placeholder|fill|stroke|decoration|accent|shadow)-\[#(?:[0-9a-f]{3,8})\]/gi;
 
-  for (const relative of privateRoots.flatMap(filesBelow)) {
+  for (const relative of [
+    ...privateRoots.flatMap(filesBelow),
+    ...authenticatedRoots.flatMap(filesBelow),
+    ...privatePageFiles,
+  ]) {
     const source = readFileSync(path.join(root, relative), 'utf8');
     const rawColors = (source.match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/gi) || []).filter(
       (color) => !color.toLowerCase().includes('var(')

@@ -21,7 +21,7 @@ const TIME_OPTS = {
 };
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-dark-strong';
 
 function fmtTime(value) {
   return formatDate(value, TIME_OPTS);
@@ -279,7 +279,7 @@ function Messenger({
           ← {t('messenger.conversations')}
           {totalUnread > 0 && (
             <span
-              className={`rounded-full bg-brand px-1.5 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+              className={`rounded-full bg-brand px-1.5 py-0.5 font-bold text-dark-strong ${microTextClass}`}
             >
               {totalUnread}
             </span>
@@ -306,7 +306,7 @@ function Messenger({
           <span className="flex shrink-0 items-center gap-2">
             {totalUnread > 0 && (
               <span
-                className={`rounded-full bg-brand px-2 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+                className={`rounded-full bg-brand px-2 py-0.5 font-bold text-dark-strong ${microTextClass}`}
               >
                 {totalUnread}
               </span>
@@ -353,7 +353,7 @@ function Messenger({
           <p className="px-4 py-6 text-sm text-on-dark/70">{t('messenger.noConversations')}</p>
         ) : (
           <ul
-            className={`max-h-[60vh] divide-y divide-white/15 overflow-y-auto ${
+            className={`max-h-[60vh] divide-y divide-glass/15 overflow-y-auto ${
               tabletConversationDropdown ? 'min-h-0 md:max-h-80' : ''
             } lg:max-h-none lg:flex-1`}
           >
@@ -393,7 +393,7 @@ function Messenger({
                       </span>
                       {c.unread > 0 && (
                         <span
-                          className={`shrink-0 rounded-full bg-brand px-1.5 py-0.5 font-bold text-slate-950 ${microTextClass}`}
+                          className={`shrink-0 rounded-full bg-brand px-1.5 py-0.5 font-bold text-dark-strong ${microTextClass}`}
                         >
                           {c.unread}
                         </span>
@@ -435,7 +435,7 @@ function Messenger({
                   type="button"
                   onClick={handleResolve}
                   disabled={resolving}
-                  className={`shrink-0 rounded-full border border-emerald-500/40 px-4 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`shrink-0 rounded-full border border-success-base/40 px-4 py-1.5 text-xs font-semibold text-success-soft transition hover:bg-success-base/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {resolving ? t('messenger.resolving') : t('messenger.markResolved')}
                 </button>
@@ -452,7 +452,7 @@ function Messenger({
                   m.type === 'support_resolved' ? (
                     /* Marqueur système : la demande a été clôturée. */
                     <div key={m.id_message} className="flex justify-center py-1">
-                      <p className="rounded-full bg-emerald-500/10 px-4 py-1 text-center text-xs italic text-emerald-300">
+                      <p className="rounded-full bg-success-base/10 px-4 py-1 text-center text-xs italic text-success-soft">
                         {t('messenger.resolvedMarker', { time: fmtTime(m.sent_at) })}
                       </p>
                     </div>
@@ -561,7 +561,7 @@ function Messenger({
                                   type="button"
                                   role="menuitem"
                                   onClick={() => handleDelete(m.id_message, 'all')}
-                                  className="block w-full px-3 py-2 text-left text-red-300 transition hover:bg-surface/10"
+                                  className="block w-full px-3 py-2 text-left text-danger-soft transition hover:bg-surface/10"
                                 >
                                   {confirmKey === `${m.id_message}:all`
                                     ? t('messenger.confirmDelete')

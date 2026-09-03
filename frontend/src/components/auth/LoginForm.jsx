@@ -87,11 +87,11 @@ function LoginForm({ onSwitchToRegister }) {
       {serverError && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-red-300 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="mb-4 rounded-lg border border-danger-soft bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {serverError}
           {isBlocked && (
-            <span className="mt-1 block font-mono text-xs text-red-300">
+            <span className="mt-1 block font-mono text-xs text-danger-soft">
               Nouvelle tentative possible dans{' '}
               <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
             </span>

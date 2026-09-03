@@ -13,7 +13,7 @@ const ROLES = [
 const inputClass =
   'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
 const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
-const errorClass = 'mt-1 block text-xs text-red-400';
+const errorClass = 'mt-1 block text-xs text-danger-bright';
 const requiredMark = (
   <span aria-hidden="true" className="ml-0.5 text-brand">
     *
@@ -96,7 +96,7 @@ function AdminCreateUserPage() {
         {success && (
           <div
             role="status"
-            className="status-indicator status-indicator--success mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
+            className="status-indicator status-indicator--success mb-4 rounded-lg border border-success-base/40 bg-success-base/10 px-4 py-3 text-sm text-success-soft"
           >
             Compte créé pour <span className="font-semibold">{success.email}</span> ({success.role}
             ). Un email vient de lui être envoyé pour définir son mot de passe.
@@ -106,7 +106,7 @@ function AdminCreateUserPage() {
         {serverError && (
           <div
             role="alert"
-            className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+            className="status-indicator status-indicator--danger mb-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
           >
             {serverError}
           </div>

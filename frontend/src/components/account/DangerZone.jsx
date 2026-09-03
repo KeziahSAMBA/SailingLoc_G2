@@ -9,7 +9,7 @@ import PasswordField from '../auth/PasswordField.jsx';
 const inputClass =
   'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
 const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
-const errorClass = 'mt-1 block text-xs text-red-400';
+const errorClass = 'mt-1 block text-xs text-danger-bright';
 
 function DangerZone() {
   const { t } = useTranslation();
@@ -116,7 +116,7 @@ function DangerZone() {
 
   return (
     <>
-      <article className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/5 backdrop-blur-xl p-8 shadow-xl">
+      <article className="mt-6 rounded-2xl border border-danger-base/30 bg-danger-base/5 backdrop-blur-xl p-8 shadow-xl">
         <h2 className="mb-1 text-lg font-semibold text-on-dark">
           {t('accountForm.dangerZone.title')}
         </h2>
@@ -125,7 +125,7 @@ function DangerZone() {
         {blocked && (
           <div
             role="alert"
-            className="status-indicator status-indicator--warning mb-5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200"
+            className="status-indicator status-indicator--warning mb-5 rounded-lg border border-warning-bright/40 bg-warning-bright/10 px-4 py-3 text-sm text-warning-pale"
           >
             <p className="font-semibold">{t('accountForm.dangerZone.blocked.title')}</p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -163,7 +163,7 @@ function DangerZone() {
               type="button"
               onClick={(event) => openDialog('deactivate', event)}
               disabled={blocked}
-              className="mt-auto w-full rounded-full border border-amber-300/50 px-5 py-2.5 text-sm font-semibold text-amber-200 transition hover:bg-amber-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-auto w-full rounded-full border border-warning-soft/50 px-5 py-2.5 text-sm font-semibold text-warning-pale transition hover:bg-warning-soft/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-soft disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('accountForm.dangerZone.deactivate.action')}
             </button>
@@ -180,7 +180,7 @@ function DangerZone() {
               type="button"
               onClick={(event) => openDialog('delete', event)}
               disabled={blocked}
-              className="mt-auto w-full rounded-full border border-transparent bg-red-600 px-5 py-2.5 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-auto w-full rounded-full border border-transparent bg-danger px-5 py-2.5 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-danger-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-bright disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('accountForm.dangerZone.delete.action')}
             </button>
@@ -200,7 +200,7 @@ function DangerZone() {
             ref={dialogRef}
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl border border-glass/20 bg-slate-900/90 p-6 shadow-2xl backdrop-blur-2xl outline-none sm:p-8"
+            className="w-full max-w-lg rounded-2xl border border-glass/20 bg-dark-surface/90 p-6 shadow-2xl backdrop-blur-2xl outline-none sm:p-8"
           >
             <h2 id="danger-zone-dialog-title" className="text-lg font-semibold text-on-dark">
               {t(
@@ -234,7 +234,7 @@ function DangerZone() {
             {error && (
               <div
                 role="alert"
-                className="status-indicator status-indicator--danger mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+                className="status-indicator status-indicator--danger mt-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
               >
                 {error}
               </div>
@@ -293,8 +293,8 @@ function DangerZone() {
                   disabled={submitting}
                   className={`flex-1 rounded-full px-5 py-2.5 text-sm font-semibold text-on-dark shadow-lg transition disabled:cursor-not-allowed disabled:opacity-60 ${
                     mode === 'delete'
-                      ? 'bg-red-600 hover:bg-red-500'
-                      : 'bg-amber-500 hover:bg-amber-400'
+                      ? 'bg-danger hover:bg-danger-base'
+                      : 'bg-warning-base hover:bg-warning-bright'
                   }`}
                 >
                   {submitting

@@ -76,14 +76,14 @@ function ForgotPasswordPage() {
       className="min-h-screen w-full bg-cover bg-fixed bg-center text-on-dark"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
+      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-dark-strong/90 via-dark-strong/75 to-dark-strong/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
         <section aria-labelledby="forgot-title" className="w-full max-w-md">
           <article className="rounded-2xl border border-glass/20 bg-surface/10 p-8 shadow-2xl backdrop-blur-xl">
             {submitted ? (
               <div role="status" aria-live="polite" className="text-center">
                 <div
                   aria-hidden="true"
-                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-action/20 text-sky-300 ring-2 ring-sky-400"
+                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-action/20 text-action-soft ring-2 ring-action-bright"
                 >
                   <MdMarkEmailRead size={28} />
                 </div>
@@ -114,11 +114,11 @@ function ForgotPasswordPage() {
                 {serverError && (
                   <div
                     role="alert"
-                    className="status-indicator status-indicator--danger mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+                    className="status-indicator status-indicator--danger mb-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
                   >
                     {serverError}
                     {isBlocked && (
-                      <span className="mt-1 block font-mono text-xs text-red-200">
+                      <span className="mt-1 block font-mono text-xs text-danger-pale">
                         Nouvelle tentative possible dans{' '}
                         <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
                       </span>
