@@ -158,12 +158,22 @@ describe('palettes complètes des profils daltoniens', () => {
   it('laisse les thèmes standards inchangés et déclare les tokens contextuels', () => {
     const light = block(':root');
     const dark = block("html[data-sailingloc-theme='dark']");
-    for (const [source, values] of [
-      [light, { page: '248 250 252', action: '14 165 233', 'calendar-selected': '2 132 199' }],
-      [dark, { page: '2 6 23', action: '2 132 199', 'calendar-selected': '2 132 199' }],
+    for (const [source, values, actionText] of [
+      [
+        light,
+        { page: '248 250 252', action: '14 165 233', 'calendar-selected': '2 132 199' },
+        '0 0 0',
+      ],
+      [
+        dark,
+        { page: '2 6 23', action: '3 105 161', 'calendar-selected': '2 132 199' },
+        // Le bouton sombre porte un texte clair ; le test contextuel vérifie
+        // le contraste AA de cette combinaison sur le fond sombre.
+        'var(--sl-on-dark)',
+      ],
     ]) {
       for (const [name, value] of Object.entries(values)) expect(token(source, name)).toBe(value);
-      expect(token(source, 'action-text')).toBe('0 0 0');
+      expect(token(source, 'action-text')).toBe(actionText);
       expect(token(source, 'calendar-selected-text')).toBe('0 0 0');
     }
   });
