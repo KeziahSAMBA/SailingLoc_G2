@@ -258,7 +258,7 @@ function AdminPublicationPage() {
                           to={`/product/${b.id_boat}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-brand hover:underline"
+                          className="font-medium text-brand-soft hover:underline"
                         >
                           {b.name}
                         </Link>
@@ -333,7 +333,7 @@ function AdminPublicationPage() {
                         to={`/product/${b.id_boat}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="break-words font-medium text-brand hover:underline"
+                        className="break-words font-medium text-brand-soft hover:underline"
                       >
                         {b.name}
                       </Link>
@@ -459,7 +459,7 @@ function AdminPublicationPage() {
                             to={`/product/${r.boat.id_boat}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-medium text-brand hover:underline"
+                            className="font-medium text-brand-soft hover:underline"
                           >
                             {r.boat.name}
                           </Link>
@@ -546,7 +546,7 @@ function AdminPublicationPage() {
                           to={`/product/${r.boat.id_boat}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="break-words font-medium text-brand hover:underline"
+                          className="break-words font-medium text-brand-soft hover:underline"
                         >
                           {r.boat.name}
                         </Link>

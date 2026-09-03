@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -56,10 +56,30 @@ const PHOTO_FILES = [
   'src/components/common/ClientReviews.jsx',
 ];
 
+const PRIVATE_ROOTS = [
+  'src/components/locataire',
+  'src/components/proprietaire',
+  'src/components/admin',
+];
+
 const RAW_COLOR = /#[0-9a-f]{3,8}\b|(?:rgba?|hsla?|oklch|color)\([^)]*\)/giu;
 const DIRECT_TAILWIND =
   /\b(?:text|bg|border|ring|from|via|to|divide|placeholder|fill|stroke|decoration|accent|shadow)-(?:slate|gray|zinc|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(?:-\d+)?(?:\/\d+)?|\b(?:text|bg|border|ring|from|via|to|divide|placeholder|fill|stroke|decoration|accent|shadow)-\[(?:#|rgba?|hsla?|oklch|color)[^\]]+\]/giu;
 const GENERIC_CONTEXT_COLOR = /\btext-(?:action|brand)(?![-\w])/gu;
+const PRIVATE_GENERIC_ACCENT =
+  /\b(?:text|border|ring|bg|from|via|to|divide|placeholder|fill|stroke|decoration|accent|shadow)-(?:brand)(?![-\w])/gu;
+
+function filesBelow(relative) {
+  const directory = resolve(ROOT, 'frontend', relative);
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const child = relative + '/' + entry.name;
+    return entry.isDirectory()
+      ? filesBelow(child)
+      : /\.(?:js|jsx)$/u.test(entry.name)
+        ? [child]
+        : [];
+  });
+}
 
 function block(selector) {
   const start = CSS.indexOf(selector);
@@ -317,6 +337,15 @@ describe('contrastes contextuels des palettes daltoniennes', () => {
     const findings = [];
     for (const relative of PHOTO_FILES) {
       const generic = source(relative).match(GENERIC_CONTEXT_COLOR) ?? [];
+      if (generic.length) findings.push({ file: relative, generic });
+    }
+    expect(findings).toEqual([]);
+  });
+
+  it('réserve les accents brand génériques aux espaces privés à leurs tokens contextuels', () => {
+    const findings = [];
+    for (const relative of PRIVATE_ROOTS.flatMap(filesBelow)) {
+      const generic = source(relative).match(PRIVATE_GENERIC_ACCENT) ?? [];
       if (generic.length) findings.push({ file: relative, generic });
     }
     expect(findings).toEqual([]);

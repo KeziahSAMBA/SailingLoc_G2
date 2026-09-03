@@ -13,7 +13,7 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
   const scrollRef = useRef(null);
@@ -110,7 +110,7 @@ function FavoriteCard({ favorite, onRemove, removing }) {
   const boatLink = boat?.id_boat ? `/product/${boat.id_boat}` : undefined;
 
   return (
-    <article className="group h-36 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
+    <article className="group h-36 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand-soft/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
       <div className="flex h-full">
         {boat?.image ? (
           <SafeImage
@@ -155,7 +155,9 @@ function FavoriteCard({ favorite, onRemove, removing }) {
 
           <div className="mt-auto flex items-center justify-between gap-3 pt-2">
             <p className="truncate text-sm text-on-dark/80">
-              <span className="font-bold text-brand">{EURO.format(boat?.daily_price ?? 0)}</span>{' '}
+              <span className="font-bold text-brand-soft">
+                {EURO.format(boat?.daily_price ?? 0)}
+              </span>{' '}
               {t('locataireFavorites.perDay')}
             </p>
             <button

@@ -39,7 +39,7 @@ const FILTER_KEYS = ['all', 'pending', 'confirmed', 'cancelled', 'refused'];
 const PERIOD_KEYS = ['all', 'upcoming', 'current', 'past'];
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
   const scrollRef = useRef(null);
@@ -175,7 +175,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
   const canInvoice = booking.status === 'confirmed';
 
   return (
-    <article className="group min-h-56 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
+    <article className="group min-h-56 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand-soft/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
       {/* Colonne gauche de la grille : photo à droite ; colonne droite : photo à
           gauche — les photos se font face vers le centre. */}
       <div
@@ -233,14 +233,14 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
                 type="button"
                 onClick={() => onViewLocataire(booking)}
                 title={t('proprietaireReservations.viewLocataire')}
-                className={`rounded font-semibold text-on-dark hover:text-brand hover:underline ${FOCUS_RING}`}
+                className={`rounded font-semibold text-on-dark hover:text-brand-soft hover:underline ${FOCUS_RING}`}
               >
                 {locataire.first_name} {locataire.last_name}
               </button>
               {locataire.email && (
                 <a
                   href={`mailto:${locataire.email}`}
-                  className={`ml-1.5 text-brand hover:underline ${FOCUS_RING}`}
+                  className={`ml-1.5 text-brand-soft hover:underline ${FOCUS_RING}`}
                 >
                   {locataire.email}
                 </a>
@@ -593,7 +593,7 @@ function ProprietaireReservations() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'border-brand bg-brand/15 text-brand-soft non-color-active'
+                  ? 'border-brand-soft bg-brand-soft/15 text-brand-soft non-color-active'
                   : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
               }`}
             >
@@ -693,7 +693,7 @@ function ProprietaireReservations() {
                         : t('proprietaireReservations.modal.cancelPlaceholder')
                     }
                     aria-describedby="cancel-reason-hint"
-                    className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
+                    className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand-soft"
                   />
                 </>
               )}
@@ -722,7 +722,7 @@ function ProprietaireReservations() {
                     ))}
                     {photos.length < 5 && (
                       <label
-                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-xl text-on-dark/70 transition hover:border-brand hover:text-brand ${FOCUS_RING}`}
+                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-xl text-on-dark/70 transition hover:border-brand-soft hover:text-brand-soft ${FOCUS_RING}`}
                         title={t('proprietaireReservations.modal.addPhotos')}
                       >
                         +
@@ -817,7 +817,7 @@ function ProprietaireReservations() {
                   </p>
                   <a
                     href={`mailto:${locataireData.locataire.email}`}
-                    className={`text-sm text-brand hover:underline ${FOCUS_RING}`}
+                    className={`text-sm text-brand-soft hover:underline ${FOCUS_RING}`}
                   >
                     {locataireData.locataire.email}
                   </a>

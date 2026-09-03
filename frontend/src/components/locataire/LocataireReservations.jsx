@@ -74,7 +74,7 @@ function matchesPeriod(booking, period) {
 }
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
   const scrollRef = useRef(null);
@@ -228,7 +228,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
   const canInvoice = booking.status === 'confirmed';
 
   return (
-    <article className="group min-h-52 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
+    <article className="group min-h-52 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand-soft/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
       {/* Colonne gauche de la grille : photo à droite ; colonne droite : photo à
           gauche — les photos se font face vers le centre. */}
       <div
@@ -315,7 +315,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
           )}
 
           {finished && (
-            <p className="mt-2 truncate text-xs font-medium text-brand">
+            <p className="mt-2 truncate text-xs font-medium text-brand-soft">
               {booking.reviewed
                 ? t('locataireReservations.reviewDone')
                 : t('locataireReservations.reviewHint')}
@@ -336,7 +336,7 @@ function BookingCard({ booking, busy, onAction, mirrored }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'review')}
-                  className={`inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-on-dark transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`inline-flex items-center gap-1 rounded-full bg-action px-3 py-1 text-xs font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   <FaStar aria-hidden className="text-[0.6875rem]" />
                   {t('locataireReservations.actions.review')}
@@ -622,7 +622,7 @@ function LocataireReservations() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'border-brand bg-brand/15 text-brand-soft non-color-active'
+                  ? 'border-brand-soft bg-brand-soft/15 text-brand-soft non-color-active'
                   : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
               }`}
             >
@@ -729,7 +729,7 @@ function LocataireReservations() {
                   setReviewError('');
                 }}
                 placeholder={t('locataireReservations.reviewModal.commentPlaceholder')}
-                className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
+                className="w-full resize-y rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand-soft"
               />
               <div className="mt-1 flex items-start justify-between gap-3">
                 <p className="text-xs text-content-light">
@@ -758,7 +758,7 @@ function LocataireReservations() {
                 <button
                   type="submit"
                   disabled={busyId === reviewBooking.id_booking}
-                  className={`rounded-full bg-brand px-4 py-2 text-sm font-semibold text-dark-strong transition hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                  className={`rounded-full bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                 >
                   {busyId === reviewBooking.id_booking
                     ? t('locataireReservations.reviewModal.submitting')
@@ -822,7 +822,7 @@ function LocataireReservations() {
                 autoFocus
                 aria-describedby="locataire-decision-hint"
                 aria-invalid={reasonError ? true : undefined}
-                className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
+                className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand-soft"
               />
               {reasonError && (
                 <p role="alert" className="mt-1 text-xs text-danger-bright">
@@ -855,7 +855,7 @@ function LocataireReservations() {
                     ))}
                     {photos.length < 5 && (
                       <label
-                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-xl text-on-dark/70 transition hover:border-brand hover:text-brand ${FOCUS_RING}`}
+                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-xl text-on-dark/70 transition hover:border-brand-soft hover:text-brand-soft ${FOCUS_RING}`}
                         title={t('locataireReservations.modal.disputeAddPhotos')}
                       >
                         +

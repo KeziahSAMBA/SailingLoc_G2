@@ -42,7 +42,7 @@ function getBookingStatus(t) {
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 function fmtDate(value) {
   return formatDate(value, DATE_OPTS);
@@ -94,11 +94,11 @@ function NextBookingCard({ booking }) {
   return (
     <Link
       to="/locataire/reservations"
-      className={`block rounded-2xl border border-brand/50 bg-brand/10 p-5 backdrop-blur-xl transition hover:border-brand sm:p-6 ${FOCUS_RING}`}
+      className={`block rounded-2xl border border-brand-soft/70 bg-brand-soft/10 p-5 backdrop-blur-xl transition hover:border-brand-soft sm:p-6 ${FOCUS_RING}`}
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand">
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-soft">
             {t('locataireDashboard.nextBooking.label')}
           </p>
           <h3 className="mt-1 text-xl font-bold text-on-dark sm:text-2xl">{booking.boat?.name}</h3>
@@ -110,7 +110,7 @@ function NextBookingCard({ booking }) {
             </p>
           )}
         </div>
-        <span className="rounded-full bg-brand/15 px-3 py-1 text-sm font-semibold text-brand">
+        <span className="rounded-full bg-brand-soft/15 px-3 py-1 text-sm font-semibold text-brand-soft">
           {days === 0
             ? t('locataireDashboard.nextBooking.today')
             : t('locataireDashboard.nextBooking.inDays', { days })}
@@ -160,7 +160,7 @@ function RecentBookings({ bookings }) {
         </h2>
         <Link
           to="/locataire/reservations"
-          className={`rounded text-xs font-medium text-brand hover:underline ${FOCUS_RING}`}
+          className={`rounded text-xs font-medium text-brand-soft hover:underline ${FOCUS_RING}`}
         >
           {t('locataireDashboard.recentBookings.seeAll')}
         </Link>
@@ -211,7 +211,7 @@ function FavoritesPreview({ favorites }) {
         </h2>
         <Link
           to="/locataire/favoris"
-          className={`rounded text-xs font-medium text-brand hover:underline ${FOCUS_RING}`}
+          className={`rounded text-xs font-medium text-brand-soft hover:underline ${FOCUS_RING}`}
         >
           {t('locataireDashboard.favoritesPreview.seeAll')}
         </Link>
@@ -253,7 +253,7 @@ function FavoritesPreview({ favorites }) {
                     <span className="block truncate text-xs text-on-dark/70">
                       {[f.boat?.type, f.boat?.port?.city].filter(Boolean).join(' · ')}
                     </span>
-                    <span className="mt-1 block text-xs font-semibold text-brand">
+                    <span className="mt-1 block text-xs font-semibold text-brand-soft">
                       {EURO.format(f.boat?.daily_price ?? 0)}{' '}
                       {t('locataireDashboard.favoritesPreview.perDay')}
                     </span>
@@ -365,7 +365,7 @@ function LocataireDashboard() {
         />
         <StatCard
           label={t('locataireDashboard.stats.favorites')}
-          accent="text-brand"
+          accent="text-brand-soft"
           value={stats?.favorites}
           to="/locataire/favoris"
           loading={loading}

@@ -66,7 +66,7 @@ const VARIANTS = {
   success: 'border-success-base/40 text-success-soft hover:bg-success-base/10',
   danger: 'border-danger-base/40 text-danger-soft hover:bg-danger-base/10',
   warn: 'border-warning-base/40 text-warning-soft hover:bg-warning-base/10',
-  info: 'border-brand/40 text-brand hover:bg-brand/10',
+  info: 'border-brand-soft text-brand-soft hover:bg-brand-soft/15',
 };
 
 export function IconBtn({ title, onClick, disabled, variant = 'default', children }) {

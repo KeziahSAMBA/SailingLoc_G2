@@ -56,9 +56,9 @@ function formatRegistration(input, typing) {
 }
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 const inputClass =
-  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none transition focus:border-brand';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none transition focus:border-brand-soft';
 const labelClass = 'mb-1 block text-xs font-medium text-on-dark/70';
 const cardClass = 'rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5';
 
@@ -550,7 +550,7 @@ function ProprietaireBoatForm() {
                 name="with_skipper"
                 checked={form.with_skipper}
                 onChange={handleChange}
-                className="h-4 w-4 accent-brand"
+                className="h-4 w-4 accent-action-bright"
               />
               <span>
                 {t('proprietaireBoatForm.skipperOffered')}{' '}
@@ -566,7 +566,7 @@ function ProprietaireBoatForm() {
                 name="license_required"
                 checked={form.license_required}
                 onChange={handleChange}
-                className="h-4 w-4 accent-brand"
+                className="h-4 w-4 accent-action-bright"
               />
               {t('proprietaireBoatForm.licenseRequired')}
             </label>
@@ -681,7 +681,7 @@ function ProprietaireBoatForm() {
 
             {photos.length < MAX_PHOTOS && (
               <label
-                className={`flex h-24 w-32 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-sm text-on-dark/70 transition hover:border-brand hover:text-on-dark/90 ${FOCUS_RING}`}
+                className={`flex h-24 w-32 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-sm text-on-dark/70 transition hover:border-brand-soft hover:text-on-dark/90 ${FOCUS_RING}`}
               >
                 {t('proprietaireBoatForm.addPhoto')}
                 <input
@@ -773,7 +773,7 @@ function ProprietaireBoatForm() {
               {/* Option 2 : en déposer un nouveau, qui sera vérifié. */}
               {!acteDocId && (
                 <label
-                  className={`inline-flex cursor-pointer items-center gap-2 self-end rounded-full border border-dashed border-glass/40 px-4 py-2 text-sm text-on-dark/70 transition hover:border-brand hover:text-on-dark/90 ${FOCUS_RING}`}
+                  className={`inline-flex cursor-pointer items-center gap-2 self-end rounded-full border border-dashed border-glass/40 px-4 py-2 text-sm text-on-dark/70 transition hover:border-brand-soft hover:text-on-dark/90 ${FOCUS_RING}`}
                 >
                   {myActes.length > 0
                     ? t('proprietaireBoatForm.uploadNewInline')
@@ -804,7 +804,7 @@ function ProprietaireBoatForm() {
               {t('proprietaireBoatForm.docTip')}{' '}
               <Link
                 to="/proprietaire/documents"
-                className={`text-brand hover:underline ${FOCUS_RING}`}
+                className={`text-brand-soft hover:underline ${FOCUS_RING}`}
               >
                 {t('proprietaireBoatForm.myDocuments')}
               </Link>{' '}

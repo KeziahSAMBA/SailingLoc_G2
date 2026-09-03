@@ -27,7 +27,7 @@ const BOOKING_STATUS_CLS = {
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 function fmtDateShort(value) {
   return formatDate(value, DATE_SHORT_OPTS);
@@ -45,7 +45,7 @@ function StatCard({ label, value, accent, to, loading, format = NUMBER, classNam
             ? t('proprietaireDashboard.statLoading', { label })
             : t('proprietaireDashboard.statValue', { label, value: display })
         }
-        className={`block h-full rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5 text-center transition-colors hover:border-brand/60 ${FOCUS_RING}`}
+        className={`block h-full rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5 text-center transition-colors hover:border-brand-soft/60 ${FOCUS_RING}`}
       >
         <span className="block text-xs font-semibold uppercase tracking-wide text-on-dark/70">
           {label}
@@ -83,7 +83,7 @@ function RecentBookings({ bookings }) {
         </h2>
         <Link
           to="/proprietaire/reservations"
-          className={`rounded text-xs font-medium text-brand hover:underline ${FOCUS_RING}`}
+          className={`rounded text-xs font-medium text-brand-soft hover:underline ${FOCUS_RING}`}
         >
           {t('proprietaireDashboard.seeAll')}
         </Link>
@@ -133,7 +133,7 @@ function BoatsPreview({ boats }) {
         </h2>
         <Link
           to="/proprietaire/bateaux"
-          className={`rounded text-xs font-medium text-brand hover:underline ${FOCUS_RING}`}
+          className={`rounded text-xs font-medium text-brand-soft hover:underline ${FOCUS_RING}`}
         >
           {t('proprietaireDashboard.seeAll')}
         </Link>
@@ -173,7 +173,7 @@ function BoatsPreview({ boats }) {
                     <span className="block truncate text-xs text-on-dark/70">
                       {[boat.type, boat.port?.city].filter(Boolean).join(' · ')}
                     </span>
-                    <span className="mt-1 block text-xs font-semibold text-brand">
+                    <span className="mt-1 block text-xs font-semibold text-brand-soft">
                       {t('proprietaireDashboard.perDay', {
                         price: EURO.format(boat.daily_price ?? 0),
                       })}
@@ -249,7 +249,7 @@ function ProprietaireDashboard() {
         />
         <StatCard
           label={t('proprietaireDashboard.monthRevenue')}
-          accent="text-brand"
+          accent="text-brand-soft"
           value={stats?.monthRevenue}
           format={EURO}
           to="/proprietaire/revenus"

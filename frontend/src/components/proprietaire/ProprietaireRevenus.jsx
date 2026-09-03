@@ -626,7 +626,7 @@ function ProprietaireRevenus() {
                 type="button"
                 onClick={handleManageAccount}
                 disabled={onboarding}
-                className="rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright"
               >
                 {onboarding
                   ? t('proprietaireRevenus.stripe.opening')
@@ -638,7 +638,7 @@ function ProprietaireRevenus() {
               type="button"
               onClick={handleOnboarding}
               disabled={onboarding}
-              className="rounded-full bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="rounded-full bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright"
             >
               {onboarding
                 ? t('proprietaireRevenus.stripe.redirecting')
@@ -672,7 +672,7 @@ function ProprietaireRevenus() {
                       type="button"
                       onClick={() => setStatus(key)}
                       aria-pressed={active}
-                      className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
                         active
                           ? 'bg-action text-action-text non-color-active'
                           : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
@@ -699,9 +699,9 @@ function ProprietaireRevenus() {
                       type="button"
                       onClick={() => setPeriod(key)}
                       aria-pressed={active}
-                      className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
                         active
-                          ? 'border-brand bg-brand/15 text-brand-soft non-color-active'
+                          ? 'border-brand-soft bg-brand-soft/15 text-brand-soft non-color-active'
                           : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
                       }`}
                     >
@@ -914,7 +914,7 @@ function ProprietaireRevenus() {
                     type="button"
                     onClick={() => setPage(safePage - 1)}
                     disabled={safePage === 1}
-                    className="rounded-full px-3 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="rounded-full px-3 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright"
                   >
                     {t('pagination.previous')}
                   </button>
@@ -925,7 +925,7 @@ function ProprietaireRevenus() {
                       onClick={() => setPage(n)}
                       aria-current={n === safePage ? 'page' : undefined}
                       aria-label={t('pagination.page', { n })}
-                      className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      className={`min-w-[2rem] rounded-full px-2.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
                         n === safePage
                           ? 'bg-action text-action-text non-color-active'
                           : 'text-on-dark/80 hover:bg-surface/10 hover:text-on-dark'
@@ -938,7 +938,7 @@ function ProprietaireRevenus() {
                     type="button"
                     onClick={() => setPage(safePage + 1)}
                     disabled={safePage === pageCount}
-                    className="rounded-full px-3 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="rounded-full px-3 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright"
                   >
                     {t('pagination.next')}
                   </button>

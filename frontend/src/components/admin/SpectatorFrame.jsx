@@ -98,7 +98,7 @@ function SpectatorFrame({ mode, title, description, banner }) {
           value={path}
           onChange={(e) => setPath(e.target.value)}
           placeholder="/"
-          className="min-w-0 flex-1 rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark outline-none focus:border-brand md:rounded-l-none"
+          className="min-w-0 flex-1 rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark outline-none focus:border-brand-soft md:rounded-l-none"
         />
       </div>
       <button

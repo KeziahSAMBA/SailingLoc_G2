@@ -6,7 +6,7 @@ import CardSkeleton from '../common/CardSkeleton.jsx';
 import { formatDate } from '../../utils/formatDate.js';
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 const STATUS_FILTERS = ['all', 'success', 'pending', 'refunded', 'failed'];
 const PERIOD_FILTERS = ['all', 'last30', 'last180', 'year'];
@@ -208,7 +208,7 @@ function LocataireDepenses() {
             <StatTile
               label={t('locataireDepenses.totals.net')}
               value={EURO.format(totals?.net ?? 0)}
-              accent="text-brand"
+              accent="text-brand-soft"
             />
           </div>
 
@@ -258,7 +258,7 @@ function LocataireDepenses() {
                   aria-pressed={active}
                   className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                     active
-                      ? 'border-brand bg-brand/15 text-brand-soft non-color-active'
+                      ? 'border-brand-soft bg-brand-soft/15 text-brand-soft non-color-active'
                       : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
                   }`}
                 >
@@ -281,7 +281,7 @@ function LocataireDepenses() {
                 const cls = STATUS_CLS[p.status] || STATUS_CLS.failed;
                 return (
                   <li key={p.id_payment} className="min-w-0">
-                    <article className="flex h-32 items-center gap-4 rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl transition hover:border-brand/60 hover:bg-surface/15">
+                    <article className="flex h-32 items-center gap-4 rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl transition hover:border-brand-soft/60 hover:bg-surface/15">
                       <span
                         aria-hidden
                         className={`status-indicator--has-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl ${cls}`}

@@ -133,7 +133,7 @@ function AdminDashboard() {
         />
         <StatCard
           label={t('adminDashboard.commission')}
-          accent="text-brand"
+          accent="text-brand-soft"
           value={loading ? '…' : EURO.format(stats?.commission ?? 0)}
         />
       </div>

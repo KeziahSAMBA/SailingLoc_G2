@@ -35,7 +35,7 @@ const REGIONS = [
 ];
 
 const inputClass =
-  'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand';
+  'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand-soft';
 
 function fmtCoord(v) {
   return v == null ? '—' : Number(v).toFixed(4);
@@ -217,7 +217,7 @@ function AdminPortsPage() {
                           type="button"
                           disabled={already || importingName === p.name}
                           onClick={() => importPort(p)}
-                          className="w-full shrink-0 rounded-lg border border-brand/40 px-3 py-1.5 text-xs font-semibold text-brand transition hover:bg-brand/10 disabled:opacity-40 sm:w-auto"
+                          className="w-full shrink-0 rounded-lg border border-brand-soft px-3 py-1.5 text-xs font-semibold text-brand-soft transition hover:bg-brand-soft/15 disabled:opacity-40 sm:w-auto"
                         >
                           {already
                             ? t('adminPorts.inBase')

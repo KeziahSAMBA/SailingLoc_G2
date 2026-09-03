@@ -28,7 +28,7 @@ const DATE_OPTS = {
 };
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-dark-strong';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-2 focus-visible:ring-offset-dark-strong';
 
 // Demandes envoyées via le formulaire public de la page Contact : l'admin les
 // consulte et les marque traitées (ou à retraiter).
@@ -143,7 +143,7 @@ function AdminContactPage() {
                       {r.name} ·{' '}
                       <a
                         href={`mailto:${r.email}`}
-                        className={`break-all text-brand hover:underline ${FOCUS_RING}`}
+                        className={`break-all text-brand-soft hover:underline ${FOCUS_RING}`}
                       >
                         {r.email}
                       </a>{' '}

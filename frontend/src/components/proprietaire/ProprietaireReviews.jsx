@@ -13,7 +13,7 @@ const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
 const PAGE_SIZE = 5;
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 const STATUS_CLS = {
   validated: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
@@ -131,7 +131,7 @@ function ReviewCard({ review, onReplied }) {
             onChange={(e) => setText(e.target.value)}
             maxLength={1000}
             placeholder={t('proprietaireReviews.replyPlaceholder')}
-            className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
+            className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand-soft"
           />
           <div className="mt-2 flex justify-end gap-2">
             {editing && (

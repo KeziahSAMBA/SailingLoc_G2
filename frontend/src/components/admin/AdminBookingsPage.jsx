@@ -49,7 +49,7 @@ const DISPUTE_FILTERS = [
 const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 const selectClass =
-  'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand';
+  'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand-soft';
 
 const PAGE_SIZE = 10;
 
@@ -557,7 +557,7 @@ function AdminBookingsPage() {
                                     src={imageUrl}
                                     alt={t('adminBookings.photoAlt')}
                                     loading="lazy"
-                                    className="h-10 w-10 rounded border border-glass/30 object-cover transition hover:border-brand"
+                                    className="h-10 w-10 rounded border border-glass/30 object-cover transition hover:border-brand-soft"
                                   />
                                 </a>
                               );
@@ -644,7 +644,7 @@ function AdminBookingsPage() {
                               src={imageUrl}
                               alt={t('adminBookings.photoAlt')}
                               loading="lazy"
-                              className="h-12 w-12 rounded border border-glass/30 object-cover transition hover:border-brand"
+                              className="h-12 w-12 rounded border border-glass/30 object-cover transition hover:border-brand-soft"
                             />
                           </a>
                         );
@@ -732,7 +732,7 @@ function AdminBookingsPage() {
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
               placeholder={t('adminBookings.decisionPlaceholder')}
-              className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand"
+              className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand-soft"
             />
 
             {decision.status === 'resolved' &&
@@ -789,7 +789,7 @@ function AdminBookingsPage() {
                                 max={100}
                                 value={refundPct}
                                 onChange={(e) => setRefundPct(e.target.value)}
-                                className="w-16 rounded-lg border border-glass/30 bg-surface/10 px-2 py-1 text-xs text-on-dark outline-none focus:border-brand"
+                                className="w-16 rounded-lg border border-glass/30 bg-surface/10 px-2 py-1 text-xs text-on-dark outline-none focus:border-brand-soft"
                               />
                               <span className="text-xs text-on-dark/70">%</span>
                             </div>

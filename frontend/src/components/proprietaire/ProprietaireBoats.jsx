@@ -23,7 +23,7 @@ const FILTER_KEYS = ['all', 'draft', 'pending', 'published', 'refused'];
 
 // Styles de focus clavier communs aux éléments cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 const PAGE_SIZE = 9;
 
@@ -121,7 +121,7 @@ function BoatCard({ boat, busy, onDelete }) {
     'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
 
   return (
-    <article className="group flex h-full min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand/60 hover:shadow-xl hover:shadow-action/10">
+    <article className="group flex h-full min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand-soft/60 hover:shadow-xl hover:shadow-action/10">
       {boat.image ? (
         <SafeImage
           src={boat.image}
