@@ -36,7 +36,7 @@ function FilterChip({ label, onRemove }) {
           e.stopPropagation();
           onRemove();
         }}
-        className="flex flex-shrink-0 items-center transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-on-dark"
+        className="relative z-10 flex flex-shrink-0 items-center transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-on-dark"
       >
         <FaXmark size={9} />
       </button>
@@ -99,13 +99,6 @@ function FilterBar({
   const containerRef = useRef(null);
   const boatTypeLabels = getBoatTypeLabels(t);
   const sortLabels = getSortLabels(t);
-
-  function handleHeaderKeyDown(event) {
-    if (event.target !== event.currentTarget) return;
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    setFilterOpen((value) => !value);
-  }
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -236,7 +229,7 @@ function FilterBar({
             e.stopPropagation();
             onReset();
           }}
-          className={`whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-[#0A527A] hover:text-sky-800' : light ? 'text-on-dark/70 hover:text-on-dark' : 'text-on-light/60 hover:text-on-light'}`}
+          className={`relative z-10 whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-[#0A527A] hover:text-sky-800' : light ? 'text-on-dark/70 hover:text-on-dark' : 'text-on-light/60 hover:text-on-light'}`}
         >
           {t('filterBar.reset')}
         </button>
@@ -263,6 +256,7 @@ function FilterBar({
       <div
         ref={ghostRef}
         aria-hidden="true"
+        inert=""
         className="pointer-events-none invisible absolute left-0 top-0 flex w-max flex-nowrap items-center gap-1.5 rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3"
       >
         {headerContent}
@@ -270,7 +264,7 @@ function FilterBar({
 
       {/* Header — always visible */}
       <div
-        className={`flex cursor-pointer select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-surface/10' : 'hover:bg-overlay/10'}`}
+        className={`relative flex select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-surface/10' : 'hover:bg-overlay/10'}`}
         style={{
           width: headerWidth != null ? `${headerWidth}px` : undefined,
           backgroundColor: compact
@@ -288,138 +282,139 @@ function FilterBar({
           transition:
             'width 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease',
         }}
-        onClick={() => setFilterOpen((v) => !v)}
-        onKeyDown={handleHeaderKeyDown}
-        role="button"
-        tabIndex={0}
-        aria-expanded={filterOpen}
-        aria-controls="category-filter-panel"
       >
+        <button
+          type="button"
+          className="absolute inset-0 z-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          onClick={() => setFilterOpen((value) => !value)}
+          aria-label={t('filterBar.label')}
+          aria-expanded={filterOpen}
+          aria-controls="category-filter-panel"
+        />
         {headerContent}
       </div>
 
       {/* Expanded filter panel */}
-      {filterOpen && (
-        <div
-          id="category-filter-panel"
-          className="fixed inset-x-4 z-30 max-h-[70vh] overflow-y-auto rounded-xl p-4 sm:inset-x-8 sm:p-6 lg:absolute lg:inset-x-auto lg:left-16 lg:right-16 lg:!top-full lg:mt-2 lg:max-h-none lg:w-auto lg:overflow-visible xl:left-28 xl:right-28"
-          style={{
-            top: compact
-              ? 'calc(var(--category-header-height) + 0.5rem)'
-              : 'calc(var(--category-header-height) + 1.25rem)',
-            backgroundColor: 'rgba(255,255,255,0.98)',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
-          }}
-        >
-          <div className="grid grid-cols-2 gap-6 xl:flex xl:gap-0 xl:divide-x xl:divide-gray-100">
-            {/* Type de bateau */}
-            <div className="xl:pr-10">
-              <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
-                {t('filterBar.boatType.title')}
-              </p>
-              <div className="space-y-1.5">
-                {Object.entries(boatTypeLabels).map(([key, label]) => (
-                  <FilterCheckbox
-                    key={key}
-                    label={label}
-                    checked={boatTypeFilters[key]}
-                    onChange={(e) =>
-                      onBoatTypeChange({ ...boatTypeFilters, [key]: e.target.checked })
-                    }
-                  />
-                ))}
-              </div>
+      <div
+        id="category-filter-panel"
+        hidden={!filterOpen}
+        className="fixed inset-x-4 z-30 max-h-[70vh] overflow-y-auto rounded-xl p-4 sm:inset-x-8 sm:p-6 lg:absolute lg:inset-x-auto lg:left-16 lg:right-16 lg:!top-full lg:mt-2 lg:max-h-none lg:w-auto lg:overflow-visible xl:left-28 xl:right-28"
+        style={{
+          top: compact
+            ? 'calc(var(--category-header-height) + 0.5rem)'
+            : 'calc(var(--category-header-height) + 1.25rem)',
+          backgroundColor: 'rgba(255,255,255,0.98)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+        }}
+      >
+        <div className="grid grid-cols-2 gap-6 xl:flex xl:gap-0 xl:divide-x xl:divide-gray-100">
+          {/* Type de bateau */}
+          <div className="xl:pr-10">
+            <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
+              {t('filterBar.boatType.title')}
+            </p>
+            <div className="space-y-1.5">
+              {Object.entries(boatTypeLabels).map(([key, label]) => (
+                <FilterCheckbox
+                  key={key}
+                  label={label}
+                  checked={boatTypeFilters[key]}
+                  onChange={(e) =>
+                    onBoatTypeChange({ ...boatTypeFilters, [key]: e.target.checked })
+                  }
+                />
+              ))}
             </div>
+          </div>
 
-            {/* Permis */}
-            <div className="xl:px-10">
-              <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
-                {t('filterBar.license.title')}
-              </p>
-              <div className="space-y-1.5">
-                <FilterCheckbox
-                  label={t('filterBar.license.notRequired')}
-                  checked={licenseFilter === 'not_required'}
-                  onChange={(e) => onLicenseFilterChange(e.target.checked ? 'not_required' : 'any')}
-                />
-                <FilterCheckbox
-                  label={t('filterBar.license.required')}
-                  checked={licenseFilter === 'required'}
-                  onChange={(e) => onLicenseFilterChange(e.target.checked ? 'required' : 'any')}
-                />
-                <FilterCheckbox
-                  label={t('filterBar.skipper.included')}
-                  checked={skipperFilter === 'included'}
-                  onChange={(e) => onSkipperFilterChange(e.target.checked ? 'included' : 'any')}
-                />
-                <FilterCheckbox
-                  label={t('filterBar.skipper.excluded')}
-                  checked={skipperFilter === 'excluded'}
-                  onChange={(e) => onSkipperFilterChange(e.target.checked ? 'excluded' : 'any')}
-                />
-              </div>
+          {/* Permis */}
+          <div className="xl:px-10">
+            <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
+              {t('filterBar.license.title')}
+            </p>
+            <div className="space-y-1.5">
+              <FilterCheckbox
+                label={t('filterBar.license.notRequired')}
+                checked={licenseFilter === 'not_required'}
+                onChange={(e) => onLicenseFilterChange(e.target.checked ? 'not_required' : 'any')}
+              />
+              <FilterCheckbox
+                label={t('filterBar.license.required')}
+                checked={licenseFilter === 'required'}
+                onChange={(e) => onLicenseFilterChange(e.target.checked ? 'required' : 'any')}
+              />
+              <FilterCheckbox
+                label={t('filterBar.skipper.included')}
+                checked={skipperFilter === 'included'}
+                onChange={(e) => onSkipperFilterChange(e.target.checked ? 'included' : 'any')}
+              />
+              <FilterCheckbox
+                label={t('filterBar.skipper.excluded')}
+                checked={skipperFilter === 'excluded'}
+                onChange={(e) => onSkipperFilterChange(e.target.checked ? 'excluded' : 'any')}
+              />
             </div>
+          </div>
 
-            {/* Prix par jour */}
-            <div className="xl:px-10">
-              <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
-                {t('filterBar.price.title')}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="number"
-                  min="0"
-                  placeholder={t('filterBar.price.min')}
-                  value={priceRange.min}
-                  onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
-                  className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
-                />
-                <span className="text-field-placeholder">–</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder={t('filterBar.price.max')}
-                  value={priceRange.max}
-                  onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
-                  className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
-                />
-              </div>
+          {/* Prix par jour */}
+          <div className="xl:px-10">
+            <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
+              {t('filterBar.price.title')}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                placeholder={t('filterBar.price.min')}
+                value={priceRange.min}
+                onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
+                className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
+              />
+              <span className="text-field-placeholder">–</span>
+              <input
+                type="number"
+                min="0"
+                placeholder={t('filterBar.price.max')}
+                value={priceRange.max}
+                onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
+                className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-action-bright sm:w-20 sm:flex-none"
+              />
             </div>
+          </div>
 
-            {/* Trier par */}
-            <div className="xl:pl-10">
-              <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
-                {t('filterBar.sort.title')}
-              </p>
-              <div className="space-y-1.5">
-                <FilterRadio
-                  name="sortBy"
-                  label={t('filterBar.sort.relevance')}
-                  checked={sortBy === 'relevance'}
-                  onChange={() => onSortByChange('relevance')}
-                />
-                <FilterRadio
-                  name="sortBy"
-                  label={t('filterBar.sort.rating')}
-                  checked={sortBy === 'rating'}
-                  onChange={() => onSortByChange('rating')}
-                />
-                <FilterRadio
-                  name="sortBy"
-                  label={t('filterBar.sort.popularity')}
-                  checked={sortBy === 'popularity'}
-                  onChange={() => onSortByChange('popularity')}
-                />
-                <FilterCheckbox
-                  label={t('filterBar.coupDeCoeur')}
-                  checked={coupDeCoeurFilter}
-                  onChange={(e) => onCoupDeCoeurFilterChange(e.target.checked)}
-                />
-              </div>
+          {/* Trier par */}
+          <div className="xl:pl-10">
+            <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
+              {t('filterBar.sort.title')}
+            </p>
+            <div className="space-y-1.5">
+              <FilterRadio
+                name="sortBy"
+                label={t('filterBar.sort.relevance')}
+                checked={sortBy === 'relevance'}
+                onChange={() => onSortByChange('relevance')}
+              />
+              <FilterRadio
+                name="sortBy"
+                label={t('filterBar.sort.rating')}
+                checked={sortBy === 'rating'}
+                onChange={() => onSortByChange('rating')}
+              />
+              <FilterRadio
+                name="sortBy"
+                label={t('filterBar.sort.popularity')}
+                checked={sortBy === 'popularity'}
+                onChange={() => onSortByChange('popularity')}
+              />
+              <FilterCheckbox
+                label={t('filterBar.coupDeCoeur')}
+                checked={coupDeCoeurFilter}
+                onChange={(e) => onCoupDeCoeurFilterChange(e.target.checked)}
+              />
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

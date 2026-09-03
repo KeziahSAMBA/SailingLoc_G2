@@ -25,12 +25,6 @@ function isPlainLeftClick(e) {
   return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 }
 
-function activateSlideWithKeyboard(event, slide, onSlideClick) {
-  if (event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  onSlideClick?.(slide);
-}
-
 // ─── Transformateurs DB → slide ───────────────────────────────────────────────
 
 const portToSlide = (port) => ({
@@ -185,14 +179,17 @@ const PortCarousel = memo(
             {slides.map((slide) => (
               <div
                 key={slide.id}
-                className="group flex cursor-pointer flex-col px-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="group relative flex cursor-pointer flex-col px-1.5"
                 style={{ width: `${slideWidthPct}%` }}
-                onClick={() => onSlideClick?.(slide)}
-                onKeyDown={(event) => activateSlideWithKeyboard(event, slide, onSlideClick)}
-                role={onSlideClick ? 'link' : undefined}
-                tabIndex={onSlideClick ? 0 : undefined}
-                aria-label={onSlideClick ? slide.label : undefined}
               >
+                {onSlideClick && (
+                  <button
+                    type="button"
+                    className="absolute inset-0 z-[5] rounded-[8px] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    onClick={() => onSlideClick(slide)}
+                    aria-label={slide.label}
+                  />
+                )}
                 {variant === 'overlay' ? (
                   <>
                     <div
@@ -497,14 +494,17 @@ const SlideItem = memo(function SlideItem({
 
   return (
     <motion.div
-      className="relative shrink-0 cursor-pointer overflow-hidden rounded-[8px] border border-glass/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      className="relative shrink-0 cursor-pointer overflow-hidden rounded-[8px] border border-glass/20"
       style={{ width: itemWidth, height: 220, rotateY, willChange: 'transform' }}
-      onClick={() => onSlideClick?.(slide)}
-      onKeyDown={(event) => activateSlideWithKeyboard(event, slide, onSlideClick)}
-      role={onSlideClick ? 'link' : undefined}
-      tabIndex={onSlideClick ? 0 : undefined}
-      aria-label={onSlideClick ? slide.label : undefined}
     >
+      {onSlideClick && (
+        <button
+          type="button"
+          className="absolute inset-0 z-[5] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          onClick={() => onSlideClick(slide)}
+          aria-label={slide.label}
+        />
+      )}
       <div className="block w-full h-full">
         <SafeImage
           src={slide.img}

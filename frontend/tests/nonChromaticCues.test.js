@@ -11,8 +11,10 @@ test('les commandes de carrousel et les cartes sont utilisables au clavier', () 
 
   assert.match(carrousel, /<motion\.button/);
   assert.match(carrousel, /aria-current=\{activeIndex === i \? 'true' : undefined\}/);
-  assert.match(carrousel, /role=\{onSlideClick \? 'link' : undefined\}/);
-  assert.match(carrousel, /onKeyDown=\{\(event\) => activateSlideWithKeyboard/);
+  assert.doesNotMatch(carrousel, /role=\{onSlideClick \? 'link' : undefined\}/);
+  assert.match(carrousel, /className="absolute inset-0 z-\[5\]/);
+  assert.match(carrousel, /onClick=\{\(\) => onSlideClick\(slide\)\}/);
+  assert.match(carrousel, /<FavoriteButton/);
   assert.match(carrousel, /focus-visible:ring-2 focus-visible:ring-brand/);
 });
 
@@ -63,9 +65,10 @@ test('les filtres et le graphe administrateur sont décrits sans modifier leur f
   const reviews = source('src/components/common/ClientReviews.jsx');
   const dashboard = source('src/components/admin/AdminDashboard.jsx');
 
-  assert.match(filterBar, /role="button"/);
-  assert.match(filterBar, /onKeyDown=\{handleHeaderKeyDown\}/);
+  assert.doesNotMatch(filterBar, /role="button"/);
+  assert.match(filterBar, /<button[\s\S]*aria-expanded=\{filterOpen\}/);
   assert.match(filterBar, /aria-controls="category-filter-panel"/);
+  assert.match(filterBar, /id="category-filter-panel"[\s\S]*hidden=\{!filterOpen\}/);
   assert.match(reviews, /aria-pressed=\{roleFilter === opt\.value\}/);
   assert.match(dashboard, /role="img"/);
   assert.match(dashboard, /aria-describedby="admin-bookings-status-chart-description"/);
