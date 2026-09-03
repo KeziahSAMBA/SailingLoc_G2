@@ -25,11 +25,11 @@ describe('consommation des préférences par les composants spécialisés', () =
     const map = source('frontend/src/components/common/MapView.jsx');
 
     expect(map).toContain('var(--sl-brand-focus)');
-    expect(map).toContain('var(--sl-border-light)');
+    expect(map).toContain('var(--sl-map-control-border)');
     expect(map).toContain('border-dark-elevated');
     expect(map).toContain('text-content-muted');
     expect(map).toContain('text-content-subtle');
-    expect(map).toContain('text-on-light');
+    expect(map).toContain('text-map-control-text');
     expect(map).not.toMatch(/\.leaflet-tile[^}]*filter\s*:/u);
   });
 
