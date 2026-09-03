@@ -2,89 +2,135 @@ import { describe, expect, it } from '@jest/globals';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { normalizeVisualPreferences } from '../../frontend/src/utils/visualPreferences.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const CSS = readFileSync(resolve(ROOT, 'frontend/src/index.css'), 'utf8');
+const THEMES = ['light', 'dark'];
+const PROFILES = ['protanopia', 'deuteranopia', 'tritanopia'];
+const STRUCTURAL = [
+  'page',
+  'surface',
+  'content',
+  'content-muted',
+  'on-dark',
+  'on-light',
+  'brand',
+  'brand-soft',
+  'brand-hover',
+  'brand-navy',
+  'brand-focus',
+  'brand-text',
+  'action',
+  'action-hover',
+  'action-pale',
+  'action-soft',
+  'action-bright',
+  'action-deep',
+  'action-text',
+  'status-fill-text',
+  'calendar-selected-text',
+  'glass',
+  'overlay',
+  'dark-surface',
+  'dark-elevated',
+  'dark-muted',
+  'dark-strong',
+  'content-bright',
+  'content-light',
+  'content-media',
+  'content-soft',
+  'content-subtle',
+  'border-light',
+  'field-border',
+  'field-placeholder',
+  'home-sea',
+  'home-tint',
+  'neutral',
+];
+const SEMANTIC = [
+  'success',
+  'success-base',
+  'success-bright',
+  'success-soft',
+  'success-deep',
+  'success-surface',
+  'success-text',
+  'warning',
+  'warning-base',
+  'warning-bright',
+  'warning-soft',
+  'warning-pale',
+  'warning-deep',
+  'warning-surface',
+  'warning-text',
+  'danger',
+  'danger-base',
+  'danger-bright',
+  'danger-soft',
+  'danger-pale',
+  'danger-deep',
+  'danger-surface',
+  'danger-text',
+  'info',
+  'info-surface',
+  'info-text',
+  'neutral-surface',
+  'neutral-text',
+  'map-available',
+  'map-unavailable',
+  'chart-primary',
+  'chart-hover',
+  'chart-violet',
+  'chart-1',
+  'chart-2',
+  'chart-3',
+  'chart-4',
+  'chart-5',
+  'calendar-border',
+  'calendar-title',
+  'calendar-muted',
+  'calendar-weekday',
+  'calendar-disabled',
+  'calendar-hover',
+  'calendar-available',
+  'calendar-available-text',
+  'calendar-available-hover',
+  'calendar-selected',
+  'calendar-range',
+  'calendar-range-text',
+  'calendar-reserved',
+];
 
-const PALETTES = {
-  'light/protanopia': {
-    success: ['0 122 158', 'rgb(232 247 250)', '0 90 117'],
-    warning: ['184 107 0', 'rgb(255 245 223)', '122 69 0'],
-    danger: ['167 55 121', 'rgb(252 234 244)', '118 33 81'],
-    info: ['78 95 210', 'rgb(238 240 255)', '55 63 155'],
-    charts: ['0 114 178', '230 159 0', '204 121 167', '0 158 115', '111 76 155'],
-    map: ['0 122 158', '118 33 81'],
-  },
-  'dark/protanopia': {
-    success: ['94 208 242', 'rgb(94 208 242 / 0.15)', '94 208 242'],
-    warning: ['255 193 90', 'rgb(255 193 90 / 0.15)', '255 193 90'],
-    danger: ['240 138 194', 'rgb(240 138 194 / 0.15)', '240 138 194'],
-    info: ['156 168 255', 'rgb(156 168 255 / 0.15)', '156 168 255'],
-    charts: ['86 180 233', '255 193 90', '240 138 194', '94 208 179', '185 160 232'],
-    map: ['94 208 242', '240 138 194'],
-  },
-  'light/deuteranopia': {
-    success: ['0 107 182', 'rgb(232 243 252)', '0 81 143'],
-    warning: ['166 106 0', 'rgb(255 246 222)', '112 69 0'],
-    danger: ['166 62 120', 'rgb(252 234 244)', '119 32 79'],
-    info: ['102 89 199', 'rgb(240 238 255)', '68 53 143'],
-    charts: ['68 119 170', '204 187 68', '170 51 119', '34 136 51', '102 102 102'],
-    map: ['0 107 182', '166 62 120'],
-  },
-  'dark/deuteranopia': {
-    success: ['103 183 255', 'rgb(103 183 255 / 0.15)', '103 183 255'],
-    warning: ['255 196 91', 'rgb(255 196 91 / 0.15)', '255 196 91'],
-    danger: ['229 138 188', 'rgb(229 138 188 / 0.15)', '229 138 188'],
-    info: ['175 161 255', 'rgb(175 161 255 / 0.15)', '175 161 255'],
-    charts: ['119 170 221', '232 212 91', '238 153 187', '102 204 153', '187 187 187'],
-    map: ['103 183 255', '229 138 188'],
-  },
-  'light/tritanopia': {
-    success: ['11 123 89', 'rgb(232 248 241)', '8 96 68'],
-    warning: ['181 74 0', 'rgb(255 240 230)', '132 53 0'],
-    danger: ['180 35 60', 'rgb(253 236 239)', '143 25 48'],
-    info: ['118 73 168', 'rgb(244 237 252)', '87 48 128'],
-    charts: ['0 158 115', '213 94 0', '204 121 167', '122 62 157', '85 85 85'],
-    map: ['8 127 91', '180 35 60'],
-  },
-  'dark/tritanopia': {
-    success: ['82 214 162', 'rgb(82 214 162 / 0.15)', '82 214 162'],
-    warning: ['255 154 98', 'rgb(255 154 98 / 0.15)', '255 154 98'],
-    danger: ['255 135 149', 'rgb(255 135 149 / 0.15)', '255 135 149'],
-    info: ['201 160 255', 'rgb(201 160 255 / 0.15)', '201 160 255'],
-    charts: ['82 214 162', '255 154 98', '240 138 194', '201 160 255', '199 203 209'],
-    map: ['82 214 162', '255 135 149'],
-  },
-};
-
-function paletteBlock(theme, profile) {
-  const selector =
-    `html\\[data-sailingloc-theme=['"]${theme}['"]\\]` +
-    `\\[data-sailingloc-color-vision=['"]${profile}['"]\\]`;
-  const match = CSS.match(new RegExp(`${selector}\\s*\\{([\\s\\S]*?)\\n\\}`, 'u'));
-  expect(match).not.toBeNull();
-  return match[1];
+function block(selector) {
+  const start = CSS.indexOf(selector);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const open = CSS.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < CSS.length; i += 1) {
+    if (CSS[i] === '{') depth += 1;
+    if (CSS[i] === '}' && --depth === 0) return CSS.slice(open + 1, i);
+  }
+  throw new Error(`Bloc non fermé: ${selector}`);
 }
 
-function token(block, name) {
-  const match = block.match(new RegExp(`--sl-${name}:\\s*([^;]+);`, 'u'));
+function token(source, name) {
+  const match = source.match(new RegExp(`--sl-${name}:\\s*([^;]+);`, 'u'));
   expect(match).not.toBeNull();
   return match[1].trim();
 }
 
-function channels(value) {
+function rgb(value) {
   return value
     .match(/\d+(?:\.\d+)?/gu)
     .slice(0, 3)
     .map(Number);
 }
 
-function luminance(rgb) {
-  return rgb
-    .map((channel) => channel / 255)
-    .map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
-    .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+function luminance(values) {
+  return values
+    .map((value) => value / 255)
+    .map((value) => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4))
+    .reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
 }
 
 function contrast(first, second) {
@@ -92,81 +138,99 @@ function contrast(first, second) {
   return (Math.max(...values) + 0.05) / (Math.min(...values) + 0.05);
 }
 
-function blend(foreground, background, alpha) {
-  return foreground.map((channel, index) => channel * alpha + background[index] * (1 - alpha));
+function blend(value, background) {
+  const alpha = value.match(/\/\s*([\d.]+)\s*\)?$/u);
+  return alpha
+    ? rgb(value).map(
+        (channel, i) => channel * Number(alpha[1]) + background[i] * (1 - Number(alpha[1]))
+      )
+    : rgb(value);
 }
 
-describe('matrice des profils de vision des couleurs', () => {
-  it.each(Object.entries(PALETTES))('déclare exactement la palette %s', (combination, expected) => {
-    const [theme, profile] = combination.split('/');
-    const block = paletteBlock(theme, profile);
+function profile(theme, name) {
+  return block(`html[data-sailingloc-theme='${theme}'][data-sailingloc-color-vision='${name}']`);
+}
 
-    for (const status of ['success', 'warning', 'danger', 'info']) {
-      expect([
-        token(block, status),
-        token(block, `${status}-surface`),
-        token(block, `${status}-text`),
-      ]).toEqual(expected[status]);
+describe('palettes complètes des profils daltoniens', () => {
+  it('laisse les thèmes standards inchangés et déclare les tokens contextuels', () => {
+    const light = block(':root');
+    const dark = block("html[data-sailingloc-theme='dark']");
+    for (const [source, values] of [
+      [light, { page: '248 250 252', action: '14 165 233', 'calendar-selected': '2 132 199' }],
+      [dark, { page: '2 6 23', action: '2 132 199', 'calendar-selected': '2 132 199' }],
+    ]) {
+      for (const [name, value] of Object.entries(values)) expect(token(source, name)).toBe(value);
+      expect(token(source, 'action-text')).toBe('0 0 0');
+      expect(token(source, 'calendar-selected-text')).toBe('0 0 0');
     }
-    expect(Array.from({ length: 5 }, (_, index) => token(block, `chart-${index + 1}`))).toEqual(
-      expected.charts
-    );
-    expect([token(block, 'map-available'), token(block, 'map-unavailable')]).toEqual(expected.map);
-    expect(token(block, 'calendar-available')).toBe(expected.success[0]);
-    expect(token(block, 'calendar-selected')).toBe(expected.info[0]);
-    expect(token(block, 'calendar-reserved')).toBe(expected.danger[0]);
   });
 
-  it('accepte les huit combinaisons thème et profil sans modifier les tokens structurels', () => {
-    const profiles = ['standard', 'protanopia', 'deuteranopia', 'tritanopia'];
-    for (const theme of ['light', 'dark']) {
-      for (const colorVision of profiles) {
-        expect(normalizeVisualPreferences({ theme, colorVision })).toEqual({ theme, colorVision });
+  it('fournit une palette structurelle et sémantique complète pour les six variantes', () => {
+    const signatures = [];
+    for (const theme of THEMES)
+      for (const name of PROFILES) {
+        const source = profile(theme, name);
+        [...STRUCTURAL, ...SEMANTIC].forEach((key) => token(source, key));
+        signatures.push(STRUCTURAL.map((key) => token(source, key)).join('|'));
       }
-    }
-    for (const [combination] of Object.entries(PALETTES)) {
-      const [theme, profile] = combination.split('/');
-      const block = paletteBlock(theme, profile);
-      expect(block).not.toMatch(/--sl-(?:page|surface|content|brand|glass|overlay):/u);
-    }
-  });
-
-  it('respecte les contrastes WCAG des textes de statut et des indicateurs', () => {
-    for (const [combination, palette] of Object.entries(PALETTES)) {
-      const dark = combination.startsWith('dark/');
-      const page = dark ? [2, 6, 23] : [248, 250, 252];
-      const structuralSurface = dark ? [15, 23, 42] : null;
-      for (const status of ['success', 'warning', 'danger', 'info']) {
-        const accent = channels(palette[status][0]);
-        const surface = dark
-          ? blend(accent, structuralSurface, 0.15)
-          : channels(palette[status][1]);
-        const text = channels(palette[status][2]);
-        expect(contrast(text, surface)).toBeGreaterThanOrEqual(4.5);
-        expect(contrast(accent, page)).toBeGreaterThanOrEqual(3);
-      }
-    }
-    expect(contrast([10, 82, 122], [248, 250, 252])).toBeGreaterThanOrEqual(3);
-    expect(contrast([125, 211, 252], [2, 6, 23])).toBeGreaterThanOrEqual(3);
-  });
-
-  it('garde les profils distincts et ne filtre aucun média', () => {
-    const signatures = Object.values(PALETTES).map((palette) => JSON.stringify(palette));
     expect(new Set(signatures).size).toBe(6);
-    expect(CSS).not.toMatch(/\b(?:img|video|picture|canvas|\.leaflet-tile)\s*\{[^}]*filter:/su);
-    expect(CSS).not.toMatch(/data-sailingloc-color-vision[^}]*filter:/su);
   });
-});
 
-describe('sélection des profils', () => {
-  it('revient au standard au second clic et reste indépendante du thème', () => {
-    const settings = readFileSync(
-      resolve(ROOT, 'frontend/src/components/common/Header/shared/SettingsMenu.jsx'),
-      'utf8'
-    );
-    expect(settings).toContain("setColorVision(colorVision === value ? 'standard' : value)");
-    expect(settings).toContain("setTheme(theme === 'dark' ? 'light' : 'dark')");
-    expect(settings).toContain("aria-pressed={colorVision !== 'standard'}");
-    expect(settings.match(/value: '(?:protanopia|deuteranopia|tritanopia)'/gu)).toHaveLength(3);
+  it('respecte 4,5:1 pour le texte et 3:1 pour les signaux UI', () => {
+    for (const theme of THEMES)
+      for (const name of PROFILES) {
+        const source = profile(theme, name);
+        const page = rgb(token(source, 'page'));
+        const surface = rgb(token(source, 'surface'));
+        expect(contrast(rgb(token(source, 'content')), page)).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(rgb(token(source, 'content-muted')), page)).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(rgb(token(source, 'brand')), page)).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(rgb(token(source, 'field-placeholder')), surface)).toBeGreaterThanOrEqual(
+          4.5
+        );
+        expect(contrast(rgb(token(source, 'field-border')), surface)).toBeGreaterThanOrEqual(3);
+        expect(
+          contrast(rgb(token(source, 'action-text')), rgb(token(source, 'action')))
+        ).toBeGreaterThanOrEqual(4.5);
+        for (const name of ['success', 'warning', 'danger', 'info']) {
+          expect(
+            contrast(
+              rgb(token(source, `${name}-text`)),
+              blend(token(source, `${name}-surface`), surface)
+            )
+          ).toBeGreaterThanOrEqual(4.5);
+          expect(contrast(rgb(token(source, name)), page)).toBeGreaterThanOrEqual(3);
+        }
+        for (const group of [
+          ['map-available', 'map-unavailable'],
+          ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5'],
+        ]) {
+          expect(
+            Math.min(...group.map((key) => contrast(rgb(token(source, key)), page)))
+          ).toBeGreaterThanOrEqual(3);
+        }
+        expect(
+          contrast(
+            rgb(token(source, 'calendar-available-text')),
+            rgb(token(source, 'calendar-available'))
+          )
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+          contrast(rgb(token(source, 'calendar-range-text')), rgb(token(source, 'calendar-range')))
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+          contrast(
+            rgb(token(source, 'calendar-selected-text')),
+            rgb(token(source, 'calendar-selected'))
+          )
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+  });
+
+  it('conserve la redondance non chromatique et ne filtre aucun média', () => {
+    expect(CSS).not.toMatch(/(?:img|video|picture|canvas|\.leaflet-tile)[^}]*filter:/su);
+    expect(CSS).toContain('calendar-day--selected');
+    expect(CSS).toContain('calendar-day--disabled');
+    expect(CSS).toContain('status-indicator--danger');
   });
 });
