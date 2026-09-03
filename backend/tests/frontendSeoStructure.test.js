@@ -14,7 +14,7 @@ describe('structure sémantique et textes alternatifs frontend', () => {
     const home = source('frontend/src/pages/HomePage.jsx');
 
     expect(home).toMatch(
-      /<h1\s+className="mx-auto max-w-3xl px-2 text-base leading-relaxed text-gray-300 sm:text-lg lg:text-xl"\s+style=\{\{ \.\.\.heroSlideStyle\('left'\), \.\.\.introTaglineStyle \}\}\s*>\s*\{t\('home\.hero\.tagline'\)\}\s*<\/h1>/u
+      /<h1\s+className="mx-auto max-w-3xl px-2 text-base leading-relaxed text-content-soft sm:text-lg lg:text-xl"\s+style=\{\{ \.\.\.heroSlideStyle\('left'\), \.\.\.introTaglineStyle \}\}\s*>\s*\{t\('home\.hero\.tagline'\)\}\s*<\/h1>/u
     );
     expect(home).not.toMatch(/sr-only[^\n]*home\.hero\.tagline/u);
   });
