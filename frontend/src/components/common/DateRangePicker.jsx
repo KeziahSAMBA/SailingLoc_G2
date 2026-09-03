@@ -205,7 +205,7 @@ function DateRangePicker({
               let cellClass = 'text-calendar-disabled cursor-not-allowed';
               let calendarState = 'disabled';
               if (isStart || isEnd) {
-                cellClass = 'bg-calendar-selected text-on-dark font-semibold';
+                cellClass = 'bg-calendar-selected text-calendar-selected-text font-semibold';
                 calendarState = 'selected';
               } else if (inRange) {
                 cellClass = 'bg-calendar-range text-calendar-range-text';
@@ -238,7 +238,10 @@ function DateRangePicker({
           </div>
 
           <div className="flex items-center gap-1 mt-2 text-[10px] text-calendar-muted">
-            <span className="w-2.5 h-2.5 rounded-full bg-calendar-available border border-success inline-block" />
+            <span
+              className="w-2.5 h-2.5 rounded-full bg-calendar-available border border-calendar-available-text inline-block"
+              aria-hidden="true"
+            />
             {t('searchBar.datesAvailable')}
           </div>
         </div>

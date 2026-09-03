@@ -26,7 +26,7 @@ const MONTH_FULL_OPTS = { month: 'long', year: 'numeric' };
 
 // Bleu des graphiques : la teinte est centralisée dans les tokens du thème.
 // (luminosité + contraste ≥ 3:1) sur la surface sombre du dashboard.
-const CHART_BLUE = 'rgb(var(--sl-chart-primary))';
+const CHART_BLUE = 'rgb(var(--sl-chart-1))';
 const CHART_BLUE_HOVER = 'rgb(var(--sl-chart-hover))';
 
 const PAYMENT_STATUS_CLS = {

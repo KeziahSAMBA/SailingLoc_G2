@@ -147,12 +147,22 @@ const MAP_STYLE_CSS = `
   background: rgb(var(--sl-surface));
   color: rgb(var(--sl-content));
   border-radius: 14px;
-  border: 1px solid rgb(var(--sl-action) / 0.25);
+  border: 1px solid rgb(var(--sl-brand-focus) / 0.35);
   box-shadow: 0 8px 24px rgba(2,44,74,0.18);
 }
 .sailingloc-popup .leaflet-popup-tip {
   background: rgb(var(--sl-surface));
   box-shadow: none;
+}
+.leaflet-control-zoom a {
+  background: rgb(var(--sl-surface));
+  color: rgb(var(--sl-content));
+  border-bottom-color: rgb(var(--sl-border-light));
+}
+.leaflet-control-zoom a:hover,
+.leaflet-control-zoom a:focus-visible {
+  background: rgb(var(--sl-page));
+  color: rgb(var(--sl-brand-text));
 }
 `;
 
@@ -185,9 +195,9 @@ function ZoomableMarker({ marker }) {
           }`}
         >
           <div className="font-semibold">{marker.title}</div>
-          {marker.subtitle && <div className="text-slate-500">{marker.subtitle}</div>}
+          {marker.subtitle && <div className="text-content-muted">{marker.subtitle}</div>}
           {marker.available === false && (
-            <div className="mt-1 text-slate-400 italic">Bientôt disponible</div>
+            <div className="mt-1 text-content-subtle italic">Bientôt disponible</div>
           )}
           {marker.badge != null && (
             <div className="mt-1 font-medium text-info">
@@ -217,7 +227,7 @@ function BoatMarker({ boat, onSelect }) {
           aria-label={`${boat.name}${boat.city ? ` — ${boat.city}` : ''} — ${boat.price}€ / jour`}
         >
           <div className="font-semibold">{boat.name}</div>
-          {boat.city && <div className="text-slate-500">{boat.city}</div>}
+          {boat.city && <div className="text-content-muted">{boat.city}</div>}
           <div className="mt-1 font-medium text-info">{boat.price}€ / jour</div>
         </div>
       </Popup>
@@ -268,7 +278,7 @@ function MapView({
     // (jusqu'à 700+ pour les popups/controls) restent contenus dans la carte et ne
     // passent plus au-dessus du header fixe ni de ses panneaux burger.
     <div
-      className={`relative z-0 isolate overflow-hidden rounded-2xl border border-slate-800 ${className}`}
+      className={`relative z-0 isolate overflow-hidden rounded-2xl border border-dark-elevated ${className}`}
     >
       <style>{MAP_STYLE_CSS}</style>
       <MapContainer
@@ -297,12 +307,12 @@ function MapView({
         onClick={handleResetView}
         title="Réinitialiser la carte"
         aria-label="Réinitialiser la carte"
-        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-surface text-slate-700 shadow-md hover:bg-slate-100 transition-colors"
+        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-surface text-on-light shadow-md hover:bg-page transition-colors"
       >
         <FiRefreshCw size={15} />
       </button>
       {points.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 z-[400] flex items-center justify-center bg-slate-950/40 text-sm text-slate-200">
+        <div className="pointer-events-none absolute inset-0 z-[400] flex items-center justify-center bg-dark-strong/40 text-sm text-content-light">
           {emptyLabel}
         </div>
       )}

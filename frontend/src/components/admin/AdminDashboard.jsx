@@ -25,10 +25,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 const NUMBER = new Intl.NumberFormat('fr-FR');
 
 const STATUS_COLOR = {
-  confirmed: 'rgb(var(--sl-success-bright))',
-  pending: 'rgb(var(--sl-warning-bright))',
-  refused: 'rgb(var(--sl-danger-bright))',
-  cancelled: 'rgb(var(--sl-content-subtle))',
+  confirmed: 'rgb(var(--sl-chart-4))',
+  pending: 'rgb(var(--sl-chart-2))',
+  refused: 'rgb(var(--sl-chart-3))',
+  cancelled: 'rgb(var(--sl-chart-5))',
 };
 
 const MONTH_OPTS = { month: 'short', year: '2-digit' };
@@ -180,7 +180,7 @@ function AdminDashboard() {
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [EURO.format(v), t('adminDashboard.revenue')]}
                 />
-                <Bar dataKey="revenue" fill="rgb(var(--sl-success-bright))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="rgb(var(--sl-chart-4))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -195,7 +195,7 @@ function AdminDashboard() {
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [v, t('adminDashboard.bookings')]}
                 />
-                <Bar dataKey="count" fill="rgb(var(--sl-brand))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="rgb(var(--sl-chart-1))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -210,11 +210,7 @@ function AdminDashboard() {
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [EURO.format(v), t('adminDashboard.commission')]}
                 />
-                <Bar
-                  dataKey="commission"
-                  fill="rgb(var(--sl-chart-violet))"
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="commission" fill="rgb(var(--sl-chart-3))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>

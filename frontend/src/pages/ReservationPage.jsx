@@ -40,21 +40,79 @@ const GHOST_BTN =
 const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
-// Style du champ carte Stripe (iframe) accordé au thème sombre de la page.
-export function stripeCardElementOptions(theme) {
-  const dark = theme === 'dark';
+// Les options Stripe suivent le thème et le profil visuel sans recréer le champ.
+
+// Style du champ carte Stripe (iframe) accordé au thème et au profil visuel.
+const STRIPE_CARD_PALETTES = Object.freeze({
+  light: Object.freeze({
+    standard: Object.freeze({
+      content: '#ffffff',
+      placeholder: 'rgba(255,255,255,0.4)',
+      icon: '#7dd3fc',
+      invalid: '#fca5a5',
+    }),
+    protanopia: Object.freeze({
+      content: '#f0f9fc',
+      placeholder: 'rgba(190,218,229,0.65)',
+      icon: '#4baedc',
+      invalid: '#ad4278',
+    }),
+    deuteranopia: Object.freeze({
+      content: '#f6f3fc',
+      placeholder: 'rgba(205,194,222,0.65)',
+      icon: '#9679d0',
+      invalid: '#ad4278',
+    }),
+    tritanopia: Object.freeze({
+      content: '#fcf7ef',
+      placeholder: 'rgba(238,221,205,0.65)',
+      icon: '#e08327',
+      invalid: '#ad4278',
+    }),
+  }),
+  dark: Object.freeze({
+    standard: Object.freeze({
+      content: '#f8fafc',
+      placeholder: 'rgba(203,213,225,0.65)',
+      icon: '#7dd3fc',
+      invalid: '#f87171',
+    }),
+    protanopia: Object.freeze({
+      content: '#eff9ff',
+      placeholder: 'rgba(193,220,231,0.65)',
+      icon: '#90ddf6',
+      invalid: '#f3a6ce',
+    }),
+    deuteranopia: Object.freeze({
+      content: '#f9f5ff',
+      placeholder: 'rgba(220,207,237,0.65)',
+      icon: '#e2d5ff',
+      invalid: '#f3a6ce',
+    }),
+    tritanopia: Object.freeze({
+      content: '#fff7eb',
+      placeholder: 'rgba(237,211,187,0.65)',
+      icon: '#ffd7a0',
+      invalid: '#f3a6ce',
+    }),
+  }),
+});
+
+export function stripeCardElementOptions(theme, colorVision = 'standard') {
+  const mode = theme === 'dark' ? 'dark' : 'light';
+  const palette = STRIPE_CARD_PALETTES[mode][colorVision] ?? STRIPE_CARD_PALETTES[mode].standard;
   return {
     hidePostalCode: true,
     style: {
       base: {
-        color: dark ? '#f8fafc' : '#ffffff',
+        color: palette.content,
         fontSize: '16px',
-        '::placeholder': { color: dark ? 'rgba(203,213,225,0.65)' : 'rgba(255,255,255,0.4)' },
-        iconColor: '#7dd3fc',
+        '::placeholder': { color: palette.placeholder },
+        iconColor: palette.icon,
       },
       invalid: {
-        color: dark ? '#f87171' : '#fca5a5',
-        iconColor: dark ? '#f87171' : '#fca5a5',
+        color: palette.invalid,
+        iconColor: palette.invalid,
       },
     },
   };
@@ -134,10 +192,13 @@ function ErrorNote({ children }) {
 // posée ici ; le débit n'a lieu qu'à la confirmation du propriétaire.
 function StripeCardForm({ idBooking, total, onPaid, onBack }) {
   const { t } = useTranslation();
-  const { theme } = useVisualPreferences();
+  const { theme, colorVision } = useVisualPreferences();
   const stripe = useStripe();
   const elements = useElements();
-  const cardElementOptions = useMemo(() => stripeCardElementOptions(theme), [theme]);
+  const cardElementOptions = useMemo(
+    () => stripeCardElementOptions(theme, colorVision),
+    [theme, colorVision]
+  );
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

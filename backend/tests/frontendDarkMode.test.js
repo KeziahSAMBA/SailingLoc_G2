@@ -160,8 +160,9 @@ describe('composants spéciaux du mode nuit', () => {
   it('adapte uniquement le style visuel de Stripe CardElement au thème', () => {
     const reservation = source('frontend/src/pages/ReservationPage.jsx');
 
-    expect(reservation).toContain('stripeCardElementOptions(theme)');
-    expect(reservation).toContain("const dark = theme === 'dark'");
+    expect(reservation).toContain('stripeCardElementOptions(theme, colorVision)');
+    expect(reservation).toContain("const mode = theme === 'dark' ? 'dark' : 'light'");
+    expect(reservation).toContain('STRIPE_CARD_PALETTES');
     expect(reservation).toContain('<CardElement options={cardElementOptions} />');
     expect(reservation).not.toContain('key={theme}');
     expect(reservation).toContain('stripe.confirmCardPayment(data.client_secret');
@@ -179,7 +180,7 @@ describe('composants spéciaux du mode nuit', () => {
     expect(calendar).toContain('text-calendar-disabled');
     expect(map).toContain('rgb(var(--sl-map-available))');
     expect(map).toContain('background: rgb(var(--sl-surface))');
-    expect(chart).toContain('rgb(var(--sl-chart-primary))');
+    expect(chart).toContain('rgb(var(--sl-chart-1))');
     expect(chart).toContain('rgb(var(--sl-glass) / 0.15)');
     expect(source('frontend/src/index.css')).not.toMatch(/\b(?:img|video)\s*\{[^}]*filter:/su);
   });
