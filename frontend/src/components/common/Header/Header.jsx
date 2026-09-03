@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useId, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../hooks/useAuth.jsx';
@@ -119,8 +119,12 @@ function Header() {
   const scrolled = useScrolled();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const menuRef = useRef(null);
   const userMenuRef = useRef(null);
+  const settingsPanelRef = useRef(null);
+  const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
+  const menuPanelId = `${idBase}-public-menu`;
   const location = useLocation();
   const goToCategory = useCategoryNavigate();
   const goHome = useHomeNavigate();
@@ -193,20 +197,29 @@ function Header() {
           : getBurgerItems(t);
 
   return (
-    <HeaderShell scrolled={scrolled} introHidden={introHidden}>
+    <HeaderShell
+      scrolled={scrolled}
+      introHidden={introHidden}
+      settingsOpen={settingsOpen}
+      settingsPanelRef={settingsPanelRef}
+    >
       {/* Gauche — Burger + Logo (33%) */}
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {/* Burger */}
         <div className="relative" ref={menuRef}>
           <button
+            type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex flex-col justify-center gap-[5px] p-1"
+            className="flex flex-col justify-center gap-[5px] p-1.5"
             aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-controls={menuPanelId}
           >
             <BurgerIcon open={menuOpen} />
           </button>
 
           <SidePanel
+            id={menuPanelId}
             side="left"
             open={menuOpen}
             scrolled={scrolled}
@@ -287,7 +300,11 @@ function Header() {
 
       {/* Droite — Paramètres + Connexion (33%) */}
       <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4 lg:w-1/3 lg:flex-none lg:pr-4">
-        <SettingsMenu scrolled={scrolled} />
+        <SettingsMenu
+          scrolled={scrolled}
+          onOpenChange={setSettingsOpen}
+          panelContainerRef={settingsPanelRef}
+        />
 
         {authLoading ? (
           <div className="h-6 w-9 sm:w-[120px]" aria-hidden="true" />

@@ -136,4 +136,37 @@ describe('intégration statique des préférences visuelles', () => {
     expect(settings).toContain('motion-reduce:transition-none');
     expect(settings).toContain('activeGlassesButtonRef.current?.focus()');
   });
+
+  it('intègre le sélecteur sous le header et réserve sa hauteur dans le flux', () => {
+    const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');
+    const shell = source('frontend/src/components/common/Header/shared/HeaderShell.jsx');
+    const clickOutside = source('frontend/src/components/common/Header/shared/useClickOutside.js');
+
+    expect(settings).toContain('createPortal');
+    expect(settings).toContain('panelContainerRef');
+    expect(settings).toContain('data-visual-settings-panel');
+    expect(settings).toContain('grid-cols-1');
+    expect(settings).toContain('sm:grid-cols-4');
+    expect(settings).not.toMatch(/className=.*absolute.*settings/u);
+    expect(shell).toContain('settingsPanelRef');
+    expect(shell).toContain('settingsOpen');
+    expect(shell).toContain('settingsHeight');
+    expect(shell).toContain('aria-hidden={!settingsOpen}');
+    expect(clickOutside).toContain('Array.isArray(ref)');
+  });
+
+  it('expose les panneaux de navigation et les retire de la tabulation lorsqu’ils sont fermés', () => {
+    const publicHeader = source('frontend/src/components/common/Header/Header.jsx');
+    const dashboardHeader = source('frontend/src/components/common/Header/DashboardHeader.jsx');
+    const sidePanel = source('frontend/src/components/common/Header/shared/SidePanel.jsx');
+
+    expect(publicHeader).toContain('aria-expanded={menuOpen}');
+    expect(publicHeader).toContain('aria-controls={menuPanelId}');
+    expect(dashboardHeader).toContain('aria-expanded={navOpen}');
+    expect(dashboardHeader).toContain('aria-controls={navPanelId}');
+    expect(dashboardHeader).toContain('aria-expanded={rightMenuOpen}');
+    expect(dashboardHeader).toContain('aria-controls={rightPanelId}');
+    expect(sidePanel).toContain('aria-hidden={!open}');
+    expect(sidePanel).toContain('panelRef.current.inert = !open');
+  });
 });

@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiMail } from 'react-icons/fi';
@@ -58,8 +58,13 @@ function DashboardHeader({
   const scrolled = useScrolled();
   const [navOpen, setNavOpen] = useState(false);
   const [rightMenuOpen, setRightMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const navRef = useRef(null);
   const rightMenuRef = useRef(null);
+  const settingsPanelRef = useRef(null);
+  const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
+  const navPanelId = `${idBase}-dashboard-navigation`;
+  const rightPanelId = `${idBase}-dashboard-user-menu`;
   const location = useLocation();
   // Route les liens vers /categorie (resp. l'accueil) à travers la transition
   // animée depuis l'accueil (resp. /categorie) ; toute autre destination est
@@ -177,20 +182,29 @@ function DashboardHeader({
   }
 
   return (
-    <HeaderShell scrolled={scrolled} introHidden={introHidden}>
+    <HeaderShell
+      scrolled={scrolled}
+      introHidden={introHidden}
+      settingsOpen={settingsOpen}
+      settingsPanelRef={settingsPanelRef}
+    >
       {/* Gauche — Burger nav + Logo (33%) */}
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {resolvedLeftGroups && (
           <div className="relative" ref={navRef}>
             <button
+              type="button"
               onClick={() => setNavOpen((o) => !o)}
-              className="flex flex-col justify-center gap-[5px] p-1"
+              className="flex flex-col justify-center gap-[5px] p-1.5"
               aria-label={t('dashboardHeader.menuAria')}
+              aria-expanded={navOpen}
+              aria-controls={navPanelId}
             >
               <BurgerIcon open={navOpen} />
             </button>
 
             <SidePanel
+              id={navPanelId}
               side="left"
               open={navOpen}
               scrolled={scrolled}
@@ -283,7 +297,11 @@ function DashboardHeader({
 
       {/* Droite — Paramètres + Icône utilisateur + Burger menu (33%) */}
       <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-3 lg:w-1/3 lg:flex-none lg:pr-4">
-        <SettingsMenu scrolled={scrolled} />
+        <SettingsMenu
+          scrolled={scrolled}
+          onOpenChange={setSettingsOpen}
+          panelContainerRef={settingsPanelRef}
+        />
 
         <a
           href={profileHref}
@@ -353,14 +371,18 @@ function DashboardHeader({
 
         <div className="relative" ref={rightMenuRef}>
           <button
+            type="button"
             onClick={() => setRightMenuOpen((o) => !o)}
-            className="flex flex-col justify-center gap-[5px] p-1 ml-1"
+            className="flex flex-col justify-center gap-[5px] p-1.5 ml-1"
             aria-label={t('dashboardHeader.userMenuAria')}
+            aria-expanded={rightMenuOpen}
+            aria-controls={rightPanelId}
           >
             <BurgerIcon open={rightMenuOpen} />
           </button>
 
           <SidePanel
+            id={rightPanelId}
             side="right"
             open={rightMenuOpen}
             scrolled={scrolled}

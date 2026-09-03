@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaGlasses } from 'react-icons/fa';
@@ -12,7 +13,7 @@ const COLOR_VISION_PROFILES = [
   { value: 'tritanopia', labelKey: 'header.settings.tritanopia' },
 ];
 
-function SettingsMenu({ scrolled }) {
+function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
   const { t, i18n } = useTranslation();
   const { theme, colorVision, setTheme, setColorVision } = useVisualPreferences();
   const [open, setOpen] = useState(false);
@@ -20,20 +21,16 @@ function SettingsMenu({ scrolled }) {
   const ref = useRef(null);
   const settingsButtonRef = useRef(null);
   const activeGlassesButtonRef = useRef(null);
-  const desktopGlassesButtonRef = useRef(null);
-  const mobileGlassesButtonRef = useRef(null);
+  const panelRef = useRef(null);
   const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
-  const colorVisionMenuIds = {
-    desktop: `${idBase}-desktop-color-vision`,
-    mobile: `${idBase}-mobile-color-vision`,
-  };
+  const settingsPanelId = `${idBase}-settings-panel`;
+  const colorVisionMenuId = `${idBase}-color-vision`;
 
   useClickOutside([
     [
-      ref,
+      [ref, panelRef],
       () => {
-        setOpen(false);
-        setColorVisionOpen(false);
+        closeMenus();
       },
     ],
   ]);
@@ -49,7 +46,7 @@ function SettingsMenu({ scrolled }) {
         setColorVisionOpen(false);
         activeGlassesButtonRef.current?.focus();
       } else {
-        setOpen(false);
+        closeMenus();
         settingsButtonRef.current?.focus();
       }
     }
@@ -61,6 +58,7 @@ function SettingsMenu({ scrolled }) {
   function closeMenus() {
     setOpen(false);
     setColorVisionOpen(false);
+    onOpenChange?.(false);
   }
 
   function handleGlassesClick(event) {
@@ -72,21 +70,21 @@ function SettingsMenu({ scrolled }) {
     setColorVision(colorVision === value ? 'standard' : value);
   }
 
-  function renderColorVisionOptions(menuId) {
+  function renderColorVisionOptions() {
     return (
       <div
-        id={menuId}
+        id={colorVisionMenuId}
         role="group"
         aria-label={t('header.settings.colorVisionOptions')}
         aria-hidden={!colorVisionOpen}
-        className={`absolute right-0 top-full z-50 mt-1 grid w-max min-w-[11rem] transition-[grid-template-rows,opacity] duration-[180ms] ease-out motion-reduce:transition-none ${
+        className={`grid transition-[grid-template-rows,opacity] duration-[180ms] ease-out motion-reduce:transition-none ${
           colorVisionOpen
             ? 'grid-rows-[1fr] opacity-100 pointer-events-auto'
             : 'grid-rows-[0fr] opacity-0 pointer-events-none'
         }`}
       >
-        <div className="min-h-0 overflow-hidden rounded-xl border border-glass/20 bg-slate-900/95 shadow-xl">
-          <div className="flex flex-col py-1">
+        <div className="min-h-0 overflow-hidden">
+          <div className="grid grid-cols-1 gap-1 border-t border-glass/20 pt-2 sm:grid-cols-3">
             {COLOR_VISION_PROFILES.map(({ value, labelKey }) => {
               const selected = colorVision === value;
               return (
@@ -97,7 +95,7 @@ function SettingsMenu({ scrolled }) {
                   aria-pressed={selected}
                   tabIndex={colorVisionOpen ? 0 : -1}
                   onClick={() => handleColorVisionChange(value)}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-xs font-medium text-on-dark transition-colors hover:bg-surface/10"
+                  className="flex min-h-9 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs font-medium text-on-dark transition-colors hover:bg-surface/10"
                 >
                   <span>{t(labelKey)}</span>
                   {selected && <FiCheck size={14} aria-hidden="true" />}
@@ -110,10 +108,7 @@ function SettingsMenu({ scrolled }) {
     );
   }
 
-  function renderControls(variant) {
-    const colorVisionMenuId = colorVisionMenuIds[variant];
-    const glassesButtonRef =
-      variant === 'desktop' ? desktopGlassesButtonRef : mobileGlassesButtonRef;
+  function renderControls() {
     const controlTabIndex = open ? 0 : -1;
 
     return (
@@ -157,9 +152,9 @@ function SettingsMenu({ scrolled }) {
         >
           {theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}
         </button>
-        <div className="relative flex shrink-0">
+        <div className="flex min-w-0 shrink-0">
           <button
-            ref={glassesButtonRef}
+            ref={activeGlassesButtonRef}
             type="button"
             onClick={handleGlassesClick}
             aria-label={t('header.settings.colorblindMode')}
@@ -173,58 +168,65 @@ function SettingsMenu({ scrolled }) {
           >
             <FaGlasses size={20} />
           </button>
-          {renderColorVisionOptions(colorVisionMenuId)}
         </div>
       </>
     );
   }
 
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        ref={settingsButtonRef}
-        type="button"
-        onClick={() => {
-          if (open) setColorVisionOpen(false);
-          setOpen((value) => !value);
-        }}
+  function renderPanel() {
+    return (
+      <div
+        ref={panelRef}
+        id={settingsPanelId}
+        role="region"
         aria-label={t('header.settings.label')}
-        title={t('header.settings.label')}
-        aria-expanded={open}
-        aria-haspopup="true"
-        className="flex items-center justify-center rounded-full p-3 text-on-dark transition-colors hover:bg-surface/10"
-      >
-        <FiSettings size={scrolled ? 18 : 20} />
-      </button>
-
-      {/* Web : glissement horizontal vers la gauche, sans fond. */}
-      <div
-        aria-hidden={!open}
-        className={`absolute right-full top-1/2 hidden -translate-y-1/2 items-center gap-2.5 pr-2 transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] sm:flex ${
-          open
-            ? 'translate-x-0 opacity-100 pointer-events-auto'
-            : 'translate-x-3 opacity-0 pointer-events-none'
-        }`}
-      >
-        {renderControls('desktop')}
-      </div>
-
-      {/* Mobile : glissement horizontal vers la gauche, fond glassmorphism. */}
-      <div
-        aria-hidden={!open}
-        className={`absolute right-full top-1/2 mr-2 flex -translate-y-1/2 items-center gap-2.5 rounded-2xl border border-glass/15 p-2 shadow-xl transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] sm:hidden ${
-          open
-            ? 'translate-x-0 opacity-100 pointer-events-auto'
-            : 'translate-x-3 opacity-0 pointer-events-none'
-        }`}
+        data-visual-settings-panel="true"
+        className="max-h-[calc(100vh-1rem)] overflow-y-auto rounded-2xl border border-glass/15 p-2 shadow-xl"
         style={{
           backgroundColor: 'rgba(0, 0, 0, 0.35)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(14px)',
         }}
       >
-        {renderControls('mobile')}
+        <div className="grid grid-cols-1 items-center gap-1 sm:grid-cols-4 sm:gap-2">
+          {renderControls()}
+        </div>
+        {renderColorVisionOptions()}
       </div>
+    );
+  }
+
+  function toggleSettings() {
+    if (open) {
+      closeMenus();
+      return;
+    }
+
+    setOpen(true);
+    onOpenChange?.(true);
+  }
+
+  const panel =
+    open && panelContainerRef?.current
+      ? createPortal(renderPanel(), panelContainerRef.current)
+      : null;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        ref={settingsButtonRef}
+        type="button"
+        onClick={toggleSettings}
+        aria-label={t('header.settings.label')}
+        title={t('header.settings.label')}
+        aria-expanded={open}
+        aria-haspopup="true"
+        aria-controls={settingsPanelId}
+        className="flex items-center justify-center rounded-full p-3 text-on-dark transition-colors hover:bg-surface/10"
+      >
+        <FiSettings size={scrolled ? 18 : 20} />
+      </button>
+      {panel}
     </div>
   );
 }

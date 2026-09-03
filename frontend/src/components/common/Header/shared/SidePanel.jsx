@@ -1,9 +1,19 @@
-function SidePanel({ side, open, scrolled, width, children, darkerOverlay = false }) {
+import { useLayoutEffect, useRef } from 'react';
+
+function SidePanel({ id, side, open, scrolled, width, children, darkerOverlay = false }) {
   const panelTop = scrolled ? '60px' : 'clamp(64px, 6vw, 80px)';
   const isLeft = side === 'left';
+  const panelRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (panelRef.current) panelRef.current.inert = !open;
+  }, [open]);
 
   return (
     <div
+      ref={panelRef}
+      id={id}
+      aria-hidden={!open}
       className={`fixed ${isLeft ? 'left-0' : 'right-0'} overflow-hidden`}
       style={{
         top: panelTop,

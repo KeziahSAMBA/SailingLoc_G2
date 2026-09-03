@@ -46,8 +46,79 @@ const readVisualState = () =>
   }, STORAGE_KEY);
 
 const settings = page.getByRole('button', { name: 'Paramètres' }).first();
+assert(
+  (await settings.getAttribute('aria-expanded')) === 'false',
+  'Le panneau doit rester fermé au chargement.'
+);
+assert(
+  (await page.locator('[data-visual-settings-panel]').count()) === 0,
+  'Un panneau fermé ne doit pas rester dans le DOM interactif.'
+);
 await settings.click();
 await page.getByRole('button', { name: 'Mode sombre' }).first().click();
+
+async function assertResponsiveSettingsPanel(width) {
+  await page.setViewportSize({ width, height: 800 });
+  const panel = page.locator('[data-visual-settings-panel]');
+  await panel.waitFor({ state: 'visible' });
+  const metrics = await page.evaluate(() => {
+    const header = document.querySelector('header');
+    const bar = document.querySelector('[data-header-bar]');
+    const panel = document.querySelector('[data-visual-settings-panel]');
+    const spacer = document.querySelector('[data-header-settings-spacer]');
+    const panelRect = panel?.getBoundingClientRect();
+    const headerRect = header?.getBoundingClientRect();
+    const barRect = bar?.getBoundingClientRect();
+    const spacerRect = spacer?.getBoundingClientRect();
+    return {
+      panelPosition: panel ? getComputedStyle(panel).position : null,
+      panelLeft: panelRect?.left,
+      panelRight: panelRect?.right,
+      headerHeight: headerRect?.height,
+      barHeight: barRect?.height,
+      spacerHeight: spacerRect?.height,
+      viewportWidth: window.innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    };
+  });
+
+  assert(metrics.panelPosition === 'static', `Le panneau ${width}px doit rester dans le flux.`);
+  assert(metrics.panelLeft >= 8, `Le panneau ${width}px sort par la gauche.`);
+  assert(
+    metrics.panelRight <= metrics.viewportWidth - 8,
+    `Le panneau ${width}px sort par la droite.`
+  );
+  assert(metrics.headerHeight > metrics.barHeight, `Le header ${width}px ne grandit pas.`);
+  assert(
+    Math.abs(metrics.spacerHeight - (metrics.headerHeight - metrics.barHeight)) < 1,
+    `Le contenu ${width}px n'est pas poussé par la hauteur du panneau.`
+  );
+  assert(
+    metrics.scrollWidth <= metrics.viewportWidth + 1,
+    `Le panneau ${width}px provoque un défilement horizontal.`
+  );
+}
+
+for (const width of [320, 375, 639, 640, 768, 1023, 1024, 1279, 1280, 1440]) {
+  await assertResponsiveSettingsPanel(width);
+}
+
+await page.setViewportSize({ width: 1280, height: 800 });
+await settings.click();
+assert(
+  (await settings.getAttribute('aria-expanded')) === 'false',
+  'Le second clic doit fermer le panneau.'
+);
+await settings.focus();
+await settings.press('Enter');
+await page.locator('[data-visual-settings-panel]').waitFor({ state: 'visible' });
+await page.keyboard.press('Escape');
+assert((await settings.getAttribute('aria-expanded')) === 'false', 'Echap doit fermer le panneau.');
+assert(
+  await settings.evaluate((element) => element === document.activeElement),
+  'Echap doit restituer le focus au bouton Paramètres.'
+);
+await settings.click();
 
 let state = await readVisualState();
 assert(state.theme === 'dark', 'Le clic doit activer le thème sombre.');
