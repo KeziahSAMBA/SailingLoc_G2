@@ -300,7 +300,7 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 | Email                 | Mot de passe                    |
 | --------------------- | ------------------------------- |
-| `admin@sailingloc.fr` | configuré localement uniquement |
+| `admin@sailingloc.fr` | Admin@123456 |
 
 > **Connexion admin :** la page de login administrateur est séparée de celle des utilisateurs.
 > URL : [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
@@ -310,13 +310,13 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 | Email                     | Mot de passe                    |
 | ------------------------- | ------------------------------- |
-| `thomas.bernard@email.fr` | configuré localement uniquement |
+| `thomas.bernard@email.fr` | Locataire@2025Secure |
 
 ### Compte Propriétaire
 
 | Email                 | Mot de passe                    |
 | --------------------- | ------------------------------- |
-| `luc.martin@email.fr` | configuré localement uniquement |
+| `luc.martin@email.fr` | Proprietaire@2025Secure |
 
 > **Note :** Ces comptes sont uniquement créés par le seed de développement. Aucun mot de passe de démonstration n'est publié dans le dépôt ; ne lancez jamais le seed sur une base de staging ou de production.
 
