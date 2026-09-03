@@ -8,6 +8,25 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function rgbChannels(value) {
+  return value
+    .match(/[\d.]+/gu)
+    .slice(0, 3)
+    .map(Number);
+}
+
+function luminance(rgb) {
+  return rgb
+    .map((channel) => channel / 255)
+    .map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4))
+    .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+}
+
+function contrast(first, second) {
+  const values = [luminance(rgbChannels(first)), luminance(rgbChannels(second))];
+  return (Math.max(...values) + 0.05) / (Math.min(...values) + 0.05);
+}
+
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 await context.addInitScript(
@@ -69,8 +88,10 @@ await page
   .first()
   .evaluate((button) => button.click());
 
-async function assertResponsiveSettingsPanel(width) {
+async function assertResponsiveSettingsPanel(width, scrollY) {
   await page.setViewportSize({ width, height: 800 });
+  await page.evaluate((top) => scrollTo(0, top), scrollY);
+  await page.waitForTimeout(350);
   const panel = page.locator('[data-visual-settings-panel]');
   await panel.waitFor({ state: 'visible' });
   const metrics = await page.evaluate(() => {
@@ -82,6 +103,11 @@ async function assertResponsiveSettingsPanel(width) {
     const headerRect = header?.getBoundingClientRect();
     const barRect = bar?.getBoundingClientRect();
     const spacerRect = spacer?.getBoundingClientRect();
+    const backgroundRect = header?.firstElementChild?.getBoundingClientRect();
+    const panelStyles = panel ? getComputedStyle(panel) : null;
+    const focusedControl = panel?.querySelector('button');
+    focusedControl?.focus();
+    const focusedStyles = focusedControl ? getComputedStyle(focusedControl) : null;
     return {
       panelPosition: panel ? getComputedStyle(panel).position : null,
       panelLeft: panelRect?.left,
@@ -91,6 +117,10 @@ async function assertResponsiveSettingsPanel(width) {
       spacerHeight: spacerRect?.height,
       viewportWidth: window.innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
+      backgroundHeight: backgroundRect?.height,
+      panelBackground: panelStyles?.backgroundColor,
+      panelColor: focusedStyles?.color,
+      focusColor: focusedStyles?.outlineColor,
     };
   });
 
@@ -109,10 +139,22 @@ async function assertResponsiveSettingsPanel(width) {
     metrics.scrollWidth <= metrics.viewportWidth + 1,
     `Le panneau ${width}px provoque un défilement horizontal.`
   );
+  assert(
+    Math.abs(metrics.backgroundHeight - metrics.barHeight) < 1,
+    `Le fond du header ${width}px/${scrollY}px déborde derrière le panneau.`
+  );
+  assert(
+    contrast(metrics.panelColor, metrics.panelBackground) >= 4.5,
+    `Contraste texte du panneau insuffisant à ${width}px/${scrollY}px.`
+  );
+  assert(
+    contrast(metrics.focusColor, metrics.panelBackground) >= 3,
+    `Contraste focus du panneau insuffisant à ${width}px/${scrollY}px.`
+  );
 }
 
 for (const width of [320, 375, 639, 640, 768, 1023, 1024, 1279, 1280, 1440]) {
-  await assertResponsiveSettingsPanel(width);
+  for (const scrollY of [0, 200]) await assertResponsiveSettingsPanel(width, scrollY);
 }
 
 await page.setViewportSize({ width: 1280, height: 800 });

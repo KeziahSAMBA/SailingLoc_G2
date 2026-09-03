@@ -101,6 +101,7 @@
   --sl-brand-hover: 74 163 219;
   --sl-brand-navy: 10 49 114;
   --sl-brand-focus: 10 82 122;
+  --sl-header-settings-bg: var(--sl-brand-navy);
   --sl-brand-text: 36 112 172;
   --sl-action: 14 165 233;
   --sl-action-hover: 2 132 199;

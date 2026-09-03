@@ -95,7 +95,9 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
                   aria-pressed={selected}
                   tabIndex={colorVisionOpen ? 0 : -1}
                   onClick={() => handleColorVisionChange(value)}
-                  className="flex min-h-9 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs font-medium text-on-dark transition-colors hover:bg-surface/10"
+                  className={`flex min-h-9 w-full items-center justify-between gap-3 rounded-lg border-2 px-3 py-2 text-left text-xs font-medium text-on-dark transition-colors hover:bg-surface/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark ${
+                    selected ? 'border-on-dark' : 'border-transparent'
+                  }`}
                 >
                   <span>{t(labelKey)}</span>
                   {selected && <FiCheck size={14} aria-hidden="true" />}
@@ -123,11 +125,16 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
             }}
             aria-label={label}
             title={label}
+            aria-pressed={i18n.language === code}
             tabIndex={controlTabIndex}
-            className="flex shrink-0 items-center justify-center rounded-md p-2.5 transition-transform hover:scale-110"
+            className="relative flex shrink-0 items-center justify-center rounded-md p-2.5 transition-transform hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
           >
             <span
-              className="block overflow-hidden rounded-[3px]"
+              className={`block overflow-hidden rounded-[3px] ${
+                i18n.language === code
+                  ? 'ring-2 ring-on-dark ring-offset-2 ring-offset-transparent'
+                  : ''
+              }`}
               style={{
                 width: '26px',
                 height: '18px',
@@ -137,6 +144,13 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
             >
               <Flag className="w-full h-full block" />
             </span>
+            {i18n.language === code && (
+              <FiCheck
+                size={12}
+                aria-hidden="true"
+                className="absolute bottom-0.5 right-0.5 text-on-dark drop-shadow-md"
+              />
+            )}
           </button>
         ))}
         <button
@@ -148,7 +162,7 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
           title={t(theme === 'dark' ? 'header.settings.lightMode' : 'header.settings.darkMode')}
           aria-pressed={theme === 'dark'}
           tabIndex={controlTabIndex}
-          className="flex h-11 w-11 shrink-0 items-center justify-center text-on-dark opacity-60 drop-shadow-md"
+          className="flex h-11 w-11 shrink-0 items-center justify-center text-on-dark opacity-60 drop-shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
         >
           {theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}
         </button>
@@ -164,7 +178,7 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
             aria-haspopup="true"
             aria-controls={colorVisionMenuId}
             tabIndex={controlTabIndex}
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-on-dark opacity-60 drop-shadow-md"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-on-dark opacity-60 drop-shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
           >
             <FaGlasses size={20} />
           </button>
@@ -181,9 +195,9 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
         role="region"
         aria-label={t('header.settings.label')}
         data-visual-settings-panel="true"
-        className="max-h-[calc(100vh-1rem)] overflow-y-auto rounded-2xl border border-glass/15 p-2 shadow-xl"
+        className="max-h-[calc(100vh-1rem)] overflow-y-auto rounded-2xl border border-glass/40 p-2 text-on-dark shadow-xl"
         style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.35)',
+          backgroundColor: 'rgb(var(--sl-header-settings-bg) / 0.96)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(14px)',
         }}
@@ -222,7 +236,7 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
         aria-expanded={open}
         aria-haspopup="true"
         aria-controls={settingsPanelId}
-        className="flex items-center justify-center rounded-full p-3 text-on-dark transition-colors hover:bg-surface/10"
+        className="flex items-center justify-center rounded-full p-3 text-on-dark transition-colors hover:bg-surface/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
       >
         <FiSettings size={scrolled ? 18 : 20} />
       </button>

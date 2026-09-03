@@ -61,8 +61,9 @@ function HeaderShell({ scrolled, introHidden, settingsOpen = false, settingsPane
           backdrop-filter (they're nested inside <header>).
         */}
         <div
-          className="absolute inset-0 -z-10"
+          className="absolute left-0 right-0 top-0 -z-10"
           style={{
+            height: baseHeight,
             backgroundColor: scrolled ? 'rgba(10, 49, 114, 0.95)' : 'rgba(255, 255, 255, 0.05)',
             borderBottom: '1px solid rgba(90, 180, 236, 0.2)',
             boxShadow: scrolled ? '0 2px 12px rgba(10, 49, 114, 0.08)' : 'none',

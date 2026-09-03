@@ -154,6 +154,21 @@ describe('bascule lune et soleil', () => {
     expect(settings).toContain("aria-pressed={theme === 'dark'}");
     expect(settings).toContain("{theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}");
   });
+
+  it('borne le fond à la barre et conserve un panneau sombre accessible', () => {
+    const shell = source('frontend/src/components/common/Header/shared/HeaderShell.jsx');
+    const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');
+    const css = source('frontend/src/index.css');
+
+    expect(css).toContain('--sl-header-settings-bg: var(--sl-brand-navy)');
+    expect(shell).toContain('className="absolute left-0 right-0 top-0 -z-10"');
+    expect(shell).toContain('height: baseHeight');
+    expect(settings).toContain("backgroundColor: 'rgb(var(--sl-header-settings-bg) / 0.96)'");
+    expect(settings).toContain('border border-glass/40');
+    expect(settings).toContain('focus-visible:outline-on-dark');
+    expect(settings).toContain('aria-pressed={i18n.language === code}');
+    expect(settings).toContain("selected ? 'border-on-dark' : 'border-transparent'");
+  });
 });
 
 describe('composants spéciaux du mode nuit', () => {

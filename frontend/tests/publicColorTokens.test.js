@@ -128,7 +128,6 @@ const RAW_EXCEPTION_COUNTS = {
   },
   'src/components/common/Header/shared/SettingsMenu.jsx': {
     'rgba(255,255,255,0.5)': 1,
-    'rgba(0,0,0,0.35)': 1,
   },
   'src/components/common/Header/shared/SidePanel.jsx': {
     'rgba(255,255,255,0.95)': 1,
