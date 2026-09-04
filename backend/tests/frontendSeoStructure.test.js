@@ -14,7 +14,7 @@ describe('structure sémantique et textes alternatifs frontend', () => {
     const home = source('frontend/src/pages/HomePage.jsx');
 
     expect(home).toMatch(
-      /<h1\s+className="mx-auto max-w-3xl px-2 text-base leading-relaxed text-gray-300 sm:text-lg lg:text-xl"\s+style=\{\{ \.\.\.heroSlideStyle\('left'\), \.\.\.introTaglineStyle \}\}\s*>\s*\{t\('home\.hero\.tagline'\)\}\s*<\/h1>/u
+      /<h1\s+className="mx-auto max-w-3xl px-2 text-base leading-relaxed text-content-soft sm:text-lg lg:text-xl"\s+style=\{\{ \.\.\.heroSlideStyle\('left'\), \.\.\.introTaglineStyle \}\}\s*>\s*\{t\('home\.hero\.tagline'\)\}\s*<\/h1>/u
     );
     expect(home).not.toMatch(/sr-only[^\n]*home\.hero\.tagline/u);
   });
@@ -24,10 +24,10 @@ describe('structure sémantique et textes alternatifs frontend', () => {
     const product = source('frontend/src/pages/ProductPage.jsx');
 
     expect(category).toMatch(
-      /<h1 className="text-xl font-bold uppercase tracking-tight text-white drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.4\)\] sm:text-2xl">\s*\{t\('category\.results\.title'\)\}\s*<\/h1>/u
+      /<h1 className="text-xl font-bold uppercase tracking-tight text-map-results-heading drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.4\)\] sm:text-2xl">\s*\{t\('category\.results\.title'\)\}\s*<\/h1>/u
     );
     expect(product).toMatch(
-      /<h1 className="text-lg font-bold text-white tracking-tight drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.4\)\]">\s*\{boat\.name\}\s*<\/h1>/u
+      /<h1 className="text-lg font-bold text-on-dark tracking-tight drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.4\)\]">\s*\{boat\.name\}\s*<\/h1>/u
     );
   });
 

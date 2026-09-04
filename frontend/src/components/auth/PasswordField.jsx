@@ -4,16 +4,16 @@ import { useState } from 'react';
 // (fonds ardoise) et verre (dashboards sur fond photo, ex. « Mon compte »).
 const INPUT_CLASSES = {
   light:
-    'w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 pr-11 text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0A3172] focus:ring-2 focus:ring-[#0A3172]/20',
-  dark: 'w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 pr-11 text-slate-100 placeholder-slate-500 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20',
+    'w-full rounded-lg border border-content-soft bg-surface px-4 py-2.5 pr-11 text-content placeholder-content-subtle outline-none transition focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/20',
+  dark: 'w-full rounded-lg border border-dark-muted bg-dark-surface px-4 py-2.5 pr-11 text-content-bright placeholder-neutral outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20',
   glass:
-    'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 pr-11 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20',
+    'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 pr-11 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20',
 };
 
 const TOGGLE_CLASSES = {
-  light: 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
-  dark: 'text-slate-400 hover:bg-slate-800 hover:text-slate-200',
-  glass: 'text-white/60 hover:bg-white/10 hover:text-white',
+  light: 'text-neutral hover:bg-neutral-surface hover:text-dark-muted',
+  dark: 'text-content-subtle hover:bg-dark-elevated hover:text-content-light',
+  glass: 'text-on-dark/60 hover:bg-surface/10 hover:text-on-dark',
 };
 
 function EyeIcon() {

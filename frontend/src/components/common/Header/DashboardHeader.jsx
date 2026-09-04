@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiMail } from 'react-icons/fi';
@@ -30,7 +30,10 @@ import { getAboutNavigationItems } from './shared/aboutNavigation.js';
 import { getContactNavigationItems } from './shared/contactNavigation.js';
 import SafeImage from '../SafeImage.jsx';
 
-const roundIconHover = hoverBackground('rgba(255,255,255,0.25)', 'rgba(255,255,255,0.1)');
+const roundIconHover = hoverBackground(
+  'rgb(var(--sl-header-icon) / 0.25)',
+  'rgb(var(--sl-header-icon) / 0.1)'
+);
 
 /**
  * Header shared by every authenticated role (admin, propriétaire, locataire).
@@ -58,8 +61,13 @@ function DashboardHeader({
   const scrolled = useScrolled();
   const [navOpen, setNavOpen] = useState(false);
   const [rightMenuOpen, setRightMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const navRef = useRef(null);
   const rightMenuRef = useRef(null);
+  const settingsPanelRef = useRef(null);
+  const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
+  const navPanelId = `${idBase}-dashboard-navigation`;
+  const rightPanelId = `${idBase}-dashboard-user-menu`;
   const location = useLocation();
   // Route les liens vers /categorie (resp. l'accueil) à travers la transition
   // animée depuis l'accueil (resp. /categorie) ; toute autre destination est
@@ -177,20 +185,29 @@ function DashboardHeader({
   }
 
   return (
-    <HeaderShell scrolled={scrolled} introHidden={introHidden}>
+    <HeaderShell
+      scrolled={scrolled}
+      introHidden={introHidden}
+      settingsOpen={settingsOpen}
+      settingsPanelRef={settingsPanelRef}
+    >
       {/* Gauche — Burger nav + Logo (33%) */}
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {resolvedLeftGroups && (
           <div className="relative" ref={navRef}>
             <button
+              type="button"
               onClick={() => setNavOpen((o) => !o)}
-              className="flex flex-col justify-center gap-[5px] p-1"
+              className="flex flex-col justify-center gap-[5px] p-1.5"
               aria-label={t('dashboardHeader.menuAria')}
+              aria-expanded={navOpen}
+              aria-controls={navPanelId}
             >
               <BurgerIcon open={navOpen} />
             </button>
 
             <SidePanel
+              id={navPanelId}
               side="left"
               open={navOpen}
               scrolled={scrolled}
@@ -201,7 +218,7 @@ function DashboardHeader({
                 <div
                   className="flex flex-col py-2 lg:hidden"
                   style={{
-                    borderBottom: `1px solid ${scrolled ? 'rgba(10, 49, 114, 0.15)' : 'rgba(255, 255, 255, 0.2)'}`,
+                    borderBottom: `1px solid ${scrolled ? 'rgb(var(--sl-header-panel-scrolled-separator) / 0.15)' : 'rgb(var(--sl-glass) / 0.2)'}`,
                   }}
                 >
                   {centerNav.map((item) => (
@@ -241,8 +258,8 @@ function DashboardHeader({
                           margin: '6px 16px',
                           height: '1px',
                           backgroundColor: scrolled
-                            ? 'rgba(10, 49, 114, 0.15)'
-                            : 'rgba(255, 255, 255, 0.2)',
+                            ? 'rgb(var(--sl-header-panel-scrolled-separator) / 0.15)'
+                            : 'rgb(var(--sl-glass) / 0.2)',
                         }}
                       />
                     )}
@@ -283,7 +300,11 @@ function DashboardHeader({
 
       {/* Droite — Paramètres + Icône utilisateur + Burger menu (33%) */}
       <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-3 lg:w-1/3 lg:flex-none lg:pr-4">
-        <SettingsMenu scrolled={scrolled} />
+        <SettingsMenu
+          scrolled={scrolled}
+          onOpenChange={setSettingsOpen}
+          panelContainerRef={settingsPanelRef}
+        />
 
         <a
           href={profileHref}
@@ -311,8 +332,8 @@ function DashboardHeader({
             style={{
               width: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
               height: scrolled ? '32px' : 'clamp(34px, 4vw, 40px)',
-              border: '1.5px solid rgba(255, 255, 255, 0.7)',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              border: '1.5px solid rgb(var(--sl-header-icon) / 0.7)',
+              backgroundColor: 'rgb(var(--sl-header-icon) / 0.1)',
               transition: 'width 0.3s ease, height 0.3s ease, background-color 0.2s ease',
             }}
             {...roundIconHover}
@@ -339,11 +360,12 @@ function DashboardHeader({
             {...roundIconHover}
             aria-label={t('dashboardHeader.messagesAria')}
           >
-            <FiMail size={scrolled ? 18 : 22} color="#fff" />
+            <FiMail size={scrolled ? 18 : 22} color="rgb(var(--sl-header-icon))" />
             {unread > 0 && (
               <span
                 aria-hidden="true"
-                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#5AB4EC] px-1 text-[10px] font-bold text-slate-950"
+                className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold"
+                style={{ color: 'rgb(var(--sl-header-badge-text))' }}
               >
                 {unread > 9 ? '9+' : unread}
               </span>
@@ -353,14 +375,18 @@ function DashboardHeader({
 
         <div className="relative" ref={rightMenuRef}>
           <button
+            type="button"
             onClick={() => setRightMenuOpen((o) => !o)}
-            className="flex flex-col justify-center gap-[5px] p-1 ml-1"
+            className="flex flex-col justify-center gap-[5px] p-1.5 ml-1"
             aria-label={t('dashboardHeader.userMenuAria')}
+            aria-expanded={rightMenuOpen}
+            aria-controls={rightPanelId}
           >
             <BurgerIcon open={rightMenuOpen} />
           </button>
 
           <SidePanel
+            id={rightPanelId}
             side="right"
             open={rightMenuOpen}
             scrolled={scrolled}

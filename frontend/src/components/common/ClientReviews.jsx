@@ -56,14 +56,22 @@ function fetchReviews(boatId) {
 // ClientReviews via sa clé côté page produit suffit donc à rafraîchir la liste.
 export function invalidatePublicReviews() {}
 
-const StarRating = memo(function StarRating({ rating }) {
+const StarRating = memo(function StarRating({ rating, light = false }) {
   return (
-    <div className="flex gap-0.5">
+    <div className="flex gap-0.5" role="img" aria-label={`${rating}/5`}>
       {Array.from({ length: 5 }, (_, i) =>
         i < Math.round(rating) ? (
-          <FaStar key={i} className="text-sky-500" style={{ fontSize: '13px' }} />
+          <FaStar
+            key={i}
+            className={light ? 'text-photo-action' : 'text-brand-text'}
+            style={{ fontSize: '13px' }}
+          />
         ) : (
-          <FaRegStar key={i} className="text-sky-500" style={{ fontSize: '13px' }} />
+          <FaRegStar
+            key={i}
+            className={light ? 'text-photo-action' : 'text-brand-text'}
+            style={{ fontSize: '13px' }}
+          />
         )
       )}
     </div>
@@ -94,7 +102,7 @@ const ReviewCard = memo(function ReviewCard({
     : date;
   return (
     <div
-      className={`flex min-w-0 flex-col gap-1.5 px-3 py-2 sm:gap-2 sm:px-5 sm:py-3 ${light ? 'rounded-xl border border-white/15 bg-white/5' : ''}`}
+      className={`flex min-w-0 flex-col gap-1.5 px-3 py-2 sm:gap-2 sm:px-5 sm:py-3 ${light ? 'rounded-xl border border-glass/15 bg-surface/5' : ''}`}
       style={
         light ? { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } : undefined
       }
@@ -113,37 +121,41 @@ const ReviewCard = memo(function ReviewCard({
         />
         <div className="flex flex-col">
           <span
-            className={`text-xs font-semibold leading-tight sm:text-sm ${light ? 'text-white' : 'text-gray-800'}`}
+            className={`text-xs font-semibold leading-tight sm:text-sm ${light ? 'text-on-dark' : 'text-content'}`}
           >
             {name}
           </span>
           {role && (
-            <span className="text-[11px] font-semibold text-sky-500 sm:text-xs">
+            <span
+              className={`text-[11px] font-semibold sm:text-xs ${light ? 'text-photo-action' : 'text-brand-text'}`}
+            >
               {roleLabels[role] ?? role}
             </span>
           )}
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <StarRating rating={rating} />
-        <span className={`text-[11px] sm:text-xs ${light ? 'text-white/50' : 'text-gray-400'}`}>
+        <StarRating rating={rating} light={light} />
+        <span
+          className={`text-[11px] sm:text-xs ${light ? 'text-on-dark/80' : 'text-content-muted'}`}
+        >
           {displayedDate}
         </span>
       </div>
       <p
-        className={`break-words text-xs leading-relaxed sm:text-sm ${light ? 'text-white/80' : 'text-gray-600'}`}
+        className={`break-words text-xs leading-relaxed sm:text-sm ${light ? 'text-on-dark/80' : 'text-content-muted'}`}
       >
         {text}
       </p>
       {ownerReply && (
         <div
-          className={`rounded-lg border-l-2 px-3 py-2 ${light ? 'border-sky-400/60 bg-white/5' : 'border-sky-500/60 bg-sky-50'}`}
+          className={`rounded-lg border-l-2 px-3 py-2 ${light ? 'border-photo-action bg-surface/5' : 'border-info/60 bg-info-surface'}`}
         >
-          <p className={`text-xs font-semibold ${light ? 'text-sky-300' : 'text-sky-600'}`}>
+          <p className={`text-xs font-semibold ${light ? 'text-photo-action' : 'text-info'}`}>
             {t('boatReviews.ownerReply')}
           </p>
           <p
-            className={`mt-0.5 break-words text-sm leading-relaxed ${light ? 'text-white/80' : 'text-gray-600'}`}
+            className={`mt-0.5 break-words text-sm leading-relaxed ${light ? 'text-on-dark/80' : 'text-content-muted'}`}
           >
             {ownerReply}
           </p>
@@ -155,7 +167,7 @@ const ReviewCard = memo(function ReviewCard({
             <button
               type="button"
               onClick={onEdit}
-              className={`text-xs font-semibold transition hover:underline ${light ? 'text-sky-300 hover:text-sky-200' : 'text-sky-600 hover:text-sky-700'}`}
+              className={`text-xs font-semibold transition hover:underline ${light ? 'text-photo-action hover:text-photo-action-hover' : 'text-info hover:text-info-text'}`}
             >
               {t('boatReviews.edit')}
             </button>
@@ -164,7 +176,7 @@ const ReviewCard = memo(function ReviewCard({
             <button
               type="button"
               onClick={onDelete}
-              className={`text-xs font-semibold transition hover:underline ${light ? 'text-red-300 hover:text-red-200' : 'text-red-600 hover:text-red-700'}`}
+              className="text-xs font-semibold text-danger transition hover:text-danger-text hover:underline"
             >
               {t('boatReviews.delete')}
             </button>
@@ -272,12 +284,12 @@ export default function ClientReviews({
       onChange={(e) => handleSort(e.target.value)}
       className={`text-sm border rounded-full px-3 py-1 cursor-pointer focus:outline-none ${
         light
-          ? 'border-white/30 text-white bg-white/10 focus:border-sky-400 focus:text-sky-300'
-          : 'border-gray-200 text-gray-600 bg-white focus:border-sky-400 focus:text-sky-500'
+          ? 'border-glass/30 text-on-dark bg-surface/10 focus:border-photo-action focus:text-photo-action-hover'
+          : 'border-border-light text-content-muted bg-surface focus:border-action-bright focus:text-brand-text'
       }`}
     >
       {sortOptions.map((opt) => (
-        <option key={opt.value} value={opt.value} className="text-gray-900">
+        <option key={opt.value} value={opt.value} className="text-content">
           {opt.label}
         </option>
       ))}
@@ -294,7 +306,7 @@ export default function ClientReviews({
         // sur la même ligne, comme le lien "Voir toute la flotte" du Carrousel.
         <div className="w-full flex flex-wrap items-center gap-4">
           <h2
-            className={`font-semibold ${light ? 'text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-gray-900'}`}
+            className={`font-semibold ${light ? 'text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-content'}`}
             style={{ fontSize: '20px', lineHeight: '22px' }}
           >
             {t('reviews.productTitle')}
@@ -304,11 +316,13 @@ export default function ClientReviews({
       ) : (
         <>
           <div className="text-center mb-2">
-            <p className="text-sm font-semibold tracking-widest text-sky-500 uppercase mb-4 underline underline-offset-4">
+            <p
+              className={`text-sm font-semibold tracking-widest uppercase mb-4 underline underline-offset-4 ${light ? 'text-photo-action' : 'text-brand-text'}`}
+            >
               {t('reviews.kicker')}
             </p>
             <h2
-              className={`text-lg font-semibold sm:text-3xl md:text-4xl ${light ? 'text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-gray-900'}`}
+              className={`text-lg font-semibold sm:text-3xl md:text-4xl ${light ? 'text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-content'}`}
             >
               {t('reviews.title')}
             </h2>
@@ -319,13 +333,15 @@ export default function ClientReviews({
               {roleFilters.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
                   onClick={() => handleRoleFilter(opt.value)}
-                  className={`px-3 py-1 rounded-full text-sm font-semibold border transition-all duration-200 ${
+                  aria-pressed={roleFilter === opt.value}
+                  className={`rounded-full border px-3 py-1 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action ${
                     roleFilter === opt.value
-                      ? 'bg-sky-500 text-white border-sky-500 shadow-sm'
+                      ? 'bg-photo-action-fill text-photo-text border-photo-action shadow-sm non-color-active'
                       : light
-                        ? 'bg-white/5 text-white border-white/30 hover:border-sky-400 hover:text-sky-300'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-sky-400 hover:text-sky-500'
+                        ? 'bg-surface/5 text-on-dark border-glass/30 hover:border-photo-action hover:text-photo-action-hover'
+                        : 'bg-surface text-content-muted border-border-light hover:border-action-bright hover:text-brand-text'
                   }`}
                   style={
                     light && roleFilter !== opt.value
@@ -344,7 +360,7 @@ export default function ClientReviews({
       )}
 
       {sorted.length === 0 ? (
-        <p className={`text-sm py-4 ${light ? 'text-white/70' : 'text-gray-500'}`}>
+        <p className={`text-sm py-4 ${light ? 'text-on-dark/70' : 'text-content-muted'}`}>
           {t('reviews.empty')}
         </p>
       ) : (
@@ -377,28 +393,34 @@ export default function ClientReviews({
           {/* Navigation */}
           <div className="flex items-center gap-4">
             <button
+              type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={currentPage === 0}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
+              aria-label={t('reviewFilters.prevPage')}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action disabled:cursor-not-allowed disabled:opacity-30 ${
                 light
-                  ? 'border-white/30 bg-white/10 text-white hover:border-sky-400 hover:text-sky-300'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-sky-500 hover:text-sky-500 shadow-sm'
+                  ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-photo-action hover:text-photo-action-hover'
+                  : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
               }`}
             >
               <FaChevronLeft size={13} />
             </button>
 
-            <span className={`text-sm font-medium ${light ? 'text-white/80' : 'text-gray-500'}`}>
+            <span
+              className={`text-sm font-medium ${light ? 'text-on-dark/80' : 'text-content-muted'}`}
+            >
               {currentPage + 1} / {totalPages}
             </span>
 
             <button
+              type="button"
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={currentPage === totalPages - 1}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
+              aria-label={t('reviewFilters.nextPage')}
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action disabled:cursor-not-allowed disabled:opacity-30 ${
                 light
-                  ? 'border-white/30 bg-white/10 text-white hover:border-sky-400 hover:text-sky-300'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-sky-500 hover:text-sky-500 shadow-sm'
+                  ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-photo-action hover:text-photo-action-hover'
+                  : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
               }`}
             >
               <FaChevronRight size={13} />
@@ -417,7 +439,7 @@ export default function ClientReviews({
       className={
         light && !wide
           ? `w-full flex flex-col items-start gap-5 px-4 sm:px-8 lg:pl-16 lg:pr-16 xl:pl-28 xl:pr-24 ${className}`
-          : `w-full flex flex-col items-center gap-5 px-4 sm:px-8 lg:px-16 xl:px-28 ${!light ? 'bg-white' : ''} ${className}`
+          : `w-full flex flex-col items-center gap-5 px-4 sm:px-8 lg:px-16 xl:px-28 ${!light ? 'bg-surface' : ''} ${className}`
       }
       style={style}
     >

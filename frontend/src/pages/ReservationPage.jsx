@@ -14,6 +14,7 @@ import {
 } from '../utils/reservationResume.js';
 import bateauBg from '../assets/image/image_bateau/bateau_searchbar.webp';
 import SafeImage from '../components/common/SafeImage.jsx';
+import { useVisualPreferences } from '../context/VisualPreferencesContext.jsx';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,32 +27,96 @@ function countDays(startStr, endStr) {
 // Doit correspondre à DOCUMENT_TYPES.locataire côté backend.
 const REQUIRED_DOC_TYPES = ['permis_conduire', 'piece_identite', 'cv_nautique'];
 
-const GLASS = 'rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl';
+const GLASS = 'rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl';
 const FIELD =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-action-bright focus:ring-2 focus:ring-action-bright/30';
 const PRIMARY_BTN =
-  'rounded-full bg-sky-500 px-8 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50';
+  'rounded-full bg-action px-8 py-2.5 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50';
 const GHOST_BTN =
-  'rounded-full border border-white/40 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10';
+  'rounded-full border border-glass/40 px-6 py-2.5 text-sm font-semibold text-on-dark transition hover:bg-surface/10';
 
 // Clé publique Stripe (mode test, pk_test_…). Absente : le formulaire de carte
 // simulé historique reste utilisé, en cohérence avec le backend sans clé.
 const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
 
-// Style du champ carte Stripe (iframe) accordé au thème sombre de la page.
-const CARD_ELEMENT_OPTIONS = {
-  hidePostalCode: true,
-  style: {
-    base: {
-      color: '#ffffff',
-      fontSize: '16px',
-      '::placeholder': { color: 'rgba(255,255,255,0.4)' },
-      iconColor: '#7dd3fc',
+// Les options Stripe suivent le thème et le profil visuel sans recréer le champ.
+
+// Style du champ carte Stripe (iframe) accordé au thème et au profil visuel.
+const STRIPE_CARD_PALETTES = Object.freeze({
+  light: Object.freeze({
+    standard: Object.freeze({
+      content: '#ffffff',
+      placeholder: 'rgba(255,255,255,0.4)',
+      icon: '#7dd3fc',
+      invalid: '#fca5a5',
+    }),
+    protanopia: Object.freeze({
+      content: '#f0f9fc',
+      placeholder: 'rgba(190,218,229,0.65)',
+      icon: '#4baedc',
+      invalid: '#ad4278',
+    }),
+    deuteranopia: Object.freeze({
+      content: '#f6f3fc',
+      placeholder: 'rgba(205,194,222,0.65)',
+      icon: '#9679d0',
+      invalid: '#ad4278',
+    }),
+    tritanopia: Object.freeze({
+      content: '#fcf7ef',
+      placeholder: 'rgba(238,221,205,0.65)',
+      icon: '#e08327',
+      invalid: '#ad4278',
+    }),
+  }),
+  dark: Object.freeze({
+    standard: Object.freeze({
+      content: '#f8fafc',
+      placeholder: 'rgba(203,213,225,0.65)',
+      icon: '#7dd3fc',
+      invalid: '#f87171',
+    }),
+    protanopia: Object.freeze({
+      content: '#eff9ff',
+      placeholder: 'rgba(193,220,231,0.65)',
+      icon: '#90ddf6',
+      invalid: '#f3a6ce',
+    }),
+    deuteranopia: Object.freeze({
+      content: '#f9f5ff',
+      placeholder: 'rgba(220,207,237,0.65)',
+      icon: '#e2d5ff',
+      invalid: '#f3a6ce',
+    }),
+    tritanopia: Object.freeze({
+      content: '#fff7eb',
+      placeholder: 'rgba(237,211,187,0.65)',
+      icon: '#ffd7a0',
+      invalid: '#f3a6ce',
+    }),
+  }),
+});
+
+export function stripeCardElementOptions(theme, colorVision = 'standard') {
+  const mode = theme === 'dark' ? 'dark' : 'light';
+  const palette = STRIPE_CARD_PALETTES[mode][colorVision] ?? STRIPE_CARD_PALETTES[mode].standard;
+  return {
+    hidePostalCode: true,
+    style: {
+      base: {
+        color: palette.content,
+        fontSize: '16px',
+        '::placeholder': { color: palette.placeholder },
+        iconColor: palette.icon,
+      },
+      invalid: {
+        color: palette.invalid,
+        iconColor: palette.invalid,
+      },
     },
-    invalid: { color: '#fca5a5', iconColor: '#fca5a5' },
-  },
-};
+  };
+}
 
 // Saisie carte : groupes de 4 chiffres (affichage uniquement, rien n'est envoyé).
 function formatCardNumber(value) {
@@ -84,22 +149,22 @@ function Stepper({ step }) {
             <span
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                 state === 'done'
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-success text-on-dark'
                   : state === 'current'
-                    ? 'bg-sky-500 text-white'
-                    : 'bg-white/20 text-white/60'
+                    ? 'bg-action text-action-text non-color-active'
+                    : 'bg-surface/20 text-on-dark/60'
               }`}
             >
               {state === 'done' ? <MdCheck aria-hidden /> : i + 1}
             </span>
             <span
               className={`text-xs font-semibold sm:text-sm ${
-                state === 'current' ? 'text-white' : 'text-white/60'
+                state === 'current' ? 'text-on-dark' : 'text-on-dark/60'
               }`}
             >
               {label}
             </span>
-            {i < steps.length - 1 && <span className="h-px w-4 bg-white/30 sm:w-8" aria-hidden />}
+            {i < steps.length - 1 && <span className="h-px w-4 bg-surface/30 sm:w-8" aria-hidden />}
           </li>
         );
       })}
@@ -110,7 +175,10 @@ function Stepper({ step }) {
 function ErrorNote({ children }) {
   if (!children) return null;
   return (
-    <p role="alert" className="rounded-lg bg-red-500/20 px-4 py-2 text-sm text-red-200">
+    <p
+      role="alert"
+      className="status-indicator status-indicator--danger rounded-lg bg-danger-surface/20 px-4 py-2 text-sm text-danger-text"
+    >
       {children}
     </p>
   );
@@ -124,8 +192,13 @@ function ErrorNote({ children }) {
 // posée ici ; le débit n'a lieu qu'à la confirmation du propriétaire.
 function StripeCardForm({ idBooking, total, onPaid, onBack }) {
   const { t } = useTranslation();
+  const { theme, colorVision } = useVisualPreferences();
   const stripe = useStripe();
   const elements = useElements();
+  const cardElementOptions = useMemo(
+    () => stripeCardElementOptions(theme, colorVision),
+    [theme, colorVision]
+  );
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -169,16 +242,16 @@ function StripeCardForm({ idBooking, total, onPaid, onBack }) {
 
   return (
     <form onSubmit={handleSubmit} className={`${GLASS} flex flex-col gap-4 p-6`} noValidate>
-      <h2 className="text-lg font-semibold text-white">{t('reservation.payment.title')}</h2>
-      <div className="flex justify-between rounded-lg bg-white/10 px-4 py-3 text-sm">
-        <span className="text-white/70">{t('reservation.payment.amount')}</span>
-        <span className="text-lg font-bold text-sky-400">{total} €</span>
+      <h2 className="text-lg font-semibold text-on-dark">{t('reservation.payment.title')}</h2>
+      <div className="flex justify-between rounded-lg bg-surface/10 px-4 py-3 text-sm">
+        <span className="text-on-dark/70">{t('reservation.payment.amount')}</span>
+        <span className="text-lg font-bold text-action-bright">{total} €</span>
       </div>
-      <p className="flex items-center gap-1.5 text-xs text-amber-300">
+      <p className="flex items-center gap-1.5 text-xs text-warning-text">
         <MdLockOutline aria-hidden />
         {t('reservation.payment.stripeTest')}
       </p>
-      <label className="flex flex-col gap-1 text-sm text-white/80">
+      <label className="flex flex-col gap-1 text-sm text-on-dark/80">
         {t('reservation.payment.name')}
         <input
           className={FIELD}
@@ -187,10 +260,10 @@ function StripeCardForm({ idBooking, total, onPaid, onBack }) {
           onChange={(e) => setName(e.target.value)}
         />
       </label>
-      <div className="flex flex-col gap-1 text-sm text-white/80">
+      <div className="flex flex-col gap-1 text-sm text-on-dark/80">
         <span>{t('reservation.payment.card')}</span>
         <div className={`${FIELD} py-3`}>
-          <CardElement options={CARD_ELEMENT_OPTIONS} />
+          <CardElement options={cardElementOptions} />
         </div>
       </div>
       <ErrorNote>{error}</ErrorNote>
@@ -365,26 +438,28 @@ function ReservationPage() {
         backgroundPosition: 'center',
       }}
     >
-      <div className="min-h-screen w-full bg-black/50 px-4 pt-[120px] pb-16">
+      <div className="min-h-screen w-full bg-overlay/50 px-4 pt-[120px] pb-16">
         <section className="mx-auto w-full max-w-2xl">
-          <h1 className="mb-2 text-center text-3xl font-bold text-white">
+          <h1 className="mb-2 text-center text-3xl font-bold text-on-dark">
             {t('reservation.title')}
           </h1>
           {boat && (
-            <p className="mb-6 text-center text-slate-200">
+            <p className="mb-6 text-center text-content-soft">
               {boat.name}
               {boat.port ? ` · ${boat.port.name}, ${boat.port.city}` : ''}
             </p>
           )}
 
-          {!boatsLoaded && <p className="text-center text-slate-200">{t('reservation.loading')}</p>}
+          {!boatsLoaded && (
+            <p className="text-center text-content-soft">{t('reservation.loading')}</p>
+          )}
 
           {invalid && (
             <div className={`${GLASS} p-6 text-center`}>
-              <p className="text-white">{t('reservation.invalid')}</p>
+              <p className="text-on-dark">{t('reservation.invalid')}</p>
               <Link
                 to="/categorie"
-                className="mt-4 inline-block text-sm font-semibold text-sky-400 hover:text-sky-300"
+                className="mt-4 inline-block text-sm font-semibold text-action-bright hover:text-action-soft"
               >
                 {t('reservation.backToCatalog')}
               </Link>
@@ -398,7 +473,7 @@ function ReservationPage() {
               {/* ── Étape 1 : récapitulatif ── */}
               {step === 0 && (
                 <div className={`${GLASS} flex flex-col gap-4 p-6`}>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-on-dark">
                     {t('reservation.recap.title')}
                   </h2>
                   <SafeImage
@@ -409,20 +484,20 @@ function ReservationPage() {
                   />
                   <dl className="flex flex-col gap-2 text-sm">
                     <div className="flex justify-between gap-4">
-                      <dt className="text-white/70">{t('reservation.recap.dates')}</dt>
-                      <dd className="text-right font-semibold text-white">
+                      <dt className="text-on-dark/70">{t('reservation.recap.dates')}</dt>
+                      <dd className="text-right font-semibold text-on-dark">
                         {fmtDay(start)} → {fmtDay(end)}
                       </dd>
                     </div>
                     <div className="flex justify-between gap-4">
-                      <dt className="text-white/70">{t('reservation.recap.detail')}</dt>
-                      <dd className="font-semibold text-white">
+                      <dt className="text-on-dark/70">{t('reservation.recap.detail')}</dt>
+                      <dd className="font-semibold text-on-dark">
                         {t('reservation.recap.days', { count: dayCount, price })}
                       </dd>
                     </div>
-                    <div className="flex justify-between gap-4 border-t border-white/20 pt-2 text-base">
-                      <dt className="font-semibold text-white">{t('reservation.recap.total')}</dt>
-                      <dd className="text-xl font-bold text-sky-400">{total} €</dd>
+                    <div className="flex justify-between gap-4 border-t border-glass/20 pt-2 text-base">
+                      <dt className="font-semibold text-on-dark">{t('reservation.recap.total')}</dt>
+                      <dd className="text-xl font-bold text-action-bright">{total} €</dd>
                     </div>
                   </dl>
                   <ErrorNote>{error}</ErrorNote>
@@ -471,18 +546,18 @@ function ReservationPage() {
                   className={`${GLASS} flex flex-col gap-4 p-6`}
                   noValidate
                 >
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-on-dark">
                     {t('reservation.payment.title')}
                   </h2>
-                  <div className="flex justify-between rounded-lg bg-white/10 px-4 py-3 text-sm">
-                    <span className="text-white/70">{t('reservation.payment.amount')}</span>
-                    <span className="text-lg font-bold text-sky-400">{total} €</span>
+                  <div className="flex justify-between rounded-lg bg-surface/10 px-4 py-3 text-sm">
+                    <span className="text-on-dark/70">{t('reservation.payment.amount')}</span>
+                    <span className="text-lg font-bold text-action-bright">{total} €</span>
                   </div>
-                  <p className="flex items-center gap-1.5 text-xs text-amber-300">
+                  <p className="flex items-center gap-1.5 text-xs text-warning-text">
                     <MdLockOutline aria-hidden />
                     {t('reservation.payment.demo')}
                   </p>
-                  <label className="flex flex-col gap-1 text-sm text-white/80">
+                  <label className="flex flex-col gap-1 text-sm text-on-dark/80">
                     {t('reservation.payment.name')}
                     <input
                       className={FIELD}
@@ -491,7 +566,7 @@ function ReservationPage() {
                       onChange={(e) => setCard({ ...card, name: e.target.value })}
                     />
                   </label>
-                  <label className="flex flex-col gap-1 text-sm text-white/80">
+                  <label className="flex flex-col gap-1 text-sm text-on-dark/80">
                     {t('reservation.payment.number')}
                     <input
                       className={FIELD}
@@ -505,7 +580,7 @@ function ReservationPage() {
                     />
                   </label>
                   <div className="grid grid-cols-2 gap-4">
-                    <label className="flex flex-col gap-1 text-sm text-white/80">
+                    <label className="flex flex-col gap-1 text-sm text-on-dark/80">
                       {t('reservation.payment.expiry')}
                       <input
                         className={FIELD}
@@ -516,7 +591,7 @@ function ReservationPage() {
                         onChange={(e) => setCard({ ...card, expiry: formatExpiry(e.target.value) })}
                       />
                     </label>
-                    <label className="flex flex-col gap-1 text-sm text-white/80">
+                    <label className="flex flex-col gap-1 text-sm text-on-dark/80">
                       {t('reservation.payment.cvc')}
                       <input
                         className={FIELD}
@@ -546,15 +621,15 @@ function ReservationPage() {
               {/* ── Confirmation ── */}
               {step === 2 && (
                 <div className={`${GLASS} flex flex-col items-center gap-4 p-8 text-center`}>
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500">
-                    <MdCheck className="text-3xl text-white" aria-hidden />
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-success">
+                    <MdCheck className="text-3xl text-on-dark" aria-hidden />
                   </span>
-                  <h2 className="text-xl font-bold text-white">{t('reservation.done.title')}</h2>
-                  <p className="text-sm leading-relaxed text-slate-200">
+                  <h2 className="text-xl font-bold text-on-dark">{t('reservation.done.title')}</h2>
+                  <p className="text-sm leading-relaxed text-content-soft">
                     {t('reservation.done.text', { boat: boat.name })}
                   </p>
                   {payment?.transaction_ref && (
-                    <p className="text-xs text-white/60">
+                    <p className="text-xs text-on-dark/60">
                       {t('reservation.done.ref', { ref: payment.transaction_ref })}
                     </p>
                   )}

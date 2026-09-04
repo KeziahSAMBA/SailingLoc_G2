@@ -23,23 +23,23 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 const DATE_OPTS = { day: 'numeric', month: 'short', year: 'numeric' };
 
 const BOOKING_STATUS_CLS = {
-  pending: 'bg-amber-500/15 text-amber-300',
-  confirmed: 'bg-emerald-500/15 text-emerald-300',
-  refused: 'bg-red-500/15 text-red-300',
-  cancelled: 'bg-slate-500/15 text-white/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  confirmed: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  cancelled: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
 };
 
 const DOC_STATUS_CLS = {
-  pending: 'bg-amber-500/15 text-amber-300',
-  validated: 'bg-emerald-500/15 text-emerald-300',
-  refused: 'bg-red-500/15 text-red-300',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  validated: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 const FILTER_KEYS = ['all', 'pending', 'confirmed', 'cancelled', 'refused'];
 const PERIOD_KEYS = ['all', 'upcoming', 'current', 'past'];
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
   const scrollRef = useRef(null);
@@ -94,7 +94,7 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
       {scrollEdges.left && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-slate-950/95 via-slate-950/70 to-transparent pl-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 items-center bg-gradient-to-r from-dark-strong/95 via-dark-strong/70 to-transparent pl-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -111,7 +111,7 @@ function ScrollableFilterRow({ ariaLabel, children, className, contentKey }) {
       {scrollEdges.right && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-slate-950/95 via-slate-950/70 to-transparent pr-1 text-white/90 sm:hidden"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-end bg-gradient-to-l from-dark-strong/95 via-dark-strong/70 to-transparent pr-1 text-on-dark/90 sm:hidden"
         >
           <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 motion-safe:animate-pulse">
             <path
@@ -160,7 +160,9 @@ function matchesPeriod(booking, period) {
 
 function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
   const { t } = useTranslation();
-  const statusCls = BOOKING_STATUS_CLS[booking.status] || 'bg-slate-500/15 text-white/80';
+  const statusCls =
+    BOOKING_STATUS_CLS[booking.status] ||
+    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
   const port = booking.boat?.port;
   const locataire = booking.locataire;
   // Une demande n'est actionnable qu'une fois payée par le locataire
@@ -173,7 +175,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
   const canInvoice = booking.status === 'confirmed';
 
   return (
-    <article className="group min-h-56 overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:border-[#5AB4EC]/60 hover:bg-white/15 hover:shadow-xl hover:shadow-sky-500/10 motion-safe:hover:-translate-y-1">
+    <article className="group min-h-56 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand-soft/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
       {/* Colonne gauche de la grille : photo à droite ; colonne droite : photo à
           gauche — les photos se font face vers le centre. */}
       <div
@@ -184,14 +186,14 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
           alt={t('carrousel.boatImageAlt', { name: booking.boat?.name })}
           loading="lazy"
           className="aspect-video w-full object-cover transition-transform duration-500 sm:aspect-auto sm:w-28 sm:self-stretch md:w-36 motion-safe:group-hover:scale-105"
-          fallbackClassName="flex aspect-video w-full items-center justify-center bg-white/5 text-3xl sm:aspect-auto sm:w-28 sm:self-stretch md:w-36"
+          fallbackClassName="flex aspect-video w-full items-center justify-center bg-surface/5 text-3xl sm:aspect-auto sm:w-28 sm:self-stretch md:w-36"
         />
 
         <div className="flex min-w-0 flex-1 flex-col p-4">
           <header className="min-w-0">
-            <h3 className="truncate text-base font-bold text-white">{booking.boat?.name}</h3>
+            <h3 className="truncate text-base font-bold text-on-dark">{booking.boat?.name}</h3>
             {(booking.boat?.type || port) && (
-              <p className="mt-0.5 truncate text-xs text-white/60">
+              <p className="mt-0.5 truncate text-xs text-on-dark/60">
                 {[booking.boat?.type, port && `${port.name} · ${port.city}`]
                   .filter(Boolean)
                   .join(' — ')}
@@ -200,14 +202,16 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
             {/* Badges toujours sous le nom, jamais à côté. */}
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {booking.has_open_dispute && (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6875rem] font-semibold text-amber-300">
+                <span className="status-indicator status-indicator--warning rounded-full bg-warning-base/15 px-2 py-0.5 text-[0.6875rem] font-semibold text-warning-soft">
                   {t('proprietaireReservations.openDispute')}
                 </span>
               )}
               {booking.status === 'pending' && (
                 <span
                   className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-                    isPaid ? 'bg-sky-500/15 text-sky-300' : 'bg-slate-500/15 text-white/70'
+                    isPaid
+                      ? 'status-indicator status-indicator--info bg-action/15 text-action-soft'
+                      : 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                   }`}
                 >
                   {isPaid
@@ -224,19 +228,19 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
           </header>
 
           {locataire && (
-            <p className="mt-2 truncate text-xs text-white/70">
+            <p className="mt-2 truncate text-xs text-on-dark/70">
               <button
                 type="button"
                 onClick={() => onViewLocataire(booking)}
                 title={t('proprietaireReservations.viewLocataire')}
-                className={`rounded font-semibold text-white hover:text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                className={`rounded font-semibold text-on-dark hover:text-brand-soft hover:underline ${FOCUS_RING}`}
               >
                 {locataire.first_name} {locataire.last_name}
               </button>
               {locataire.email && (
                 <a
                   href={`mailto:${locataire.email}`}
-                  className={`ml-1.5 text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                  className={`ml-1.5 text-brand-soft hover:underline ${FOCUS_RING}`}
                 >
                   {locataire.email}
                 </a>
@@ -245,18 +249,18 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
           )}
 
           {/* Ligne méta mono-ligne tronquée : la hauteur de carte reste fixe. */}
-          <p className="mt-1.5 truncate text-sm text-white/90">
-            <span className="font-bold text-white">{EURO.format(booking.total_amount ?? 0)}</span>
-            <span aria-hidden className="text-white/30">
+          <p className="mt-1.5 truncate text-sm text-on-dark/90">
+            <span className="font-bold text-on-dark">{EURO.format(booking.total_amount ?? 0)}</span>
+            <span aria-hidden className="text-on-dark/30">
               {' • '}
             </span>
             <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time>
             {' → '}
             <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
-            <span aria-hidden className="text-white/30">
+            <span aria-hidden className="text-on-dark/30">
               {' • '}
             </span>
-            <span className="text-xs text-white/60">
+            <span className="text-xs text-on-dark/60">
               {t('proprietaireReservations.bookedOn')}{' '}
               <time dateTime={booking.booking_date}>{fmtDate(booking.booking_date)}</time>
             </span>
@@ -264,7 +268,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
 
           {booking.status === 'cancelled' && booking.cancellation_reason && (
             <p
-              className="mt-2 truncate rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-white/70"
+              className="mt-2 truncate rounded-lg bg-surface/10 px-2.5 py-1.5 text-xs text-on-dark/70"
               title={booking.cancellation_reason}
             >
               <span className="font-semibold">
@@ -293,7 +297,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
                     type="button"
                     disabled={busy}
                     onClick={() => onAction(booking, 'confirm')}
-                    className={`rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                    className={`rounded-full bg-success-deep px-3 py-1 text-xs font-semibold text-on-dark transition hover:bg-success-base disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                   >
                     {t('proprietaireReservations.confirm')}
                   </button>
@@ -301,7 +305,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
                     type="button"
                     disabled={busy}
                     onClick={() => onAction(booking, 'refuse')}
-                    className={`rounded-full bg-red-600/80 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                    className={`rounded-full bg-danger/80 px-3 py-1 text-xs font-semibold text-on-dark transition hover:bg-danger-base disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                   >
                     {t('proprietaireReservations.refuse')}
                   </button>
@@ -312,7 +316,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'cancel')}
-                  className={`rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('proprietaireReservations.cancelBooking')}
                 </button>
@@ -322,7 +326,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
                   type="button"
                   disabled={busy}
                   onClick={() => onAction(booking, 'dispute')}
-                  className={`rounded-full border border-amber-500/50 px-3 py-1 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-warning-base/50 px-3 py-1 text-xs font-semibold text-warning-soft transition hover:bg-warning-base/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('proprietaireReservations.reportProblem')}
                 </button>
@@ -528,16 +532,16 @@ function ProprietaireReservations() {
   return (
     <section aria-labelledby="reservations-title">
       <header className="mb-6">
-        <h1 id="reservations-title" className="text-2xl font-bold text-white">
+        <h1 id="reservations-title" className="text-2xl font-bold text-on-dark">
           {t('proprietaireReservations.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('proprietaireReservations.subtitle')}</p>
+        <p className="mt-1 text-sm text-on-dark/70">{t('proprietaireReservations.subtitle')}</p>
       </header>
 
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="status-indicator status-indicator--danger rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -561,8 +565,8 @@ function ProprietaireReservations() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'bg-sky-500 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
+                  ? 'bg-action text-action-text non-color-active'
+                  : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark'
               }`}
             >
               {t(`proprietaireReservations.filters.${key}`)}
@@ -589,8 +593,8 @@ function ProprietaireReservations() {
               aria-pressed={active}
               className={`shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition ${FOCUS_RING} ${
                 active
-                  ? 'border-[#5AB4EC] bg-[#5AB4EC]/15 text-[#ABD4FF]'
-                  : 'border-white/30 bg-transparent text-white/70 hover:border-white/50 hover:text-white'
+                  ? 'border-brand-soft bg-brand-soft/15 text-brand-soft non-color-active'
+                  : 'border-glass/30 bg-transparent text-on-dark/70 hover:border-glass/50 hover:text-on-dark'
               }`}
             >
               {t(`proprietaireReservations.periods.${key}`)}
@@ -602,7 +606,7 @@ function ProprietaireReservations() {
       {loading ? (
         <CardSkeleton count={4} height="h-56" />
       ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-white/70">
+        <p className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl px-4 py-8 text-center text-sm text-on-dark/70">
           {bookings.length === 0
             ? t('proprietaireReservations.emptyAll')
             : t('proprietaireReservations.emptyFilter')}
@@ -630,24 +634,24 @@ function ProprietaireReservations() {
       {/* Modal de refus / annulation */}
       {decision && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
           onClick={() => !deciding && closeModal()}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="decision-title"
-            className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+            className="w-full max-w-md rounded-2xl border border-glass/20 bg-surface/10 p-6 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="decision-title" className="text-lg font-semibold text-white">
+            <h2 id="decision-title" className="text-lg font-semibold text-on-dark">
               {decision.action === 'refuse'
                 ? t('proprietaireReservations.modal.refuseTitle')
                 : decision.action === 'dispute'
                   ? t('proprietaireReservations.modal.disputeTitle')
                   : t('proprietaireReservations.modal.cancelTitle')}
             </h2>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 text-sm text-on-dark/70">
               {decision.booking.boat?.name}
               {decision.booking.locataire &&
                 ` — ${decision.booking.locataire.first_name} ${decision.booking.locataire.last_name}`}
@@ -671,7 +675,7 @@ function ProprietaireReservations() {
                 <>
                   <label
                     htmlFor="cancel-reason"
-                    className="mb-1 mt-4 block text-xs font-medium text-white/70"
+                    className="mb-1 mt-4 block text-xs font-medium text-on-dark/70"
                   >
                     {decision.action === 'dispute'
                       ? t('proprietaireReservations.modal.describeProblem')
@@ -689,13 +693,13 @@ function ProprietaireReservations() {
                         : t('proprietaireReservations.modal.cancelPlaceholder')
                     }
                     aria-describedby="cancel-reason-hint"
-                    className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+                    className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand-soft"
                   />
                 </>
               )}
               {decision.action === 'dispute' && (
                 <div className="mt-3">
-                  <span className="mb-1 block text-xs font-medium text-white/70">
+                  <span className="mb-1 block text-xs font-medium text-on-dark/70">
                     {t('proprietaireReservations.modal.photosLabel')}
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
@@ -704,13 +708,13 @@ function ProprietaireReservations() {
                         <img
                           src={p.url}
                           alt=""
-                          className="h-14 w-14 rounded-lg border border-white/30 object-cover"
+                          className="h-14 w-14 rounded-lg border border-glass/30 object-cover"
                         />
                         <button
                           type="button"
                           onClick={() => removePhoto(i)}
                           aria-label={t('proprietaireReservations.modal.removePhoto')}
-                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-xs text-white hover:bg-red-500 ${FOCUS_RING}`}
+                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface/20 text-xs text-on-dark hover:bg-danger-base ${FOCUS_RING}`}
                         >
                           ×
                         </button>
@@ -718,7 +722,7 @@ function ProprietaireReservations() {
                     ))}
                     {photos.length < 5 && (
                       <label
-                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/40 text-xl text-white/70 transition hover:border-[#5AB4EC] hover:text-[#5AB4EC] ${FOCUS_RING}`}
+                        className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border border-dashed border-glass/40 text-xl text-on-dark/70 transition hover:border-brand-soft hover:text-brand-soft ${FOCUS_RING}`}
                         title={t('proprietaireReservations.modal.addPhotos')}
                       >
                         +
@@ -738,7 +742,7 @@ function ProprietaireReservations() {
                 </div>
               )}
 
-              <p id="cancel-reason-hint" className="mt-2 text-xs text-white/60">
+              <p id="cancel-reason-hint" className="mt-2 text-xs text-on-dark/60">
                 {decision.action === 'refuse'
                   ? t('proprietaireReservations.modal.refuseNotice')
                   : decision.action === 'dispute'
@@ -751,14 +755,14 @@ function ProprietaireReservations() {
                   type="button"
                   disabled={deciding}
                   onClick={closeModal}
-                  className={`rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                  className={`rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                 >
                   {t('proprietaireReservations.modal.back')}
                 </button>
                 <button
                   type="submit"
                   disabled={deciding}
-                  className={`rounded-full bg-red-600/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                  className={`rounded-full bg-danger/80 px-4 py-2 text-sm font-semibold text-on-dark transition hover:bg-danger-base disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                 >
                   {deciding
                     ? t('proprietaireReservations.modal.sending')
@@ -777,64 +781,64 @@ function ProprietaireReservations() {
       {/* Modal profil + documents du locataire */}
       {locataireModal && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
           onClick={closeLocataire}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="locataire-title"
-            className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+            className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-glass/20 bg-surface/10 p-6 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
-              <h2 id="locataire-title" className="text-lg font-semibold text-white">
+              <h2 id="locataire-title" className="text-lg font-semibold text-on-dark">
                 {t('proprietaireReservations.locataire.title')}
               </h2>
               <button
                 type="button"
                 onClick={closeLocataire}
                 aria-label={t('proprietaireReservations.locataire.close')}
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white ${FOCUS_RING}`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface/10 text-on-dark/80 transition hover:bg-surface/20 hover:text-on-dark ${FOCUS_RING}`}
               >
                 ×
               </button>
             </div>
 
             {locataireLoading || !locataireData ? (
-              <p className="mt-6 text-sm text-white/70">
+              <p className="mt-6 text-sm text-on-dark/70">
                 {t('proprietaireReservations.locataire.loading')}
               </p>
             ) : (
               <>
                 <div className="mt-4">
-                  <p className="text-base font-bold text-white">
+                  <p className="text-base font-bold text-on-dark">
                     {locataireData.locataire.first_name} {locataireData.locataire.last_name}
                   </p>
                   <a
                     href={`mailto:${locataireData.locataire.email}`}
-                    className={`text-sm text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                    className={`text-sm text-brand-soft hover:underline ${FOCUS_RING}`}
                   >
                     {locataireData.locataire.email}
                   </a>
                   <dl className="mt-3 flex flex-col gap-1.5 text-sm">
                     <div className="flex justify-between gap-4">
-                      <dt className="text-white/60">
+                      <dt className="text-on-dark/60">
                         {t('proprietaireReservations.locataire.phone')}
                       </dt>
-                      <dd className="text-white/90">
+                      <dd className="text-on-dark/90">
                         {locataireData.locataire.phone || (
-                          <span className="text-white/50">
+                          <span className="text-content-light">
                             {t('proprietaireReservations.locataire.noPhone')}
                           </span>
                         )}
                       </dd>
                     </div>
                     <div className="flex justify-between gap-4">
-                      <dt className="text-white/60">
+                      <dt className="text-on-dark/60">
                         {t('proprietaireReservations.locataire.memberSince')}
                       </dt>
-                      <dd className="text-white/90">
+                      <dd className="text-on-dark/90">
                         {fmtDate(locataireData.locataire.created_at)}
                       </dd>
                     </div>
@@ -842,17 +846,17 @@ function ProprietaireReservations() {
                   <button
                     type="button"
                     onClick={messageLocataire}
-                    className={`mt-4 w-fit max-w-full whitespace-nowrap rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 sm:w-full ${FOCUS_RING}`}
+                    className={`mt-4 w-fit max-w-full whitespace-nowrap rounded-full bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action-hover sm:w-full ${FOCUS_RING}`}
                   >
                     {t('proprietaireReservations.locataire.sendMessage')}
                   </button>
                 </div>
 
-                <h3 className="mt-5 mb-2 text-sm font-semibold text-white">
+                <h3 className="mt-5 mb-2 text-sm font-semibold text-on-dark">
                   {t('proprietaireReservations.locataire.documents')}
                 </h3>
                 {locataireData.documents.length === 0 ? (
-                  <p className="rounded-lg bg-white/5 px-3 py-3 text-sm text-white/60">
+                  <p className="rounded-lg bg-surface/5 px-3 py-3 text-sm text-on-dark/60">
                     {t('proprietaireReservations.locataire.noDocuments')}
                   </p>
                 ) : (
@@ -860,17 +864,18 @@ function ProprietaireReservations() {
                     {locataireData.documents.map((doc) => (
                       <li
                         key={doc.id_document}
-                        className="flex items-center justify-between gap-3 rounded-lg border border-white/15 bg-white/5 px-3 py-2"
+                        className="flex items-center justify-between gap-3 rounded-lg border border-glass/15 bg-surface/5 px-3 py-2"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-white">
+                          <p className="truncate text-sm font-medium text-on-dark">
                             {t(`documentsManager.docTypes.locataire.${doc.type}.label`, {
                               defaultValue: doc.type,
                             })}
                           </p>
                           <span
                             className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-                              DOC_STATUS_CLS[doc.status] || 'bg-slate-500/15 text-white/70'
+                              DOC_STATUS_CLS[doc.status] ||
+                              'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                             }`}
                           >
                             {t(`documentsManager.status.${doc.status}`, {
@@ -882,7 +887,7 @@ function ProprietaireReservations() {
                           type="button"
                           disabled={doc.status !== 'validated' || viewingDocId === doc.id_document}
                           onClick={() => doc.status === 'validated' && viewDocument(doc)}
-                          className={`shrink-0 rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/90 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                          className={`shrink-0 rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/90 transition hover:bg-surface/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
                         >
                           {t('proprietaireReservations.locataire.view')}
                         </button>

@@ -20,7 +20,9 @@ function ConfidentialitePage() {
           <Trans
             i18nKey="confidentialitePage.s1.p1"
             components={{
-              email: <a href="mailto:dpo@sailingloc.fr" className="text-sky-300 hover:underline" />,
+              email: (
+                <a href="mailto:dpo@sailingloc.fr" className="text-action-soft hover:underline" />
+              ),
             }}
           />
         </p>
@@ -101,7 +103,7 @@ function ConfidentialitePage() {
                 <button
                   type="button"
                   onClick={openPreferences}
-                  className="font-medium text-sky-300 hover:underline"
+                  className="font-medium text-action-soft hover:underline"
                 />
               ),
             }}
@@ -125,7 +127,9 @@ function ConfidentialitePage() {
           <Trans
             i18nKey="confidentialitePage.s8.p1"
             components={{
-              email: <a href="mailto:dpo@sailingloc.fr" className="text-sky-300 hover:underline" />,
+              email: (
+                <a href="mailto:dpo@sailingloc.fr" className="text-action-soft hover:underline" />
+              ),
             }}
           />
         </p>
@@ -137,7 +141,9 @@ function ConfidentialitePage() {
             i18nKey="confidentialitePage.s8.p3"
             components={{
               strong: <strong />,
-              email: <a href="mailto:dpo@sailingloc.fr" className="text-sky-300 hover:underline" />,
+              email: (
+                <a href="mailto:dpo@sailingloc.fr" className="text-action-soft hover:underline" />
+              ),
             }}
           />
         </p>
@@ -150,7 +156,7 @@ function ConfidentialitePage() {
                   href="https://www.cnil.fr/fr/plaintes"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sky-300 hover:underline"
+                  className="text-action-soft hover:underline"
                 />
               ),
             }}

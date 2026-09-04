@@ -7,9 +7,9 @@ import PasswordField from '../components/auth/PasswordField.jsx';
 import bgImage from '../assets/image/paysage/crique.jpg';
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,}$/;
-const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
+const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 function formatCountdown(seconds) {
   const m = Math.floor(seconds / 60);
@@ -111,23 +111,23 @@ function ResetPasswordPage() {
 
   return (
     <main
-      className="min-h-screen w-full bg-cover bg-fixed bg-center text-white"
+      className="min-h-screen w-full bg-cover bg-fixed bg-center text-on-dark"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
+      <div className="min-h-screen w-full bg-fixed bg-gradient-to-b from-dark-strong/90 via-dark-strong/75 to-dark-strong/60 px-4 pt-[120px] pb-12 flex items-start justify-center">
         <section aria-labelledby="reset-title" className="w-full max-w-md">
-          <article className="rounded-2xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
+          <article className="rounded-2xl border border-glass/20 bg-surface/10 p-8 shadow-2xl backdrop-blur-xl">
             <header className="mb-6 text-center">
               <div
                 aria-hidden="true"
-                className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-sky-500 text-white shadow-lg"
+                className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-action text-action-text shadow-lg"
               >
                 <MdLockReset size={30} />
               </div>
-              <h1 id="reset-title" className="text-2xl font-bold text-white">
+              <h1 id="reset-title" className="text-2xl font-bold text-on-dark">
                 Nouveau mot de passe
               </h1>
-              <p className="mt-2 text-sm text-white/70">
+              <p className="mt-2 text-sm text-on-dark/70">
                 Choisissez un mot de passe sécurisé pour votre compte.
               </p>
             </header>
@@ -136,21 +136,21 @@ function ResetPasswordPage() {
               <div
                 role="status"
                 aria-live="polite"
-                className="flex flex-col items-center gap-3 py-4 text-sm text-white/70"
+                className="flex flex-col items-center gap-3 py-4 text-sm text-on-dark/70"
               >
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/20 border-t-sky-400" />
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-glass/20 border-t-sky-400" />
                 Vérification du lien…
               </div>
             ) : tokenStatus === 'invalid' ? (
               <div
                 role="alert"
-                className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                className="status-indicator status-indicator--danger rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-3 text-sm text-danger-soft"
               >
                 Ce lien de réinitialisation est invalide, expiré ou déjà utilisé. Demandez un
                 nouveau lien depuis la page{' '}
                 <Link
                   to="/forgot-password"
-                  className={`rounded font-semibold text-[#5AB4EC] underline ${FOCUS_RING}`}
+                  className={`rounded font-semibold text-brand underline ${FOCUS_RING}`}
                 >
                   mot de passe oublié
                 </Link>
@@ -161,11 +161,11 @@ function ResetPasswordPage() {
                 {serverError && (
                   <div
                     role="alert"
-                    className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+                    className="status-indicator status-indicator--danger mb-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
                   >
                     {serverError}
                     {isBlocked && (
-                      <span className="mt-1 block font-mono text-xs text-red-200">
+                      <span className="mt-1 block font-mono text-xs text-danger-pale">
                         Nouvelle tentative possible dans{' '}
                         <time dateTime={`PT${retryAfter}S`}>{formatCountdown(retryAfter)}</time>
                       </span>
@@ -189,11 +189,11 @@ function ResetPasswordPage() {
                       ariaInvalid={Boolean(errors.password)}
                       ariaDescribedBy="reset-hint reset-error"
                     />
-                    <small id="reset-hint" className="mt-1 block text-xs text-white/60">
+                    <small id="reset-hint" className="mt-1 block text-xs text-on-dark/60">
                       12 caractères minimum, 1 majuscule, 1 minuscule, 1 caractère spécial.
                     </small>
                     {errors.password && (
-                      <span id="reset-error" className="mt-1 block text-xs text-red-300">
+                      <span id="reset-error" className="mt-1 block text-xs text-danger-soft">
                         {errors.password}
                       </span>
                     )}
@@ -212,9 +212,13 @@ function ResetPasswordPage() {
                       required
                       variant="glass"
                       ariaInvalid={Boolean(errors.confirmPassword)}
+                      ariaDescribedBy={errors.confirmPassword ? 'reset-confirm-error' : undefined}
                     />
                     {errors.confirmPassword && (
-                      <span className="mt-1 block text-xs text-red-300">
+                      <span
+                        id="reset-confirm-error"
+                        className="mt-1 block text-xs text-danger-soft"
+                      >
                         {errors.confirmPassword}
                       </span>
                     )}
@@ -223,7 +227,7 @@ function ResetPasswordPage() {
                   <button
                     type="submit"
                     disabled={loading || isBlocked}
-                    className={`mt-2 w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                    className={`mt-2 w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                   >
                     {isBlocked
                       ? `Réessayez dans ${formatCountdown(retryAfter)}`

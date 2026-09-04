@@ -176,9 +176,11 @@ cp .env.example .env
 En runtime de déploiement (`NODE_ENV=production`), le backend refuse de démarrer si
 `DEPLOYMENT_ENV` (`staging` ou `production`), `JWT_SECRET`, `DATABASE_URL`,
 `FILE_ENCRYPTION_KEY`, `APP_URL` HTTPS et `PUBLIC_API_URL` HTTPS ne sont pas
-fournis. Une cible `production` exige des secrets Stripe live et une
-configuration email valide ; une cible `staging` accepte uniquement une clé
-Stripe test (facultative pour conserver le paiement simulé). Le seed de
+fournis. Une cible `production` exige une configuration email valide et une
+clé Stripe `sk_live_` ou `sk_test_` — le déploiement de démonstration tourne en
+runtime production sans encaisser de paiement réel ; une cible `staging`
+accepte uniquement une clé Stripe test (facultative pour conserver le paiement
+simulé). Une clé malformée reste refusée dans les deux cas. Le seed de
 démonstration est réservé aux environnements de développement et de test.
 
 `NODE_ENV` décrit le runtime et ne doit pas servir à choisir le compte Stripe.
@@ -298,7 +300,7 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 | Email                 | Mot de passe                    |
 | --------------------- | ------------------------------- |
-| `admin@sailingloc.fr` | configuré localement uniquement |
+| `admin@sailingloc.fr` | Admin@123456 |
 
 > **Connexion admin :** la page de login administrateur est séparée de celle des utilisateurs.
 > URL : [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
@@ -308,13 +310,13 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 | Email                     | Mot de passe                    |
 | ------------------------- | ------------------------------- |
-| `thomas.bernard@email.fr` | configuré localement uniquement |
+| `thomas.bernard@email.fr` | Locataire@2025Secure |
 
 ### Compte Propriétaire
 
 | Email                 | Mot de passe                    |
 | --------------------- | ------------------------------- |
-| `luc.martin@email.fr` | configuré localement uniquement |
+| `luc.martin@email.fr` | Proprietaire@2025Secure |
 
 > **Note :** Ces comptes sont uniquement créés par le seed de développement. Aucun mot de passe de démonstration n'est publié dans le dépôt ; ne lancez jamais le seed sur une base de staging ou de production.
 

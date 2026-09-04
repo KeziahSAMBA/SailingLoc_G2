@@ -16,10 +16,10 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const STATUS_CLS = {
-  pending: 'bg-amber-500/15 text-amber-300',
-  success: 'bg-emerald-500/15 text-emerald-300',
-  failed: 'bg-red-500/15 text-red-300',
-  refunded: 'bg-sky-500/15 text-sky-300',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  success: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  failed: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  refunded: 'status-indicator status-indicator--info bg-action/15 text-action-soft',
 };
 const STATUS_FILTERS = [
   { value: '', labelKey: 'all' },
@@ -37,16 +37,16 @@ const METHOD_FILTERS = [
 const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 const selectClass =
-  'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
+  'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand-soft';
 
-function StatCard({ label, value, sublabel, accent = 'text-white', className = '' }) {
+function StatCard({ label, value, sublabel, accent = 'text-on-dark', className = '' }) {
   return (
     <div
-      className={`h-full rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-xl ${className}`}
+      className={`h-full rounded-2xl border border-glass/20 bg-surface/10 p-5 backdrop-blur-xl ${className}`}
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-on-dark/60">{label}</p>
       <p className={`mt-2 text-2xl font-bold ${accent}`}>{value}</p>
-      {sublabel && <p className="mt-1 text-xs text-white/60">{sublabel}</p>}
+      {sublabel && <p className="mt-1 text-xs text-on-dark/60">{sublabel}</p>}
     </div>
   );
 }
@@ -147,17 +147,19 @@ function AdminTransactionsPage() {
 
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
-      active ? 'bg-sky-500 text-white' : 'border border-white/30 text-white/80 hover:bg-white/10'
+      active
+        ? 'bg-action text-action-text non-color-active'
+        : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const badge = (cls) =>
     `inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-      cls || 'bg-slate-500/15 text-white/70'
+      cls || 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
     }`;
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">{t('adminTransactions.title')}</h1>
-      <p className="mt-1 text-sm text-white/70">{t('adminTransactions.subtitle')}</p>
+      <h1 className="text-2xl font-bold text-on-dark">{t('adminTransactions.title')}</h1>
+      <p className="mt-1 text-sm text-on-dark/70">{t('adminTransactions.subtitle')}</p>
 
       {/* Stats cards */}
       <div className="mt-5 grid auto-rows-fr grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -165,14 +167,14 @@ function AdminTransactionsPage() {
           label={t('adminTransactions.volume')}
           value={statsLoading ? '…' : stats ? EURO.format(stats.total_volume) : EURO.format(0)}
           sublabel={t('adminTransactions.volumeSub')}
-          accent="text-white"
+          accent="text-on-dark"
           className="col-span-2 sm:col-span-1"
         />
         <StatCard
           label={t('adminTransactions.commission')}
           value={statsLoading ? '…' : stats ? EURO.format(stats.total_commission) : EURO.format(0)}
           sublabel={t('adminTransactions.commissionSub')}
-          accent="text-emerald-300"
+          accent="text-success-soft"
           className="col-span-2 sm:col-span-1"
         />
         <StatCard
@@ -191,12 +193,12 @@ function AdminTransactionsPage() {
           label={t('adminTransactions.refunds')}
           value={statsLoading ? '…' : (stats?.counts.refunded ?? 0).toLocaleString('fr-FR')}
           sublabel={t('adminTransactions.refundsSub')}
-          accent="text-sky-300"
+          accent="text-action-soft"
         />
       </div>
 
       {/* Filtres */}
-      <div className="mt-6 space-y-4 md:rounded-2xl md:border md:border-white/20 md:bg-white/10 md:p-5 md:backdrop-blur-xl">
+      <div className="mt-6 space-y-4 md:rounded-2xl md:border md:border-glass/20 md:bg-surface/10 md:p-5 md:backdrop-blur-xl">
         <label className="block">
           <span className="sr-only">{t('adminTransactions.searchPlaceholder')}</span>
           <input
@@ -210,7 +212,7 @@ function AdminTransactionsPage() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
           <fieldset className="min-w-0">
-            <legend className="text-xs font-semibold uppercase tracking-wide text-white/60">
+            <legend className="text-xs font-semibold uppercase tracking-wide text-on-dark/60">
               {t('adminTransactions.colStatus')}
             </legend>
             <AdminScrollableFilterRow
@@ -224,7 +226,7 @@ function AdminTransactionsPage() {
                   type="button"
                   aria-pressed={status === value}
                   onClick={() => setStatus(value)}
-                  className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+                  className={`${pill(status === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright`}
                 >
                   {t(`adminTransactions.statusFilters.${labelKey}`)}
                 </button>
@@ -233,7 +235,7 @@ function AdminTransactionsPage() {
           </fieldset>
 
           <fieldset className="min-w-0">
-            <legend className="text-xs font-semibold uppercase tracking-wide text-white/60">
+            <legend className="text-xs font-semibold uppercase tracking-wide text-on-dark/60">
               {t('adminTransactions.methodLabel')}
             </legend>
             <AdminScrollableFilterRow
@@ -247,7 +249,7 @@ function AdminTransactionsPage() {
                   type="button"
                   aria-pressed={method === value}
                   onClick={() => setMethod(value)}
-                  className={`${pill(method === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+                  className={`${pill(method === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright`}
                 >
                   {t(`adminTransactions.methodFilters.${labelKey}`)}
                 </button>
@@ -256,8 +258,8 @@ function AdminTransactionsPage() {
           </fieldset>
         </div>
 
-        <div className="grid gap-2 border-t border-white/15 pt-4 sm:grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
-          <label className="flex min-w-0 flex-col items-stretch gap-1.5 text-xs text-white/70">
+        <div className="grid gap-2 border-t border-glass/15 pt-4 sm:grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+          <label className="flex min-w-0 flex-col items-stretch gap-1.5 text-xs text-on-dark/70">
             {t('adminTransactions.dateFrom')}
             <input
               type="date"
@@ -267,7 +269,7 @@ function AdminTransactionsPage() {
               className={`${selectClass} w-full min-w-0`}
             />
           </label>
-          <label className="flex min-w-0 flex-col items-stretch gap-1.5 text-xs text-white/70">
+          <label className="flex min-w-0 flex-col items-stretch gap-1.5 text-xs text-on-dark/70">
             {t('adminTransactions.dateTo')}
             <input
               type="date"
@@ -284,7 +286,7 @@ function AdminTransactionsPage() {
                 setDateFrom('');
                 setDateTo('');
               }}
-              className="w-full rounded-full border border-white/30 px-3 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 sm:col-span-2 sm:w-auto sm:justify-self-start md:col-span-1 md:justify-self-auto"
+              className="w-full rounded-full border border-glass/30 px-3 py-2 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 sm:col-span-2 sm:w-auto sm:justify-self-start md:col-span-1 md:justify-self-auto"
             >
               {t('adminTransactions.reset')}
             </button>
@@ -294,7 +296,7 @@ function AdminTransactionsPage() {
 
       {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
       <div className="mt-4 flex flex-wrap items-center gap-2 xl:hidden">
-        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+        <span className="text-xs font-semibold uppercase tracking-wide text-on-dark/60">
           {t('adminTransactions.sortLabel')}
         </span>
         <AdminScrollableFilterRow
@@ -308,7 +310,7 @@ function AdminTransactionsPage() {
               type="button"
               aria-pressed={sortBy === field}
               onClick={() => toggleSort(field)}
-              className={`${pill(sortBy === field)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+              className={`${pill(sortBy === field)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright`}
             >
               {t(
                 `adminTransactions.col${field === 'date' ? 'Date' : field === 'amount' ? 'Amount' : 'Commission'}`
@@ -320,11 +322,11 @@ function AdminTransactionsPage() {
       </div>
 
       {/* Tableau (desktop) */}
-      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
+      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl xl:block">
         <table className="w-full text-sm">
-          <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
+          <thead className="border-b border-glass/20 text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">
+              <th className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminTransactions.colRef')}
               </th>
               <th
@@ -332,18 +334,18 @@ function AdminTransactionsPage() {
                 aria-sort={
                   sortBy === 'date' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
                 }
-                className="cursor-pointer select-none px-3 py-3 text-left font-semibold text-white/80 hover:text-white"
+                className="cursor-pointer select-none px-3 py-3 text-left font-semibold text-on-dark/80 hover:text-on-dark"
               >
                 {t('adminTransactions.colDate')}
                 {sortArrow('date')}
               </th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">
+              <th className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminTransactions.colRenter')}
               </th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">
+              <th className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminTransactions.colBoat')}
               </th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">
+              <th className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminTransactions.colMethod')}
               </th>
               <th
@@ -351,7 +353,7 @@ function AdminTransactionsPage() {
                 aria-sort={
                   sortBy === 'amount' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
                 }
-                className="cursor-pointer select-none px-3 py-3 text-right font-semibold text-white/80 hover:text-white"
+                className="cursor-pointer select-none px-3 py-3 text-right font-semibold text-on-dark/80 hover:text-on-dark"
               >
                 {t('adminTransactions.colAmount')}
                 {sortArrow('amount')}
@@ -365,36 +367,36 @@ function AdminTransactionsPage() {
                       : 'descending'
                     : 'none'
                 }
-                className="cursor-pointer select-none px-3 py-3 text-right font-semibold text-white/80 hover:text-white"
+                className="cursor-pointer select-none px-3 py-3 text-right font-semibold text-on-dark/80 hover:text-on-dark"
               >
                 {t('adminTransactions.colCommission')}
                 {sortArrow('commission')}
               </th>
-              <th className="px-3 py-3 text-left font-semibold text-white/80">
+              <th className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminTransactions.colStatus')}
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/15">
+          <tbody className="divide-y divide-glass/15">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-white/70">
+                <td colSpan={8} className="px-3 py-8 text-center text-on-dark/70">
                   {t('adminTransactions.loading')}
                 </td>
               </tr>
             ) : visiblePayments.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-white/70">
+                <td colSpan={8} className="px-3 py-8 text-center text-on-dark/70">
                   {t('adminTransactions.empty')}
                 </td>
               </tr>
             ) : (
               pagePayments.map((p) => (
-                <tr key={p.id_payment} className="text-white/90">
-                  <td className="break-all px-3 py-3 font-mono text-xs text-white/80">
+                <tr key={p.id_payment} className="text-on-dark/90">
+                  <td className="break-all px-3 py-3 font-mono text-xs text-on-dark/80">
                     {p.transaction_ref || '—'}
                   </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-white/70">
+                  <td className="px-3 py-3 whitespace-nowrap text-on-dark/70">
                     {fmtDate(p.payment_date)}
                   </td>
                   <td className="px-3 py-3">
@@ -403,25 +405,25 @@ function AdminTransactionsPage() {
                         ? `${p.booking.guest_first_name || ''} ${p.booking.guest_last_name || ''}`.trim()
                         : '—'}
                     </div>
-                    <div className="text-xs text-white/60">{p.booking?.guest_email}</div>
+                    <div className="text-xs text-on-dark/60">{p.booking?.guest_email}</div>
                   </td>
-                  <td className="px-3 py-3 text-white/70">{p.booking?.boat_name || '—'}</td>
-                  <td className="px-3 py-3 text-white/70">
+                  <td className="px-3 py-3 text-on-dark/70">{p.booking?.boat_name || '—'}</td>
+                  <td className="px-3 py-3 text-on-dark/70">
                     {t(`adminTransactions.methods.${p.payment_method}`, {
                       defaultValue: p.payment_method,
                     })}
                   </td>
-                  <td className="px-3 py-3 text-right font-medium text-white">
+                  <td className="px-3 py-3 text-right font-medium text-on-dark">
                     {EURO.format(p.amount)}
                     {p.status === 'refunded' && p.refunded_amount != null && (
-                      <div className="text-xs font-normal text-sky-300">
+                      <div className="text-xs font-normal text-action-soft">
                         {t('adminTransactions.refundedAmount', {
                           amount: EURO.format(p.refunded_amount),
                         })}
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-right font-medium text-emerald-300">
+                  <td className="px-3 py-3 text-right font-medium text-success-soft">
                     {EURO.format(p.commission)}
                   </td>
                   <td className="px-3 py-3">
@@ -429,7 +431,7 @@ function AdminTransactionsPage() {
                       {t(`adminTransactions.status.${p.status}`, { defaultValue: p.status })}
                     </span>
                     {p.id_dispute && (
-                      <div className="mt-1 text-xs text-white/60">
+                      <div className="mt-1 text-xs text-on-dark/60">
                         {t('adminTransactions.dispute', { id: p.id_dispute })}
                       </div>
                     )}
@@ -444,17 +446,17 @@ function AdminTransactionsPage() {
       {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
       <ul className="mt-4 space-y-3 xl:hidden">
         {loading || visiblePayments.length === 0 ? (
-          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+          <li className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
             {loading ? t('adminTransactions.loading') : t('adminTransactions.empty')}
           </li>
         ) : (
           pagePayments.map((p) => (
             <li
               key={p.id_payment}
-              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+              className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl"
             >
               <div className="flex items-start justify-between gap-3">
-                <span className="min-w-0 break-all font-mono text-xs text-white/80">
+                <span className="min-w-0 break-all font-mono text-xs text-on-dark/80">
                   {p.transaction_ref || '—'}
                 </span>
                 <span className={`shrink-0 ${badge(STATUS_CLS[p.status])}`}>
@@ -462,31 +464,31 @@ function AdminTransactionsPage() {
                 </span>
               </div>
 
-              <p className="mt-2 text-xs text-white/60">{fmtDate(p.payment_date)}</p>
+              <p className="mt-2 text-xs text-on-dark/60">{fmtDate(p.payment_date)}</p>
 
-              <p className="mt-2 text-sm font-medium text-white">
+              <p className="mt-2 text-sm font-medium text-on-dark">
                 {p.booking?.guest_first_name || p.booking?.guest_last_name
                   ? `${p.booking.guest_first_name || ''} ${p.booking.guest_last_name || ''}`.trim()
                   : '—'}
               </p>
               {p.booking?.guest_email && (
-                <p className="break-all text-xs text-white/60">{p.booking.guest_email}</p>
+                <p className="break-all text-xs text-on-dark/60">{p.booking.guest_email}</p>
               )}
-              <p className="mt-1 text-xs text-white/70">
+              <p className="mt-1 text-xs text-on-dark/70">
                 {p.booking?.boat_name || '—'} ·{' '}
                 {t(`adminTransactions.methods.${p.payment_method}`, {
                   defaultValue: p.payment_method,
                 })}
               </p>
 
-              <dl className="mt-3 space-y-1 border-t border-white/15 pt-3 text-sm">
+              <dl className="mt-3 space-y-1 border-t border-glass/15 pt-3 text-sm">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-white/70">{t('adminTransactions.colAmount')}</dt>
-                  <dd className="font-medium text-white">{EURO.format(p.amount)}</dd>
+                  <dt className="text-on-dark/70">{t('adminTransactions.colAmount')}</dt>
+                  <dd className="font-medium text-on-dark">{EURO.format(p.amount)}</dd>
                 </div>
                 {p.status === 'refunded' && p.refunded_amount != null && (
                   <div className="flex justify-end">
-                    <span className="text-xs text-sky-300">
+                    <span className="text-xs text-action-soft">
                       {t('adminTransactions.refundedAmount', {
                         amount: EURO.format(p.refunded_amount),
                       })}
@@ -494,13 +496,13 @@ function AdminTransactionsPage() {
                   </div>
                 )}
                 <div className="flex justify-between gap-3">
-                  <dt className="text-white/70">{t('adminTransactions.colCommission')}</dt>
-                  <dd className="font-medium text-emerald-300">{EURO.format(p.commission)}</dd>
+                  <dt className="text-on-dark/70">{t('adminTransactions.colCommission')}</dt>
+                  <dd className="font-medium text-success-soft">{EURO.format(p.commission)}</dd>
                 </div>
               </dl>
 
               {p.id_dispute && (
-                <p className="mt-2 text-xs text-white/60">
+                <p className="mt-2 text-xs text-on-dark/60">
                   {t('adminTransactions.dispute', { id: p.id_dispute })}
                 </p>
               )}

@@ -277,6 +277,27 @@ describe('ordre des protections du serveur', () => {
     expect(source).toContain("app.use('/api', handleCsrfError)");
   });
 
+  it('accepte côté client le format de jeton réellement émis par le middleware', async () => {
+    const response = await request(buildCsrfApp())
+      .get('/api/public')
+      .set('Origin', FRONTEND_ORIGIN);
+    const issuedToken = response.headers['x-csrf-token'];
+
+    const source = fs.readFileSync(
+      new URL('../../frontend/src/services/api.js', import.meta.url),
+      'utf8'
+    );
+    const declaration = source.match(/const CSRF_TOKEN_PATTERN = \/(.+?)\/([a-z]*);/);
+    expect(declaration).not.toBeNull();
+    const clientPattern = new RegExp(declaration[1], declaration[2]);
+
+    // Le contrat qui a réellement cassé : un jeton valide rejeté ici prive le
+    // client de toute reprise CSRF et bloque définitivement la reconnexion.
+    expect(issuedToken).toMatch(clientPattern);
+    expect(clientPattern.test('')).toBe(false);
+    expect(clientPattern.test('jeton invalide')).toBe(false);
+  });
+
   it('limite le rejeu Axios au code de transition CSRF et à une seule tentative', () => {
     const source = fs.readFileSync(
       new URL('../../frontend/src/services/api.js', import.meta.url),

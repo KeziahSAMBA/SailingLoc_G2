@@ -21,16 +21,28 @@ const DATE_SHORT_OPTS = {
 
 function getBookingStatus(t) {
   return {
-    pending: { label: t('bookingStatus.pending'), cls: 'bg-amber-500/15 text-amber-300' },
-    confirmed: { label: t('bookingStatus.confirmed'), cls: 'bg-emerald-500/15 text-emerald-300' },
-    refused: { label: t('bookingStatus.refused'), cls: 'bg-red-500/15 text-red-300' },
-    cancelled: { label: t('bookingStatus.cancelled'), cls: 'bg-slate-500/15 text-white/80' },
+    pending: {
+      label: t('bookingStatus.pending'),
+      cls: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+    },
+    confirmed: {
+      label: t('bookingStatus.confirmed'),
+      cls: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+    },
+    refused: {
+      label: t('bookingStatus.refused'),
+      cls: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+    },
+    cancelled: {
+      label: t('bookingStatus.cancelled'),
+      cls: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
+    },
   };
 }
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 function fmtDate(value) {
   return formatDate(value, DATE_OPTS);
@@ -61,9 +73,9 @@ function StatCard({ label, value, accent, to, loading }) {
             ? t('locataireDashboard.statLoading', { label })
             : t('locataireDashboard.statValue', { label, value: display })
         }
-        className={`block h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 transition hover:border-white/40 hover:bg-white/15 ${FOCUS_RING}`}
+        className={`block h-full rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5 transition hover:border-glass/40 hover:bg-surface/15 ${FOCUS_RING}`}
       >
-        <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
+        <span className="block text-xs font-semibold uppercase tracking-wide text-on-dark/70">
           {label}
         </span>
         <span className={`mt-2 block text-3xl font-bold ${accent}`} aria-hidden="true">
@@ -82,23 +94,23 @@ function NextBookingCard({ booking }) {
   return (
     <Link
       to="/locataire/reservations"
-      className={`block rounded-2xl border border-[#5AB4EC]/50 bg-[#5AB4EC]/10 p-5 backdrop-blur-xl transition hover:border-[#5AB4EC] sm:p-6 ${FOCUS_RING}`}
+      className={`block rounded-2xl border border-brand-soft/70 bg-brand-soft/10 p-5 backdrop-blur-xl transition hover:border-brand-soft sm:p-6 ${FOCUS_RING}`}
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#5AB4EC]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-soft">
             {t('locataireDashboard.nextBooking.label')}
           </p>
-          <h3 className="mt-1 text-xl font-bold text-white sm:text-2xl">{booking.boat?.name}</h3>
+          <h3 className="mt-1 text-xl font-bold text-on-dark sm:text-2xl">{booking.boat?.name}</h3>
           {(booking.boat?.type || port) && (
-            <p className="mt-1 text-sm text-white/80">
+            <p className="mt-1 text-sm text-on-dark/80">
               {[booking.boat?.type, port && `${port.name} · ${port.city}`]
                 .filter(Boolean)
                 .join(' — ')}
             </p>
           )}
         </div>
-        <span className="rounded-full bg-[#5AB4EC]/15 px-3 py-1 text-sm font-semibold text-[#5AB4EC]">
+        <span className="rounded-full bg-brand-soft/15 px-3 py-1 text-sm font-semibold text-brand-soft">
           {days === 0
             ? t('locataireDashboard.nextBooking.today')
             : t('locataireDashboard.nextBooking.inDays', { days })}
@@ -107,15 +119,15 @@ function NextBookingCard({ booking }) {
 
       <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm">
         <div>
-          <dt className="text-white/70">{t('locataireDashboard.nextBooking.dates')}</dt>
-          <dd className="font-medium text-white">
+          <dt className="text-on-dark/70">{t('locataireDashboard.nextBooking.dates')}</dt>
+          <dd className="font-medium text-on-dark">
             <time dateTime={booking.start_date}>{fmtDate(booking.start_date)}</time> →{' '}
             <time dateTime={booking.end_date}>{fmtDate(booking.end_date)}</time>
           </dd>
         </div>
         <div>
-          <dt className="text-white/70">{t('locataireDashboard.nextBooking.amount')}</dt>
-          <dd className="font-medium text-white">{EURO.format(booking.total_amount ?? 0)}</dd>
+          <dt className="text-on-dark/70">{t('locataireDashboard.nextBooking.amount')}</dt>
+          <dd className="font-medium text-on-dark">{EURO.format(booking.total_amount ?? 0)}</dd>
         </div>
       </dl>
     </Link>
@@ -126,7 +138,7 @@ function StatusBadge({ status }) {
   const { t } = useTranslation();
   const meta = getBookingStatus(t)[status] || {
     label: status,
-    cls: 'bg-slate-500/15 text-white/80',
+    cls: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
   };
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.cls}`}>
@@ -140,39 +152,41 @@ function RecentBookings({ bookings }) {
   return (
     <section
       aria-labelledby="recent-bookings-title"
-      className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
+      className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5"
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id="recent-bookings-title" className="text-sm font-semibold text-white/90">
+        <h2 id="recent-bookings-title" className="text-sm font-semibold text-on-dark/90">
           {t('locataireDashboard.recentBookings.title')}
         </h2>
         <Link
           to="/locataire/reservations"
-          className={`rounded text-xs font-medium text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+          className={`rounded text-xs font-medium text-brand-soft hover:underline ${FOCUS_RING}`}
         >
           {t('locataireDashboard.recentBookings.seeAll')}
         </Link>
       </header>
 
       {bookings.length === 0 ? (
-        <p className="mt-4 text-sm text-white/70">{t('locataireDashboard.recentBookings.empty')}</p>
+        <p className="mt-4 text-sm text-on-dark/70">
+          {t('locataireDashboard.recentBookings.empty')}
+        </p>
       ) : (
-        <ul className="mt-4 divide-y divide-white/15">
+        <ul className="mt-4 divide-y divide-glass/15">
           {bookings.map((b) => (
             <li
               key={b.id_booking}
               className="flex flex-wrap items-center justify-between gap-2 py-3"
             >
               <div className="min-w-0">
-                <p className="truncate font-medium text-white">{b.boat?.name}</p>
-                <p className="text-xs text-white/70">
+                <p className="truncate font-medium text-on-dark">{b.boat?.name}</p>
+                <p className="text-xs text-on-dark/70">
                   <time dateTime={b.start_date}>{fmtDateShort(b.start_date)}</time> →{' '}
                   <time dateTime={b.end_date}>{fmtDateShort(b.end_date)}</time>
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={b.status} />
-                <span className="text-sm font-medium text-white">
+                <span className="text-sm font-medium text-on-dark">
                   {EURO.format(b.total_amount ?? 0)}
                 </span>
               </div>
@@ -189,22 +203,22 @@ function FavoritesPreview({ favorites }) {
   return (
     <section
       aria-labelledby="favorites-title"
-      className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5"
+      className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5"
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id="favorites-title" className="text-sm font-semibold text-white/90">
+        <h2 id="favorites-title" className="text-sm font-semibold text-on-dark/90">
           {t('locataireDashboard.favoritesPreview.title')}
         </h2>
         <Link
           to="/locataire/favoris"
-          className={`rounded text-xs font-medium text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+          className={`rounded text-xs font-medium text-brand-soft hover:underline ${FOCUS_RING}`}
         >
           {t('locataireDashboard.favoritesPreview.seeAll')}
         </Link>
       </header>
 
       {favorites.length === 0 ? (
-        <p className="mt-4 text-sm text-white/70">
+        <p className="mt-4 text-sm text-on-dark/70">
           {t('locataireDashboard.favoritesPreview.empty')}
         </p>
       ) : (
@@ -213,7 +227,7 @@ function FavoritesPreview({ favorites }) {
             <li key={f.id_favorite} className="min-w-0">
               <Link
                 to="/locataire/favoris"
-                className={`block overflow-hidden rounded-xl border border-white/20 bg-white/10 backdrop-blur-xl transition hover:border-white/40 ${FOCUS_RING}`}
+                className={`block overflow-hidden rounded-xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition hover:border-glass/40 ${FOCUS_RING}`}
               >
                 <figure className="m-0">
                   {f.boat?.image ? (
@@ -221,25 +235,25 @@ function FavoritesPreview({ favorites }) {
                       src={f.boat.image}
                       alt={t('carrousel.boatImageAlt', { name: f.boat?.name })}
                       loading="lazy"
-                      className="aspect-[4/3] w-full bg-slate-800 object-cover"
-                      fallbackClassName="flex aspect-[4/3] w-full items-center justify-center bg-slate-800 text-slate-600"
+                      className="aspect-[4/3] w-full bg-dark-elevated object-cover"
+                      fallbackClassName="flex aspect-[4/3] w-full items-center justify-center bg-dark-elevated text-content-muted"
                     />
                   ) : (
                     <span
                       aria-hidden="true"
-                      className="flex aspect-[4/3] w-full items-center justify-center bg-slate-800 text-slate-600"
+                      className="flex aspect-[4/3] w-full items-center justify-center bg-dark-elevated text-content-muted"
                     >
                       ⛵
                     </span>
                   )}
                   <figcaption className="p-3">
-                    <span className="block truncate text-sm font-medium text-white">
+                    <span className="block truncate text-sm font-medium text-on-dark">
                       {f.boat?.name}
                     </span>
-                    <span className="block truncate text-xs text-white/70">
+                    <span className="block truncate text-xs text-on-dark/70">
                       {[f.boat?.type, f.boat?.port?.city].filter(Boolean).join(' · ')}
                     </span>
-                    <span className="mt-1 block text-xs font-semibold text-[#5AB4EC]">
+                    <span className="mt-1 block text-xs font-semibold text-brand-soft">
                       {EURO.format(f.boat?.daily_price ?? 0)}{' '}
                       {t('locataireDashboard.favoritesPreview.perDay')}
                     </span>
@@ -287,17 +301,17 @@ function LocataireDashboard() {
 
   return (
     <section aria-labelledby="dashboard-title" aria-busy={loading}>
-      <h1 id="dashboard-title" className="text-2xl font-bold text-white">
+      <h1 id="dashboard-title" className="text-2xl font-bold text-on-dark">
         {t('locataireDashboard.title')}
       </h1>
-      <p className="mt-1 text-sm text-white/70">
+      <p className="mt-1 text-sm text-on-dark/70">
         {t('locataireDashboard.greeting', { name: user?.first_name })}
       </p>
 
       {error && (
         <div
           role="alert"
-          className="mt-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="status-indicator status-indicator--danger mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -308,7 +322,7 @@ function LocataireDashboard() {
         <Link
           to="/locataire/documents"
           role="alert"
-          className={`mt-6 flex items-center gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 transition hover:bg-amber-500/20 ${FOCUS_RING}`}
+          className={`status-indicator status-indicator--warning mt-6 flex items-center gap-3 rounded-lg border border-warning-base/40 bg-warning-base/10 px-4 py-3 text-sm text-warning-pale transition hover:bg-warning-base/20 ${FOCUS_RING}`}
         >
           <span aria-hidden="true" className="text-lg">
             ⚠️
@@ -337,28 +351,28 @@ function LocataireDashboard() {
       >
         <StatCard
           label={t('locataireDashboard.stats.activeBookings')}
-          accent="text-white"
+          accent="text-on-dark"
           value={stats?.activeBookings}
           to="/locataire/reservations"
           loading={loading}
         />
         <StatCard
           label={t('locataireDashboard.stats.reviewsToLeave')}
-          accent="text-emerald-400"
+          accent="text-success-bright"
           value={stats?.reviewsToLeave}
           to="/locataire/reservations"
           loading={loading}
         />
         <StatCard
           label={t('locataireDashboard.stats.favorites')}
-          accent="text-[#5AB4EC]"
+          accent="text-brand-soft"
           value={stats?.favorites}
           to="/locataire/favoris"
           loading={loading}
         />
         <StatCard
           label={t('locataireDashboard.stats.unreadMessages')}
-          accent="text-amber-400"
+          accent="text-warning-bright"
           value={stats?.unreadMessages}
           to="/locataire/messages"
           loading={loading}

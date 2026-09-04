@@ -71,17 +71,24 @@ const ICONS = {
 };
 
 const COLORS = {
-  success: 'border-emerald-400 bg-emerald-50 text-emerald-900',
-  error: 'border-red-400 bg-red-50 text-red-900',
-  info: 'border-sky-400 bg-sky-50 text-sky-900',
-  warning: 'border-orange-400 bg-orange-50 text-orange-900',
+  success: 'border-success bg-success-surface text-success-text',
+  error: 'border-danger bg-danger-surface text-danger-text',
+  info: 'border-info bg-info-surface text-info-text',
+  warning: 'border-warning bg-warning-surface text-warning-text',
 };
 
 const ICON_COLORS = {
-  success: 'text-emerald-600',
-  error: 'text-red-600',
-  info: 'text-sky-600',
-  warning: 'text-orange-600',
+  success: 'text-success',
+  error: 'text-danger',
+  info: 'text-info',
+  warning: 'text-warning',
+};
+
+const STATUS_INDICATOR_CLASSES = {
+  success: 'status-indicator--success',
+  error: 'status-indicator--danger',
+  info: 'status-indicator--info',
+  warning: 'status-indicator--warning',
 };
 
 export function ToastProvider({ children }) {
@@ -122,7 +129,9 @@ function ToastItem({ toast, onDismiss }) {
   return (
     <div
       role="status"
-      className={`flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg ring-1 ring-black/5 ${COLORS[toast.type]}`}
+      className={`status-indicator status-indicator--has-icon ${
+        STATUS_INDICATOR_CLASSES[toast.type] || 'status-indicator--neutral'
+      } flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg ring-1 ring-black/5 ${COLORS[toast.type]}`}
     >
       <span className={`mt-0.5 flex-shrink-0 ${ICON_COLORS[toast.type]}`}>{ICONS[toast.type]}</span>
       <p className="flex-1 text-sm font-medium">{toast.message}</p>

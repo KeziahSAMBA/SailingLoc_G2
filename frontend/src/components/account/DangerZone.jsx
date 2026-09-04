@@ -7,9 +7,9 @@ import { getClosureStatus, deactivateAccount, deleteAccount } from '../../servic
 import PasswordField from '../auth/PasswordField.jsx';
 
 const inputClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
-const errorClass = 'mt-1 block text-xs text-red-400';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
+const errorClass = 'mt-1 block text-xs text-danger-bright';
 
 function DangerZone() {
   const { t } = useTranslation();
@@ -116,16 +116,16 @@ function DangerZone() {
 
   return (
     <>
-      <article className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/5 backdrop-blur-xl p-8 shadow-xl">
-        <h2 className="mb-1 text-lg font-semibold text-white">
+      <article className="mt-6 rounded-2xl border border-danger-base/30 bg-danger-base/5 backdrop-blur-xl p-8 shadow-xl">
+        <h2 className="mb-1 text-lg font-semibold text-on-dark">
           {t('accountForm.dangerZone.title')}
         </h2>
-        <p className="mb-5 text-sm text-white/70">{t('accountForm.dangerZone.subtitle')}</p>
+        <p className="mb-5 text-sm text-on-dark/70">{t('accountForm.dangerZone.subtitle')}</p>
 
         {blocked && (
           <div
             role="alert"
-            className="mb-5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200"
+            className="status-indicator status-indicator--warning mb-5 rounded-lg border border-warning-bright/40 bg-warning-bright/10 px-4 py-3 text-sm text-warning-pale"
           >
             <p className="font-semibold">{t('accountForm.dangerZone.blocked.title')}</p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -147,11 +147,11 @@ function DangerZone() {
         )}
 
         <div className="grid gap-5 sm:grid-cols-2">
-          <section className="flex flex-col rounded-xl border border-white/15 bg-white/5 p-5">
-            <h3 className="mb-2 text-base font-semibold text-white">
+          <section className="flex flex-col rounded-xl border border-glass/15 bg-surface/5 p-5">
+            <h3 className="mb-2 text-base font-semibold text-on-dark">
               {t('accountForm.dangerZone.deactivate.title')}
             </h3>
-            <p className="mb-4 text-sm text-white/70">
+            <p className="mb-4 text-sm text-on-dark/70">
               {t(
                 isOwner
                   ? 'accountForm.dangerZone.deactivate.ownerDescription'
@@ -163,24 +163,24 @@ function DangerZone() {
               type="button"
               onClick={(event) => openDialog('deactivate', event)}
               disabled={blocked}
-              className="mt-auto w-full rounded-full border border-amber-300/50 px-5 py-2.5 text-sm font-semibold text-amber-200 transition hover:bg-amber-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-auto w-full rounded-full border border-warning-soft/50 px-5 py-2.5 text-sm font-semibold text-warning-pale transition hover:bg-warning-soft/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-soft disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('accountForm.dangerZone.deactivate.action')}
             </button>
           </section>
 
-          <section className="flex flex-col rounded-xl border border-white/15 bg-white/5 p-5">
-            <h3 className="mb-2 text-base font-semibold text-white">
+          <section className="flex flex-col rounded-xl border border-glass/15 bg-surface/5 p-5">
+            <h3 className="mb-2 text-base font-semibold text-on-dark">
               {t('accountForm.dangerZone.delete.title')}
             </h3>
-            <p className="mb-4 text-sm text-white/70">
+            <p className="mb-4 text-sm text-on-dark/70">
               {t('accountForm.dangerZone.delete.description', { days: status.retentionDays })}
             </p>
             <button
               type="button"
               onClick={(event) => openDialog('delete', event)}
               disabled={blocked}
-              className="mt-auto w-full rounded-full border border-transparent bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-auto w-full rounded-full border border-transparent bg-danger px-5 py-2.5 text-sm font-semibold text-on-dark shadow-lg transition hover:bg-danger-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-bright disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('accountForm.dangerZone.delete.action')}
             </button>
@@ -193,16 +193,16 @@ function DangerZone() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="danger-zone-dialog-title"
-          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 px-3 py-6 backdrop-blur-sm sm:px-4 sm:py-12"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-overlay/60 px-3 py-6 backdrop-blur-sm sm:px-4 sm:py-12"
           onClick={closeDialog}
         >
           <div
             ref={dialogRef}
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl border border-white/20 bg-slate-900/90 p-6 shadow-2xl backdrop-blur-2xl outline-none sm:p-8"
+            className="w-full max-w-lg rounded-2xl border border-glass/20 bg-dark-surface/90 p-6 shadow-2xl backdrop-blur-2xl outline-none sm:p-8"
           >
-            <h2 id="danger-zone-dialog-title" className="text-lg font-semibold text-white">
+            <h2 id="danger-zone-dialog-title" className="text-lg font-semibold text-on-dark">
               {t(
                 mode === 'delete'
                   ? 'accountForm.dangerZone.delete.dialogTitle'
@@ -210,7 +210,7 @@ function DangerZone() {
               )}
             </h2>
 
-            <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-white/75">
+            <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-on-dark/75">
               {(mode === 'delete'
                 ? [
                     t('accountForm.dangerZone.delete.consequences.access'),
@@ -234,7 +234,7 @@ function DangerZone() {
             {error && (
               <div
                 role="alert"
-                className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+                className="status-indicator status-indicator--danger mt-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
               >
                 {error}
               </div>
@@ -284,17 +284,17 @@ function DangerZone() {
                   type="button"
                   onClick={closeDialog}
                   disabled={submitting}
-                  className="rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                  className="rounded-full border border-glass/40 px-5 py-2.5 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:opacity-50"
                 >
                   {t('accountForm.dangerZone.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`flex-1 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  className={`flex-1 rounded-full px-5 py-2.5 text-sm font-semibold text-on-dark shadow-lg transition disabled:cursor-not-allowed disabled:opacity-60 ${
                     mode === 'delete'
-                      ? 'bg-red-600 hover:bg-red-500'
-                      : 'bg-amber-500 hover:bg-amber-400'
+                      ? 'bg-danger hover:bg-danger-base'
+                      : 'bg-warning-base hover:bg-warning-bright'
                   }`}
                 >
                   {submitting

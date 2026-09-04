@@ -26,16 +26,17 @@ function getSortLabels(t) {
 function FilterChip({ label, onRemove }) {
   return (
     <span
-      className="flex flex-shrink-0 items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
-      style={{ backgroundColor: 'rgba(14,165,233,0.95)' }}
+      className="flex flex-shrink-0 items-center gap-1 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-semibold text-photo-text"
+      style={{ backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.95)' }}
     >
       {label}
       <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
         }}
-        className="flex flex-shrink-0 items-center hover:opacity-70 transition-opacity"
+        className="relative z-10 flex flex-shrink-0 items-center transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-on-dark"
       >
         <FaXmark size={9} />
       </button>
@@ -50,9 +51,9 @@ function FilterCheckbox({ label, checked, onChange }) {
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
+        className="w-3.5 h-3.5 accent-action cursor-pointer"
       />
-      <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+      <span className="text-sm text-content-muted group-hover:text-content transition-colors">
         {label}
       </span>
     </label>
@@ -67,9 +68,9 @@ function FilterRadio({ name, label, checked, onChange }) {
         name={name}
         checked={checked}
         onChange={onChange}
-        className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
+        className="w-3.5 h-3.5 accent-action cursor-pointer"
       />
-      <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+      <span className="text-sm text-content-muted group-hover:text-content transition-colors">
         {label}
       </span>
     </label>
@@ -194,11 +195,13 @@ function FilterBar({
     <>
       <div className="flex flex-shrink-0 items-center gap-2">
         <FaSliders
-          className={compact ? 'text-[#0A527A]' : light ? 'text-white/80' : 'text-black/70'}
+          className={
+            compact ? 'text-photo-compact-link' : light ? 'text-photo-text' : 'text-on-light/70'
+          }
           size={13}
         />
         <span
-          className={`hidden whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:inline ${compact ? 'text-[#0A527A]' : light ? 'text-white' : 'text-black'}`}
+          className={`hidden whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:inline ${compact ? 'text-photo-compact-link' : light ? 'text-photo-text' : 'text-on-light'}`}
         >
           {t('filterBar.label')}
         </span>
@@ -206,14 +209,14 @@ function FilterBar({
 
       {activeChips.length > 0 && (
         <div className="hidden sm:contents">
-          <div className={`h-3 w-px flex-shrink-0 ${light ? 'bg-white/30' : 'bg-black/20'}`} />
+          <div className={`h-3 w-px flex-shrink-0 ${light ? 'bg-surface/30' : 'bg-overlay/20'}`} />
           <div className="flex flex-shrink-0 items-center gap-1.5">
             {activeChips.slice(0, 2).map((chip) => (
               <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
             ))}
             {activeChips.length > 2 && (
               <span
-                className={`whitespace-nowrap text-[10px] font-semibold ${light ? 'text-white/70' : 'text-black/50'}`}
+                className={`whitespace-nowrap text-[10px] font-semibold ${light ? 'text-photo-text' : 'text-on-light/50'}`}
               >
                 ...
               </span>
@@ -228,19 +231,23 @@ function FilterBar({
             e.stopPropagation();
             onReset();
           }}
-          className={`whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-[#0A527A] hover:text-sky-800' : light ? 'text-white/70 hover:text-white' : 'text-black/60 hover:text-black'}`}
+          className={`relative z-10 whitespace-nowrap text-[10px] font-semibold transition-colors uppercase tracking-wide ${compact ? 'text-photo-compact-link hover:text-photo-action-hover' : light ? 'text-photo-action-hover hover:text-photo-text' : 'text-on-light/60 hover:text-on-light'}`}
         >
           {t('filterBar.reset')}
         </button>
         {filterOpen ? (
           <FaChevronUp
             size={9}
-            className={compact ? 'text-[#0A527A]' : light ? 'text-white/70' : 'text-black/50'}
+            className={
+              compact ? 'text-photo-compact-link' : light ? 'text-photo-text' : 'text-on-light/50'
+            }
           />
         ) : (
           <FaChevronDown
             size={9}
-            className={compact ? 'text-[#0A527A]' : light ? 'text-white/70' : 'text-black/50'}
+            className={
+              compact ? 'text-photo-compact-link' : light ? 'text-photo-text' : 'text-on-light/50'
+            }
           />
         )}
       </div>
@@ -255,6 +262,7 @@ function FilterBar({
       <div
         ref={ghostRef}
         aria-hidden="true"
+        inert=""
         className="pointer-events-none invisible absolute left-0 top-0 flex w-max flex-nowrap items-center gap-1.5 rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3"
       >
         {headerContent}
@@ -262,150 +270,157 @@ function FilterBar({
 
       {/* Header — always visible */}
       <div
-        className={`flex cursor-pointer select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+        className={`relative flex select-none flex-nowrap items-center gap-1.5 overflow-hidden rounded-full border px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-2 lg:py-3 ${light ? 'hover:bg-photo-text/10' : 'hover:bg-overlay/10'}`}
         style={{
           width: headerWidth != null ? `${headerWidth}px` : undefined,
           backgroundColor: compact
             ? 'transparent'
             : light
-              ? 'rgba(255,255,255,0.1)'
-              : 'rgba(0,0,0,0.05)',
+              ? 'rgb(var(--sl-glass) / 0.1)'
+              : 'rgb(var(--sl-overlay) / 0.05)',
           borderColor: compact
             ? 'transparent'
             : light
-              ? 'rgba(255,255,255,0.3)'
-              : 'rgba(0,0,0,0.1)',
+              ? 'rgb(var(--sl-glass) / 0.3)'
+              : 'rgb(var(--sl-overlay) / 0.1)',
           backdropFilter: compact ? 'none' : 'blur(40px)',
           WebkitBackdropFilter: compact ? 'none' : 'blur(40px)',
           transition:
             'width 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease',
         }}
-        onClick={() => setFilterOpen((v) => !v)}
       >
+        <button
+          type="button"
+          className="absolute inset-0 z-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action"
+          onClick={() => setFilterOpen((value) => !value)}
+          aria-label={t('filterBar.label')}
+          aria-expanded={filterOpen}
+          aria-controls="category-filter-panel"
+        />
         {headerContent}
       </div>
 
       {/* Expanded filter panel */}
-      {filterOpen && (
-        <div
-          className="fixed inset-x-4 z-30 max-h-[70vh] overflow-y-auto rounded-xl p-4 sm:inset-x-8 sm:p-6 lg:absolute lg:inset-x-auto lg:left-16 lg:right-16 lg:!top-full lg:mt-2 lg:max-h-none lg:w-auto lg:overflow-visible xl:left-28 xl:right-28"
-          style={{
-            top: compact
-              ? 'calc(var(--category-header-height) + 0.5rem)'
-              : 'calc(var(--category-header-height) + 1.25rem)',
-            backgroundColor: 'rgba(255,255,255,0.98)',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
-          }}
-        >
-          <div className="grid grid-cols-2 gap-6 xl:flex xl:gap-0 xl:divide-x xl:divide-gray-100">
-            {/* Type de bateau */}
-            <div className="xl:pr-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                {t('filterBar.boatType.title')}
-              </p>
-              <div className="space-y-1.5">
-                {Object.entries(boatTypeLabels).map(([key, label]) => (
-                  <FilterCheckbox
-                    key={key}
-                    label={label}
-                    checked={boatTypeFilters[key]}
-                    onChange={(e) =>
-                      onBoatTypeChange({ ...boatTypeFilters, [key]: e.target.checked })
-                    }
-                  />
-                ))}
-              </div>
+      <div
+        id="category-filter-panel"
+        hidden={!filterOpen}
+        className="fixed inset-x-4 z-30 max-h-[70vh] overflow-y-auto rounded-xl p-4 sm:inset-x-8 sm:p-6 lg:absolute lg:inset-x-auto lg:left-16 lg:right-16 lg:!top-full lg:mt-2 lg:max-h-none lg:w-auto lg:overflow-visible xl:left-28 xl:right-28"
+        style={{
+          top: compact
+            ? 'calc(var(--category-header-height) + 0.5rem)'
+            : 'calc(var(--category-header-height) + 1.25rem)',
+          backgroundColor: 'rgb(var(--sl-surface) / 0.98)',
+          boxShadow: '0 12px 40px rgb(var(--sl-overlay) / 0.25)',
+        }}
+      >
+        <div className="grid grid-cols-2 gap-6 xl:flex xl:gap-0 xl:divide-x xl:divide-border-light">
+          {/* Type de bateau */}
+          <div className="xl:pr-10">
+            <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
+              {t('filterBar.boatType.title')}
+            </p>
+            <div className="space-y-1.5">
+              {Object.entries(boatTypeLabels).map(([key, label]) => (
+                <FilterCheckbox
+                  key={key}
+                  label={label}
+                  checked={boatTypeFilters[key]}
+                  onChange={(e) =>
+                    onBoatTypeChange({ ...boatTypeFilters, [key]: e.target.checked })
+                  }
+                />
+              ))}
             </div>
+          </div>
 
-            {/* Permis */}
-            <div className="xl:px-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                {t('filterBar.license.title')}
-              </p>
-              <div className="space-y-1.5">
-                <FilterCheckbox
-                  label={t('filterBar.license.notRequired')}
-                  checked={licenseFilter === 'not_required'}
-                  onChange={(e) => onLicenseFilterChange(e.target.checked ? 'not_required' : 'any')}
-                />
-                <FilterCheckbox
-                  label={t('filterBar.license.required')}
-                  checked={licenseFilter === 'required'}
-                  onChange={(e) => onLicenseFilterChange(e.target.checked ? 'required' : 'any')}
-                />
-                <FilterCheckbox
-                  label={t('filterBar.skipper.included')}
-                  checked={skipperFilter === 'included'}
-                  onChange={(e) => onSkipperFilterChange(e.target.checked ? 'included' : 'any')}
-                />
-                <FilterCheckbox
-                  label={t('filterBar.skipper.excluded')}
-                  checked={skipperFilter === 'excluded'}
-                  onChange={(e) => onSkipperFilterChange(e.target.checked ? 'excluded' : 'any')}
-                />
-              </div>
+          {/* Permis */}
+          <div className="xl:px-10">
+            <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
+              {t('filterBar.license.title')}
+            </p>
+            <div className="space-y-1.5">
+              <FilterCheckbox
+                label={t('filterBar.license.notRequired')}
+                checked={licenseFilter === 'not_required'}
+                onChange={(e) => onLicenseFilterChange(e.target.checked ? 'not_required' : 'any')}
+              />
+              <FilterCheckbox
+                label={t('filterBar.license.required')}
+                checked={licenseFilter === 'required'}
+                onChange={(e) => onLicenseFilterChange(e.target.checked ? 'required' : 'any')}
+              />
+              <FilterCheckbox
+                label={t('filterBar.skipper.included')}
+                checked={skipperFilter === 'included'}
+                onChange={(e) => onSkipperFilterChange(e.target.checked ? 'included' : 'any')}
+              />
+              <FilterCheckbox
+                label={t('filterBar.skipper.excluded')}
+                checked={skipperFilter === 'excluded'}
+                onChange={(e) => onSkipperFilterChange(e.target.checked ? 'excluded' : 'any')}
+              />
             </div>
+          </div>
 
-            {/* Prix par jour */}
-            <div className="xl:px-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                {t('filterBar.price.title')}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="number"
-                  min="0"
-                  placeholder={t('filterBar.price.min')}
-                  value={priceRange.min}
-                  onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
-                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1 text-sm outline-none focus:border-sky-400 sm:w-20 sm:flex-none"
-                />
-                <span className="text-gray-400">–</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder={t('filterBar.price.max')}
-                  value={priceRange.max}
-                  onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
-                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1 text-sm outline-none focus:border-sky-400 sm:w-20 sm:flex-none"
-                />
-              </div>
+          {/* Prix par jour */}
+          <div className="xl:px-10">
+            <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
+              {t('filterBar.price.title')}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                placeholder={t('filterBar.price.min')}
+                value={priceRange.min}
+                onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
+                className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-focus-ring sm:w-20 sm:flex-none"
+              />
+              <span className="text-field-placeholder">–</span>
+              <input
+                type="number"
+                min="0"
+                placeholder={t('filterBar.price.max')}
+                value={priceRange.max}
+                onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
+                className="min-w-0 flex-1 rounded-lg border border-field-border-strong bg-surface text-content px-2 py-1 text-sm outline-none focus:border-focus-ring sm:w-20 sm:flex-none"
+              />
             </div>
+          </div>
 
-            {/* Trier par */}
-            <div className="xl:pl-10">
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
-                {t('filterBar.sort.title')}
-              </p>
-              <div className="space-y-1.5">
-                <FilterRadio
-                  name="sortBy"
-                  label={t('filterBar.sort.relevance')}
-                  checked={sortBy === 'relevance'}
-                  onChange={() => onSortByChange('relevance')}
-                />
-                <FilterRadio
-                  name="sortBy"
-                  label={t('filterBar.sort.rating')}
-                  checked={sortBy === 'rating'}
-                  onChange={() => onSortByChange('rating')}
-                />
-                <FilterRadio
-                  name="sortBy"
-                  label={t('filterBar.sort.popularity')}
-                  checked={sortBy === 'popularity'}
-                  onChange={() => onSortByChange('popularity')}
-                />
-                <FilterCheckbox
-                  label={t('filterBar.coupDeCoeur')}
-                  checked={coupDeCoeurFilter}
-                  onChange={(e) => onCoupDeCoeurFilterChange(e.target.checked)}
-                />
-              </div>
+          {/* Trier par */}
+          <div className="xl:pl-10">
+            <p className="text-[10px] font-bold text-content-muted uppercase tracking-widest mb-3">
+              {t('filterBar.sort.title')}
+            </p>
+            <div className="space-y-1.5">
+              <FilterRadio
+                name="sortBy"
+                label={t('filterBar.sort.relevance')}
+                checked={sortBy === 'relevance'}
+                onChange={() => onSortByChange('relevance')}
+              />
+              <FilterRadio
+                name="sortBy"
+                label={t('filterBar.sort.rating')}
+                checked={sortBy === 'rating'}
+                onChange={() => onSortByChange('rating')}
+              />
+              <FilterRadio
+                name="sortBy"
+                label={t('filterBar.sort.popularity')}
+                checked={sortBy === 'popularity'}
+                onChange={() => onSortByChange('popularity')}
+              />
+              <FilterCheckbox
+                label={t('filterBar.coupDeCoeur')}
+                checked={coupDeCoeurFilter}
+                onChange={(e) => onCoupDeCoeurFilterChange(e.target.checked)}
+              />
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

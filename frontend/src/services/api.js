@@ -33,7 +33,10 @@ const api = axios.create({
 const CSRF_HEADER_NAME = 'X-CSRF-Token';
 const CSRF_RESPONSE_HEADER = 'x-csrf-token';
 const CSRF_TOKEN_REQUIRED_CODE = 'CSRF_TOKEN_REQUIRED';
-const CSRF_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
+// Le backend délivre le jeton via @dr.pogodin/csurf, dont le format est
+// « sel-empreinte » en base64url, et non l'hexadécimal de l'implémentation
+// maison précédente. Un jeton refusé ici empêcherait toute reprise CSRF.
+const CSRF_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**

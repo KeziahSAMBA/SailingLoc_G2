@@ -9,10 +9,10 @@ import { buildCron, describeCron, parseCron, WEEKDAYS } from '../../utils/cronEx
 const POLL_MS = 5000;
 
 const STATUS_CLS = {
-  running: 'bg-sky-500/15 text-sky-300',
-  success: 'bg-emerald-500/15 text-emerald-300',
-  failed: 'bg-red-500/15 text-red-300',
-  skipped: 'bg-amber-500/15 text-amber-300',
+  running: 'status-indicator status-indicator--info bg-action/15 text-action-soft',
+  success: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  failed: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  skipped: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
 };
 
 const DATE_OPTS = {
@@ -24,9 +24,9 @@ const DATE_OPTS = {
 };
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-2 focus-visible:ring-offset-dark-strong';
 
-const FIELD_CLS = `w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/50 backdrop-blur-xl ${FOCUS_RING}`;
+const FIELD_CLS = `w-full rounded-lg border border-glass/20 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark backdrop-blur-xl ${FOCUS_RING}`;
 
 const PILL_CLS = `rounded-full px-3 py-1.5 text-xs font-semibold transition ${FOCUS_RING}`;
 
@@ -113,12 +113,12 @@ function AdminCronJobsPage() {
     <section aria-labelledby="admin-cron-title">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 id="admin-cron-title" className="text-2xl font-bold text-white">
+          <h1 id="admin-cron-title" className="text-2xl font-bold text-on-dark">
             {t('adminCron.title')}
           </h1>
-          <p className="mt-1 text-sm text-white/70">{t('adminCron.subtitle')}</p>
+          <p className="mt-1 text-sm text-on-dark/70">{t('adminCron.subtitle')}</p>
           {timezone && (
-            <p className="mt-1 text-xs text-white/50">
+            <p className="mt-1 text-xs text-content-light">
               {t('adminCron.timezoneNotice', { timezone })}
             </p>
           )}
@@ -126,7 +126,7 @@ function AdminCronJobsPage() {
         <button
           type="button"
           onClick={() => load()}
-          className={`flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/20 hover:text-white ${FOCUS_RING}`}
+          className={`flex items-center gap-2 rounded-full bg-surface/10 px-4 py-2 text-sm font-medium text-on-dark/80 transition hover:bg-surface/20 hover:text-on-dark ${FOCUS_RING}`}
         >
           <MdRefresh aria-hidden="true" className="h-4 w-4" />
           {t('adminCron.refresh')}
@@ -134,11 +134,11 @@ function AdminCronJobsPage() {
       </header>
 
       {loading ? (
-        <p className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+        <p className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
           {t('adminCron.loading')}
         </p>
       ) : jobs.length === 0 ? (
-        <p className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+        <p className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
           {t('adminCron.empty')}
         </p>
       ) : (
@@ -146,42 +146,42 @@ function AdminCronJobsPage() {
           {jobs.map((job) => (
             <li
               key={job.key}
-              className="flex h-full flex-col rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+              className="flex h-full flex-col rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl"
             >
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-base font-semibold text-white">{jobLabel(job.key)}</h2>
+                    <h2 className="text-base font-semibold text-on-dark">{jobLabel(job.key)}</h2>
                     {job.running && (
-                      <span className="flex items-center gap-1.5 rounded-full bg-sky-500/15 px-2.5 py-0.5 text-xs font-semibold text-sky-300">
+                      <span className="status-indicator status-indicator--info flex items-center gap-1.5 rounded-full bg-action/15 px-2.5 py-0.5 text-xs font-semibold text-action-soft">
                         <span
                           aria-hidden="true"
-                          className="h-2 w-2 animate-pulse rounded-full bg-sky-400"
+                          className="h-2 w-2 animate-pulse rounded-full bg-action-bright"
                         />
                         {t('adminCron.running')}
                       </span>
                     )}
                     {job.dry_run && (
-                      <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+                      <span className="status-indicator status-indicator--warning rounded-full bg-warning-base/15 px-2.5 py-0.5 text-xs font-semibold text-warning-soft">
                         {t('adminCron.dryRun')}
                       </span>
                     )}
                     {job.orphan && (
-                      <span className="rounded-full bg-red-500/15 px-2.5 py-0.5 text-xs font-semibold text-red-300">
+                      <span className="status-indicator status-indicator--danger rounded-full bg-danger-base/15 px-2.5 py-0.5 text-xs font-semibold text-danger-soft">
                         {t('adminCron.orphan')}
                       </span>
                     )}
                   </div>
                   <p
-                    className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm text-white/70"
+                    className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm text-on-dark/70"
                     title={jobDescription(job.key)}
                   >
                     {jobDescription(job.key)}
                   </p>
-                  <p className="mt-0.5 font-mono text-xs text-white/40">{job.key}</p>
+                  <p className="mt-0.5 font-mono text-xs text-content-light">{job.key}</p>
                 </div>
 
-                <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-white/80">
+                <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-on-dark/80">
                   <input
                     type="checkbox"
                     checked={job.enabled}
@@ -193,7 +193,7 @@ function AdminCronJobsPage() {
                         e.target.checked ? t('adminCron.enabled') : t('adminCron.disabled')
                       )
                     }
-                    className={`h-4 w-4 rounded border-white/30 bg-white/10 ${FOCUS_RING}`}
+                    className={`h-4 w-4 rounded border-glass/30 bg-surface/10 ${FOCUS_RING}`}
                   />
                   {t('adminCron.activeLabel')}
                 </label>
@@ -201,17 +201,17 @@ function AdminCronJobsPage() {
 
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-white/50">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-content-light">
                     {t('adminCron.scheduleLabel')}
                   </dt>
-                  <dd className="mt-0.5 text-white/90">{describeCron(job.schedule, t)}</dd>
-                  <dd className="font-mono text-xs text-white/40">{job.schedule}</dd>
+                  <dd className="mt-0.5 text-on-dark/90">{describeCron(job.schedule, t)}</dd>
+                  <dd className="font-mono text-xs text-content-light">{job.schedule}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-white/50">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-content-light">
                     {t('adminCron.lastRunLabel')}
                   </dt>
-                  <dd className="mt-0.5 text-white/90">
+                  <dd className="mt-0.5 text-on-dark/90">
                     {job.last_run_at
                       ? formatDate(job.last_run_at, DATE_OPTS)
                       : t('adminCron.never')}
@@ -220,7 +220,8 @@ function AdminCronJobsPage() {
                     <dd className="mt-1">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                          STATUS_CLS[job.last_status] || 'bg-slate-500/15 text-white/80'
+                          STATUS_CLS[job.last_status] ||
+                          'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80'
                         }`}
                       >
                         {t(`adminCronRuns.statuses.${job.last_status}`, {
@@ -231,10 +232,10 @@ function AdminCronJobsPage() {
                   )}
                 </div>
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-white/50">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-content-light">
                     {t('adminCron.nextRunLabel')}
                   </dt>
-                  <dd className="mt-0.5 text-white/90">
+                  <dd className="mt-0.5 text-on-dark/90">
                     {job.next_run_at
                       ? formatDate(job.next_run_at, DATE_OPTS)
                       : t('adminCron.notScheduled')}
@@ -247,7 +248,7 @@ function AdminCronJobsPage() {
                   type="button"
                   onClick={() => setEditing(job)}
                   disabled={job.orphan}
-                  className={`flex items-center gap-1.5 bg-white/10 text-white/80 hover:bg-white/20 hover:text-white disabled:opacity-40 ${PILL_CLS}`}
+                  className={`flex items-center gap-1.5 bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark disabled:opacity-40 ${PILL_CLS}`}
                 >
                   <MdSchedule aria-hidden="true" className="h-4 w-4" />
                   {t('adminCron.editSchedule')}
@@ -256,7 +257,7 @@ function AdminCronJobsPage() {
                   type="button"
                   onClick={() => trigger(job.key)}
                   disabled={job.orphan || job.running || busyKey === job.key}
-                  className={`flex items-center gap-1.5 bg-sky-500 text-white hover:bg-sky-400 disabled:opacity-40 ${PILL_CLS}`}
+                  className={`flex items-center gap-1.5 bg-action text-action-text hover:bg-action-bright disabled:opacity-40 ${PILL_CLS}`}
                 >
                   <MdPlayArrow aria-hidden="true" className="h-4 w-4" />
                   {t('adminCron.runNow')}
@@ -271,7 +272,7 @@ function AdminCronJobsPage() {
                     )
                   }
                   disabled={job.orphan || busyKey === job.key}
-                  className={`bg-white/10 text-white/80 hover:bg-white/20 hover:text-white disabled:opacity-40 ${PILL_CLS}`}
+                  className={`bg-surface/10 text-on-dark/80 hover:bg-surface/20 hover:text-on-dark disabled:opacity-40 ${PILL_CLS}`}
                 >
                   {job.dry_run ? t('adminCron.switchToLive') : t('adminCron.switchToDryRun')}
                 </button>
@@ -330,19 +331,19 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
       onClick={onClose}
     >
       <form
         role="dialog"
         aria-modal="true"
         aria-labelledby="cron-schedule-title"
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-glass/20 bg-surface/10 p-6 shadow-2xl backdrop-blur-2xl"
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 id="cron-schedule-title" className="text-lg font-semibold text-white">
+          <h2 id="cron-schedule-title" className="text-lg font-semibold text-on-dark">
             {t('adminCron.dialogTitle', {
               name: t(`adminCron.jobs.${job.key}.name`, { defaultValue: job.key }),
             })}
@@ -351,14 +352,14 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
             type="button"
             onClick={onClose}
             aria-label={t('adminCron.close')}
-            className={`rounded-full px-2 text-xl leading-none text-white/70 transition hover:text-white ${FOCUS_RING}`}
+            className={`rounded-full px-2 text-xl leading-none text-on-dark/70 transition hover:text-on-dark ${FOCUS_RING}`}
           >
             ✕
           </button>
         </div>
 
         <fieldset className="mt-4">
-          <legend className="text-xs font-medium uppercase tracking-wide text-white/60">
+          <legend className="text-xs font-medium uppercase tracking-wide text-on-dark/60">
             {t('adminCron.frequencyLabel')}
           </legend>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -367,8 +368,8 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
                 key={value}
                 className={`cursor-pointer ${PILL_CLS} ${
                   mode === value
-                    ? 'bg-sky-500 text-white'
-                    : 'bg-white/10 text-white/80 hover:bg-white/20'
+                    ? 'bg-action text-action-text'
+                    : 'bg-surface/10 text-on-dark/80 hover:bg-surface/20'
                 }`}
               >
                 <input
@@ -387,7 +388,10 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
 
         {mode === 'weekly' && (
           <div className="mt-4">
-            <label htmlFor="cron-weekday" className="mb-1 block text-xs font-medium text-white/70">
+            <label
+              htmlFor="cron-weekday"
+              className="mb-1 block text-xs font-medium text-on-dark/70"
+            >
               {t('adminCron.weekdayLabel')}
             </label>
             <select
@@ -397,7 +401,7 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
               className={FIELD_CLS}
             >
               {WEEKDAYS.map((day) => (
-                <option key={day} value={day} className="text-slate-900">
+                <option key={day} value={day} className="text-content">
                   {t(`adminCron.weekdays.${day}`)}
                 </option>
               ))}
@@ -407,7 +411,7 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
 
         {(mode === 'daily' || mode === 'weekly') && (
           <div className="mt-4">
-            <label htmlFor="cron-time" className="mb-1 block text-xs font-medium text-white/70">
+            <label htmlFor="cron-time" className="mb-1 block text-xs font-medium text-on-dark/70">
               {t('adminCron.timeLabel')}
             </label>
             <input
@@ -426,7 +430,7 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
 
         {mode === 'hourly' && (
           <div className="mt-4">
-            <label htmlFor="cron-minute" className="mb-1 block text-xs font-medium text-white/70">
+            <label htmlFor="cron-minute" className="mb-1 block text-xs font-medium text-on-dark/70">
               {t('adminCron.minuteLabel')}
             </label>
             <input
@@ -443,7 +447,7 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
 
         {mode === 'custom' && (
           <div className="mt-4">
-            <label htmlFor="cron-custom" className="mb-1 block text-xs font-medium text-white/70">
+            <label htmlFor="cron-custom" className="mb-1 block text-xs font-medium text-on-dark/70">
               {t('adminCron.customLabel')}
             </label>
             <input
@@ -455,7 +459,7 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
               aria-describedby="cron-custom-help"
               className={`${FIELD_CLS} font-mono`}
             />
-            <p id="cron-custom-help" className="mt-1 text-xs text-white/50">
+            <p id="cron-custom-help" className="mt-1 text-xs text-content-light">
               {t('adminCron.customHelp')}
             </p>
           </div>
@@ -463,14 +467,14 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
 
         {paramKeys.length > 0 && (
           <fieldset className="mt-4">
-            <legend className="text-xs font-medium uppercase tracking-wide text-white/60">
+            <legend className="text-xs font-medium uppercase tracking-wide text-on-dark/60">
               {t('adminCron.paramsLabel')}
             </legend>
             {paramKeys.map((key) => (
               <div key={key} className="mt-2">
                 <label
                   htmlFor={`cron-param-${key}`}
-                  className="mb-1 block text-xs font-medium text-white/70"
+                  className="mb-1 block text-xs font-medium text-on-dark/70"
                 >
                   {t(`adminCron.params.${key}`, { defaultValue: key })}
                 </label>
@@ -490,25 +494,25 @@ function ScheduleDialog({ job, timezone, onClose, onSave }) {
           </fieldset>
         )}
 
-        <p className="mt-4 rounded-lg bg-black/20 p-3 text-sm text-white/80">
+        <p className="mt-4 rounded-lg bg-overlay/20 p-3 text-sm text-on-dark/80">
           {t('adminCron.preview')} <strong>{describeCron(schedule, t)}</strong>
           <br />
-          <span className="font-mono text-xs text-white/50">{schedule || '—'}</span>
-          {timezone && <span className="text-xs text-white/50"> · {timezone}</span>}
+          <span className="font-mono text-xs text-content-light">{schedule || '—'}</span>
+          {timezone && <span className="text-xs text-content-light"> · {timezone}</span>}
         </p>
 
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className={`rounded-full border border-white/30 px-4 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
+            className={`rounded-full border border-glass/30 px-4 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark ${FOCUS_RING}`}
           >
             {t('adminCron.close')}
           </button>
           <button
             type="submit"
             disabled={saving || !schedule}
-            className={`rounded-full bg-sky-500 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:opacity-40 ${FOCUS_RING}`}
+            className={`rounded-full bg-action px-4 py-1.5 text-sm font-semibold text-action-text transition hover:bg-action-bright disabled:opacity-40 ${FOCUS_RING}`}
           >
             {t('adminCron.save')}
           </button>

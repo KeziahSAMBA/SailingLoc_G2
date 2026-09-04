@@ -22,8 +22,8 @@ const FavoriteButton = memo(function FavoriteButton({
         <FaHeart size={size} className="text-red-500" />
       ) : (
         <span className="relative block" style={{ width: size, height: size }}>
-          <FaHeart size={size} className="absolute inset-0 text-white/40" />
-          <FaRegHeart size={size} className="absolute inset-0 text-black/30" />
+          <FaHeart size={size} className="absolute inset-0 text-on-dark/40" />
+          <FaRegHeart size={size} className="absolute inset-0 text-on-light/30" />
         </span>
       )}
     </button>
