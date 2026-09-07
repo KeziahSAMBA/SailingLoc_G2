@@ -59,7 +59,7 @@ import { onPageExitRequest, isOnDashboardPage } from '../hooks/usePageTransition
 // Fond photo bateau partagé par toutes les sections de la page (résultats,
 // carrousels, avis), qui reprennent toutes ce même habillage (image + assombrissement).
 const PHOTO_BG_STYLE = {
-  backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
+  backgroundImage: `${PHOTO_OVERLAY_BOAT}, url(${bateauBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
 };

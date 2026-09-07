@@ -185,7 +185,7 @@ const GLASS_STYLE = {
 // .product-photo-background (cf. PRODUCT_RESPONSIVE_CSS) et non ici, pour
 // rester réactif au breakpoint plutôt que figé au premier rendu.
 const PHOTO_BG_STYLE = {
-  backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
+  backgroundImage: `${PHOTO_OVERLAY_BOAT}, url(${bateauBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
 };

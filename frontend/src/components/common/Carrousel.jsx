@@ -16,6 +16,7 @@ import { fetchBoats } from '../../services/boatService';
 import { fetchPorts } from '../../services/portService';
 import { useFavorites } from '../../hooks/useFavorites.js';
 import { useCategoryNavigate, useProductNavigate } from '../../hooks/useCategoryTransition.js';
+import { useVisualPreferences } from '../../context/VisualPreferencesContext.jsx';
 import FavoriteButton from './FavoriteButton.jsx';
 import SafeImage from './SafeImage.jsx';
 
@@ -745,7 +746,12 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
             key={i}
             type="button"
             className="h-2 w-2 cursor-pointer rounded-full border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            style={{ background: activeIndex === i ? '#333' : 'rgba(51,51,51,0.4)' }}
+            style={{
+              background:
+                activeIndex === i
+                  ? 'rgb(var(--sl-carousel-dot-active))'
+                  : 'rgb(var(--sl-carousel-dot-muted) / 0.4)',
+            }}
             animate={{ scale: activeIndex === i ? 1.2 : 1 }}
             transition={{ duration: 0.15 }}
             onClick={() => setPosition(i + 1)}
@@ -768,10 +774,15 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 // lève ce forçage sans toucher au rendu de la HomePage (par défaut à false).
 const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly = false }) => {
   const { t } = useTranslation();
+  const { theme: visualTheme } = useVisualPreferences();
   const goToCategory = useCategoryNavigate();
   const goToProduct = useProductNavigate();
   const [boats, setBoats] = useState([]);
   const [ports, setPorts] = useState([]);
+  // Les sections d'accueil historiquement claires restent claires en mode
+  // standard, mais doivent suivre le mode nuit lorsque la palette globale est
+  // activée : leurs surfaces deviennent alors sombres via les tokens Home.
+  const effectiveTheme = visualTheme === 'dark' ? 'dark' : theme;
   const { favoriteIds, toggleFavorite } = useFavorites(!portsOnly);
 
   const handleBoatClick = useCallback(
@@ -935,9 +946,9 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
     return [...related, ...fillers].slice(0, 6).map((boat) => boatToSlide(boat, t));
   }, [boats, similarTo, t]);
 
-  const headerTitle = theme === 'light' ? 'text-on-light' : 'text-on-dark';
+  const headerTitle = effectiveTheme === 'light' ? 'text-on-light' : 'text-on-dark';
   const headerLink =
-    theme === 'light'
+    effectiveTheme === 'light'
       ? 'text-content-muted hover:text-on-light'
       : 'text-on-dark/70 hover:text-on-dark';
 
@@ -948,12 +959,12 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
       <CarouselSection
         title={section.title}
         slides={section.slides}
-        theme={theme}
+        theme={effectiveTheme}
         variant={section.variant}
         favoriteIds={favoriteIds}
         onToggleFavorite={toggleFavorite}
         onSlideClick={handlePortClick}
-        darkHeaderAtAllBreakpoints={theme === 'dark'}
+        darkHeaderAtAllBreakpoints={effectiveTheme === 'dark'}
       />
     );
   }
@@ -965,7 +976,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
         title={t('carrousel.sections.similar')}
         slides={similarSlides}
         linkLabel={t('carrousel.sections.similarLink')}
-        theme={theme}
+        theme={effectiveTheme}
         variant="overlay"
         favoriteIds={favoriteIds}
         onToggleFavorite={toggleFavorite}
@@ -1010,7 +1021,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
                   slides={slides}
                   initialSlide={initialSlide}
                   interval={interval}
-                  theme={theme}
+                  theme={effectiveTheme}
                   favoriteIds={favoriteIds}
                   onToggleFavorite={toggleFavorite}
                   onSlideClick={handleBoatClick}
@@ -1028,7 +1039,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
             title={title}
             slides={slides}
             linkLabel={linkLabel}
-            theme={themed || glass ? theme : 'light'}
+            theme={themed || glass || effectiveTheme === 'dark' ? effectiveTheme : 'light'}
             variant={variant}
             favoriteIds={favoriteIds}
             onToggleFavorite={toggleFavorite}

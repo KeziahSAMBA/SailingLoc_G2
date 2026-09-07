@@ -38,7 +38,7 @@ const valueCardClass =
   'flex flex-col items-center gap-3 rounded-2xl border border-glass/20 bg-surface/5 p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-8';
 
 const PHOTO_BG_STYLE = {
-  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${aboutBg})`,
+  backgroundImage: `${PHOTO_OVERLAY_STATIC_PAGE}, url(${aboutBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',

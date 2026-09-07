@@ -255,7 +255,7 @@ function HomePageProprio() {
           src={bateauVideo}
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-overlay/50" />
+        <div className="sailingloc-photo-overlay sailingloc-photo-overlay--hero absolute inset-0" />
 
         {/* Crossfade vidéo ↔ photo : en sortie, la photo de la page cible
             (exitBgSrc) recouvre la vidéo ; à l'arrivée, c'est l'inverse, la

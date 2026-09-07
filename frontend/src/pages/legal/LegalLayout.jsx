@@ -38,7 +38,7 @@ const TABS = [
 
 // Photo de fond pleine page + voile sombre, comme les pages contact et à propos.
 const PHOTO_BG_STYLE = {
-  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${heroBg})`,
+  backgroundImage: `${PHOTO_OVERLAY_STATIC_PAGE}, url(${heroBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',

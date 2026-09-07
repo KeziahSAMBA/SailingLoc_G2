@@ -53,7 +53,7 @@ const RAW_EXCEPTION_COUNTS = {
     'rgba(255,255,255,0.2)': 1,
     'rgba(0,0,0,0.4)': 1,
   },
-  'src/components/common/Carrousel.jsx': { '#333': 1, 'rgba(51,51,51,0.4)': 1 },
+  'src/components/common/Carrousel.jsx': {},
   'src/components/common/ClientReviews.jsx': {
     'rgba(255,255,255,0.1)': 1,
     'rgba(255,255,255,0.2)': 1,
@@ -63,7 +63,6 @@ const RAW_EXCEPTION_COUNTS = {
   'src/components/common/Footer.jsx': {
     '#fff': 2,
     'rgba(255,255,255,0.5)': 2,
-    'rgba(0,0,0,0.6)': 2,
     'rgba(90,180,236,0.2)': 1,
     'rgba(255,255,255,0.15)': 1,
   },
@@ -84,10 +83,7 @@ const RAW_EXCEPTION_COUNTS = {
     'rgba(2,44,74,0.35)': 2,
     'rgba(2,44,74,0.18)': 1,
   },
-  'src/components/common/PageLoadGateScreen.jsx': {
-    'rgba(3,24,30,0.72)': 1,
-    'rgba(3,35,39,0.8)': 1,
-  },
+  'src/components/common/PageLoadGateScreen.jsx': {},
   'src/components/common/SearchBar.jsx': {
     'rgba(0,0,0,0.45)': 1,
     'rgba(255,255,255,0.1)': 1,
@@ -104,11 +100,8 @@ const RAW_EXCEPTION_COUNTS = {
   'src/components/common/Spinner.jsx': { '#5ab4ec': 1 },
   'src/pages/AboutPage.jsx': {
     'rgba(0,0,0,0.18)': 2,
-    'rgba(3,24,30,0.62)': 1,
-    'rgba(3,35,39,0.72)': 1,
   },
   'src/pages/CategoryPage.jsx': {
-    'rgba(0,0,0,0.5)': 2,
     'rgba(14,165,233,0.35)': 2,
     'rgba(14,165,233,0.15)': 1,
     'rgba(255,255,255,0.5)': 1,
@@ -117,19 +110,14 @@ const RAW_EXCEPTION_COUNTS = {
   },
   'src/pages/ContactPage.jsx': {
     'rgba(0,0,0,0.18)': 4,
-    'rgba(3,24,30,0.62)': 1,
-    'rgba(3,35,39,0.72)': 1,
     'rgba(14,165,233,0.35)': 1,
   },
   'src/pages/HomePage.jsx': {
-    'rgb(0,78,87)': 1,
     'rgba(14,165,233,0.3)': 1,
     'rgba(0,0,0,0.25)': 1,
     'rgba(14,165,233,0.95)': 1,
   },
   'src/pages/legal/LegalLayout.jsx': {
-    'rgba(3,24,30,0.62)': 1,
-    'rgba(3,35,39,0.72)': 1,
     'rgba(0,0,0,0.18)': 1,
   },
   'src/pages/NotFoundPage.jsx': {
@@ -143,7 +131,6 @@ const RAW_EXCEPTION_COUNTS = {
   'src/pages/ProductPage.jsx': {
     'rgba(255,255,255,0.1)': 3,
     'rgba(255,255,255,0.2)': 3,
-    'rgba(0,0,0,0.5)': 2,
     'rgba(0,0,0,0.4)': 3,
     'rgba(255,255,255,0.3)': 1,
     'rgba(14,165,233,0.35)': 1,
@@ -198,7 +185,7 @@ const TAILWIND_EXCEPTION_COUNTS = {
     'bg-slate-800': 2,
   },
   'src/pages/ContactPage.jsx': {},
-  'src/pages/HomePage.jsx': { 'to-[rgb(0,78,87)]': 1 },
+  'src/pages/HomePage.jsx': {},
   'src/pages/ProductPage.jsx': {},
   'src/pages/ReservationPage.jsx': { 'bg-slate-800': 1, 'text-sky-300': 1, 'text-sky-200': 1 },
 };

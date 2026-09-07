@@ -108,7 +108,7 @@ const Footer = () => {
       id="contact"
       className="flex flex-col justify-between overflow-x-hidden px-4 text-content-soft sm:px-8 lg:px-12 xl:px-16"
       style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${bgImage})`,
+        backgroundImage: `linear-gradient(rgb(var(--sl-photo-overlay-footer-color) / var(--sl-photo-overlay-footer-opacity)), rgb(var(--sl-photo-overlay-footer-color) / var(--sl-photo-overlay-footer-opacity))), url(${bgImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         borderTop: '1px solid rgba(90, 180, 236, 0.2)',

@@ -506,8 +506,8 @@ function HomePage() {
           preload="none"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-overlay/50" />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-b from-transparent to-[rgb(0,78,87)]" />
+        <div className="sailingloc-photo-overlay sailingloc-photo-overlay--hero absolute inset-0" />
+        <div className="sailingloc-home-hero-fade pointer-events-none absolute bottom-0 left-0 right-0 h-28" />
 
         {/* Crossfade façon diaporama : le fond de la page cible (même image +
             même voile — sombre pour catégorie/produit, plus profond pour
