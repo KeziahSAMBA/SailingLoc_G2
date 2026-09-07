@@ -73,24 +73,27 @@ function frontendSourceFiles(directory = FRONTEND_SRC) {
 }
 
 describe('intégration transversale des thèmes visuels', () => {
-  it('intègre le panneau de préférences dans le header sans portail ni superposition', () => {
+  it('intègre le panneau de préférences en portail flottant sans modifier le flux du header', () => {
     const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');
     const shell = source('frontend/src/components/common/Header/shared/HeaderShell.jsx');
 
     expect(settings).toContain('data-visual-settings-panel="true"');
     expect(settings).toContain('className="contents"');
-    expect(settings).toContain('order-last basis-full');
-    expect(settings).toContain('sm:order-none sm:basis-auto');
+    expect(settings).toContain('data-header-settings-placement="fixed"');
+    expect(settings).toContain('data-settings-color-vision-options');
     expect(settings).toContain('aria-hidden={!colorVisionOpen}');
     expect(settings).toContain('tabIndex={colorVisionOpen ? 0 : -1}');
-    expect(settings).not.toContain('createPortal');
+    expect(settings).toContain('createPortal');
     expect(settings).not.toContain('panelContainerRef');
-    expect(settings).not.toMatch(/className=.*\babsolute\b.*settings/u);
+    expect(settings).toContain("position: 'fixed'");
 
     expect(shell).toContain('settingsOpen');
-    expect(shell).toContain('settingsHeight');
-    expect(shell).toContain('data-header-settings-spacer="true"');
+    expect(shell).not.toContain('settingsHeight');
+    expect(shell).not.toContain('data-header-settings-spacer="true"');
+    expect(shell).not.toContain('data-header-settings-row="true"');
+    expect(shell).not.toContain('HeaderSettingsContext');
     expect(shell).toContain('className="absolute inset-0 -z-10"');
+    expect(shell).toContain('height: baseHeight');
     expect(shell).not.toContain('settingsPanelRef');
   });
 

@@ -200,10 +200,12 @@ describe('bascule lune et soleil', () => {
     expect(shell).toContain('className="absolute inset-0 -z-10"');
     expect(shell).toContain('minHeight: baseHeight');
     expect(shell).not.toContain('settingsPanelRef');
-    expect(settings).not.toContain('createPortal');
+    expect(settings).toContain('createPortal');
     expect(settings).not.toContain('panelContainerRef');
     expect(settings).toContain('data-visual-settings-panel');
-    expect(settings).toContain('order-last basis-full');
+    expect(settings).toContain('data-header-settings-placement="fixed"');
+    expect(settings).toContain("position: 'fixed'");
+    expect(settings).not.toContain('settingsPlacement');
     expect(settings).toContain('border border-glass/40');
     expect(settings).toContain('focus-visible:outline-on-dark');
     expect(settings).toContain('aria-pressed={i18n.language === code}');

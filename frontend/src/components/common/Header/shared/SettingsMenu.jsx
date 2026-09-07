@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaGlasses } from 'react-icons/fa';
 import { FiCheck, FiMoon, FiSettings, FiSun } from 'react-icons/fi';
@@ -12,19 +13,38 @@ const COLOR_VISION_PROFILES = [
   { value: 'tritanopia', labelKey: 'header.settings.tritanopia' },
 ];
 
+const HEADER_VIEWPORT_MARGIN = 8;
+
+function approximatelyEqual(first, second, tolerance = 0.5) {
+  return first !== null && second !== null && Math.abs(first - second) < tolerance;
+}
+
 function SettingsMenu({ scrolled, onOpenChange }) {
   const { t, i18n } = useTranslation();
   const { theme, colorVision, setTheme, setColorVision } = useVisualPreferences();
   const [open, setOpen] = useState(false);
   const [colorVisionOpen, setColorVisionOpen] = useState(false);
+  const [panelPosition, setPanelPosition] = useState(null);
   const ref = useRef(null);
   const settingsButtonRef = useRef(null);
   const activeGlassesButtonRef = useRef(null);
+  const settingsGroupRef = useRef(null);
+  const panelRef = useRef(null);
+  const pendingFocusRef = useRef(null);
+  const focusFrameRef = useRef(null);
+  const layoutStateRef = useRef(null);
+  const measurementStateRef = useRef({ pending: false, version: 0, width: null });
   const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
   const settingsPanelId = `${idBase}-settings-panel`;
   const colorVisionMenuId = `${idBase}-color-vision`;
 
-  useClickOutside([[ref, () => closeMenus()]]);
+  layoutStateRef.current = {
+    open,
+    colorVisionOpen,
+    panelPosition,
+  };
+
+  useClickOutside([[[ref, settingsGroupRef], () => closeMenus(true)]]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -34,8 +54,8 @@ function SettingsMenu({ scrolled, onOpenChange }) {
 
       event.preventDefault();
       if (colorVisionOpen) {
+        pendingFocusRef.current = { target: 'glasses' };
         setColorVisionOpen(false);
-        activeGlassesButtonRef.current?.focus();
       } else {
         closeMenus();
         settingsButtonRef.current?.focus();
@@ -46,13 +66,25 @@ function SettingsMenu({ scrolled, onOpenChange }) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [colorVisionOpen, open]);
 
-  function closeMenus() {
+  function cancelFocusRestore() {
+    if (focusFrameRef.current === null) return;
+    window.cancelAnimationFrame?.(focusFrameRef.current);
+    focusFrameRef.current = null;
+  }
+
+  function closeMenus(restoreFocus = false) {
+    pendingFocusRef.current = null;
+    cancelFocusRestore();
     setOpen(false);
     setColorVisionOpen(false);
+    setPanelPosition(null);
     onOpenChange?.(false);
+    if (restoreFocus) settingsButtonRef.current?.focus();
   }
 
   function handleGlassesClick(event) {
+    pendingFocusRef.current = null;
+    cancelFocusRestore();
     activeGlassesButtonRef.current = event.currentTarget;
     setColorVisionOpen((value) => !value);
   }
@@ -68,34 +100,43 @@ function SettingsMenu({ scrolled, onOpenChange }) {
         role="group"
         aria-label={t('header.settings.colorVisionOptions')}
         aria-hidden={!colorVisionOpen}
-        className={`basis-full grid transition-[grid-template-rows,opacity] duration-[180ms] ease-out motion-reduce:transition-none ${
+        data-settings-color-vision-options="true"
+        className={`w-full overflow-hidden transition-[max-height,opacity] duration-[180ms] ease-out motion-reduce:transition-none ${
           colorVisionOpen
-            ? 'grid-rows-[1fr] opacity-100 pointer-events-auto'
-            : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+            ? 'max-h-48 opacity-100 pointer-events-auto'
+            : 'max-h-0 opacity-0 pointer-events-none'
         }`}
+        style={{ display: colorVisionOpen ? 'block' : 'none' }}
       >
-        <div className="min-h-0 overflow-hidden">
-          <div className="grid grid-cols-1 gap-1 border-t border-glass/20 pt-2 sm:grid-cols-3">
-            {COLOR_VISION_PROFILES.map(({ value, labelKey }) => {
-              const selected = colorVision === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  aria-label={t(labelKey)}
-                  aria-pressed={selected}
-                  tabIndex={colorVisionOpen ? 0 : -1}
-                  onClick={() => handleColorVisionChange(value)}
-                  className={`flex min-h-9 w-full items-center justify-between gap-3 rounded-lg border-2 px-3 py-2 text-left text-xs font-medium text-on-dark transition-colors hover:bg-surface/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark ${
-                    selected ? 'border-on-dark' : 'border-transparent'
-                  }`}
+        <div
+          data-settings-color-vision-block="true"
+          className="flex w-full min-w-0 flex-col gap-1 overflow-hidden rounded-2xl border border-glass/40 p-1"
+          style={{ backgroundColor: 'rgb(var(--sl-header-bar-bg) / 0.95)' }}
+        >
+          {COLOR_VISION_PROFILES.map(({ value, labelKey }) => {
+            const selected = colorVision === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                aria-label={t(labelKey)}
+                aria-pressed={selected}
+                tabIndex={colorVisionOpen ? 0 : -1}
+                onClick={() => handleColorVisionChange(value)}
+                className={`flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-lg border-2 px-3 py-2 text-left text-xs font-medium leading-tight text-on-dark transition-colors hover:bg-surface/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark ${
+                  selected ? 'border-on-dark' : 'border-transparent'
+                }`}
+              >
+                <span
+                  className="min-w-0 flex-1 whitespace-normal break-words"
+                  style={{ overflowWrap: 'anywhere' }}
                 >
-                  <span>{t(labelKey)}</span>
-                  {selected && <FiCheck size={14} aria-hidden="true" />}
-                </button>
-              );
-            })}
-          </div>
+                  {t(labelKey)}
+                </span>
+                {selected && <FiCheck size={14} aria-hidden="true" />}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -118,7 +159,7 @@ function SettingsMenu({ scrolled, onOpenChange }) {
             title={label}
             aria-pressed={i18n.language === code}
             tabIndex={controlTabIndex}
-            className="relative flex shrink-0 items-center justify-center rounded-md p-2.5 transition-transform hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-md p-2.5 transition-transform hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
           >
             <span
               className={`block overflow-hidden rounded-[3px] ${
@@ -133,7 +174,7 @@ function SettingsMenu({ scrolled, onOpenChange }) {
                 boxShadow: '0 0 0 1px rgb(var(--sl-glass) / 0.5)',
               }}
             >
-              <Flag className="w-full h-full block" />
+              <Flag className="block h-full w-full" />
             </span>
             {i18n.language === code && (
               <FiCheck
@@ -157,43 +198,308 @@ function SettingsMenu({ scrolled, onOpenChange }) {
         >
           {theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}
         </button>
-        <div className="flex min-w-0 shrink-0">
-          <button
-            ref={activeGlassesButtonRef}
-            type="button"
-            onClick={handleGlassesClick}
-            aria-label={t('header.settings.colorblindMode')}
-            title={t('header.settings.colorblindMode')}
-            aria-pressed={colorVision !== 'standard'}
-            aria-expanded={colorVisionOpen}
-            aria-haspopup="true"
-            aria-controls={colorVisionMenuId}
-            tabIndex={controlTabIndex}
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-on-dark opacity-60 drop-shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
-          >
-            <FaGlasses size={20} />
-          </button>
-        </div>
+        <button
+          ref={activeGlassesButtonRef}
+          type="button"
+          onClick={handleGlassesClick}
+          aria-label={t('header.settings.colorblindMode')}
+          title={t('header.settings.colorblindMode')}
+          aria-pressed={colorVision !== 'standard'}
+          aria-expanded={colorVisionOpen}
+          aria-controls={colorVisionMenuId}
+          data-settings-color-vision-trigger="true"
+          tabIndex={controlTabIndex}
+          className="flex h-11 w-11 shrink-0 items-center justify-center text-on-dark opacity-60 drop-shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
+        >
+          <FaGlasses size={20} />
+        </button>
       </>
     );
   }
 
-  function renderInlineControls() {
-    return (
+  function renderSettingsPortal() {
+    if (!open || typeof document === 'undefined') return null;
+
+    return createPortal(
       <div
+        ref={settingsGroupRef}
         id={settingsPanelId}
         role="region"
         aria-label={t('header.settings.label')}
-        data-visual-settings-panel="true"
-        className="order-last basis-full flex min-w-0 flex-wrap items-center justify-end gap-1 rounded-2xl border border-glass/40 p-1 text-on-dark sm:order-none sm:basis-auto sm:flex-nowrap sm:rounded-none sm:border-0 sm:p-0"
+        data-settings-group="true"
+        className="flex max-w-[calc(100vw-1rem)] flex-col items-stretch gap-1 text-on-dark"
+        style={{
+          position: 'fixed',
+          top: `${panelPosition?.top ?? 0}px`,
+          left: `${panelPosition?.left ?? 0}px`,
+          width: panelPosition ? `${panelPosition.width}px` : 'max-content',
+          maxWidth: 'calc(100vw - 1rem)',
+          maxHeight: 'calc(100vh - 1rem)',
+          overflowY: 'auto',
+          visibility: panelPosition ? 'visible' : 'hidden',
+          pointerEvents: panelPosition ? 'auto' : 'none',
+          zIndex: 60,
+        }}
       >
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-1 sm:flex-nowrap sm:gap-2">
-          {renderControls()}
+        <div
+          ref={panelRef}
+          data-visual-settings-panel="true"
+          data-header-settings-placement="fixed"
+          className="w-full rounded-2xl border border-glass/40 p-1 text-on-dark"
+          style={{ backgroundColor: 'rgb(var(--sl-header-bar-bg) / 0.95)' }}
+        >
+          <div
+            data-settings-controls="true"
+            className="flex w-max max-w-full flex-nowrap items-center justify-end gap-1 sm:gap-2"
+          >
+            {renderControls()}
+          </div>
         </div>
         {renderColorVisionOptions()}
-      </div>
+      </div>,
+      document.body
     );
   }
+
+  useLayoutEffect(() => {
+    if (!open) {
+      measurementStateRef.current = {
+        ...measurementStateRef.current,
+        pending: false,
+        width: null,
+      };
+      return undefined;
+    }
+
+    let disposed = false;
+    let scheduledFrame = null;
+    let scheduledWithAnimationFrame = false;
+
+    const measure = () => {
+      if (disposed) return;
+
+      const group = settingsGroupRef.current;
+      const panel = panelRef.current;
+      const trigger = settingsButtonRef.current;
+      if (!group || !panel || !trigger) {
+        measurementStateRef.current = {
+          ...measurementStateRef.current,
+          pending: false,
+          version: measurementStateRef.current.version + 1,
+          width: null,
+        };
+        return;
+      }
+
+      const controls = panel.querySelector('[data-settings-controls]');
+      const controlItems = controls ? [...controls.children] : [];
+      const controlsStyles = controls ? window.getComputedStyle(controls) : null;
+      const controlGap = controlsStyles
+        ? Number.parseFloat(controlsStyles.columnGap || controlsStyles.gap) || 0
+        : 0;
+      const controlsWidth = controlItems.reduce(
+        (total, element) => total + element.getBoundingClientRect().width,
+        0
+      );
+      const controlsGaps = Math.max(0, controlItems.length - 1) * controlGap;
+      const panelStyles = window.getComputedStyle(panel);
+      const panelChrome =
+        (Number.parseFloat(panelStyles.paddingLeft) || 0) +
+        (Number.parseFloat(panelStyles.paddingRight) || 0) +
+        (Number.parseFloat(panelStyles.borderLeftWidth) || 0) +
+        (Number.parseFloat(panelStyles.borderRightWidth) || 0);
+      const viewportWidth = Math.max(0, document.documentElement.clientWidth || window.innerWidth);
+      const maxPanelWidth = Math.max(0, viewportWidth - HEADER_VIEWPORT_MARGIN * 2);
+      const width = Math.min(
+        controlsWidth + controlsGaps + panelChrome,
+        maxPanelWidth || controlsWidth + controlsGaps + panelChrome
+      );
+      const triggerRect = trigger.getBoundingClientRect();
+      const groupHeight = group.getBoundingClientRect().height;
+      const viewportHeight = Math.max(
+        0,
+        document.documentElement.clientHeight || window.innerHeight
+      );
+      const maxTop = Math.max(HEADER_VIEWPORT_MARGIN, viewportHeight - groupHeight - 8);
+      const top = Math.min(triggerRect.bottom + 8, maxTop);
+      const minimumRight = HEADER_VIEWPORT_MARGIN + width;
+      const maximumRight = Math.max(minimumRight, viewportWidth - HEADER_VIEWPORT_MARGIN);
+      const right = Math.min(maximumRight, Math.max(minimumRight, triggerRect.right));
+      const left = Math.max(HEADER_VIEWPORT_MARGIN, right - width);
+      const nextPosition = { top, left, width };
+
+      measurementStateRef.current = {
+        ...measurementStateRef.current,
+        pending: false,
+        version: measurementStateRef.current.version + 1,
+        width,
+      };
+
+      setPanelPosition((current) => {
+        if (
+          current &&
+          approximatelyEqual(current.top, nextPosition.top) &&
+          approximatelyEqual(current.left, nextPosition.left) &&
+          approximatelyEqual(current.width, nextPosition.width)
+        ) {
+          return current;
+        }
+        return nextPosition;
+      });
+    };
+
+    const scheduleMeasure = () => {
+      if (disposed) return;
+
+      measurementStateRef.current = {
+        ...measurementStateRef.current,
+        pending: true,
+      };
+      if (scheduledFrame !== null) return;
+
+      const callback = () => {
+        scheduledFrame = null;
+        if (!disposed) measure();
+      };
+
+      if (typeof window.requestAnimationFrame === 'function') {
+        scheduledWithAnimationFrame = true;
+        scheduledFrame = window.requestAnimationFrame(callback);
+      } else {
+        scheduledWithAnimationFrame = false;
+        window.queueMicrotask?.(callback);
+      }
+    };
+
+    const resizeObserver =
+      typeof window.ResizeObserver === 'function'
+        ? new window.ResizeObserver(scheduleMeasure)
+        : null;
+    const observedGroup = settingsGroupRef.current;
+    const observedTrigger = settingsButtonRef.current;
+    if (observedGroup) resizeObserver?.observe(observedGroup);
+    if (observedTrigger) resizeObserver?.observe(observedTrigger);
+
+    const mutationObserver =
+      typeof window.MutationObserver === 'function'
+        ? new window.MutationObserver(scheduleMeasure)
+        : null;
+    if (observedGroup) {
+      mutationObserver?.observe(observedGroup, {
+        attributes: true,
+        characterData: true,
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    scheduleMeasure();
+    document.fonts?.ready?.then(scheduleMeasure, scheduleMeasure);
+    window.addEventListener('resize', scheduleMeasure);
+    window.addEventListener('scroll', scheduleMeasure, true);
+    window.visualViewport?.addEventListener('resize', scheduleMeasure);
+
+    return () => {
+      disposed = true;
+      if (scheduledFrame !== null) {
+        if (scheduledWithAnimationFrame && typeof window.cancelAnimationFrame === 'function') {
+          window.cancelAnimationFrame(scheduledFrame);
+        }
+        scheduledFrame = null;
+      }
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+      window.removeEventListener('resize', scheduleMeasure);
+      window.removeEventListener('scroll', scheduleMeasure, true);
+      window.visualViewport?.removeEventListener('resize', scheduleMeasure);
+    };
+  }, [colorVisionOpen, i18n.language, open, scrolled, theme]);
+
+  useLayoutEffect(() => {
+    if (!open || pendingFocusRef.current?.target !== 'glasses') return undefined;
+
+    let disposed = false;
+    const focusRequest = pendingFocusRef.current;
+
+    const scheduleFocusCheck = (callback) => {
+      if (disposed || pendingFocusRef.current !== focusRequest) return;
+      if (typeof window.requestAnimationFrame === 'function') {
+        focusFrameRef.current = window.requestAnimationFrame(() => {
+          focusFrameRef.current = null;
+          callback();
+        });
+        return;
+      }
+      window.queueMicrotask?.(callback);
+    };
+
+    const isCurrentLayout = () => {
+      const state = layoutStateRef.current;
+      const measurement = measurementStateRef.current;
+      return (
+        state.panelPosition &&
+        !measurement.pending &&
+        approximatelyEqual(state.panelPosition.width, measurement.width)
+      );
+    };
+
+    const checkFocus = () => {
+      if (disposed || pendingFocusRef.current !== focusRequest) return;
+
+      const currentGlassesButton = settingsGroupRef.current?.querySelector(
+        '[data-settings-color-vision-trigger="true"]'
+      );
+      if (!currentGlassesButton?.isConnected || !isCurrentLayout()) {
+        scheduleFocusCheck(checkFocus);
+        return;
+      }
+
+      const stablePosition = layoutStateRef.current.panelPosition;
+      const stableVersion = measurementStateRef.current.version;
+      currentGlassesButton.focus();
+
+      scheduleFocusCheck(() => {
+        if (disposed || pendingFocusRef.current !== focusRequest) return;
+
+        const latestButton = settingsGroupRef.current?.querySelector(
+          '[data-settings-color-vision-trigger="true"]'
+        );
+        const latestPosition = layoutStateRef.current.panelPosition;
+        const stable =
+          latestButton === currentGlassesButton &&
+          latestButton?.isConnected &&
+          document.activeElement === latestButton &&
+          latestPosition &&
+          stablePosition &&
+          approximatelyEqual(latestPosition.top, stablePosition.top) &&
+          approximatelyEqual(latestPosition.left, stablePosition.left) &&
+          approximatelyEqual(latestPosition.width, stablePosition.width) &&
+          measurementStateRef.current.version === stableVersion &&
+          isCurrentLayout();
+
+        if (stable) {
+          pendingFocusRef.current = null;
+          return;
+        }
+        scheduleFocusCheck(checkFocus);
+      });
+    };
+
+    scheduleFocusCheck(checkFocus);
+
+    return () => {
+      disposed = true;
+      cancelFocusRestore();
+    };
+  }, [colorVisionOpen, i18n.language, open, panelPosition, scrolled]);
+
+  useEffect(
+    () => () => {
+      pendingFocusRef.current = null;
+      cancelFocusRestore();
+    },
+    []
+  );
 
   function toggleSettings() {
     if (open) {
@@ -201,27 +507,29 @@ function SettingsMenu({ scrolled, onOpenChange }) {
       return;
     }
 
+    setPanelPosition(null);
     setOpen(true);
     onOpenChange?.(true);
   }
 
   return (
-    <div className="contents" ref={ref}>
-      <button
-        ref={settingsButtonRef}
-        type="button"
-        onClick={toggleSettings}
-        aria-label={t('header.settings.label')}
-        title={t('header.settings.label')}
-        aria-expanded={open}
-        aria-haspopup="true"
-        aria-controls={settingsPanelId}
-        className="flex items-center justify-center rounded-full p-3 text-on-dark transition-colors hover:bg-surface/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
-      >
-        <FiSettings size={scrolled ? 18 : 20} />
-      </button>
-      {open && renderInlineControls()}
-    </div>
+    <>
+      <div className="contents" ref={ref}>
+        <button
+          ref={settingsButtonRef}
+          type="button"
+          onClick={toggleSettings}
+          aria-label={t('header.settings.label')}
+          title={t('header.settings.label')}
+          aria-expanded={open}
+          aria-controls={settingsPanelId}
+          className="flex items-center justify-center rounded-full p-3 text-on-dark transition-colors hover:bg-surface/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-on-dark"
+        >
+          <FiSettings size={scrolled ? 18 : 20} />
+        </button>
+      </div>
+      {renderSettingsPortal()}
+    </>
   );
 }
 

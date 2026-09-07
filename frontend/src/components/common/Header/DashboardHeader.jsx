@@ -293,7 +293,10 @@ function DashboardHeader({
       </nav>
 
       {/* Droite — Paramètres + Icône utilisateur + Burger menu (33%) */}
-      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1.5 sm:gap-3 lg:w-1/3 lg:flex-none lg:pr-4">
+      <div
+        data-header-right="true"
+        className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1.5 sm:gap-3 lg:w-1/3 lg:flex-none lg:pr-4"
+      >
         <SettingsMenu scrolled={scrolled} onOpenChange={setSettingsOpen} />
 
         <a
