@@ -182,6 +182,13 @@ async function capture(browser, previewOrigin, routePath, apiOrigin) {
     await page.evaluate((selector) => {
       document.querySelectorAll(selector).forEach((node) => node.remove());
     }, GATE_SELECTOR);
+    await page.evaluate(() => {
+      document.querySelectorAll('script[src], iframe[src]').forEach((node) => {
+        const raw = node.getAttribute('src') || '';
+        if (!/^https?:/i.test(raw)) return;
+        if (new URL(raw, document.baseURI).origin !== window.location.origin) node.remove();
+      });
+    });
     return await page.content();
   } finally {
     await page.close();
