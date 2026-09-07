@@ -30,7 +30,10 @@ describe('consommation des préférences par les composants spécialisés', () =
     expect(map).toContain('text-content-muted');
     expect(map).toContain('text-content-subtle');
     expect(map).toContain('text-map-control-text');
-    expect(map).not.toMatch(/\.leaflet-tile[^}]*filter\s*:/u);
+    expect(map).toMatch(
+      /\.leaflet-layer\.sailingloc-map-labels\s+\.leaflet-tile\s*\{[^}]*filter\s*:\s*invert\(1\)/u
+    );
+    expect(map).not.toMatch(/(?<!\.sailingloc-map-labels\s)\.leaflet-tile[^}]*\{[^}]*filter\s*:/u);
   });
 
   it('utilise le premier plan du calendrier et conserve ses états ARIA', () => {

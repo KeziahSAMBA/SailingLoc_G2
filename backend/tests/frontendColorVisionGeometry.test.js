@@ -45,7 +45,10 @@ describe('redondance géométrique des cartes, calendriers et graphiques', () =>
     expect(map).toContain('m9 9 6 6m0-6-6 6');
     expect(map).toContain('Bientôt disponible');
     expect(map).toContain('role="group"');
-    expect(map).not.toMatch(/\.leaflet-tile\s*\{[^}]*filter\s*:/u);
+    expect(map).toMatch(
+      /\.leaflet-layer\.sailingloc-map-labels\s+\.leaflet-tile\s*\{[^}]*filter\s*:\s*invert\(1\)/u
+    );
+    expect(map).not.toMatch(/(?<!\.sailingloc-map-labels\s)\.leaflet-tile[^}]*\{[^}]*filter\s*:/u);
   });
 
   it('rend le graphique de revenus identifiable sans dépendre d’une couleur', () => {

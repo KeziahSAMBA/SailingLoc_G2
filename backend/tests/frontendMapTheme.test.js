@@ -7,7 +7,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const mapView = readFileSync(resolve(ROOT, 'frontend/src/components/common/MapView.jsx'), 'utf8');
 
 describe('fonds cartographiques selon le thème visuel', () => {
-  it('sélectionne les tuiles CARTO claires ou sombres depuis les préférences', () => {
+  it('sélectionne Voyager en clair et sépare le fond sombre de ses libellés', () => {
     expect(mapView).toContain(
       "import { useVisualPreferences } from '../../context/VisualPreferencesContext.jsx';"
     );
@@ -16,13 +16,20 @@ describe('fonds cartographiques selon le thème visuel', () => {
       "light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'"
     );
     expect(mapView).toContain(
-      "dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'"
+      "dark: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'"
+    );
+    expect(mapView).toContain(
+      "darkLabels: 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png'"
     );
     expect(mapView).toContain('const { theme } = useVisualPreferences();');
     expect(mapView).toContain(
       "const tileUrl = theme === 'dark' ? CARTO_TILE_URLS.dark : CARTO_TILE_URLS.light;"
     );
     expect(mapView).toContain('url={tileUrl}');
+    expect(mapView).toContain('url={CARTO_TILE_URLS.darkLabels}');
+    expect(mapView).toContain('className="sailingloc-map-labels"');
+    expect(mapView).toContain('zIndex={10}');
+    expect(mapView).not.toContain('dark_all');
     expect(mapView).not.toContain('key={theme}');
   });
 
@@ -36,7 +43,13 @@ describe('fonds cartographiques selon le thème visuel', () => {
       '{onBoundsChange && <BoundsWatcher onBoundsChange={onBoundsChange} />}'
     );
     expect(mapView).toContain('onSelect={onBoatSelect}');
-    expect(mapView).not.toMatch(/\.leaflet-tile[^}]*filter\s*:/u);
+    expect(mapView.match(/\battribution=/gu)).toHaveLength(1);
+    expect(mapView).toMatch(
+      /\.leaflet-layer\.sailingloc-map-labels\s+\.leaflet-tile\s*\{[^}]*filter\s*:\s*invert\(1\)/u
+    );
+    expect(mapView).not.toMatch(
+      /(?<!\.sailingloc-map-labels\s)\.leaflet-tile[^}]*\{[^}]*filter\s*:/u
+    );
   });
 
   it('garde les contrôles, popups et marqueurs branchés sur les tokens', () => {

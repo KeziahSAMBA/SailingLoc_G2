@@ -97,21 +97,36 @@ describe('intégration transversale des thèmes visuels', () => {
     expect(shell).not.toContain('settingsPanelRef');
   });
 
-  it('sélectionne Voyager en clair et dark_all en mode nuit sans modifier les tuiles', () => {
+  it('sélectionne Voyager en clair et des libellés clairs sur le fond sombre', () => {
     const map = source('frontend/src/components/common/MapView.jsx');
 
     expect(map).toContain('useVisualPreferences');
     expect(map).toContain(
       "light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'"
     );
-    expect(map).toContain("dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'");
+    expect(map).toContain(
+      "dark: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'"
+    );
+    expect(map).toContain(
+      "darkLabels: 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png'"
+    );
     expect(map).toContain(
       "const tileUrl = theme === 'dark' ? CARTO_TILE_URLS.dark : CARTO_TILE_URLS.light;"
     );
     expect(map).toContain('url={tileUrl}');
+    expect(map).toContain('url={CARTO_TILE_URLS.darkLabels}');
+    expect(map).toContain('className="sailingloc-map-labels"');
+    expect(map).toContain('zIndex={10}');
+    expect(map).not.toContain('dark_all');
     expect(map).toContain('carto.com/attributions');
+    expect(map.match(/\battribution=/gu)).toHaveLength(1);
     expect(map).not.toContain('key={theme}');
-    expect(map).not.toMatch(/\.leaflet-tile[^}]*\bfilter\s*:/u);
+    expect(map).toMatch(
+      /\.leaflet-layer\.sailingloc-map-labels\s+\.leaflet-tile\s*\{[^}]*\bfilter\s*:\s*invert\(1\)/u
+    );
+    expect(map).not.toMatch(
+      /(?<!\.sailingloc-map-labels\s)\.leaflet-tile[^}]*\{[^}]*\bfilter\s*:/u
+    );
   });
 
   it('conserve un glass clair, un remplissage noir en nuit et une bordure visible', () => {
@@ -161,17 +176,19 @@ describe('intégration transversale des thèmes visuels', () => {
     }
   });
 
-  it('n’applique aucun filtre CSS aux images, vidéos, canvas ou tuiles Leaflet', () => {
+  it('ne filtre aucun média ni tuile de fond, hors inversion dédiée des libellés', () => {
     const violations = [];
 
     for (const path of frontendSourceFiles()) {
       const text = readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\//gu, '');
       for (const match of text.matchAll(/([^{}]+)\{([^{}]*)\}/gsu)) {
         const [, selector, body] = match;
-        if (
-          /(?:\bimg\b|\bvideo\b|\bpicture\b|\bcanvas\b|\.leaflet-tile)/iu.test(selector) &&
-          /\bfilter\s*:/iu.test(body)
-        ) {
+        const hasMediaSelector =
+          /(?:\bimg\b|\bvideo\b|\bpicture\b|\bcanvas\b|\.leaflet-tile)/iu.test(selector);
+        const isDedicatedLabelFilter =
+          /\.leaflet-layer\.sailingloc-map-labels\s+\.leaflet-tile\b/iu.test(selector) &&
+          /\bfilter\s*:\s*invert\(1\)\s*;/iu.test(body);
+        if (hasMediaSelector && /\bfilter\s*:/iu.test(body) && !isDedicatedLabelFilter) {
           violations.push(`${relative(FRONTEND_SRC, path)}: ${selector.trim()}`);
         }
       }

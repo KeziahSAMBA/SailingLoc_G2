@@ -107,6 +107,13 @@ describe('surfaces du mode nuit', () => {
     expect(css).not.toMatch(
       /\.sailingloc-photo-overlay--(?:hero|dashboard|document|not-found)\s*\{[^}]*opacity:/u
     );
+    const map = source('frontend/src/components/common/MapView.jsx');
+    expect(map).toMatch(
+      /\.leaflet-layer\.sailingloc-map-labels\s+\.leaflet-tile\s*\{[^}]*filter\s*:\s*invert\(1\)/u
+    );
+    expect(map).not.toMatch(
+      /(?:\bimg\b|\bvideo\b|\bpicture\b|\bcanvas\b|(?<!\.sailingloc-map-labels\s)\.leaflet-tile)[^}]*filter\s*:/su
+    );
     expect(css).not.toMatch(/(?:img|video|picture|canvas|\.leaflet-tile)[^}]*filter:/su);
   });
 

@@ -10,12 +10,14 @@ import 'leaflet/dist/leaflet.css';
 const PIN_COLOR_AVAILABLE = 'rgb(var(--sl-map-available))';
 const PIN_COLOR_UNAVAILABLE = 'rgb(var(--sl-map-unavailable-strong))';
 
-// Les deux fonds CARTO portent la même projection, le même niveau de zoom et la
-// même attribution. Changer uniquement l'URL permet de basculer de fond sans
-// filtrer les tuiles (ce qui dégraderait leur lisibilité et leurs couleurs).
+// Les fonds CARTO portent la même projection, le même niveau de zoom et la même
+// attribution. En mode sombre, le fond sans libellés est combiné avec la couche
+// de libellés claire ; seul ce calque transparent est inversé pour améliorer la
+// lisibilité, le fond restant strictement natif.
 const CARTO_TILE_URLS = Object.freeze({
   light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  dark: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+  darkLabels: 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
 });
 
 function escapeHtml(str) {
@@ -173,6 +175,16 @@ const MAP_STYLE_CSS = `
   background: rgb(var(--sl-map-control-hover));
   color: rgb(var(--sl-map-control-hover-text));
 }
+
+/*
+ * CARTO's light-only label raster has a muted fill surrounded by a bright
+ * halo.  Inverting this dedicated transparent layer keeps the dark map
+ * readable while turning the halo into a discreet dark outline.  The base
+ * tiles, content imagery and Leaflet controls remain untouched.
+ */
+.leaflet-layer.sailingloc-map-labels .leaflet-tile {
+  filter: invert(1);
+}
 `;
 
 // Zoom sur un port au clic, sans dépasser le niveau de zoom déjà atteint par l'utilisateur.
@@ -305,6 +317,15 @@ function MapView({
           subdomains="abcd"
           maxZoom={20}
         />
+        {theme === 'dark' && (
+          <TileLayer
+            url={CARTO_TILE_URLS.darkLabels}
+            className="sailingloc-map-labels"
+            subdomains="abcd"
+            maxZoom={20}
+            zIndex={10}
+          />
+        )}
         <FitBounds points={fitPoints} />
         {onBoundsChange && <BoundsWatcher onBoundsChange={onBoundsChange} />}
         <ZoomWatcher onZoomChange={setZoom} />
