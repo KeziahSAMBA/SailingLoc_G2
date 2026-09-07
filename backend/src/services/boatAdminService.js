@@ -12,6 +12,9 @@ function publicBoat(b) {
     type: b.type,
     daily_price: b.daily_price != null ? Number(b.daily_price) : null,
     is_published: b.is_published,
+    // Distingue une annonce jamais examinée d'une annonce refusée : les deux
+    // ont is_published à false, seul le statut permet à l'admin de trier.
+    status: b.status,
     registration: b.registration,
     created_at: b.created_at,
     owner: b.owner
@@ -96,24 +99,10 @@ export async function setBoatPublished(id_boat, is_published) {
     where: { id_boat: id, status: 'pending' },
   });
 
-  return {
-    id_boat: updated.id_boat,
-    name: updated.name,
-    type: updated.type,
-    daily_price: updated.daily_price != null ? Number(updated.daily_price) : null,
-    is_published: updated.is_published,
-    registration: updated.registration,
-    created_at: updated.created_at,
-    owner: boat.owner
-      ? {
-          id_user: boat.owner.id_user,
-          first_name: boat.owner.first_name,
-          last_name: boat.owner.last_name,
-          email: boat.owner.email,
-        }
-      : null,
-    pending_reports,
-  };
+  // Même projection que la liste : dupliquer ce mapping avait déjà fait
+  // diverger les deux réponses, et l'interface fusionne celle-ci dans la ligne
+  // qu'elle a chargée depuis la liste.
+  return { ...publicBoat({ ...updated, owner: boat.owner }), pending_reports };
 }
 
 export async function listReports({ status } = {}) {
