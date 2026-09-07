@@ -148,6 +148,38 @@ const BREADCRUMB_LABELS = {
 
 const trimValue = (value) => (typeof value === 'string' ? value.trim() : '');
 
+function containsUnsafeUrlSyntax(value) {
+  return (
+    value.startsWith('//') ||
+    value.includes('\\') ||
+    /%5c/iu.test(value) ||
+    containsEncodedControlCharacters(value) ||
+    [...value].some((character) => {
+      const codePoint = character.codePointAt(0);
+      return (
+        (codePoint >= 0 && codePoint <= 31) ||
+        codePoint === 127 ||
+        codePoint === 0x2028 ||
+        codePoint === 0x2029
+      );
+    })
+  );
+}
+
+function containsEncodedControlCharacters(value) {
+  const octets = value.match(/%[0-9a-f]{2}/giu) || [];
+  if (
+    octets.some((octet) => {
+      const codePoint = Number.parseInt(octet.slice(1), 16);
+      return codePoint <= 31 || codePoint === 127;
+    })
+  ) {
+    return true;
+  }
+
+  return /%e2%80%a8|%e2%80%a9/iu.test(value);
+}
+
 function languageCopy(language) {
   return COPY[language === 'en' ? 'en' : 'fr'];
 }
@@ -165,6 +197,16 @@ export function getRouteKind(pathname) {
 export function buildCanonicalUrl(origin, pathname) {
   const rawPath = typeof pathname === 'string' && pathname.startsWith('/') ? pathname : '/';
   const safePath = rawPath.split(/[?#]/, 1)[0] || '/';
+  if (containsUnsafeUrlSyntax(safePath)) {
+    if (!origin) return '/';
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.protocol !== 'http:' && originUrl.protocol !== 'https:') return '/';
+      return new URL('/', originUrl).toString();
+    } catch {
+      return '/';
+    }
+  }
   if (!origin) return safePath;
   try {
     return new URL(safePath, origin).toString();
@@ -175,7 +217,7 @@ export function buildCanonicalUrl(origin, pathname) {
 
 function buildAbsoluteUrl(origin, value) {
   const safeValue = trimValue(value);
-  if (!safeValue || !origin) return null;
+  if (!safeValue || !origin || containsUnsafeUrlSyntax(safeValue)) return null;
   try {
     const url = new URL(safeValue, origin);
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;

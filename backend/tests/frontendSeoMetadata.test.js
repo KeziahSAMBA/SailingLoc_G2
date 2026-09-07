@@ -65,6 +65,18 @@ describe('métadonnées SEO des routes frontend existantes', () => {
     );
   });
 
+  it('neutralise les chemins ambigus avant de construire une canonique', () => {
+    for (const pathname of [
+      '//evil.example.test',
+      '/\\evil.example.test',
+      '/%5Cevil.example.test',
+    ]) {
+      expect(buildCanonicalUrl('https://www.example.test', pathname)).toBe(
+        'https://www.example.test/'
+      );
+    }
+  });
+
   it('utilise uniquement les données réelles disponibles pour une fiche produit', () => {
     const metadata = getSeoMetadata('/product/42', {
       language: 'fr',
