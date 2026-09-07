@@ -5,7 +5,7 @@ import usePagination from '../../hooks/usePagination.js';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.jsx';
 import { formatDate } from '../../utils/formatDate.js';
-import { IconBtn, EyeIcon, EyeOffIcon, CheckIcon, XIcon } from './AdminActions.jsx';
+import { ActionBtn, IconBtn, EyeOffIcon, CheckIcon, XIcon } from './AdminActions.jsx';
 import AdminScrollableFilterRow from './AdminScrollableFilterRow.jsx';
 import {
   listBoats,
@@ -32,6 +32,20 @@ const REPORT_FILTERS = [
   { value: 'resolved', labelKey: 'resolved' },
   { value: 'dismissed', labelKey: 'dismissed' },
 ];
+
+const BOAT_STATUS_STYLES = {
+  draft: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  published: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+};
+
+// Les annonces d'avant l'introduction du statut n'en portent pas : on retombe
+// sur la visibilité publique, seule information disponible pour elles.
+function boatStatus(b) {
+  if (BOAT_STATUS_STYLES[b.status]) return b.status;
+  return b.is_published ? 'published' : 'draft';
+}
 
 const PUBLISHED_FILTERS = [
   { value: '', labelKey: 'all' },
@@ -100,17 +114,15 @@ function AdminPublicationPage() {
     pageItems: pageReports,
   } = usePagination(reports, PAGE_SIZE, reportStatus);
 
-  async function togglePublish(b) {
+  async function decidePublication(b, accepted) {
     setBusyId(`b${b.id_boat}`);
     try {
-      const res = await setBoatPublished(b.id_boat, !b.is_published);
+      const res = await setBoatPublished(b.id_boat, accepted);
       setBoats((prev) =>
         prev.map((x) => (x.id_boat === b.id_boat ? { ...x, ...res.data.boat } : x))
       );
       showToast(
-        b.is_published
-          ? t('adminPublication.unpublishedToast')
-          : t('adminPublication.publishedToast'),
+        accepted ? t('adminPublication.publishedToast') : t('adminPublication.unpublishedToast'),
         'success'
       );
     } catch (err) {
@@ -273,14 +285,10 @@ function AdminPublicationPage() {
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            b.is_published
-                              ? 'status-indicator status-indicator--success bg-success-base/15 text-success-soft'
-                              : 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
+                            BOAT_STATUS_STYLES[boatStatus(b)]
                           }`}
                         >
-                          {b.is_published
-                            ? t('adminPublication.published')
-                            : t('adminPublication.unpublished')}
+                          {t(`adminPublication.status.${boatStatus(b)}`)}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -293,19 +301,23 @@ function AdminPublicationPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-end">
-                          <IconBtn
-                            title={
-                              b.is_published
-                                ? t('adminPublication.unpublish')
-                                : t('adminPublication.publish')
-                            }
-                            variant={b.is_published ? 'default' : 'success'}
-                            disabled={busyId === `b${b.id_boat}`}
-                            onClick={() => togglePublish(b)}
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <ActionBtn
+                            label={t('adminPublication.accept')}
+                            variant="success"
+                            disabled={busyId === `b${b.id_boat}` || boatStatus(b) === 'published'}
+                            onClick={() => decidePublication(b, true)}
                           >
-                            {b.is_published ? <EyeOffIcon /> : <EyeIcon />}
-                          </IconBtn>
+                            <CheckIcon />
+                          </ActionBtn>
+                          <ActionBtn
+                            label={t('adminPublication.refuse')}
+                            variant="danger"
+                            disabled={busyId === `b${b.id_boat}` || boatStatus(b) === 'refused'}
+                            onClick={() => decidePublication(b, false)}
+                          >
+                            <XIcon />
+                          </ActionBtn>
                         </div>
                       </td>
                     </tr>
@@ -341,14 +353,10 @@ function AdminPublicationPage() {
                     </div>
                     <span
                       className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        b.is_published
-                          ? 'status-indicator status-indicator--success bg-success-base/15 text-success-soft'
-                          : 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
+                        BOAT_STATUS_STYLES[boatStatus(b)]
                       }`}
                     >
-                      {b.is_published
-                        ? t('adminPublication.published')
-                        : t('adminPublication.unpublished')}
+                      {t(`adminPublication.status.${boatStatus(b)}`)}
                     </span>
                   </div>
 
@@ -365,19 +373,23 @@ function AdminPublicationPage() {
                     </p>
                   )}
 
-                  <div className="mt-3 flex justify-end border-t border-glass/15 pt-3">
-                    <IconBtn
-                      title={
-                        b.is_published
-                          ? t('adminPublication.unpublish')
-                          : t('adminPublication.publish')
-                      }
-                      variant={b.is_published ? 'default' : 'success'}
-                      disabled={busyId === `b${b.id_boat}`}
-                      onClick={() => togglePublish(b)}
+                  <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-glass/15 pt-3">
+                    <ActionBtn
+                      label={t('adminPublication.accept')}
+                      variant="success"
+                      disabled={busyId === `b${b.id_boat}` || boatStatus(b) === 'published'}
+                      onClick={() => decidePublication(b, true)}
                     >
-                      {b.is_published ? <EyeOffIcon /> : <EyeIcon />}
-                    </IconBtn>
+                      <CheckIcon />
+                    </ActionBtn>
+                    <ActionBtn
+                      label={t('adminPublication.refuse')}
+                      variant="danger"
+                      disabled={busyId === `b${b.id_boat}` || boatStatus(b) === 'refused'}
+                      onClick={() => decidePublication(b, false)}
+                    >
+                      <XIcon />
+                    </ActionBtn>
                   </div>
                 </li>
               ))

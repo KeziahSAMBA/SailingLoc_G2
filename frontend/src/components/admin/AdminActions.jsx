@@ -69,6 +69,22 @@ const VARIANTS = {
   info: 'border-brand-soft text-brand-soft hover:bg-brand-soft/15',
 };
 
+export function ActionBtn({ label, onClick, disabled, variant = 'default', children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+        VARIANTS[variant] || VARIANTS.default
+      }`}
+    >
+      {children}
+      {label}
+    </button>
+  );
+}
+
 export function IconBtn({ title, onClick, disabled, variant = 'default', children }) {
   return (
     <button
