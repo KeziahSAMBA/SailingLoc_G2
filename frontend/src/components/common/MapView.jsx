@@ -2,12 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { FiRefreshCw } from 'react-icons/fi';
+import { useVisualPreferences } from '../../context/VisualPreferencesContext.jsx';
 import 'leaflet/dist/leaflet.css';
 
 // Navy — couleur "sérieuse" de la marque (déjà utilisée pour le header scrollé et le
 // fil d'ariane), plus lisible sur les tuiles claires que le sky ou le blanc.
 const PIN_COLOR_AVAILABLE = 'rgb(var(--sl-map-available))';
 const PIN_COLOR_UNAVAILABLE = 'rgb(var(--sl-map-unavailable-strong))';
+
+// Les deux fonds CARTO portent la même projection, le même niveau de zoom et la
+// même attribution. Changer uniquement l'URL permet de basculer de fond sans
+// filtrer les tuiles (ce qui dégraderait leur lisibilité et leurs couleurs).
+const CARTO_TILE_URLS = Object.freeze({
+  light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+});
 
 function escapeHtml(str) {
   return String(str).replace(
@@ -246,6 +255,7 @@ function MapView({
   onBoundsChange,
   onBoatSelect,
 }) {
+  const { theme } = useVisualPreferences();
   const points = markers.filter((m) => Number.isFinite(m.lat) && Number.isFinite(m.lng));
   // Par défaut la vue se recadre sur tous les marqueurs. `focusMarkers` permet à
   // l'appelant de restreindre ce recadrage (ex : uniquement les ports correspondant
@@ -257,6 +267,7 @@ function MapView({
   const mapRef = useRef(null);
   const [zoom, setZoom] = useState(FRANCE_ZOOM);
   const showBoats = zoom >= BOAT_ZOOM_THRESHOLD && boatPoints.length > 0;
+  const tileUrl = theme === 'dark' ? CARTO_TILE_URLS.dark : CARTO_TILE_URLS.light;
 
   function handleResetView() {
     const map = mapRef.current;
@@ -290,7 +301,7 @@ function MapView({
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url={tileUrl}
           subdomains="abcd"
           maxZoom={20}
         />
