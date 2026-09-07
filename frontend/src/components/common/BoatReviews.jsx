@@ -21,7 +21,7 @@ const PAGE_SIZE = 5;
 
 const GLASS_STYLE = {
   backgroundColor: 'rgb(var(--sl-glass-fill) / 0.1)',
-  borderColor: 'rgb(var(--sl-glass-border) / 0.2)',
+  borderColor: 'rgb(var(--sl-glass-border) / var(--sl-glass-functional-alpha))',
   backdropFilter: 'blur(20px)',
   WebkitBackdropFilter: 'blur(20px)',
 };

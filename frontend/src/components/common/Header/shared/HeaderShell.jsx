@@ -71,7 +71,7 @@ function HeaderShell({ scrolled, introHidden, settingsOpen = false, children }) 
             backgroundColor:
               scrolled || settingsOpen
                 ? 'rgb(var(--sl-header-bar-bg) / 0.95)'
-                : 'rgb(var(--sl-glass) / 0.05)',
+                : 'rgb(var(--sl-glass-fill) / 0.05)',
             borderBottom: '1px solid rgb(var(--sl-brand) / 0.2)',
             boxShadow: scrolled ? '0 2px 12px rgb(var(--sl-brand-navy) / 0.08)' : 'none',
             transition: 'box-shadow 0.3s ease, background-color 0.3s ease',

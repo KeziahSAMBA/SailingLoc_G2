@@ -281,7 +281,7 @@ function FilterBar({
           borderColor: compact
             ? 'transparent'
             : light
-              ? 'rgb(var(--sl-glass-border) / 0.3)'
+              ? 'rgb(var(--sl-glass-border) / var(--sl-glass-control-alpha))'
               : 'rgb(var(--sl-overlay) / 0.1)',
           backdropFilter: compact ? 'none' : 'blur(40px)',
           WebkitBackdropFilter: compact ? 'none' : 'blur(40px)',

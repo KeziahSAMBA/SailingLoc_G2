@@ -105,13 +105,21 @@ const SEMANTIC = [
 ];
 
 function block(selector) {
-  const start = CSS.indexOf(selector);
+  let start = CSS.indexOf(selector);
   expect(start).toBeGreaterThanOrEqual(0);
-  const open = CSS.indexOf('{', start);
-  let depth = 0;
-  for (let i = open; i < CSS.length; i += 1) {
-    if (CSS[i] === '{') depth += 1;
-    if (CSS[i] === '}' && --depth === 0) return CSS.slice(open + 1, i);
+
+  while (start >= 0) {
+    const open = CSS.indexOf('{', start);
+    let depth = 0;
+    for (let i = open; i < CSS.length; i += 1) {
+      if (CSS[i] === '{') depth += 1;
+      if (CSS[i] === '}' && --depth === 0) {
+        const candidate = CSS.slice(open + 1, i);
+        if (candidate.includes('--sl-page:')) return candidate;
+        break;
+      }
+    }
+    start = CSS.indexOf(selector, open + 1);
   }
   throw new Error(`Bloc non fermé: ${selector}`);
 }

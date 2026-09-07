@@ -16,15 +16,25 @@ function source(relativePath) {
  * accidentally reading a similarly named token in a later profile block.
  */
 function cssBlock(css, selector) {
-  const start = css.indexOf(selector);
+  let start = css.indexOf(selector);
   expect(start).toBeGreaterThanOrEqual(0);
-  const open = css.indexOf('{', start);
-  expect(open).toBeGreaterThan(start);
 
-  let depth = 0;
-  for (let index = open; index < css.length; index += 1) {
-    if (css[index] === '{') depth += 1;
-    if (css[index] === '}' && --depth === 0) return css.slice(open + 1, index);
+  while (start >= 0) {
+    const open = css.indexOf('{', start);
+    expect(open).toBeGreaterThan(start);
+
+    let depth = 0;
+    for (let index = open; index < css.length; index += 1) {
+      if (css[index] === '{') depth += 1;
+      if (css[index] === '}' && --depth === 0) {
+        const candidate = css.slice(open + 1, index);
+        // Theme blocks contain tokens; skip nested selectors that happen to
+        // share the same prefix (for example the dark border override).
+        if (candidate.includes('--sl-page:')) return candidate;
+        break;
+      }
+    }
+    start = css.indexOf(selector, open + 1);
   }
 
   throw new Error(`Bloc CSS non fermé : ${selector}`);

@@ -10,13 +10,21 @@ function source(relativePath) {
 }
 
 function block(css, selector) {
-  const start = css.indexOf(selector);
+  let start = css.indexOf(selector);
   expect(start).toBeGreaterThanOrEqual(0);
-  const open = css.indexOf('{', start);
-  let depth = 0;
-  for (let index = open; index < css.length; index += 1) {
-    if (css[index] === '{') depth += 1;
-    if (css[index] === '}' && --depth === 0) return css.slice(open + 1, index);
+
+  while (start >= 0) {
+    const open = css.indexOf('{', start);
+    let depth = 0;
+    for (let index = open; index < css.length; index += 1) {
+      if (css[index] === '{') depth += 1;
+      if (css[index] === '}' && --depth === 0) {
+        const candidate = css.slice(open + 1, index);
+        if (candidate.includes('--sl-page:')) return candidate;
+        break;
+      }
+    }
+    start = css.indexOf(selector, open + 1);
   }
   throw new Error(`Bloc CSS non fermé : ${selector}`);
 }
@@ -88,6 +96,17 @@ describe('surfaces du mode nuit', () => {
     }
 
     const css = source('frontend/src/index.css');
+    for (const modifier of ['hero', 'dashboard', 'document', 'not-found']) {
+      expect(css).toMatch(
+        new RegExp(
+          `\\.sailingloc-photo-overlay--${modifier}\\s*\\{[^}]*background-color:\\s*rgb\\(var\\(--sl-overlay\\) /`,
+          'u'
+        )
+      );
+    }
+    expect(css).not.toMatch(
+      /\.sailingloc-photo-overlay--(?:hero|dashboard|document|not-found)\s*\{[^}]*opacity:/u
+    );
     expect(css).not.toMatch(/(?:img|video|picture|canvas|\.leaflet-tile)[^}]*filter:/su);
   });
 
