@@ -26,6 +26,7 @@ import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import ShareButton from '../components/common/ShareButton.jsx';
 import DateRangePicker from '../components/common/DateRangePicker.jsx';
 import SafeImage from '../components/common/SafeImage.jsx';
+import ImageLightbox from '../components/common/ImageLightbox.jsx';
 import SeoMetadata from '../components/common/SeoMetadata.jsx';
 import {
   MdLocationOn,
@@ -581,6 +582,17 @@ function ProductPage() {
   const images = boat?.images ?? [];
   // Galerie : image principale + jusqu'à 4 secondaires, agencées par
   // layoutGalleryRows selon leur ratio réel (cf. plus bas).
+  // Index de la photo ouverte en grand ; null quand la visionneuse est fermée.
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+  // Rend le focus à la photo cliquée quand la visionneuse se ferme, sinon la
+  // navigation au clavier repart du haut de la page.
+  const lightboxOpenerRef = useRef(null);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxIndex(null);
+    lightboxOpenerRef.current?.focus();
+  }, []);
+
   const galleryImages = useMemo(
     () => (images.length ? images.slice(0, 5) : [{ key: 'boat-fallback', url: '' }]),
     [images]
@@ -636,6 +648,7 @@ function ProductPage() {
         galleryImages.map((img, i) => ({
           key: img.url ?? i,
           url: img.url,
+          index: i,
           ratio: (img.url && galleryRatiosRef.current[img.url]) || 1.5,
         })),
         galleryContainerSize.width,
@@ -1061,20 +1074,31 @@ function ProductPage() {
                         style={{ gap: GALLERY_GAP }}
                       >
                         {row.items.map((item) => (
-                          <SafeImage
+                          <button
                             key={item.key}
-                            src={item.url}
-                            alt={t('carrousel.boatImageAlt', { name: boat.name })}
-                            loading={rowIndex === 0 ? undefined : 'lazy'}
-                            decoding="async"
-                            className="rounded-2xl object-cover"
-                            fallbackClassName="flex items-center justify-center rounded-2xl bg-photo-surface text-4xl"
-                            style={{
-                              height: `${row.height}px`,
-                              width: `${row.height * item.ratio}px`,
-                              display: 'block',
+                            type="button"
+                            disabled={!item.url}
+                            aria-label={t('product.lightbox.open', { index: item.index + 1 })}
+                            onClick={(e) => {
+                              lightboxOpenerRef.current = e.currentTarget;
+                              setLightboxIndex(item.index);
                             }}
-                          />
+                            className="cursor-zoom-in rounded-2xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-default"
+                          >
+                            <SafeImage
+                              src={item.url}
+                              alt={t('carrousel.boatImageAlt', { name: boat.name })}
+                              loading={rowIndex === 0 ? undefined : 'lazy'}
+                              decoding="async"
+                              className="rounded-2xl object-cover"
+                              fallbackClassName="flex items-center justify-center rounded-2xl bg-photo-surface text-4xl"
+                              style={{
+                                height: `${row.height}px`,
+                                width: `${row.height * item.ratio}px`,
+                                display: 'block',
+                              }}
+                            />
+                          </button>
                         ))}
                       </div>
                     ))}
@@ -1609,6 +1633,16 @@ function ProductPage() {
           )}
         </div>
       </div>
+
+      {lightboxIndex !== null && boat && (
+        <ImageLightbox
+          images={galleryImages}
+          index={lightboxIndex}
+          alt={t('carrousel.boatImageAlt', { name: boat.name })}
+          onClose={closeLightbox}
+          onNavigate={setLightboxIndex}
+        />
+      )}
     </main>
   );
 }
