@@ -7,7 +7,9 @@
     "dev": "vite",
     "prebuild": "node scripts/validate-build-env.mjs",
     "build": "vite build",
+    "postbuild": "node scripts/prerender.mjs",
     "preview": "vite preview",
+    "preview:nginx": "node scripts/preview-nginx.mjs",
     "lint": "eslint src/**/*.{js,jsx}",
     "format": "prettier --write src/**/*.{js,jsx,css,md}"
   },
