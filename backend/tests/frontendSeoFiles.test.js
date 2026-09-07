@@ -24,13 +24,17 @@ describe('fichiers SEO statiques frontend', () => {
       .replaceAll('\r\n', '\n')
       .trim();
 
-    expect(robots).toMatch(/^User-agent:\s*\*$/mu);
-    expect(robots).toMatch(/^Allow:\s*\/$/mu);
-    expect(robots).toMatch(/^Disallow:\s*\/admin$/mu);
-    expect(robots).toMatch(new RegExp(`^Sitemap:\\s*${DEFAULT_SITE_ORIGIN}/sitemap\\.xml$`, 'mu'));
+    const lines = robots.split('\n').map((line) => line.trim());
+
+    expect(lines).toContain('User-agent: *');
+    expect(lines).toContain('Allow: /');
+    expect(lines).toContain('Disallow: /admin');
+    // Comparaison de ligne exacte : injecter une URL dans une expression
+    // régulière rendrait ses points génériques, donc l'assertion permissive.
+    expect(lines).toContain(`Sitemap: ${DEFAULT_SITE_ORIGIN}/sitemap.xml`);
 
     // Un « Disallow: / » nu bloquerait tout le site : c'est l'état d'où l'on vient.
-    expect(robots).not.toMatch(/^Disallow:\s*\/$/mu);
+    expect(lines).not.toContain('Disallow: /');
   });
 
   it('laisse les espaces privés au noindex plutôt qu’au blocage d’exploration', () => {
