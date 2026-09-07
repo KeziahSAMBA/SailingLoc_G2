@@ -61,7 +61,8 @@ function withSiteOrigin(html, previewOrigin, siteOrigin) {
 
 function assertRewritten(routePath, html, previewOrigin) {
   const { host } = new URL(previewOrigin);
-  const leaks = [host, host.replace(':', '%3A'), host.replace(':', '%3a')];
+  const encodedHost = encodeURIComponent(host);
+  const leaks = [host, encodedHost, encodedHost.toLowerCase()];
   if (leaks.some((leak) => html.includes(leak))) {
     throw new Error(`${routePath} : l’origine de pré-rendu subsiste dans le HTML.`);
   }
