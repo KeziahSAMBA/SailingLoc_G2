@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useId, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../hooks/useAuth.jsx';
@@ -65,7 +65,7 @@ const UserIcon = ({ size }) => (
     style={{
       width: size,
       height: size,
-      border: '1px solid rgba(255, 255, 255, 0.6)',
+      border: '1px solid rgb(var(--sl-header-icon) / 0.6)',
       transition: 'width 0.3s ease, height 0.3s ease',
     }}
   >
@@ -74,9 +74,9 @@ const UserIcon = ({ size }) => (
       height="10"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#fff"
+      stroke="currentColor"
       strokeWidth="2"
-      className="max-sm:!h-5 max-sm:!w-5"
+      className="text-header-icon max-sm:!h-5 max-sm:!w-5"
     >
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -90,8 +90,9 @@ const ChevronDown = ({ open }) => (
     height="10"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="#fff"
+    stroke="currentColor"
     strokeWidth="2"
+    className="text-header-icon"
     style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
   >
     <polyline points="6 9 12 15 18 9" />
@@ -100,8 +101,8 @@ const ChevronDown = ({ open }) => (
 
 function getAuthBtnStyle(scrolled) {
   return {
-    color: '#fff',
-    border: '1px solid rgba(255, 255, 255, 0.5)',
+    color: 'rgb(var(--sl-header-text))',
+    border: '1px solid rgb(var(--sl-header-text) / 0.5)',
     backgroundColor: 'transparent',
     fontSize: scrolled ? '0.75rem' : '0.80rem',
     padding: scrolled ? '5px 14px' : '7px 16px',
@@ -109,9 +110,9 @@ function getAuthBtnStyle(scrolled) {
   };
 }
 
-const authBtnHover = hoverBackground('rgba(255, 255, 255, 0.15)', 'transparent', {
-  hover: '#fff',
-  base: 'rgba(255, 255, 255, 0.5)',
+const authBtnHover = hoverBackground('rgb(var(--sl-header-text) / 0.15)', 'transparent', {
+  hover: 'rgb(var(--sl-header-text))',
+  base: 'rgb(var(--sl-header-text) / 0.5)',
 });
 
 function Header() {
@@ -119,8 +120,12 @@ function Header() {
   const scrolled = useScrolled();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const menuRef = useRef(null);
   const userMenuRef = useRef(null);
+  const settingsPanelRef = useRef(null);
+  const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
+  const menuPanelId = `${idBase}-public-menu`;
   const location = useLocation();
   const goToCategory = useCategoryNavigate();
   const goHome = useHomeNavigate();
@@ -193,20 +198,29 @@ function Header() {
           : getBurgerItems(t);
 
   return (
-    <HeaderShell scrolled={scrolled} introHidden={introHidden}>
+    <HeaderShell
+      scrolled={scrolled}
+      introHidden={introHidden}
+      settingsOpen={settingsOpen}
+      settingsPanelRef={settingsPanelRef}
+    >
       {/* Gauche — Burger + Logo (33%) */}
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {/* Burger */}
         <div className="relative" ref={menuRef}>
           <button
+            type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex flex-col justify-center gap-[5px] p-1"
+            className="flex flex-col justify-center gap-[5px] p-1.5"
             aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-controls={menuPanelId}
           >
             <BurgerIcon open={menuOpen} />
           </button>
 
           <SidePanel
+            id={menuPanelId}
             side="left"
             open={menuOpen}
             scrolled={scrolled}
@@ -217,7 +231,7 @@ function Header() {
               <div
                 className="flex flex-col py-2 lg:hidden"
                 style={{
-                  borderBottom: `1px solid ${scrolled ? 'rgba(10, 49, 114, 0.15)' : 'rgba(255, 255, 255, 0.2)'}`,
+                  borderBottom: `1px solid ${scrolled ? 'rgb(var(--sl-header-panel-scrolled-separator) / 0.15)' : 'rgb(var(--sl-glass) / 0.2)'}`,
                 }}
               >
                 {getNavLinks(t).map(([label, href]) => (
@@ -287,7 +301,11 @@ function Header() {
 
       {/* Droite — Paramètres + Connexion (33%) */}
       <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4 lg:w-1/3 lg:flex-none lg:pr-4">
-        <SettingsMenu scrolled={scrolled} />
+        <SettingsMenu
+          scrolled={scrolled}
+          onOpenChange={setSettingsOpen}
+          panelContainerRef={settingsPanelRef}
+        />
 
         {authLoading ? (
           <div className="h-6 w-9 sm:w-[120px]" aria-hidden="true" />

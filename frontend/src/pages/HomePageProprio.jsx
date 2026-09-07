@@ -26,7 +26,7 @@ import {
 // Le voile du crossfade doit être identique au pixel près à celui que la page
 // affiche réellement (cf. PHOTO_OVERLAY_* dans useCategoryTransition.js) :
 // contact/à propos/légal partagent tous PHOTO_OVERLAY_STATIC_PAGE, mais un
-// des 3 tableaux de bord (arrivée) a son propre voile bg-black/40.
+// des 3 tableaux de bord (arrivée) a son propre voile bg-overlay/40.
 function overlayFor(bg) {
   if (bg === dashboardBg) return PHOTO_OVERLAY_DASHBOARD;
   return PHOTO_OVERLAY_STATIC_PAGE;
@@ -77,36 +77,38 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 
 // Même palette de statuts que ProprietaireBoats.jsx / ProprietaireDashboard.jsx.
 const BOAT_STATUS_CLS = {
-  draft: 'bg-slate-500/15 text-white/80',
-  pending: 'bg-amber-500/15 text-amber-300',
-  published: 'bg-emerald-500/15 text-emerald-300',
-  refused: 'bg-red-500/15 text-red-300',
+  draft: 'status-indicator status-indicator--neutral bg-page/15 text-on-dark/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  published: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 function OwnerBoatCard({ boat, t }) {
-  const statusCls = BOAT_STATUS_CLS[boat.status] || 'bg-slate-500/15 text-white/80';
+  const statusCls =
+    BOAT_STATUS_CLS[boat.status] ||
+    'status-indicator status-indicator--neutral bg-page/15 text-on-dark/80';
   return (
     <Link
       to={`/proprietaire/bateaux/${boat.id_boat}/modifier`}
-      className={`group flex h-64 w-52 shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl transition-colors hover:border-[#5AB4EC]/60 sm:w-60 ${FOCUS_RING}`}
+      className={`group flex h-64 w-52 shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-colors hover:border-brand/60 sm:w-60 ${FOCUS_RING}`}
     >
-      <div className="relative h-36 w-full shrink-0 bg-white/10">
+      <div className="relative h-36 w-full shrink-0 bg-surface/10">
         {boat.image ? (
           <SafeImage
             src={boat.image}
             alt={t('proprietaireBoats.boatAlt', { name: boat.name })}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            fallbackClassName="flex h-full w-full items-center justify-center text-3xl text-white/40"
+            fallbackClassName="flex h-full w-full items-center justify-center text-3xl text-on-dark/40"
           />
         ) : (
           <span
             aria-hidden="true"
-            className="flex h-full w-full items-center justify-center text-3xl text-white/40"
+            className="flex h-full w-full items-center justify-center text-3xl text-on-dark/40"
           >
             ⛵
           </span>
@@ -118,11 +120,11 @@ function OwnerBoatCard({ boat, t }) {
         </span>
       </div>
       <div className="flex flex-1 flex-col gap-0.5 p-3 text-left">
-        <span className="truncate text-sm font-medium text-white">{boat.name}</span>
-        <span className="truncate text-xs text-white/70">
+        <span className="truncate text-sm font-medium text-on-dark">{boat.name}</span>
+        <span className="truncate text-xs text-on-dark/70">
           {[boat.type, boat.port?.city].filter(Boolean).join(' · ')}
         </span>
-        <span className="mt-auto text-xs font-semibold text-[#5AB4EC]">
+        <span className="mt-auto text-xs font-semibold text-brand">
           {t('proprietaireDashboard.perDay', { price: EURO.format(boat.daily_price ?? 0) })}
         </span>
       </div>
@@ -134,7 +136,7 @@ function AddBoatCard({ t }) {
   return (
     <Link
       to="/proprietaire/bateaux/nouveau"
-      className={`flex h-64 w-52 shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/30 bg-white/5 p-6 text-center text-white/80 transition-colors hover:border-[#5AB4EC] hover:bg-white/10 hover:text-white sm:w-60 ${FOCUS_RING}`}
+      className={`flex h-64 w-52 shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-glass/30 bg-surface/5 p-6 text-center text-on-dark/80 transition-colors hover:border-brand hover:bg-surface/10 hover:text-on-dark sm:w-60 ${FOCUS_RING}`}
     >
       <MdAdd className="text-3xl" />
       <span className="text-sm font-semibold">{t('homeProprio.hero.addBoat')}</span>
@@ -161,7 +163,7 @@ function OwnerBoatsCarousel({ boats, loading, t }) {
             type="button"
             onClick={() => scroll(-1)}
             aria-label={t('carrousel.prev')}
-            className="absolute -left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-2 text-white shadow-lg transition-colors hover:bg-black/50 sm:-left-4"
+            className="absolute -left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-overlay/30 p-2 text-on-dark shadow-lg transition-colors hover:bg-overlay/50 sm:-left-4"
           >
             <FaChevronLeft size={14} />
           </button>
@@ -169,7 +171,7 @@ function OwnerBoatsCarousel({ boats, loading, t }) {
             type="button"
             onClick={() => scroll(1)}
             aria-label={t('carrousel.next')}
-            className="absolute -right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/30 p-2 text-white shadow-lg transition-colors hover:bg-black/50 sm:-right-4"
+            className="absolute -right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-overlay/30 p-2 text-on-dark shadow-lg transition-colors hover:bg-overlay/50 sm:-right-4"
           >
             <FaChevronRight size={14} />
           </button>
@@ -184,7 +186,7 @@ function OwnerBoatsCarousel({ boats, loading, t }) {
           ? Array.from({ length: 3 }, (_, i) => (
               <div
                 key={i}
-                className="h-64 w-52 shrink-0 animate-pulse rounded-2xl border border-white/10 bg-white/5 sm:w-60"
+                className="h-64 w-52 shrink-0 animate-pulse rounded-2xl border border-glass/10 bg-surface/5 sm:w-60"
               />
             ))
           : boats.map((boat) => <OwnerBoatCard key={boat.id_boat} boat={boat} t={t} />)}
@@ -253,7 +255,7 @@ function HomePageProprio() {
           src={bateauVideo}
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-overlay/50" />
 
         {/* Crossfade vidéo ↔ photo : en sortie, la photo de la page cible
             (exitBgSrc) recouvre la vidéo ; à l'arrivée, c'est l'inverse, la
@@ -279,7 +281,7 @@ function HomePageProprio() {
               alt="SailingLoc"
               className="mx-auto mb-3 h-9 max-w-[70vw] object-contain sm:h-11 lg:h-12"
             />
-            <p className="mx-auto max-w-2xl px-2 text-sm leading-relaxed text-gray-300 sm:text-base lg:text-lg">
+            <p className="mx-auto max-w-2xl px-2 text-sm leading-relaxed text-content-media sm:text-base lg:text-lg">
               {t('homeProprio.hero.tagline')}
             </p>
           </div>
@@ -289,12 +291,12 @@ function HomePageProprio() {
             style={slide(1, 'right')}
           >
             <div className="flex w-full max-w-[1020px] items-baseline justify-center gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-on-dark/70">
                 {t('proprietaireLayout.nav.boats')}
               </h2>
               <Link
                 to="/proprietaire/bateaux"
-                className={`rounded text-xs font-medium text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+                className={`rounded text-xs font-medium text-brand hover:underline ${FOCUS_RING}`}
               >
                 {t('proprietaireDashboard.seeAll')}
               </Link>
@@ -306,7 +308,7 @@ function HomePageProprio() {
           </div>
 
           <div className="mt-auto text-center" style={slide(2)}>
-            <p className="mb-2 text-xs uppercase tracking-widest text-white/70">
+            <p className="mb-2 text-xs uppercase tracking-widest text-on-dark/70">
               {t('home.hero.mobileApp')}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
@@ -316,7 +318,7 @@ function HomePageProprio() {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-xs font-medium text-white transition-colors hover:border-white hover:bg-white/15"
+                  className="flex items-center gap-2 rounded-full border border-glass/40 px-4 py-2 text-xs font-medium text-on-dark transition-colors hover:border-glass hover:bg-surface/15"
                 >
                   <span className="text-sm">{icon}</span>
                   {label}

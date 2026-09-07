@@ -14,10 +14,10 @@ function LocataireMessages() {
   return (
     <section aria-labelledby="messages-title">
       <header className="mb-6">
-        <h1 id="messages-title" className="text-2xl font-bold text-white">
+        <h1 id="messages-title" className="text-2xl font-bold text-on-dark">
           Messagerie
         </h1>
-        <p className="mt-1 text-sm text-white/70">
+        <p className="mt-1 text-sm text-on-dark/70">
           Échangez avec les propriétaires de vos locations et le support SailingLoc.
         </p>
       </header>

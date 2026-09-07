@@ -19,15 +19,15 @@ const DATE_SHORT_OPTS = {
 };
 
 const BOOKING_STATUS_CLS = {
-  pending: 'bg-amber-500/15 text-amber-300',
-  confirmed: 'bg-emerald-500/15 text-emerald-300',
-  refused: 'bg-red-500/15 text-red-300',
-  cancelled: 'bg-slate-500/15 text-white/80',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  confirmed: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
+  cancelled: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
 };
 
 // Styles de focus clavier communs aux cartes cliquables (accessibilité).
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-0';
 
 function fmtDateShort(value) {
   return formatDate(value, DATE_SHORT_OPTS);
@@ -45,9 +45,9 @@ function StatCard({ label, value, accent, to, loading, format = NUMBER, classNam
             ? t('proprietaireDashboard.statLoading', { label })
             : t('proprietaireDashboard.statValue', { label, value: display })
         }
-        className={`block h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 text-center transition-colors hover:border-[#5AB4EC]/60 ${FOCUS_RING}`}
+        className={`block h-full rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5 text-center transition-colors hover:border-brand-soft/60 ${FOCUS_RING}`}
       >
-        <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">
+        <span className="block text-xs font-semibold uppercase tracking-wide text-on-dark/70">
           {label}
         </span>
         <span className={`mt-2 block text-3xl font-bold ${accent}`} aria-hidden="true">
@@ -60,7 +60,9 @@ function StatCard({ label, value, accent, to, loading, format = NUMBER, classNam
 
 function StatusBadge({ status }) {
   const { t } = useTranslation();
-  const cls = BOOKING_STATUS_CLS[status] || 'bg-slate-500/15 text-white/80';
+  const cls =
+    BOOKING_STATUS_CLS[status] ||
+    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80';
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${cls}`}>
       {t(`bookingStatus.${status}`, { defaultValue: status })}
@@ -73,32 +75,32 @@ function RecentBookings({ bookings }) {
   return (
     <section
       aria-labelledby="recent-bookings-title"
-      className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5 md:h-full"
+      className="rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5 md:h-full"
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id="recent-bookings-title" className="text-sm font-semibold text-white/90">
+        <h2 id="recent-bookings-title" className="text-sm font-semibold text-on-dark/90">
           {t('proprietaireDashboard.recentBookings')}
         </h2>
         <Link
           to="/proprietaire/reservations"
-          className={`rounded text-xs font-medium text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+          className={`rounded text-xs font-medium text-brand-soft hover:underline ${FOCUS_RING}`}
         >
           {t('proprietaireDashboard.seeAll')}
         </Link>
       </header>
 
       {bookings.length === 0 ? (
-        <p className="mt-4 text-sm text-white/70">{t('proprietaireDashboard.noBookings')}</p>
+        <p className="mt-4 text-sm text-on-dark/70">{t('proprietaireDashboard.noBookings')}</p>
       ) : (
-        <ul className="mt-4 divide-y divide-white/15">
+        <ul className="mt-4 divide-y divide-glass/15">
           {bookings.map((b) => (
             <li
               key={b.id_booking}
               className="flex flex-wrap items-center justify-between gap-2 py-3"
             >
               <div className="min-w-0">
-                <p className="truncate font-medium text-white">{b.boat?.name}</p>
-                <p className="text-xs text-white/70">
+                <p className="truncate font-medium text-on-dark">{b.boat?.name}</p>
+                <p className="text-xs text-on-dark/70">
                   {[b.user?.first_name, b.user?.last_name].filter(Boolean).join(' ')} ·{' '}
                   <time dateTime={b.start_date}>{fmtDateShort(b.start_date)}</time> →{' '}
                   <time dateTime={b.end_date}>{fmtDateShort(b.end_date)}</time>
@@ -106,7 +108,7 @@ function RecentBookings({ bookings }) {
               </div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={b.status} />
-                <span className="text-sm font-medium text-white">
+                <span className="text-sm font-medium text-on-dark">
                   {EURO.format(b.total_amount ?? 0)}
                 </span>
               </div>
@@ -123,29 +125,29 @@ function BoatsPreview({ boats }) {
   return (
     <section
       aria-labelledby="boats-preview-title"
-      className="rounded-2xl border border-white/20 bg-white/10 p-5 md:h-full"
+      className="rounded-2xl border border-glass/20 bg-surface/10 p-5 md:h-full"
     >
       <header className="flex items-center justify-between gap-3">
-        <h2 id="boats-preview-title" className="text-sm font-semibold text-white/90">
+        <h2 id="boats-preview-title" className="text-sm font-semibold text-on-dark/90">
           {t('proprietaireDashboard.myBoats')}
         </h2>
         <Link
           to="/proprietaire/bateaux"
-          className={`rounded text-xs font-medium text-[#5AB4EC] hover:underline ${FOCUS_RING}`}
+          className={`rounded text-xs font-medium text-brand-soft hover:underline ${FOCUS_RING}`}
         >
           {t('proprietaireDashboard.seeAll')}
         </Link>
       </header>
 
       {boats.length === 0 ? (
-        <p className="mt-4 text-sm text-white/70">{t('proprietaireDashboard.noBoats')}</p>
+        <p className="mt-4 text-sm text-on-dark/70">{t('proprietaireDashboard.noBoats')}</p>
       ) : (
         <ul className={`mt-4 grid gap-3 ${boats.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
           {boats.map((boat) => (
             <li key={boat.id_boat} className="min-w-0">
               <Link
                 to="/proprietaire/bateaux"
-                className={`block overflow-hidden rounded-xl border border-white/20 bg-white/10 transition-colors hover:border-white/40 ${FOCUS_RING}`}
+                className={`block overflow-hidden rounded-xl border border-glass/20 bg-surface/10 transition-colors hover:border-glass/40 ${FOCUS_RING}`}
               >
                 <figure className="m-0">
                   {boat.image ? (
@@ -153,25 +155,25 @@ function BoatsPreview({ boats }) {
                       src={boat.image}
                       alt={t('proprietaireDashboard.boatAlt', { name: boat.name })}
                       loading="lazy"
-                      className="aspect-[4/3] w-full bg-white/10 object-cover"
-                      fallbackClassName="flex aspect-[4/3] w-full items-center justify-center bg-white/10 text-white/40"
+                      className="aspect-[4/3] w-full bg-surface/10 object-cover"
+                      fallbackClassName="flex aspect-[4/3] w-full items-center justify-center bg-surface/10 text-on-dark/40"
                     />
                   ) : (
                     <span
                       aria-hidden="true"
-                      className="flex aspect-[4/3] w-full items-center justify-center bg-white/10 text-white/40"
+                      className="flex aspect-[4/3] w-full items-center justify-center bg-surface/10 text-on-dark/40"
                     >
                       ⛵
                     </span>
                   )}
                   <figcaption className="p-3">
-                    <span className="block truncate text-sm font-medium text-white">
+                    <span className="block truncate text-sm font-medium text-on-dark">
                       {boat.name}
                     </span>
-                    <span className="block truncate text-xs text-white/70">
+                    <span className="block truncate text-xs text-on-dark/70">
                       {[boat.type, boat.port?.city].filter(Boolean).join(' · ')}
                     </span>
-                    <span className="mt-1 block text-xs font-semibold text-[#5AB4EC]">
+                    <span className="mt-1 block text-xs font-semibold text-brand-soft">
                       {t('proprietaireDashboard.perDay', {
                         price: EURO.format(boat.daily_price ?? 0),
                       })}
@@ -208,17 +210,17 @@ function ProprietaireDashboard() {
 
   return (
     <section aria-labelledby="dashboard-title" aria-busy={loading}>
-      <h1 id="dashboard-title" className="text-2xl font-bold text-white">
+      <h1 id="dashboard-title" className="text-2xl font-bold text-on-dark">
         {t('proprietaireDashboard.title')}
       </h1>
-      <p className="mt-1 text-sm text-white/70">
+      <p className="mt-1 text-sm text-on-dark/70">
         {t('proprietaireDashboard.greeting', { name: user?.first_name ?? '' })}
       </p>
 
       {error && (
         <div
           role="alert"
-          className="mt-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+          className="status-indicator status-indicator--danger mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
         >
           {error}
         </div>
@@ -233,21 +235,21 @@ function ProprietaireDashboard() {
       >
         <StatCard
           label={t('proprietaireDashboard.publishedBoats')}
-          accent="text-white"
+          accent="text-on-dark"
           value={stats?.publishedBoats}
           to="/proprietaire/bateaux"
           loading={loading}
         />
         <StatCard
           label={t('proprietaireDashboard.pendingBookings')}
-          accent="text-amber-400"
+          accent="text-warning-bright"
           value={stats?.pendingBookings}
           to="/proprietaire/reservations"
           loading={loading}
         />
         <StatCard
           label={t('proprietaireDashboard.monthRevenue')}
-          accent="text-[#5AB4EC]"
+          accent="text-brand-soft"
           value={stats?.monthRevenue}
           format={EURO}
           to="/proprietaire/revenus"

@@ -32,18 +32,18 @@ function AuthModal({ activeTab, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
-      className="fixed inset-0 z-[100] flex [align-items:safe_center] justify-center overflow-y-auto bg-black/60 px-3 py-4 backdrop-blur-sm sm:items-start sm:px-4 sm:py-10"
+      className="fixed inset-0 z-[100] flex [align-items:safe_center] justify-center overflow-y-auto bg-overlay/60 px-3 py-4 backdrop-blur-sm sm:items-start sm:px-4 sm:py-10"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-xl rounded-2xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-8"
+        className="relative w-full max-w-xl rounded-2xl border border-glass/20 bg-surface/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-8"
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Fermer"
-          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-on-dark/60 transition hover:bg-surface/10 hover:text-on-dark"
         >
           <svg
             width="20"
@@ -63,12 +63,12 @@ function AuthModal({ activeTab, onClose }) {
         <div
           role="tablist"
           aria-label="Connexion ou inscription"
-          className="relative mb-6 mt-10 flex rounded-full bg-white/10 p-1 sm:mt-6"
+          className="relative mb-6 mt-10 flex rounded-full bg-surface/10 p-1 sm:mt-6"
         >
           {/* Indicateur coulissant : glisse entre les deux onglets au changement. */}
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-sky-500 shadow transition-transform duration-300 ease-out ${
+            className={`pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-action shadow transition-transform duration-300 ease-out ${
               activeTab === 'register' ? 'translate-x-full' : 'translate-x-0'
             }`}
           />
@@ -85,7 +85,7 @@ function AuthModal({ activeTab, onClose }) {
                 aria-selected={isActive}
                 onClick={tab.onClick}
                 className={`relative z-10 flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
-                  isActive ? 'text-white' : 'text-white/60 hover:text-white'
+                  isActive ? 'text-on-dark' : 'text-on-dark/60 hover:text-on-dark'
                 }`}
               >
                 {tab.label}

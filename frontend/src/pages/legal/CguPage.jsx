@@ -17,7 +17,7 @@ function CguPage() {
         <p>
           <Trans
             i18nKey="cguPage.s1.p2"
-            components={{ cgv: <a href="/cgv" className="text-sky-300 hover:underline" /> }}
+            components={{ cgv: <a href="/cgv" className="text-action-soft hover:underline" /> }}
           />
         </p>
       </LegalSection>

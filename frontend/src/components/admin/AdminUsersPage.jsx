@@ -16,10 +16,10 @@ const ROLE_VALUES = ['locataire', 'proprietaire', 'admin'];
 const DATE_OPTS = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
 const selectClass =
-  'rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white/90 outline-none focus:border-[#5AB4EC]';
+  'rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark/90 outline-none focus:border-brand-soft';
 const inputClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]';
-const labelClass = 'mb-1 block text-xs font-medium text-white/70';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand-soft';
+const labelClass = 'mb-1 block text-xs font-medium text-on-dark/70';
 
 function EditUserModal({ user, onClose, onSaved }) {
   const { t } = useTranslation();
@@ -62,17 +62,17 @@ function EditUserModal({ user, onClose, onSaved }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:items-center"
+      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-overlay/60 p-4 sm:items-center"
       onClick={onClose}
     >
       <div
-        className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
+        className="my-auto max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-glass/20 bg-surface/10 p-5 shadow-2xl backdrop-blur-2xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-white">{t('adminUsers.editTitle')}</h2>
+        <h2 className="text-lg font-semibold text-on-dark">{t('adminUsers.editTitle')}</h2>
 
         {error && (
-          <div className="mt-3 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          <div className="mt-3 rounded-lg border border-danger-base/40 bg-danger-base/10 px-3 py-2 text-sm text-danger-soft">
             {error}
           </div>
         )}
@@ -154,14 +154,14 @@ function EditUserModal({ user, onClose, onSaved }) {
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/10 sm:w-auto"
+              className="w-full rounded-full border border-glass/30 px-5 py-2 text-sm font-semibold text-on-dark/90 transition hover:bg-surface/10 sm:w-auto"
             >
               {t('adminUsers.cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="w-full rounded-full bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90 disabled:opacity-60 sm:w-auto"
+              className="w-full rounded-full bg-action px-5 py-2 text-sm font-semibold text-action-text shadow transition hover:bg-action/90 disabled:opacity-60 sm:w-auto"
             >
               {saving ? t('adminUsers.saving') : t('adminUsers.save')}
             </button>
@@ -259,7 +259,7 @@ function AdminUsersPage() {
   const SortTh = ({ field, children }) => (
     <th
       onClick={() => toggleSort(field)}
-      className="cursor-pointer select-none px-4 py-3 text-left font-semibold text-white/80 hover:text-white"
+      className="cursor-pointer select-none px-4 py-3 text-left font-semibold text-on-dark/80 hover:text-on-dark"
     >
       {children} {sort === field ? (order === 'asc' ? '▲' : '▼') : ''}
     </th>
@@ -268,10 +268,10 @@ function AdminUsersPage() {
   return (
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">{t('adminUsers.title')}</h1>
+        <h1 className="text-2xl font-bold text-on-dark">{t('adminUsers.title')}</h1>
         <Link
           to="/admin/users/new"
-          className="rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-sky-500/90"
+          className="rounded-full bg-action px-5 py-2.5 text-sm font-semibold text-action-text shadow transition hover:bg-action/90"
         >
           {t('adminUsers.addAccount')}
         </Link>
@@ -309,14 +309,14 @@ function AdminUsersPage() {
       </div>
 
       {error && (
-        <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300">
+        <div className="mt-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft">
           {error}
         </div>
       )}
 
       {/* Tri en pastilles : remplace les en-têtes cliquables, masqués avec le tableau. */}
       <div className="mt-5 xl:hidden">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
+        <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-on-dark/60">
           {t('adminUsers.sortLabel')}
         </span>
         <AdminScrollableFilterRow
@@ -334,10 +334,10 @@ function AdminUsersPage() {
               type="button"
               aria-pressed={sort === field}
               onClick={() => toggleSort(field)}
-              className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+              className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright ${
                 sort === field
-                  ? 'bg-sky-500 text-white'
-                  : 'border border-white/30 text-white/80 hover:bg-white/10'
+                  ? 'bg-action text-action-text non-color-active'
+                  : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
               }`}
             >
               {label}
@@ -347,63 +347,63 @@ function AdminUsersPage() {
         </AdminScrollableFilterRow>
       </div>
 
-      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
+      <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl xl:block">
         <table className="w-full text-sm">
-          <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
+          <thead className="border-b border-glass/20 text-xs uppercase tracking-wide">
             <tr>
               <SortTh field="last_name">{t('adminUsers.colName')}</SortTh>
               <SortTh field="email">{t('adminUsers.colEmail')}</SortTh>
               <SortTh field="role">{t('adminUsers.colRole')}</SortTh>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">
+              <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminUsers.colPhone')}
               </th>
-              <th className="px-4 py-3 text-left font-semibold text-white/80">
+              <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminUsers.colStatus')}
               </th>
               <SortTh field="created_at">{t('adminUsers.colRegistered')}</SortTh>
-              <th className="px-4 py-3 text-right font-semibold text-white/80">
+              <th className="px-4 py-3 text-right font-semibold text-on-dark/80">
                 {t('adminUsers.colActions')}
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/15">
+          <tbody className="divide-y divide-glass/15">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-white/70">
+                <td colSpan={7} className="px-4 py-8 text-center text-on-dark/70">
                   {t('adminUsers.loading')}
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-white/70">
+                <td colSpan={7} className="px-4 py-8 text-center text-on-dark/70">
                   {t('adminUsers.empty')}
                 </td>
               </tr>
             ) : (
               pageUsers.map((u) => (
-                <tr key={u.id_user} className="text-white/90">
+                <tr key={u.id_user} className="text-on-dark/90">
                   <td className="px-4 py-3 font-medium">
                     {u.first_name} {u.last_name}
                   </td>
-                  <td className="px-4 py-3 text-white/70">{u.email}</td>
+                  <td className="px-4 py-3 text-on-dark/70">{u.email}</td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-white/90">
+                    <span className="rounded-full bg-surface/10 px-2.5 py-1 text-xs font-medium text-on-dark/90">
                       {roleLabel(u.role)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-white/70">{u.phone || '—'}</td>
+                  <td className="px-4 py-3 text-on-dark/70">{u.phone || '—'}</td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      className={`status-indicator rounded-full px-2.5 py-1 text-xs font-semibold ${
                         u.is_active
-                          ? 'bg-emerald-500/15 text-emerald-300'
-                          : 'bg-slate-500/15 text-white/70'
+                          ? 'status-indicator--success bg-success-base/15 text-success-soft'
+                          : 'status-indicator--neutral bg-neutral/15 text-on-dark/70'
                       }`}
                     >
                       {u.is_active ? t('adminUsers.statusActive') : t('adminUsers.statusInactive')}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-white/70">{fmtDate(u.created_at)}</td>
+                  <td className="px-4 py-3 text-on-dark/70">{fmtDate(u.created_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <IconBtn
@@ -441,41 +441,41 @@ function AdminUsersPage() {
       {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
       <ul className="mt-5 space-y-3 xl:hidden">
         {loading || users.length === 0 ? (
-          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+          <li className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
             {loading ? t('adminUsers.loading') : t('adminUsers.empty')}
           </li>
         ) : (
           pageUsers.map((u) => (
             <li
               key={u.id_user}
-              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+              className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl"
             >
               <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 font-medium text-white">
+                <p className="min-w-0 font-medium text-on-dark">
                   {u.first_name} {u.last_name}
                 </p>
                 <span
-                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  className={`status-indicator shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
                     u.is_active
-                      ? 'bg-emerald-500/15 text-emerald-300'
-                      : 'bg-slate-500/15 text-white/70'
+                      ? 'status-indicator--success bg-success-base/15 text-success-soft'
+                      : 'status-indicator--neutral bg-neutral/15 text-on-dark/70'
                   }`}
                 >
                   {u.is_active ? t('adminUsers.statusActive') : t('adminUsers.statusInactive')}
                 </span>
               </div>
 
-              <p className="mt-1 break-all text-sm text-white/70">{u.email}</p>
+              <p className="mt-1 break-all text-sm text-on-dark/70">{u.email}</p>
 
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/70">
-                <span className="rounded-full bg-white/10 px-2.5 py-1 font-medium text-white/90">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-on-dark/70">
+                <span className="rounded-full bg-surface/10 px-2.5 py-1 font-medium text-on-dark/90">
                   {roleLabel(u.role)}
                 </span>
                 <span>{u.phone || '—'}</span>
-                <span className="text-white/60">{fmtDate(u.created_at)}</span>
+                <span className="text-on-dark/60">{fmtDate(u.created_at)}</span>
               </div>
 
-              <div className="mt-3 flex justify-end gap-2 border-t border-white/15 pt-3">
+              <div className="mt-3 flex justify-end gap-2 border-t border-glass/15 pt-3">
                 <IconBtn
                   title={t('adminUsers.edit')}
                   disabled={busyId === u.id_user}
@@ -514,7 +514,7 @@ function AdminUsersPage() {
         className="mt-4"
       />
 
-      <p className="mt-3 text-xs text-white/60">
+      <p className="mt-3 text-xs text-on-dark/60">
         {t('adminUsers.countHint', { count: users.length })}
       </p>
 

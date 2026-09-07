@@ -6,8 +6,8 @@ import 'leaflet/dist/leaflet.css';
 
 // Navy — couleur "sérieuse" de la marque (déjà utilisée pour le header scrollé et le
 // fil d'ariane), plus lisible sur les tuiles claires que le sky ou le blanc.
-const PIN_COLOR_AVAILABLE = '#0A3172';
-const PIN_COLOR_UNAVAILABLE = '#94a3b8';
+const PIN_COLOR_AVAILABLE = 'rgb(var(--sl-map-available))';
+const PIN_COLOR_UNAVAILABLE = 'rgb(var(--sl-map-unavailable-strong))';
 
 function escapeHtml(str) {
   return String(str).replace(
@@ -29,18 +29,25 @@ function escapeHtml(str) {
 function createPortIcon({ available, badge, city }) {
   const color = available ? PIN_COLOR_AVAILABLE : PIN_COLOR_UNAVAILABLE;
   const showBadge = available && Number(badge) > 0;
+  const availabilityLabel = available ? 'Disponible' : 'Bientôt disponible';
+  const markerLabel = `${city ?? ''} — ${availabilityLabel}`;
+  const pinShape = available
+    ? `<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="${color}"/>
+          <path d="m8.8 9.2 2.1 2.1 4.3-4.3" fill="none" stroke="rgb(var(--sl-on-dark))" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`
+    : `<path d="m12 2 9 10-9 10-9-10 9-10z" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="3 2" stroke-linejoin="round"/>
+          <path d="m9 9 6 6m0-6-6 6" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`;
   return L.divIcon({
     className: '',
     html: `
-      <div style="position:relative;">
-        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;align-items:center;gap:4px;padding:3px 8px 3px 3px;${showBadge ? 'padding-right:14px;' : ''}border-radius:9999px;background:rgba(255,255,255,0.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.5);box-shadow:0 2px 8px rgba(2,44,74,0.25);white-space:nowrap;">
-          <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" fill="${color}"/>
+      <div role="img" aria-label="${escapeHtml(markerLabel)}" data-marker-availability="${available ? 'available' : 'unavailable'}" style="position:relative;">
+        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;align-items:center;gap:4px;padding:3px 8px 3px 3px;${showBadge ? 'padding-right:14px;' : ''}border-radius:9999px;background:rgb(var(--sl-surface) / 0.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgb(var(--sl-glass) / 0.5);box-shadow:0 2px 8px rgba(2,44,74,0.25);white-space:nowrap;">
+          <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="flex-shrink:0;">
+            ${pinShape}
           </svg>
           <span style="font-size:10px;font-weight:700;color:${color};">${escapeHtml(city ?? '')}</span>
           ${
             showBadge
-              ? `<span style="position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;padding:0 3px;border-radius:9999px;background:#ef4444;color:#fff;font-size:8px;font-weight:700;line-height:15px;text-align:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(2,44,74,0.35);">${badge}</span>`
+              ? `<span style="position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;padding:0 3px;border-radius:9999px;background:rgb(var(--sl-danger-base));color:rgb(var(--sl-on-dark));font-size:8px;font-weight:700;line-height:15px;text-align:center;border:2px solid rgb(var(--sl-surface));box-shadow:0 1px 3px rgba(2,44,74,0.35);">${badge}</span>`
               : ''
           }
         </div>
@@ -55,12 +62,13 @@ function createPortIcon({ available, badge, city }) {
 // Pastille prix (style Airbnb) pour les pins bateaux individuels affichés au fort
 // zoom. iconSize [0,0] + transform CSS : la pastille s'auto-dimensionne au texte
 // (le prix a une largeur variable) tout en restant centrée/ancrée sur le point GPS.
-function createPriceIcon(price) {
+function createPriceIcon(price, label) {
+  const markerLabel = label || `${price}€ / jour`;
   return L.divIcon({
     className: '',
     html: `
-      <div style="position:relative;">
-        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);padding:4px 9px;border-radius:9999px;background:#fff;border:1.5px solid #0A3172;color:#0A3172;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(2,44,74,0.35);">
+      <div role="img" aria-label="${escapeHtml(markerLabel)}" data-marker-availability="available" style="position:relative;">
+        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);padding:4px 9px;border-radius:9999px;background:rgb(var(--sl-surface));border:1.5px solid rgb(var(--sl-map-available));color:rgb(var(--sl-map-available));font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(2,44,74,0.35);">
           ${price}€
         </div>
       </div>
@@ -136,11 +144,26 @@ function FlyToBoat({ boat, zoom = BOAT_FOCUS_ZOOM }) {
 // par défaut de Leaflet.
 const MAP_STYLE_CSS = `
 .sailingloc-popup .leaflet-popup-content-wrapper {
+  background: rgb(var(--sl-surface));
+  color: rgb(var(--sl-content));
   border-radius: 14px;
-  border: 1px solid rgba(14,165,233,0.25);
+  border: 1px solid rgb(var(--sl-brand-focus) / 0.35);
   box-shadow: 0 8px 24px rgba(2,44,74,0.18);
 }
-.sailingloc-popup .leaflet-popup-tip { box-shadow: none; }
+.sailingloc-popup .leaflet-popup-tip {
+  background: rgb(var(--sl-surface));
+  box-shadow: none;
+}
+.leaflet-control-zoom a {
+  background: rgb(var(--sl-map-control));
+  color: rgb(var(--sl-map-control-text));
+  border-bottom-color: rgb(var(--sl-map-control-border));
+}
+.leaflet-control-zoom a:hover,
+.leaflet-control-zoom a:focus-visible {
+  background: rgb(var(--sl-map-control-hover));
+  color: rgb(var(--sl-map-control-hover-text));
+}
 `;
 
 // Zoom sur un port au clic, sans dépasser le niveau de zoom déjà atteint par l'utilisateur.
@@ -164,14 +187,20 @@ function ZoomableMarker({ marker }) {
       }}
     >
       <Popup className="sailingloc-popup">
-        <div className="text-sm">
+        <div
+          className="text-sm"
+          role="group"
+          aria-label={`${marker.title} — ${
+            marker.available === false ? 'Bientôt disponible' : 'Disponible'
+          }`}
+        >
           <div className="font-semibold">{marker.title}</div>
-          {marker.subtitle && <div className="text-slate-500">{marker.subtitle}</div>}
+          {marker.subtitle && <div className="text-content-muted">{marker.subtitle}</div>}
           {marker.available === false && (
-            <div className="mt-1 text-slate-400 italic">Bientôt disponible</div>
+            <div className="mt-1 text-content-subtle italic">Bientôt disponible</div>
           )}
           {marker.badge != null && (
-            <div className="mt-1 font-medium text-sky-600">
+            <div className="mt-1 font-medium text-info">
               {marker.badge} bateau{marker.badge === 1 ? '' : 'x'}
             </div>
           )}
@@ -185,14 +214,21 @@ function BoatMarker({ boat, onSelect }) {
   return (
     <Marker
       position={[boat.lat, boat.lng]}
-      icon={createPriceIcon(boat.price)}
+      icon={createPriceIcon(
+        boat.price,
+        `${boat.name}${boat.city ? ` — ${boat.city}` : ''} — ${boat.price}€ / jour`
+      )}
       eventHandlers={{ click: () => onSelect?.(boat) }}
     >
       <Popup className="sailingloc-popup">
-        <div className="text-sm">
+        <div
+          className="text-sm"
+          role="group"
+          aria-label={`${boat.name}${boat.city ? ` — ${boat.city}` : ''} — ${boat.price}€ / jour`}
+        >
           <div className="font-semibold">{boat.name}</div>
-          {boat.city && <div className="text-slate-500">{boat.city}</div>}
-          <div className="mt-1 font-medium text-sky-600">{boat.price}€ / jour</div>
+          {boat.city && <div className="text-content-muted">{boat.city}</div>}
+          <div className="mt-1 font-medium text-info">{boat.price}€ / jour</div>
         </div>
       </Popup>
     </Marker>
@@ -242,7 +278,7 @@ function MapView({
     // (jusqu'à 700+ pour les popups/controls) restent contenus dans la carte et ne
     // passent plus au-dessus du header fixe ni de ses panneaux burger.
     <div
-      className={`relative z-0 isolate overflow-hidden rounded-2xl border border-slate-800 ${className}`}
+      className={`relative z-0 isolate overflow-hidden rounded-2xl border border-dark-elevated ${className}`}
     >
       <style>{MAP_STYLE_CSS}</style>
       <MapContainer
@@ -271,12 +307,12 @@ function MapView({
         onClick={handleResetView}
         title="Réinitialiser la carte"
         aria-label="Réinitialiser la carte"
-        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-white text-slate-700 shadow-md hover:bg-slate-100 transition-colors"
+        className="absolute top-2.5 right-2.5 z-[500] flex items-center justify-center w-8 h-8 rounded-md bg-map-control text-map-control-text shadow-md hover:bg-map-control-hover hover:text-map-control-hover-text transition-colors"
       >
         <FiRefreshCw size={15} />
       </button>
       {points.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 z-[400] flex items-center justify-center bg-slate-950/40 text-sm text-slate-200">
+        <div className="pointer-events-none absolute inset-0 z-[400] flex items-center justify-center bg-dark-strong/40 text-sm text-content-light">
           {emptyLabel}
         </div>
       )}

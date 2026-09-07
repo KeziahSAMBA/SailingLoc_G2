@@ -21,9 +21,9 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const REPORT_STATUS_CLS = {
-  pending: 'bg-amber-500/15 text-amber-300',
-  resolved: 'bg-emerald-500/15 text-emerald-300',
-  dismissed: 'bg-slate-500/15 text-white/70',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  resolved: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  dismissed: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70',
 };
 
 const REPORT_FILTERS = [
@@ -159,24 +159,36 @@ function AdminPublicationPage() {
   const tabBtn = (key) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
       tab === key
-        ? 'bg-sky-500 text-white'
-        : 'border border-white/30 text-white/80 hover:bg-white/10'
+        ? 'bg-action text-action-text non-color-active'
+        : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
   const pill = (active) =>
     `rounded-full px-4 py-1.5 text-sm font-medium transition ${
-      active ? 'bg-sky-500 text-white' : 'border border-white/30 text-white/80 hover:bg-white/10'
+      active
+        ? 'bg-action text-action-text non-color-active'
+        : 'border border-glass/30 text-on-dark/80 hover:bg-surface/10'
     }`;
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">{t('adminPublication.title')}</h1>
-      <p className="mt-1 text-sm text-white/70">{t('adminPublication.subtitle')}</p>
+      <h1 className="text-2xl font-bold text-on-dark">{t('adminPublication.title')}</h1>
+      <p className="mt-1 text-sm text-on-dark/70">{t('adminPublication.subtitle')}</p>
 
       <div className="mt-5 flex gap-2">
-        <button type="button" onClick={() => setTab('boats')} className={tabBtn('boats')}>
+        <button
+          type="button"
+          aria-pressed={tab === 'boats'}
+          onClick={() => setTab('boats')}
+          className={tabBtn('boats')}
+        >
           {t('adminPublication.tabBoats')}
         </button>
-        <button type="button" onClick={() => setTab('reports')} className={tabBtn('reports')}>
+        <button
+          type="button"
+          aria-pressed={tab === 'reports'}
+          onClick={() => setTab('reports')}
+          className={tabBtn('reports')}
+        >
           {t('adminPublication.tabReports')}
         </button>
       </div>
@@ -194,76 +206,76 @@ function AdminPublicationPage() {
                 type="button"
                 aria-pressed={published === value}
                 onClick={() => setPublished(value)}
-                className={`${pill(published === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+                className={`${pill(published === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright`}
               >
                 {t(`adminPublication.publishedFilters.${labelKey}`)}
               </button>
             ))}
           </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl xl:block">
             <table className="w-full text-sm">
-              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
+              <thead className="border-b border-glass/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colBoat')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colOwner')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colPrice')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colStatus')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colReports')}
                   </th>
-                  <th className="px-4 py-3 text-right font-semibold text-white/80">
+                  <th className="px-4 py-3 text-right font-semibold text-on-dark/80">
                     {t('adminPublication.colAction')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/15">
+              <tbody className="divide-y divide-glass/15">
                 {boatsLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
+                    <td colSpan={6} className="px-4 py-8 text-center text-on-dark/70">
                       {t('adminPublication.loading')}
                     </td>
                   </tr>
                 ) : boats.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
+                    <td colSpan={6} className="px-4 py-8 text-center text-on-dark/70">
                       {t('adminPublication.emptyBoats')}
                     </td>
                   </tr>
                 ) : (
                   pageBoats.map((b) => (
-                    <tr key={b.id_boat} className="text-white/90">
+                    <tr key={b.id_boat} className="text-on-dark/90">
                       <td className="px-4 py-3">
                         <Link
                           to={`/product/${b.id_boat}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-[#5AB4EC] hover:underline"
+                          className="font-medium text-brand-soft hover:underline"
                         >
                           {b.name}
                         </Link>
-                        <div className="text-xs text-white/60">{b.type}</div>
+                        <div className="text-xs text-on-dark/60">{b.type}</div>
                       </td>
-                      <td className="px-4 py-3 text-white/70">
+                      <td className="px-4 py-3 text-on-dark/70">
                         {b.owner ? `${b.owner.first_name} ${b.owner.last_name}` : '—'}
                       </td>
-                      <td className="px-4 py-3 text-white/70">
+                      <td className="px-4 py-3 text-on-dark/70">
                         {b.daily_price != null ? EURO.format(b.daily_price) : '—'}
                       </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                             b.is_published
-                              ? 'bg-emerald-500/15 text-emerald-300'
-                              : 'bg-slate-500/15 text-white/70'
+                              ? 'status-indicator status-indicator--success bg-success-base/15 text-success-soft'
+                              : 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                           }`}
                         >
                           {b.is_published
@@ -273,11 +285,11 @@ function AdminPublicationPage() {
                       </td>
                       <td className="px-4 py-3">
                         {b.pending_reports > 0 ? (
-                          <span className="inline-block whitespace-nowrap rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
+                          <span className="status-indicator status-indicator--danger inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
                             {t('adminPublication.pendingReports', { count: b.pending_reports })}
                           </span>
                         ) : (
-                          <span className="text-xs text-white/60">—</span>
+                          <span className="text-xs text-on-dark/60">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -306,14 +318,14 @@ function AdminPublicationPage() {
           {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
           <ul className="mt-4 space-y-3 xl:hidden">
             {boatsLoading || boats.length === 0 ? (
-              <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+              <li className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
                 {boatsLoading ? t('adminPublication.loading') : t('adminPublication.emptyBoats')}
               </li>
             ) : (
               pageBoats.map((b) => (
                 <li
                   key={b.id_boat}
-                  className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+                  className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -321,17 +333,17 @@ function AdminPublicationPage() {
                         to={`/product/${b.id_boat}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="break-words font-medium text-[#5AB4EC] hover:underline"
+                        className="break-words font-medium text-brand-soft hover:underline"
                       >
                         {b.name}
                       </Link>
-                      <p className="text-xs text-white/60">{b.type}</p>
+                      <p className="text-xs text-on-dark/60">{b.type}</p>
                     </div>
                     <span
                       className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                         b.is_published
-                          ? 'bg-emerald-500/15 text-emerald-300'
-                          : 'bg-slate-500/15 text-white/70'
+                          ? 'status-indicator status-indicator--success bg-success-base/15 text-success-soft'
+                          : 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                       }`}
                     >
                       {b.is_published
@@ -340,20 +352,20 @@ function AdminPublicationPage() {
                     </span>
                   </div>
 
-                  <p className="mt-2 break-words text-sm text-white/70">
+                  <p className="mt-2 break-words text-sm text-on-dark/70">
                     {b.owner ? `${b.owner.first_name} ${b.owner.last_name}` : '—'}
                     {b.daily_price != null ? ` · ${EURO.format(b.daily_price)}` : ''}
                   </p>
 
                   {b.pending_reports > 0 && (
                     <p className="mt-2">
-                      <span className="inline-block whitespace-nowrap rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-300">
+                      <span className="status-indicator status-indicator--danger inline-block whitespace-nowrap rounded-full bg-danger-base/15 px-2.5 py-1 text-xs font-semibold text-danger-soft">
                         {t('adminPublication.pendingReports', { count: b.pending_reports })}
                       </span>
                     </p>
                   )}
 
-                  <div className="mt-3 flex justify-end border-t border-white/15 pt-3">
+                  <div className="mt-3 flex justify-end border-t border-glass/15 pt-3">
                     <IconBtn
                       title={
                         b.is_published
@@ -394,81 +406,82 @@ function AdminPublicationPage() {
                 type="button"
                 aria-pressed={reportStatus === value}
                 onClick={() => setReportStatus2(value)}
-                className={`${pill(reportStatus === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400`}
+                className={`${pill(reportStatus === value)} shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-bright`}
               >
                 {t(`adminPublication.reportFilters.${labelKey}`)}
               </button>
             ))}
           </AdminScrollableFilterRow>
 
-          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl xl:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl xl:block">
             <table className="w-full text-sm">
-              <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
+              <thead className="border-b border-glass/20 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colBoat')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colReason')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colReportedBy')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colDate')}
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/80">
+                  <th className="px-4 py-3 text-left font-semibold text-on-dark/80">
                     {t('adminPublication.colStatus')}
                   </th>
-                  <th className="px-4 py-3 text-right font-semibold text-white/80">
+                  <th className="px-4 py-3 text-right font-semibold text-on-dark/80">
                     {t('adminPublication.colActions')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/15">
+              <tbody className="divide-y divide-glass/15">
                 {reportsLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
+                    <td colSpan={6} className="px-4 py-8 text-center text-on-dark/70">
                       {t('adminPublication.loading')}
                     </td>
                   </tr>
                 ) : reports.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-white/70">
+                    <td colSpan={6} className="px-4 py-8 text-center text-on-dark/70">
                       {t('adminPublication.emptyReports')}
                     </td>
                   </tr>
                 ) : (
                   pageReports.map((r) => (
-                    <tr key={r.id_report} className="text-white/90 align-top">
+                    <tr key={r.id_report} className="text-on-dark/90 align-top">
                       <td className="px-4 py-3">
                         {r.boat ? (
                           <Link
                             to={`/product/${r.boat.id_boat}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-medium text-[#5AB4EC] hover:underline"
+                            className="font-medium text-brand-soft hover:underline"
                           >
                             {r.boat.name}
                           </Link>
                         ) : (
                           <span className="font-medium">—</span>
                         )}
-                        <div className="text-xs text-white/60">
+                        <div className="text-xs text-on-dark/60">
                           {r.boat?.is_published
                             ? t('adminPublication.published')
                             : t('adminPublication.unpublished')}
                         </div>
                       </td>
-                      <td className="max-w-xs px-4 py-3 text-white/80">{r.reason}</td>
-                      <td className="px-4 py-3 text-white/70">
+                      <td className="max-w-xs px-4 py-3 text-on-dark/80">{r.reason}</td>
+                      <td className="px-4 py-3 text-on-dark/70">
                         {r.reporter ? `${r.reporter.first_name} ${r.reporter.last_name}` : '—'}
                       </td>
-                      <td className="px-4 py-3 text-white/70">{fmtDate(r.created_at)}</td>
+                      <td className="px-4 py-3 text-on-dark/70">{fmtDate(r.created_at)}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            REPORT_STATUS_CLS[r.status] || 'bg-slate-500/15 text-white/70'
+                            REPORT_STATUS_CLS[r.status] ||
+                            'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                           }`}
                         >
                           {t(`adminPublication.reportStatus.${r.status}`, {
@@ -515,7 +528,7 @@ function AdminPublicationPage() {
           {/* Cartes jusqu'au desktop large : le tableau ci-dessus est masqué. */}
           <ul className="mt-4 space-y-3 xl:hidden">
             {reportsLoading || reports.length === 0 ? (
-              <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+              <li className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
                 {reportsLoading
                   ? t('adminPublication.loading')
                   : t('adminPublication.emptyReports')}
@@ -524,7 +537,7 @@ function AdminPublicationPage() {
               pageReports.map((r) => (
                 <li
                   key={r.id_report}
-                  className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+                  className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -533,14 +546,14 @@ function AdminPublicationPage() {
                           to={`/product/${r.boat.id_boat}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="break-words font-medium text-[#5AB4EC] hover:underline"
+                          className="break-words font-medium text-brand-soft hover:underline"
                         >
                           {r.boat.name}
                         </Link>
                       ) : (
-                        <span className="font-medium text-white">—</span>
+                        <span className="font-medium text-on-dark">—</span>
                       )}
-                      <p className="text-xs text-white/60">
+                      <p className="text-xs text-on-dark/60">
                         {r.boat?.is_published
                           ? t('adminPublication.published')
                           : t('adminPublication.unpublished')}
@@ -548,23 +561,24 @@ function AdminPublicationPage() {
                     </div>
                     <span
                       className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        REPORT_STATUS_CLS[r.status] || 'bg-slate-500/15 text-white/70'
+                        REPORT_STATUS_CLS[r.status] ||
+                        'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
                       }`}
                     >
                       {t(`adminPublication.reportStatus.${r.status}`, { defaultValue: r.status })}
                     </span>
                   </div>
 
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-white/80">
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-on-dark/80">
                     {r.reason}
                   </p>
 
-                  <p className="mt-2 break-words text-xs text-white/60">
+                  <p className="mt-2 break-words text-xs text-on-dark/60">
                     {r.reporter ? `${r.reporter.first_name} ${r.reporter.last_name}` : '—'} ·{' '}
                     {fmtDate(r.created_at)}
                   </p>
 
-                  <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-white/15 pt-3">
+                  <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-glass/15 pt-3">
                     {r.boat?.is_published && (
                       <IconBtn
                         title={t('adminPublication.unpublishBoat')}

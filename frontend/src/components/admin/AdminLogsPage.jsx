@@ -9,9 +9,9 @@ import Pagination from '../common/Pagination.jsx';
 const PAGE_SIZE = 10;
 
 const LEVEL_CLS = {
-  info: 'bg-sky-500/15 text-sky-300',
-  warning: 'bg-amber-500/15 text-amber-300',
-  error: 'bg-red-500/15 text-red-300',
+  info: 'status-indicator status-indicator--info bg-action/15 text-action-soft',
+  warning: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  error: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 const DATE_OPTS = {
@@ -23,11 +23,11 @@ const DATE_OPTS = {
 };
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-action-bright focus-visible:ring-offset-2 focus-visible:ring-offset-dark-strong';
 
-const FIELD_CLS = `w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/50 backdrop-blur-xl ${FOCUS_RING}`;
+const FIELD_CLS = `w-full rounded-lg border border-glass/20 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark backdrop-blur-xl ${FOCUS_RING}`;
 
-const ICON_BTN_CLS = `rounded-full bg-white/10 p-2 text-white/80 transition hover:bg-white/20 hover:text-white ${FOCUS_RING}`;
+const ICON_BTN_CLS = `rounded-full bg-surface/10 p-2 text-on-dark/80 transition hover:bg-surface/20 hover:text-on-dark ${FOCUS_RING}`;
 
 const EMPTY_FILTERS = { search: '', category: '', role: '', level: '', from: '', to: '' };
 
@@ -171,15 +171,15 @@ function AdminLogsPage() {
   return (
     <section aria-labelledby="admin-logs-title">
       <header className="mb-6">
-        <h1 id="admin-logs-title" className="text-2xl font-bold text-white">
+        <h1 id="admin-logs-title" className="text-2xl font-bold text-on-dark">
           {t('adminLogs.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('adminLogs.subtitle')}</p>
+        <p className="mt-1 text-sm text-on-dark/70">{t('adminLogs.subtitle')}</p>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div className="sm:col-span-2 lg:col-span-1">
-          <label htmlFor="log-search" className="mb-1 block text-xs font-medium text-white/70">
+          <label htmlFor="log-search" className="mb-1 block text-xs font-medium text-on-dark/70">
             {t('adminLogs.searchLabel')}
           </label>
           <input
@@ -193,7 +193,7 @@ function AdminLogsPage() {
         </div>
 
         <div>
-          <label htmlFor="log-category" className="mb-1 block text-xs font-medium text-white/70">
+          <label htmlFor="log-category" className="mb-1 block text-xs font-medium text-on-dark/70">
             {t('adminLogs.categoryLabel')}
           </label>
           <select
@@ -202,11 +202,11 @@ function AdminLogsPage() {
             onChange={(e) => updateFilter('category', e.target.value)}
             className={FIELD_CLS}
           >
-            <option value="" className="text-slate-900">
+            <option value="" className="text-content">
               {t('adminLogs.allCategories')}
             </option>
             {categories.map((c) => (
-              <option key={c} value={c} className="text-slate-900">
+              <option key={c} value={c} className="text-content">
                 {t(`adminLogs.categories.${c}`, { defaultValue: c })}
               </option>
             ))}
@@ -214,7 +214,7 @@ function AdminLogsPage() {
         </div>
 
         <div>
-          <label htmlFor="log-role" className="mb-1 block text-xs font-medium text-white/70">
+          <label htmlFor="log-role" className="mb-1 block text-xs font-medium text-on-dark/70">
             {t('adminLogs.roleLabel')}
           </label>
           <select
@@ -223,11 +223,11 @@ function AdminLogsPage() {
             onChange={(e) => updateFilter('role', e.target.value)}
             className={FIELD_CLS}
           >
-            <option value="" className="text-slate-900">
+            <option value="" className="text-content">
               {t('adminLogs.allRoles')}
             </option>
             {roles.map((r) => (
-              <option key={r} value={r} className="text-slate-900">
+              <option key={r} value={r} className="text-content">
                 {t(`adminLogs.roles.${r}`, { defaultValue: r })}
               </option>
             ))}
@@ -235,7 +235,7 @@ function AdminLogsPage() {
         </div>
 
         <div>
-          <label htmlFor="log-level" className="mb-1 block text-xs font-medium text-white/70">
+          <label htmlFor="log-level" className="mb-1 block text-xs font-medium text-on-dark/70">
             {t('adminLogs.levelLabel')}
           </label>
           <select
@@ -244,11 +244,11 @@ function AdminLogsPage() {
             onChange={(e) => updateFilter('level', e.target.value)}
             className={FIELD_CLS}
           >
-            <option value="" className="text-slate-900">
+            <option value="" className="text-content">
               {t('adminLogs.allLevels')}
             </option>
             {levels.map((l) => (
-              <option key={l} value={l} className="text-slate-900">
+              <option key={l} value={l} className="text-content">
                 {t(`adminLogs.levels.${l}`, { defaultValue: l })}
               </option>
             ))}
@@ -257,7 +257,7 @@ function AdminLogsPage() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="log-from" className="mb-1 block text-xs font-medium text-white/70">
+            <label htmlFor="log-from" className="mb-1 block text-xs font-medium text-on-dark/70">
               {t('adminLogs.fromLabel')}
             </label>
             <input
@@ -269,7 +269,7 @@ function AdminLogsPage() {
             />
           </div>
           <div>
-            <label htmlFor="log-to" className="mb-1 block text-xs font-medium text-white/70">
+            <label htmlFor="log-to" className="mb-1 block text-xs font-medium text-on-dark/70">
               {t('adminLogs.toLabel')}
             </label>
             <input
@@ -290,51 +290,51 @@ function AdminLogsPage() {
             setPage(1);
             setFilters(EMPTY_FILTERS);
           }}
-          className={`mt-3 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/20 hover:text-white ${FOCUS_RING}`}
+          className={`mt-3 rounded-full bg-surface/10 px-3 py-1.5 text-xs font-medium text-on-dark/80 transition hover:bg-surface/20 hover:text-on-dark ${FOCUS_RING}`}
         >
           {t('adminLogs.resetFilters')}
         </button>
       )}
 
       {/* Tableau (desktop) */}
-      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl md:block">
+      <div className="mt-4 hidden overflow-x-auto rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl md:block">
         <table className="w-full text-sm">
           <caption className="sr-only">{t('adminLogs.tableCaption')}</caption>
-          <thead className="border-b border-white/20 text-xs uppercase tracking-wide">
+          <thead className="border-b border-glass/20 text-xs uppercase tracking-wide">
             <tr>
-              <th scope="col" className="px-3 py-3 text-left font-semibold text-white/80">
+              <th scope="col" className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminLogs.colDate')}
               </th>
-              <th scope="col" className="px-3 py-3 text-left font-semibold text-white/80">
+              <th scope="col" className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminLogs.colActor')}
               </th>
-              <th scope="col" className="px-3 py-3 text-left font-semibold text-white/80">
+              <th scope="col" className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminLogs.colAction')}
               </th>
-              <th scope="col" className="px-3 py-3 text-left font-semibold text-white/80">
+              <th scope="col" className="px-3 py-3 text-left font-semibold text-on-dark/80">
                 {t('adminLogs.colTarget')}
               </th>
-              <th scope="col" className="px-3 py-3 text-right font-semibold text-white/80">
+              <th scope="col" className="px-3 py-3 text-right font-semibold text-on-dark/80">
                 <span className="sr-only">{t('adminLogs.colActions')}</span>
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/15">
+          <tbody className="divide-y divide-glass/15">
             {loading || logs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-white/70">
+                <td colSpan={5} className="px-3 py-8 text-center text-on-dark/70">
                   {loading ? t('adminLogs.loading') : t('adminLogs.empty')}
                 </td>
               </tr>
             ) : (
               logs.map((log) => (
-                <tr key={log.id_log} className="text-white/90 transition hover:bg-white/5">
-                  <td className="whitespace-nowrap px-3 py-3 text-white/70">
+                <tr key={log.id_log} className="text-on-dark/90 transition hover:bg-surface/5">
+                  <td className="whitespace-nowrap px-3 py-3 text-on-dark/70">
                     <time dateTime={log.created_at}>{formatDate(log.created_at, DATE_OPTS)}</time>
                   </td>
                   <td className="px-3 py-3">
                     <div className="font-medium">{actorLabel(log)}</div>
-                    <div className="text-xs text-white/60">
+                    <div className="text-xs text-on-dark/60">
                       {log.actor_role
                         ? t(`adminLogs.roles.${log.actor_role}`, { defaultValue: log.actor_role })
                         : log.actor_email}
@@ -343,13 +343,14 @@ function AdminLogsPage() {
                   <td className="px-3 py-3">
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                        LEVEL_CLS[log.level] || 'bg-slate-500/15 text-white/80'
+                        LEVEL_CLS[log.level] ||
+                        'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80'
                       }`}
                     >
                       {actionLabel(log.action)}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-white/70">{targetLabel(log)}</td>
+                  <td className="px-3 py-3 text-on-dark/70">{targetLabel(log)}</td>
                   <td className="whitespace-nowrap px-3 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
@@ -382,29 +383,30 @@ function AdminLogsPage() {
       {/* Cartes (mobile) */}
       <ul className="mt-4 space-y-3 md:hidden">
         {loading || logs.length === 0 ? (
-          <li className="rounded-2xl border border-white/20 bg-white/10 px-4 py-8 text-center text-sm text-white/70 backdrop-blur-xl">
+          <li className="rounded-2xl border border-glass/20 bg-surface/10 px-4 py-8 text-center text-sm text-on-dark/70 backdrop-blur-xl">
             {loading ? t('adminLogs.loading') : t('adminLogs.empty')}
           </li>
         ) : (
           logs.map((log) => (
             <li
               key={log.id_log}
-              className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-xl"
+              className="rounded-2xl border border-glass/20 bg-surface/10 p-4 backdrop-blur-xl"
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    LEVEL_CLS[log.level] || 'bg-slate-500/15 text-white/80'
+                    LEVEL_CLS[log.level] ||
+                    'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80'
                   }`}
                 >
                   {actionLabel(log.action)}
                 </span>
-                <time dateTime={log.created_at} className="text-xs text-white/60">
+                <time dateTime={log.created_at} className="text-xs text-on-dark/60">
                   {formatDate(log.created_at, DATE_OPTS)}
                 </time>
               </div>
-              <p className="mt-2 text-sm text-white/90">{actorLabel(log)}</p>
-              <p className="text-xs text-white/60">{targetLabel(log)}</p>
+              <p className="mt-2 text-sm text-on-dark/90">{actorLabel(log)}</p>
+              <p className="text-xs text-on-dark/60">{targetLabel(log)}</p>
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
@@ -442,25 +444,25 @@ function AdminLogsPage() {
       {/* Détail complet d'une entrée : le tableau tronque, ici tout est affiché. */}
       {selected && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
           onClick={() => setSelected(null)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="log-detail-title"
-            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl"
+            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-glass/20 bg-surface/10 p-6 shadow-2xl backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
-              <h2 id="log-detail-title" className="text-lg font-semibold text-white">
+              <h2 id="log-detail-title" className="text-lg font-semibold text-on-dark">
                 {t('adminLogs.detailTitle', { id: selected.id_log })}
               </h2>
               <button
                 type="button"
                 onClick={() => setSelected(null)}
                 aria-label={t('adminLogs.close')}
-                className={`rounded-full px-2 text-xl leading-none text-white/70 transition hover:text-white ${FOCUS_RING}`}
+                className={`rounded-full px-2 text-xl leading-none text-on-dark/70 transition hover:text-on-dark ${FOCUS_RING}`}
               >
                 ✕
               </button>
@@ -469,16 +471,16 @@ function AdminLogsPage() {
             <dl className="mt-4 space-y-2 text-sm">
               {detailFields(selected).map(([label, value]) => (
                 <div key={label} className="flex flex-wrap gap-x-2">
-                  <dt className="w-40 shrink-0 text-white/60">{label}</dt>
-                  <dd className="min-w-0 flex-1 break-words text-white/90">{value}</dd>
+                  <dt className="w-40 shrink-0 text-on-dark/60">{label}</dt>
+                  <dd className="min-w-0 flex-1 break-words text-on-dark/90">{value}</dd>
                 </div>
               ))}
             </dl>
 
-            <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-white/60">
+            <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-on-dark/60">
               {t('adminLogs.fieldMeta')}
             </h3>
-            <pre className="mt-1 overflow-x-auto rounded-lg bg-black/30 p-3 text-xs text-white/80">
+            <pre className="mt-1 overflow-x-auto rounded-lg bg-overlay/30 p-3 text-xs text-on-dark/80">
               {selected.meta ? JSON.stringify(selected.meta, null, 2) : '—'}
             </pre>
 
@@ -486,14 +488,14 @@ function AdminLogsPage() {
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                className={`rounded-full border border-white/30 px-4 py-1.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
+                className={`rounded-full border border-glass/30 px-4 py-1.5 text-sm font-medium text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark ${FOCUS_RING}`}
               >
                 {t('adminLogs.close')}
               </button>
               <button
                 type="button"
                 onClick={() => downloadLog(selected)}
-                className={`flex items-center gap-2 rounded-full bg-sky-500 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-sky-400 ${FOCUS_RING}`}
+                className={`flex items-center gap-2 rounded-full bg-action px-4 py-1.5 text-sm font-semibold text-action-text transition hover:bg-action-bright ${FOCUS_RING}`}
               >
                 <MdDownload aria-hidden="true" className="h-4 w-4" />
                 {t('adminLogs.download')}

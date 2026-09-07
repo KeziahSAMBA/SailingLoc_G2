@@ -5,7 +5,7 @@ import { FaFileInvoice } from 'react-icons/fa';
 import { useToast } from '../../hooks/useToast.jsx';
 
 const FOCUS_RING =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5AB4EC] focus-visible:ring-offset-0';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-0';
 
 function fileNameFrom(headers, fallback) {
   const disposition = headers?.['content-disposition'] || '';
@@ -86,7 +86,7 @@ function InvoiceButton({ fetchInvoice, label, title, className = '' }) {
         disabled={busy}
         onClick={openInvoice}
         title={title}
-        className={`inline-flex items-center gap-1 rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${className}`}
+        className={`inline-flex items-center gap-1 rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${className}`}
       >
         <FaFileInvoice aria-hidden className="text-[0.6875rem]" />
         {busy ? t('invoice.loading') : label}
@@ -95,23 +95,23 @@ function InvoiceButton({ fetchInvoice, label, title, className = '' }) {
       {preview &&
         createPortal(
           <div
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-2 sm:p-4"
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-overlay/70 p-2 sm:p-4"
             onClick={closePreview}
           >
             <div
               role="dialog"
               aria-modal="true"
               aria-label={title}
-              className="flex h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-slate-900/90 shadow-2xl backdrop-blur-2xl"
+              className="flex h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-glass/20 bg-slate-900/90 shadow-2xl backdrop-blur-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <header className="flex items-center justify-between gap-3 border-b border-white/15 px-5 py-3">
-                <h2 className="truncate text-sm font-semibold text-white">{preview.name}</h2>
+              <header className="flex items-center justify-between gap-3 border-b border-glass/15 px-5 py-3">
+                <h2 className="truncate text-sm font-semibold text-on-dark">{preview.name}</h2>
                 <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     onClick={() => save(preview.url, preview.name)}
-                    className={`rounded-full bg-[#5AB4EC] px-3 py-1 text-xs font-semibold text-slate-950 transition hover:bg-[#ABD4FF] ${FOCUS_RING}`}
+                    className={`rounded-full bg-brand px-3 py-1 text-xs font-semibold text-slate-950 transition hover:bg-[#ABD4FF] ${FOCUS_RING}`}
                   >
                     {t('invoice.download')}
                   </button>
@@ -119,13 +119,13 @@ function InvoiceButton({ fetchInvoice, label, title, className = '' }) {
                     ref={closeRef}
                     type="button"
                     onClick={closePreview}
-                    className={`rounded-full border border-white/40 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white ${FOCUS_RING}`}
+                    className={`rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark ${FOCUS_RING}`}
                   >
                     {t('invoice.close')}
                   </button>
                 </div>
               </header>
-              <iframe src={preview.url} title={title} className="h-full w-full flex-1 bg-white" />
+              <iframe src={preview.url} title={title} className="h-full w-full flex-1 bg-surface" />
             </div>
           </div>,
           document.body

@@ -11,11 +11,11 @@ const ROLES = [
 ];
 
 const inputClass =
-  'w-full rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-white placeholder-white/40 outline-none transition focus:border-[#5AB4EC] focus:ring-2 focus:ring-[#5AB4EC]/20';
-const labelClass = 'mb-1.5 block text-sm font-medium text-white/80';
-const errorClass = 'mt-1 block text-xs text-red-400';
+  'w-full rounded-lg border border-glass/30 bg-surface/10 px-4 py-2.5 text-on-dark placeholder-on-dark outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+const labelClass = 'mb-1.5 block text-sm font-medium text-on-dark/80';
+const errorClass = 'mt-1 block text-xs text-danger-bright';
 const requiredMark = (
-  <span aria-hidden="true" className="ml-0.5 text-[#5AB4EC]">
+  <span aria-hidden="true" className="ml-0.5 text-brand">
     *
   </span>
 );
@@ -82,21 +82,21 @@ function AdminCreateUserPage() {
   return (
     <section className="w-full">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Ajouter un compte</h1>
-        <p className="mt-2 text-white/80">
+        <h1 className="text-3xl font-bold text-on-dark">Ajouter un compte</h1>
+        <p className="mt-2 text-on-dark/80">
           Créez un compte utilisateur. L'utilisateur recevra un email pour définir lui-même son mot
           de passe.
         </p>
-        <p className="mt-1 text-xs text-white/60">
-          Les champs marqués d&apos;un <span className="text-[#5AB4EC]">*</span> sont obligatoires.
+        <p className="mt-1 text-xs text-on-dark/60">
+          Les champs marqués d&apos;un <span className="text-brand">*</span> sont obligatoires.
         </p>
       </header>
 
-      <article className="rounded-2xl border border-white/20 bg-white/10 p-4 shadow-xl backdrop-blur-xl sm:p-8">
+      <article className="rounded-2xl border border-glass/20 bg-surface/10 p-4 shadow-xl backdrop-blur-xl sm:p-8">
         {success && (
           <div
             role="status"
-            className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
+            className="status-indicator status-indicator--success mb-4 rounded-lg border border-success-base/40 bg-success-base/10 px-4 py-3 text-sm text-success-soft"
           >
             Compte créé pour <span className="font-semibold">{success.email}</span> ({success.role}
             ). Un email vient de lui être envoyé pour définir son mot de passe.
@@ -106,7 +106,7 @@ function AdminCreateUserPage() {
         {serverError && (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+            className="status-indicator status-indicator--danger mb-4 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
           >
             {serverError}
           </div>
@@ -189,7 +189,7 @@ function AdminCreateUserPage() {
 
           <div>
             <label htmlFor="phone" className={labelClass}>
-              Téléphone <span className="font-normal text-white/70">(facultatif)</span>
+              Téléphone <span className="font-normal text-on-dark/70">(facultatif)</span>
             </label>
             <input
               id="phone"
@@ -234,14 +234,14 @@ function AdminCreateUserPage() {
             <button
               type="button"
               onClick={() => navigate('/admin/users')}
-              className="w-full rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10 sm:w-auto"
+              className="w-full rounded-full border border-glass/30 px-6 py-3 text-sm font-semibold text-on-dark/90 transition hover:bg-surface/10 sm:w-auto"
             >
               Retour
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
+              className="w-full rounded-full bg-action px-6 py-3 text-sm font-semibold text-action-text shadow-lg transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 sm:flex-1"
             >
               {loading ? 'Création en cours…' : 'Créer le compte'}
             </button>

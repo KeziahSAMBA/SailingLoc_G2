@@ -15,11 +15,11 @@ function LocataireDocuments() {
   return (
     <section aria-labelledby="documents-title" className="w-full">
       <header className="mb-6">
-        <h1 id="documents-title" className="text-2xl font-bold text-white">
+        <h1 id="documents-title" className="text-2xl font-bold text-on-dark">
           {t('locataireDocuments.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('locataireDocuments.subtitle')}</p>
-        <p className="mt-2 text-sm font-semibold text-white/90">
+        <p className="mt-1 text-sm text-on-dark/70">{t('locataireDocuments.subtitle')}</p>
+        <p className="mt-2 text-sm font-semibold text-on-dark/90">
           {t('locataireDocuments.count', { provided: counts.provided, total: counts.total })}
         </p>
       </header>

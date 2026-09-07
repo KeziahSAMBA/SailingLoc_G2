@@ -48,15 +48,15 @@ function AdminMessagesPage() {
   return (
     <section aria-labelledby="admin-messages-title">
       <header className="mb-6">
-        <h1 id="admin-messages-title" className="text-2xl font-bold text-white">
+        <h1 id="admin-messages-title" className="text-2xl font-bold text-on-dark">
           {t('adminMessages.title')}
         </h1>
-        <p className="mt-1 text-sm text-white/70">{t('adminMessages.subtitle')}</p>
+        <p className="mt-1 text-sm text-on-dark/70">{t('adminMessages.subtitle')}</p>
       </header>
 
       {/* Annuaire : réservé à l'admin */}
       <div ref={boxRef} className="relative mb-5 max-w-md">
-        <label htmlFor="user-search" className="mb-1 block text-xs font-medium text-white/70">
+        <label htmlFor="user-search" className="mb-1 block text-xs font-medium text-on-dark/70">
           {t('adminMessages.newMessageTo')}
         </label>
         <input
@@ -73,10 +73,10 @@ function AdminMessagesPage() {
           }}
           onFocus={() => setOpen(true)}
           placeholder={t('adminMessages.searchPlaceholder')}
-          className="w-full rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-[#5AB4EC]"
+          className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark placeholder-on-dark outline-none focus:border-brand-soft"
         />
         {open && results.length > 0 && (
-          <ul className="absolute z-10 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-white/30 bg-white/10 shadow-xl">
+          <ul className="absolute z-10 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-glass/30 bg-surface/10 shadow-xl">
             {results.map((u) => (
               <li key={u.id_user}>
                 <button
@@ -91,13 +91,13 @@ function AdminMessagesPage() {
                     setSearch('');
                     setOpen(false);
                   }}
-                  className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm text-white transition hover:bg-white/20"
+                  className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-sm text-on-dark transition hover:bg-surface/20"
                 >
                   <span className="min-w-0 break-words">
                     {u.first_name} {u.last_name}
-                    {u.email && <span className="text-white/70"> — {u.email}</span>}
+                    {u.email && <span className="text-on-dark/70"> — {u.email}</span>}
                   </span>
-                  <span className="shrink-0 text-[0.625rem] uppercase tracking-wide text-white/70">
+                  <span className="shrink-0 text-[0.625rem] uppercase tracking-wide text-on-dark/70">
                     {roleLabel(u.role)}
                   </span>
                 </button>

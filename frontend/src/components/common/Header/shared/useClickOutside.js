@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 /**
  * Closes each ref's menu when a click lands outside of it.
- * @param {Array<[React.RefObject, () => void]>} entries
+ * @param {Array<[React.RefObject|React.RefObject[], () => void]>} entries
  */
 export function useClickOutside(entries) {
   const entriesRef = useRef(entries);
@@ -11,7 +11,9 @@ export function useClickOutside(entries) {
   useEffect(() => {
     function onClickOutside(e) {
       entriesRef.current.forEach(([ref, close]) => {
-        if (ref.current && !ref.current.contains(e.target)) close();
+        const refs = Array.isArray(ref) ? ref : [ref];
+        const inside = refs.some((entry) => entry.current?.contains(e.target));
+        if (!inside) close();
       });
     }
     document.addEventListener('mousedown', onClickOutside);

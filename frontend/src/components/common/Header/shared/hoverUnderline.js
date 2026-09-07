@@ -2,10 +2,10 @@
 // blanche qui se déploie sous le texte).
 export function hoverUnderlineStyle({ fontSize, baseOpacity = 1, ...extra }) {
   return {
-    color: '#fff',
+    color: 'rgb(var(--sl-header-text))',
     fontSize,
     opacity: baseOpacity,
-    backgroundImage: 'linear-gradient(#fff, #fff)',
+    backgroundImage: 'linear-gradient(rgb(var(--sl-header-text)), rgb(var(--sl-header-text)))',
     backgroundRepeat: 'no-repeat',
     backgroundSize: '0% 1px',
     backgroundPosition: '0 100%',

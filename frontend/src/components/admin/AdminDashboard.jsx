@@ -25,21 +25,21 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 const NUMBER = new Intl.NumberFormat('fr-FR');
 
 const STATUS_COLOR = {
-  confirmed: '#34d399',
-  pending: '#fbbf24',
-  refused: '#f87171',
-  cancelled: '#94a3b8',
+  confirmed: 'rgb(var(--sl-chart-4))',
+  pending: 'rgb(var(--sl-chart-2))',
+  refused: 'rgb(var(--sl-chart-3))',
+  cancelled: 'rgb(var(--sl-chart-5))',
 };
 
 const MONTH_OPTS = { month: 'short', year: '2-digit' };
 
 const TOOLTIP_STYLE = {
-  background: '#0f172a',
-  border: '0.0625rem solid #1e293b',
+  background: 'rgb(var(--sl-dark-surface))',
+  border: '0.0625rem solid rgb(var(--sl-dark-elevated))',
   borderRadius: '0.5rem',
-  color: '#e2e8f0',
+  color: 'rgb(var(--sl-content-soft))',
 };
-const AXIS_TICK_STYLE = { fill: '#94a3b8', fontSize: '0.75rem' };
+const AXIS_TICK_STYLE = { fill: 'rgb(var(--sl-content-subtle))', fontSize: '0.75rem' };
 
 function fmtMonth(m) {
   const [y, mo] = String(m).split('-');
@@ -48,8 +48,8 @@ function fmtMonth(m) {
 
 function StatCard({ label, value, accent }) {
   return (
-    <div className="h-full rounded-2xl border border-white/20 bg-white/10 p-5 text-center backdrop-blur-xl">
-      <p className="text-xs font-semibold uppercase tracking-wide text-white/70">{label}</p>
+    <div className="h-full rounded-2xl border border-glass/20 bg-surface/10 p-5 text-center backdrop-blur-xl">
+      <p className="text-xs font-semibold uppercase tracking-wide text-on-dark/70">{label}</p>
       <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
     </div>
   );
@@ -57,8 +57,8 @@ function StatCard({ label, value, accent }) {
 
 function ChartCard({ title, children }) {
   return (
-    <div className="h-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-5">
-      <h2 className="mb-4 text-sm font-semibold text-white/90">{title}</h2>
+    <div className="h-full rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl p-5">
+      <h2 className="mb-4 text-sm font-semibold text-on-dark/90">{title}</h2>
       <div className="h-56 w-full sm:h-[16.25rem]">{children}</div>
     </div>
   );
@@ -81,8 +81,11 @@ function AdminDashboard() {
   const pieData = (stats?.bookingsByStatus ?? []).map((b) => ({
     name: t(`adminDashboard.status.${b.status}`, { defaultValue: b.status }),
     value: b.count,
-    color: STATUS_COLOR[b.status] || '#64748b',
+    color: STATUS_COLOR[b.status] || 'rgb(var(--sl-neutral))',
   }));
+  const pieDescription = pieData.length
+    ? pieData.map((entry) => `${entry.name}: ${NUMBER.format(entry.value)}`).join(', ')
+    : t('adminDashboard.noData');
   const revenueData = (stats?.revenueByMonth ?? []).map((r) => ({
     month: fmtMonth(r.month),
     revenue: r.revenue,
@@ -98,13 +101,16 @@ function AdminDashboard() {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-white">{t('adminDashboard.title')}</h1>
-      <p className="mt-1 text-sm text-white/70">
+      <h1 className="text-2xl font-bold text-on-dark">{t('adminDashboard.title')}</h1>
+      <p className="mt-1 text-sm text-on-dark/70">
         {t('adminDashboard.greeting', { name: user?.first_name ?? '' })}
       </p>
 
       {error && (
-        <div className="mt-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-300">
+        <div
+          role="alert"
+          className="mt-6 rounded-lg border border-danger-base/40 bg-danger-base/10 px-4 py-2 text-sm text-danger-soft"
+        >
           {error}
         </div>
       )}
@@ -112,22 +118,22 @@ function AdminDashboard() {
       <div className="mt-6 grid auto-rows-fr grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label={t('adminDashboard.users')}
-          accent="text-white"
+          accent="text-on-dark"
           value={loading ? '…' : NUMBER.format(stats?.users ?? 0)}
         />
         <StatCard
           label={t('adminDashboard.bookings')}
-          accent="text-white"
+          accent="text-on-dark"
           value={loading ? '…' : NUMBER.format(stats?.bookings ?? 0)}
         />
         <StatCard
           label={t('adminDashboard.revenue')}
-          accent="text-emerald-400"
+          accent="text-success-bright"
           value={loading ? '…' : EURO.format(stats?.revenue ?? 0)}
         />
         <StatCard
           label={t('adminDashboard.commission')}
-          accent="text-[#5AB4EC]"
+          accent="text-brand-soft"
           value={loading ? '…' : EURO.format(stats?.commission ?? 0)}
         />
       </div>
@@ -135,44 +141,62 @@ function AdminDashboard() {
       {!loading && !error && (
         <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-2">
           <ChartCard title={t('adminDashboard.bookingsByStatus')}>
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="42%"
-                  outerRadius="68%"
-                  paddingAngle={2}
-                >
-                  {pieData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} stroke="#0f172a" />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend
-                  align="center"
-                  verticalAlign="bottom"
-                  iconSize={10}
-                  wrapperStyle={{ fontSize: '0.75rem', lineHeight: '1.25rem', color: '#cbd5e1' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div
+              className="h-full w-full"
+              role="img"
+              aria-label={t('adminDashboard.bookingsByStatus')}
+              aria-describedby="admin-bookings-status-chart-description"
+            >
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="42%"
+                    outerRadius="68%"
+                    paddingAngle={2}
+                  >
+                    {pieData.map((entry) => (
+                      <Cell
+                        key={entry.name}
+                        fill={entry.color}
+                        stroke="rgb(var(--sl-dark-surface))"
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend
+                    align="center"
+                    verticalAlign="bottom"
+                    iconSize={10}
+                    wrapperStyle={{
+                      fontSize: '0.75rem',
+                      lineHeight: '1.25rem',
+                      color: 'rgb(var(--sl-content-soft))',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <p id="admin-bookings-status-chart-description" className="sr-only">
+              {pieDescription}
+            </p>
           </ChartCard>
 
           <ChartCard title={t('adminDashboard.revenueByMonth')}>
             <ResponsiveContainer>
               <BarChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--sl-dark-elevated))" />
                 <XAxis dataKey="month" tick={AXIS_TICK_STYLE} tickMargin={8} minTickGap={12} />
                 <YAxis tick={AXIS_TICK_STYLE} tickMargin={4} width={52} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [EURO.format(v), t('adminDashboard.revenue')]}
                 />
-                <Bar dataKey="revenue" fill="#34d399" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="rgb(var(--sl-chart-4))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -180,14 +204,14 @@ function AdminDashboard() {
           <ChartCard title={t('adminDashboard.bookingsByMonth')}>
             <ResponsiveContainer>
               <BarChart data={bookingsData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--sl-dark-elevated))" />
                 <XAxis dataKey="month" tick={AXIS_TICK_STYLE} tickMargin={8} minTickGap={12} />
                 <YAxis allowDecimals={false} tick={AXIS_TICK_STYLE} tickMargin={4} width={52} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [v, t('adminDashboard.bookings')]}
                 />
-                <Bar dataKey="count" fill="#5AB4EC" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="rgb(var(--sl-chart-1))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -195,14 +219,14 @@ function AdminDashboard() {
           <ChartCard title={t('adminDashboard.commissionByMonth')}>
             <ResponsiveContainer>
               <BarChart data={commissionData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--sl-dark-elevated))" />
                 <XAxis dataKey="month" tick={AXIS_TICK_STYLE} tickMargin={8} minTickGap={12} />
                 <YAxis tick={AXIS_TICK_STYLE} tickMargin={4} width={52} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
                   formatter={(v) => [EURO.format(v), t('adminDashboard.commission')]}
                 />
-                <Bar dataKey="commission" fill="#a78bfa" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="commission" fill="rgb(var(--sl-chart-3))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>

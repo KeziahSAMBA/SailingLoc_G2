@@ -4,6 +4,1056 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Redondance non colorimétrique des états : les badges conservent leurs
+ * couleurs existantes, mais leur contour donne aussi une information
+ * indépendante de la perception des couleurs. Les classes sont ajoutées aux
+ * indicateurs de statut uniquement ; les dimensions externes restent
+ * inchangées grâce à box-sizing: border-box (défini plus bas).
+ */
+@layer components {
+  .status-indicator {
+    border-color: currentColor;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .status-indicator.status-indicator--success {
+    border-style: solid;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--warning {
+    border-style: dashed;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--danger {
+    border-style: double;
+    border-width: 3px;
+  }
+
+  .status-indicator.status-indicator--info {
+    border-style: dotted;
+    border-width: 2px;
+  }
+
+  .status-indicator.status-indicator--neutral {
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  /* Certains indicateurs disposent déjà d'une icône SVG dédiée. */
+  .status-indicator--has-icon {
+    border-color: currentColor;
+  }
+
+  /* Un contour interne complète la couleur pour signaler un état actif. Il
+     n'ajoute aucune dimension et reste lisible avec une palette forcée. */
+  .non-color-active {
+    box-shadow: inset 0 0 0 2px currentColor;
+  }
+
+  /* États du calendrier : la forme reste lisible sans distinguer les teintes. */
+  .calendar-day {
+    border-color: transparent;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--selected {
+    border-color: currentColor;
+    border-style: double;
+    border-width: 3px;
+  }
+
+  .calendar-day.calendar-day--available {
+    border-color: currentColor;
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--range {
+    border-color: currentColor;
+    border-style: dotted;
+    border-width: 1px;
+  }
+
+  .calendar-day.calendar-day--disabled {
+    border-color: currentColor;
+    border-style: dashed;
+    border-width: 1px;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent 0,
+      transparent 3px,
+      rgb(var(--sl-calendar-disabled) / 0.35) 3px,
+      rgb(var(--sl-calendar-disabled) / 0.35) 4px
+    );
+  }
+}
+
+/* Le burger utilise cette classe partagée dans le JSX. La déclaration
+   explicite garantit sa présence aussi dans la feuille injectée par Vite en
+   développement, où une classe dynamique peut sinon rester absente jusqu'au
+   prochain cycle de compilation. */
+@layer utilities {
+  .bg-header-icon {
+    background-color: rgb(var(--sl-header-icon));
+  }
+
+  .text-map-heading {
+    color: rgb(var(--sl-map-heading));
+  }
+
+  .text-map-results-heading {
+    color: rgb(var(--sl-map-results-heading));
+  }
+
+  .text-map-live {
+    color: rgb(var(--sl-map-live));
+  }
+
+  .bg-map-live {
+    background-color: rgb(var(--sl-map-live));
+  }
+
+  .text-map-hint {
+    color: rgb(var(--sl-map-hint));
+  }
+
+  .bg-map-control {
+    background-color: rgb(var(--sl-map-control));
+  }
+
+  .text-map-control-text {
+    color: rgb(var(--sl-map-control-text));
+  }
+
+  .bg-map-control-hover:hover {
+    background-color: rgb(var(--sl-map-control-hover));
+  }
+
+  .text-map-control-hover-text:hover {
+    color: rgb(var(--sl-map-control-hover-text));
+  }
+}
+
+/* Couleurs contextuelles du rendu clair historique. Les sélecteurs des futurs
+   modes héritent volontairement de ces mêmes valeurs sur la branche commune. */
+:root {
+  --sl-page: 248 250 252;
+  --sl-surface: 255 255 255;
+  --sl-content: 15 23 42;
+  --sl-content-muted: 71 85 105;
+  --sl-on-dark: 255 255 255;
+  --sl-on-light: 0 0 0;
+  --sl-brand: 90 180 236;
+  --sl-brand-soft: 171 212 255;
+  --sl-brand-hover: 74 163 219;
+  --sl-brand-navy: 10 49 114;
+  --sl-brand-focus: 10 82 122;
+  --sl-header-settings-bg: var(--sl-brand-navy);
+  --sl-header-panel-scrolled-text: var(--sl-brand-navy);
+  --sl-header-panel-scrolled-separator: var(--sl-brand-navy);
+  --sl-header-panel-scrolled-hover: var(--sl-brand-navy);
+  --sl-header-panel-danger: 224 82 82;
+  --sl-header-badge-text: 2 6 23;
+  --sl-header-bar-bg: var(--sl-brand-navy);
+  --sl-header-text: var(--sl-on-dark);
+  --sl-header-icon: var(--sl-on-dark);
+  --sl-header-focus: var(--sl-on-dark);
+  --sl-photo-surface: var(--sl-dark-surface);
+  --sl-photo-text: var(--sl-on-dark);
+  --sl-photo-action: 58 192 250;
+  --sl-photo-action-hover: 125 211 252;
+  --sl-photo-icon: var(--sl-photo-action);
+  --sl-photo-link: 14 165 233;
+  --sl-photo-action-fill: var(--sl-action-deep);
+  --sl-photo-action-shadow: var(--sl-action-deep);
+  --sl-photo-compact-link: 10 82 122;
+  --sl-surface-link: var(--sl-brand-text);
+  --sl-surface-link-hover: var(--sl-brand-focus);
+  --sl-control-border: var(--sl-field-border-strong);
+  --sl-focus-ring: var(--sl-brand-focus);
+  --sl-header-dropdown-border: 241 245 249;
+  --sl-header-dropdown-danger-hover: 254 242 242;
+  --sl-brand-text: 36 112 172;
+  --sl-action: 14 165 233;
+  --sl-action-hover: 2 132 199;
+  --sl-action-pale: 186 230 253;
+  --sl-action-soft: 125 211 252;
+  --sl-action-bright: 56 189 248;
+  --sl-action-deep: 3 105 161;
+  --sl-action-text: 0 0 0;
+  --sl-status-fill-text: 0 0 0;
+  --sl-calendar-selected-text: 0 0 0;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 15 23 42;
+  --sl-dark-elevated: 30 41 59;
+  --sl-dark-muted: 51 65 85;
+  --sl-dark-strong: 2 6 23;
+  --sl-content-bright: 241 245 249;
+  --sl-content-light: 226 232 240;
+  --sl-content-media: 209 213 219;
+  --sl-content-soft: 203 213 225;
+  --sl-content-subtle: 148 163 184;
+  --sl-border-light: 226 232 240;
+  --sl-field-border: 203 213 225;
+  --sl-field-border-strong: 100 116 139;
+  --sl-field-placeholder: 148 163 184;
+  --sl-field-placeholder-strong: 71 85 105;
+  --sl-home-sea: 0 78 87;
+  --sl-home-tint: 235 245 253;
+  --sl-neutral: 100 116 139;
+  --sl-success: 22 163 74;
+  --sl-success-base: 16 185 129;
+  --sl-success-bright: 52 211 153;
+  --sl-success-soft: 110 231 183;
+  --sl-success-deep: 5 150 105;
+  --sl-warning: 217 119 6;
+  --sl-warning-base: 245 158 11;
+  --sl-warning-bright: 251 191 36;
+  --sl-warning-soft: 252 211 77;
+  --sl-warning-pale: 253 230 138;
+  --sl-warning-deep: 146 64 14;
+  --sl-danger: 220 38 38;
+  --sl-danger-base: 239 68 68;
+  --sl-danger-bright: 248 113 113;
+  --sl-danger-soft: 252 165 165;
+  --sl-danger-pale: 254 202 202;
+  --sl-danger-deep: 153 27 27;
+  --sl-info: 2 132 199;
+  --sl-success-surface: rgb(220 252 231);
+  --sl-success-text: 22 101 52;
+  --sl-warning-surface: rgb(254 243 199);
+  --sl-warning-text: 146 64 14;
+  --sl-danger-surface: rgb(254 226 226);
+  --sl-danger-text: 153 27 27;
+  --sl-info-surface: rgb(224 242 254);
+  --sl-info-text: 7 89 133;
+  --sl-neutral-surface: rgb(241 245 249);
+  --sl-neutral-text: 51 65 85;
+  --sl-map-available: 10 49 114;
+  --sl-map-unavailable: 148 163 184;
+  --sl-map-unavailable-strong: 100 116 139;
+  --sl-map-heading: var(--sl-photo-action);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-success);
+  --sl-map-hint: var(--sl-content-soft);
+  --sl-map-control: var(--sl-surface);
+  --sl-map-control-text: var(--sl-content);
+  --sl-map-control-hover: var(--sl-page);
+  --sl-map-control-hover-text: var(--sl-brand-text);
+  --sl-map-control-border: var(--sl-border-light);
+  --sl-chart-primary: 62 151 214;
+  --sl-chart-hover: 90 180 236;
+  --sl-chart-violet: 167 139 250;
+  --sl-chart-1: 62 151 214;
+  --sl-chart-2: 217 119 6;
+  --sl-chart-3: 167 139 250;
+  --sl-chart-4: 22 163 74;
+  --sl-chart-5: 100 116 139;
+  --sl-calendar-border: 243 244 246;
+  --sl-calendar-title: 55 65 81;
+  --sl-calendar-muted: 107 114 128;
+  --sl-calendar-weekday: 156 163 175;
+  --sl-calendar-disabled: 209 213 219;
+  --sl-calendar-hover: 243 244 246;
+  --sl-calendar-available: 187 247 208;
+  --sl-calendar-available-text: 22 101 52;
+  --sl-calendar-available-hover: 134 239 172;
+  --sl-calendar-selected: 2 132 199;
+  --sl-calendar-range: 224 242 254;
+  --sl-calendar-range-text: 7 89 133;
+  --sl-calendar-reserved: 220 38 38;
+}
+
+/* Palette du mode nuit. Les composants utilisent les mêmes tokens que le
+   rendu clair : seul l'attribut posé sur <html> change leurs valeurs, ce qui
+   conserve la structure, les dimensions et les interactions existantes. */
+html[data-sailingloc-theme='dark'] {
+  color-scheme: dark;
+
+  --sl-page: 2 6 23;
+  --sl-surface: 15 23 42;
+  --sl-content: 248 250 252;
+  --sl-content-muted: 203 213 225;
+  --sl-on-dark: 248 250 252;
+  --sl-on-light: 15 23 42;
+  --sl-brand: 90 180 236;
+  --sl-brand-soft: 125 211 252;
+  --sl-brand-hover: 125 211 252;
+  --sl-brand-navy: 15 23 42;
+  --sl-brand-focus: 125 211 252;
+  --sl-header-panel-scrolled-text: var(--sl-content);
+  --sl-header-panel-scrolled-separator: var(--sl-content);
+  --sl-header-panel-scrolled-hover: var(--sl-content);
+  --sl-header-panel-danger: var(--sl-danger);
+  --sl-header-badge-text: var(--sl-on-light);
+  --sl-header-bar-bg: var(--sl-brand-navy);
+  --sl-header-text: var(--sl-on-dark);
+  --sl-header-icon: var(--sl-on-dark);
+  --sl-header-focus: var(--sl-on-dark);
+  --sl-photo-surface: var(--sl-dark-surface);
+  --sl-photo-text: var(--sl-on-dark);
+  --sl-photo-action: var(--sl-action-bright);
+  --sl-photo-action-hover: var(--sl-action-soft);
+  --sl-photo-icon: var(--sl-photo-action);
+  --sl-photo-link: var(--sl-photo-action);
+  --sl-photo-action-fill: var(--sl-action-deep);
+  --sl-photo-action-shadow: var(--sl-action-deep);
+  --sl-photo-compact-link: var(--sl-photo-action);
+  --sl-surface-link: var(--sl-brand-text);
+  --sl-surface-link-hover: var(--sl-brand-focus);
+  --sl-control-border: var(--sl-field-border-strong);
+  --sl-focus-ring: var(--sl-brand-focus);
+  --sl-header-dropdown-border: var(--sl-border-light);
+  --sl-header-dropdown-danger-hover: var(--sl-danger-deep);
+  --sl-brand-text: 125 211 252;
+  --sl-action: 3 105 161;
+  --sl-action-hover: 3 105 161;
+  --sl-action-pale: 186 230 253;
+  --sl-action-soft: 125 211 252;
+  --sl-action-bright: 56 189 248;
+  --sl-action-deep: 3 105 161;
+  --sl-action-text: var(--sl-on-dark);
+  --sl-status-fill-text: 0 0 0;
+  --sl-calendar-selected-text: 0 0 0;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 15 23 42;
+  --sl-dark-elevated: 30 41 59;
+  --sl-dark-muted: 51 65 85;
+  --sl-dark-strong: 2 6 23;
+  --sl-content-bright: 241 245 249;
+  --sl-content-light: 226 232 240;
+  --sl-content-media: 209 213 219;
+  --sl-content-soft: 203 213 225;
+  --sl-content-subtle: 148 163 184;
+  --sl-border-light: 100 116 139;
+  --sl-field-border: 71 85 105;
+  --sl-field-border-strong: 148 163 184;
+  --sl-field-placeholder: 148 163 184;
+  --sl-field-placeholder-strong: 203 213 225;
+  --sl-home-sea: 15 23 42;
+  --sl-home-tint: 30 41 59;
+  --sl-neutral: 148 163 184;
+
+  /* Les variantes utilisées en surface / texte gardent une couleur de
+     statut unique pour que les opacités Tailwind (/15 et /18) restent
+     déterministes dans tous les espaces. Les variantes « deep » servent aux
+     boutons pleins qui conservent du texte clair. */
+  --sl-success: 74 222 128;
+  --sl-success-base: 74 222 128;
+  --sl-success-bright: 74 222 128;
+  --sl-success-soft: 74 222 128;
+  --sl-success-deep: 22 163 74;
+  --sl-warning: 251 191 36;
+  --sl-warning-base: 251 191 36;
+  --sl-warning-bright: 251 191 36;
+  --sl-warning-soft: 251 191 36;
+  --sl-warning-pale: 251 191 36;
+  --sl-warning-deep: 146 64 14;
+  --sl-danger: 248 113 113;
+  --sl-danger-base: 248 113 113;
+  --sl-danger-bright: 248 113 113;
+  --sl-danger-soft: 248 113 113;
+  --sl-danger-pale: 248 113 113;
+  --sl-danger-deep: 190 18 60;
+  --sl-info: 56 189 248;
+  --sl-success-surface: rgb(74 222 128 / 0.15);
+  --sl-success-text: 74 222 128;
+  --sl-warning-surface: rgb(251 191 36 / 0.15);
+  --sl-warning-text: 251 191 36;
+  --sl-danger-surface: rgb(248 113 113 / 0.15);
+  --sl-danger-text: 248 113 113;
+  --sl-info-surface: rgb(56 189 248 / 0.15);
+  --sl-info-text: 56 189 248;
+  --sl-neutral-surface: rgb(148 163 184 / 0.16);
+  --sl-neutral-text: 203 213 225;
+  --sl-map-available: 125 211 252;
+  --sl-map-unavailable: 148 163 184;
+  --sl-map-unavailable-strong: 203 213 225;
+  --sl-map-heading: var(--sl-on-dark);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-on-dark);
+  --sl-map-hint: var(--sl-on-dark);
+  --sl-map-control: var(--sl-surface);
+  --sl-map-control-text: var(--sl-content);
+  --sl-map-control-hover: var(--sl-dark-elevated);
+  --sl-map-control-hover-text: var(--sl-content);
+  --sl-map-control-border: var(--sl-border-light);
+  --sl-chart-primary: 56 189 248;
+  --sl-chart-hover: 125 211 252;
+  --sl-chart-violet: 196 181 253;
+  --sl-chart-1: 56 189 248;
+  --sl-chart-2: 251 191 36;
+  --sl-chart-3: 196 181 253;
+  --sl-chart-4: 74 222 128;
+  --sl-chart-5: 148 163 184;
+  --sl-calendar-border: 51 65 85;
+  --sl-calendar-title: 248 250 252;
+  --sl-calendar-muted: 203 213 225;
+  --sl-calendar-weekday: 148 163 184;
+  --sl-calendar-disabled: 100 116 139;
+  --sl-calendar-hover: 51 65 85;
+  --sl-calendar-available: 22 101 52;
+  --sl-calendar-available-text: 220 252 231;
+  --sl-calendar-available-hover: 21 128 61;
+  --sl-calendar-selected: 2 132 199;
+  --sl-calendar-range: 12 74 110;
+  --sl-calendar-range-text: 224 242 254;
+  --sl-calendar-reserved: 248 113 113;
+
+  /* Sans imposer une largeur, ces couleurs s'appliquent aux barres natives
+     des navigateurs qui les exposent. */
+  scrollbar-color: rgb(var(--sl-border-light)) rgb(var(--sl-page));
+}
+
+/* Chaque profil de vision des couleurs déclare une identité complète,
+   structurelle et sémantique. Les médias restent inchangés et sans filtre. */
+html[data-sailingloc-theme='light'][data-sailingloc-color-vision='protanopia'] {
+  /* Structure légèrement bleutée : aucun média n'est filtré. */
+  --sl-page: 244 249 252;
+  --sl-surface: 255 255 255;
+  --sl-content: 15 42 55;
+  --sl-content-muted: 58 80 92;
+  --sl-on-dark: 255 255 255;
+  --sl-on-light: 8 31 43;
+  --sl-brand: 0 114 178;
+  --sl-brand-soft: 144 205 235;
+  --sl-brand-hover: 0 90 141;
+  --sl-brand-navy: 6 64 88;
+  --sl-brand-focus: 0 82 122;
+  --sl-brand-text: 0 90 141;
+  --sl-header-panel-danger: var(--sl-danger-text);
+  --sl-header-badge-text: var(--sl-on-dark);
+  --sl-photo-action: var(--sl-action-bright);
+  --sl-photo-action-hover: var(--sl-action-soft);
+  --sl-photo-icon: var(--sl-photo-action);
+  --sl-photo-link: var(--sl-photo-action);
+  --sl-photo-action-fill: var(--sl-action);
+  --sl-photo-action-shadow: var(--sl-action);
+  --sl-photo-compact-link: var(--sl-photo-action);
+  --sl-action: 0 90 141;
+  --sl-action-hover: 0 73 115;
+  --sl-action-pale: 191 231 247;
+  --sl-action-soft: 111 190 225;
+  --sl-action-bright: 75 174 220;
+  --sl-action-deep: 0 63 100;
+  --sl-action-text: 255 255 255;
+  --sl-status-fill-text: 255 255 255;
+  --sl-calendar-selected-text: 255 255 255;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 15 42 55;
+  --sl-dark-elevated: 30 62 76;
+  --sl-dark-muted: 55 78 91;
+  --sl-dark-strong: 5 23 31;
+  --sl-content-bright: 240 249 252;
+  --sl-content-light: 221 238 245;
+  --sl-content-media: 194 217 227;
+  --sl-content-soft: 190 218 229;
+  --sl-content-subtle: 111 141 154;
+  --sl-border-light: 194 217 227;
+  --sl-field-border: 100 116 139;
+  --sl-field-border-strong: 100 116 139;
+  --sl-field-placeholder: 71 85 105;
+  --sl-field-placeholder-strong: 71 85 105;
+  --sl-home-sea: 0 64 77;
+  --sl-home-tint: 235 247 252;
+  --sl-neutral: 100 116 139;
+  --sl-success: 0 122 94;
+  --sl-success-base: 0 122 94;
+  --sl-success-bright: 0 145 112;
+  --sl-success-soft: 0 122 94;
+  --sl-success-deep: 0 92 70;
+  --sl-success-surface: rgb(232 248 241);
+  --sl-success-text: 0 96 74;
+  --sl-warning: 163 79 0;
+  --sl-warning-base: 163 79 0;
+  --sl-warning-bright: 186 98 0;
+  --sl-warning-soft: 163 79 0;
+  --sl-warning-pale: 255 242 229;
+  --sl-warning-deep: 130 62 0;
+  --sl-warning-surface: rgb(255 242 229);
+  --sl-warning-text: 130 62 0;
+  --sl-danger: 143 36 95;
+  --sl-danger-base: 143 36 95;
+  --sl-danger-bright: 173 66 120;
+  --sl-danger-soft: 143 36 95;
+  --sl-danger-pale: 253 235 244;
+  --sl-danger-deep: 115 25 72;
+  --sl-danger-surface: rgb(253 235 244);
+  --sl-danger-text: 115 25 72;
+  --sl-info: 0 114 178;
+  --sl-info-surface: rgb(232 242 250);
+  --sl-info-text: 0 90 141;
+  --sl-neutral-surface: rgb(241 245 249);
+  --sl-neutral-text: 51 65 85;
+  --sl-map-available: 0 114 178;
+  --sl-map-unavailable: 95 61 140;
+  --sl-map-unavailable-strong: 100 116 139;
+  --sl-map-heading: var(--sl-on-dark);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-on-dark);
+  --sl-map-hint: var(--sl-on-dark);
+  --sl-chart-primary: 0 114 178;
+  --sl-chart-hover: 0 90 141;
+  /* Couleurs de graphiques lisibles à la fois sur la page claire et sur
+     les surfaces de tableau de bord assombries (contraste UI >= 3:1). */
+  --sl-chart-violet: 214 31 214;
+  --sl-chart-1: 32 128 223;
+  --sl-chart-2: 187 107 27;
+  --sl-chart-3: 214 31 214;
+  --sl-chart-4: 22 156 22;
+  --sl-chart-5: 22 156 156;
+  --sl-calendar-border: 226 235 240;
+  --sl-calendar-title: 15 42 55;
+  --sl-calendar-muted: 58 80 92;
+  --sl-calendar-weekday: 71 85 105;
+  --sl-calendar-disabled: 148 163 184;
+  --sl-calendar-hover: 226 235 240;
+  --sl-calendar-available: 232 248 241;
+  --sl-calendar-available-text: 0 96 74;
+  --sl-calendar-available-hover: 240 251 246;
+  --sl-calendar-selected: 0 90 141;
+  --sl-calendar-range: 232 242 250;
+  --sl-calendar-range-text: 0 90 141;
+  --sl-calendar-reserved: 143 36 95;
+}
+
+html[data-sailingloc-theme='dark'][data-sailingloc-color-vision='protanopia'] {
+  --sl-page: 3 18 28;
+  --sl-surface: 8 31 43;
+  --sl-content: 239 249 255;
+  --sl-content-muted: 196 220 231;
+  --sl-on-dark: 239 249 255;
+  --sl-on-light: 8 31 43;
+  --sl-brand: 86 180 233;
+  --sl-brand-soft: 174 224 246;
+  --sl-brand-hover: 112 204 239;
+  --sl-brand-navy: 8 31 43;
+  --sl-brand-focus: 144 221 246;
+  --sl-brand-text: 144 221 246;
+  --sl-action: 0 90 141;
+  --sl-action-hover: 0 73 115;
+  --sl-action-pale: 172 224 244;
+  --sl-action-soft: 133 211 238;
+  --sl-action-bright: 86 180 233;
+  --sl-action-deep: 0 64 91;
+  --sl-action-text: 255 255 255;
+  --sl-status-fill-text: 255 255 255;
+  --sl-calendar-selected-text: 239 249 255;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 8 31 43;
+  --sl-dark-elevated: 18 48 62;
+  --sl-dark-muted: 35 63 77;
+  --sl-dark-strong: 3 18 28;
+  --sl-content-bright: 245 251 255;
+  --sl-content-light: 218 238 246;
+  --sl-content-media: 154 192 207;
+  --sl-content-soft: 193 220 231;
+  --sl-content-subtle: 144 181 195;
+  --sl-border-light: 80 112 127;
+  --sl-field-border: 100 116 139;
+  --sl-field-border-strong: 100 116 139;
+  --sl-field-placeholder: 203 225 235;
+  --sl-field-placeholder-strong: 203 225 235;
+  --sl-home-sea: 3 18 28;
+  --sl-home-tint: 18 48 62;
+  --sl-neutral: 155 184 196;
+  --sl-success: 139 227 185;
+  --sl-success-base: 139 227 185;
+  --sl-success-bright: 139 227 185;
+  --sl-success-soft: 139 227 185;
+  --sl-success-deep: 15 118 110;
+  --sl-success-surface: rgb(18 78 71 / 0.15);
+  --sl-success-text: 139 227 185;
+  --sl-warning: 248 212 119;
+  --sl-warning-base: 248 212 119;
+  --sl-warning-bright: 248 212 119;
+  --sl-warning-soft: 248 212 119;
+  --sl-warning-pale: 248 212 119;
+  --sl-warning-deep: 146 64 14;
+  --sl-warning-surface: rgb(113 63 18 / 0.15);
+  --sl-warning-text: 248 212 119;
+  --sl-danger: 243 166 206;
+  --sl-danger-base: 243 166 206;
+  --sl-danger-bright: 243 166 206;
+  --sl-danger-soft: 243 166 206;
+  --sl-danger-pale: 243 166 206;
+  --sl-danger-deep: 190 18 60;
+  --sl-danger-surface: rgb(131 24 67 / 0.15);
+  --sl-danger-text: 243 166 206;
+  --sl-info: 138 204 242;
+  --sl-info-surface: rgb(30 58 138 / 0.15);
+  --sl-info-text: 138 204 242;
+  --sl-neutral-surface: rgb(148 163 184 / 0.16);
+  --sl-neutral-text: 203 225 235;
+  --sl-map-available: 86 180 233;
+  --sl-map-unavailable: 232 140 189;
+  --sl-map-unavailable-strong: 100 116 139;
+  --sl-chart-primary: 86 180 233;
+  --sl-chart-hover: 144 221 246;
+  --sl-chart-violet: 196 181 253;
+  --sl-chart-1: 86 180 233;
+  --sl-chart-2: 240 193 90;
+  --sl-chart-3: 232 140 189;
+  --sl-chart-4: 86 197 150;
+  --sl-chart-5: 196 181 253;
+  --sl-calendar-border: 35 63 77;
+  --sl-calendar-title: 239 249 255;
+  --sl-calendar-muted: 193 220 231;
+  --sl-calendar-weekday: 144 181 195;
+  --sl-calendar-disabled: 100 116 139;
+  --sl-calendar-hover: 35 63 77;
+  --sl-calendar-available: 18 78 71;
+  --sl-calendar-available-text: 209 250 229;
+  --sl-calendar-available-hover: 22 101 52;
+  --sl-calendar-selected: 10 82 122;
+  --sl-calendar-range: 12 74 110;
+  --sl-calendar-range-text: 224 242 254;
+  --sl-calendar-reserved: 190 18 60;
+}
+
+html[data-sailingloc-theme='light'][data-sailingloc-color-vision='deuteranopia'] {
+  /* Structure légèrement violette : les médias restent inchangés. */
+  --sl-page: 249 247 252;
+  --sl-surface: 255 255 255;
+  --sl-content: 30 18 50;
+  --sl-content-muted: 78 61 98;
+  --sl-on-dark: 255 255 255;
+  --sl-on-light: 30 18 50;
+  --sl-brand: 95 61 160;
+  --sl-brand-soft: 197 182 235;
+  --sl-brand-hover: 76 42 137;
+  --sl-brand-navy: 48 25 88;
+  --sl-brand-focus: 87 53 154;
+  --sl-brand-text: 83 48 145;
+  --sl-header-panel-danger: var(--sl-danger-text);
+  --sl-header-badge-text: var(--sl-on-dark);
+  --sl-photo-action: 152 128 208;
+  --sl-photo-action-hover: 183 160 225;
+  --sl-photo-icon: var(--sl-photo-action);
+  --sl-photo-link: var(--sl-photo-action);
+  --sl-photo-action-fill: var(--sl-action);
+  --sl-photo-action-shadow: var(--sl-action);
+  --sl-photo-compact-link: var(--sl-photo-action);
+  --sl-action: 83 48 145;
+  --sl-action-hover: 66 35 120;
+  --sl-action-pale: 228 218 249;
+  --sl-action-soft: 183 160 225;
+  --sl-action-bright: 150 121 208;
+  --sl-action-deep: 51 26 99;
+  --sl-action-text: 255 255 255;
+  --sl-status-fill-text: 255 255 255;
+  --sl-calendar-selected-text: 255 255 255;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 30 18 50;
+  --sl-dark-elevated: 48 32 71;
+  --sl-dark-muted: 75 59 94;
+  --sl-dark-strong: 17 8 28;
+  --sl-content-bright: 246 243 252;
+  --sl-content-light: 226 217 239;
+  --sl-content-media: 204 190 220;
+  --sl-content-soft: 205 194 222;
+  --sl-content-subtle: 140 122 163;
+  --sl-border-light: 210 199 225;
+  --sl-field-border: 100 116 139;
+  --sl-field-border-strong: 100 116 139;
+  --sl-field-placeholder: 71 61 98;
+  --sl-field-placeholder-strong: 71 61 98;
+  --sl-home-sea: 48 25 88;
+  --sl-home-tint: 244 240 252;
+  --sl-neutral: 100 116 139;
+  --sl-success: 0 114 178;
+  --sl-success-base: 0 114 178;
+  --sl-success-bright: 0 140 205;
+  --sl-success-soft: 0 114 178;
+  --sl-success-deep: 0 82 138;
+  --sl-success-surface: rgb(232 242 250);
+  --sl-success-text: 0 90 141;
+  --sl-warning: 143 90 0;
+  --sl-warning-base: 143 90 0;
+  --sl-warning-bright: 170 111 0;
+  --sl-warning-soft: 143 90 0;
+  --sl-warning-pale: 255 244 222;
+  --sl-warning-deep: 112 68 0;
+  --sl-warning-surface: rgb(255 244 222);
+  --sl-warning-text: 112 68 0;
+  --sl-danger: 143 36 95;
+  --sl-danger-base: 143 36 95;
+  --sl-danger-bright: 173 66 120;
+  --sl-danger-soft: 143 36 95;
+  --sl-danger-pale: 253 235 244;
+  --sl-danger-deep: 115 25 72;
+  --sl-danger-surface: rgb(253 235 244);
+  --sl-danger-text: 115 25 72;
+  --sl-info: 95 61 140;
+  --sl-info-surface: rgb(242 238 252);
+  --sl-info-text: 83 48 145;
+  --sl-neutral-surface: rgb(241 245 249);
+  --sl-neutral-text: 51 65 85;
+  --sl-map-available: 0 114 178;
+  --sl-map-unavailable: 95 61 140;
+  --sl-map-unavailable-strong: 100 116 139;
+  --sl-map-heading: var(--sl-on-dark);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-on-dark);
+  --sl-map-hint: var(--sl-on-dark);
+  --sl-chart-primary: 0 114 178;
+  --sl-chart-hover: 0 90 141;
+  /* Palette catégorielle renforcée : chaque série reste visible sur la
+     surface claire et sur le fond sombre des graphiques. */
+  --sl-chart-violet: 168 31 214;
+  --sl-chart-1: 31 122 214;
+  --sl-chart-2: 201 115 29;
+  --sl-chart-3: 214 31 168;
+  --sl-chart-4: 24 133 170;
+  --sl-chart-5: 168 31 214;
+  --sl-calendar-border: 226 222 235;
+  --sl-calendar-title: 30 18 50;
+  --sl-calendar-muted: 78 61 98;
+  --sl-calendar-weekday: 71 61 98;
+  --sl-calendar-disabled: 148 163 184;
+  --sl-calendar-hover: 226 222 235;
+  --sl-calendar-available: 232 242 250;
+  --sl-calendar-available-text: 0 90 141;
+  --sl-calendar-available-hover: 240 248 253;
+  --sl-calendar-selected: 0 90 141;
+  --sl-calendar-range: 242 238 252;
+  --sl-calendar-range-text: 83 48 145;
+  --sl-calendar-reserved: 143 36 95;
+}
+
+html[data-sailingloc-theme='dark'][data-sailingloc-color-vision='deuteranopia'] {
+  --sl-page: 18 10 35;
+  --sl-surface: 31 18 53;
+  --sl-content: 249 245 255;
+  --sl-content-muted: 219 204 236;
+  --sl-on-dark: 249 245 255;
+  --sl-on-light: 31 18 53;
+  --sl-brand: 196 181 253;
+  --sl-brand-soft: 225 216 255;
+  --sl-brand-hover: 213 198 255;
+  --sl-brand-navy: 31 18 53;
+  --sl-brand-focus: 226 213 255;
+  --sl-brand-text: 226 213 255;
+  --sl-action: 83 48 145;
+  --sl-action-hover: 66 35 120;
+  --sl-action-pale: 224 213 250;
+  --sl-action-soft: 190 168 230;
+  --sl-action-bright: 165 135 224;
+  --sl-action-deep: 52 24 94;
+  --sl-action-text: 255 255 255;
+  --sl-status-fill-text: 255 255 255;
+  --sl-calendar-selected-text: 249 245 255;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 31 18 53;
+  --sl-dark-elevated: 49 31 77;
+  --sl-dark-muted: 75 56 98;
+  --sl-dark-strong: 18 10 35;
+  --sl-content-bright: 250 247 255;
+  --sl-content-light: 229 220 242;
+  --sl-content-media: 173 153 198;
+  --sl-content-soft: 220 207 237;
+  --sl-content-subtle: 177 158 201;
+  --sl-border-light: 105 84 130;
+  --sl-field-border: 100 116 139;
+  --sl-field-border-strong: 100 116 139;
+  --sl-field-placeholder: 207 190 226;
+  --sl-field-placeholder-strong: 207 190 226;
+  --sl-home-sea: 18 10 35;
+  --sl-home-tint: 49 31 77;
+  --sl-neutral: 179 162 202;
+  --sl-success: 86 180 233;
+  --sl-success-base: 86 180 233;
+  --sl-success-bright: 86 180 233;
+  --sl-success-soft: 86 180 233;
+  --sl-success-deep: 15 118 110;
+  --sl-success-surface: rgb(18 78 71 / 0.15);
+  --sl-success-text: 139 227 185;
+  --sl-warning: 248 212 119;
+  --sl-warning-base: 248 212 119;
+  --sl-warning-bright: 248 212 119;
+  --sl-warning-soft: 248 212 119;
+  --sl-warning-pale: 248 212 119;
+  --sl-warning-deep: 146 64 14;
+  --sl-warning-surface: rgb(113 63 18 / 0.15);
+  --sl-warning-text: 248 212 119;
+  --sl-danger: 243 166 206;
+  --sl-danger-base: 243 166 206;
+  --sl-danger-bright: 243 166 206;
+  --sl-danger-soft: 243 166 206;
+  --sl-danger-pale: 243 166 206;
+  --sl-danger-deep: 190 18 60;
+  --sl-danger-surface: rgb(131 24 67 / 0.15);
+  --sl-danger-text: 243 166 206;
+  --sl-info: 196 181 253;
+  --sl-info-surface: rgb(30 58 138 / 0.15);
+  --sl-info-text: 138 204 242;
+  --sl-neutral-surface: rgb(148 163 184 / 0.16);
+  --sl-neutral-text: 220 207 237;
+  --sl-map-available: 86 180 233;
+  --sl-map-unavailable: 232 140 189;
+  --sl-map-unavailable-strong: 100 116 139;
+  --sl-chart-primary: 86 180 233;
+  --sl-chart-hover: 144 221 246;
+  --sl-chart-violet: 196 181 253;
+  --sl-chart-1: 86 180 233;
+  --sl-chart-2: 240 193 90;
+  --sl-chart-3: 232 140 189;
+  --sl-chart-4: 86 197 150;
+  --sl-chart-5: 196 181 253;
+  --sl-calendar-border: 49 31 77;
+  --sl-calendar-title: 249 245 255;
+  --sl-calendar-muted: 220 207 237;
+  --sl-calendar-weekday: 177 158 201;
+  --sl-calendar-disabled: 100 116 139;
+  --sl-calendar-hover: 49 31 77;
+  --sl-calendar-available: 18 78 71;
+  --sl-calendar-available-text: 209 250 229;
+  --sl-calendar-available-hover: 22 101 52;
+  --sl-calendar-selected: 10 82 122;
+  --sl-calendar-range: 12 74 110;
+  --sl-calendar-range-text: 224 242 254;
+  --sl-calendar-reserved: 190 18 60;
+}
+
+html[data-sailingloc-theme='light'][data-sailingloc-color-vision='tritanopia'] {
+  --sl-page: 252 248 244;
+  --sl-surface: 255 255 255;
+  --sl-content: 54 27 12;
+  --sl-content-muted: 99 70 45;
+  --sl-on-dark: 255 255 255;
+  --sl-on-light: 54 27 12;
+  --sl-brand: 164 75 0;
+  --sl-brand-soft: 247 196 128;
+  --sl-brand-hover: 139 59 0;
+  --sl-brand-navy: 94 38 0;
+  --sl-brand-focus: 123 50 0;
+  --sl-brand-text: 139 59 0;
+  --sl-header-panel-danger: var(--sl-danger-text);
+  --sl-header-badge-text: var(--sl-on-dark);
+  --sl-photo-action: 228 141 39;
+  --sl-photo-action-hover: 242 169 94;
+  --sl-photo-icon: var(--sl-photo-action);
+  --sl-photo-link: var(--sl-photo-action);
+  --sl-photo-action-fill: var(--sl-action);
+  --sl-photo-action-shadow: var(--sl-action);
+  --sl-photo-compact-link: var(--sl-photo-action);
+  --sl-action: 139 59 0;
+  --sl-action-hover: 109 44 0;
+  --sl-action-pale: 255 226 189;
+  --sl-action-soft: 242 169 94;
+  --sl-action-bright: 224 131 39;
+  --sl-action-deep: 94 38 0;
+  --sl-action-text: 255 255 255;
+  --sl-status-fill-text: 255 255 255;
+  --sl-calendar-selected-text: 255 255 255;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 54 27 12;
+  --sl-dark-elevated: 77 45 25;
+  --sl-dark-muted: 109 70 40;
+  --sl-dark-strong: 31 12 3;
+  --sl-content-bright: 252 247 239;
+  --sl-content-light: 238 221 205;
+  --sl-content-media: 219 191 163;
+  --sl-content-soft: 238 221 205;
+  --sl-content-subtle: 153 115 84;
+  --sl-border-light: 205 184 159;
+  --sl-field-border: 100 116 139;
+  --sl-field-border-strong: 100 116 139;
+  --sl-field-placeholder: 84 58 39;
+  --sl-field-placeholder-strong: 84 58 39;
+  --sl-home-sea: 94 42 0;
+  --sl-home-tint: 252 238 220;
+  --sl-neutral: 100 116 139;
+  --sl-success: 0 122 94;
+  --sl-success-base: 0 122 94;
+  --sl-success-bright: 0 145 112;
+  --sl-success-soft: 0 122 94;
+  --sl-success-deep: 0 92 70;
+  --sl-success-surface: rgb(232 248 241);
+  --sl-success-text: 0 96 74;
+  --sl-warning: 163 79 0;
+  --sl-warning-base: 163 79 0;
+  --sl-warning-bright: 186 98 0;
+  --sl-warning-soft: 163 79 0;
+  --sl-warning-pale: 255 242 229;
+  --sl-warning-deep: 130 62 0;
+  --sl-warning-surface: rgb(255 242 229);
+  --sl-warning-text: 130 62 0;
+  --sl-danger: 143 36 95;
+  --sl-danger-base: 143 36 95;
+  --sl-danger-bright: 173 66 120;
+  --sl-danger-soft: 143 36 95;
+  --sl-danger-pale: 253 235 244;
+  --sl-danger-deep: 115 25 72;
+  --sl-danger-surface: rgb(253 235 244);
+  --sl-danger-text: 115 25 72;
+  --sl-info: 95 61 140;
+  --sl-info-surface: rgb(242 238 252);
+  --sl-info-text: 83 48 145;
+  --sl-neutral-surface: rgb(241 245 249);
+  --sl-neutral-text: 51 65 85;
+  --sl-map-available: 0 122 94;
+  --sl-map-unavailable: 143 36 95;
+  --sl-map-unavailable-strong: 100 116 139;
+  --sl-map-heading: var(--sl-on-dark);
+  --sl-map-results-heading: var(--sl-on-dark);
+  --sl-map-live: var(--sl-on-dark);
+  --sl-map-hint: var(--sl-on-dark);
+  --sl-chart-primary: 0 122 94;
+  --sl-chart-hover: 0 92 70;
+  /* Vert, turquoise et rose sont associés à des teintes distinctes ; les
+     valeurs sont assez soutenues pour les surfaces photo assombries. */
+  --sl-chart-violet: 175 32 223;
+  --sl-chart-1: 22 156 89;
+  --sl-chart-2: 24 133 170;
+  --sl-chart-3: 214 31 168;
+  --sl-chart-4: 214 31 31;
+  --sl-chart-5: 175 32 223;
+  --sl-calendar-border: 231 222 211;
+  --sl-calendar-title: 54 27 12;
+  --sl-calendar-muted: 99 70 45;
+  --sl-calendar-weekday: 84 58 39;
+  --sl-calendar-disabled: 148 163 184;
+  --sl-calendar-hover: 231 222 211;
+  --sl-calendar-available: 232 248 241;
+  --sl-calendar-available-text: 0 96 74;
+  --sl-calendar-available-hover: 240 251 246;
+  --sl-calendar-selected: 139 59 0;
+  --sl-calendar-range: 242 238 252;
+  --sl-calendar-range-text: 83 48 145;
+  --sl-calendar-reserved: 143 36 95;
+}
+
+html[data-sailingloc-theme='dark'][data-sailingloc-color-vision='tritanopia'] {
+  --sl-page: 31 12 3;
+  --sl-surface: 54 27 12;
+  --sl-content: 255 247 235;
+  --sl-content-muted: 239 214 190;
+  --sl-on-dark: 255 247 235;
+  --sl-on-light: 54 27 12;
+  --sl-brand: 255 179 102;
+  --sl-brand-soft: 255 211 151;
+  --sl-brand-hover: 255 194 128;
+  --sl-brand-navy: 54 27 12;
+  --sl-brand-focus: 255 215 160;
+  --sl-brand-text: 255 215 160;
+  --sl-action: 139 59 0;
+  --sl-action-hover: 109 44 0;
+  --sl-action-pale: 255 226 189;
+  --sl-action-soft: 242 169 94;
+  --sl-action-bright: 255 179 102;
+  --sl-action-deep: 94 38 0;
+  --sl-action-text: 255 255 255;
+  --sl-status-fill-text: 255 255 255;
+  --sl-calendar-selected-text: 255 247 235;
+  --sl-glass: 255 255 255;
+  --sl-overlay: 0 0 0;
+  --sl-dark-surface: 54 27 12;
+  --sl-dark-elevated: 77 45 25;
+  --sl-dark-muted: 109 70 40;
+  --sl-dark-strong: 31 12 3;
+  --sl-content-bright: 255 249 241;
+  --sl-content-light: 246 225 204;
+  --sl-content-media: 212 170 129;
+  --sl-content-soft: 237 211 187;
+  --sl-content-subtle: 190 150 112;
+  --sl-border-light: 132 88 52;
+  --sl-field-border: 100 116 139;
+  --sl-field-border-strong: 100 116 139;
+  --sl-field-placeholder: 235 204 174;
+  --sl-field-placeholder-strong: 235 204 174;
+  --sl-home-sea: 31 12 3;
+  --sl-home-tint: 77 45 25;
+  --sl-neutral: 190 160 128;
+  --sl-success: 86 197 150;
+  --sl-success-base: 86 197 150;
+  --sl-success-bright: 86 197 150;
+  --sl-success-soft: 86 197 150;
+  --sl-success-deep: 15 118 110;
+  --sl-success-surface: rgb(18 78 71 / 0.15);
+  --sl-success-text: 139 227 185;
+  --sl-warning: 248 212 119;
+  --sl-warning-base: 248 212 119;
+  --sl-warning-bright: 248 212 119;
+  --sl-warning-soft: 248 212 119;
+  --sl-warning-pale: 248 212 119;
+  --sl-warning-deep: 146 64 14;
+  --sl-warning-surface: rgb(113 63 18 / 0.15);
+  --sl-warning-text: 248 212 119;
+  --sl-danger: 243 166 206;
+  --sl-danger-base: 243 166 206;
+  --sl-danger-bright: 243 166 206;
+  --sl-danger-soft: 243 166 206;
+  --sl-danger-pale: 243 166 206;
+  --sl-danger-deep: 190 18 60;
+  --sl-danger-surface: rgb(131 24 67 / 0.15);
+  --sl-danger-text: 243 166 206;
+  --sl-info: 196 181 253;
+  --sl-info-surface: rgb(30 58 138 / 0.15);
+  --sl-info-text: 138 204 242;
+  --sl-neutral-surface: rgb(148 163 184 / 0.16);
+  --sl-neutral-text: 237 211 187;
+  --sl-map-available: 86 197 150;
+  --sl-map-unavailable: 243 166 206;
+  --sl-map-unavailable-strong: 203 213 225;
+  --sl-chart-primary: 86 197 150;
+  --sl-chart-hover: 139 227 185;
+  --sl-chart-violet: 196 181 253;
+  --sl-chart-1: 86 180 233;
+  --sl-chart-2: 240 193 90;
+  --sl-chart-3: 232 140 189;
+  --sl-chart-4: 201 160 255;
+  --sl-chart-5: 237 211 187;
+  --sl-calendar-border: 77 45 25;
+  --sl-calendar-title: 255 247 235;
+  --sl-calendar-muted: 237 211 187;
+  --sl-calendar-weekday: 190 150 112;
+  --sl-calendar-disabled: 148 163 184;
+  --sl-calendar-hover: 77 45 25;
+  --sl-calendar-available: 18 78 71;
+  --sl-calendar-available-text: 209 250 229;
+  --sl-calendar-available-hover: 22 101 52;
+  --sl-calendar-selected: 94 38 0;
+  --sl-calendar-range: 72 38 13;
+  --sl-calendar-range-text: 255 226 189;
+  --sl-calendar-reserved: 190 18 60;
+}
+
+/* Chaque profil déclare ses variantes explicitement : aucune réécriture
+   globale ne doit effacer les contrastes propres au thème ou au profil. */
+
+html[data-sailingloc-theme='dark'] body,
+html[data-sailingloc-theme='dark'] #root {
+  background-color: rgb(var(--sl-page));
+  color: rgb(var(--sl-content));
+}
+
+html[data-sailingloc-theme='dark']::-webkit-scrollbar-track {
+  background-color: rgb(var(--sl-page));
+}
+
+html[data-sailingloc-theme='dark']::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--sl-border-light));
+  border: 3px solid rgb(var(--sl-page));
+  border-radius: 999px;
+}
+
+html[data-sailingloc-theme='dark'] :where(input, select, textarea) {
+  accent-color: rgb(var(--sl-brand-hover));
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -25,7 +1075,7 @@ html {
 
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-page text-content antialiased;
 }
 
 * {
@@ -35,6 +1085,10 @@ body {
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
+}
+
+html[data-sailingloc-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 
 /* Transition du panneau d'auth lors du passage Connexion <-> Inscription. */
@@ -82,9 +1136,19 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 select:-webkit-autofill,
 textarea:-webkit-autofill {
-  -webkit-text-fill-color: #fff;
-  caret-color: #fff;
+  -webkit-text-fill-color: rgb(var(--sl-on-dark));
+  caret-color: rgb(var(--sl-on-dark));
   transition: background-color 9999999s ease-in-out 0s;
+}
+
+html[data-sailingloc-theme='dark'] input:-webkit-autofill,
+html[data-sailingloc-theme='dark'] input:-webkit-autofill:hover,
+html[data-sailingloc-theme='dark'] input:-webkit-autofill:focus,
+html[data-sailingloc-theme='dark'] select:-webkit-autofill,
+html[data-sailingloc-theme='dark'] textarea:-webkit-autofill {
+  -webkit-text-fill-color: rgb(var(--sl-content));
+  caret-color: rgb(var(--sl-content));
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--sl-surface)) inset;
 }
 
 /* Apparition douce des cartes au changement de filtre (dashboards). En grille
@@ -163,13 +1227,137 @@ textarea:-webkit-autofill {
    Bleu marine repris de la teinte de l'accent #5AB4EC, et accent lui-même
    sur le choix sélectionné, pour rester dans la palette du site. */
 .select-glass option {
-  background-color: #16324a;
-  color: #fff;
+  background-color: rgb(22 50 74);
+  color: rgb(var(--sl-on-dark));
 }
 
 /* Accent assombri : #5AB4EC ne donne que 3,2:1 avec du blanc, sous le seuil AA. */
 .select-glass option:checked,
 .select-glass option:hover {
-  background-color: #2470ac;
-  color: #fff;
+  background-color: rgb(var(--sl-brand-text));
+  color: rgb(var(--sl-on-dark));
+}
+
+html[data-sailingloc-theme='dark'] .select-glass option {
+  background-color: rgb(var(--sl-dark-elevated));
+  color: rgb(var(--sl-content));
+}
+
+html[data-sailingloc-theme='dark'] .select-glass option:checked,
+html[data-sailingloc-theme='dark'] .select-glass option:hover {
+  background-color: rgb(var(--sl-brand-hover));
+  color: rgb(var(--sl-on-light));
+}
+
+html[data-sailingloc-theme='dark'] .sailingloc-popup .leaflet-popup-content-wrapper,
+html[data-sailingloc-theme='dark'] .sailingloc-popup .leaflet-popup-tip {
+  background-color: rgb(var(--sl-surface));
+  color: rgb(var(--sl-content));
+}
+
+/* Préférence système de contraste : l'aspect clair standard reste inchangé,
+   mais le focus est plus facile à repérer lorsque l'utilisateur demande un
+   contraste renforcé. */
+@media (prefers-contrast: more) {
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid rgb(var(--sl-brand-focus)) !important;
+    outline-offset: 2px;
+  }
+}
+
+/* Couleurs forcées : le navigateur reprend sa palette système (Canvas,
+   ButtonText, Highlight, …). Les formes et les motifs restent les signaux
+   non colorimétriques des états, sans imposer de couleur d'auteur. */
+@media (forced-colors: active) {
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 2px;
+  }
+
+  .status-indicator {
+    forced-color-adjust: auto;
+    border-color: ButtonText !important;
+  }
+
+  .calendar-day {
+    forced-color-adjust: auto;
+    border-color: ButtonText !important;
+    background-image: none !important;
+  }
+
+  .calendar-day.calendar-day--selected {
+    border-color: Highlight !important;
+    color: HighlightText !important;
+  }
+
+  .calendar-day.calendar-day--available,
+  .calendar-day.calendar-day--range {
+    border-color: ButtonText !important;
+  }
+
+  .calendar-day.calendar-day--disabled {
+    border-color: GrayText !important;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent 0,
+      transparent 3px,
+      GrayText 3px,
+      GrayText 4px
+    ) !important;
+  }
+
+  .select-glass {
+    appearance: auto;
+    -webkit-appearance: auto;
+    background-image: none !important;
+  }
+
+  [data-marker-availability] {
+    forced-color-adjust: auto;
+    color: ButtonText !important;
+  }
+
+  [data-marker-availability] > div {
+    background-color: Canvas !important;
+    border-color: ButtonText !important;
+    color: ButtonText !important;
+  }
+
+  [data-marker-availability] svg path[fill='none'] {
+    fill: none !important;
+    stroke: ButtonText !important;
+  }
+
+  [data-marker-availability] svg path:not([fill='none']) {
+    fill: ButtonText !important;
+    stroke: none !important;
+  }
+
+  .monthly-revenue-chart {
+    forced-color-adjust: auto;
+  }
+
+  .sailingloc-popup .leaflet-popup-content-wrapper,
+  .sailingloc-popup .leaflet-popup-tip {
+    forced-color-adjust: auto;
+    background: Canvas !important;
+    color: CanvasText !important;
+    border-color: ButtonText !important;
+  }
+}
+
+/* Toutes les animations et transitions auteur respectent la préférence de
+   réduction des mouvements, y compris celles ajoutées ultérieurement. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
