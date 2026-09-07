@@ -423,8 +423,14 @@ export async function listBookings(id_user) {
         select: { status: true },
         take: 1,
       },
+      // Mon avis (propriétaire → locataire) sur cette réservation, le cas échéant.
+      reviews: {
+        where: { id_user: ownerId, deleted_at: null },
+        select: { id_review: true, rating: true, comment: true, status: true },
+        take: 1,
+      },
       disputes: { where: { status: 'open' }, select: { id_dispute: true }, take: 1 },
-      user: { select: { first_name: true, last_name: true, email: true } },
+      user: { select: { id_user: true, first_name: true, last_name: true, email: true } },
       boat: {
         select: {
           name: true,
@@ -452,8 +458,17 @@ export async function listBookings(id_user) {
     cancellation_date: b.cancellation_date,
     payment_status: b.payments[0]?.status ?? null,
     has_open_dispute: b.disputes.length > 0,
+    my_review: b.reviews?.[0]
+      ? {
+          id_review: b.reviews[0].id_review,
+          rating: b.reviews[0].rating,
+          comment: b.reviews[0].comment,
+          status: b.reviews[0].status,
+        }
+      : null,
     locataire: b.user
       ? {
+          id_user: b.user.id_user,
           first_name: b.user.first_name,
           last_name: b.user.last_name,
           email: b.user.email,

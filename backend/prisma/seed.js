@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { seedBoatReviews } from './reviewSeedData.js';
+import { seedRenterReviews } from './renterReviewSeedData.js';
 import { enforceSeedPolicy, isSeedForced } from './seedPolicy.js';
 
 let prisma;
@@ -1254,6 +1255,24 @@ async function main() {
   await prisma.$executeRawUnsafe(`
     UPDATE boat SET status = 'refused' WHERE registration = 'FR-MRS-051'
   `);
+
+  // ── Avis propriétaire → locataire (au moins 3 par locataire) ─────────────────
+  // Chaque avis crée sa propre réservation confirmée passée sur un bateau du
+  // propriétaire auteur. Logique partagée avec prisma/addRenterReviews.js.
+  const renterReviewRenters = await prisma.user.findMany({
+    where: { role: 'locataire', deleted_at: null },
+    select: { id_user: true, first_name: true },
+    orderBy: { id_user: 'asc' },
+  });
+  const renterReviewOwners = await prisma.user.findMany({
+    where: { role: 'proprietaire', deleted_at: null },
+    select: {
+      id_user: true,
+      boats: { where: { deleted_at: null }, select: { id_boat: true, daily_price: true } },
+    },
+    orderBy: { id_user: 'asc' },
+  });
+  await seedRenterReviews(prisma, renterReviewRenters, renterReviewOwners);
 
   console.log('Seed completed.');
 }

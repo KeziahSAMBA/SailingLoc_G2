@@ -2,7 +2,12 @@ import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCategoryNavigate, useHomeNavigate } from '../../hooks/useCategoryTransition.js';
 
-function Breadcrumb({ light = false, compact = false, items = null }) {
+// `onNavigate` (optionnel) : si fourni, tous les clics de crumbs (Accueil,
+// étapes intermédiaires) sont routés vers cette fonction avec le chemin cible,
+// au lieu des transitions internes par défaut (goHome/goToCategory). Permet à
+// une page de faire jouer SA propre sortie avant de naviguer (cf.
+// OwnerProfilePage + usePageExitNavigate).
+function Breadcrumb({ light = false, compact = false, items = null, onNavigate = null }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const goHome = useHomeNavigate();
@@ -52,7 +57,8 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
           // (ctrl/cmd/shift/clic molette) sans intercepter le lien.
           if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
           e.preventDefault();
-          goHome();
+          if (onNavigate) onNavigate('/');
+          else goHome();
         }}
         className={`${linkHoverClass} transition-colors`}
       >
@@ -88,6 +94,11 @@ function Breadcrumb({ light = false, compact = false, items = null }) {
                   // Même interception que le lien Accueil : les liens vers
                   // /categorie jouent la transition de page.
                   if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  if (onNavigate) {
+                    e.preventDefault();
+                    onNavigate(to);
+                    return;
+                  }
                   if (!to.startsWith('/categorie')) return;
                   e.preventDefault();
                   goToCategory(to);

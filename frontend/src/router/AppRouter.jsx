@@ -5,6 +5,8 @@ import HomePageProprio from '../pages/HomePageProprio.jsx';
 import { useAuth } from '../hooks/useAuth.jsx';
 import CategoryPage from '../pages/CategoryPage.jsx';
 import ProductPage from '../pages/ProductPage.jsx';
+import OwnerProfilePage from '../pages/OwnerProfilePage.jsx';
+import RenterProfilePage from '../pages/RenterProfilePage.jsx';
 import ContactPage from '../pages/ContactPage.jsx';
 import AboutPage from '../pages/AboutPage.jsx';
 import MentionsLegalesPage from '../pages/legal/MentionsLegalesPage.jsx';
@@ -84,6 +86,15 @@ function AppRouter({ location }) {
       <Route path="/categorie" element={<CategoryPage />} />
       <Route path="/product" element={<ProductPage />} />
       <Route path="/product/:id" element={<ProductPage />} />
+      <Route path="/proprietaires/:id" element={<OwnerProfilePage />} />
+      <Route
+        path="/locataires/:id"
+        element={
+          <RequireRole role="proprietaire">
+            <RenterProfilePage />
+          </RequireRole>
+        }
+      />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/a-propos" element={<AboutPage />} />
       <Route path="/mentions-legales" element={<MentionsLegalesPage />} />

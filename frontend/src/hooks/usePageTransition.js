@@ -36,6 +36,12 @@ export const EXIT_TRANSITION_PAGES = [
   '/cgv',
   '/politique-de-confidentialite',
   '/mentions-legales',
+  // Fiche publique d'un propriétaire (/proprietaires/:id) : match par préfixe
+  // via isOnPath (l'URL porte un id). Elle monte usePageSlideTransition, donc
+  // toute navigation sortante y déclenche sa cascade inverse.
+  '/proprietaires',
+  // Fiche d'un locataire (/locataires/:id), côté propriétaire : idem.
+  '/locataires',
 ];
 
 const isOnPath = (pathname, base) => pathname === base || pathname.startsWith(`${base}/`);
@@ -132,7 +138,11 @@ export function usePageExitNavigate() {
       // écran en permanence après ce clic.
       const shouldIntercept =
         (onExitPage && !samePage) ||
-        (onStaticExitAwarePage && EXIT_TRANSITION_PAGES.includes(to)) ||
+        // Match par préfixe (comme onExitPage / isOnDashboardPage) : les cibles
+        // paramétrées comme /proprietaires/:id doivent compter au même titre
+        // que /contact, /a-propos… — sinon la page de départ (ex. Produit vers
+        // la fiche propriétaire) ne joue pas sa sortie.
+        (onStaticExitAwarePage && EXIT_TRANSITION_PAGES.some((base) => isOnPath(to, base))) ||
         (!isOnDashboardPage(location.pathname) && onStaticExitAwarePage && isOnDashboardPage(to)) ||
         (isOnDashboardPage(location.pathname) && to === '/');
       if (shouldIntercept && !prefersReducedMotion()) {

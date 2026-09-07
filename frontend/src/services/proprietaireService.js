@@ -16,6 +16,20 @@ export function getBookingLocataire(idBooking) {
   return api.get(`/users/me/proprietaire/bookings/${idBooking}/locataire`);
 }
 
+// Fiche complète d'un locataire (identité, badges, locations chez moi, avis).
+export function getRenterProfile(id) {
+  return api.get(`/users/me/proprietaire/locataires/${id}`);
+}
+
+// Dépose ou met à jour mon avis sur le locataire d'une réservation terminée.
+export function saveRenterReview(idBooking, rating, comment) {
+  return api.put(`/users/me/proprietaire/bookings/${idBooking}/review`, { rating, comment });
+}
+
+export function deleteRenterReview(idBooking) {
+  return api.delete(`/users/me/proprietaire/bookings/${idBooking}/review`);
+}
+
 export function getBookingInvoice(idBooking) {
   return api.get(`/users/me/proprietaire/bookings/${idBooking}/invoice.pdf`, {
     responseType: 'blob',

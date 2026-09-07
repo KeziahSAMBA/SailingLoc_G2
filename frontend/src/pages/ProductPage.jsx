@@ -70,7 +70,11 @@ import {
   CATEGORY_EXIT_EASING,
   prefersReducedMotion,
 } from '../hooks/useCategoryTransition.js';
-import { onPageExitRequest, isOnDashboardPage } from '../hooks/usePageTransition.js';
+import {
+  onPageExitRequest,
+  isOnDashboardPage,
+  usePageExitNavigate,
+} from '../hooks/usePageTransition.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -241,6 +245,9 @@ function ProductPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const goToCategory = useCategoryNavigate();
+  // Sortie animée de la fiche produit vers la fiche propriétaire (même
+  // mécanique que vers contact / à propos / pages légales).
+  const pageExitNavigate = usePageExitNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
   const { favoriteIds, toggleFavorite } = useFavorites();
@@ -413,7 +420,8 @@ function ProductPage() {
           ? aboutBg
           : to === '/contact'
             ? contactBg
-            : isOnDashboardPage(to)
+            : // La fiche propriétaire partage le fond des tableaux de bord.
+              to.startsWith('/proprietaires/') || isOnDashboardPage(to)
               ? dashboardBg
               : legalBg
       );
@@ -650,6 +658,10 @@ function ProductPage() {
   const ownerName = boat
     ? [boat.owner?.first_name, boat.owner?.last_name].filter(Boolean).join(' ')
     : '';
+  // Lien vers la fiche publique du propriétaire (/proprietaires/:id) : absent
+  // des annonces tant que l'API ne renvoie pas l'id — on retombe alors sur un
+  // simple libellé « par … » non cliquable.
+  const ownerId = boat?.owner?.id_user ?? null;
   const isAvailable = (boat?.availabilities?.length ?? 0) > 0;
   const [reviewBooking, setReviewBooking] = useState(null);
   const [reviewRating, setReviewRating] = useState(0);
@@ -1196,11 +1208,37 @@ function ProductPage() {
                       <h1 className="text-lg font-bold text-on-dark tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                         {boat.name}
                       </h1>
-                      {ownerName && (
-                        <span className="text-xs font-medium text-on-dark/70">
-                          {t('product.header.ownerBy', { name: ownerName })}
-                        </span>
-                      )}
+                      {ownerName &&
+                        (ownerId ? (
+                          <Link
+                            to={`/proprietaires/${ownerId}`}
+                            state={{ fromBoat: { id: boat.id_boat, name: boat.name } }}
+                            onClick={(e) => {
+                              // Clic gauche simple : la fiche produit joue sa
+                              // sortie avant de naviguer. Modificateurs (nouvel
+                              // onglet…) : comportement natif conservé.
+                              if (
+                                e.button !== 0 ||
+                                e.metaKey ||
+                                e.ctrlKey ||
+                                e.shiftKey ||
+                                e.altKey
+                              )
+                                return;
+                              e.preventDefault();
+                              pageExitNavigate(`/proprietaires/${ownerId}`, {
+                                state: { fromBoat: { id: boat.id_boat, name: boat.name } },
+                              });
+                            }}
+                            className="text-xs font-medium text-on-dark/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-on-dark hover:decoration-solid"
+                          >
+                            {t('product.header.ownerBy', { name: ownerName })}
+                          </Link>
+                        ) : (
+                          <span className="text-xs font-medium text-on-dark/70">
+                            {t('product.header.ownerBy', { name: ownerName })}
+                          </span>
+                        ))}
                       <span className="text-on-dark/50">-</span>
                       <span className="text-xs font-bold tracking-widest text-photo-action uppercase">
                         {typeLabel}
