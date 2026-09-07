@@ -1,2 +1,5 @@
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /admin
+
+Sitemap: https://dsp-dev-o24a-g2.com/sitemap.xml
