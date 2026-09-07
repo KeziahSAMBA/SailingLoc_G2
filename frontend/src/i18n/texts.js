@@ -259,6 +259,14 @@ export const TEXTS = {
   },
 
   product: {
+    lightbox: {
+      label: { fr: 'Photo en grand', en: 'Enlarged photo' },
+      open: { fr: 'Agrandir la photo {{index}}', en: 'Enlarge photo {{index}}' },
+      close: { fr: 'Fermer', en: 'Close' },
+      previous: { fr: 'Photo précédente', en: 'Previous photo' },
+      next: { fr: 'Photo suivante', en: 'Next photo' },
+      counter: { fr: '{{current}} / {{total}}', en: '{{current}} / {{total}}' },
+    },
     notFound: {
       title: { fr: 'Bateau introuvable', en: 'Boat not found' },
       text: {
