@@ -24,6 +24,12 @@ const BOAT_SELECT = {
   is_published: true,
   status: true,
   license_required: true,
+  owner: {
+    select: {
+      first_name: true,
+      last_name: true,
+    },
+  },
   port: {
     select: {
       id_port: true,
