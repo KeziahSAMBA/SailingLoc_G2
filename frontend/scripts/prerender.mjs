@@ -15,6 +15,10 @@ const SYSTEM_CHROMIUM_CANDIDATES = [
 const NAVIGATION_TIMEOUT = 20000;
 const RENDER_TIMEOUT = 15000;
 const SETTLE_DELAY = 1500;
+const GATE_TIMEOUT = 10000;
+const QUIET_PERIOD = 900;
+const QUIET_TIMEOUT = 20000;
+const GATE_SELECTOR = 'div[role="status"][aria-live="polite"].fixed.inset-0';
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const frontendRoot = path.resolve(scriptDirectory, '..');
@@ -99,9 +103,59 @@ function write(filePath, contents) {
   fs.writeFileSync(filePath, contents, { encoding: 'utf8', mode: 0o644 });
 }
 
-async function capture(browser, previewOrigin, routePath) {
-  const page = await browser.newPage();
+function apiOriginFromEnv() {
+  const raw = String(process.env.VITE_API_BASE_URL || fileEnv.VITE_API_BASE_URL || '').trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
+async function allowApiRequests(page, apiOrigin, previewOrigin) {
+  const corsHeaders = {
+    'access-control-allow-origin': previewOrigin,
+    'access-control-allow-credentials': 'true',
+  };
+
+  await page.route(
+    (url) => url.origin === apiOrigin,
+    async (route) => {
+      const request = route.request();
+      if (request.method() === 'OPTIONS') {
+        await route.fulfill({
+          status: 204,
+          headers: {
+            ...corsHeaders,
+            'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+            'access-control-allow-headers':
+              request.headers()['access-control-request-headers'] || 'content-type',
+          },
+        });
+        return;
+      }
+
+      try {
+        const forwarded = { ...request.headers() };
+        delete forwarded.origin;
+        delete forwarded.referer;
+        const response = await route.fetch({ headers: forwarded });
+        const headers = { ...response.headers(), ...corsHeaders };
+        delete headers['content-encoding'];
+        delete headers['content-length'];
+        await route.fulfill({ response, headers });
+      } catch {
+        await route.abort();
+      }
+    }
+  );
+}
+
+async function capture(browser, previewOrigin, routePath, apiOrigin) {
+  const page = await browser.newPage({ reducedMotion: 'reduce' });
   page.setDefaultTimeout(RENDER_TIMEOUT);
+  if (apiOrigin) await allowApiRequests(page, apiOrigin, previewOrigin);
   try {
     await page.goto(new URL(routePath, previewOrigin).toString(), {
       waitUntil: 'load',
@@ -113,10 +167,43 @@ async function capture(browser, previewOrigin, routePath) {
       })
       .catch(() => report(`${routePath} : rendu incomplet, capture de l’état courant.`));
     await page.waitForTimeout(SETTLE_DELAY);
+    await page
+      .evaluate(waitForQuietDom, { quietPeriod: QUIET_PERIOD, timeout: QUIET_TIMEOUT })
+      .catch(() =>
+        report(`${routePath} : le DOM n’a pas cessé de changer, capture de l’état courant.`)
+      );
+    await page
+      .waitForFunction((selector) => !document.querySelector(selector), GATE_SELECTOR, {
+        timeout: GATE_TIMEOUT,
+      })
+      .catch(() =>
+        report(`${routePath} : écran de chargement encore affiché, il est retiré de la capture.`)
+      );
+    await page.evaluate((selector) => {
+      document.querySelectorAll(selector).forEach((node) => node.remove());
+    }, GATE_SELECTOR);
     return await page.content();
   } finally {
     await page.close();
   }
+}
+
+function waitForQuietDom({ quietPeriod, timeout }) {
+  return new Promise((resolve) => {
+    let timer = null;
+    const observer = new MutationObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(finish, quietPeriod);
+    });
+    function finish() {
+      clearTimeout(deadline);
+      observer.disconnect();
+      resolve();
+    }
+    const deadline = setTimeout(finish, timeout);
+    timer = setTimeout(finish, quietPeriod);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+  });
 }
 
 function resolveChromiumPath() {
@@ -171,10 +258,17 @@ async function main() {
   });
   const previewOrigin = new URL(server.resolvedUrls.local[0]).origin;
 
+  const apiOrigin = apiOriginFromEnv();
+  report(
+    apiOrigin
+      ? `appels API relayés vers ${apiOrigin} pour contourner le CORS du pré-rendu.`
+      : 'VITE_API_BASE_URL absente : les pages dépendant de l’API seront pré-rendues sans données.'
+  );
+
   const rendered = new Map();
   try {
     for (const routePath of routePaths) {
-      const captured = await capture(browser, previewOrigin, routePath);
+      const captured = await capture(browser, previewOrigin, routePath, apiOrigin);
       const html = withSiteOrigin(captured, previewOrigin, siteOrigin);
       assertRewritten(routePath, html, previewOrigin);
       rendered.set(routePath, html);
