@@ -64,7 +64,6 @@ function DashboardHeader({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navRef = useRef(null);
   const rightMenuRef = useRef(null);
-  const settingsPanelRef = useRef(null);
   const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
   const navPanelId = `${idBase}-dashboard-navigation`;
   const rightPanelId = `${idBase}-dashboard-user-menu`;
@@ -185,12 +184,7 @@ function DashboardHeader({
   }
 
   return (
-    <HeaderShell
-      scrolled={scrolled}
-      introHidden={introHidden}
-      settingsOpen={settingsOpen}
-      settingsPanelRef={settingsPanelRef}
-    >
+    <HeaderShell scrolled={scrolled} introHidden={introHidden} settingsOpen={settingsOpen}>
       {/* Gauche — Burger nav + Logo (33%) */}
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {resolvedLeftGroups && (
@@ -299,12 +293,8 @@ function DashboardHeader({
       </nav>
 
       {/* Droite — Paramètres + Icône utilisateur + Burger menu (33%) */}
-      <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-3 lg:w-1/3 lg:flex-none lg:pr-4">
-        <SettingsMenu
-          scrolled={scrolled}
-          onOpenChange={setSettingsOpen}
-          panelContainerRef={settingsPanelRef}
-        />
+      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1.5 sm:gap-3 lg:w-1/3 lg:flex-none lg:pr-4">
+        <SettingsMenu scrolled={scrolled} onOpenChange={setSettingsOpen} />
 
         <a
           href={profileHref}

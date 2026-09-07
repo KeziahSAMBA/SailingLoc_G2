@@ -1,4 +1,3 @@
-import { createPortal } from 'react-dom';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaGlasses } from 'react-icons/fa';
@@ -13,7 +12,7 @@ const COLOR_VISION_PROFILES = [
   { value: 'tritanopia', labelKey: 'header.settings.tritanopia' },
 ];
 
-function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
+function SettingsMenu({ scrolled, onOpenChange }) {
   const { t, i18n } = useTranslation();
   const { theme, colorVision, setTheme, setColorVision } = useVisualPreferences();
   const [open, setOpen] = useState(false);
@@ -21,19 +20,11 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
   const ref = useRef(null);
   const settingsButtonRef = useRef(null);
   const activeGlassesButtonRef = useRef(null);
-  const panelRef = useRef(null);
   const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
   const settingsPanelId = `${idBase}-settings-panel`;
   const colorVisionMenuId = `${idBase}-color-vision`;
 
-  useClickOutside([
-    [
-      [ref, panelRef],
-      () => {
-        closeMenus();
-      },
-    ],
-  ]);
+  useClickOutside([[ref, () => closeMenus()]]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -77,7 +68,7 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
         role="group"
         aria-label={t('header.settings.colorVisionOptions')}
         aria-hidden={!colorVisionOpen}
-        className={`grid transition-[grid-template-rows,opacity] duration-[180ms] ease-out motion-reduce:transition-none ${
+        className={`basis-full grid transition-[grid-template-rows,opacity] duration-[180ms] ease-out motion-reduce:transition-none ${
           colorVisionOpen
             ? 'grid-rows-[1fr] opacity-100 pointer-events-auto'
             : 'grid-rows-[0fr] opacity-0 pointer-events-none'
@@ -187,22 +178,16 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
     );
   }
 
-  function renderPanel() {
+  function renderInlineControls() {
     return (
       <div
-        ref={panelRef}
         id={settingsPanelId}
         role="region"
         aria-label={t('header.settings.label')}
         data-visual-settings-panel="true"
-        className="max-h-[calc(100vh-1rem)] overflow-y-auto rounded-2xl border border-glass/40 p-2 text-on-dark shadow-xl"
-        style={{
-          backgroundColor: 'rgb(var(--sl-header-settings-bg) / 0.96)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(14px)',
-        }}
+        className="order-last basis-full flex min-w-0 flex-wrap items-center justify-end gap-1 rounded-2xl border border-glass/40 p-1 text-on-dark sm:order-none sm:basis-auto sm:flex-nowrap sm:rounded-none sm:border-0 sm:p-0"
       >
-        <div className="grid grid-cols-1 items-center gap-1 sm:grid-cols-4 sm:gap-2">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-1 sm:flex-nowrap sm:gap-2">
           {renderControls()}
         </div>
         {renderColorVisionOptions()}
@@ -220,13 +205,8 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
     onOpenChange?.(true);
   }
 
-  const panel =
-    open && panelContainerRef?.current
-      ? createPortal(renderPanel(), panelContainerRef.current)
-      : null;
-
   return (
-    <div className="relative" ref={ref}>
+    <div className="contents" ref={ref}>
       <button
         ref={settingsButtonRef}
         type="button"
@@ -240,7 +220,7 @@ function SettingsMenu({ scrolled, onOpenChange, panelContainerRef }) {
       >
         <FiSettings size={scrolled ? 18 : 20} />
       </button>
-      {panel}
+      {open && renderInlineControls()}
     </div>
   );
 }

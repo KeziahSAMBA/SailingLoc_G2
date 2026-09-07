@@ -8,7 +8,7 @@ import {
  * Coquille commune aux headers public et dashboard : positionnement fixed,
  * hauteur/masquage animés au scroll et à l'intro, calque de fond.
  */
-function HeaderShell({ scrolled, introHidden, settingsOpen = false, settingsPanelRef, children }) {
+function HeaderShell({ scrolled, introHidden, settingsOpen = false, children }) {
   const headerRef = useRef(null);
   const barRef = useRef(null);
   const [settingsHeight, setSettingsHeight] = useState(0);
@@ -26,8 +26,14 @@ function HeaderShell({ scrolled, introHidden, settingsOpen = false, settingsPane
       }
 
       const headerHeight = header.getBoundingClientRect().height;
-      const barHeight = bar.getBoundingClientRect().height;
-      setSettingsHeight(Math.max(0, headerHeight - barHeight));
+      // The settings row is now part of the header bar itself.  Use the
+      // resolved minimum height as the baseline so the spacer reserves only
+      // the additional row height and does not shift the page by the whole
+      // fixed header height when the panel opens.
+      const baseBarHeight = Number.parseFloat(window.getComputedStyle(bar).minHeight);
+      setSettingsHeight(
+        Math.max(0, headerHeight - (Number.isFinite(baseBarHeight) ? baseBarHeight : 0))
+      );
     };
 
     updateReservedHeight();
@@ -39,9 +45,8 @@ function HeaderShell({ scrolled, introHidden, settingsOpen = false, settingsPane
 
     const observer = new ResizeObserver(updateReservedHeight);
     observer.observe(header);
-    if (settingsPanelRef?.current) observer.observe(settingsPanelRef.current);
     return () => observer.disconnect();
-  }, [scrolled, settingsOpen, settingsPanelRef]);
+  }, [scrolled, settingsOpen]);
 
   return (
     <>
@@ -61,9 +66,8 @@ function HeaderShell({ scrolled, introHidden, settingsOpen = false, settingsPane
           backdrop-filter (they're nested inside <header>).
         */}
         <div
-          className="absolute left-0 right-0 top-0 -z-10"
+          className="absolute inset-0 -z-10"
           style={{
-            height: baseHeight,
             backgroundColor:
               scrolled || settingsOpen
                 ? 'rgb(var(--sl-header-bar-bg) / 0.95)'
@@ -78,17 +82,10 @@ function HeaderShell({ scrolled, introHidden, settingsOpen = false, settingsPane
           ref={barRef}
           data-header-bar="true"
           className="flex w-full shrink-0 items-center px-4 sm:px-6 lg:px-12"
-          style={{ height: baseHeight }}
+          style={{ minHeight: baseHeight }}
         >
           {children}
         </div>
-
-        <div
-          ref={settingsPanelRef}
-          aria-hidden={!settingsOpen}
-          className={settingsOpen ? 'mx-2 mb-2 min-w-0' : 'hidden'}
-          style={{ maxHeight: 'calc(100vh - 1rem)' }}
-        />
       </header>
 
       <div

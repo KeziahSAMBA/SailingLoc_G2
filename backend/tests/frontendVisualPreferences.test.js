@@ -137,21 +137,24 @@ describe('intégration statique des préférences visuelles', () => {
     expect(settings).toContain('activeGlassesButtonRef.current?.focus()');
   });
 
-  it('intègre le sélecteur sous le header et réserve sa hauteur dans le flux', () => {
+  it('intègre le sélecteur dans le flux du header sans portail ni chevauchement', () => {
     const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');
     const shell = source('frontend/src/components/common/Header/shared/HeaderShell.jsx');
     const clickOutside = source('frontend/src/components/common/Header/shared/useClickOutside.js');
 
-    expect(settings).toContain('createPortal');
-    expect(settings).toContain('panelContainerRef');
+    expect(settings).not.toContain('createPortal');
+    expect(settings).not.toContain('panelContainerRef');
     expect(settings).toContain('data-visual-settings-panel');
     expect(settings).toContain('grid-cols-1');
-    expect(settings).toContain('sm:grid-cols-4');
+    expect(settings).toContain('order-last basis-full');
+    expect(settings).toContain('sm:order-none sm:basis-auto');
+    expect(settings).toContain('className="contents"');
     expect(settings).not.toMatch(/className=.*absolute.*settings/u);
-    expect(shell).toContain('settingsPanelRef');
+    expect(shell).not.toContain('settingsPanelRef');
     expect(shell).toContain('settingsOpen');
     expect(shell).toContain('settingsHeight');
-    expect(shell).toContain('aria-hidden={!settingsOpen}');
+    expect(shell).toContain('minHeight: baseHeight');
+    expect(shell).toContain('className="absolute inset-0 -z-10"');
     expect(clickOutside).toContain('Array.isArray(ref)');
   });
 

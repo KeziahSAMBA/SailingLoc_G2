@@ -91,7 +91,7 @@ await page
 async function assertResponsiveSettingsPanel(width, scrollY) {
   await page.setViewportSize({ width, height: 800 });
   await page.evaluate((top) => scrollTo(0, top), scrollY);
-  await page.waitForTimeout(350);
+  await page.waitForTimeout(500);
   const panel = page.locator('[data-visual-settings-panel]');
   await panel.waitFor({ state: 'visible' });
   const metrics = await page.evaluate(() => {
@@ -105,20 +105,31 @@ async function assertResponsiveSettingsPanel(width, scrollY) {
     const spacerRect = spacer?.getBoundingClientRect();
     const backgroundRect = header?.firstElementChild?.getBoundingClientRect();
     const panelStyles = panel ? getComputedStyle(panel) : null;
+    const barStyles = bar ? getComputedStyle(bar) : null;
     const focusedControl = panel?.querySelector('button');
     focusedControl?.focus();
     const focusedStyles = focusedControl ? getComputedStyle(focusedControl) : null;
     return {
       panelPosition: panel ? getComputedStyle(panel).position : null,
+      panelTop: panelRect?.top,
+      panelBottom: panelRect?.bottom,
       panelLeft: panelRect?.left,
       panelRight: panelRect?.right,
+      headerTop: headerRect?.top,
+      headerBottom: headerRect?.bottom,
       headerHeight: headerRect?.height,
       barHeight: barRect?.height,
+      baseBarHeight: barStyles ? parseFloat(barStyles.minHeight) : null,
       spacerHeight: spacerRect?.height,
       viewportWidth: window.innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
       backgroundHeight: backgroundRect?.height,
-      panelBackground: panelStyles?.backgroundColor,
+      panelBackground:
+        panelStyles?.backgroundColor === 'rgba(0, 0, 0, 0)'
+          ? header
+            ? getComputedStyle(header.firstElementChild).backgroundColor
+            : panelStyles.backgroundColor
+          : panelStyles?.backgroundColor,
       panelColor: focusedStyles?.color,
       focusColor: focusedStyles?.outlineColor,
     };
@@ -130,9 +141,18 @@ async function assertResponsiveSettingsPanel(width, scrollY) {
     metrics.panelRight <= metrics.viewportWidth - 8,
     `Le panneau ${width}px sort par la droite.`
   );
-  assert(metrics.headerHeight > metrics.barHeight, `Le header ${width}px ne grandit pas.`);
   assert(
-    Math.abs(metrics.spacerHeight - (metrics.headerHeight - metrics.barHeight)) < 1,
+    metrics.panelTop >= metrics.headerTop - 1 && metrics.panelBottom <= metrics.headerBottom + 1,
+    `Le panneau ${width}px n'est pas contenu dans le header.`
+  );
+  if (width < 640) {
+    assert(
+      metrics.headerHeight > metrics.baseBarHeight,
+      `Le header mobile ${width}px ne grandit pas avec la seconde ligne.`
+    );
+  }
+  assert(
+    Math.abs(metrics.spacerHeight - (metrics.headerHeight - metrics.baseBarHeight)) < 1,
     `Le contenu ${width}px n'est pas poussé par la hauteur du panneau.`
   );
   assert(
@@ -140,7 +160,7 @@ async function assertResponsiveSettingsPanel(width, scrollY) {
     `Le panneau ${width}px provoque un défilement horizontal.`
   );
   assert(
-    Math.abs(metrics.backgroundHeight - metrics.barHeight) < 1,
+    Math.abs(metrics.backgroundHeight - metrics.headerHeight) < 1,
     `Le fond du header ${width}px/${scrollY}px déborde derrière le panneau.`
   );
   assert(
