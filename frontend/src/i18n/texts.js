@@ -277,6 +277,7 @@ export const TEXTS = {
         en: 'No comments yet',
       },
       lengthValue: { fr: '{{size}} m', en: '{{size}} m' },
+      ownerBy: { fr: 'par {{name}}', en: 'by {{name}}' },
     },
     booking: {
       available: { fr: 'Disponible', en: 'Available' },

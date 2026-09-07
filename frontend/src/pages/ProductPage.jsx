@@ -647,6 +647,9 @@ function ProductPage() {
     [galleryImages, galleryContainerSize, galleryRatioTick]
   );
   const typeLabel = boat ? t(`carrousel.boatType.${boat.type}`, { defaultValue: boat.type }) : '';
+  const ownerName = boat
+    ? [boat.owner?.first_name, boat.owner?.last_name].filter(Boolean).join(' ')
+    : '';
   const isAvailable = (boat?.availabilities?.length ?? 0) > 0;
   const [reviewBooking, setReviewBooking] = useState(null);
   const [reviewRating, setReviewRating] = useState(0);
@@ -1193,6 +1196,11 @@ function ProductPage() {
                       <h1 className="text-lg font-bold text-on-dark tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                         {boat.name}
                       </h1>
+                      {ownerName && (
+                        <span className="text-xs font-medium text-on-dark/70">
+                          {t('product.header.ownerBy', { name: ownerName })}
+                        </span>
+                      )}
                       <span className="text-on-dark/50">-</span>
                       <span className="text-xs font-bold tracking-widest text-photo-action uppercase">
                         {typeLabel}
