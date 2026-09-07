@@ -138,6 +138,9 @@ export async function listBoatReviews(id_boat, viewer = null, query = {}) {
   const reviews = await prisma.review.findMany({
     where: {
       deleted_at: null,
+      // Avis locataire→bateau uniquement : ceux écrits par un propriétaire
+      // portent sur le locataire, pas sur ce bateau.
+      user: { role: 'locataire' },
       OR: ownPending ? [validatedForPublishedBoat, ownPending] : [validatedForPublishedBoat],
     },
     orderBy: [{ created_at: 'desc' }, { id_review: 'desc' }],
@@ -217,6 +220,98 @@ export async function deleteBookingReview(id_user, id_review) {
   return { id_review: review.id_review };
 }
 
+// ─── Avis propriétaire → locataire ───────────────────────────────────────────
+// Stockés dans la même table review, mais l'auteur (id_user) est le
+// propriétaire : c'est ce qui les distingue des avis locataire → bateau
+// (le locataire ne pouvant pas réserver, un avis signé d'un propriétaire porte
+// toujours sur le locataire de la réservation).
+
+// Le propriétaire dépose ou met à jour son avis sur le locataire d'une de ses
+// réservations confirmées et terminées. Un seul avis par réservation ; toute
+// écriture le (re)met en modération.
+export async function saveRenterReview(id_owner, id_booking, { rating, comment } = {}) {
+  const parsedRating = Number(rating);
+  const cleanComment = String(comment ?? '').trim();
+  if (!Number.isInteger(parsedRating) || parsedRating < RATING_MIN || parsedRating > RATING_MAX) {
+    throw Object.assign(new Error('Note invalide (1 à 5).'), { status: 400 });
+  }
+  if (cleanComment.length < 10 || cleanComment.length > 1000) {
+    throw Object.assign(new Error('Le commentaire doit contenir entre 10 et 1000 caractères.'), {
+      status: 400,
+    });
+  }
+
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id_booking: Number(id_booking),
+      deleted_at: null,
+      boat: { id_user: id_owner, deleted_at: null },
+    },
+    select: {
+      id_booking: true,
+      status: true,
+      end_date: true,
+      reviews: {
+        where: { id_user: id_owner, deleted_at: null },
+        select: { id_review: true },
+        take: 1,
+      },
+    },
+  });
+  if (!booking) {
+    throw Object.assign(new Error('Réservation introuvable.'), { status: 404 });
+  }
+
+  const end = new Date(booking.end_date);
+  end.setHours(0, 0, 0, 0);
+  const finished = booking.status === 'confirmed' && end < startOfToday();
+  if (!finished) {
+    throw Object.assign(new Error('Vous pourrez laisser un avis une fois la location terminée.'), {
+      status: 400,
+    });
+  }
+
+  const data = {
+    rating: parsedRating,
+    comment: cleanComment,
+    status: 'pending',
+    updated_at: new Date(),
+  };
+  const existing = booking.reviews[0];
+  if (existing) {
+    return prisma.review.update({
+      where: { id_review: existing.id_review },
+      data,
+      select: { id_review: true, rating: true, comment: true, status: true },
+    });
+  }
+  return prisma.review.create({
+    data: { id_user: id_owner, id_booking: booking.id_booking, ...data, created_at: new Date() },
+    select: { id_review: true, rating: true, comment: true, status: true },
+  });
+}
+
+// Le propriétaire retire son avis sur un locataire (suppression douce).
+export async function deleteRenterReview(id_owner, id_booking) {
+  const review = await prisma.review.findFirst({
+    where: {
+      id_user: id_owner,
+      deleted_at: null,
+      booking: { id_booking: Number(id_booking), boat: { id_user: id_owner } },
+    },
+    select: { id_review: true },
+  });
+  if (!review) {
+    throw Object.assign(new Error('Avis introuvable.'), { status: 404 });
+  }
+  const now = new Date();
+  await prisma.review.update({
+    where: { id_review: review.id_review },
+    data: { deleted_at: now, updated_at: now },
+  });
+  return { id_review: review.id_review };
+}
+
 // Avis reçus sur les bateaux du propriétaire (fil « Avis reçus ») : uniquement
 // les avis validés, ceux en attente de modération restent masqués.
 export async function listOwnerReviews(id_owner) {
@@ -224,6 +319,9 @@ export async function listOwnerReviews(id_owner) {
     where: {
       status: 'validated',
       deleted_at: null,
+      // « Avis reçus » = avis laissés par des locataires sur mes bateaux ;
+      // mes propres avis sur des locataires sont exclus.
+      user: { role: 'locataire' },
       booking: { deleted_at: null, boat: { id_user: id_owner, deleted_at: null } },
     },
     orderBy: { created_at: 'desc' },
@@ -265,6 +363,8 @@ export async function replyToReview(id_owner, id_review, reply) {
     where: {
       id_review: Number(id_review),
       deleted_at: null,
+      // On ne répond qu'aux avis d'un locataire sur l'un de ses bateaux.
+      user: { role: 'locataire' },
       booking: { boat: { id_user: id_owner } },
     },
     select: { id_review: true },

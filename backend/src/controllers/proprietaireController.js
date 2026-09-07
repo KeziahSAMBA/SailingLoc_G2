@@ -11,7 +11,13 @@ import {
   createStripeLoginLink,
 } from '../services/proprietaireService.js';
 import { reportDispute } from '../services/bookingService.js';
-import { listOwnerReviews, replyToReview } from '../services/reviewService.js';
+import {
+  listOwnerReviews,
+  replyToReview,
+  saveRenterReview,
+  deleteRenterReview,
+} from '../services/reviewService.js';
+import { getRenterProfileForOwner } from '../services/renterProfileService.js';
 import { sendError } from '../middlewares/errorSecurityMiddleware.js';
 
 export async function getDashboard(req, res) {
@@ -36,6 +42,38 @@ export async function getBookingLocataireProfile(req, res) {
   try {
     const data = await getBookingLocataire(req.user.id_user, req.params.id_booking);
     res.json(data);
+  } catch (err) {
+    return sendError(res, err);
+  }
+}
+
+// Fiche complète d'un locataire ayant réservé chez ce propriétaire.
+export async function getLocataireProfile(req, res) {
+  try {
+    const data = await getRenterProfileForOwner(req.user.id_user, req.params.id);
+    res.json(data);
+  } catch (err) {
+    return sendError(res, err);
+  }
+}
+
+// Dépose / met à jour l'avis du propriétaire sur le locataire d'une réservation.
+export async function putRenterReview(req, res) {
+  try {
+    const review = await saveRenterReview(req.user.id_user, req.params.id_booking, {
+      rating: req.body?.rating,
+      comment: req.body?.comment,
+    });
+    res.json({ review });
+  } catch (err) {
+    return sendError(res, err);
+  }
+}
+
+export async function removeRenterReview(req, res) {
+  try {
+    await deleteRenterReview(req.user.id_user, req.params.id_booking);
+    res.status(204).end();
   } catch (err) {
     return sendError(res, err);
   }

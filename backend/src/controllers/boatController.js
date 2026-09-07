@@ -26,6 +26,10 @@ const BOAT_SELECT = {
   license_required: true,
   owner: {
     select: {
+      // id_user : cible du lien « par {propriétaire} » de la fiche produit vers
+      // la page publique du propriétaire (/proprietaires/:id). enrichWithRating
+      // ne retire que le id_user de premier niveau du bateau, pas celui-ci.
+      id_user: true,
       first_name: true,
       last_name: true,
     },
@@ -67,7 +71,9 @@ const BOAT_SELECT = {
       start_date: true,
       end_date: true,
       reviews: {
-        where: { status: 'validated', deleted_at: null },
+        // role locataire : exclut les avis propriétaire→locataire, qui vivent
+        // dans la même table mais ne concernent pas la note du bateau.
+        where: { status: 'validated', deleted_at: null, user: { role: 'locataire' } },
         orderBy: { id_review: 'desc' },
         take: 1,
         select: { rating: true, comment: true },

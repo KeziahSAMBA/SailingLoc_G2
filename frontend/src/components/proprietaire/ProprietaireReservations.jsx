@@ -1,19 +1,27 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   getBookings,
-  getBookingLocataire,
   updateBookingStatus,
   reportDispute,
   getBookingInvoice,
+  saveRenterReview,
 } from '../../services/proprietaireService.js';
-import { fetchDocumentFile } from '../../services/documentService.js';
+import { usePageExitNavigate } from '../../hooks/usePageTransition.js';
 import { useToast } from '../../hooks/useToast.jsx';
 import CardSkeleton from '../common/CardSkeleton.jsx';
 import InvoiceButton from '../common/InvoiceButton.jsx';
+import StarRatingInput from '../common/StarRatingInput.jsx';
 import { formatDate } from '../../utils/formatDate.js';
 import SafeImage from '../common/SafeImage.jsx';
+
+const MIN_REVIEW_COMMENT = 10;
+
+const REVIEW_STATUS_CLS = {
+  pending: 'bg-warning-base/15 text-warning-soft',
+  validated: 'bg-success-base/15 text-success-soft',
+  refused: 'bg-danger-base/15 text-danger-soft',
+};
 
 const EURO = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -27,12 +35,6 @@ const BOOKING_STATUS_CLS = {
   confirmed: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
   refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
   cancelled: 'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/80',
-};
-
-const DOC_STATUS_CLS = {
-  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
-  validated: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
-  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
 
 const FILTER_KEYS = ['all', 'pending', 'confirmed', 'cancelled', 'refused'];
@@ -158,7 +160,7 @@ function matchesPeriod(booking, period) {
   return true;
 }
 
-function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
+function BookingCard({ booking, busy, onAction, onViewLocataire, onReview, mirrored }) {
   const { t } = useTranslation();
   const statusCls =
     BOOKING_STATUS_CLS[booking.status] ||
@@ -173,6 +175,8 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
   const finished = booking.status === 'confirmed' && isPast(booking.end_date);
   const canDispute = (booking.status === 'cancelled' || finished) && !booking.has_open_dispute;
   const canInvoice = booking.status === 'confirmed';
+  // Une location terminée peut recevoir l'avis du propriétaire sur le locataire.
+  const myReview = booking.my_review;
 
   return (
     <article className="group min-h-56 overflow-hidden rounded-2xl border border-glass/20 bg-surface/10 backdrop-blur-xl transition-all duration-300 hover:border-brand-soft/60 hover:bg-surface/15 hover:shadow-xl hover:shadow-action/10 motion-safe:hover:-translate-y-1">
@@ -282,8 +286,31 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
             </p>
           )}
 
-          {(canDecide || canCancel || canDispute || canInvoice) && (
-            <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+          {(canDecide || canCancel || canDispute || canInvoice || finished) && (
+            <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-3">
+              {finished && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onReview(booking)}
+                  className={`rounded-full border border-photo-action/50 px-3 py-1 text-xs font-semibold text-photo-action transition hover:bg-photo-action/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {myReview
+                    ? t('proprietaireReservations.review.edit')
+                    : t('proprietaireReservations.review.add')}
+                </button>
+              )}
+              {myReview && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
+                    REVIEW_STATUS_CLS[myReview.status] || 'bg-neutral/15 text-on-dark/70'
+                  }`}
+                >
+                  {t(`proprietaireReservations.review.status.${myReview.status}`, {
+                    defaultValue: myReview.status,
+                  })}
+                </span>
+              )}
               {canInvoice && (
                 <InvoiceButton
                   fetchInvoice={() => getBookingInvoice(booking.id_booking)}
@@ -341,7 +368,7 @@ function BookingCard({ booking, busy, onAction, onViewLocataire, mirrored }) {
 
 function ProprietaireReservations() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const pageExitNavigate = usePageExitNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -353,11 +380,11 @@ function ProprietaireReservations() {
   const [reason, setReason] = useState('');
   // Photos jointes au signalement : { file, url (aperçu à révoquer) }.
   const [photos, setPhotos] = useState([]);
-  // Fiche locataire : booking cliqué + données chargées à la demande.
-  const [locataireModal, setLocataireModal] = useState(null);
-  const [locataireData, setLocataireData] = useState(null);
-  const [locataireLoading, setLocataireLoading] = useState(false);
-  const [viewingDocId, setViewingDocId] = useState(null);
+  // Modal d'avis propriétaire → locataire : { booking } | null.
+  const [reviewModal, setReviewModal] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewBusy, setReviewBusy] = useState(false);
   const { showToast } = useToast();
 
   function addPhotos(fileList) {
@@ -415,13 +442,46 @@ function ProprietaireReservations() {
   }, [decision, deciding]);
 
   useEffect(() => {
-    if (!locataireModal) return undefined;
+    if (!reviewModal) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape') closeLocataire();
+      if (e.key === 'Escape' && !reviewBusy) setReviewModal(null);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [locataireModal]);
+  }, [reviewModal, reviewBusy]);
+
+  function openReview(booking) {
+    setReviewModal(booking);
+    setReviewRating(booking.my_review?.rating ?? 0);
+    setReviewComment(booking.my_review?.comment ?? '');
+  }
+
+  async function submitReview(e) {
+    e.preventDefault();
+    if (reviewRating < 1 || reviewComment.trim().length < MIN_REVIEW_COMMENT) {
+      showToast(t('proprietaireReservations.review.commentTooShort'), 'error');
+      return;
+    }
+    setReviewBusy(true);
+    try {
+      const { data } = await saveRenterReview(
+        reviewModal.id_booking,
+        reviewRating,
+        reviewComment.trim()
+      );
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id_booking === reviewModal.id_booking ? { ...b, my_review: data.review } : b
+        )
+      );
+      showToast(t('proprietaireReservations.review.saved'), 'success');
+      setReviewModal(null);
+    } catch (err) {
+      showToast(err.response?.data?.message || t('proprietaireReservations.review.error'), 'error');
+    } finally {
+      setReviewBusy(false);
+    }
+  }
 
   async function executeAction(booking, action, actionReason) {
     setBusyId(booking.id_booking);
@@ -475,50 +535,11 @@ function ProprietaireReservations() {
     setReason('');
   }
 
-  async function openLocataire(booking) {
-    setLocataireModal(booking);
-    setLocataireData(null);
-    setLocataireLoading(true);
-    try {
-      const res = await getBookingLocataire(booking.id_booking);
-      setLocataireData(res.data);
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || t('proprietaireReservations.locataire.loadError'),
-        'error'
-      );
-      setLocataireModal(null);
-    } finally {
-      setLocataireLoading(false);
-    }
-  }
-
-  function closeLocataire() {
-    setLocataireModal(null);
-    setLocataireData(null);
-  }
-
-  // Ouvre la messagerie avec ce locataire pré-sélectionné (fil de discussion).
-  function messageLocataire() {
-    const { id_user, first_name, last_name } = locataireData.locataire;
-    navigate('/proprietaire/messages', {
-      state: { openUser: { id_user, first_name, last_name, role: 'locataire' } },
-    });
-  }
-
-  // Ouvre le fichier dans un nouvel onglet : la route protégée renvoie un blob
-  // (le token est ajouté par l'intercepteur axios).
-  async function viewDocument(doc) {
-    setViewingDocId(doc.id_document);
-    try {
-      const res = await fetchDocumentFile(doc.id_document);
-      const url = URL.createObjectURL(res.data);
-      window.open(url, '_blank', 'noopener');
-    } catch {
-      showToast(t('proprietaireReservations.locataire.fileError'), 'error');
-    } finally {
-      setViewingDocId(null);
-    }
+  // Le nom du locataire mène désormais à sa fiche complète (identité, locations,
+  // avis) plutôt qu'à une pop-up ; la fiche produit joue sa sortie au passage.
+  function viewLocataire(booking) {
+    const id = booking.locataire?.id_user;
+    if (id) pageExitNavigate(`/locataires/${id}`);
   }
 
   const filtered = useMemo(
@@ -623,12 +644,83 @@ function ProprietaireReservations() {
                 booking={b}
                 busy={busyId === b.id_booking}
                 onAction={handleAction}
-                onViewLocataire={openLocataire}
+                onViewLocataire={viewLocataire}
+                onReview={openReview}
                 mirrored={i % 2 === 0}
               />
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Modal : avis du propriétaire sur le locataire d'une location terminée */}
+      {reviewModal && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
+          onClick={() => !reviewBusy && setReviewModal(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="renter-review-title"
+            className="w-full max-w-md rounded-2xl border border-glass/20 bg-surface/10 p-6 shadow-2xl backdrop-blur-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="renter-review-title" className="text-lg font-semibold text-on-dark">
+              {t('proprietaireReservations.review.title')}
+            </h2>
+            <p className="mt-1 text-sm text-on-dark/70">
+              {reviewModal.locataire &&
+                `${reviewModal.locataire.first_name} ${reviewModal.locataire.last_name} — `}
+              {reviewModal.boat?.name}
+            </p>
+
+            <form onSubmit={submitReview} className="mt-4 flex flex-col gap-2">
+              <span className="text-xs font-medium text-on-dark/70">
+                {t('proprietaireReservations.review.ratingLabel')}
+              </span>
+              <StarRatingInput value={reviewRating} onChange={setReviewRating} />
+              <label
+                htmlFor="renter-review-comment"
+                className="mt-1 text-xs font-medium text-on-dark/70"
+              >
+                {t('proprietaireReservations.review.commentLabel')}
+              </label>
+              <textarea
+                id="renter-review-comment"
+                rows={4}
+                value={reviewComment}
+                maxLength={1000}
+                autoFocus
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder={t('proprietaireReservations.review.commentPlaceholder')}
+                className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark outline-none focus:border-brand-soft"
+              />
+              <p className="text-xs text-on-dark/60">
+                {t('proprietaireReservations.review.pendingNotice')}
+              </p>
+              <div className="mt-3 flex justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={reviewBusy}
+                  onClick={() => setReviewModal(null)}
+                  className={`rounded-full border border-glass/40 px-4 py-2 text-sm font-semibold text-on-dark/80 transition hover:bg-surface/10 hover:text-on-dark disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+                >
+                  {t('proprietaireReservations.review.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={reviewBusy}
+                  className={`rounded-full bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+                >
+                  {reviewBusy
+                    ? t('proprietaireReservations.review.saving')
+                    : t('proprietaireReservations.review.save')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Modal de refus / annulation */}
@@ -774,129 +866,6 @@ function ProprietaireReservations() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal profil + documents du locataire */}
-      {locataireModal && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay/60 p-4"
-          onClick={closeLocataire}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="locataire-title"
-            className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-glass/20 bg-surface/10 p-6 shadow-2xl backdrop-blur-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <h2 id="locataire-title" className="text-lg font-semibold text-on-dark">
-                {t('proprietaireReservations.locataire.title')}
-              </h2>
-              <button
-                type="button"
-                onClick={closeLocataire}
-                aria-label={t('proprietaireReservations.locataire.close')}
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface/10 text-on-dark/80 transition hover:bg-surface/20 hover:text-on-dark ${FOCUS_RING}`}
-              >
-                ×
-              </button>
-            </div>
-
-            {locataireLoading || !locataireData ? (
-              <p className="mt-6 text-sm text-on-dark/70">
-                {t('proprietaireReservations.locataire.loading')}
-              </p>
-            ) : (
-              <>
-                <div className="mt-4">
-                  <p className="text-base font-bold text-on-dark">
-                    {locataireData.locataire.first_name} {locataireData.locataire.last_name}
-                  </p>
-                  <a
-                    href={`mailto:${locataireData.locataire.email}`}
-                    className={`text-sm text-brand-soft hover:underline ${FOCUS_RING}`}
-                  >
-                    {locataireData.locataire.email}
-                  </a>
-                  <dl className="mt-3 flex flex-col gap-1.5 text-sm">
-                    <div className="flex justify-between gap-4">
-                      <dt className="text-on-dark/60">
-                        {t('proprietaireReservations.locataire.phone')}
-                      </dt>
-                      <dd className="text-on-dark/90">
-                        {locataireData.locataire.phone || (
-                          <span className="text-content-light">
-                            {t('proprietaireReservations.locataire.noPhone')}
-                          </span>
-                        )}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <dt className="text-on-dark/60">
-                        {t('proprietaireReservations.locataire.memberSince')}
-                      </dt>
-                      <dd className="text-on-dark/90">
-                        {fmtDate(locataireData.locataire.created_at)}
-                      </dd>
-                    </div>
-                  </dl>
-                  <button
-                    type="button"
-                    onClick={messageLocataire}
-                    className={`mt-4 w-fit max-w-full whitespace-nowrap rounded-full bg-action px-4 py-2 text-sm font-semibold text-action-text transition hover:bg-action-hover sm:w-full ${FOCUS_RING}`}
-                  >
-                    {t('proprietaireReservations.locataire.sendMessage')}
-                  </button>
-                </div>
-
-                <h3 className="mt-5 mb-2 text-sm font-semibold text-on-dark">
-                  {t('proprietaireReservations.locataire.documents')}
-                </h3>
-                {locataireData.documents.length === 0 ? (
-                  <p className="rounded-lg bg-surface/5 px-3 py-3 text-sm text-on-dark/60">
-                    {t('proprietaireReservations.locataire.noDocuments')}
-                  </p>
-                ) : (
-                  <ul className="flex flex-col gap-2">
-                    {locataireData.documents.map((doc) => (
-                      <li
-                        key={doc.id_document}
-                        className="flex items-center justify-between gap-3 rounded-lg border border-glass/15 bg-surface/5 px-3 py-2"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-on-dark">
-                            {t(`documentsManager.docTypes.locataire.${doc.type}.label`, {
-                              defaultValue: doc.type,
-                            })}
-                          </p>
-                          <span
-                            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-                              DOC_STATUS_CLS[doc.status] ||
-                              'status-indicator status-indicator--neutral bg-neutral/15 text-on-dark/70'
-                            }`}
-                          >
-                            {t(`documentsManager.status.${doc.status}`, {
-                              defaultValue: doc.status,
-                            })}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          disabled={doc.status !== 'validated' || viewingDocId === doc.id_document}
-                          onClick={() => doc.status === 'validated' && viewDocument(doc)}
-                          className={`shrink-0 rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/90 transition hover:bg-surface/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
-                        >
-                          {t('proprietaireReservations.locataire.view')}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
           </div>
         </div>
       )}

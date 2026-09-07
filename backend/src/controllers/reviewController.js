@@ -25,6 +25,9 @@ export async function getPublicReviews(req, res) {
       where: {
         status: 'validated',
         deleted_at: null,
+        // Avis locataire→bateau uniquement (les avis propriétaire→locataire
+        // partagent la table mais ne sont pas du contenu public bateau).
+        user: { role: 'locataire' },
         booking: {
           ...(idBoat !== null ? { id_boat: idBoat } : {}),
           deleted_at: null,

@@ -5,6 +5,7 @@ import csrf from 'csurf';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import boatRoutes from './routes/boatRoutes.js';
+import ownerRoutes from './routes/ownerRoutes.js';
 import portRoutes from './routes/portRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -193,6 +194,7 @@ const contactLimiter = rateLimit({
 app.post('/api/contact', contactLimiter, postContactRequest);
 
 app.use('/api/boats', boatRoutes);
+app.use('/api/owners', ownerRoutes);
 app.use('/api/ports', portRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
