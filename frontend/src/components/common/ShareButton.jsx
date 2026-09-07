@@ -6,7 +6,7 @@ import { FaFacebookF, FaXTwitter, FaWhatsapp, FaEnvelope } from 'react-icons/fa6
 
 const PANEL_STYLE = {
   backgroundColor: 'rgba(20,20,30,0.85)',
-  borderColor: 'rgba(255,255,255,0.2)',
+  borderColor: 'rgb(var(--sl-glass-border) / 0.2)',
   backdropFilter: 'blur(20px)',
   WebkitBackdropFilter: 'blur(20px)',
 };

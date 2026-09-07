@@ -240,8 +240,8 @@ const BoatListingCard = memo(function BoatListingCard({
       <div
         className="relative p-3 border-t"
         style={{
-          backgroundColor: 'rgb(var(--sl-glass) / 0.1)',
-          borderColor: 'rgb(var(--sl-glass) / 0.3)',
+          backgroundColor: 'rgb(var(--sl-glass-fill) / 0.1)',
+          borderColor: 'rgb(var(--sl-glass-border) / 0.3)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
         }}
@@ -1087,7 +1087,7 @@ function CategoryPage() {
             }`}
             style={{
               top: 'var(--category-header-height)',
-              backgroundColor: scrolled ? 'rgb(var(--sl-glass) / 0.1)' : 'transparent',
+              backgroundColor: scrolled ? 'rgb(var(--sl-glass-fill) / 0.1)' : 'transparent',
               backdropFilter: scrolled ? 'blur(5px)' : 'none',
               WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
               transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
@@ -1252,7 +1252,7 @@ function CategoryPage() {
                 <div
                   className="flex items-center justify-between px-4 py-2"
                   style={{
-                    backgroundColor: 'rgb(var(--sl-glass) / 0.1)',
+                    backgroundColor: 'rgb(var(--sl-glass-fill) / 0.1)',
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)',
                   }}

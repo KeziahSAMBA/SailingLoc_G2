@@ -69,8 +69,8 @@ function getInfoLinks(t) {
 }
 
 const appBtnStyle = {
-  color: '#fff',
-  border: '1px solid rgba(255,255,255,0.5)',
+  color: 'rgb(var(--sl-on-dark))',
+  border: '1px solid rgb(var(--sl-glass-border) / 0.5)',
   backgroundColor: 'transparent',
   transition: 'background-color 0.2s, border-color 0.2s',
 };
@@ -131,12 +131,12 @@ const Footer = () => {
                 className="inline-flex w-fit min-w-0 flex-none items-center justify-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-xs sm:px-2.5"
                 style={appBtnStyle}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
-                  e.currentTarget.style.borderColor = '#fff';
+                  e.currentTarget.style.backgroundColor = 'rgb(var(--sl-glass-fill) / 0.15)';
+                  e.currentTarget.style.borderColor = 'rgb(var(--sl-glass-border))';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
+                  e.currentTarget.style.borderColor = 'rgb(var(--sl-glass-border) / 0.5)';
                 }}
               >
                 <span className="flex items-center justify-center flex-shrink-0 w-[18px] h-[18px] text-base">

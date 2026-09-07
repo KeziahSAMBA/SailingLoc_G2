@@ -41,7 +41,13 @@ export default {
         'action-deep': 'rgb(var(--sl-action-deep) / <alpha-value>)',
         'action-text': 'rgb(var(--sl-action-text) / <alpha-value>)',
         'status-fill-text': 'rgb(var(--sl-status-fill-text) / <alpha-value>)',
-        glass: 'rgb(var(--sl-glass) / <alpha-value>)',
+        // `glass` reste le nom historique utilisé par les classes de bordure;
+        // sa valeur est désormais dédiée au contour, tandis que les remplissages
+        // translucides utilisent `glass-fill`.
+        glass: 'rgb(var(--sl-glass-border) / <alpha-value>)',
+        'glass-fill': 'rgb(var(--sl-glass-fill) / <alpha-value>)',
+        'glass-border': 'rgb(var(--sl-glass-border) / <alpha-value>)',
+        'glass-shadow': 'rgb(var(--sl-glass-shadow) / <alpha-value>)',
         overlay: 'rgb(var(--sl-overlay) / <alpha-value>)',
         'dark-surface': 'rgb(var(--sl-dark-surface) / <alpha-value>)',
         'dark-elevated': 'rgb(var(--sl-dark-elevated) / <alpha-value>)',

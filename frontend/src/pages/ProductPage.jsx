@@ -173,8 +173,8 @@ function layoutGalleryRows(items, containerWidth, containerHeight, gap) {
 
 // Mêmes surfaces "verre" que les blocs de la page catégorie.
 const GLASS_STYLE = {
-  backgroundColor: 'rgba(255,255,255,0.1)',
-  borderColor: 'rgba(255,255,255,0.2)',
+  backgroundColor: 'rgb(var(--sl-glass-fill) / 0.1)',
+  borderColor: 'rgb(var(--sl-glass-border) / 0.2)',
   backdropFilter: 'blur(20px)',
   WebkitBackdropFilter: 'blur(20px)',
 };
@@ -946,7 +946,7 @@ function ProductPage() {
             }`}
             style={{
               top: productHeaderHeight,
-              backgroundColor: scrolled ? 'rgba(255,255,255,0.1)' : 'transparent',
+              backgroundColor: scrolled ? 'rgb(var(--sl-glass-fill) / 0.1)' : 'transparent',
               backdropFilter: scrolled ? 'blur(5px)' : 'none',
               WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
               transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
@@ -1149,7 +1149,7 @@ function ProductPage() {
                                   style={{
                                     backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.15)',
                                     color: 'rgb(var(--sl-photo-text))',
-                                    border: '1px solid rgb(var(--sl-glass) / 0.3)',
+                                    border: '1px solid rgb(var(--sl-glass-border) / 0.3)',
                                   }}
                                 >
                                   {eq.name}
@@ -1247,7 +1247,7 @@ function ProductPage() {
                           className="flex items-center gap-1 text-[11px] font-medium text-on-dark px-1.5 py-0.5 rounded-full backdrop-blur-md"
                           style={{
                             backgroundColor: 'rgb(var(--sl-photo-action-fill) / 0.15)',
-                            border: '1px solid rgb(var(--sl-glass) / 0.3)',
+                            border: '1px solid rgb(var(--sl-glass-border) / 0.3)',
                           }}
                         >
                           <Icon className="text-photo-icon" style={{ fontSize: '12px' }} />
@@ -1367,7 +1367,7 @@ function ProductPage() {
                   className="relative z-20 flex w-full flex-col rounded-2xl border"
                   style={{
                     minHeight: '195px',
-                    borderColor: 'rgba(255,255,255,0.2)',
+                    borderColor: 'rgb(var(--sl-glass-border) / 0.2)',
                     ...slideInStyleLate('panel', 3, 'right'),
                   }}
                 >
@@ -1398,7 +1398,7 @@ function ProductPage() {
                   </div>
                   <div
                     className="flex flex-col gap-3 px-4 py-3 border-t rounded-b-2xl"
-                    style={{ ...GLASS_STYLE, borderColor: 'rgba(255,255,255,0.2)' }}
+                    style={{ ...GLASS_STYLE, borderColor: 'rgb(var(--sl-glass-border) / 0.2)' }}
                   >
                     <p className="text-[10px] font-bold tracking-widest uppercase text-photo-action text-center">
                       {t('product.booking.selectDates')}
@@ -1406,8 +1406,8 @@ function ProductPage() {
                     <div
                       className="flex max-w-full self-center justify-center rounded-full border"
                       style={{
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        borderColor: 'rgba(255,255,255,0.3)',
+                        backgroundColor: 'rgb(var(--sl-glass-fill) / 0.1)',
+                        borderColor: 'rgb(var(--sl-glass-border) / 0.3)',
                       }}
                     >
                       <DateRangePicker

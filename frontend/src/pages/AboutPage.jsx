@@ -30,12 +30,12 @@ const FOCUS_LIGHT =
 
 // Cartes glassmorphism, comme les sections de la page d'accueil.
 const cardClass =
-  'rounded-2xl border border-glass/20 bg-surface/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px]';
+  'rounded-2xl border border-glass/20 bg-surface/5 p-6 sailingloc-glass-shadow backdrop-blur-[5px]';
 
 // Taille et format des cartes Valeurs : même modèle que la Section 4
 // (proposition de valeur) de l'accueil, en gardant les couleurs glassmorphism.
 const valueCardClass =
-  'flex flex-col items-center gap-3 rounded-2xl border border-glass/20 bg-surface/5 p-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-8';
+  'flex flex-col items-center gap-3 rounded-2xl border border-glass/20 bg-surface/5 p-6 text-center sailingloc-glass-shadow backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-8';
 
 const PHOTO_BG_STYLE = {
   backgroundImage: `${PHOTO_OVERLAY_STATIC_PAGE}, url(${aboutBg})`,

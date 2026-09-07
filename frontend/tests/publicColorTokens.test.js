@@ -49,22 +49,15 @@ for (const stripeIframeColor of ['#f8fafc', '#f87171', 'rgba(203,213,225,0.65)']
 // migré ; elle ne doit jamais être élargie pour faire passer un nouveau code.
 const RAW_EXCEPTION_COUNTS = {
   'src/components/common/BoatReviews.jsx': {
-    'rgba(255,255,255,0.1)': 1,
-    'rgba(255,255,255,0.2)': 1,
     'rgba(0,0,0,0.4)': 1,
   },
   'src/components/common/Carrousel.jsx': {},
   'src/components/common/ClientReviews.jsx': {
-    'rgba(255,255,255,0.1)': 1,
-    'rgba(255,255,255,0.2)': 1,
     'rgba(0,0,0,0.4)': 2,
   },
   'src/components/common/CookieConsentBanner.jsx': { 'rgba(0,0,0,0.15)': 1 },
   'src/components/common/Footer.jsx': {
-    '#fff': 2,
-    'rgba(255,255,255,0.5)': 2,
     'rgba(90,180,236,0.2)': 1,
-    'rgba(255,255,255,0.15)': 1,
   },
   'src/components/common/GhostButton.jsx': { 'rgba(10,49,114,0.3)': 1, 'rgba(0,0,0,0.5)': 1 },
 
@@ -86,21 +79,15 @@ const RAW_EXCEPTION_COUNTS = {
   'src/components/common/PageLoadGateScreen.jsx': {},
   'src/components/common/SearchBar.jsx': {
     'rgba(0,0,0,0.45)': 1,
-    'rgba(255,255,255,0.1)': 1,
     'rgba(0,0,0,0.05)': 1,
-    'rgba(255,255,255,0.15)': 1,
-    'rgba(255,255,255,0.3)': 1,
     'rgba(0,0,0,0.1)': 1,
   },
   'src/components/common/ShareButton.jsx': {
     'rgba(20,20,30,0.85)': 1,
-    'rgba(255,255,255,0.2)': 1,
     'rgba(0,0,0,0.4)': 1,
   },
   'src/components/common/Spinner.jsx': { '#5ab4ec': 1 },
-  'src/pages/AboutPage.jsx': {
-    'rgba(0,0,0,0.18)': 2,
-  },
+  'src/pages/AboutPage.jsx': {},
   'src/pages/CategoryPage.jsx': {
     'rgba(14,165,233,0.35)': 2,
     'rgba(14,165,233,0.15)': 1,
@@ -109,7 +96,6 @@ const RAW_EXCEPTION_COUNTS = {
     'rgba(0,0,0,0.4)': 1,
   },
   'src/pages/ContactPage.jsx': {
-    'rgba(0,0,0,0.18)': 4,
     'rgba(14,165,233,0.35)': 1,
   },
   'src/pages/HomePage.jsx': {
@@ -117,9 +103,7 @@ const RAW_EXCEPTION_COUNTS = {
     'rgba(0,0,0,0.25)': 1,
     'rgba(14,165,233,0.95)': 1,
   },
-  'src/pages/legal/LegalLayout.jsx': {
-    'rgba(0,0,0,0.18)': 1,
-  },
+  'src/pages/legal/LegalLayout.jsx': {},
   'src/pages/NotFoundPage.jsx': {
     '#fff': 2,
     'rgba(255,255,255,0.15)': 1,
@@ -129,10 +113,7 @@ const RAW_EXCEPTION_COUNTS = {
     'rgba(255,255,255,0.6)': 1,
   },
   'src/pages/ProductPage.jsx': {
-    'rgba(255,255,255,0.1)': 3,
-    'rgba(255,255,255,0.2)': 3,
     'rgba(0,0,0,0.4)': 3,
-    'rgba(255,255,255,0.3)': 1,
     'rgba(14,165,233,0.35)': 1,
   },
   'src/pages/ReservationPage.jsx': {

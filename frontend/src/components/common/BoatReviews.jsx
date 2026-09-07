@@ -20,8 +20,8 @@ const DATE_OPTS = { day: 'numeric', month: 'long', year: 'numeric' };
 const PAGE_SIZE = 5;
 
 const GLASS_STYLE = {
-  backgroundColor: 'rgba(255,255,255,0.1)',
-  borderColor: 'rgba(255,255,255,0.2)',
+  backgroundColor: 'rgb(var(--sl-glass-fill) / 0.1)',
+  borderColor: 'rgb(var(--sl-glass-border) / 0.2)',
   backdropFilter: 'blur(20px)',
   WebkitBackdropFilter: 'blur(20px)',
 };
