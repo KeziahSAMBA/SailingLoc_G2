@@ -5,7 +5,7 @@ const CONSENT_KEY = 'sailingloc_cookie_consent';
 const VISUAL_PREFERENCES_KEY = 'sailingloc:visual-preferences:v1';
 
 const RESIZE_WIDTHS = [1024, 1100, 1280, 1440, 1902];
-const DIRECT_WIDTHS = [320, 375];
+const DIRECT_WIDTHS = [320, 375, 639, 640];
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -111,6 +111,7 @@ async function readCurrentAnnouncements(page) {
         left: value.left,
         right: value.right,
         width: value.width,
+        height: value.height,
         top: value.top,
         bottom: value.bottom,
       };
@@ -138,6 +139,7 @@ async function readCurrentAnnouncements(page) {
     return {
       viewport: { width: window.innerWidth, height: window.innerHeight },
       suggestions: rect(document.querySelector('#suggestions')),
+      heading: rect(heading),
       row: rect(row),
       wrappers: visibleWrappers.map(rect),
       panels: panels.map(rect),
@@ -148,6 +150,7 @@ async function readCurrentAnnouncements(page) {
 
 function assertLayout(layout, width, expectedVisibleCount) {
   assert(layout.row, `${width}px : ligne des annonces du moment introuvable.`);
+  assert(layout.heading, `${width}px : titre des annonces du moment introuvable.`);
   assert(
     layout.wrappers.length === expectedVisibleCount,
     `${width}px : ${expectedVisibleCount} carrousel(s) attendu(s), ${layout.wrappers.length} visible(s).`
@@ -162,12 +165,26 @@ function assertLayout(layout, width, expectedVisibleCount) {
     `${width}px : débordement horizontal (${layout.scrollWidth - width}px).`
   );
 
+  const expectedInset = width < 640 ? 14 : 22;
+  assert(
+    Math.abs(layout.wrappers[0].left - layout.heading.left - expectedInset) <= 1,
+    `${width}px : inset horizontal attendu de ${expectedInset}px, obtenu ${layout.wrappers[0].left - layout.heading.left}px.`
+  );
+  assert(
+    Math.abs(layout.row.height - 274) <= 1,
+    `${width}px : hauteur de la ligne attendue de 274px, obtenue ${layout.row.height}px.`
+  );
+
   for (const [index, wrapper] of layout.wrappers.entries()) {
     const panel = layout.panels[index];
     assert(panel, `${width}px : panneau du carrousel ${index + 1} introuvable.`);
     assert(
       panel.left >= wrapper.left - 1 && panel.right <= wrapper.right + 1,
       `${width}px : panneau ${index + 1} hors de son wrapper.`
+    );
+    assert(
+      Math.abs(panel.height - 254) <= 1,
+      `${width}px : hauteur historique du panneau ${index + 1} attendue de 254px, obtenue ${panel.height}px.`
     );
   }
 

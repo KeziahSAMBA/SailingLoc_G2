@@ -1009,7 +1009,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
             {t('carrousel.sections.currentLink')} <FaArrowRight size={10} />
           </Link>
         </div>
-        <div className="flex flex-col gap-4 lg:flex-row">
+        <div className="flex flex-col gap-4 px-3.5 lg:flex-row sm:px-[22px]">
           {boatTypeSections
             .filter((s) => s.slides.length > 0)
             .map(({ slides, title, initialSlide, interval }, i) => (
