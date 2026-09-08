@@ -14,6 +14,7 @@ const COLOR_VISION_PROFILES = [
 ];
 
 const HEADER_VIEWPORT_MARGIN = 8;
+const HEADER_TRANSITION_GUARD_MARGIN_MS = 120;
 
 function approximatelyEqual(first, second, tolerance = 0.5) {
   return first !== null && second !== null && Math.abs(first - second) < tolerance;
@@ -277,6 +278,8 @@ function SettingsMenu({ scrolled, onOpenChange }) {
     let headerTransitionFrame = null;
     let headerTransitionUsesAnimationFrame = false;
     let headerTransitionActive = false;
+    let headerTransitionTimeout = null;
+    const header = settingsButtonRef.current?.closest('header');
 
     const measure = () => {
       if (disposed) return;
@@ -384,6 +387,55 @@ function SettingsMenu({ scrolled, onOpenChange }) {
       headerTransitionFrame = null;
     };
 
+    const cancelHeaderTransitionGuard = () => {
+      if (headerTransitionTimeout === null) return;
+      window.clearTimeout(headerTransitionTimeout);
+      headerTransitionTimeout = null;
+    };
+
+    const parseCssTime = (value) => {
+      const normalized = String(value || '').trim();
+      if (!normalized) return 0;
+      const amount = Number.parseFloat(normalized);
+      if (!Number.isFinite(amount) || amount < 0) return 0;
+      if (normalized.endsWith('ms')) return amount;
+      if (normalized.endsWith('s')) return amount * 1000;
+      return 0;
+    };
+
+    const getHeaderTransitionBudget = () => {
+      if (!header) return 0;
+      const styles = window.getComputedStyle(header);
+      const properties = String(styles.transitionProperty || '')
+        .split(',')
+        .map((value) => value.trim());
+      const durations = String(styles.transitionDuration || '')
+        .split(',')
+        .map(parseCssTime);
+      const delays = String(styles.transitionDelay || '')
+        .split(',')
+        .map(parseCssTime);
+      const count = Math.max(durations.length, delays.length);
+      let budget = 0;
+      for (let index = 0; index < count; index += 1) {
+        const property = properties[index % properties.length] || '';
+        if (property && property !== 'all' && property !== 'transform') continue;
+        const duration = durations[index % durations.length] || 0;
+        const delay = delays[index % delays.length] || 0;
+        budget = Math.max(budget, duration + delay);
+      }
+      return budget;
+    };
+
+    const scheduleHeaderTransitionGuard = () => {
+      cancelHeaderTransitionGuard();
+      const delay = getHeaderTransitionBudget() + HEADER_TRANSITION_GUARD_MARGIN_MS;
+      headerTransitionTimeout = window.setTimeout(() => {
+        headerTransitionTimeout = null;
+        stopHeaderTransitionTracking();
+      }, delay);
+    };
+
     const measureHeaderTransitionFrame = () => {
       headerTransitionFrame = null;
       if (disposed || !headerTransitionActive) return;
@@ -400,6 +452,7 @@ function SettingsMenu({ scrolled, onOpenChange }) {
     const startHeaderTransitionTracking = () => {
       if (disposed) return;
       headerTransitionActive = true;
+      scheduleHeaderTransitionGuard();
       if (headerTransitionFrame === null) measureHeaderTransitionFrame();
     };
 
@@ -407,10 +460,10 @@ function SettingsMenu({ scrolled, onOpenChange }) {
       if (!headerTransitionActive) return;
       headerTransitionActive = false;
       cancelHeaderTransitionFrame();
+      cancelHeaderTransitionGuard();
       scheduleMeasure();
     };
 
-    const header = settingsButtonRef.current?.closest('header');
     const isTransformTransition = (event) =>
       event.target === header && (!event.propertyName || event.propertyName === 'transform');
     const handleHeaderTransitionRun = (event) => {
@@ -475,6 +528,7 @@ function SettingsMenu({ scrolled, onOpenChange }) {
       }
       headerTransitionActive = false;
       cancelHeaderTransitionFrame();
+      cancelHeaderTransitionGuard();
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
       header?.removeEventListener('transitionrun', handleHeaderTransitionRun);

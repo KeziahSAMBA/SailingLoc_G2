@@ -148,6 +148,11 @@ describe('intégration statique des préférences visuelles', () => {
     expect(settings).toContain('window.cancelAnimationFrame');
     expect(settings).toContain("addEventListener('transitionrun'");
     expect(settings).toContain('measureHeaderTransitionFrame');
+    expect(settings).toContain('headerTransitionTimeout');
+    expect(settings).toContain('getHeaderTransitionBudget');
+    expect(settings).toContain('transitionProperty');
+    expect(settings).toContain('cancelHeaderTransitionGuard');
+    expect(settings).toContain('HEADER_TRANSITION_GUARD_MARGIN_MS');
   });
 
   it('intègre le sélecteur en portail flottant sans modifier le flux du header', () => {

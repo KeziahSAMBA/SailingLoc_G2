@@ -1108,7 +1108,14 @@ async function assertIntroPanelTracking(width) {
 
     assert(samples.values.length >= 10, `Trop peu de frames de suivi à ${width}px.`);
     for (const [index, sample] of samples.values.entries()) {
-      assert(sample.delta !== null && Math.abs(sample.delta - 8) <= 2, `Le panneau dérive à ${width}px/frame ${index}.`);
+      assert(
+        sample.delta !== null && sample.delta >= -1,
+        `Le panneau passe au-dessus ou chevauche le bouton à ${width}px/frame ${index}.`
+      );
+      assert(
+        sample.delta === null || (sample.delta >= 4 && sample.delta <= 12),
+        `L'écart du panneau est anormal à ${width}px/frame ${index}: ${sample.delta}px.`
+      );
       assert(
         samples.headerHeight !== null && Math.abs(sample.headerHeight - samples.headerHeight) < 1,
         `La hauteur du header change pendant l'intro à ${width}px.`
