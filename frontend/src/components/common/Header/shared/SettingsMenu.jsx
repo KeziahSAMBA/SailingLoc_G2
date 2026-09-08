@@ -274,6 +274,9 @@ function SettingsMenu({ scrolled, onOpenChange }) {
     let disposed = false;
     let scheduledFrame = null;
     let scheduledWithAnimationFrame = false;
+    let headerTransitionFrame = null;
+    let headerTransitionUsesAnimationFrame = false;
+    let headerTransitionActive = false;
 
     const measure = () => {
       if (disposed) return;
@@ -371,6 +374,69 @@ function SettingsMenu({ scrolled, onOpenChange }) {
       }
     };
 
+    const cancelHeaderTransitionFrame = () => {
+      if (headerTransitionFrame === null) return;
+      if (headerTransitionUsesAnimationFrame && typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(headerTransitionFrame);
+      } else {
+        window.clearTimeout(headerTransitionFrame);
+      }
+      headerTransitionFrame = null;
+    };
+
+    const measureHeaderTransitionFrame = () => {
+      headerTransitionFrame = null;
+      if (disposed || !headerTransitionActive) return;
+      measure();
+      if (typeof window.requestAnimationFrame === 'function') {
+        headerTransitionUsesAnimationFrame = true;
+        headerTransitionFrame = window.requestAnimationFrame(measureHeaderTransitionFrame);
+      } else {
+        headerTransitionUsesAnimationFrame = false;
+        headerTransitionFrame = window.setTimeout(measureHeaderTransitionFrame, 16);
+      }
+    };
+
+    const startHeaderTransitionTracking = () => {
+      if (disposed) return;
+      headerTransitionActive = true;
+      if (headerTransitionFrame === null) measureHeaderTransitionFrame();
+    };
+
+    const stopHeaderTransitionTracking = () => {
+      if (!headerTransitionActive) return;
+      headerTransitionActive = false;
+      cancelHeaderTransitionFrame();
+      scheduleMeasure();
+    };
+
+    const header = settingsButtonRef.current?.closest('header');
+    const isTransformTransition = (event) =>
+      event.target === header && (!event.propertyName || event.propertyName === 'transform');
+    const handleHeaderTransitionRun = (event) => {
+      if (isTransformTransition(event)) startHeaderTransitionTracking();
+    };
+    const handleHeaderTransitionEnd = (event) => {
+      if (isTransformTransition(event)) stopHeaderTransitionTracking();
+    };
+
+    header?.addEventListener('transitionrun', handleHeaderTransitionRun);
+    header?.addEventListener('transitionstart', handleHeaderTransitionRun);
+    header?.addEventListener('transitionend', handleHeaderTransitionEnd);
+    header?.addEventListener('transitioncancel', handleHeaderTransitionEnd);
+
+    if (
+      header
+        ?.getAnimations?.()
+        .some(
+          (animation) =>
+            animation.playState === 'running' &&
+            (!animation.transitionProperty || animation.transitionProperty === 'transform')
+        )
+    ) {
+      startHeaderTransitionTracking();
+    }
+
     const resizeObserver =
       typeof window.ResizeObserver === 'function'
         ? new window.ResizeObserver(scheduleMeasure)
@@ -407,8 +473,14 @@ function SettingsMenu({ scrolled, onOpenChange }) {
         }
         scheduledFrame = null;
       }
+      headerTransitionActive = false;
+      cancelHeaderTransitionFrame();
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
+      header?.removeEventListener('transitionrun', handleHeaderTransitionRun);
+      header?.removeEventListener('transitionstart', handleHeaderTransitionRun);
+      header?.removeEventListener('transitionend', handleHeaderTransitionEnd);
+      header?.removeEventListener('transitioncancel', handleHeaderTransitionEnd);
       window.removeEventListener('resize', scheduleMeasure);
       window.removeEventListener('scroll', scheduleMeasure, true);
       window.visualViewport?.removeEventListener('resize', scheduleMeasure);

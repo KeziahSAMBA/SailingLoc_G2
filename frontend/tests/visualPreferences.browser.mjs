@@ -1050,5 +1050,84 @@ if (systemState.animationDuration)
 assert(systemState.filteredMedia === 0, 'Un média ou une tuile est filtré.');
 assert(systemState.brokenImages === 0, 'Une image chargée est cassée.');
 
+// Une session neuve révèle le header avec une transition transform. Le panneau
+// étant fixé au viewport, sa position doit suivre le bouton à chaque frame
+// pendant cette animation, sans modifier le flux de la page.
+async function assertIntroPanelTracking(width) {
+  const introContext = await browser.newContext({ viewport: { width, height: 800 } });
+  await introContext.addInitScript(({ consentKey }) => {
+    localStorage.setItem(
+      consentKey,
+      JSON.stringify({
+        version: 2,
+        date: new Date().toISOString(),
+        purposes: { analytics: false, ads: false, personalization: false },
+      })
+    );
+    sessionStorage.removeItem('sailingloc:intro-seen');
+    sessionStorage.removeItem('sailingloc:intro-revealed');
+  }, { consentKey: CONSENT_KEY });
+
+  const introPage = await introContext.newPage();
+  try {
+    await introPage.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+    await introPage.locator('main').waitFor({ state: 'visible' });
+    const settings = introPage.locator('button[aria-label="Paramètres"]');
+    await settings.evaluate((button) => button.click());
+    await introPage.locator('[data-visual-settings-panel]:visible').waitFor({ state: 'visible' });
+    await introPage.waitForFunction(() => {
+      const header = document.querySelector('header');
+      const transform = header ? getComputedStyle(header).transform : 'none';
+      return transform !== 'none' && transform !== 'matrix(1, 0, 0, 1, 0, 0)';
+    });
+
+    await introPage.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('sailingloc:intro-reveal'));
+    });
+    const samples = await introPage.evaluate(async () => {
+      const header = document.querySelector('header');
+      const trigger = document.querySelector('button[aria-label="Paramètres"]');
+      const panel = document.querySelector('[data-visual-settings-panel]');
+      const main = document.querySelector('main');
+      const headerHeight = header?.getBoundingClientRect().height ?? null;
+      const mainTop = main?.getBoundingClientRect().top ?? null;
+      const values = [];
+      const startedAt = performance.now();
+      while (performance.now() - startedAt < 700) {
+        const triggerRect = trigger?.getBoundingClientRect();
+        const panelRect = panel?.getBoundingClientRect();
+        values.push({
+          delta: panelRect && triggerRect ? panelRect.top - triggerRect.bottom : null,
+          headerHeight: header?.getBoundingClientRect().height ?? null,
+          mainTop: main?.getBoundingClientRect().top ?? null,
+        });
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+      return { values, headerHeight, mainTop };
+    });
+
+    assert(samples.values.length >= 10, `Trop peu de frames de suivi à ${width}px.`);
+    for (const [index, sample] of samples.values.entries()) {
+      assert(sample.delta !== null && Math.abs(sample.delta - 8) <= 2, `Le panneau dérive à ${width}px/frame ${index}.`);
+      assert(
+        samples.headerHeight !== null && Math.abs(sample.headerHeight - samples.headerHeight) < 1,
+        `La hauteur du header change pendant l'intro à ${width}px.`
+      );
+      assert(
+        samples.mainTop !== null && Math.abs(sample.mainTop - samples.mainTop) < 1,
+        `Le flux principal change pendant l'intro à ${width}px.`
+      );
+    }
+    assert(
+      (await introPage.evaluate(() => document.documentElement.scrollWidth)) <= width + 1,
+      `Le suivi du panneau provoque un débordement à ${width}px.`
+    );
+  } finally {
+    await introContext.close();
+  }
+}
+
+for (const width of [375, 1024]) await assertIntroPanelTracking(width);
+
 await browser.close();
 console.log('Préférences visuelles interactives : OK');

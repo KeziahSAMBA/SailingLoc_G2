@@ -146,6 +146,8 @@ describe('intégration statique des préférences visuelles', () => {
     expect(settings).toContain('document.activeElement === latestButton');
     expect(settings).toContain('window.requestAnimationFrame');
     expect(settings).toContain('window.cancelAnimationFrame');
+    expect(settings).toContain("addEventListener('transitionrun'");
+    expect(settings).toContain('measureHeaderTransitionFrame');
   });
 
   it('intègre le sélecteur en portail flottant sans modifier le flux du header', () => {
