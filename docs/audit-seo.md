@@ -9,10 +9,11 @@ reste une application monopage (SPA) : les métadonnées de navigation sont
 appliquées côté client, tandis que les fichiers d’exploration sont servis
 comme ressources statiques.
 
-Le domaine fourni, `https://dsp-dev-o24a-g2.com`, est traité comme un domaine
-de staging. Son fichier `robots.txt` bloque donc volontairement toute
-indexation. Le sitemap est néanmoins prêt avec les routes publiques stables
-afin de pouvoir être réutilisé après validation du domaine public définitif.
+Le domaine `https://dsp-dev-o24a-g2.com` est le domaine de production. Son
+fichier `robots.txt` ouvre donc l’exploration des pages publiques et déclare
+le sitemap, qui contient les routes publiques stables. Seul `/admin` est
+interdit d’exploration ; les espaces privés sont écartés par la balise
+`meta[name="robots"]` en `noindex,nofollow`.
 
 ## État initial observé
 
@@ -68,7 +69,8 @@ pages SEO indexables.
 
 ### Fichiers d’exploration
 
-- ajout de `frontend/public/robots.txt` avec `Disallow: /` pour le staging ;
+- ajout de `frontend/public/robots.txt` autorisant les pages publiques,
+  interdisant `/admin` et déclarant l’URL du sitemap ;
 - ajout d’un sitemap XML statique contenant uniquement les huit routes
   publiques stables existantes ;
 - aucune date, fréquence ou priorité artificielle n’est déclarée.
@@ -102,12 +104,12 @@ audit ; leurs dimensions et leur comportement restent inchangés.
 
 ## Limites et recommandations de mise en production
 
-1. Le domaine de staging doit rester bloqué tant que le site n’est pas destiné
-   à être indexé.
-2. Avant ouverture au public, remplacer l’hôte de staging dans le sitemap par
-   le domaine public canonique et définir une politique `robots.txt` validée.
-   Vérifier aussi que les balises canonical générées utilisent ce même domaine
-   lorsqu’il est effectivement servi.
+1. Les espaces privés ne sont pas bloqués dans `robots.txt` : ils reposent sur
+   `noindex,nofollow`. Les interdire à l’exploration empêcherait les moteurs de
+   lire cette balise, ce qui peut au contraire laisser les URL apparaître en
+   résultat.
+2. Vérifier après déploiement que les balises canonical générées utilisent bien
+   `https://dsp-dev-o24a-g2.com`, l’hôte déclaré dans le sitemap.
 3. Si une indexation complète des fiches bateau devient nécessaire, prévoir
    une stratégie SSR ou de pré-rendu séparée, avec une liste de fiches publiée
    depuis les données publiques et une gestion explicite des suppressions.

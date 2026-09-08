@@ -26,6 +26,7 @@ import FavoriteButton from '../components/common/FavoriteButton.jsx';
 import ShareButton from '../components/common/ShareButton.jsx';
 import DateRangePicker from '../components/common/DateRangePicker.jsx';
 import SafeImage from '../components/common/SafeImage.jsx';
+import ImageLightbox from '../components/common/ImageLightbox.jsx';
 import SeoMetadata from '../components/common/SeoMetadata.jsx';
 import {
   MdLocationOn,
@@ -70,7 +71,11 @@ import {
   CATEGORY_EXIT_EASING,
   prefersReducedMotion,
 } from '../hooks/useCategoryTransition.js';
-import { onPageExitRequest, isOnDashboardPage } from '../hooks/usePageTransition.js';
+import {
+  onPageExitRequest,
+  isOnDashboardPage,
+  usePageExitNavigate,
+} from '../hooks/usePageTransition.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -241,6 +246,9 @@ function ProductPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const goToCategory = useCategoryNavigate();
+  // Sortie animée de la fiche produit vers la fiche propriétaire (même
+  // mécanique que vers contact / à propos / pages légales).
+  const pageExitNavigate = usePageExitNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
   const { favoriteIds, toggleFavorite } = useFavorites();
@@ -413,7 +421,8 @@ function ProductPage() {
           ? aboutBg
           : to === '/contact'
             ? contactBg
-            : isOnDashboardPage(to)
+            : // La fiche propriétaire partage le fond des tableaux de bord.
+              to.startsWith('/proprietaires/') || isOnDashboardPage(to)
               ? dashboardBg
               : legalBg
       );
@@ -581,6 +590,17 @@ function ProductPage() {
   const images = boat?.images ?? [];
   // Galerie : image principale + jusqu'à 4 secondaires, agencées par
   // layoutGalleryRows selon leur ratio réel (cf. plus bas).
+  // Index de la photo ouverte en grand ; null quand la visionneuse est fermée.
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+  // Rend le focus à la photo cliquée quand la visionneuse se ferme, sinon la
+  // navigation au clavier repart du haut de la page.
+  const lightboxOpenerRef = useRef(null);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxIndex(null);
+    lightboxOpenerRef.current?.focus();
+  }, []);
+
   const galleryImages = useMemo(
     () => (images.length ? images.slice(0, 5) : [{ key: 'boat-fallback', url: '' }]),
     [images]
@@ -636,6 +656,7 @@ function ProductPage() {
         galleryImages.map((img, i) => ({
           key: img.url ?? i,
           url: img.url,
+          index: i,
           ratio: (img.url && galleryRatiosRef.current[img.url]) || 1.5,
         })),
         galleryContainerSize.width,
@@ -647,6 +668,13 @@ function ProductPage() {
     [galleryImages, galleryContainerSize, galleryRatioTick]
   );
   const typeLabel = boat ? t(`carrousel.boatType.${boat.type}`, { defaultValue: boat.type }) : '';
+  const ownerName = boat
+    ? [boat.owner?.first_name, boat.owner?.last_name].filter(Boolean).join(' ')
+    : '';
+  // Lien vers la fiche publique du propriétaire (/proprietaires/:id) : absent
+  // des annonces tant que l'API ne renvoie pas l'id — on retombe alors sur un
+  // simple libellé « par … » non cliquable.
+  const ownerId = boat?.owner?.id_user ?? null;
   const isAvailable = (boat?.availabilities?.length ?? 0) > 0;
   const [reviewBooking, setReviewBooking] = useState(null);
   const [reviewRating, setReviewRating] = useState(0);
@@ -1058,20 +1086,31 @@ function ProductPage() {
                         style={{ gap: GALLERY_GAP }}
                       >
                         {row.items.map((item) => (
-                          <SafeImage
+                          <button
                             key={item.key}
-                            src={item.url}
-                            alt={t('carrousel.boatImageAlt', { name: boat.name })}
-                            loading={rowIndex === 0 ? undefined : 'lazy'}
-                            decoding="async"
-                            className="rounded-2xl object-cover"
-                            fallbackClassName="flex items-center justify-center rounded-2xl bg-photo-surface text-4xl"
-                            style={{
-                              height: `${row.height}px`,
-                              width: `${row.height * item.ratio}px`,
-                              display: 'block',
+                            type="button"
+                            disabled={!item.url}
+                            aria-label={t('product.lightbox.open', { index: item.index + 1 })}
+                            onClick={(e) => {
+                              lightboxOpenerRef.current = e.currentTarget;
+                              setLightboxIndex(item.index);
                             }}
-                          />
+                            className="cursor-zoom-in rounded-2xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-default"
+                          >
+                            <SafeImage
+                              src={item.url}
+                              alt={t('carrousel.boatImageAlt', { name: boat.name })}
+                              loading={rowIndex === 0 ? undefined : 'lazy'}
+                              decoding="async"
+                              className="rounded-2xl object-cover"
+                              fallbackClassName="flex items-center justify-center rounded-2xl bg-photo-surface text-4xl"
+                              style={{
+                                height: `${row.height}px`,
+                                width: `${row.height * item.ratio}px`,
+                                display: 'block',
+                              }}
+                            />
+                          </button>
                         ))}
                       </div>
                     ))}
@@ -1194,6 +1233,37 @@ function ProductPage() {
                       <h1 className="text-lg font-bold text-on-dark tracking-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
                         {boat.name}
                       </h1>
+                      {ownerName &&
+                        (ownerId ? (
+                          <Link
+                            to={`/proprietaires/${ownerId}`}
+                            state={{ fromBoat: { id: boat.id_boat, name: boat.name } }}
+                            onClick={(e) => {
+                              // Clic gauche simple : la fiche produit joue sa
+                              // sortie avant de naviguer. Modificateurs (nouvel
+                              // onglet…) : comportement natif conservé.
+                              if (
+                                e.button !== 0 ||
+                                e.metaKey ||
+                                e.ctrlKey ||
+                                e.shiftKey ||
+                                e.altKey
+                              )
+                                return;
+                              e.preventDefault();
+                              pageExitNavigate(`/proprietaires/${ownerId}`, {
+                                state: { fromBoat: { id: boat.id_boat, name: boat.name } },
+                              });
+                            }}
+                            className="text-xs font-medium text-on-dark/70 underline decoration-dotted underline-offset-2 transition-colors hover:text-on-dark hover:decoration-solid"
+                          >
+                            {t('product.header.ownerBy', { name: ownerName })}
+                          </Link>
+                        ) : (
+                          <span className="text-xs font-medium text-on-dark/70">
+                            {t('product.header.ownerBy', { name: ownerName })}
+                          </span>
+                        ))}
                       <span className="text-on-dark/50">-</span>
                       <span className="text-xs font-bold tracking-widest text-photo-action uppercase">
                         {typeLabel}
@@ -1606,6 +1676,16 @@ function ProductPage() {
           )}
         </div>
       </div>
+
+      {lightboxIndex !== null && boat && (
+        <ImageLightbox
+          images={galleryImages}
+          index={lightboxIndex}
+          alt={t('carrousel.boatImageAlt', { name: boat.name })}
+          onClose={closeLightbox}
+          onNavigate={setLightboxIndex}
+        />
+      )}
     </main>
   );
 }

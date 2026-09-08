@@ -1,6 +1,6 @@
 const SITE_NAME = 'SailingLoc';
 
-const PUBLIC_PATHS = new Set([
+export const PUBLIC_PATHS = new Set([
   '/',
   '/categorie',
   '/a-propos',

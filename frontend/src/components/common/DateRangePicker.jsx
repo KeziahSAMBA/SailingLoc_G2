@@ -119,9 +119,9 @@ function DateRangePicker({
     if (!startDate || (startDate && endDate) || isBeforeDay(day, startDate)) {
       onChangeStart(toISO(day));
       onChangeEnd('');
-    } else if (isSameDay(day, startDate)) {
-      // no-op, garde juste la date de début
     } else {
+      // Re-cliquer sur le jour de début confirme une réservation d'un seul
+      // jour (bornes incluses : début = fin = 1 jour facturé).
       onChangeEnd(toISO(day));
       setOpen(false);
     }
@@ -131,7 +131,9 @@ function DateRangePicker({
   const canGoPrev = isBeforeDay(today, month) || month.getMonth() === today.getMonth();
 
   const displayValue = startDate
-    ? `${dateFormatter.format(startDate)}${endDate ? ` - ${dateFormatter.format(endDate)}` : ''}`
+    ? `${dateFormatter.format(startDate)}${
+        endDate && !isSameDay(startDate, endDate) ? ` - ${dateFormatter.format(endDate)}` : ''
+      }`
     : '';
 
   return (

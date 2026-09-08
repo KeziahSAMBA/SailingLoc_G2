@@ -55,6 +55,9 @@ import {
   getMyBoats as getProprietaireBoats,
   getMyBookings as getProprietaireBookings,
   getBookingLocataireProfile as getProprietaireBookingLocataire,
+  getLocataireProfile as getProprietaireLocataireProfile,
+  putRenterReview as putProprietaireRenterReview,
+  removeRenterReview as removeProprietaireRenterReview,
   getMyReviews as getProprietaireReviews,
   postReviewReply as postProprietaireReviewReply,
   getMyPayments as getProprietairePayments,
@@ -298,6 +301,27 @@ router.get(
   protect,
   requireRole('proprietaire'),
   getProprietaireBookingLocataire
+);
+// Fiche complète d'un locataire (identité, locations, avis) — réservée au
+// propriétaire ayant réservé avec lui.
+router.get(
+  '/me/proprietaire/locataires/:id',
+  protect,
+  requireRole('proprietaire'),
+  getProprietaireLocataireProfile
+);
+// Avis du propriétaire sur le locataire d'une réservation (un par réservation).
+router.put(
+  '/me/proprietaire/bookings/:id_booking/review',
+  protect,
+  requireRole('proprietaire'),
+  putProprietaireRenterReview
+);
+router.delete(
+  '/me/proprietaire/bookings/:id_booking/review',
+  protect,
+  requireRole('proprietaire'),
+  removeProprietaireRenterReview
 );
 router.get(
   '/me/proprietaire/bookings/:id_booking/invoice.pdf',

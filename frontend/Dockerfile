@@ -10,6 +10,11 @@ FROM node:20.19.4-alpine3.21 AS builder
 
 WORKDIR /app/frontend
 
+# The post-build prerender step drives a real browser. Alpine ships its own
+# Chromium build, so Playwright reuses it instead of downloading one.
+RUN apk add --no-cache chromium nss freetype harfbuzz ttf-freefont
+ENV PRERENDER_CHROMIUM_PATH=/usr/bin/chromium-browser
+
 # Vite inlines public configuration into the browser bundle. Railway exposes
 # service variables during the Docker build; declaring them as ARGs makes that
 # contract explicit and lets the build validator fail closed when a deployment
@@ -18,10 +23,12 @@ ARG VITE_API_BASE_URL
 ARG VITE_MATOMO_URL
 ARG VITE_STRIPE_PUBLISHABLE_KEY
 ARG VITE_BUILD_ENV=production
+ARG VITE_SITE_ORIGIN
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_MATOMO_URL=$VITE_MATOMO_URL \
     VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY \
-    VITE_BUILD_ENV=$VITE_BUILD_ENV
+    VITE_BUILD_ENV=$VITE_BUILD_ENV \
+    VITE_SITE_ORIGIN=$VITE_SITE_ORIGIN
 
 # Copy the frontend workspace manifest before installing so Docker can cache
 # dependencies independently from application source changes. The frontend has

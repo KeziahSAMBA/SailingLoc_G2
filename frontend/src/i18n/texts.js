@@ -259,6 +259,14 @@ export const TEXTS = {
   },
 
   product: {
+    lightbox: {
+      label: { fr: 'Photo en grand', en: 'Enlarged photo' },
+      open: { fr: 'Agrandir la photo {{index}}', en: 'Enlarge photo {{index}}' },
+      close: { fr: 'Fermer', en: 'Close' },
+      previous: { fr: 'Photo précédente', en: 'Previous photo' },
+      next: { fr: 'Photo suivante', en: 'Next photo' },
+      counter: { fr: '{{current}} / {{total}}', en: '{{current}} / {{total}}' },
+    },
     notFound: {
       title: { fr: 'Bateau introuvable', en: 'Boat not found' },
       text: {
@@ -277,6 +285,7 @@ export const TEXTS = {
         en: 'No comments yet',
       },
       lengthValue: { fr: '{{size}} m', en: '{{size}} m' },
+      ownerBy: { fr: 'par {{name}}', en: 'by {{name}}' },
     },
     booking: {
       available: { fr: 'Disponible', en: 'Available' },
@@ -354,6 +363,161 @@ export const TEXTS = {
         fr: 'Port de départ : {{port}}',
         en: 'Departure port: {{port}}',
       },
+    },
+  },
+
+  ownerProfile: {
+    pageTitle: { fr: 'Profil propriétaire', en: 'Owner profile' },
+    pageTitleNamed: { fr: 'Profil de {{name}}', en: '{{name}} — owner profile' },
+    loading: { fr: 'Chargement du profil…', en: 'Loading profile…' },
+    loadError: {
+      fr: 'Impossible de charger ce profil pour le moment.',
+      en: 'Unable to load this profile right now.',
+    },
+    notFound: {
+      title: { fr: 'Propriétaire introuvable', en: 'Owner not found' },
+      text: {
+        fr: 'Ce propriétaire n’existe pas ou n’a plus d’annonce publiée.',
+        en: 'This owner does not exist or no longer has a published listing.',
+      },
+      cta: { fr: 'Parcourir la flotte', en: 'Browse the fleet' },
+    },
+    memberSince: { fr: 'Membre depuis {{date}}', en: 'Member since {{date}}' },
+    stats: {
+      boats_one: { fr: '{{count}} bateau', en: '{{count}} boat' },
+      boats_other: { fr: '{{count}} bateaux', en: '{{count}} boats' },
+      reviews_one: { fr: '{{count}} avis', en: '{{count}} review' },
+      reviews_other: { fr: '{{count}} avis', en: '{{count}} reviews' },
+      rating: { fr: '{{rating}} / 5', en: '{{rating}}/5' },
+    },
+    badges: {
+      skipper: { fr: 'Skipper vérifié', en: 'Verified skipper' },
+      license: { fr: 'Permis vérifié', en: 'Verified license' },
+      insurance: { fr: 'Assurance vérifiée', en: 'Verified insurance' },
+      francisation: { fr: 'Acte de francisation vérifié', en: 'Verified registration' },
+      none: {
+        fr: 'Aucune vérification renseignée pour l’instant.',
+        en: 'No verification on file yet.',
+      },
+    },
+    boats: {
+      title: { fr: 'Ses bateaux', en: 'Their boats' },
+      empty: { fr: 'Aucun bateau publié pour l’instant.', en: 'No published boat yet.' },
+      new: { fr: 'Nouveau', en: 'New' },
+      pricePerDay: { fr: '{{price}} € / jour', en: '€{{price}} / day' },
+    },
+    reviews: {
+      title: { fr: 'Avis reçus', en: 'Reviews received' },
+      empty: {
+        fr: 'Aucun avis pour l’instant sur les bateaux de ce propriétaire.',
+        en: 'No reviews yet on this owner’s boats.',
+      },
+    },
+    pager: {
+      prev: { fr: 'Précédent', en: 'Previous' },
+      next: { fr: 'Suivant', en: 'Next' },
+      position: { fr: '{{page}} / {{total}}', en: '{{page}} / {{total}}' },
+    },
+  },
+
+  renterProfile: {
+    pageTitle: { fr: 'Profil locataire', en: 'Renter profile' },
+    pageTitleNamed: { fr: 'Profil de {{name}}', en: '{{name}} — renter profile' },
+    breadcrumb: { reservations: { fr: 'Mes réservations', en: 'My bookings' } },
+    loading: { fr: 'Chargement du profil…', en: 'Loading profile…' },
+    loadError: {
+      fr: 'Impossible de charger ce profil pour le moment.',
+      en: 'Unable to load this profile right now.',
+    },
+    notFound: {
+      title: { fr: 'Locataire introuvable', en: 'Renter not found' },
+      text: {
+        fr: 'Ce locataire n’a aucune réservation avec vous, ou son compte n’existe plus.',
+        en: 'This renter has no booking with you, or the account no longer exists.',
+      },
+      cta: { fr: 'Retour aux réservations', en: 'Back to bookings' },
+    },
+    memberSince: { fr: 'Membre depuis {{date}}', en: 'Member since {{date}}' },
+    phone: { none: { fr: 'Téléphone non renseigné', en: 'No phone on file' } },
+    contact: { message: { fr: 'Envoyer un message', en: 'Send a message' } },
+    stats: {
+      bookings_one: { fr: '{{count}} location', en: '{{count}} booking' },
+      bookings_other: { fr: '{{count}} locations', en: '{{count}} bookings' },
+      reviews_one: { fr: '{{count}} avis', en: '{{count}} review' },
+      reviews_other: { fr: '{{count}} avis', en: '{{count}} reviews' },
+      rating: { fr: '{{rating}} / 5', en: '{{rating}}/5' },
+    },
+    badges: {
+      license: { fr: 'Permis vérifié', en: 'Verified license' },
+      identity: { fr: 'Identité vérifiée', en: 'Verified identity' },
+      nautical_cv: { fr: 'CV nautique vérifié', en: 'Verified sailing résumé' },
+      none: {
+        fr: 'Aucun justificatif validé pour l’instant.',
+        en: 'No approved document yet.',
+      },
+    },
+    documents: {
+      title: { fr: 'Documents d’identité', en: 'Identity documents' },
+      empty: { fr: 'Aucun document transmis.', en: 'No document provided.' },
+      view: { fr: 'Voir', en: 'View' },
+      fileError: {
+        fr: 'Impossible d’ouvrir le document.',
+        en: 'Unable to open the document.',
+      },
+    },
+    bookings: {
+      title: { fr: 'Ses locations chez vous', en: 'Their bookings with you' },
+      empty: { fr: 'Aucune location pour l’instant.', en: 'No booking yet.' },
+    },
+    reviews: {
+      title: { fr: 'Avis reçus des propriétaires', en: 'Reviews from owners' },
+      empty: {
+        fr: 'Aucun avis pour l’instant sur ce locataire.',
+        en: 'No reviews about this renter yet.',
+      },
+    },
+    reviewForm: {
+      sectionTitle: { fr: 'Votre évaluation de ce locataire', en: 'Your rating of this renter' },
+      forBoat: { fr: 'Location : {{boat}}', en: 'Rental: {{boat}}' },
+      add: { fr: '+ Laisser un avis', en: '+ Leave a review' },
+      edit: { fr: 'Modifier', en: 'Edit' },
+      remove: { fr: 'Supprimer', en: 'Delete' },
+      save: { fr: 'Publier', en: 'Publish' },
+      saving: { fr: 'Envoi…', en: 'Sending…' },
+      cancel: { fr: 'Annuler', en: 'Cancel' },
+      yourReview: { fr: 'Votre avis', en: 'Your review' },
+      ratingLabel: { fr: 'Note', en: 'Rating' },
+      ratingValue: { fr: '{{n}} sur 5', en: '{{n}} out of 5' },
+      commentLabel: { fr: 'Commentaire', en: 'Comment' },
+      commentPlaceholder: {
+        fr: 'Comment s’est passée la location avec ce locataire ?',
+        en: 'How did the rental with this renter go?',
+      },
+      commentTooShort: {
+        fr: 'Note requise et commentaire d’au moins 10 caractères.',
+        en: 'Rating required and comment of at least 10 characters.',
+      },
+      notYet: {
+        fr: 'Un avis sera possible une fois la location terminée.',
+        en: 'A review will be possible once the rental is over.',
+      },
+      saved: { fr: 'Avis enregistré (en modération).', en: 'Review saved (under review).' },
+      removed: { fr: 'Avis supprimé.', en: 'Review deleted.' },
+      removeConfirm: {
+        fr: 'Supprimer définitivement cet avis ?',
+        en: 'Permanently delete this review?',
+      },
+      error: { fr: 'L’opération a échoué.', en: 'The operation failed.' },
+      status: {
+        pending: { fr: 'En modération', en: 'Under review' },
+        validated: { fr: 'Publié', en: 'Published' },
+        refused: { fr: 'Refusé', en: 'Rejected' },
+      },
+    },
+    pager: {
+      prev: { fr: 'Précédent', en: 'Previous' },
+      next: { fr: 'Suivant', en: 'Next' },
+      position: { fr: '{{page}} / {{total}}', en: '{{page}} / {{total}}' },
     },
   },
 
@@ -520,6 +684,7 @@ export const TEXTS = {
   breadcrumb: {
     home: { fr: 'Accueil', en: 'Home' },
     categorie: { fr: 'Catégorie', en: 'Category' },
+    product: { fr: 'Bateau', en: 'Boat' },
   },
 
   footer: {
@@ -1810,6 +1975,14 @@ export const TEXTS = {
       fr: 'Bateau dépublié — propriétaire notifié, signalement clôturé.',
       en: 'Boat unpublished — owner notified, report closed.',
     },
+    accept: { fr: 'Accepter', en: 'Accept' },
+    refuse: { fr: 'Refuser', en: 'Refuse' },
+    status: {
+      draft: { fr: 'Brouillon', en: 'Draft' },
+      pending: { fr: 'En attente', en: 'Pending review' },
+      published: { fr: 'Publié', en: 'Published' },
+      refused: { fr: 'Refusé', en: 'Refused' },
+    },
     published: { fr: 'Publié', en: 'Published' },
     unpublished: { fr: 'Non publié', en: 'Unpublished' },
     pendingReports: { fr: '{{count}} en attente', en: '{{count}} pending' },
@@ -2394,6 +2567,35 @@ export const TEXTS = {
     refused: { fr: 'Demande refusée, paiement annulé.', en: 'Request refused, payment cancelled.' },
     cancelled: { fr: 'Réservation annulée.', en: 'Booking cancelled.' },
     genericError: { fr: 'Une erreur est survenue.', en: 'Something went wrong.' },
+    review: {
+      add: { fr: '+ Mettre un avis', en: '+ Add a review' },
+      edit: { fr: 'Modifier l’avis', en: 'Edit review' },
+      title: { fr: 'Votre avis sur le locataire', en: 'Your review of the renter' },
+      ratingLabel: { fr: 'Note', en: 'Rating' },
+      commentLabel: { fr: 'Commentaire', en: 'Comment' },
+      commentPlaceholder: {
+        fr: 'Comment s’est passée la location avec ce locataire ?',
+        en: 'How did the rental with this renter go?',
+      },
+      commentTooShort: {
+        fr: 'Note requise et commentaire d’au moins 10 caractères.',
+        en: 'Rating required and comment of at least 10 characters.',
+      },
+      pendingNotice: {
+        fr: 'Votre avis sera publié après validation par notre équipe.',
+        en: 'Your review will be published once approved by our team.',
+      },
+      save: { fr: 'Publier', en: 'Publish' },
+      saving: { fr: 'Envoi…', en: 'Sending…' },
+      cancel: { fr: 'Annuler', en: 'Cancel' },
+      saved: { fr: 'Avis enregistré (en modération).', en: 'Review saved (under review).' },
+      error: { fr: 'L’enregistrement a échoué.', en: 'Saving failed.' },
+      status: {
+        pending: { fr: 'Avis en modération', en: 'Review under review' },
+        validated: { fr: 'Avis publié', en: 'Review published' },
+        refused: { fr: 'Avis refusé', en: 'Review rejected' },
+      },
+    },
   },
 
   proprietaireAccount: {
