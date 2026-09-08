@@ -44,7 +44,7 @@ function PageLoadGateScreen({ pathname }) {
       aria-live="polite"
       className="fixed inset-0 z-[999] flex items-center justify-center"
       style={{
-        backgroundImage: `linear-gradient(rgba(3,24,30,0.72), rgba(3,35,39,0.8)), url(${bg})`,
+        backgroundImage: `linear-gradient(rgb(var(--sl-photo-overlay-page-gate-start) / var(--sl-photo-overlay-page-gate-start-opacity)), rgb(var(--sl-photo-overlay-page-gate-end) / var(--sl-photo-overlay-page-gate-end-opacity))), url(${bg})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         animation: 'pageLoadGateFadeIn 300ms ease both',

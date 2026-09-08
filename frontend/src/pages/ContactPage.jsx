@@ -47,7 +47,7 @@ const FOCUS_LIGHT =
 // mise en page (gap, tailles de texte) reprise du modèle Section 4 (proposition
 // de valeur) de la page d'accueil.
 const detailCardClass =
-  'flex flex-col items-center gap-3 rounded-2xl border border-glass/20 bg-surface/5 p-4 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-6';
+  'flex flex-col items-center gap-3 rounded-2xl border border-glass/20 bg-surface/5 p-4 text-center sailingloc-glass-shadow backdrop-blur-[5px] transition-all duration-300 hover:-translate-y-1 sm:p-6';
 
 const inputLight =
   'w-full rounded-lg border border-glass/25 bg-surface/10 px-4 py-2.5 text-sm text-on-dark placeholder-on-dark outline-none backdrop-blur-md transition focus:border-photo-action focus:bg-surface/15 focus:ring-2 focus:ring-photo-action/20';
@@ -55,7 +55,7 @@ const labelLight = 'mb-1.5 block text-sm font-medium text-on-dark/80';
 
 const PHOTO_BG_STYLE = {
   fontFamily: "'Plus Jakarta Sans', sans-serif",
-  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${contactBg})`,
+  backgroundImage: `${PHOTO_OVERLAY_STATIC_PAGE}, url(${contactBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',
@@ -313,7 +313,7 @@ function ContactPage() {
             {formSent ? (
               <div
                 role="status"
-                className="status-indicator status-indicator--success mx-auto w-3/4 rounded-2xl border border-success/40 bg-success-surface/10 px-6 py-8 text-center shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
+                className="status-indicator status-indicator--success mx-auto w-3/4 rounded-2xl border border-success/40 bg-success-surface/10 px-6 py-8 text-center sailingloc-glass-shadow backdrop-blur-xl md:flex md:flex-1 md:flex-col md:items-center md:justify-center"
               >
                 <p className="text-lg font-semibold text-success-text">
                   {t('contactPage.form.sent.title')}
@@ -332,7 +332,7 @@ function ContactPage() {
             ) : (
               <form
                 onSubmit={handleFormSubmit}
-                className="mx-auto w-3/4 rounded-2xl border border-glass/20 bg-surface/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] md:flex md:flex-1 md:flex-col"
+                className="mx-auto w-3/4 rounded-2xl border border-glass/20 bg-surface/5 p-6 sailingloc-glass-shadow backdrop-blur-[5px] md:flex md:flex-1 md:flex-col"
               >
                 {formError && (
                   <div
@@ -446,7 +446,7 @@ function ContactPage() {
                 return (
                   <div
                     key={item.q}
-                    className={`rounded-2xl border border-glass/20 bg-surface/5 shadow-sm backdrop-blur-[5px] transition-colors duration-300 ${open ? 'bg-surface/10 shadow-[0_8px_32px_rgba(0,0,0,0.18)]' : ''}`}
+                    className={`rounded-2xl border border-glass/20 bg-surface/5 shadow-sm backdrop-blur-[5px] transition-colors duration-300 ${open ? 'bg-surface/10 sailingloc-glass-shadow' : ''}`}
                   >
                     <button
                       type="button"

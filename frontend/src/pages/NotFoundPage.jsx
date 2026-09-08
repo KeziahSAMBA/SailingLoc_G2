@@ -64,7 +64,7 @@ function NotFoundPage() {
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
       />
-      <div className="absolute inset-0 bg-overlay/60" />
+      <div className="sailingloc-photo-overlay sailingloc-photo-overlay--not-found absolute inset-0" />
 
       <div className="relative">
         <CapsizedBoat />

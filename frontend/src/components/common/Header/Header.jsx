@@ -123,7 +123,6 @@ function Header() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const menuRef = useRef(null);
   const userMenuRef = useRef(null);
-  const settingsPanelRef = useRef(null);
   const idBase = useId().replace(/[^a-zA-Z0-9_-]/g, '-');
   const menuPanelId = `${idBase}-public-menu`;
   const location = useLocation();
@@ -198,12 +197,7 @@ function Header() {
           : getBurgerItems(t);
 
   return (
-    <HeaderShell
-      scrolled={scrolled}
-      introHidden={introHidden}
-      settingsOpen={settingsOpen}
-      settingsPanelRef={settingsPanelRef}
-    >
+    <HeaderShell scrolled={scrolled} introHidden={introHidden} settingsOpen={settingsOpen}>
       {/* Gauche — Burger + Logo (33%) */}
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4 lg:w-1/3 lg:flex-none lg:pl-4">
         {/* Burger */}
@@ -300,12 +294,11 @@ function Header() {
       </nav>
 
       {/* Droite — Paramètres + Connexion (33%) */}
-      <div className="flex flex-1 items-center justify-end gap-2 sm:gap-4 lg:w-1/3 lg:flex-none lg:pr-4">
-        <SettingsMenu
-          scrolled={scrolled}
-          onOpenChange={setSettingsOpen}
-          panelContainerRef={settingsPanelRef}
-        />
+      <div
+        data-header-right="true"
+        className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:gap-4 lg:w-1/3 lg:flex-none lg:pr-4"
+      >
+        <SettingsMenu scrolled={scrolled} onOpenChange={setSettingsOpen} />
 
         {authLoading ? (
           <div className="h-6 w-9 sm:w-[120px]" aria-hidden="true" />

@@ -197,9 +197,15 @@ describe('bascule lune et soleil', () => {
     const css = source('frontend/src/index.css');
 
     expect(css).toContain('--sl-header-settings-bg: var(--sl-brand-navy)');
-    expect(shell).toContain('className="absolute left-0 right-0 top-0 -z-10"');
-    expect(shell).toContain('height: baseHeight');
-    expect(settings).toContain("backgroundColor: 'rgb(var(--sl-header-settings-bg) / 0.96)'");
+    expect(shell).toContain('className="absolute inset-0 -z-10"');
+    expect(shell).toContain('minHeight: baseHeight');
+    expect(shell).not.toContain('settingsPanelRef');
+    expect(settings).toContain('createPortal');
+    expect(settings).not.toContain('panelContainerRef');
+    expect(settings).toContain('data-visual-settings-panel');
+    expect(settings).toContain('data-header-settings-placement="fixed"');
+    expect(settings).toContain("position: 'fixed'");
+    expect(settings).not.toContain('settingsPlacement');
     expect(settings).toContain('border border-glass/40');
     expect(settings).toContain('focus-visible:outline-on-dark');
     expect(settings).toContain('aria-pressed={i18n.language === code}');
@@ -232,7 +238,10 @@ describe('composants spéciaux du mode nuit', () => {
     expect(map).toContain('rgb(var(--sl-map-available))');
     expect(map).toContain('background: rgb(var(--sl-surface))');
     expect(chart).toContain('rgb(var(--sl-chart-1))');
-    expect(chart).toContain('rgb(var(--sl-glass) / 0.15)');
+    expect(chart).toContain('rgb(var(--sl-glass-border) / 0.15)');
+    expect(chart).not.toContain('rgb(var(--sl-glass) / 0.15)');
+    expect(source('frontend/src/index.css')).toContain('--sl-glass-fill:');
+    expect(source('frontend/src/index.css')).toContain('--sl-glass-border:');
     expect(source('frontend/src/index.css')).not.toMatch(/\b(?:img|video)\s*\{[^}]*filter:/su);
   });
 });

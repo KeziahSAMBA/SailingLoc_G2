@@ -96,12 +96,15 @@ export const PAGE_SLIDE_CSS = `
 // exactement le même voile — celui de la page d'ARRIVÉE, pas celle de départ,
 // pour que l'image affichée pendant le fondu soit identique au pixel près à
 // celle que la page cible affichera dès son montage.
-export const PHOTO_OVERLAY_BOAT = 'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5))';
-export const PHOTO_OVERLAY_STATIC_PAGE = 'linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72))';
+export const PHOTO_OVERLAY_BOAT =
+  'linear-gradient(rgb(var(--sl-photo-overlay-boat-color) / var(--sl-photo-overlay-boat-opacity)), rgb(var(--sl-photo-overlay-boat-color) / var(--sl-photo-overlay-boat-opacity)))';
+export const PHOTO_OVERLAY_STATIC_PAGE =
+  'linear-gradient(rgb(var(--sl-photo-overlay-static-start) / var(--sl-photo-overlay-static-start-opacity)), rgb(var(--sl-photo-overlay-static-end) / var(--sl-photo-overlay-static-end-opacity)))';
 // Identique au voile bg-black/40 des 3 layouts dashboard (Proprietaire/
 // Locataire/Admin) — sans lui, le crossfade vers l'un d'eux atterrit sur un
 // voile plus sombre/teinté que le leur, et le raccord accroche visiblement.
-export const PHOTO_OVERLAY_DASHBOARD = 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4))';
+export const PHOTO_OVERLAY_DASHBOARD =
+  'linear-gradient(rgb(var(--sl-photo-overlay-dashboard-color) / var(--sl-photo-overlay-dashboard-opacity)), rgb(var(--sl-photo-overlay-dashboard-color) / var(--sl-photo-overlay-dashboard-opacity)))';
 
 export const HERO_EXIT_EASING = 'cubic-bezier(0.5, 0, 0.75, 0.2)';
 export const HERO_ENTER_EASING = 'cubic-bezier(0.25, 0.8, 0.5, 1)';

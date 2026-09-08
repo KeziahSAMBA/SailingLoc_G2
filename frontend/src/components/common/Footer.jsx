@@ -69,8 +69,8 @@ function getInfoLinks(t) {
 }
 
 const appBtnStyle = {
-  color: '#fff',
-  border: '1px solid rgba(255,255,255,0.5)',
+  color: 'rgb(var(--sl-on-dark))',
+  border: '1px solid rgb(var(--sl-glass-border) / 0.5)',
   backgroundColor: 'transparent',
   transition: 'background-color 0.2s, border-color 0.2s',
 };
@@ -108,7 +108,7 @@ const Footer = () => {
       id="contact"
       className="flex flex-col justify-between overflow-x-hidden px-4 text-content-soft sm:px-8 lg:px-12 xl:px-16"
       style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${bgImage})`,
+        backgroundImage: `linear-gradient(rgb(var(--sl-photo-overlay-footer-color) / var(--sl-photo-overlay-footer-opacity)), rgb(var(--sl-photo-overlay-footer-color) / var(--sl-photo-overlay-footer-opacity))), url(${bgImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         borderTop: '1px solid rgba(90, 180, 236, 0.2)',
@@ -131,12 +131,12 @@ const Footer = () => {
                 className="inline-flex w-fit min-w-0 flex-none items-center justify-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-xs sm:px-2.5"
                 style={appBtnStyle}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
-                  e.currentTarget.style.borderColor = '#fff';
+                  e.currentTarget.style.backgroundColor = 'rgb(var(--sl-glass-fill) / 0.15)';
+                  e.currentTarget.style.borderColor = 'rgb(var(--sl-glass-border))';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
+                  e.currentTarget.style.borderColor = 'rgb(var(--sl-glass-border) / 0.5)';
                 }}
               >
                 <span className="flex items-center justify-center flex-shrink-0 w-[18px] h-[18px] text-base">

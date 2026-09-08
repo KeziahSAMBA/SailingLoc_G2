@@ -438,7 +438,7 @@ function ReservationPage() {
         backgroundPosition: 'center',
       }}
     >
-      <div className="min-h-screen w-full bg-overlay/50 px-4 pt-[120px] pb-16">
+      <div className="min-h-screen w-full sailingloc-photo-overlay sailingloc-photo-overlay--hero px-4 pt-[120px] pb-16">
         <section className="mx-auto w-full max-w-2xl">
           <h1 className="mb-2 text-center text-3xl font-bold text-on-dark">
             {t('reservation.title')}

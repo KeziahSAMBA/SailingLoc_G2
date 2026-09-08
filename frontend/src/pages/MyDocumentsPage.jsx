@@ -20,7 +20,7 @@ function MyDocumentsPage() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      <div className="min-h-screen w-full bg-overlay/40 px-4 pt-[120px] pb-16">
+      <div className="min-h-screen w-full sailingloc-photo-overlay sailingloc-photo-overlay--document px-4 pt-[120px] pb-16">
         <section className="mx-auto w-full max-w-2xl">
           <header className="mb-8">
             <p className="inline-block rounded-full bg-surface/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-on-dark">

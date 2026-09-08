@@ -130,28 +130,52 @@ describe('intégration statique des préférences visuelles', () => {
     expect(settings).toContain("aria-pressed={colorVision !== 'standard'}");
     expect(settings).toContain('aria-hidden={!colorVisionOpen}');
     expect(settings).toContain('tabIndex={colorVisionOpen ? 0 : -1}');
-    expect(settings).toContain('grid-rows-[0fr]');
-    expect(settings).toContain('grid-rows-[1fr]');
+    expect(settings).toContain('flex-col');
+    expect(settings).toContain('min-h-11 w-full');
+    expect(settings).toContain("overflowWrap: 'anywhere'");
     expect(settings).toContain('duration-[180ms]');
     expect(settings).toContain('motion-reduce:transition-none');
-    expect(settings).toContain('activeGlassesButtonRef.current?.focus()');
+    expect(settings).toContain("pendingFocusRef.current = { target: 'glasses' }");
+    expect(settings).toContain('measurementStateRef');
+    expect(settings).toContain('measurement.pending');
+    expect(settings).toContain('measurementStateRef.current.version === stableVersion');
+    expect(settings).toContain(
+      'const currentGlassesButton = settingsGroupRef.current?.querySelector('
+    );
+    expect(settings).toContain('currentGlassesButton.focus()');
+    expect(settings).toContain('document.activeElement === latestButton');
+    expect(settings).toContain('window.requestAnimationFrame');
+    expect(settings).toContain('window.cancelAnimationFrame');
+    expect(settings).toContain("addEventListener('transitionrun'");
+    expect(settings).toContain('measureHeaderTransitionFrame');
+    expect(settings).toContain('headerTransitionTimeout');
+    expect(settings).toContain('getHeaderTransitionBudget');
+    expect(settings).toContain('transitionProperty');
+    expect(settings).toContain('cancelHeaderTransitionGuard');
+    expect(settings).toContain('HEADER_TRANSITION_GUARD_MARGIN_MS');
   });
 
-  it('intègre le sélecteur sous le header et réserve sa hauteur dans le flux', () => {
+  it('intègre le sélecteur en portail flottant sans modifier le flux du header', () => {
     const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');
     const shell = source('frontend/src/components/common/Header/shared/HeaderShell.jsx');
     const clickOutside = source('frontend/src/components/common/Header/shared/useClickOutside.js');
 
     expect(settings).toContain('createPortal');
-    expect(settings).toContain('panelContainerRef');
+    expect(settings).not.toContain('panelContainerRef');
     expect(settings).toContain('data-visual-settings-panel');
-    expect(settings).toContain('grid-cols-1');
-    expect(settings).toContain('sm:grid-cols-4');
+    expect(settings).toContain('flex-col');
+    expect(settings).toContain('data-header-settings-placement="fixed"');
+    expect(settings).toContain("position: 'fixed'");
+    expect(settings).toContain('className="contents"');
     expect(settings).not.toMatch(/className=.*absolute.*settings/u);
-    expect(shell).toContain('settingsPanelRef');
+    expect(shell).not.toContain('settingsPanelRef');
     expect(shell).toContain('settingsOpen');
-    expect(shell).toContain('settingsHeight');
-    expect(shell).toContain('aria-hidden={!settingsOpen}');
+    expect(shell).not.toContain('settingsHeight');
+    expect(shell).not.toContain('HeaderSettingsContext');
+    expect(shell).not.toContain('data-header-settings-row="true"');
+    expect(shell).toContain('minHeight: baseHeight');
+    expect(shell).toContain('height: baseHeight');
+    expect(shell).toContain('className="absolute inset-0 -z-10"');
     expect(clickOutside).toContain('Array.isArray(ref)');
   });
 

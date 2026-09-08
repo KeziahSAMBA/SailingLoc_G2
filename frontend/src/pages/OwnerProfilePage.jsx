@@ -32,6 +32,9 @@ const PHOTO_BG_STYLE = {
 
 const OWNER_RESPONSIVE_CSS = `
   .owner-photo-background { background-attachment: scroll; }
+  .owner-photo-heading {
+    text-shadow: 0 2px 6px rgb(var(--sl-overlay) / 0.4);
+  }
   @media (min-width: 80rem) {
     .owner-photo-background { background-attachment: fixed; }
   }
@@ -39,7 +42,7 @@ const OWNER_RESPONSIVE_CSS = `
 
 // Surfaces « verre » identiques aux blocs des pages catégorie/produit.
 const GLASS =
-  'rounded-2xl border border-glass/20 bg-surface/5 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px]';
+  'rounded-2xl border border-glass/20 bg-glass-fill/5 sailingloc-glass-shadow backdrop-blur-[5px]';
 
 const FOCUS =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
@@ -111,20 +114,20 @@ function BoatCard({ boat, onNavigate }) {
           src={boat.image}
           alt={t('carrousel.boatImageAlt', { name: boat.name })}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          fallbackClassName="flex h-full w-full items-center justify-center bg-surface/20 text-3xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-glass-fill/20 text-3xl"
           loading="lazy"
           decoding="async"
         />
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">
         <div className="flex items-baseline justify-between gap-2">
-          <h3 className="truncate text-sm font-bold text-on-dark">{boat.name}</h3>
-          <span className="shrink-0 text-xs font-semibold text-on-dark">
+          <h3 className="truncate text-sm font-bold text-photo-text">{boat.name}</h3>
+          <span className="shrink-0 text-xs font-semibold text-photo-text">
             {boat.avg_rating != null ? (
               <>
                 <span className="text-warning-bright">★</span> {boat.avg_rating}
                 {boat.review_count > 0 && (
-                  <span className="text-on-dark/60"> ({boat.review_count})</span>
+                  <span className="text-photo-text/60"> ({boat.review_count})</span>
                 )}
               </>
             ) : (
@@ -136,13 +139,13 @@ function BoatCard({ boat, onNavigate }) {
           {t(`carrousel.boatType.${boat.type}`, { defaultValue: boat.type })}
         </span>
         {boat.city && (
-          <span className="flex items-center gap-1 text-xs text-on-dark/70">
+          <span className="flex items-center gap-1 text-xs text-photo-text/70">
             <MdLocationOn style={{ fontSize: '13px' }} aria-hidden="true" />
             {boat.city}
           </span>
         )}
         {boat.price != null && (
-          <span className="mt-auto pt-1 text-sm font-semibold text-on-dark">
+          <span className="mt-auto pt-1 text-sm font-semibold text-photo-text">
             {t('ownerProfile.boats.pricePerDay', { price: boat.price })}
           </span>
         )}
@@ -168,12 +171,12 @@ function ReviewItem({ review }) {
           alt={t('accessibility.profileImageAlt', { name: review.name })}
         />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-on-dark">{review.name}</p>
+          <p className="truncate text-sm font-semibold text-photo-text">{review.name}</p>
           {review.boat_name && (
             <p className="truncate text-xs text-photo-action">{review.boat_name}</p>
           )}
         </div>
-        <span className="ml-auto shrink-0 text-xs text-on-dark/70">
+        <span className="ml-auto shrink-0 text-xs text-photo-text/70">
           {formatDate(review.created_at, REVIEW_DATE_OPTS)}
         </span>
       </div>
@@ -182,12 +185,12 @@ function ReviewItem({ review }) {
         <span className="sr-only">{review.rating}/5</span>
       </div>
       {review.text && (
-        <p className="break-words text-sm leading-relaxed text-on-dark/80">{review.text}</p>
+        <p className="break-words text-sm leading-relaxed text-photo-text/80">{review.text}</p>
       )}
       {review.owner_reply && (
-        <div className="rounded-lg border-l-2 border-photo-action bg-surface/5 px-3 py-2">
+        <div className="rounded-lg border-l-2 border-photo-action bg-glass-fill/5 px-3 py-2">
           <p className="text-xs font-semibold text-photo-action">{t('boatReviews.ownerReply')}</p>
-          <p className="mt-0.5 break-words text-sm leading-relaxed text-on-dark/80">
+          <p className="mt-0.5 break-words text-sm leading-relaxed text-photo-text/80">
             {review.owner_reply}
           </p>
         </div>
@@ -199,7 +202,7 @@ function ReviewItem({ review }) {
 function Pager({ page, pageCount, onPrev, onNext }) {
   const { t } = useTranslation();
   if (pageCount <= 1) return null;
-  const btn = `flex h-9 w-9 items-center justify-center rounded-full border border-glass/30 bg-surface/10 text-on-dark backdrop-blur-sm transition-colors hover:bg-surface/20 disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS}`;
+  const btn = `flex h-9 w-9 items-center justify-center rounded-full border border-glass/30 bg-glass-fill/10 text-photo-text backdrop-blur-sm transition-colors hover:bg-glass-fill/20 disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS}`;
   return (
     <div className="flex items-center justify-center gap-4 pt-1">
       <button
@@ -211,7 +214,7 @@ function Pager({ page, pageCount, onPrev, onNext }) {
       >
         <FaChevronLeft size={13} aria-hidden="true" />
       </button>
-      <span className="text-sm font-medium text-on-dark/80">
+      <span className="text-sm font-medium text-photo-text/80">
         {t('ownerProfile.pager.position', { page: page + 1, total: pageCount })}
       </span>
       <button
@@ -293,7 +296,7 @@ function OwnerProfilePage() {
 
   return (
     <main
-      className="owner-photo-background relative w-full min-h-[100svh] overflow-x-clip bg-surface text-on-dark"
+      className="owner-photo-background relative w-full min-h-[100svh] overflow-x-clip bg-surface text-photo-text"
       style={PHOTO_BG_STYLE}
     >
       <style>{`${PAGE_SLIDE_CSS}\n${OWNER_RESPONSIVE_CSS}`}</style>
@@ -326,7 +329,7 @@ function OwnerProfilePage() {
 
         {state.status === 'loading' && (
           <p
-            className={`${GLASS} px-4 py-10 text-center text-sm text-on-dark/70`}
+            className={`${GLASS} px-4 py-10 text-center text-sm text-photo-text/70`}
             style={slide(1, 'right')}
           >
             {t('ownerProfile.loading')}
@@ -338,8 +341,10 @@ function OwnerProfilePage() {
             className={`${GLASS} flex flex-col items-center gap-3 px-4 py-12 text-center`}
             style={slide(1, 'right')}
           >
-            <h1 className="text-xl font-bold text-on-dark">{t('ownerProfile.notFound.title')}</h1>
-            <p className="text-sm text-on-dark/70">{t('ownerProfile.notFound.text')}</p>
+            <h1 className="text-xl font-bold text-photo-text">
+              {t('ownerProfile.notFound.title')}
+            </h1>
+            <p className="text-sm text-photo-text/70">{t('ownerProfile.notFound.text')}</p>
             <Link
               to="/categorie"
               onClick={(e) => {
@@ -357,7 +362,7 @@ function OwnerProfilePage() {
         {state.status === 'error' && (
           <p
             role="alert"
-            className={`${GLASS} px-4 py-10 text-center text-sm text-on-dark/80`}
+            className={`${GLASS} px-4 py-10 text-center text-sm text-photo-text/80`}
             style={slide(1, 'right')}
           >
             {t('ownerProfile.loadError')}
@@ -381,17 +386,17 @@ function OwnerProfilePage() {
                 alt={t('accessibility.profileImageAlt', { name: fullName })}
               />
               <div className="flex flex-col gap-2 sm:flex-1">
-                <h1 className="text-2xl font-bold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
+                <h1 className="owner-photo-heading text-2xl font-bold text-photo-text sm:text-3xl md:text-4xl">
                   {fullName}
                 </h1>
                 {owner.member_since && (
-                  <p className="text-sm text-on-dark/70 sm:text-base">
+                  <p className="text-sm text-photo-text/70 sm:text-base">
                     {t('ownerProfile.memberSince', {
                       date: formatDate(owner.member_since, { month: 'long', year: 'numeric' }),
                     })}
                   </p>
                 )}
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-on-dark/80 sm:justify-start sm:gap-x-6 sm:text-base">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-photo-text/80 sm:justify-start sm:gap-x-6 sm:text-base">
                   <span className="inline-flex items-center gap-1">
                     <MdDirectionsBoat className="text-photo-action" aria-hidden="true" />
                     {t('ownerProfile.stats.boats', { count: state.data.stats.boat_count })}
@@ -414,7 +419,7 @@ function OwnerProfilePage() {
                     {activeBadges.map((key) => (
                       <li
                         key={key}
-                        className="inline-flex items-center gap-1 rounded-full border border-glass/30 bg-surface/10 px-3 py-1 text-xs font-semibold text-on-dark backdrop-blur-sm"
+                        className="inline-flex items-center gap-1 rounded-full border border-glass/30 bg-glass-fill/10 px-3 py-1 text-xs font-semibold text-photo-text backdrop-blur-sm"
                       >
                         <MdVerified
                           className="text-photo-action"
@@ -426,7 +431,7 @@ function OwnerProfilePage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="pt-1 text-xs text-on-dark/50">{t('ownerProfile.badges.none')}</p>
+                  <p className="pt-1 text-xs text-photo-text/50">{t('ownerProfile.badges.none')}</p>
                 )}
               </div>
             </header>
@@ -439,12 +444,12 @@ function OwnerProfilePage() {
             >
               <h2
                 id="owner-boats-title"
-                className="text-lg font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-xl"
+                className="owner-photo-heading text-lg font-semibold text-photo-text sm:text-xl"
               >
                 {t('ownerProfile.boats.title')}
               </h2>
               {state.data.boats.length === 0 ? (
-                <p className={`${GLASS} px-4 py-8 text-center text-sm text-on-dark/70`}>
+                <p className={`${GLASS} px-4 py-8 text-center text-sm text-photo-text/70`}>
                   {t('ownerProfile.boats.empty')}
                 </p>
               ) : (
@@ -474,12 +479,12 @@ function OwnerProfilePage() {
             >
               <h2
                 id="owner-reviews-title"
-                className="text-lg font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-xl"
+                className="owner-photo-heading text-lg font-semibold text-photo-text sm:text-xl"
               >
                 {t('ownerProfile.reviews.title')}
               </h2>
               {state.data.reviews.length === 0 ? (
-                <p className={`${GLASS} px-4 py-8 text-center text-sm text-on-dark/70`}>
+                <p className={`${GLASS} px-4 py-8 text-center text-sm text-photo-text/70`}>
                   {t('ownerProfile.reviews.empty')}
                 </p>
               ) : (

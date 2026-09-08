@@ -178,12 +178,12 @@ function SearchBar({
         backgroundColor: compact
           ? 'rgba(0,0,0,0.45)'
           : light
-            ? 'rgba(255,255,255,0.1)'
+            ? 'rgb(var(--sl-glass-fill) / 0.1)'
             : 'rgba(0,0,0,0.05)',
         borderColor: compact
-          ? 'rgba(255,255,255,0.15)'
+          ? 'rgb(var(--sl-glass-border) / var(--sl-glass-subtle-alpha))'
           : light
-            ? 'rgba(255,255,255,0.3)'
+            ? 'rgb(var(--sl-glass-border) / var(--sl-glass-control-alpha))'
             : 'rgba(0,0,0,0.1)',
         backdropFilter: compact ? 'blur(5px)' : 'blur(40px)',
         WebkitBackdropFilter: compact ? 'blur(14px)' : 'blur(40px)',

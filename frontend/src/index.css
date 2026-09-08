@@ -137,6 +137,50 @@
   .text-map-control-hover-text:hover {
     color: rgb(var(--sl-map-control-hover-text));
   }
+
+  /* Voiles des médias : l'image reste intacte, seule la couche de contraste
+     est adaptée au thème courant. */
+  .sailingloc-photo-overlay {
+    background-color: rgb(var(--sl-overlay));
+  }
+
+  .sailingloc-photo-overlay--hero {
+    background-color: rgb(var(--sl-overlay) / var(--sl-photo-overlay-hero-opacity));
+  }
+
+  .sailingloc-photo-overlay--dashboard {
+    background-color: rgb(var(--sl-overlay) / var(--sl-photo-overlay-dashboard-layer-opacity));
+  }
+
+  .sailingloc-photo-overlay--document {
+    background-color: rgb(var(--sl-overlay) / var(--sl-photo-overlay-document-opacity));
+  }
+
+  .sailingloc-photo-overlay--not-found {
+    background-color: rgb(var(--sl-overlay) / var(--sl-photo-overlay-not-found-opacity));
+  }
+
+  .sailingloc-home-hero-fade {
+    background-image: linear-gradient(to bottom, transparent, rgb(var(--sl-home-sea)));
+  }
+
+  .sailingloc-glass-shadow {
+    box-shadow: 0 8px 32px rgb(var(--sl-glass-shadow) / 0.18);
+  }
+}
+
+/* Les bordures glass faibles restent décoratives en clair, mais elles doivent
+   rester identifiables lorsqu'elles délimitent un composant en mode nuit. Le
+   sélecteur s'appuie sur les classes existantes afin de ne modifier ni la
+   structure ni les alphas du thème clair. */
+html[data-sailingloc-theme='dark']
+  :where(
+    [class~='border-glass/15'],
+    [class~='border-glass/20'],
+    [class~='border-glass/25'],
+    [class~='border-glass/30']
+  ) {
+  border-color: rgb(var(--sl-glass-border) / var(--sl-glass-functional-alpha));
 }
 
 /* Couleurs contextuelles du rendu clair historique. Les sélecteurs des futurs
@@ -189,7 +233,33 @@
   --sl-status-fill-text: 0 0 0;
   --sl-calendar-selected-text: 0 0 0;
   --sl-glass: 255 255 255;
+  --sl-glass-fill: 255 255 255;
+  --sl-glass-border: 255 255 255;
+  --sl-glass-shadow: 0 0 0;
+  --sl-glass-functional-alpha: 0.2;
+  --sl-glass-control-alpha: 0.3;
+  --sl-glass-subtle-alpha: 0.15;
   --sl-overlay: 0 0 0;
+  --sl-photo-overlay-boat-color: var(--sl-overlay);
+  --sl-photo-overlay-boat-opacity: 0.5;
+  --sl-photo-overlay-static-start: 3 24 30;
+  --sl-photo-overlay-static-start-opacity: 0.62;
+  --sl-photo-overlay-static-end: 3 35 39;
+  --sl-photo-overlay-static-end-opacity: 0.72;
+  --sl-photo-overlay-dashboard-color: var(--sl-overlay);
+  --sl-photo-overlay-dashboard-opacity: 0.4;
+  --sl-photo-overlay-page-gate-start: 3 24 30;
+  --sl-photo-overlay-page-gate-start-opacity: 0.72;
+  --sl-photo-overlay-page-gate-end: 3 35 39;
+  --sl-photo-overlay-page-gate-end-opacity: 0.8;
+  --sl-photo-overlay-footer-color: var(--sl-overlay);
+  --sl-photo-overlay-footer-opacity: 0.6;
+  --sl-photo-overlay-hero-opacity: 0.5;
+  --sl-photo-overlay-dashboard-layer-opacity: 0.4;
+  --sl-photo-overlay-document-opacity: 0.4;
+  --sl-photo-overlay-not-found-opacity: 0.6;
+  --sl-carousel-dot-active: 51 51 51;
+  --sl-carousel-dot-muted: 51 51 51;
   --sl-dark-surface: 15 23 42;
   --sl-dark-elevated: 30 41 59;
   --sl-dark-muted: 51 65 85;
@@ -322,7 +392,33 @@ html[data-sailingloc-theme='dark'] {
   --sl-status-fill-text: 0 0 0;
   --sl-calendar-selected-text: 0 0 0;
   --sl-glass: 255 255 255;
+  --sl-glass-fill: 0 0 0;
+  --sl-glass-border: 226 232 240;
+  --sl-glass-shadow: 0 0 0;
+  --sl-glass-functional-alpha: 0.4;
+  --sl-glass-control-alpha: 0.4;
+  --sl-glass-subtle-alpha: 0.4;
   --sl-overlay: 0 0 0;
+  --sl-photo-overlay-boat-color: var(--sl-overlay);
+  --sl-photo-overlay-boat-opacity: 0.68;
+  --sl-photo-overlay-static-start: var(--sl-overlay);
+  --sl-photo-overlay-static-start-opacity: 0.78;
+  --sl-photo-overlay-static-end: var(--sl-overlay);
+  --sl-photo-overlay-static-end-opacity: 0.86;
+  --sl-photo-overlay-dashboard-color: var(--sl-overlay);
+  --sl-photo-overlay-dashboard-opacity: 0.58;
+  --sl-photo-overlay-page-gate-start: var(--sl-overlay);
+  --sl-photo-overlay-page-gate-start-opacity: 0.84;
+  --sl-photo-overlay-page-gate-end: var(--sl-overlay);
+  --sl-photo-overlay-page-gate-end-opacity: 0.92;
+  --sl-photo-overlay-footer-color: var(--sl-overlay);
+  --sl-photo-overlay-footer-opacity: 0.74;
+  --sl-photo-overlay-hero-opacity: 0.68;
+  --sl-photo-overlay-dashboard-layer-opacity: 0.58;
+  --sl-photo-overlay-document-opacity: 0.58;
+  --sl-photo-overlay-not-found-opacity: 0.72;
+  --sl-carousel-dot-active: var(--sl-content);
+  --sl-carousel-dot-muted: var(--sl-content-muted);
   --sl-dark-surface: 15 23 42;
   --sl-dark-elevated: 30 41 59;
   --sl-dark-muted: 51 65 85;

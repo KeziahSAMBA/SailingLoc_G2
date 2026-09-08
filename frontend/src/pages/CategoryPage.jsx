@@ -59,7 +59,7 @@ import { onPageExitRequest, isOnDashboardPage } from '../hooks/usePageTransition
 // Fond photo bateau partagé par toutes les sections de la page (résultats,
 // carrousels, avis), qui reprennent toutes ce même habillage (image + assombrissement).
 const PHOTO_BG_STYLE = {
-  backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${bateauBg})`,
+  backgroundImage: `${PHOTO_OVERLAY_BOAT}, url(${bateauBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
 };
@@ -240,8 +240,8 @@ const BoatListingCard = memo(function BoatListingCard({
       <div
         className="relative p-3 border-t"
         style={{
-          backgroundColor: 'rgb(var(--sl-glass) / 0.1)',
-          borderColor: 'rgb(var(--sl-glass) / 0.3)',
+          backgroundColor: 'rgb(var(--sl-glass-fill) / 0.1)',
+          borderColor: 'rgb(var(--sl-glass-border) / var(--sl-glass-control-alpha))',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
         }}
@@ -1087,7 +1087,7 @@ function CategoryPage() {
             }`}
             style={{
               top: 'var(--category-header-height)',
-              backgroundColor: scrolled ? 'rgb(var(--sl-glass) / 0.1)' : 'transparent',
+              backgroundColor: scrolled ? 'rgb(var(--sl-glass-fill) / 0.1)' : 'transparent',
               backdropFilter: scrolled ? 'blur(5px)' : 'none',
               WebkitBackdropFilter: scrolled ? 'blur(5px)' : 'none',
               transition: 'top 0.3s ease, background-color 0.3s ease, backdrop-filter 0.3s ease',
@@ -1239,7 +1239,7 @@ function CategoryPage() {
                 contenu centré dedans (justify-center) : la carte (plus courte que cet
                 espace sur sm/lg) se retrouve centrée entre le sous-header et le bas de
                 page au lieu de rester collée en haut avec un vide en dessous. */}
-            <aside className="category-map-panel order-1 z-0 -mt-12 flex w-full min-w-0 flex-col justify-start gap-2 transition-[top,height] duration-300 xl:sticky xl:order-2 xl:col-start-2 xl:mt-0 xl:justify-center">
+            <aside className="category-map-panel order-1 z-0 mt-0 flex w-full min-w-0 flex-col justify-start gap-2 transition-[top,height] duration-300 xl:sticky xl:order-2 xl:col-start-2 xl:mt-0 xl:justify-center">
               {/* L'animation d'entrée s'applique au bloc interne et non à
                   l'<aside> sticky, dont le style transition (top) doit rester. */}
               <div
@@ -1252,7 +1252,7 @@ function CategoryPage() {
                 <div
                   className="flex items-center justify-between px-4 py-2"
                   style={{
-                    backgroundColor: 'rgb(var(--sl-glass) / 0.1)',
+                    backgroundColor: 'rgb(var(--sl-glass-fill) / 0.1)',
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)',
                   }}

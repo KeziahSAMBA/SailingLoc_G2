@@ -222,7 +222,7 @@ function MonthlyChart({ months }) {
               x2={W - PAD.right}
               y1={y(t)}
               y2={y(t)}
-              stroke="rgb(var(--sl-glass) / 0.15)"
+              stroke="rgb(var(--sl-glass-border) / 0.15)"
               strokeWidth="1"
               strokeDasharray={tickIndex % 2 === 0 ? undefined : '3 3'}
             />

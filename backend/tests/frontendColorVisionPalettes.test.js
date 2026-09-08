@@ -105,13 +105,21 @@ const SEMANTIC = [
 ];
 
 function block(selector) {
-  const start = CSS.indexOf(selector);
+  let start = CSS.indexOf(selector);
   expect(start).toBeGreaterThanOrEqual(0);
-  const open = CSS.indexOf('{', start);
-  let depth = 0;
-  for (let i = open; i < CSS.length; i += 1) {
-    if (CSS[i] === '{') depth += 1;
-    if (CSS[i] === '}' && --depth === 0) return CSS.slice(open + 1, i);
+
+  while (start >= 0) {
+    const open = CSS.indexOf('{', start);
+    let depth = 0;
+    for (let i = open; i < CSS.length; i += 1) {
+      if (CSS[i] === '{') depth += 1;
+      if (CSS[i] === '}' && --depth === 0) {
+        const candidate = CSS.slice(open + 1, i);
+        if (candidate.includes('--sl-page:')) return candidate;
+        break;
+      }
+    }
+    start = CSS.indexOf(selector, open + 1);
   }
   throw new Error(`Bloc non fermé: ${selector}`);
 }
@@ -259,6 +267,13 @@ describe('palettes complètes des profils daltoniens', () => {
   });
 
   it('conserve la redondance non chromatique et ne filtre aucun média', () => {
+    const map = readFileSync(resolve(ROOT, 'frontend/src/components/common/MapView.jsx'), 'utf8');
+    expect(map).toMatch(
+      /\.leaflet-layer\.sailingloc-map-labels\s+\.leaflet-tile\s*\{[^}]*filter\s*:\s*invert\(1\)/u
+    );
+    expect(map).not.toMatch(
+      /(?:\bimg\b|\bvideo\b|\bpicture\b|\bcanvas\b|(?<!\.sailingloc-map-labels\s)\.leaflet-tile)[^}]*filter\s*:/su
+    );
     expect(CSS).not.toMatch(/(?:img|video|picture|canvas|\.leaflet-tile)[^}]*filter:/su);
     expect(CSS).toContain('calendar-day--selected');
     expect(CSS).toContain('calendar-day--disabled');

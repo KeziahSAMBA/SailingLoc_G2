@@ -80,7 +80,7 @@ function LocataireLayout() {
           }}
         />
       )}
-      <div className="min-h-screen w-full bg-overlay/40">
+      <div className="min-h-screen w-full sailingloc-photo-overlay sailingloc-photo-overlay--dashboard">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
           {/* Menu : pleine largeur sur mobile (barre horizontale défilable),
             colonne latérale à partir de lg. */}

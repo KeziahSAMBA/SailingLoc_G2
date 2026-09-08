@@ -102,7 +102,7 @@ function AdminLayout() {
           }}
         />
       )}
-      <div className="min-h-screen w-full bg-overlay/40">
+      <div className="min-h-screen w-full sailingloc-photo-overlay sailingloc-photo-overlay--dashboard">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-[100px] pb-10 lg:flex-row">
           {/* Menu : barre horizontale défilable sur mobile, colonne à partir de lg. */}
           <aside className="relative z-30 w-full lg:w-60 lg:shrink-0" style={slide(0)}>

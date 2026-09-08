@@ -2,12 +2,23 @@ import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { FiRefreshCw } from 'react-icons/fi';
+import { useVisualPreferences } from '../../context/VisualPreferencesContext.jsx';
 import 'leaflet/dist/leaflet.css';
 
 // Navy — couleur "sérieuse" de la marque (déjà utilisée pour le header scrollé et le
 // fil d'ariane), plus lisible sur les tuiles claires que le sky ou le blanc.
 const PIN_COLOR_AVAILABLE = 'rgb(var(--sl-map-available))';
 const PIN_COLOR_UNAVAILABLE = 'rgb(var(--sl-map-unavailable-strong))';
+
+// Les fonds CARTO portent la même projection, le même niveau de zoom et la même
+// attribution. En mode sombre, le fond sans libellés est combiné avec la couche
+// de libellés claire ; seul ce calque transparent est inversé pour améliorer la
+// lisibilité, le fond restant strictement natif.
+const CARTO_TILE_URLS = Object.freeze({
+  light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  dark: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+  darkLabels: 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
+});
 
 function escapeHtml(str) {
   return String(str).replace(
@@ -40,7 +51,7 @@ function createPortIcon({ available, badge, city }) {
     className: '',
     html: `
       <div role="img" aria-label="${escapeHtml(markerLabel)}" data-marker-availability="${available ? 'available' : 'unavailable'}" style="position:relative;">
-        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;align-items:center;gap:4px;padding:3px 8px 3px 3px;${showBadge ? 'padding-right:14px;' : ''}border-radius:9999px;background:rgb(var(--sl-surface) / 0.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgb(var(--sl-glass) / 0.5);box-shadow:0 2px 8px rgba(2,44,74,0.25);white-space:nowrap;">
+        <div style="position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:flex;align-items:center;gap:4px;padding:3px 8px 3px 3px;${showBadge ? 'padding-right:14px;' : ''}border-radius:9999px;background:rgb(var(--sl-surface) / 0.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgb(var(--sl-glass-border) / 0.5);box-shadow:0 2px 8px rgba(2,44,74,0.25);white-space:nowrap;">
           <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="flex-shrink:0;">
             ${pinShape}
           </svg>
@@ -164,6 +175,16 @@ const MAP_STYLE_CSS = `
   background: rgb(var(--sl-map-control-hover));
   color: rgb(var(--sl-map-control-hover-text));
 }
+
+/*
+ * CARTO's light-only label raster has a muted fill surrounded by a bright
+ * halo.  Inverting this dedicated transparent layer keeps the dark map
+ * readable while turning the halo into a discreet dark outline.  The base
+ * tiles, content imagery and Leaflet controls remain untouched.
+ */
+.leaflet-layer.sailingloc-map-labels .leaflet-tile {
+  filter: invert(1);
+}
 `;
 
 // Zoom sur un port au clic, sans dépasser le niveau de zoom déjà atteint par l'utilisateur.
@@ -246,6 +267,7 @@ function MapView({
   onBoundsChange,
   onBoatSelect,
 }) {
+  const { theme } = useVisualPreferences();
   const points = markers.filter((m) => Number.isFinite(m.lat) && Number.isFinite(m.lng));
   // Par défaut la vue se recadre sur tous les marqueurs. `focusMarkers` permet à
   // l'appelant de restreindre ce recadrage (ex : uniquement les ports correspondant
@@ -257,6 +279,7 @@ function MapView({
   const mapRef = useRef(null);
   const [zoom, setZoom] = useState(FRANCE_ZOOM);
   const showBoats = zoom >= BOAT_ZOOM_THRESHOLD && boatPoints.length > 0;
+  const tileUrl = theme === 'dark' ? CARTO_TILE_URLS.dark : CARTO_TILE_URLS.light;
 
   function handleResetView() {
     const map = mapRef.current;
@@ -290,10 +313,19 @@ function MapView({
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url={tileUrl}
           subdomains="abcd"
           maxZoom={20}
         />
+        {theme === 'dark' && (
+          <TileLayer
+            url={CARTO_TILE_URLS.darkLabels}
+            className="sailingloc-map-labels"
+            subdomains="abcd"
+            maxZoom={20}
+            zIndex={10}
+          />
+        )}
         <FitBounds points={fitPoints} />
         {onBoundsChange && <BoundsWatcher onBoundsChange={onBoundsChange} />}
         <ZoomWatcher onZoomChange={setZoom} />

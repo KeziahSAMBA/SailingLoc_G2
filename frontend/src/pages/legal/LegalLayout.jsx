@@ -38,7 +38,7 @@ const TABS = [
 
 // Photo de fond pleine page + voile sombre, comme les pages contact et à propos.
 const PHOTO_BG_STYLE = {
-  backgroundImage: `linear-gradient(rgba(3,24,30,0.62), rgba(3,35,39,0.72)), url(${heroBg})`,
+  backgroundImage: `${PHOTO_OVERLAY_STATIC_PAGE}, url(${heroBg})`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',
@@ -112,7 +112,7 @@ function LegalLayout({ title, pageTitle, updated, children }) {
       {/* Encadré glassmorphism : onglets + avertissement + document */}
       <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-6">
         <div
-          className="rounded-2xl border border-glass/20 bg-surface/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px] sm:p-8"
+          className="rounded-2xl border border-glass/20 bg-surface/5 p-6 sailingloc-glass-shadow backdrop-blur-[5px] sm:p-8"
           style={slide(1, 'right')}
         >
           {/* Navigation entre documents légaux, toujours sur une seule ligne */}

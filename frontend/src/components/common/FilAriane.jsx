@@ -44,8 +44,10 @@ function Breadcrumb({ light = false, compact = false, items = null, onNavigate =
     <nav
       className={`inline-flex items-center gap-1.5 py-3 px-3 rounded-full text-xs font-semibold border sm:py-0.5 sm:px-2 ${compact ? 'text-photo-compact-link' : light ? 'text-on-dark' : 'text-on-light'}`}
       style={{
-        backgroundColor: compact ? 'transparent' : 'rgb(var(--sl-glass) / 0.1)',
-        borderColor: compact ? 'transparent' : 'rgb(var(--sl-glass) / 0.3)',
+        backgroundColor: compact ? 'transparent' : 'rgb(var(--sl-glass-fill) / 0.1)',
+        borderColor: compact
+          ? 'transparent'
+          : 'rgb(var(--sl-glass-border) / var(--sl-glass-control-alpha))',
         backdropFilter: compact ? 'none' : 'blur(40px)',
         WebkitBackdropFilter: compact ? 'none' : 'blur(40px)',
       }}
