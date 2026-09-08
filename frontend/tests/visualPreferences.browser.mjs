@@ -37,14 +37,6 @@ async function waitForVisualStability(page) {
   await page.waitForTimeout(350);
 }
 
-function rectanglesOverlap(first, second) {
-  if (!first || !second) return false;
-  return (
-    Math.min(first.right, second.right) - Math.max(first.left, second.left) > 1 &&
-    Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top) > 1
-  );
-}
-
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 await context.addInitScript(
