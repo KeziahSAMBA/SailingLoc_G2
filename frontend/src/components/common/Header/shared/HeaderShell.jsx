@@ -3,7 +3,7 @@ import {
   INTRO_SOFT_EASING,
 } from '../../../../hooks/useCategoryTransition.js';
 
-function HeaderShell({ scrolled, introHidden, settingsOpen = false, children }) {
+function HeaderShell({ scrolled, introHidden, children }) {
   const baseHeight = scrolled ? '60px' : 'clamp(64px, 6vw, 80px)';
 
   return (
@@ -24,10 +24,9 @@ function HeaderShell({ scrolled, introHidden, settingsOpen = false, children }) 
       <div
         className="absolute inset-0 -z-10"
         style={{
-          backgroundColor:
-            scrolled || settingsOpen
-              ? 'rgb(var(--sl-header-bar-bg) / 0.95)'
-              : 'rgb(var(--sl-glass-fill) / 0.05)',
+          backgroundColor: scrolled
+            ? 'rgb(var(--sl-header-bar-bg) / 0.95)'
+            : 'rgb(var(--sl-glass-fill) / 0.05)',
           borderBottom: '1px solid rgb(var(--sl-brand) / 0.2)',
           boxShadow: scrolled ? '0 2px 12px rgb(var(--sl-brand-navy) / 0.08)' : 'none',
           transition: 'box-shadow 0.3s ease, background-color 0.3s ease',
