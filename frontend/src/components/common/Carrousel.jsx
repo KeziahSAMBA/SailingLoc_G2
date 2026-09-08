@@ -1015,7 +1015,9 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
             .map(({ slides, title, initialSlide, interval }, i) => (
               <div
                 key={title}
-                className={i === 0 ? 'w-full lg:flex-1' : 'hidden w-full lg:block lg:flex-1'}
+                className={
+                  i === 0 ? 'min-w-0 w-full lg:flex-1' : 'hidden min-w-0 w-full lg:block lg:flex-1'
+                }
               >
                 <BoatTypeCarousel
                   slides={slides}
