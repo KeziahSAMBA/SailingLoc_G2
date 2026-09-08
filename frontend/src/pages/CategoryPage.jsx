@@ -1239,7 +1239,7 @@ function CategoryPage() {
                 contenu centré dedans (justify-center) : la carte (plus courte que cet
                 espace sur sm/lg) se retrouve centrée entre le sous-header et le bas de
                 page au lieu de rester collée en haut avec un vide en dessous. */}
-            <aside className="category-map-panel order-1 z-0 -mt-12 flex w-full min-w-0 flex-col justify-start gap-2 transition-[top,height] duration-300 xl:sticky xl:order-2 xl:col-start-2 xl:mt-0 xl:justify-center">
+            <aside className="category-map-panel order-1 z-0 mt-0 flex w-full min-w-0 flex-col justify-start gap-2 transition-[top,height] duration-300 xl:sticky xl:order-2 xl:col-start-2 xl:mt-0 xl:justify-center">
               {/* L'animation d'entrée s'applique au bloc interne et non à
                   l'<aside> sticky, dont le style transition (top) doit rester. */}
               <div
