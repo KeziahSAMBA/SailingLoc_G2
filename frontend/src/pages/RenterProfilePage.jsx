@@ -47,7 +47,7 @@ const RENTER_RESPONSIVE_CSS = `
 `;
 
 const GLASS =
-  'rounded-2xl border border-glass/20 bg-surface/5 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-[5px]';
+  'rounded-2xl border border-glass/20 bg-glass-fill/5 sailingloc-glass-shadow backdrop-blur-[5px]';
 
 const FOCUS =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
@@ -66,10 +66,15 @@ const EURO = new Intl.NumberFormat('fr-FR', {
 });
 
 const REVIEW_STATUS_CLS = {
-  pending: 'bg-warning-base/15 text-warning-soft',
-  validated: 'bg-success-base/15 text-success-soft',
-  refused: 'bg-danger-base/15 text-danger-soft',
+  pending: 'status-indicator status-indicator--warning bg-warning-base/15 text-warning-soft',
+  validated: 'status-indicator status-indicator--success bg-success-base/15 text-success-soft',
+  refused: 'status-indicator status-indicator--danger bg-danger-base/15 text-danger-soft',
 };
+
+const NEUTRAL_STATUS_CLS =
+  'status-indicator status-indicator--neutral bg-neutral/15 text-photo-text/70';
+
+const TITLE_SHADOW = 'drop-shadow-[0_2px_6px_rgb(var(--sl-glass-shadow)/0.4)]';
 
 function overlayFor(bg) {
   if (bg === dashboardBg) return PHOTO_OVERLAY_DASHBOARD;
@@ -104,7 +109,7 @@ function Stars({ rating }) {
 function Pager({ page, pageCount, onPrev, onNext }) {
   const { t } = useTranslation();
   if (pageCount <= 1) return null;
-  const btn = `flex h-9 w-9 items-center justify-center rounded-full border border-glass/30 bg-surface/10 text-on-dark backdrop-blur-sm transition-colors hover:bg-surface/20 disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS}`;
+  const btn = `flex h-9 w-9 items-center justify-center rounded-full border border-glass/30 bg-glass-fill/10 text-photo-text backdrop-blur-sm transition-colors hover:bg-glass-fill/20 disabled:cursor-not-allowed disabled:opacity-30 ${FOCUS}`;
   return (
     <div className="flex items-center justify-center gap-4 pt-1">
       <button
@@ -116,7 +121,7 @@ function Pager({ page, pageCount, onPrev, onNext }) {
       >
         <FaChevronLeft size={13} aria-hidden="true" />
       </button>
-      <span className="text-sm font-medium text-on-dark/80">
+      <span className="text-sm font-medium text-photo-text/80">
         {t('renterProfile.pager.position', { page: page + 1, total: pageCount })}
       </span>
       <button
@@ -145,7 +150,7 @@ function BookingCard({ booking, onNavigate }) {
         loading="lazy"
         decoding="async"
         className="h-16 w-20 shrink-0 rounded-xl object-cover sm:h-20 sm:w-28"
-        fallbackClassName="flex h-16 w-20 shrink-0 items-center justify-center rounded-xl bg-surface/20 text-2xl sm:h-20 sm:w-28"
+        fallbackClassName="flex h-16 w-20 shrink-0 items-center justify-center rounded-xl bg-photo-surface/20 text-2xl sm:h-20 sm:w-28"
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-baseline justify-between gap-2">
@@ -157,35 +162,35 @@ function BookingCard({ booking, onNavigate }) {
                 e.preventDefault();
                 onNavigate(productHref);
               }}
-              className={`truncate text-sm font-bold text-on-dark hover:text-photo-action ${FOCUS}`}
+              className={`truncate text-sm font-bold text-photo-text hover:text-photo-action ${FOCUS}`}
             >
               {booking.boat?.name}
             </Link>
           ) : (
-            <span className="truncate text-sm font-bold text-on-dark">{booking.boat?.name}</span>
+            <span className="truncate text-sm font-bold text-photo-text">{booking.boat?.name}</span>
           )}
           <span
             className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-              REVIEW_STATUS_CLS[booking.status] || 'bg-neutral/15 text-on-dark/70'
+              REVIEW_STATUS_CLS[booking.status] || NEUTRAL_STATUS_CLS
             }`}
           >
             {t(`bookingStatus.${booking.status}`, { defaultValue: booking.status })}
           </span>
         </div>
         {booking.boat?.city && (
-          <span className="flex items-center gap-1 text-xs text-on-dark/70">
+          <span className="flex items-center gap-1 text-xs text-photo-text/70">
             <MdLocationOn style={{ fontSize: '13px' }} aria-hidden="true" />
             {booking.boat.city}
           </span>
         )}
-        <p className="text-xs text-on-dark/80">
+        <p className="text-xs text-photo-text/80">
           <time dateTime={booking.start_date}>{formatDate(booking.start_date, DATE_OPTS)}</time>
           {' → '}
           <time dateTime={booking.end_date}>{formatDate(booking.end_date, DATE_OPTS)}</time>
           {booking.total_amount != null && (
             <>
-              <span className="text-on-dark/30"> • </span>
-              <span className="font-semibold text-on-dark">
+              <span className="text-photo-text/40"> • </span>
+              <span className="font-semibold text-photo-text">
                 {EURO.format(booking.total_amount)}
               </span>
             </>
@@ -249,21 +254,21 @@ function OwnerReviewRow({ booking, onReload }) {
 
   return (
     <li className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
-      <p className="text-xs text-on-dark/60">
+      <p className="text-xs text-photo-text/70">
         {t('renterProfile.reviewForm.forBoat', { boat: booking.boat?.name })}
-        <span className="text-on-dark/30"> · </span>
+        <span className="text-photo-text/40"> · </span>
         {formatDate(booking.start_date, DATE_OPTS)}
       </p>
 
       {editing ? (
         <form onSubmit={submit} className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-on-dark/70">
+          <span className="text-xs font-medium text-photo-text/80">
             {t('renterProfile.reviewForm.ratingLabel')}
           </span>
           <StarRatingInput value={rating} onChange={setRating} />
           <label
             htmlFor={`rr-${booking.id_booking}`}
-            className="mt-1 text-xs font-medium text-on-dark/70"
+            className="mt-1 text-xs font-medium text-photo-text/80"
           >
             {t('renterProfile.reviewForm.commentLabel')}
           </label>
@@ -274,14 +279,14 @@ function OwnerReviewRow({ booking, onReload }) {
             maxLength={1000}
             onChange={(e) => setComment(e.target.value)}
             placeholder={t('renterProfile.reviewForm.commentPlaceholder')}
-            className="w-full rounded-lg border border-glass/30 bg-surface/10 px-3 py-2 text-sm text-on-dark outline-none focus:border-photo-action"
+            className="w-full rounded-lg border border-glass/30 bg-glass-fill/10 px-3 py-2 text-sm text-photo-text outline-none focus:border-photo-action"
           />
           <div className="flex justify-end gap-2">
             <button
               type="button"
               disabled={busy}
               onClick={() => setEditing(false)}
-              className={`rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/80 transition hover:bg-surface/10 disabled:opacity-50 ${FOCUS}`}
+              className={`rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-photo-text/80 transition hover:bg-glass-fill/10 disabled:opacity-50 ${FOCUS}`}
             >
               {t('renterProfile.reviewForm.cancel')}
             </button>
@@ -303,7 +308,7 @@ function OwnerReviewRow({ booking, onReload }) {
             <Stars rating={review.rating} />
             <span
               className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-                REVIEW_STATUS_CLS[review.status] || 'bg-neutral/15 text-on-dark/70'
+                REVIEW_STATUS_CLS[review.status] || NEUTRAL_STATUS_CLS
               }`}
             >
               {t(`renterProfile.reviewForm.status.${review.status}`, {
@@ -312,14 +317,16 @@ function OwnerReviewRow({ booking, onReload }) {
             </span>
           </div>
           {review.comment && (
-            <p className="break-words text-sm leading-relaxed text-on-dark/80">{review.comment}</p>
+            <p className="break-words text-sm leading-relaxed text-photo-text/80">
+              {review.comment}
+            </p>
           )}
           <div className="flex gap-3 pt-0.5">
             <button
               type="button"
               onClick={startEdit}
               disabled={busy}
-              className={`rounded text-xs font-semibold text-on-dark/80 hover:text-on-dark hover:underline disabled:opacity-50 ${FOCUS}`}
+              className={`rounded text-xs font-semibold text-photo-text/80 hover:text-photo-text hover:underline disabled:opacity-50 ${FOCUS}`}
             >
               {t('renterProfile.reviewForm.edit')}
             </button>
@@ -355,12 +362,12 @@ function ReviewItem({ review }) {
           alt={t('accessibility.profileImageAlt', { name: review.name })}
         />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-on-dark">{review.name}</p>
+          <p className="truncate text-sm font-semibold text-photo-text">{review.name}</p>
           {review.boat_name && (
             <p className="truncate text-xs text-photo-action">{review.boat_name}</p>
           )}
         </div>
-        <span className="ml-auto shrink-0 text-xs text-on-dark/70">
+        <span className="ml-auto shrink-0 text-xs text-photo-text/70">
           {formatDate(review.created_at, DATE_OPTS)}
         </span>
       </div>
@@ -369,7 +376,7 @@ function ReviewItem({ review }) {
         <span className="sr-only">{review.rating}/5</span>
       </div>
       {review.text && (
-        <p className="break-words text-sm leading-relaxed text-on-dark/80">{review.text}</p>
+        <p className="break-words text-sm leading-relaxed text-photo-text/80">{review.text}</p>
       )}
     </li>
   );
@@ -468,7 +475,7 @@ function RenterProfilePage() {
 
   return (
     <main
-      className="renter-photo-background relative w-full min-h-[100svh] overflow-x-clip bg-surface text-on-dark"
+      className="renter-photo-background relative w-full min-h-[100svh] overflow-x-clip bg-photo-surface text-photo-text"
       style={PHOTO_BG_STYLE}
     >
       <style>{`${PAGE_SLIDE_CSS}\n${RENTER_RESPONSIVE_CSS}`}</style>
@@ -494,7 +501,7 @@ function RenterProfilePage() {
 
         {state.status === 'loading' && (
           <p
-            className={`${GLASS} px-4 py-10 text-center text-sm text-on-dark/70`}
+            className={`${GLASS} px-4 py-10 text-center text-sm text-photo-text/80`}
             style={slide(1, 'right')}
           >
             {t('renterProfile.loading')}
@@ -506,8 +513,10 @@ function RenterProfilePage() {
             className={`${GLASS} flex flex-col items-center gap-3 px-4 py-12 text-center`}
             style={slide(1, 'right')}
           >
-            <h1 className="text-xl font-bold text-on-dark">{t('renterProfile.notFound.title')}</h1>
-            <p className="text-sm text-on-dark/70">{t('renterProfile.notFound.text')}</p>
+            <h1 className="text-xl font-bold text-photo-text">
+              {t('renterProfile.notFound.title')}
+            </h1>
+            <p className="text-sm text-photo-text/80">{t('renterProfile.notFound.text')}</p>
             <Link
               to="/proprietaire/reservations"
               onClick={(e) => {
@@ -525,7 +534,7 @@ function RenterProfilePage() {
         {state.status === 'error' && (
           <p
             role="alert"
-            className={`${GLASS} px-4 py-10 text-center text-sm text-on-dark/80`}
+            className={`${GLASS} px-4 py-10 text-center text-sm text-photo-text/80`}
             style={slide(1, 'right')}
           >
             {t('renterProfile.loadError')}
@@ -548,14 +557,16 @@ function RenterProfilePage() {
                 alt={t('accessibility.profileImageAlt', { name: fullName })}
               />
               <div className="flex flex-col gap-2 sm:flex-1">
-                <h1 className="text-2xl font-bold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-3xl md:text-4xl">
+                <h1
+                  className={`text-2xl font-bold text-photo-text ${TITLE_SHADOW} sm:text-3xl md:text-4xl`}
+                >
                   {fullName}
                 </h1>
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-on-dark/75 sm:justify-start">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-photo-text/85 sm:justify-start">
                   {renter.email && (
                     <a
                       href={`mailto:${renter.email}`}
-                      className={`inline-flex items-center gap-1 hover:text-on-dark hover:underline ${FOCUS}`}
+                      className={`inline-flex items-center gap-1 hover:text-photo-text hover:underline ${FOCUS}`}
                     >
                       <MdMailOutline className="text-photo-action" aria-hidden="true" />
                       {renter.email}
@@ -567,13 +578,13 @@ function RenterProfilePage() {
                   </span>
                 </div>
                 {renter.member_since && (
-                  <p className="text-sm text-on-dark/70 sm:text-base">
+                  <p className="text-sm text-photo-text/80 sm:text-base">
                     {t('renterProfile.memberSince', {
                       date: formatDate(renter.member_since, { month: 'long', year: 'numeric' }),
                     })}
                   </p>
                 )}
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-on-dark/80 sm:justify-start sm:gap-x-6 sm:text-base">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-photo-text/85 sm:justify-start sm:gap-x-6 sm:text-base">
                   <span className="inline-flex items-center gap-1">
                     <MdDirectionsBoat className="text-photo-action" aria-hidden="true" />
                     {t('renterProfile.stats.bookings', {
@@ -598,7 +609,7 @@ function RenterProfilePage() {
                     {activeBadges.map((key) => (
                       <li
                         key={key}
-                        className="inline-flex items-center gap-1 rounded-full border border-glass/30 bg-surface/10 px-3 py-1 text-xs font-semibold text-on-dark backdrop-blur-sm"
+                        className="inline-flex items-center gap-1 rounded-full border border-glass/30 bg-glass-fill/10 px-3 py-1 text-xs font-semibold text-photo-text backdrop-blur-sm"
                       >
                         <MdVerified
                           className="text-photo-action"
@@ -610,7 +621,9 @@ function RenterProfilePage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="pt-1 text-xs text-on-dark/50">{t('renterProfile.badges.none')}</p>
+                  <p className="pt-1 text-xs text-photo-text/75">
+                    {t('renterProfile.badges.none')}
+                  </p>
                 )}
                 <div className="pt-1">
                   <button
@@ -632,12 +645,12 @@ function RenterProfilePage() {
             >
               <h2
                 id="renter-docs-title"
-                className="text-lg font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-xl"
+                className={`text-lg font-semibold text-photo-text ${TITLE_SHADOW} sm:text-xl`}
               >
                 {t('renterProfile.documents.title')}
               </h2>
               {state.data.documents.length === 0 ? (
-                <p className={`${GLASS} px-4 py-8 text-center text-sm text-on-dark/70`}>
+                <p className={`${GLASS} px-4 py-8 text-center text-sm text-photo-text/80`}>
                   {t('renterProfile.documents.empty')}
                 </p>
               ) : (
@@ -648,14 +661,14 @@ function RenterProfilePage() {
                       className={`${GLASS} flex items-center justify-between gap-3 px-3 py-2.5`}
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-on-dark">
+                        <p className="truncate text-sm font-medium text-photo-text">
                           {t(`documentsManager.docTypes.locataire.${doc.type}.label`, {
                             defaultValue: doc.type,
                           })}
                         </p>
                         <span
                           className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${
-                            REVIEW_STATUS_CLS[doc.status] || 'bg-neutral/15 text-on-dark/70'
+                            REVIEW_STATUS_CLS[doc.status] || NEUTRAL_STATUS_CLS
                           }`}
                         >
                           {t(`documentsManager.status.${doc.status}`, { defaultValue: doc.status })}
@@ -665,7 +678,7 @@ function RenterProfilePage() {
                         type="button"
                         disabled={doc.status !== 'validated' || viewingDocId === doc.id_document}
                         onClick={() => viewDocument(doc)}
-                        className={`shrink-0 rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-on-dark/90 transition hover:bg-surface/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS}`}
+                        className={`shrink-0 rounded-full border border-glass/40 px-3 py-1 text-xs font-semibold text-photo-text/90 transition hover:bg-glass-fill/10 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS}`}
                       >
                         {t('renterProfile.documents.view')}
                       </button>
@@ -683,12 +696,12 @@ function RenterProfilePage() {
             >
               <h2
                 id="renter-bookings-title"
-                className="text-lg font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-xl"
+                className={`text-lg font-semibold text-photo-text ${TITLE_SHADOW} sm:text-xl`}
               >
                 {t('renterProfile.bookings.title')}
               </h2>
               {state.data.bookings.length === 0 ? (
-                <p className={`${GLASS} px-4 py-8 text-center text-sm text-on-dark/70`}>
+                <p className={`${GLASS} px-4 py-8 text-center text-sm text-photo-text/80`}>
                   {t('renterProfile.bookings.empty')}
                 </p>
               ) : (
@@ -716,7 +729,7 @@ function RenterProfilePage() {
             >
               <h2
                 id="renter-reviews-title"
-                className="text-lg font-semibold text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] sm:text-xl"
+                className={`text-lg font-semibold text-photo-text ${TITLE_SHADOW} sm:text-xl`}
               >
                 {t('renterProfile.reviews.title')}
               </h2>
@@ -737,7 +750,7 @@ function RenterProfilePage() {
               )}
 
               {state.data.reviews.length === 0 ? (
-                <p className={`${GLASS} px-4 py-8 text-center text-sm text-on-dark/70`}>
+                <p className={`${GLASS} px-4 py-8 text-center text-sm text-photo-text/80`}>
                   {t('renterProfile.reviews.empty')}
                 </p>
               ) : (
