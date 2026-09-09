@@ -9,6 +9,9 @@
     "backend",
     "frontend"
   ],
+  "overrides": {
+    "qs": "6.16.0"
+  },
   "scripts": {
     "dev": "docker compose -f docker-compose.dev.yml up",
     "dev:build": "docker compose -f docker-compose.dev.yml up --build",
