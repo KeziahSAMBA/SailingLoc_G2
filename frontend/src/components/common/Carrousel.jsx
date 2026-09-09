@@ -11,14 +11,17 @@ import {
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaArrowRight } from 'react-icons/fa6';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { fetchBoats } from '../../services/boatService';
 import { fetchPorts } from '../../services/portService';
 import { useFavorites } from '../../hooks/useFavorites.js';
+import { useAuth } from '../../hooks/useAuth.jsx';
 import { useCategoryNavigate, useProductNavigate } from '../../hooks/useCategoryTransition.js';
 import { useVisualPreferences } from '../../context/VisualPreferencesContext.jsx';
 import FavoriteButton from './FavoriteButton.jsx';
+import GhostButton from './GhostButton.jsx';
 import SafeImage from './SafeImage.jsx';
+import favoritesPanelBg from '../../assets/image/paysage/crique.jpg';
 
 // Clic "navigation simple" : laisse le navigateur gérer les ouvertures en
 // nouvel onglet (ctrl/cmd/shift/clic molette) sans intercepter le lien.
@@ -68,6 +71,115 @@ const boatToSlide = (boat, t) => {
     img: boat.images?.[0]?.url ?? '',
     available: boat.is_published,
   };
+};
+
+// « Coup de cœur » : les bateaux les mieux notés d'abord (note moyenne, puis
+// nombre d'avis pour départager). Les bateaux sans avis passent en fin.
+const byCoupDeCoeur = (a, b) => {
+  const ra = a.avg_rating == null ? -1 : Number(a.avg_rating);
+  const rb = b.avg_rating == null ? -1 : Number(b.avg_rating);
+  if (rb !== ra) return rb - ra;
+  return Number(b.review_count ?? 0) - Number(a.review_count ?? 0);
+};
+
+// ─── Carte « overlay » (bateau) ───────────────────────────────────────────────
+// Vignette + légende, partagée par les sections overlay du carrousel et la
+// grille « Mes favoris ». `className` porte la gouttière ('px-1.5' dans un
+// carrousel, '' dans une grille à gap) et `style` la largeur éventuelle
+// (carrousel : pourcentage ; grille : laissée à la grille).
+
+const OverlayCard = ({
+  slide,
+  theme = 'light',
+  imageSize = 'small',
+  favoriteIds,
+  onToggleFavorite,
+  onSlideClick,
+  className = 'px-1.5',
+  style,
+}) => {
+  const { t } = useTranslation();
+  const isDark = theme === 'dark';
+  const imgBorder = isDark ? 'border-glass/20' : 'border-black/40';
+  const captionTitle = isDark ? 'text-on-dark' : 'text-on-light';
+  const captionMeta = isDark ? 'text-on-dark/70' : 'text-content-muted';
+  const captionSubtle = isDark ? 'text-on-dark/60' : 'text-content-muted';
+  const aspectRatio = imageSize === 'small' ? '4 / 3' : '1 / 1';
+
+  return (
+    <div className={`group relative flex cursor-pointer flex-col ${className}`} style={style}>
+      {onSlideClick && (
+        <button
+          type="button"
+          className="absolute inset-0 z-[5] rounded-[8px] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          onClick={() => onSlideClick(slide)}
+          aria-label={slide.label}
+        />
+      )}
+      <div
+        className={`relative rounded-[8px] overflow-hidden w-full border ${imgBorder}`}
+        style={{ aspectRatio }}
+      >
+        <SafeImage
+          src={slide.img}
+          alt={t('carrousel.boatImageAlt', { name: slide.label })}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-slate-800 text-4xl"
+          loading="lazy"
+        />
+        {slide.available ? (
+          <div className="absolute inset-0 bg-gradient-to-b from-overlay/5 to-overlay/30" />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-overlay/60" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span
+                className="text-on-dark font-semibold text-center px-2"
+                style={{
+                  fontSize: '13px',
+                  lineHeight: '14px',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {t('carrousel.soon')}
+              </span>
+            </div>
+          </>
+        )}
+        <FavoriteButton
+          isFavorite={favoriteIds.has(slide.id)}
+          onToggle={() => onToggleFavorite(slide.id)}
+          size={26}
+          className="absolute top-2 right-2 z-10"
+        />
+      </div>
+      <div className="mt-1 flex flex-col gap-0.5">
+        <span className={`font-semibold truncate ${captionTitle}`} style={{ lineHeight: '15px' }}>
+          <span style={{ fontSize: '14px' }}>{slide.label}</span>
+          {slide.city && (
+            <span className={captionSubtle} style={{ fontSize: '12px' }}>
+              {' '}
+              · {slide.city}
+            </span>
+          )}
+        </span>
+        {(slide.dateStr || slide.capacity) && (
+          <span className={captionMeta} style={{ fontSize: '12px', lineHeight: '15px' }}>
+            {[
+              slide.dateStr,
+              slide.capacity ? t('carrousel.persons', { count: slide.capacity }) : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        )}
+        <span className={captionMeta} style={{ fontSize: '12px', lineHeight: '15px' }}>
+          {[`${slide.price} ${t('carrousel.perDay')}`, slide.rating].filter(Boolean).join(' · ')}
+        </span>
+      </div>
+    </div>
+  );
 };
 
 // ─── Composant générique de carrousel ─────────────────────────────────────────
@@ -467,6 +579,228 @@ const CarouselSection = ({
   );
 };
 
+// ─── Section « Mes favoris » ──────────────────────────────────────────────────
+// Trois états : visiteur non connecté → panneau verrouillé + invite à se
+// connecter (pop-up login) ; locataire connecté sans favori → panneau message +
+// lien vers son tableau de bord favoris ; avec favoris → grille de 5.
+//
+// La grille montre toujours exactement 5 emplacements : les favoris remplissent
+// depuis la gauche, le reste reste en emplacements vides (pas de scroll, pas de
+// complétion par d'autres bateaux).
+const FAVORITES_SLOTS = 5;
+// Sur mobile : pas de défilement, 2 emplacements par page + flèches.
+const FAVORITES_MOBILE_PER_PAGE = 2;
+
+const FavoritesRow = ({ slides, theme, favoriteIds, onToggleFavorite, onSlideClick }) => {
+  const { t } = useTranslation();
+  const isDark = theme === 'dark';
+  const dashedBorder = isDark ? 'border-glass/25' : 'border-black/15';
+  const arrowBtn = isDark
+    ? 'bg-surface/10 hover:bg-surface/25 text-on-dark'
+    : 'bg-overlay/10 hover:bg-field-border text-content-muted';
+
+  // Rendu SSR/prerender sans window : on part en desktop, l'effet corrige au
+  // montage (une bascule sur mobile, pas de mismatch d'hydratation bloquant).
+  const [isMobile, setIsMobile] = useState(false);
+  const [page, setPage] = useState(0);
+  // Pagination pilotée par le nombre de favoris réels (pas les 5 emplacements) :
+  // pas de flèche tant que tout tient sur une page (≤ 2 favoris).
+  const filledCount = Math.min(slides.length, FAVORITES_SLOTS);
+  const pageCount = Math.max(1, Math.ceil(filledCount / FAVORITES_MOBILE_PER_PAGE));
+  const safePage = Math.min(page, pageCount - 1);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)');
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  useEffect(() => {
+    setPage(0);
+  }, [slides]);
+
+  const cell = (i, { mobile }) =>
+    slides[i] ? (
+      <OverlayCard
+        key={slides[i].id}
+        slide={slides[i]}
+        theme={theme}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={onToggleFavorite}
+        onSlideClick={onSlideClick}
+        className={mobile ? 'px-1.5' : ''}
+        style={mobile ? { width: '20%' } : undefined}
+      />
+    ) : mobile ? (
+      <div key={`favorite-slot-${i}`} className="flex flex-col px-1.5" style={{ width: '20%' }}>
+        <div
+          className={`w-full rounded-[8px] border border-dashed bg-overlay/40 ${dashedBorder}`}
+          style={{ aspectRatio: '4 / 3' }}
+        />
+      </div>
+    ) : (
+      <div
+        key={`favorite-slot-${i}`}
+        className={`rounded-[8px] border border-dashed bg-overlay/40 ${dashedBorder}`}
+        style={{ aspectRatio: '4 / 3' }}
+      />
+    );
+
+  if (!isMobile) {
+    return (
+      <div className="grid grid-cols-5 items-start gap-3 p-4">
+        {Array.from({ length: FAVORITES_SLOTS }, (_, i) => cell(i, { mobile: false }))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative p-2">
+      <div className="overflow-hidden rounded-xl">
+        <div
+          className="flex items-start"
+          style={{
+            width: '250%',
+            transform: `translateX(-${safePage * FAVORITES_MOBILE_PER_PAGE * (100 / FAVORITES_SLOTS)}%)`,
+            transition: 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            willChange: 'transform',
+          }}
+        >
+          {Array.from({ length: FAVORITES_SLOTS }, (_, i) => cell(i, { mobile: true }))}
+        </div>
+      </div>
+      {safePage > 0 && (
+        <button
+          type="button"
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+          className={`absolute left-0 z-20 rounded-full p-2.5 shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${arrowBtn}`}
+          style={{ transform: 'translate(-50%, 0)', top: '40%' }}
+          aria-label={t('carrousel.prev')}
+        >
+          <FaChevronLeft size={16} />
+        </button>
+      )}
+      {safePage < pageCount - 1 && (
+        <button
+          type="button"
+          onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+          className={`absolute right-0 z-20 rounded-full p-2.5 shadow-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand ${arrowBtn}`}
+          style={{ transform: 'translate(50%, 0)', top: '40%' }}
+          aria-label={t('carrousel.next')}
+        >
+          <FaChevronRight size={16} />
+        </button>
+      )}
+    </div>
+  );
+};
+
+const FavoritesCarousel = ({
+  title,
+  isLoggedIn,
+  pending = false,
+  slides,
+  theme = 'light',
+  favoriteIds,
+  onToggleFavorite,
+  onSlideClick,
+  onLogin,
+}) => {
+  const { t } = useTranslation();
+  const isDark = theme === 'dark';
+  const titleColor = isDark ? 'text-on-dark' : 'text-on-light';
+  const linkColor = isDark
+    ? 'text-on-dark/70 hover:text-on-dark'
+    : 'text-content-muted hover:text-on-light';
+  const hasFavorites = isLoggedIn && slides.length > 0;
+
+  // Lien « Voir mes annonces favorites » du header : toujours présent une fois
+  // l'état de connexion connu. Connecté → tableau de bord favoris ; visiteur →
+  // pop-up de connexion (même cible que le bouton du panneau verrouillé).
+  const linkClass = `flex items-center gap-1.5 transition-colors sm:ml-4 ${linkColor}`;
+  const linkStyle = { fontSize: 'clamp(13px, 2.5vw, 16px)' };
+  const linkInner = (
+    <>
+      {t('carrousel.sections.favoritesLink')} <FaArrowRight size={10} />
+    </>
+  );
+
+  return (
+    <div className="relative w-full">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2
+          className={`font-semibold ${titleColor}`}
+          style={{ fontSize: '20px', lineHeight: '22px' }}
+        >
+          {title}
+        </h2>
+        {!pending &&
+          (isLoggedIn ? (
+            <Link to="/locataire/favoris" className={linkClass} style={linkStyle}>
+              {linkInner}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={onLogin}
+              className={`${linkClass} cursor-pointer border-0 bg-transparent p-0`}
+              style={linkStyle}
+            >
+              {linkInner}
+            </button>
+          ))}
+      </div>
+
+      {hasFavorites ? (
+        <FavoritesRow
+          slides={slides}
+          theme={theme}
+          favoriteIds={favoriteIds}
+          onToggleFavorite={onToggleFavorite}
+          onSlideClick={onSlideClick}
+        />
+      ) : (
+        <div className="p-2 sm:p-4">
+          {/* Panneau à la taille d'une rangée de carrousel : image de fond +
+              même dégradé « filtre noir » que les cartes des autres carrousels.
+              Tant que l'état de connexion / la liste des favoris n'est pas connu
+              (pending), on n'affiche ni message ni action pour ne pas faire
+              clignoter le mauvais texte. */}
+          <div className="relative h-[220px] w-full overflow-hidden rounded-xl border border-black/10 sm:h-[260px]">
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${favoritesPanelBg})` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-overlay/10 to-overlay/90" />
+            {!pending && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
+                <p
+                  className="max-w-sm font-semibold text-on-dark"
+                  style={{ fontSize: '15px', lineHeight: '20px' }}
+                >
+                  {isLoggedIn
+                    ? t('carrousel.sections.favoritesEmpty')
+                    : t('carrousel.sections.favoritesLocked')}
+                </p>
+                {/* Locataire sans favori : le lien « Voir mes annonces
+                    favorites » du header suffit. Visiteur : bouton de connexion
+                    proéminent dans le panneau. */}
+                {!isLoggedIn && (
+                  <GhostButton onClick={onLogin}>
+                    {t('carrousel.sections.favoritesLoginCta')}
+                  </GhostButton>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── BoatTypeCarousel (animations 3D) ─────────────────────────────────────────
 
 const GAP = 16;
@@ -775,6 +1109,9 @@ const BoatTypeCarousel = memo(function BoatTypeCarousel({
 const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly = false }) => {
   const { t } = useTranslation();
   const { theme: visualTheme } = useVisualPreferences();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const goToCategory = useCategoryNavigate();
   const goToProduct = useProductNavigate();
   const [boats, setBoats] = useState([]);
@@ -783,7 +1120,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
   // standard, mais doivent suivre le mode nuit lorsque la palette globale est
   // activée : leurs surfaces deviennent alors sombres via les tokens Home.
   const effectiveTheme = visualTheme === 'dark' ? 'dark' : theme;
-  const { favoriteIds, toggleFavorite } = useFavorites(!portsOnly);
+  const { favoriteIds, favoriteOrder, toggleFavorite, favoritesLoading } = useFavorites(!portsOnly);
 
   const handleBoatClick = useCallback(
     (slide) => {
@@ -802,6 +1139,24 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
     if (!slide.available) return;
     goToCategory(`/categorie?destination=${encodeURIComponent(slide.label)}`);
   }
+
+  // Pop-up de connexion par-dessus la page courante (même mécanique que les
+  // favoris / la réservation), déclenchée depuis le panneau verrouillé.
+  const handleLoginRedirect = useCallback(() => {
+    navigate('/login', { state: { backgroundLocation: location } });
+  }, [navigate, location]);
+
+  // Bateaux favoris présentés dans leur section, dans l'ordre d'ajout (plus
+  // récent d'abord, cf. useFavorites) : on résout chaque id sur le catalogue
+  // public déjà chargé. Un favori dépublié en disparaît, donc d'ici aussi.
+  const favoriteSlides = useMemo(() => {
+    if (!favoriteOrder.length) return [];
+    const boatById = new Map(boats.map((b) => [b.id_boat, b]));
+    return favoriteOrder
+      .map((id) => boatById.get(id))
+      .filter(Boolean)
+      .map((boat) => boatToSlide(boat, t));
+  }, [boats, favoriteOrder, t]);
 
   // startTransition : le rendu des sections de carrousels (useMemo lourds +
   // beaucoup d'images) passe en priorité basse pour ne pas bloquer les
@@ -888,6 +1243,10 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
     }));
   }, [boats, t]);
 
+  // Ordre fixe : port de départ (ancré en tête, seule section en thème sombre,
+  // calée sur la portion foncée du dégradé HomePage) → coups de cœur → mes
+  // favoris → destinations → moins chères. « Mes favoris » garde sa place quel
+  // que soit son état (remplie, vide ou verrouillée).
   const carouselSections = useMemo(
     () => [
       {
@@ -897,25 +1256,24 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
         variant: 'port',
       },
       {
-        title: t('carrousel.sections.recent'),
-        slides: boats.slice(0, 6).map((boat) => boatToSlide(boat, t)),
-        linkLabel: t('carrousel.sections.recentLink'),
+        title: t('carrousel.sections.coupDeCoeur'),
+        slides: [...boats]
+          .sort(byCoupDeCoeur)
+          .slice(0, 5)
+          .map((boat) => boatToSlide(boat, t)),
+        linkLabel: t('carrousel.sections.coupDeCoeurLink'),
         variant: 'overlay',
+      },
+      {
+        title: t('carrousel.sections.favorites'),
+        slides: [],
+        variant: 'favorites',
       },
       {
         title: t('carrousel.sections.destinations'),
         slides: ports.slice(0, 7).map(portToSlide),
         linkLabel: t('carrousel.sections.destinationsLink'),
         variant: 'port',
-      },
-      {
-        title: t('carrousel.sections.popular'),
-        slides: [...boats]
-          .sort((a, b) => Number(b.booking_count) - Number(a.booking_count))
-          .slice(0, 5)
-          .map((boat) => boatToSlide(boat, t)),
-        linkLabel: t('carrousel.sections.popularLink'),
-        variant: 'overlay',
       },
       {
         title: t('carrousel.sections.cheapest'),
@@ -1034,20 +1392,35 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
       </div>
 
       {carouselSections
-        .filter((s) => s.slides.length > 0)
-        .map(({ title, slides, linkLabel, themed, variant }) => (
-          <CarouselSection
-            key={title}
-            title={title}
-            slides={slides}
-            linkLabel={linkLabel}
-            theme={themed || glass || visualTheme === 'dark' ? effectiveTheme : 'light'}
-            variant={variant}
-            favoriteIds={favoriteIds}
-            onToggleFavorite={toggleFavorite}
-            onSlideClick={variant === 'port' ? handlePortClick : handleBoatClick}
-          />
-        ))}
+        .filter((s) => s.variant === 'favorites' || s.slides.length > 0)
+        .map(({ title, slides, linkLabel, themed, variant }) =>
+          variant === 'favorites' ? (
+            <FavoritesCarousel
+              key={title}
+              title={title}
+              isLoggedIn={Boolean(user)}
+              pending={authLoading || favoritesLoading}
+              slides={favoriteSlides}
+              theme={glass || visualTheme === 'dark' ? effectiveTheme : 'light'}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={toggleFavorite}
+              onSlideClick={handleBoatClick}
+              onLogin={handleLoginRedirect}
+            />
+          ) : (
+            <CarouselSection
+              key={title}
+              title={title}
+              slides={slides}
+              linkLabel={linkLabel}
+              theme={themed || glass || visualTheme === 'dark' ? effectiveTheme : 'light'}
+              variant={variant}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={toggleFavorite}
+              onSlideClick={variant === 'port' ? handlePortClick : handleBoatClick}
+            />
+          )
+        )}
     </div>
   );
 };
