@@ -1592,15 +1592,6 @@ function ProductPage() {
             </div>
           )}
 
-          {/* Section 4+5+6 — Avis clients, puis localisation, puis embarcations
-              similaires : même container que la galerie/réservation
-              ci-dessus (un seul fond photo continu, pas deux containers
-              séparés) pour éviter un raccord visible en
-              background-attachment: scroll sur mobile — même traitement que
-              le carrousel/avis de la CategoryPage. */}
-          {/* Dépôt d'avis (locataire ayant une réservation terminée sur ce
-              bateau) et édition de son propre avis, déclenchée depuis sa carte
-              dans la liste ci-dessous. */}
           {belowFoldReady && (
             <BoatReviews
               idBoat={boatId}

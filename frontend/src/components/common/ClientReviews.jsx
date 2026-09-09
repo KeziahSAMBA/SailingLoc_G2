@@ -22,14 +22,6 @@ function getSortOptions(t) {
   ];
 }
 
-function getRoleFilters(t) {
-  return [
-    { value: 'all', label: t('reviews.roleFilters.all') },
-    { value: 'locataire', label: t('reviews.roleFilters.locataire') },
-    { value: 'proprietaire', label: t('reviews.roleFilters.proprietaire') },
-  ];
-}
-
 // Données statiques côté API : les pages bornées sont agrégées pour conserver
 // l'ensemble des avis publics sans demander au serveur une réponse illimitée.
 function fetchReviews(boatId) {
@@ -223,10 +215,8 @@ export default function ClientReviews({
 }) {
   const { t } = useTranslation();
   const sortOptions = getSortOptions(t);
-  const roleFilters = getRoleFilters(t);
   const [reviews, setReviews] = useState([]);
   const [sort, setSort] = useState('recent');
-  const [roleFilter, setRoleFilter] = useState('all');
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -250,13 +240,12 @@ export default function ClientReviews({
     };
   }, [boatId, commentsOnly]);
 
-  // Page produit (boatId fourni) : uniquement les avis locataire liés à ce
-  // bateau précis — les filtres de rôle habituels (Tous/Locataires/
-  // Propriétaires) n'ont plus lieu d'être, un seul rôle est jamais affiché.
+  // L'API publique ne renvoie que des avis locataire (cf. reviewController) :
+  // aucun filtre de rôle n'a de sens côté UI, un seul rôle existe jamais ici.
   const filtered = useMemo(() => {
     if (boatId != null) return reviews.filter((r) => r.role === 'locataire' && r.boatId === boatId);
-    return roleFilter === 'all' ? reviews : reviews.filter((r) => r.role === roleFilter);
-  }, [reviews, roleFilter, boatId]);
+    return reviews;
+  }, [reviews, boatId]);
   const sorted = useMemo(() => sortReviews(filtered, sort), [filtered, sort]);
   // Mode boatId : une seule rangée de 3 (grille grid-cols-3 ci-dessous) plutôt
   // que les 2 rangées de 3 du mode standard.
@@ -270,11 +259,6 @@ export default function ClientReviews({
 
   function handleSort(value) {
     setSort(value);
-    setPage(0);
-  }
-
-  function handleRoleFilter(value) {
-    setRoleFilter(value);
     setPage(0);
   }
 
@@ -296,6 +280,80 @@ export default function ClientReviews({
     </select>
   );
 
+  // Grille de résultats + pagination (ou message vide) : extrait de `body`
+  // pour être réutilisable telle quelle, seule (mode boatId) ou regroupée
+  // avec les filtres (mode standard, cf. plus bas).
+  const results =
+    sorted.length === 0 ? (
+      <p className={`text-sm py-4 ${light ? 'text-on-dark/70' : 'text-content-muted'}`}>
+        {t('reviews.empty')}
+      </p>
+    ) : (
+      <>
+        {/* Grille 2×2 — pleine largeur en mode boatId (bloc avis étalé
+            jusqu'aux marges de la page plutôt que resserré comme le
+            carrousel/avis standard). */}
+        <div
+          className={`w-full grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 ${boatId != null ? 'lg:grid-cols-3' : 'md:w-3/4 md:grid-cols-3'}`}
+        >
+          {visible.map((review) => (
+            <ReviewCard
+              key={review.id ?? `${review.name}_${review.created_at}`}
+              light={light}
+              onEdit={
+                onEditReview && currentUserId === review.id_user
+                  ? () => onEditReview(review.id)
+                  : null
+              }
+              onDelete={
+                onDeleteReview && currentUserId === review.id_user
+                  ? () => onDeleteReview(review.id)
+                  : null
+              }
+              {...review}
+            />
+          ))}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={currentPage === 0}
+            aria-label={t('reviewFilters.prevPage')}
+            className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action disabled:cursor-not-allowed disabled:opacity-30 ${
+              light
+                ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-photo-action hover:text-photo-action-hover'
+                : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
+            }`}
+          >
+            <FaChevronLeft size={13} />
+          </button>
+
+          <span
+            className={`text-sm font-medium ${light ? 'text-on-dark/80' : 'text-content-muted'}`}
+          >
+            {currentPage + 1} / {totalPages}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={currentPage === totalPages - 1}
+            aria-label={t('reviewFilters.nextPage')}
+            className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action disabled:cursor-not-allowed disabled:opacity-30 ${
+              light
+                ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-photo-action hover:text-photo-action-hover'
+                : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
+            }`}
+          >
+            <FaChevronRight size={13} />
+          </button>
+        </div>
+      </>
+    );
+
   const body = (
     <>
       {boatId != null ? (
@@ -314,119 +372,33 @@ export default function ClientReviews({
           {sortSelect}
         </div>
       ) : (
-        <>
-          <div className="text-center mb-2">
-            <p
-              className={`text-sm font-semibold tracking-widest uppercase mb-4 underline underline-offset-4 ${light ? 'text-photo-action' : 'text-brand-text'}`}
-            >
-              {t('reviews.kicker')}
-            </p>
-            <h2
-              className={`text-lg font-semibold sm:text-3xl md:text-4xl ${light ? 'text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-content'}`}
-            >
-              {t('reviews.title')}
-            </h2>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
-            <div className="flex flex-wrap justify-center gap-2">
-              {roleFilters.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleRoleFilter(opt.value)}
-                  aria-pressed={roleFilter === opt.value}
-                  className={`rounded-full border px-3 py-1 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action ${
-                    roleFilter === opt.value
-                      ? 'bg-photo-action-fill text-photo-text border-photo-action shadow-sm non-color-active'
-                      : light
-                        ? 'bg-surface/5 text-on-dark border-glass/30 hover:border-photo-action hover:text-photo-action-hover'
-                        : 'bg-surface text-content-muted border-border-light hover:border-action-bright hover:text-brand-text'
-                  }`}
-                  style={
-                    light && roleFilter !== opt.value
-                      ? { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }
-                      : undefined
-                  }
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            {sortSelect}
-          </div>
-        </>
+        <div className="text-center mb-2">
+          <p
+            className={`text-sm font-semibold tracking-widest uppercase mb-4 underline underline-offset-4 ${light ? 'text-photo-action' : 'text-brand-text'}`}
+          >
+            {t('reviews.kicker')}
+          </p>
+          <h2
+            className={`text-lg font-semibold sm:text-3xl md:text-4xl ${light ? 'text-on-dark drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]' : 'text-content'}`}
+          >
+            {t('reviews.title')}
+          </h2>
+        </div>
       )}
 
-      {sorted.length === 0 ? (
-        <p className={`text-sm py-4 ${light ? 'text-on-dark/70' : 'text-content-muted'}`}>
-          {t('reviews.empty')}
-        </p>
+      {boatId != null ? (
+        results
       ) : (
-        <>
-          {/* Grille 2×2 — pleine largeur en mode boatId (bloc avis étalé
-              jusqu'aux marges de la page plutôt que resserré comme le
-              carrousel/avis standard). */}
-          <div
-            className={`w-full grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 ${boatId != null ? 'lg:grid-cols-3' : 'md:w-3/4 md:grid-cols-3'}`}
-          >
-            {visible.map((review) => (
-              <ReviewCard
-                key={review.id ?? `${review.name}_${review.created_at}`}
-                light={light}
-                onEdit={
-                  onEditReview && currentUserId === review.id_user
-                    ? () => onEditReview(review.id)
-                    : null
-                }
-                onDelete={
-                  onDeleteReview && currentUserId === review.id_user
-                    ? () => onDeleteReview(review.id)
-                    : null
-                }
-                {...review}
-              />
-            ))}
-          </div>
+        // Filtres + grille + pagination regroupés en un seul bloc "contenu" :
+        // les mises en page qui répartissent les enfants directs de la
+        // section (ex. sections plein écran de la homepage, titre / contenu /
+        // CTA) traitent ainsi les trois comme une seule unité plutôt que de
+        // les espacer indépendamment.
+        <div data-reviews-body="true" className="w-full flex flex-col items-center gap-5">
+          <div className="flex justify-center">{sortSelect}</div>
 
-          {/* Navigation */}
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={currentPage === 0}
-              aria-label={t('reviewFilters.prevPage')}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action disabled:cursor-not-allowed disabled:opacity-30 ${
-                light
-                  ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-photo-action hover:text-photo-action-hover'
-                  : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
-              }`}
-            >
-              <FaChevronLeft size={13} />
-            </button>
-
-            <span
-              className={`text-sm font-medium ${light ? 'text-on-dark/80' : 'text-content-muted'}`}
-            >
-              {currentPage + 1} / {totalPages}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={currentPage === totalPages - 1}
-              aria-label={t('reviewFilters.nextPage')}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-photo-action disabled:cursor-not-allowed disabled:opacity-30 ${
-                light
-                  ? 'border-glass/30 bg-surface/10 text-on-dark hover:border-photo-action hover:text-photo-action-hover'
-                  : 'border-border-light bg-surface text-content-muted hover:border-brand-text hover:text-brand-text shadow-sm'
-              }`}
-            >
-              <FaChevronRight size={13} />
-            </button>
-          </div>
-        </>
+          {results}
+        </div>
       )}
 
       {children}

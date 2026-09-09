@@ -15,12 +15,15 @@
     "files:migrate": "node scripts/migrate-private-files.js",
     "seed:reviews": "node prisma/addMissingReviews.js",
     "seed:renter-reviews": "node prisma/addRenterReviews.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint src/**/*.{js,mjs}",
     "format": "prettier --write src/**/*.{js,mjs,json,md}"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
+  },
+  "overrides": {
+    "qs": "6.16.0"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
@@ -34,12 +37,13 @@
     "express-rate-limit": "^8.6.2",
     "jsonwebtoken": "^9.0.0",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^9.0.6",
+    "nodemailer": "^9.1.1",
     "pdfkit": "^0.19.1",
     "prisma": "^5.0.0",
     "stripe": "^14.0.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^29.0.0",
     "nodemon": "^3.0.1",
     "supertest": "^7.2.2"

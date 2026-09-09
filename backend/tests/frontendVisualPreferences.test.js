@@ -135,41 +135,36 @@ describe('intégration statique des préférences visuelles', () => {
     expect(settings).toContain("overflowWrap: 'anywhere'");
     expect(settings).toContain('duration-[180ms]');
     expect(settings).toContain('motion-reduce:transition-none');
-    expect(settings).toContain("pendingFocusRef.current = { target: 'glasses' }");
-    expect(settings).toContain('measurementStateRef');
-    expect(settings).toContain('measurement.pending');
-    expect(settings).toContain('measurementStateRef.current.version === stableVersion');
+    // Fermeture/focus simples (plus de mesure asynchrone de la position, le
+    // panneau étant désormais ancré en CSS à côté de l'icône) : Échap referme
+    // d'abord le sous-menu daltonien et rend le focus au bouton lunettes,
+    // sinon referme tout le panneau et rend le focus au bouton paramètres.
     expect(settings).toContain(
-      'const currentGlassesButton = settingsGroupRef.current?.querySelector('
+      'setColorVisionOpen(false);\n        activeGlassesButtonRef.current?.focus();'
     );
-    expect(settings).toContain('currentGlassesButton.focus()');
-    expect(settings).toContain('document.activeElement === latestButton');
-    expect(settings).toContain('window.requestAnimationFrame');
-    expect(settings).toContain('window.cancelAnimationFrame');
-    expect(settings).toContain("addEventListener('transitionrun'");
-    expect(settings).toContain('measureHeaderTransitionFrame');
-    expect(settings).toContain('headerTransitionTimeout');
-    expect(settings).toContain('getHeaderTransitionBudget');
-    expect(settings).toContain('transitionProperty');
-    expect(settings).toContain('cancelHeaderTransitionGuard');
-    expect(settings).toContain('HEADER_TRANSITION_GUARD_MARGIN_MS');
+    expect(settings).toContain('closeMenus();\n        settingsButtonRef.current?.focus();');
+    expect(settings).toContain('function closeMenus(restoreFocus = false)');
+    expect(settings).toContain('onOpenChange?.(false)');
   });
 
-  it('intègre le sélecteur en portail flottant sans modifier le flux du header', () => {
+  it('ancre le sélecteur à côté de l’icône sans modifier le flux du header', () => {
     const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');
     const shell = source('frontend/src/components/common/Header/shared/HeaderShell.jsx');
     const clickOutside = source('frontend/src/components/common/Header/shared/useClickOutside.js');
 
-    expect(settings).toContain('createPortal');
-    expect(settings).not.toContain('panelContainerRef');
+    // Panneau positionné en CSS (right-full/top-1/2), plus de portail ni de
+    // mesure JS de sa position — visuel d'origine restauré.
+    expect(settings).not.toContain('createPortal');
+    expect(settings).not.toContain('data-header-settings-placement');
+    expect(settings).not.toContain("position: 'fixed'");
     expect(settings).toContain('data-visual-settings-panel');
-    expect(settings).toContain('flex-col');
-    expect(settings).toContain('data-header-settings-placement="fixed"');
-    expect(settings).toContain("position: 'fixed'");
-    expect(settings).toContain('className="contents"');
-    expect(settings).not.toMatch(/className=.*absolute.*settings/u);
+    expect(settings).toContain('className="relative" ref={ref}');
+    expect(settings).toContain('absolute right-full top-1/2');
+    expect(settings).toContain('-translate-y-1/2');
+    expect(settings).toContain('translate-x-0');
+    expect(settings).toContain('translate-x-3');
     expect(shell).not.toContain('settingsPanelRef');
-    expect(shell).toContain('settingsOpen');
+    expect(shell).not.toContain('settingsOpen');
     expect(shell).not.toContain('settingsHeight');
     expect(shell).not.toContain('HeaderSettingsContext');
     expect(shell).not.toContain('data-header-settings-row="true"');

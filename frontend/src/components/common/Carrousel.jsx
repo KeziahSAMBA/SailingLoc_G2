@@ -1041,7 +1041,7 @@ const Carrousel = ({ theme = 'dark', similarTo = null, glass = false, portsOnly 
             title={title}
             slides={slides}
             linkLabel={linkLabel}
-            theme={themed || glass || effectiveTheme === 'dark' ? effectiveTheme : 'light'}
+            theme={themed || glass || visualTheme === 'dark' ? effectiveTheme : 'light'}
             variant={variant}
             favoriteIds={favoriteIds}
             onToggleFavorite={toggleFavorite}

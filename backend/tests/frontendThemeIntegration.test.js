@@ -73,21 +73,22 @@ function frontendSourceFiles(directory = FRONTEND_SRC) {
 }
 
 describe('intégration transversale des thèmes visuels', () => {
-  it('intègre le panneau de préférences en portail flottant sans modifier le flux du header', () => {
+  it('ancre le panneau de préférences à côté de l’icône sans modifier le flux du header', () => {
     const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');
     const shell = source('frontend/src/components/common/Header/shared/HeaderShell.jsx');
 
     expect(settings).toContain('data-visual-settings-panel="true"');
-    expect(settings).toContain('className="contents"');
-    expect(settings).toContain('data-header-settings-placement="fixed"');
+    expect(settings).toContain('className="relative" ref={ref}');
+    expect(settings).not.toContain('data-header-settings-placement');
     expect(settings).toContain('data-settings-color-vision-options');
     expect(settings).toContain('aria-hidden={!colorVisionOpen}');
     expect(settings).toContain('tabIndex={colorVisionOpen ? 0 : -1}');
-    expect(settings).toContain('createPortal');
+    expect(settings).not.toContain('createPortal');
     expect(settings).not.toContain('panelContainerRef');
-    expect(settings).toContain("position: 'fixed'");
+    expect(settings).not.toContain("position: 'fixed'");
+    expect(settings).toContain('absolute right-full top-1/2');
 
-    expect(shell).toContain('settingsOpen');
+    expect(shell).not.toContain('settingsOpen');
     expect(shell).not.toContain('settingsHeight');
     expect(shell).not.toContain('data-header-settings-spacer="true"');
     expect(shell).not.toContain('data-header-settings-row="true"');

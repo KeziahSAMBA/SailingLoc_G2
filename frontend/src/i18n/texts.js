@@ -1118,11 +1118,6 @@ export const TEXTS = {
       fr: 'Aucun commentaire pour le moment',
       en: 'No comments yet',
     },
-    roleFilters: {
-      all: { fr: 'Tous', en: 'All' },
-      locataire: { fr: 'Locataires', en: 'Renters' },
-      proprietaire: { fr: 'Propriétaires', en: 'Owners' },
-    },
     roleLabels: {
       locataire: { fr: 'Locataire', en: 'Renter' },
       proprietaire: { fr: 'Propriétaire', en: 'Owner' },

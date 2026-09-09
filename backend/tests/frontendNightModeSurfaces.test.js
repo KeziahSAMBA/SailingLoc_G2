@@ -123,8 +123,13 @@ describe('surfaces du mode nuit', () => {
     expect(carousel).toContain("const effectiveTheme = visualTheme === 'dark' ? 'dark' : theme");
     expect(carousel).toContain('var(--sl-carousel-dot-active)');
     expect(carousel).toContain('var(--sl-carousel-dot-muted)');
+    // Le déclencheur doit tester la préférence globale (visualTheme), pas
+    // effectiveTheme : sinon le défaut local `theme` du composant (utilisé
+    // par la section "Annonces du moment" sur fond photo) forçait ces
+    // sections en sombre même en thème clair, rendant leur légende blanche
+    // sur fond blanc.
     expect(carousel).toContain(
-      "theme={themed || glass || effectiveTheme === 'dark' ? effectiveTheme : 'light'}"
+      "theme={themed || glass || visualTheme === 'dark' ? effectiveTheme : 'light'}"
     );
   });
 });

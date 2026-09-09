@@ -1323,7 +1323,7 @@ function CategoryPage() {
               light
               wide
               id="avis"
-              className="category-page-reviews !px-4 py-8 sm:!px-8 sm:[&>.grid]:!grid-cols-2 lg:!px-16 xl:!px-28 xl:py-10 xl:[&>.grid]:!w-3/4 xl:[&>.grid]:!grid-cols-3 [&>.grid]:!w-full [&>.grid]:!grid-cols-1"
+              className="category-page-reviews !px-4 py-8 sm:!px-8 sm:[&_.grid]:!grid-cols-2 lg:!px-16 xl:!px-28 xl:py-10 xl:[&_.grid]:!w-3/4 xl:[&_.grid]:!grid-cols-3 [&_.grid]:!w-full [&_.grid]:!grid-cols-1"
             />
           )}
         </div>

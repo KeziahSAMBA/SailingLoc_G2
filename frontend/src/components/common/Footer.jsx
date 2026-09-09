@@ -106,7 +106,7 @@ const Footer = () => {
   return (
     <footer
       id="contact"
-      className="flex flex-col justify-between overflow-x-hidden px-4 text-content-soft sm:px-8 lg:px-12 xl:px-16"
+      className="flex min-h-[calc(100svh-60px)] flex-col justify-between overflow-x-hidden px-4 text-content-soft sm:px-8 lg:px-12 xl:px-16"
       style={{
         backgroundImage: `linear-gradient(rgb(var(--sl-photo-overlay-footer-color) / var(--sl-photo-overlay-footer-opacity)), rgb(var(--sl-photo-overlay-footer-color) / var(--sl-photo-overlay-footer-opacity))), url(${bgImage})`,
         backgroundSize: 'cover',
@@ -114,7 +114,7 @@ const Footer = () => {
         borderTop: '1px solid rgba(90, 180, 236, 0.2)',
       }}
     >
-      <div className="grid w-full min-w-0 grid-cols-1 gap-x-10 gap-y-4 pt-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+      <div className="grid w-full min-w-0 flex-1 grid-cols-1 gap-x-10 gap-y-4 pt-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:content-between">
         {/* Ligne A */}
         <div className="order-1 lg:order-none">
           <img src={logoLong} alt="SailingLoc logo" className="w-32 sm:w-36" />
@@ -174,7 +174,7 @@ const Footer = () => {
         </h3>
 
         {/* Ligne C — contenu */}
-        <ul className="order-4 min-w-0 space-y-3 text-sm lg:order-none">
+        <ul className="order-4 min-w-0 space-y-5 text-sm lg:order-none">
           <li className="flex items-start gap-2">
             <FaPhone className="mt-0.5 shrink-0 text-action-bright" />
             <span className="break-words">+33 (0)2 00 66 77 89</span>
@@ -214,7 +214,7 @@ const Footer = () => {
           </li>
         </ul>
 
-        <ul className="order-6 min-w-0 space-y-2 text-sm lg:order-none">
+        <ul className="order-6 min-w-0 space-y-4 text-sm lg:order-none">
           {helpLinks.map((text) => (
             <li key={text}>
               <a
@@ -244,7 +244,7 @@ const Footer = () => {
           </li>
         </ul>
 
-        <ul className="order-8 min-w-0 space-y-2 pb-2 text-sm lg:order-none lg:pb-0">
+        <ul className="order-8 min-w-0 space-y-4 pb-2 text-sm lg:order-none lg:pb-0">
           <li>{t('footer.founded')}</li>
           <li className="flex items-start gap-2">
             <FaLocationDot className="mt-0.5 shrink-0 text-action-bright" />
