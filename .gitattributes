@@ -1,0 +1,17 @@
+# Fixe les fins de ligne du dépôt en LF, indépendamment du core.autocrlf de
+# chaque machine (Windows le met souvent à `true` par défaut) — évite que git
+# ne propose de réécrire quasiment tout le repo en CRLF alors que Prettier
+# (endOfLine: "lf") committe déjà tout en LF.
+* text=auto eol=lf
+
+# Binaires : jamais de conversion de fin de ligne, jamais de diff textuel.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.mp4 binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.eot binary

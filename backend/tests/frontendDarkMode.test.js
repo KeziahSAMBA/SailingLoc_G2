@@ -191,7 +191,7 @@ describe('bascule lune et soleil', () => {
     expect(settings).toContain("{theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}");
   });
 
-  it('borne le fond à la barre et conserve un panneau sombre accessible', () => {
+  it('conserve un panneau sombre accessible ancré à côté de l’icône', () => {
     const shell = source('frontend/src/components/common/Header/shared/HeaderShell.jsx');
     const settings = source('frontend/src/components/common/Header/shared/SettingsMenu.jsx');
     const css = source('frontend/src/index.css');
@@ -200,11 +200,14 @@ describe('bascule lune et soleil', () => {
     expect(shell).toContain('className="absolute inset-0 -z-10"');
     expect(shell).toContain('minHeight: baseHeight');
     expect(shell).not.toContain('settingsPanelRef');
-    expect(settings).toContain('createPortal');
+    // Panneau ancré en CSS à côté de l'icône (visuel d'origine) : plus de
+    // portail ni de position fixe mesurée en JS.
+    expect(settings).not.toContain('createPortal');
     expect(settings).not.toContain('panelContainerRef');
+    expect(settings).not.toContain('data-header-settings-placement');
+    expect(settings).not.toContain("position: 'fixed'");
     expect(settings).toContain('data-visual-settings-panel');
-    expect(settings).toContain('data-header-settings-placement="fixed"');
-    expect(settings).toContain("position: 'fixed'");
+    expect(settings).toContain('absolute right-full top-1/2');
     expect(settings).not.toContain('settingsPlacement');
     expect(settings).toContain('border border-glass/40');
     expect(settings).toContain('focus-visible:outline-on-dark');

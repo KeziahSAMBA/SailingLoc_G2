@@ -554,7 +554,7 @@ function HomePage() {
           />
         )}
 
-        <div className="relative grid flex-1 grid-rows-[1fr_auto_1fr] items-center justify-items-center py-8 text-center sm:flex sm:flex-col sm:justify-center sm:gap-12 lg:gap-20">
+        <div className="relative grid flex-1 grid-rows-[1fr_auto_1fr] items-center justify-items-center py-8 text-center sm:flex sm:flex-col sm:justify-evenly sm:gap-12 lg:gap-20">
           <div className="relative w-full min-w-0" style={introLogoBlockStyle}>
             {introActive && (
               <p
@@ -644,14 +644,12 @@ function HomePage() {
             </div>
           </section>
 
-          <div
-            id="tutoriel"
-            className="mx-4 border-t border-border-light scroll-mt-[60px] sm:mx-8 sm:scroll-mt-[115px] lg:mx-[168px]"
-          />
-
           {/* Section 3 — Tuto */}
-          <section className="flex w-full flex-col items-center justify-center gap-0 bg-surface px-4 py-0 max-sm:min-h-[100svh] sm:px-8 sm:py-8 lg:px-16 xl:px-28">
-            <div className="flex w-full max-w-7xl flex-col items-center py-0 sm:px-4 sm:py-8 lg:px-16 lg:py-10">
+          <section
+            id="tutoriel"
+            className="flex w-full min-h-[100svh] flex-col items-center justify-center gap-0 border-t border-border-light bg-surface px-4 py-0 scroll-mt-0 sm:px-8 sm:py-8 lg:px-16 xl:px-28"
+          >
+            <div className="flex h-full w-full max-w-7xl flex-col items-center justify-evenly gap-6 py-0 sm:gap-10 sm:px-4 sm:py-8 lg:px-16 lg:py-10">
               <div className="text-center mb-4 sm:mb-10">
                 <p className="text-sm font-semibold tracking-widest text-brand-text uppercase mb-6 underline underline-offset-4">
                   {t('home.steps.kicker')}
@@ -705,12 +703,10 @@ function HomePage() {
             </div>
           </section>
 
-          <div className="mx-4 border-t border-border-light sm:mx-8 lg:mx-[168px]" />
-
           {/* Section 4 — Proposition de valeur */}
           <section
             id="proposition-valeur"
-            className="flex w-full flex-col items-center justify-center gap-0 bg-surface px-4 py-0 max-sm:min-h-[100svh] scroll-mt-[40px] sm:scroll-mt-[130px] sm:px-8 sm:py-8 lg:px-16 xl:px-28"
+            className="flex w-full min-h-[100svh] flex-col items-center justify-evenly gap-0 border-t border-border-light bg-surface px-4 py-0 scroll-mt-0 sm:px-8 sm:py-8 lg:px-16 xl:px-28"
           >
             <div className="text-center mb-10">
               <p className="text-sm font-semibold tracking-widest text-brand-text uppercase mb-6 underline underline-offset-4">
@@ -739,13 +735,11 @@ function HomePage() {
             </GhostButton>
           </section>
 
-          <div
-            id="avis"
-            className="mx-4 border-t border-border-light scroll-mt-[60px] sm:mx-8 lg:mx-[168px]"
-          />
-
           {/* Section 5 — Avis clients */}
-          <ClientReviews className="py-8">
+          <ClientReviews
+            id="avis"
+            className="py-16 min-h-[100svh] justify-evenly border-t border-border-light scroll-mt-4 [&>[data-reviews-body]]:mt-8"
+          >
             <div className="flex flex-col items-center gap-4 mt-10">
               <p className="px-4 text-center text-base font-semibold text-content-muted sm:text-lg">
                 {t('home.reviews.tagline')}
