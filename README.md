@@ -2,23 +2,103 @@
 
 # SailingLoc — Guide développeur
 
-Plateforme de location de bateaux — projet fullstack avec un backend Node.js/Express et un frontend React/Vite.
+Plateforme de location de bateaux entre particuliers — projet fullstack avec un
+backend **Node.js/Express** (API REST + Prisma/PostgreSQL) et un frontend
+**React/Vite**. Paiements via **Stripe** (empreinte, capture manuelle, Stripe
+Connect, remboursements, webhooks), envoi d'emails **MailDev** en local /
+**Mailgun** en production, mesure d'audience **Matomo** avec consentement CNIL,
+internationalisation FR/EN, mode nuit et profils d'accessibilité visuelle.
+Déploiement sur **Railway** (ou `docker-compose` auto-hébergé), CI/CD et portes
+de sécurité **GitHub Actions**, suite de tests **Jest**.
 
 ---
 
 ## Sommaire
 
+- [Fonctionnalités](#fonctionnalités)
 - [Identité visuelle](#identité-visuelle)
 - [Technologies](#technologies)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
+- [Comptes de test](#comptes-de-test)
 - [Paiements Stripe](#paiements-stripe)
+- [Déploiement (Railway)](#déploiement-railway)
+- [Tests](#tests)
 - [Scripts disponibles](#scripts-disponibles)
 - [Structure du projet](#structure-du-projet)
 - [API](#api)
 - [Choses à savoir](#choses-à-savoir)
 - [Extension TODO Tree](#extension-todo-tree)
 - [Workflow Git](#workflow-git)
+
+---
+
+## Fonctionnalités
+
+### Catalogue & pages publiques
+
+- **Page d'accueil** visiteur, avec une variante dédiée au propriétaire connecté
+- **Catalogue** de bateaux : recherche, barre de filtres, tri, pagination côté serveur
+- **Fiche bateau** : carrousel photos + lightbox, équipements, disponibilités,
+  avis notés, accès au profil du propriétaire, contact par messagerie
+- **Profils publics** propriétaire et locataire (avec avis)
+- Pages **À propos**, **Contact** (formulaire traité côté API), **404** personnalisée
+- **RGPD** : mentions légales, CGU, CGV, politique de confidentialité
+- **SEO** : métadonnées par route, données structurées JSON-LD, `sitemap.xml`,
+  `robots.txt`, pré-rendu des pages publiques au build (Playwright)
+- **Cookies & consentement CNIL** + mesure d'audience **Matomo** (opt-in par finalité)
+- **Internationalisation** FR / EN (i18next)
+- **Accessibilité visuelle** : mode nuit, profils de vision des couleurs
+  (daltonisme), mémorisation des préférences
+
+### Authentification & compte
+
+- Inscription avec **email de vérification**, connexion / déconnexion
+- **JWT à deux tokens** (access ~15 min en mémoire + refresh ~7 j en cookie
+  `httpOnly`), refresh token à usage unique (invalidation de session si rejeu)
+- Mot de passe oublié / réinitialisation par email
+- **Déconnexion automatique** après inactivité
+- Édition du profil, changement de mot de passe, **photo de profil**
+- **Désactivation / suppression de compte** (RGPD)
+- **Pièces justificatives** (permis, identité) : upload, suivi de validation,
+  **chiffrement au repos AES-256-GCM**, téléchargement via route protégée
+
+### Locataire
+
+- **Tunnel de réservation** avec vérification de disponibilité en temps réel
+- **Empreinte bancaire Stripe** à la réservation (capture manuelle), panier
+  conservé 15 min avec gestion de l'expiration de session
+- Historique des réservations, **annulation + demande de remboursement**, litiges
+- **Favoris**, **Mes dépenses** (historique des paiements), **factures PDF**
+- **Avis** après séjour, **messagerie** avec le propriétaire
+
+### Propriétaire
+
+- Dashboard, **gestion des bateaux** (création/édition, jusqu'à 5 images,
+  équipements, calendrier de disponibilités)
+- **Confirmation / refus** des demandes de réservation (déclenche le débit)
+- **Revenus** et reversement via **Stripe Connect** (90 % propriétaire /
+  10 % commission), onboarding Connect hébergé
+- Gestion des documents, avis reçus, messagerie
+
+### Back-office administrateur (login séparé)
+
+- Statistiques globales, **journaux d'activité**
+- Utilisateurs (CRUD, filtres, création avec rôle au choix)
+- Validation des **documents**, publication/validation des **bateaux**, **signalements**
+- **Réservations** (annulation) et **litiges**, **modération des avis**
+- **Ports** (régions, médias), **transactions / paiements**
+- Messagerie & **demandes de contact**
+- **Tâches planifiées (cron)** : suivi des exécutions et programmation
+- **Vue spectateur** (parcours locataire / propriétaire en lecture seule)
+
+### Tâches planifiées (cron — `croner`)
+
+Expiration des réservations en attente (`bookings.expire`), migration des
+fichiers privés (`files.migrate`), et purges RGPD/rétention :
+`tokens.purge`, `logs.purge`, `messages.purge`, `images.purge`,
+`contact.purge`, `cron.runs.purge`, `users.unverified.purge`,
+`users.inactive.purge`, `users.paused.purge`, `users.purge`.
 
 ---
 
@@ -67,35 +147,48 @@ Les logos sont disponibles dans `frontend/src/assets/image/SL_logo/` :
 
 ### Frontend
 
-| Technologie  | Version | Rôle                              |
-| ------------ | ------- | --------------------------------- |
-| React        | 18.x    | Interface utilisateur             |
-| React Router | 6.x     | Routage côté client               |
-| Vite         | 5.x     | Serveur de développement et build |
-| TailwindCSS  | 3.x     | Styles utilitaires                |
-| Axios        | 1.x     | Requêtes HTTP vers l'API          |
-| FullCalendar | 6.x     | Calendrier interactif             |
+| Technologie             | Version   | Rôle                                              |
+| ----------------------- | --------- | ------------------------------------------------- |
+| React                   | 18.3      | Interface utilisateur                             |
+| React Router            | 6.x       | Routage côté client (SPA)                         |
+| Vite                    | 6.x       | Serveur de développement et build de production   |
+| TailwindCSS             | 3.4       | Styles utilitaires                                |
+| Axios                   | 1.x       | Requêtes HTTP vers l'API                          |
+| i18next / react-i18next | 26.x      | Internationalisation FR / EN                      |
+| Leaflet / react-leaflet | 1.9       | Cartes (tuiles Carto), localisation des ports     |
+| Recharts                | 2.15      | Graphiques des dashboards (revenus, statistiques) |
+| Motion                  | 12.x      | Animations et transitions de page                 |
+| @stripe/react-stripe-js | 6.x / 9.x | Formulaire de carte (Stripe Elements)             |
+| Playwright              | 1.61      | Pré-rendu SEO des pages publiques (build)         |
 
 ### Backend
 
-| Technologie | Version | Rôle                          |
-| ----------- | ------- | ----------------------------- |
-| Node.js     | 20.x    | Environnement d'exécution     |
-| Express.js  | 4.x     | Framework web                 |
-| Prisma ORM  | 5.x     | Accès base de données         |
-| PostgreSQL  | 16.x    | Base de données relationnelle |
-| JWT         | 9.x     | Authentification par token    |
-| Bcrypt      | 5.x     | Hachage des mots de passe     |
-| Stripe SDK  | 14.x    | Paiements en ligne            |
-| Multer      | 1.x     | Upload de fichiers            |
-| Nodemailer  | 6.x     | Envoi d'emails                |
+| Technologie        | Version | Rôle                                            |
+| ------------------ | ------- | ----------------------------------------------- |
+| Node.js            | 22.x    | Environnement d'exécution (`engines: >=22 <23`) |
+| Express.js         | 4.x     | Framework web                                   |
+| Prisma ORM         | 5.x     | Accès base de données (32 migrations)           |
+| PostgreSQL         | 16      | Base de données relationnelle                   |
+| jsonwebtoken       | 9.x     | Authentification par tokens (access + refresh)  |
+| bcryptjs           | 2.x     | Hachage des mots de passe                       |
+| Stripe SDK         | 14.x    | Paiements, Connect, remboursements, webhooks    |
+| Multer             | 1.x     | Upload de fichiers (images bateaux, documents)  |
+| Nodemailer         | 9.x     | Envoi d'emails en local (SMTP / MailDev)        |
+| Mailgun (API HTTP) | —       | Envoi d'emails en production (Railway)          |
+| croner             | 10.x    | Planification des tâches de purge (cron)        |
+| @dr.pogodin/csurf  | 1.17    | Protection CSRF (double-submit cookie)          |
+| express-rate-limit | 8.x     | Limitation des tentatives par IP                |
+| pdfkit             | 0.19    | Génération des factures PDF                     |
+
+> CI : les tests tournent aussi sur **Node 20** (matrice GitHub Actions) ; le
+> runtime Docker/Railway du backend est **Node 22** (requis par `@dr.pogodin/csurf`).
 
 ---
 
 ## Prérequis
 
 - **Docker** v24+ et **Docker Compose** v2+ (méthode recommandée)
-- **ou** Node.js v20+ et PostgreSQL v16+ (méthode locale)
+- **ou** Node.js v22 (`engines: >=22 <23`) et PostgreSQL v16+ (méthode locale)
 - **Git** configuré avec vos identifiants
 - **VS Code** avec l'extension **Todo Tree** (voir [section dédiée](#extension-todo-tree))
 
@@ -298,8 +391,8 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 ### Compte Administrateur
 
-| Email                 | Mot de passe                    |
-| --------------------- | ------------------------------- |
+| Email                 | Mot de passe |
+| --------------------- | ------------ |
 | `admin@sailingloc.fr` | Admin@123456 |
 
 > **Connexion admin :** la page de login administrateur est séparée de celle des utilisateurs.
@@ -308,14 +401,14 @@ Une fois les containers lancés, vous pouvez vous connecter avec les comptes sui
 
 ### Compte Locataire
 
-| Email                     | Mot de passe                    |
-| ------------------------- | ------------------------------- |
+| Email                     | Mot de passe         |
+| ------------------------- | -------------------- |
 | `thomas.bernard@email.fr` | Locataire@2025Secure |
 
 ### Compte Propriétaire
 
-| Email                 | Mot de passe                    |
-| --------------------- | ------------------------------- |
+| Email                 | Mot de passe            |
+| --------------------- | ----------------------- |
 | `luc.martin@email.fr` | Proprietaire@2025Secure |
 
 > **Note :** Ces comptes sont uniquement créés par le seed de développement. Aucun mot de passe de démonstration n'est publié dans le dépôt ; ne lancez jamais le seed sur une base de staging ou de production.
@@ -377,37 +470,154 @@ En production : déclarer l'endpoint `https://<domaine>/api/webhooks/stripe` dan
 
 > **Aucune donnée bancaire ne touche nos serveurs** (conformité PCI-DSS, profil SAQ A) : la carte est saisie dans un iframe Stripe Elements, l'IBAN des proprios est collecté par l'onboarding hébergé Stripe — la base ne stocke que des références opaques (`pi_…`, `acct_…`).
 
+### Cycle de vie d'un paiement
+
+1. **Réservation** → création d'un `PaymentIntent` en **capture manuelle** (empreinte, non débité)
+2. **Confirmation propriétaire** → **capture** du paiement
+3. **Refus / annulation / expiration (7 j)** → libération de l'empreinte ou **remboursement**
+4. **Litige** → remboursement partiel ou total décidé par l'admin
+5. **Webhooks** (`/api/webhooks/stripe`) → synchronisation des statuts (`Payment`,
+   `StripeWebhookEvent` pour l'idempotence), réconciliation des paiements
+
+---
+
+## Déploiement (Railway)
+
+Le projet est déployé sur **Railway** avec trois services : **backend**,
+**frontend** et une base **PostgreSQL** managée. Chaque service lit sa
+configuration depuis un fichier `railway.json` versionné.
+
+### Service backend — `backend/railway.json`
+
+| Étape          | Commande                                                 |
+| -------------- | -------------------------------------------------------- |
+| Builder        | `RAILPACK`                                               |
+| Build          | `npm run prisma:generate --workspace backend`            |
+| Pre-deploy     | `npm run prisma:deploy --workspace backend` (migrations) |
+| Start          | `NODE_ENV=production npm start --workspace backend`      |
+| Health check   | `GET /health` (timeout 100 s)                            |
+| Restart policy | `ON_FAILURE`, 10 tentatives                              |
+
+### Service frontend — `frontend/railway.json`
+
+- Builder **Dockerfile** (`frontend/Dockerfile`) — image multi-stage : build Vite
+  puis **nginx non privilégié** (port interne `8080`) qui applique réellement les
+  headers de sécurité et le **CSP**.
+- **Root directory du service : `/`** (contexte racine du dépôt) — ne pas le
+  passer à `/frontend`. Sélectionner le fichier de config `/frontend/railway.json`.
+- Les variables `VITE_*` sont **figées dans le bundle au build** : elles doivent
+  être définies **avant le premier déploiement**.
+  - `VITE_API_BASE_URL` — URL API HTTPS publique **avec** `/api` (ex. `https://api.sailingloc.fr/api`), jamais `localhost`
+  - `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_MATOMO_URL` — si ces intégrations sont activées
+
+### Variables backend obligatoires en runtime production
+
+Avec `NODE_ENV=production`, le backend **refuse de démarrer** si l'une des
+variables suivantes manque ou est invalide :
+
+`DEPLOYMENT_ENV` (`staging` **ou** `production`), `JWT_SECRET`, `DATABASE_URL`,
+`FILE_ENCRYPTION_KEY`, `APP_URL` (HTTPS), `PUBLIC_API_URL` (HTTPS, sans chemin —
+sert à construire les URL des photos/avatars sous `/uploads`).
+
+- Cible **`staging`** → clé Stripe `sk_test_` uniquement (paiement simulé possible sans clé)
+- Cible **`production`** → configuration email valide **et** clé Stripe `sk_live_`
+  ou `sk_test_` (la démo tourne en runtime production sans encaisser de paiement réel)
+- `RAILWAY_ENVIRONMENT_NAME` / `RAILWAY_ENVIRONMENT` ne sont acceptés en secours
+  que s'ils valent exactement `staging` ou `production` ; un conflit avec
+  `DEPLOYMENT_ENV` bloque le démarrage.
+- `CORS_ORIGINS` (optionnelle) : origines frontend supplémentaires autorisées à
+  envoyer le cookie de session, séparées par des virgules, toutes en HTTPS.
+
+### Emails en production
+
+Les ports SMTP sortants sont bloqués sur Railway : le backend bascule sur l'**API
+HTTP Mailgun** dès que `MAILGUN_API_KEY` est renseignée (elle prend le pas sur
+`EMAIL_*`). Renseigner aussi `MAILGUN_DOMAIN` et, pour la région EU,
+`MAILGUN_HOST=api.eu.mailgun.net`.
+
+### Webhooks Stripe en production
+
+Déclarer l'endpoint `https://<domaine>/api/webhooks/stripe` dans
+Dashboard → Developers → Webhooks, puis reporter le `whsec_…` fourni dans
+`STRIPE_WEBHOOK_SECRET`.
+
+### Alternative auto-hébergée
+
+- `docker-compose.yml` — production (PostgreSQL + backend + frontend/nginx + Redis optionnel, ports non publiés sur le LAN)
+- `docker-compose.staging.yml` — staging (`DEPLOYMENT_ENV=staging`, clé Stripe test)
+
+Le Redis de production exige `REDIS_PASSWORD` (échec volontaire au démarrage si
+absent). Les volumes `storage/documents` et `storage/disputes` sont persistants
+et ne sont jamais servis par nginx.
+
+---
+
+## Tests
+
+**56 fichiers de tests Jest** dans `backend/tests/` (+ **Supertest** pour les
+tests HTTP de bout en bout). Les tests s'exécutent en ESM via
+`cross-env NODE_OPTIONS=--experimental-vm-modules`. La logique métier est testée
+au niveau des **services** (sans Express ni base réelle).
+
+```bash
+npm test                       # depuis la racine (workspace backend)
+cd backend && npm test         # équivalent
+cd backend && npm test -- --watch
+```
+
+### Domaines couverts
+
+| Domaine                   | Exemples de fichiers                                                                                                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Sécurité**              | `securityAuth`, `securityAccess`, `securityRateCsrf`, `securityAbuse`, `securityPrivacy`, `securitySecrets`, `securityHttp`, `securityFavorites`, `fileCrypto`, `fileSecurity`             |
+| **Réservation**           | `bookingService`, `proprietaireBookings`, `refuseExpiredPendingBookings`, `disputeRefund`                                                                                                  |
+| **Paiement**              | `stripeWebhook`, `disputeRefund`, `invoice`                                                                                                                                                |
+| **Crons de purge**        | `cronService`, `cronRunsPurge`, `tokensPurge`, `logsPurge`, `messagesPurge`, `imagesPurge`, `contactPurge`, `usersPurge`, `usersUnverifiedPurge`, `usersInactivePurge`, `usersPausedPurge` |
+| **Accessibilité & thème** | `frontendDarkMode`, `frontendNightModeSurfaces`, `frontendColorVision*`, `frontendGlassSurfaces`, `frontendMapTheme`, `frontendVisualPreferences`, `frontendThemeIntegration`              |
+| **SEO**                   | `frontendSeoHead`, `frontendSeoMetadata`, `frontendSeoStructuredData`, `frontendSeoStructure`, `frontendSeoFiles`                                                                          |
+| **Compte & médias**       | `accountClosure`, `privateFileMigration`, `userAvatarMedia`, `portAdminMedia`, `adminBoatValidation`, `emailService`                                                                       |
+
+Le pipeline `ci.yml` rejoue **lint + tests + build** à chaque push / PR sur
+`master`, `develop` et `staging`.
+
 ---
 
 ## Scripts disponibles
 
 ### Racine
 
-| Commande         | Description                  |
-| ---------------- | ---------------------------- |
-| `npm run lint`   | Lint backend + frontend      |
-| `npm run format` | Formatage backend + frontend |
-| `npm test`       | Tests backend                |
+| Commande            | Description                                            |
+| ------------------- | ------------------------------------------------------ |
+| `npm run dev`       | Environnement Docker de dev (`docker-compose.dev.yml`) |
+| `npm run dev:build` | Idem avec rebuild des images                           |
+| `npm run dev:down`  | Arrête l'environnement de dev                          |
+| `npm run lint`      | Lint backend + frontend                                |
+| `npm run format`    | Formatage backend + frontend                           |
+| `npm test`          | Tests backend (Jest)                                   |
 
 ### Backend (`cd backend`)
 
-| Commande         | Description                         |
-| ---------------- | ----------------------------------- |
-| `npm run dev`    | Démarrage avec hot reload (nodemon) |
-| `npm start`      | Démarrage en production             |
-| `npm test`       | Tests Jest                          |
-| `npm run lint`   | ESLint                              |
-| `npm run format` | Prettier                            |
+| Commande                  | Description                                         |
+| ------------------------- | --------------------------------------------------- |
+| `npm run dev`             | Démarrage avec hot reload (nodemon)                 |
+| `npm start`               | Démarrage en production                             |
+| `npm test`                | Tests Jest (ESM)                                    |
+| `npm run prisma:generate` | Génère le client Prisma                             |
+| `npm run prisma:migrate`  | Applique les migrations (dev)                       |
+| `npm run prisma:deploy`   | Applique les migrations (prod / Railway)            |
+| `npm run files:migrate`   | Migration des fichiers privés en clair vers chiffré |
+| `npm run lint`            | ESLint                                              |
+| `npm run format`          | Prettier                                            |
 
 ### Frontend (`cd frontend`)
 
-| Commande          | Description                   |
-| ----------------- | ----------------------------- |
-| `npm run dev`     | Serveur de développement Vite |
-| `npm run build`   | Build de production           |
-| `npm run preview` | Prévisualisation du build     |
-| `npm run lint`    | ESLint                        |
-| `npm run format`  | Prettier                      |
+| Commande          | Description                                                                |
+| ----------------- | -------------------------------------------------------------------------- |
+| `npm run dev`     | Serveur de développement Vite                                              |
+| `npm run build`   | Build de production (`prebuild` valide l'env, `postbuild` pré-rend le SEO) |
+| `npm run preview` | Prévisualisation du build                                                  |
+| `npm run lint`    | ESLint                                                                     |
+| `npm run format`  | Prettier                                                                   |
 
 ---
 
@@ -419,34 +629,45 @@ SailingLoc_G2/
 │   ├── src/
 │   │   ├── config/          # Prisma, variables d'environnement
 │   │   ├── controllers/     # Logique des routes HTTP
-│   │   ├── services/        # Logique métier
+│   │   ├── services/        # Logique métier (paiement, cron, emails, stats…)
 │   │   ├── repositories/    # Requêtes Prisma
-│   │   ├── models/          # Modèles de données
 │   │   ├── routes/          # Endpoints Express
-│   │   ├── middlewares/     # JWT, rôles, validation
+│   │   ├── middlewares/     # JWT, rôles, rate-limit, CSRF, validation
 │   │   ├── utils/           # Fonctions utilitaires
 │   │   └── server.js        # Point d'entrée
 │   ├── prisma/
 │   │   ├── schema.prisma    # Schéma base de données
-│   │   └── migrations/      # Migrations SQL
-│   ├── tests/               # Tests Jest
+│   │   ├── migrations/      # Migrations SQL (32)
+│   │   └── seed.js          # Données de démonstration (dev/test uniquement)
+│   ├── scripts/             # Scripts de maintenance (migration fichiers privés…)
+│   ├── storage/             # Fichiers privés chiffrés (documents, litiges) — hors statique
+│   ├── uploads/             # Images bateaux / avatars (servi en statique)
+│   ├── tests/               # Tests Jest (56 fichiers)
+│   ├── railway.json         # Config du service backend Railway
 │   └── package.json
 ├── frontend/
-│   └── src/
-│       ├── assets/          # Images, icônes
-│       ├── components/
-│       │   ├── common/      # Composants UI réutilisables
-│       │   └── features/    # Composants métier
-│       ├── pages/           # Pages principales
-│       ├── services/        # Appels API Axios
-│       ├── context/         # État global (AuthContext)
-│       ├── hooks/           # Hooks personnalisés
-│       ├── router/          # Configuration React Router
-│       ├── utils/           # Fonctions utilitaires
-│       ├── main.jsx         # Point d'entrée React
-│       └── index.css        # Styles globaux
-├── docker-compose.yml           # Production
-├── docker-compose.dev.yml       # Développement
+│   ├── src/
+│   │   ├── assets/          # Images, icônes, logos
+│   │   ├── components/
+│   │   │   ├── common/      # Composants UI réutilisables
+│   │   │   └── features/    # Composants métier (Auth, Boats, Booking, Payment…)
+│   │   ├── pages/           # Pages publiques + dashboards + back-office admin
+│   │   ├── services/        # Appels API Axios
+│   │   ├── context/         # État global (Auth, CookieConsent, Toast…)
+│   │   ├── hooks/           # Hooks personnalisés (useAuth, useFavorites…)
+│   │   ├── i18n/            # Traductions FR / EN (i18next)
+│   │   ├── router/          # Configuration React Router
+│   │   ├── security/        # Garde d'origine API
+│   │   ├── utils/           # SEO, Matomo, préférences visuelles, formatage…
+│   │   ├── main.jsx         # Point d'entrée React
+│   │   └── index.css        # Styles globaux
+│   ├── scripts/             # Pré-rendu SEO, sitemap, validation d'env de build
+│   ├── Dockerfile           # Build Vite + nginx non privilégié (staging/prod)
+│   └── railway.json         # Config du service frontend Railway
+├── .github/workflows/           # ci.yml (intégration) + security.yml (portes de sécurité)
+├── docs/                        # Audit SEO, accessibilité visuelle
+├── docker-compose.yml           # Production auto-hébergée
+├── docker-compose.dev.yml       # Développement (front + back + PostgreSQL + MailDev + Matomo)
 ├── docker-compose.staging.yml   # Staging
 └── Makefile                     # Commandes Docker simplifiées
 ```
@@ -501,12 +722,24 @@ Consultation des statistiques : [http://localhost:8081](http://localhost:8081) (
 
 ### CI/CD (GitHub Actions)
 
-Le pipeline `.github/workflows/ci.yml` s'exécute automatiquement sur `master`, `develop` et `staging` à chaque push ou pull request. Il vérifie :
+Deux workflows s'exécutent automatiquement sur `master`, `develop` et `staging`
+à chaque push ou pull request.
+
+**`.github/workflows/ci.yml`** — intégration :
 
 1. Lint (backend + frontend)
-2. Tests Jest (backend)
-3. Build Vite (frontend)
-4. Formatage Prettier
+2. Tests Jest (backend), client Prisma généré au préalable
+3. Build Vite (frontend) avec `VITE_API_BASE_URL` de production
+4. Vérification du formatage Prettier des workflows
+5. Jobs `deploy-staging` (`develop`/`staging`) et `deploy-production` (`master`)
+
+**`.github/workflows/security.yml`** — portes de sécurité :
+
+1. **`npm audit`** (prod + dev, seuil `high`) et génération de **SBOM** CycloneDX (racine, backend, frontend)
+2. **Dependency review** sur les pull requests
+3. **Secret scan** de l'arbre courant et **TruffleHog** sur tout l'historique Git
+4. **CodeQL** (JavaScript / TypeScript, requêtes `security-and-quality`)
+5. **Build + scan des images Docker** avec **Trivy** (secrets embarqués + vulnérabilités `HIGH`/`CRITICAL`)
 
 ---
 
